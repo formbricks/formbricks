@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Form {
+  id                  String    @id
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  owner               User      @relation(fields: [ownerId], references: [id])
+  ownerId             Int
+  title               String
+  published           Boolean   @default(false)
+  finishedOnboarding  Boolean   @default(false)
+  colorPrimary        String    @default("#db2777")
+  pages               Json
+  answerSessions      AnswerSession[]
+}
+
+model AnswerSession {
+  id          String    @id @default(uuid())
+  createdAt   DateTime  @default(now()) @map(name: "created_at")
+  updatedAt   DateTime  @updatedAt @map(name: "updated_at")
+  form        Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId      String
+  answers     Answer[]
+}
+
+model Answer {
+  id              String        @id @default(uuid())
+  createdAt       DateTime      @default(now()) @map(name: "created_at")
+  updatedAt       DateTime      @updatedAt @map(name: "updated_at")
+  answerSession   AnswerSession @relation(fields: [answerSessionId], references: [id], onDelete: Cascade)
+  answerSessionId String
+  elementId       String
+  data            Json
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map(name: "email_verified")
+  password      String?
+  createdAt     DateTime  @default(now()) @map(name: "created_at")
+  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
+  forms         Form[]
+
+  @@map(name: "users")
+}
+
+model VerificationRequest {
+  id         Int      @id @default(autoincrement())
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now()) @map(name: "created_at")
+  updatedAt  DateTime @default(now()) @map(name: "updated_at")
+
+  @@map(name: "verification_requests")
+}
