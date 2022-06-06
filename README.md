@@ -7,12 +7,12 @@
   <p align="center">
     The Open-Source Typeform Alternative
     <br />
-    <a href="https://snoopforms.com/">Website</a>  |  <a href="https://discord.com/invite/BFc4z2rS">Join Discord community</a>
+    <a href="https://snoopforms.com/">Website</a>  |  <a href="https://discord.gg/3YFcABF2Ts">Join Discord community</a>
   </p>
 </p>
 
 <p align="center">
-<a href="https://github.com/snoopForms/snoopforms/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a> <a href="https://discord.com/invite/BFc4z2rS"><img src="https://img.shields.io/badge/Discord-SnoopForms-%234A154B" alt="Join snoopForms Discord"></a>
+<a href="https://github.com/snoopForms/snoopforms/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a> <a href="https://discord.gg/3YFcABF2Ts"><img src="https://img.shields.io/badge/Discord-SnoopForms-%234A154B" alt="Join snoopForms Discord"></a>
 </p>
 
 <br/>
