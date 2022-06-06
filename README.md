@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://github.com/snoopForms/snoopforms">
-    <img src="https://user-images.githubusercontent.com/675065/172095421-9641c023-e87f-415c-bd35-4bfba86f351d.svg" alt="Logo" width="500">
+    <img src="https://user-images.githubusercontent.com/72809645/172191504-808da997-025b-4b1f-90c0-b8ef658af2dd.svg" alt="Logo" width="500">
   </a>
   <h3 align="center">snoopForms</h3>
 
@@ -31,7 +31,7 @@ Spin up forms in minutes. Pipe your data exactly where you need it. Maximize you
 
 - Work with the React Lib or use our No Code Builder to build exactly the forms you need.
 - Pipe your data where you need it. Don’t wait for your form provider to finally build the integration you desperately need.
-- Since you can self-host Snoop Forms, it’s 100% compliant with privacy all regulations.
+- Since you can self-host Snoop Forms, it’s 100% compliant with all privacy regulations.
 - How users interact with your form can be as important as their input. Don’t miss anything with our best-in-class analytics.
 - We aim for the best possible developer experience. Use what you like, build on top what you need. Everything is possible.
 
