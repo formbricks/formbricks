@@ -11,6 +11,10 @@
   </p>
 </p>
 
+<p align="center">
+<a href="https://github.com/snoopForms/snoopforms/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a> <a href="https://discord.com/invite/BFc4z2rS"><img src="https://img.shields.io/badge/Discord-SnoopForms-%234A154B" alt="Join snoopForms Discord"></a>
+</p>
+
 <br/>
 
 > :warning: **Note**: This repository is still in an early stage of development. We love the open source community and want to show what we are working on early. We will update this readme with more information once it is safe to use. Until then, feel free to share your thoughts, contact us, and contribute if you'd like.
