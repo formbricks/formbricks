@@ -11,6 +11,12 @@
   </p>
 </p>
 
+<br/>
+
+> :warning: **Note**: This repository is still in an early stage of development. We love the open source community and want to show what we are working on early. We will update this readme with more information once it is safe to use. Until then, feel free to share your thoughts, contact us, and contribute if you'd like.
+
+<br/>
+
 ## About snoopForms
 
 <img width="937" alt="screenshot-snoopForms" src="https://user-images.githubusercontent.com/675065/172094334-b5ca09d0-2058-42e3-9b05-75c79c098d06.svg">
