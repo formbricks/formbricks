@@ -63,13 +63,15 @@ git clone https://github.com/snoopForms/snoopforms.git && cd snoopforms
 yarn install
 ```
 
-1. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database. You must also set the email variables to valid SMTP-credentials for the login to work.
+1. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database.
 
-````
+```
 cp .env.example .env
 ```
-Use an editor of your choice to edit the file (we use nano):
-````
+
+Use the code editor of your choice to edit the file (we use nano):
+
+```
 
 nano .env
 
@@ -105,7 +107,7 @@ git clone https://github.com/snoopForms/snoopforms.git && cd snoopforms
 
 ```
 
-Create a `.env` file based on `.env.example` and change it according to your setup. You must set the email variables to valid SMTP-credentials for the login to work:
+Create a `.env` file based on `.env.example` and change it according to your setup.
 
 ```
 
@@ -137,4 +139,3 @@ Contributions are what make the open source community such an amazing place to b
 ## License
 
 Distributed under the AGPLv3 License. See `LICENSE` for more information.
-```
