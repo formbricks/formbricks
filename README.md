@@ -47,7 +47,7 @@ Spin up forms in minutes. Pipe your data exactly where you need it. Maximize you
 
 To get the project running locally on your machine you need to have the following development tools installed:
 
-- Node.JS
+- Node.JS (we recommend v16)
 - Yarn
 - PostgreSQL
 
@@ -63,22 +63,32 @@ git clone https://github.com/snoopForms/snoopforms.git && cd snoopforms
 yarn install
 ```
 
-3. Create a `.env.local` file based on `.env.local.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database. You must also set the email variables to valid SMTP-credentials for the login to work.
+1. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database. You must also set the email variables to valid SMTP-credentials for the login to work.
+
+````
+cp .env.example .env
+```
+Use an editor of your choice to edit the file (we use nano):
+````
+
+nano .env
 
 ```
-cp .env.local.example .env.local && nano .env.local
-```
 
-4. Let prisma set up the database for you:
+1. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
 
 ```
+
 npx prisma db push
+
 ```
 
 5. Start the development server:
 
 ```
+
 yarn dev
+
 ```
 
 You can now access the app on [https://localhost:3000](https://localhost:3000)
@@ -90,19 +100,25 @@ The easiest way to deploy snoopForms yourself on your own machine is using Docke
 Clone the repository:
 
 ```
+
 git clone https://github.com/snoopForms/snoopforms.git && cd snoopforms
-```
-
-Create a `.env.local` file based on `.env.local.example` and change it according to your setup. You must set the email variables to valid SMTP-credentials for the login to work:
 
 ```
-cp .env.local.example .env.local && nano .env.local
+
+Create a `.env` file based on `.env.example` and change it according to your setup. You must set the email variables to valid SMTP-credentials for the login to work:
+
+```
+
+cp .env.example .env && nano .env
+
 ```
 
 Start the docker-compose process to build and spin up the snoopForms container as well as the postgres database.
 
 ```
+
 docker-compose up -d
+
 ```
 
 You can now access the app on [https://localhost:3000](https://localhost:3000)
@@ -121,3 +137,4 @@ Contributions are what make the open source community such an amazing place to b
 ## License
 
 Distributed under the AGPLv3 License. See `LICENSE` for more information.
+```
