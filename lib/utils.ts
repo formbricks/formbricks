@@ -1,3 +1,5 @@
+import intlFormat from "date-fns/intlFormat";
+
 export const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export const shuffle = (array) => {
@@ -43,4 +45,37 @@ export const setField = (obj, objSetter, input, field) => {
   newData[field] = input;
   objSetter(newData, false);
   return newData;
+};
+
+export const convertDateString = (dateString: string) => {
+  const date = new Date(dateString);
+  return intlFormat(
+    date,
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    },
+    {
+      locale: "en",
+    }
+  );
+};
+
+export const convertDateTimeString = (dateString) => {
+  const date = new Date(dateString);
+  return intlFormat(
+    date,
+    {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    },
+    {
+      locale: "en",
+    }
+  );
 };

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useForm } from "../../lib/forms";
+import { convertDateTimeString } from "../../lib/utils";
 import Loading from "../Loading";
 
 export default function Submission({ formId, submissionSession }) {
@@ -9,16 +10,20 @@ export default function Submission({ formId, submissionSession }) {
   const getSubmission = (submissionSession, schema) => {
     if (!schema) return {};
     const submission = JSON.parse(JSON.stringify(schema));
-    for (const page of submission.pages) {
-      if (page.type === "form") {
-        const pageSubmission = submissionSession.submissions.find(
-          (s) => s.pageName === page.name
-        );
-        if (typeof pageSubmission !== "undefined") {
-          for (const element of page.elements) {
-            if (element.type !== "submit") {
-              if (element.name in pageSubmission.data) {
-                element.value = pageSubmission.data[element.name];
+    submission.id = submissionSession.id;
+    submission.createdAt = submissionSession.createdAt;
+    if (submissionSession.submissions.length > 0) {
+      for (const page of submission.pages) {
+        if (page.type === "form") {
+          const pageSubmission = submissionSession.submissions.find(
+            (s) => s.pageName === page.name
+          );
+          if (typeof pageSubmission !== "undefined") {
+            for (const element of page.elements) {
+              if (element.type !== "submit") {
+                if (element.name in pageSubmission.data) {
+                  element.value = pageSubmission.data[element.name];
+                }
               }
             }
           }
@@ -41,7 +46,10 @@ export default function Submission({ formId, submissionSession }) {
   return (
     <div className="bg-white shadow sm:rounded-lg max-w-">
       <div className="px-4 py-5 sm:p-6">
-        <h3 className="text-gray-900 whitespace-pre-wrap">
+        <div className="text-gray-600">
+          <p className="text-sm">
+            {convertDateTimeString(submission.createdAt)}
+          </p>
           {submission.pages.map((page) => (
             <div key={page.name}>
               {page.elements?.map(
@@ -51,7 +59,7 @@ export default function Submission({ formId, submissionSession }) {
                       <p className="font-semibold text-red-600">
                         {element.label}
                       </p>
-                      <p className="font-normal text-gray-600">
+                      <p className="font-normal">
                         {element.value || "[not provided]"}
                       </p>
                     </div>
@@ -59,7 +67,7 @@ export default function Submission({ formId, submissionSession }) {
               )}
             </div>
           ))}
-        </h3>
+        </div>
       </div>
     </div>
   );

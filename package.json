@@ -14,6 +14,7 @@
     "@prisma/client": "^3.15.0",
     "babel-plugin-superjson-next": "^0.4.3",
     "bcryptjs": "^2.4.3",
+    "date-fns": "^2.28.0",
     "next": "12.1.6",
     "next-auth": "^4.3.4",
     "nextjs-cors": "^2.1.1",
