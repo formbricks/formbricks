@@ -81,7 +81,7 @@ nano .env
 
 ```
 
-npx prisma db push
+npx prisma migrate dev
 
 ```
 

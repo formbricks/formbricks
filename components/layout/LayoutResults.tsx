@@ -22,7 +22,7 @@ export default function LayoutShare({ title, formId, children }) {
       <Head>
         <title>{title}</title>
       </Head>
-      <div className="flex h-screen overflow-hidden bg-gray-50">
+      <div className="flex min-h-screen overflow-hidden bg-gray-50">
         <div className="flex flex-col flex-1 overflow-hidden">
           <header className="w-full">
             <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b border-gray-200 shadow-sm">

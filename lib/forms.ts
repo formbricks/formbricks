@@ -1,6 +1,5 @@
 import useSWR from "swr";
-
-const fetcher = (url) => fetch(url).then((res) => res.json());
+import { fetcher } from "./utils";
 
 export const useForms = () => {
   const { data, error, mutate } = useSWR(`/api/forms/`, fetcher);
@@ -46,6 +45,7 @@ export const createForm = async () => {
     return await res.json();
   } catch (error) {
     console.error(error);
+    throw Error(`createForm: unable to create form: ${error.message}`);
   }
 };
 

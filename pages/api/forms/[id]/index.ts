@@ -23,7 +23,7 @@ export default async function handle(
         id: formId,
       },
     });
-    res.json(formData);
+    return res.json(formData);
   }
   // POST /api/forms/:id
   // Updates an existing form

@@ -7,7 +7,7 @@ export default function MenuBreadcrumbs({ formId }) {
 
   const pages = [
     { name: "Forms", href: "/forms", current: false },
-    { name: form.title, href: "#", current: true },
+    { name: form.name, href: "#", current: true },
   ];
 
   if (isLoadingForm) {

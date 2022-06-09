@@ -13,31 +13,30 @@ model Form {
   updatedAt           DateTime  @updatedAt
   owner               User      @relation(fields: [ownerId], references: [id])
   ownerId             Int
-  title               String
+  name                String
   published           Boolean   @default(false)
   finishedOnboarding  Boolean   @default(false)
-  colorPrimary        String    @default("#db2777")
-  pages               Json
-  answerSessions      AnswerSession[]
+  schema               Json
+  submissionSessions      SubmissionSession[]
 }
 
-model AnswerSession {
-  id          String    @id @default(uuid())
-  createdAt   DateTime  @default(now()) @map(name: "created_at")
-  updatedAt   DateTime  @updatedAt @map(name: "updated_at")
-  form        Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId      String
-  answers     Answer[]
+model SubmissionSession {
+  id              String    @id @default(uuid())
+  createdAt       DateTime  @default(now()) @map(name: "created_at")
+  updatedAt       DateTime  @updatedAt @map(name: "updated_at")
+  form            Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId          String
+  submissions     Submission[]
 }
 
-model Answer {
-  id              String        @id @default(uuid())
-  createdAt       DateTime      @default(now()) @map(name: "created_at")
-  updatedAt       DateTime      @updatedAt @map(name: "updated_at")
-  answerSession   AnswerSession @relation(fields: [answerSessionId], references: [id], onDelete: Cascade)
-  answerSessionId String
-  elementId       String
-  data            Json
+model Submission {
+  id                  String        @id @default(uuid())
+  createdAt           DateTime      @default(now()) @map(name: "created_at")
+  updatedAt           DateTime      @updatedAt @map(name: "updated_at")
+  submissionSession   SubmissionSession @relation(fields: [submissionSessionId], references: [id], onDelete: Cascade)
+  submissionSessionId String
+  pageName            String
+  data                Json
 }
 
 model User {

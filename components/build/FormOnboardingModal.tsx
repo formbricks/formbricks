@@ -18,11 +18,11 @@ export default function FormOnboardingModal({
   formId,
 }: FormOnboardingModalProps) {
   const { form, mutateForm, isLoadingForm } = useForm(formId);
-  const [title, setTitle] = useState(form.title);
+  const [name, setName] = useState(form.name);
 
   const submitForm = async (e) => {
     e.preventDefault();
-    const updatedForm = { ...form, title, finishedOnboarding: true };
+    const updatedForm = { ...form, name, finishedOnboarding: true };
     await persistForm(updatedForm);
     mutateForm(updatedForm);
     setOpen(false);
@@ -106,11 +106,11 @@ export default function FormOnboardingModal({
                 <div className="mt-1">
                   <input
                     type="text"
-                    name="title"
+                    name="name"
                     className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
                     placeholder="My form"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     required
                   />
                 </div>

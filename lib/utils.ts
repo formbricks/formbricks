@@ -1,3 +1,5 @@
+export const fetcher = (url) => fetch(url).then((res) => res.json());
+
 export const shuffle = (array) => {
   array = [...array];
   let currentIndex = array.length,
