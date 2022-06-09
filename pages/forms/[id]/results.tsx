@@ -41,7 +41,7 @@ export default function Share({}: ShareProps) {
             <p>Number of submissions: {submissionSessions.length}</p>
           </div>
         </div>
-        <div className="mt-8">
+        <div className="grid gap-8 mt-8">
           {submissionSessions.map((submissionSession) => (
             <Submission
               key={submissionSession.id}
