@@ -1,5 +1,6 @@
 import type { NextApiResponse, NextApiRequest } from "next";
 import NextCors from "nextjs-cors";
+import { processApiEvent, validateEvents } from "../../../../lib/apiEvents";
 import { prisma } from "../../../../lib/prisma";
 
 ///api/submissionSession
@@ -21,13 +22,17 @@ export default async function handle(
   // Required fields in body: schema
   // Optional fields in body: -
   if (req.method === "POST") {
-    const { schema } = req.body;
-    const data = { schema, updatedAt: new Date() };
-    await prisma.form.update({
-      where: { id: formId },
-      data,
-    });
-    return res.json({ success: true });
+    const { events } = req.body;
+    const error = validateEvents(events);
+    if (error) {
+      console.log(JSON.stringify(error, null, 2));
+      const { status, message } = error;
+      return res.status(status).json({ error: message });
+    }
+    res.json({ success: true });
+    for (const event of events) {
+      processApiEvent(event, formId);
+    }
   }
   // Unknown HTTP Method
   else {

@@ -1,9 +1,13 @@
+-- CreateEnum
+CREATE TYPE "FormType" AS ENUM ('CODE', 'NOCODE');
+
 -- CreateTable
 CREATE TABLE "Form" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "ownerId" INTEGER NOT NULL,
+    "formType" "FormType" NOT NULL DEFAULT E'NOCODE',
     "name" TEXT NOT NULL,
     "published" BOOLEAN NOT NULL DEFAULT false,
     "finishedOnboarding" BOOLEAN NOT NULL DEFAULT false,
@@ -18,20 +22,21 @@ CREATE TABLE "SubmissionSession" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "formId" TEXT NOT NULL,
+    "userFingerprint" TEXT NOT NULL,
 
     CONSTRAINT "SubmissionSession_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Submission" (
+CREATE TABLE "SessionEvent" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "submissionSessionId" TEXT NOT NULL,
-    "pageName" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
     "data" JSONB NOT NULL,
 
-    CONSTRAINT "Submission_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "SessionEvent_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -72,4 +77,4 @@ ALTER TABLE "Form" ADD CONSTRAINT "Form_ownerId_fkey" FOREIGN KEY ("ownerId") RE
 ALTER TABLE "SubmissionSession" ADD CONSTRAINT "SubmissionSession_formId_fkey" FOREIGN KEY ("formId") REFERENCES "Form"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Submission" ADD CONSTRAINT "Submission_submissionSessionId_fkey" FOREIGN KEY ("submissionSessionId") REFERENCES "SubmissionSession"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "SessionEvent" ADD CONSTRAINT "SessionEvent_submissionSessionId_fkey" FOREIGN KEY ("submissionSessionId") REFERENCES "SubmissionSession"("id") ON DELETE CASCADE ON UPDATE CASCADE;

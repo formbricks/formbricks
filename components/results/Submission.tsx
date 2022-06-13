@@ -12,17 +12,17 @@ export default function Submission({ formId, submissionSession }) {
     const submission = JSON.parse(JSON.stringify(schema));
     submission.id = submissionSession.id;
     submission.createdAt = submissionSession.createdAt;
-    if (submissionSession.submissions.length > 0) {
+    if (submissionSession.events.length > 0) {
       for (const page of submission.pages) {
         if (page.type === "form") {
-          const pageSubmission = submissionSession.submissions.find(
-            (s) => s.pageName === page.name
+          const pageSubmission = submissionSession.events.find(
+            (s) => s.type === "pageSubmission" && s.data?.pageName === page.name
           );
           if (typeof pageSubmission !== "undefined") {
             for (const element of page.elements) {
               if (element.type !== "submit") {
-                if (element.name in pageSubmission.data) {
-                  element.value = pageSubmission.data[element.name];
+                if (element.name in pageSubmission.data?.submission) {
+                  element.value = pageSubmission.data.submission[element.name];
                 }
               }
             }

@@ -23,7 +23,7 @@ export default async function handle(
         form: { id: formId },
       },
       include: {
-        submissions: true,
+        events: true,
       },
     });
     return res.json(submissionSessionsData);
@@ -34,8 +34,9 @@ export default async function handle(
   // Required fields in body: -
   // Optional fields in body: -
   if (req.method === "POST") {
+    const { userFingerprint } = req.body;
     const prismaRes = await prisma.submissionSession.create({
-      data: { form: { connect: { id: formId } } },
+      data: { userFingerprint, form: { connect: { id: formId } } },
     });
     return res.json(prismaRes);
   }

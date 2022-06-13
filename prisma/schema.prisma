@@ -7,17 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum FormType {
+  CODE
+  NOCODE
+}
+
 model Form {
   id                  String    @id
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   owner               User      @relation(fields: [ownerId], references: [id])
   ownerId             Int
+  formType            FormType  @default(NOCODE)
   name                String
   published           Boolean   @default(false)
   finishedOnboarding  Boolean   @default(false)
-  schema               Json
-  submissionSessions      SubmissionSession[]
+  schema              Json
+  submissionSessions  SubmissionSession[]
 }
 
 model SubmissionSession {
@@ -26,16 +32,17 @@ model SubmissionSession {
   updatedAt       DateTime  @updatedAt @map(name: "updated_at")
   form            Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId          String
-  submissions     Submission[]
+  userFingerprint String
+  events          SessionEvent[]
 }
 
-model Submission {
-  id                  String        @id @default(uuid())
-  createdAt           DateTime      @default(now()) @map(name: "created_at")
-  updatedAt           DateTime      @updatedAt @map(name: "updated_at")
+model SessionEvent {
+  id                  String            @id @default(uuid())
+  createdAt           DateTime          @default(now()) @map(name: "created_at")
+  updatedAt           DateTime          @updatedAt @map(name: "updated_at")
   submissionSession   SubmissionSession @relation(fields: [submissionSessionId], references: [id], onDelete: Cascade)
   submissionSessionId String
-  pageName            String
+  type           String
   data                Json
 }
 
