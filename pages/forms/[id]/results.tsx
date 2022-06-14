@@ -20,6 +20,7 @@ export default function Share() {
 
   return (
     <>
+<<<<<<< HEAD
       <LayoutFormResults
         title={form.title}
         formId={formId}
@@ -34,6 +35,27 @@ export default function Share() {
           </>
         )}
       </LayoutFormResults>
+=======
+      <LayoutResults title={form.title} formId={formId} currentStep="results">
+        <div className="bg-white shadow sm:rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg font-medium leading-6 text-darkgray-700">
+              Submissions for your form
+            </h3>
+            <p>Number of submissions: {submissionSessions.length}</p>
+          </div>
+        </div>
+        <div className="grid gap-8 mt-8">
+          {submissionSessions.map((submissionSession) => (
+            <Submission
+              key={submissionSession.id}
+              submissionSession={submissionSession}
+              formId={formId}
+            />
+          ))}
+        </div>
+      </LayoutResults>
+>>>>>>> 1658eb9 (colors, login, UI, fonts)
     </>
   );
 }
