@@ -27,12 +27,17 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           },
         },
         async authorize(credentials, _req) {
-          // Add logic here to look up the user from the credentials supplied
-          const user = await prisma.user.findUnique({
-            where: {
-              email: credentials?.email,
-            },
-          });
+          let user;
+          try {
+            user = await prisma.user.findUnique({
+              where: {
+                email: credentials?.email,
+              },
+            });
+          } catch (e) {
+            console.error(e);
+            throw Error("Internal server error. Please try again later");
+          }
 
           if (!user) {
             throw new Error("User not found");

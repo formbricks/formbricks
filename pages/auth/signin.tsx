@@ -27,7 +27,7 @@ export default function SignIn({ csrfToken }: props) {
                   An error occurred when logging you in
                 </h3>
                 <div className="mt-2 text-sm text-red-700">
-                  <p className="space-y-1">{error}</p>
+                  <p className="space-y-1 whitespace-pre-wrap">{error}</p>
                 </div>
               </div>
             </div>

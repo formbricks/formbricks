@@ -7,12 +7,12 @@ import { DotsHorizontalIcon, TrashIcon } from "@heroicons/react/solid";
 import { classNames } from "../lib/utils";
 import { createForm, useForms } from "../lib/forms";
 
-export default function FormList({}) {
+export default function FormList() {
   const { forms, mutateForms } = useForms();
 
   const newForm = async () => {
     const form = await createForm();
-    await Router.push(`/forms/${form.id}/results`);
+    await Router.push(`/forms/${form.id}/form`);
   };
 
   const deleteForm = async (form, formIdx) => {
@@ -44,9 +44,9 @@ export default function FormList({}) {
             .map((form, formIdx) => (
               <li key={form.id} className="col-span-1 ">
                 <div className="bg-white divide-y divide-gray-200 rounded-lg shadow">
-                  <Link href={`/forms/${form.id}/results`}>
+                  <Link href={`/forms/${form.id}/form`}>
                     <a>
-                      <div className="px-4 py-5 sm:p-6">{form.title}</div>
+                      <div className="px-4 py-5 sm:p-6">{form.name}</div>
                     </a>
                   </Link>
                   <div className="px-4 py-1 text-right sm:px-6">
