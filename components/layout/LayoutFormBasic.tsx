@@ -38,8 +38,12 @@ export default function LayoutShare({ title, formId, currentStep, children }) {
           </header>
 
           {/* Main content */}
-          <main className="max-w-lg px-4 pt-10 pb-12 mx-auto lg:pb-16">
-            {children}
+          <main>
+            <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+              {/* Replace with your content */}
+              {children}
+              {/* /End replace */}
+            </div>
           </main>
         </div>
       </div>

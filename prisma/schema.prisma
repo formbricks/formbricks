@@ -12,6 +12,10 @@ enum FormType {
   NOCODE
 }
 
+enum PipelineType {
+  WEBHOOK
+}
+
 model Form {
   id                  String    @id
   createdAt           DateTime  @default(now())
@@ -24,6 +28,17 @@ model Form {
   finishedOnboarding  Boolean   @default(false)
   schema              Json
   submissionSessions  SubmissionSession[]
+  pipelines           Pipeline[]
+}
+
+model Pipeline {
+  id              String        @id @default(uuid())
+  createdAt       DateTime      @default(now()) @map(name: "created_at")
+  updatedAt       DateTime      @updatedAt @map(name: "updated_at")
+  type            PipelineType
+  form            Form          @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId          String
+  data            Json
 }
 
 model SubmissionSession {
@@ -42,7 +57,7 @@ model SessionEvent {
   updatedAt           DateTime          @updatedAt @map(name: "updated_at")
   submissionSession   SubmissionSession @relation(fields: [submissionSessionId], references: [id], onDelete: Cascade)
   submissionSessionId String
-  type           String
+  type                String
   data                Json
 }
 

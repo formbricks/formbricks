@@ -1,27 +1,30 @@
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import LayoutResults from "../../../components/layout/LayoutResults";
+import LayoutFormBasics from "../../../components/layout/LayoutFormBasic";
 import Loading from "../../../components/Loading";
 import Submission from "../../../components/results/Submission";
 import { useForm } from "../../../lib/forms";
-import { useAnswerSessions } from "../../../lib/submissionSessions";
+import { useSubmissionSessions } from "../../../lib/submissionSessions";
 
 export default function Share() {
   const router = useRouter();
   const formId = router.query.id.toString();
   const { form, isLoadingForm } = useForm(router.query.id);
-  const { submissionSessions, isLoadingAnswerSessions } = useAnswerSessions(
-    form?.id
-  );
+  const { submissionSessions, isLoadingSubmissionSessions } =
+    useSubmissionSessions(form?.id);
 
-  if (isLoadingForm || isLoadingAnswerSessions) {
+  if (isLoadingForm || isLoadingSubmissionSessions) {
     return <Loading />;
   }
 
   return (
     <>
-      <LayoutResults title={form.title} formId={formId} currentStep="results">
+      <LayoutFormBasics
+        title={form.title}
+        formId={formId}
+        currentStep="results"
+      >
         <div className="bg-white shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium leading-6 text-gray-900">
@@ -39,7 +42,7 @@ export default function Share() {
             />
           ))}
         </div>
-      </LayoutResults>
+      </LayoutFormBasics>
     </>
   );
 }

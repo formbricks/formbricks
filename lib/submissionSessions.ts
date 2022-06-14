@@ -1,7 +1,7 @@
 import useSWR from "swr";
 import { fetcher } from "./utils";
 
-export const useAnswerSessions = (formId: string) => {
+export const useSubmissionSessions = (formId: string) => {
   const { data, error, mutate } = useSWR(
     () => `/api/forms/${formId}/submissionSessions`,
     fetcher
@@ -9,8 +9,8 @@ export const useAnswerSessions = (formId: string) => {
 
   return {
     submissionSessions: data,
-    isLoadingAnswerSessions: !error && !data,
-    isErrorAnswerSessions: error,
-    mutateAnswerSessions: mutate,
+    isLoadingSubmissionSessions: !error && !data,
+    isErrorSubmissionSessions: error,
+    mutateSubmissionSessions: mutate,
   };
 };

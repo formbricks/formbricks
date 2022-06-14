@@ -1,6 +1,9 @@
 -- CreateEnum
 CREATE TYPE "FormType" AS ENUM ('CODE', 'NOCODE');
 
+-- CreateEnum
+CREATE TYPE "PipelineType" AS ENUM ('WEBHOOK');
+
 -- CreateTable
 CREATE TABLE "Form" (
     "id" TEXT NOT NULL,
@@ -14,6 +17,18 @@ CREATE TABLE "Form" (
     "schema" JSONB NOT NULL,
 
     CONSTRAINT "Form_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Pipeline" (
+    "id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "type" "PipelineType" NOT NULL,
+    "formId" TEXT NOT NULL,
+    "data" JSONB NOT NULL,
+
+    CONSTRAINT "Pipeline_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -72,6 +87,9 @@ CREATE UNIQUE INDEX "verification_requests_token_key" ON "verification_requests"
 
 -- AddForeignKey
 ALTER TABLE "Form" ADD CONSTRAINT "Form_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Pipeline" ADD CONSTRAINT "Pipeline_formId_fkey" FOREIGN KEY ("formId") REFERENCES "Form"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SubmissionSession" ADD CONSTRAINT "SubmissionSession_formId_fkey" FOREIGN KEY ("formId") REFERENCES "Form"("id") ON DELETE CASCADE ON UPDATE CASCADE;

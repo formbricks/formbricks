@@ -44,7 +44,7 @@ export default function FormList() {
             .map((form, formIdx) => (
               <li key={form.id} className="col-span-1 ">
                 <div className="bg-white divide-y divide-gray-200 rounded-lg shadow">
-                  <Link href={`/forms/${form.id}/form`}>
+                  <Link href={`/forms/${form.id}`}>
                     <a>
                       <div className="px-4 py-5 sm:p-6">{form.name}</div>
                     </a>
