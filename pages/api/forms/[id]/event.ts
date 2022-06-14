@@ -24,7 +24,6 @@ export default async function handle(
     const { events } = req.body;
     const error = validateEvents(events);
     if (error) {
-      console.log(JSON.stringify(error, null, 2));
       const { status, message } = error;
       return res.status(status).json({ error: message });
     }

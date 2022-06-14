@@ -62,7 +62,7 @@ export const convertDateString = (dateString: string) => {
   );
 };
 
-export const convertDateTimeString = (dateString) => {
+export const convertDateTimeString = (dateString: string) => {
   const date = new Date(dateString);
   return intlFormat(
     date,
@@ -73,6 +73,21 @@ export const convertDateTimeString = (dateString) => {
       day: "numeric",
       hour: "numeric",
       minute: "2-digit",
+    },
+    {
+      locale: "en",
+    }
+  );
+};
+
+export const convertTimeString = (dateString: string) => {
+  const date = new Date(dateString);
+  return intlFormat(
+    date,
+    {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
     },
     {
       locale: "en",

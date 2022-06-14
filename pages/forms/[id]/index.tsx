@@ -5,7 +5,6 @@ import { useSubmissionSessions } from "../../../lib/submissionSessions";
 
 export default function FormIndex() {
   const router = useRouter();
-  console.log(router.query);
   const formId = router.query.id;
   const { submissionSessions, isLoadingSubmissionSessions } =
     useSubmissionSessions(formId?.toString());

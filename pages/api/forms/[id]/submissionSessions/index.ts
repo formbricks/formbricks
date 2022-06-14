@@ -21,6 +21,11 @@ export default async function handle(
       where: {
         form: { id: formId },
       },
+      orderBy: [
+        {
+          createdAt: "desc",
+        },
+      ],
       include: {
         events: true,
       },
