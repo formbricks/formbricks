@@ -4,7 +4,7 @@ import { convertDateTimeString } from "../../lib/utils";
 import Loading from "../Loading";
 
 export default function Submission({ formId, submissionSession }) {
-  const { form, mutateForm, isLoadingForm } = useForm(formId);
+  const { form, isLoadingForm } = useForm(formId);
 
   // fill the schema with the values provided by the user
   const getSubmission = (submissionSession, schema) => {

@@ -1,6 +1,6 @@
-import { Fragment, useState } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { signOut } from "next-auth/react";
+import { Fragment } from "react";
 import { classNames } from "../../lib/utils";
 
 export default function MenuProfile({}) {

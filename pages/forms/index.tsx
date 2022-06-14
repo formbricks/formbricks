@@ -5,7 +5,7 @@ import { useForms } from "../../lib/forms";
 import Loading from "../../components/Loading";
 
 export default function Forms({}) {
-  const { forms, isLoadingForms, mutateForms } = useForms();
+  const { isLoadingForms } = useForms();
 
   if (isLoadingForms) {
     <Loading />;

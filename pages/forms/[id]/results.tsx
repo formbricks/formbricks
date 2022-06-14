@@ -1,23 +1,23 @@
-import { useEffect, useState } from "react";
 import { GetServerSideProps } from "next";
-import { useRouter } from "next/router";
 import { getSession } from "next-auth/react";
-import LayoutResults from "../../../components/layout/LayoutResults";
-import { Form } from "../../../lib/types";
-import { useForm } from "../../../lib/forms";
-import Loading from "../../../components/Loading";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import FormOnboardingModal from "../../../components/build/FormOnboardingModal";
-import { useAnswerSessions } from "../../../lib/submissionSessions";
+import LayoutResults from "../../../components/layout/LayoutResults";
+import Loading from "../../../components/Loading";
 import Submission from "../../../components/results/Submission";
+import { useForm } from "../../../lib/forms";
+import { useAnswerSessions } from "../../../lib/submissionSessions";
 
 type ShareProps = {};
 
 export default function Share({}: ShareProps) {
   const router = useRouter();
   const formId = router.query.id.toString();
-  const { form, mutateForm, isLoadingForm } = useForm(router.query.id);
-  const { submissionSessions, mutateAnswerSessions, isLoadingAnswerSessions } =
-    useAnswerSessions(form?.id);
+  const { form, isLoadingForm } = useForm(router.query.id);
+  const { submissionSessions, isLoadingAnswerSessions } = useAnswerSessions(
+    form?.id
+  );
   const [openOnboardingModal, setOpenOnboardingModal] = useState(false);
 
   useEffect(() => {
@@ -60,11 +60,7 @@ export default function Share({}: ShareProps) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({
-  req,
-  res,
-  query,
-}) => {
+export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
   const session = await getSession({ req });
   if (!session) {
     res.statusCode = 403;

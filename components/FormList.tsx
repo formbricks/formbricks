@@ -8,7 +8,7 @@ import { classNames } from "../lib/utils";
 import { createForm, useForms } from "../lib/forms";
 
 export default function FormList({}) {
-  const { forms, isLoadingForms, mutateForms } = useForms();
+  const { forms, mutateForms } = useForms();
 
   const newForm = async () => {
     const form = await createForm();

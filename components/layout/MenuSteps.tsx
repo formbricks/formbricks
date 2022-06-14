@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useForm } from "../../lib/forms";
-import { Form } from "../../lib/types";
 import { classNames } from "../../lib/utils";
 
 type MenuStepsProps = {
@@ -10,7 +9,7 @@ type MenuStepsProps = {
 };
 
 export default function MenuSteps({ formId, currentStep }: MenuStepsProps) {
-  const { form, isLoadingForm, mutateForm } = useForm(formId);
+  const { form, isLoadingForm } = useForm(formId);
   const router = useRouter();
   const tabs = [
     {

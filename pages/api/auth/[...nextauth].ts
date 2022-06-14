@@ -26,7 +26,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             placeholder: "Your super secure password",
           },
         },
-        async authorize(credentials, req) {
+        async authorize(credentials, _req) {
           // Add logic here to look up the user from the credentials supplied
           const user = await prisma.user.findUnique({
             where: {

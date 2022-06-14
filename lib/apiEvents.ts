@@ -1,4 +1,4 @@
-import { ApiEvent, pageSubmissionData } from "./types";
+import { ApiEvent } from "./types";
 
 type validationError = {
   status: number;

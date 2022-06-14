@@ -1,8 +1,7 @@
 /* This example requires Tailwind CSS v2.0+ */
-import { Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { LightBulbIcon } from "@heroicons/react/outline";
-import { Form } from "../../lib/types";
+import { Fragment, useState } from "react";
 import { persistForm, useForm } from "../../lib/forms";
 import Loading from "../Loading";
 

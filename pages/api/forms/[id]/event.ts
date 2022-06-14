@@ -1,7 +1,6 @@
-import type { NextApiResponse, NextApiRequest } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import NextCors from "nextjs-cors";
 import { processApiEvent, validateEvents } from "../../../../lib/apiEvents";
-import { prisma } from "../../../../lib/prisma";
 
 ///api/submissionSession
 export default async function handle(
