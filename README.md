@@ -63,21 +63,15 @@ git clone https://github.com/snoopForms/snoopforms.git && cd snoopforms
 yarn install
 ```
 
-1. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database.
+3. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database.
 
 ```
 cp .env.example .env
 ```
 
-Use the code editor of your choice to edit the file (we use nano):
+4. Use the code editor of your choice to edit the .env file.
 
-```
-
-nano .env
-
-```
-
-1. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
+5. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
 
 ```
 
@@ -85,7 +79,7 @@ npx prisma migrate dev
 
 ```
 
-5. Start the development server:
+6. Start the development server:
 
 ```
 
@@ -93,7 +87,7 @@ yarn dev
 
 ```
 
-You can now access the app on [https://localhost:3000](https://localhost:3000)
+**You can now access the app on [https://localhost:3000](https://localhost:3000)**
 
 ## Deployment
 
