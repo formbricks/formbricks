@@ -1,4 +1,5 @@
 import useSWR from "swr";
+import { SubmissionSession } from "./types";
 import { fetcher } from "./utils";
 
 export const useSubmissionSessions = (formId: string) => {
@@ -55,4 +56,35 @@ export const getSubmission = (submissionSession, schema) => {
     }
   }
   return submission;
+};
+
+export const getSubmissionAnalytics = (
+  submissionSessions: SubmissionSession[]
+) => {
+  const uniqueUsers = [];
+  let totalSubmissions = 0;
+  let lastSubmissionAt = null;
+  for (const submissionSession of submissionSessions) {
+    // collect unique users
+    if (!uniqueUsers.includes(submissionSession.userFingerprint)) {
+      uniqueUsers.push(submissionSession.userFingerprint);
+    }
+    if (submissionSession.events.length > 0) {
+      totalSubmissions += 1;
+      const lastSubmission =
+        submissionSession.events[submissionSession.events.length - 1];
+      if (!lastSubmissionAt) {
+        lastSubmissionAt = lastSubmission.createdAt;
+      } else if (
+        Date.parse(lastSubmission.createdAt) > Date.parse(lastSubmissionAt)
+      ) {
+        lastSubmissionAt = lastSubmission.createdAt;
+      }
+    }
+  }
+  return {
+    lastSubmissionAt,
+    uniqueUsers: uniqueUsers.length,
+    totalSubmissions: totalSubmissions,
+  };
 };

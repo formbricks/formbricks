@@ -39,11 +39,7 @@ export default function LayoutShare({ title, formId, currentStep, children }) {
 
           {/* Main content */}
           <main>
-            <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-              {/* Replace with your content */}
-              {children}
-              {/* /End replace */}
-            </div>
+            <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">{children}</div>
           </main>
         </div>
       </div>

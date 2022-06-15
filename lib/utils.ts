@@ -1,4 +1,5 @@
 import intlFormat from "date-fns/intlFormat";
+import { formatDistance } from "date-fns";
 
 export const fetcher = (url) => fetch(url).then((res) => res.json());
 
@@ -93,4 +94,11 @@ export const convertTimeString = (dateString: string) => {
       locale: "en",
     }
   );
+};
+
+export const timeSince = (dateString: string) => {
+  const date = new Date(dateString);
+  return formatDistance(date, new Date(), {
+    addSuffix: true,
+  });
 };

@@ -27,7 +27,7 @@ export default function Share() {
         resultMode={resultMode}
         setResultMode={setResultMode}
       >
-        {resultMode === "dashboard" && <ResultsDashboard />}
+        {resultMode === "dashboard" && <ResultsDashboard formId={formId} />}
         {resultMode === "responses" && (
           <>
             <ResultsResponses formId={formId} />
