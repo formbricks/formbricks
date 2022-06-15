@@ -34,7 +34,7 @@ export default function FormList() {
         <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           <button onClick={() => newForm()}>
             <li className="col-span-1">
-              <div className="overflow-hidden text-white bg-red-600 rounded-lg shadow">
+              <div className="overflow-hidden text-white rounded-lg shadow bg-snoopred">
                 <div className="px-4 py-8 sm:p-10">+ New Form</div>
               </div>
             </li>
@@ -43,7 +43,7 @@ export default function FormList() {
             .sort((a, b) => b.updatedAt - a.updatedAt)
             .map((form, formIdx) => (
               <li key={form.id} className="col-span-1 ">
-                <div className="bg-white divide-y divide-gray-200 rounded-lg shadow">
+                <div className="bg-white divide-y rounded-lg shadow divide-lightgray-200">
                   <Link href={`/forms/${form.id}`}>
                     <a>
                       <div className="px-4 py-5 sm:p-6">{form.name}</div>
@@ -54,7 +54,7 @@ export default function FormList() {
                       {({ open }) => (
                         <>
                           <div>
-                            <Menu.Button className="flex items-center p-2 -m-2 text-gray-400 rounded-full hover:text-gray-600 focus:outline-none">
+                            <Menu.Button className="flex items-center p-2 -m-2 rounded-full text-darkgray-400 hover:text-darkgray-500-600 focus:outline-none">
                               <span className="sr-only">Open options</span>
                               <DotsHorizontalIcon
                                 className="w-5 h-5"
@@ -84,13 +84,13 @@ export default function FormList() {
                                       onClick={() => deleteForm(form, formIdx)}
                                       className={classNames(
                                         active
-                                          ? "bg-gray-100 text-gray-900"
-                                          : "text-gray-700",
+                                          ? "bg-lightgray-100 text-darkgray-700"
+                                          : "text-darkgray-500",
                                         "flex px-4 py-2 text-sm w-full"
                                       )}
                                     >
                                       <TrashIcon
-                                        className="w-5 h-5 mr-3 text-gray-400"
+                                        className="w-5 h-5 mr-3 text-darkgray-400"
                                         aria-hidden="true"
                                       />
                                       <span>Delete Form</span>
