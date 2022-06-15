@@ -227,6 +227,9 @@ module.exports = {
       dropShadow: {
         cont: "7.5px 7.5px 13.7px 4.5px rgba(0, 0, 0, 0.2);",
       },
+      fontFamily: {
+        sans: "Poppins, Arial, sans-serif",
+      },
       // fontFamily: {
       //   sans: "Arial, Poppins, Montserrat, Roboto, system ui, sans-serif, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',, 'Helvetica Neue', Arial",
       // },
