@@ -1,6 +1,5 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Dialog, RadioGroup, Transition } from "@headlessui/react";
-import { LightBulbIcon } from "@heroicons/react/outline";
 import { CheckCircleIcon } from "@heroicons/react/solid";
 import { Fragment, useState } from "react";
 import { persistForm, useForm } from "../../lib/forms";
@@ -97,7 +96,7 @@ export default function FormOnboardingModal({
               className="inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-xl sm:w-full sm:p-6"
             >
               {/* <div>
-                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-snoopred-100 rounded-full">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-snoopred-100">
                   <LightBulbIcon
                     className="w-6 h-6 text-snoopred"
                     aria-hidden="true"
@@ -114,17 +113,14 @@ export default function FormOnboardingModal({
               </div> 
               <hr className="my-4" /> */}
               <div>
-                <label
-                  htmlFor="email"
-                  className="text-sm text-darkgray-500"
-                >
+                <label htmlFor="email" className="text-sm text-darkgray-500">
                   Name your form
                 </label>
                 <div className="mt-1">
                   <input
                     type="text"
                     name="name"
-                    className="block w-full p-1 rounded-lg focus:ring-2 focus:ring-snoopred sm:text-lg mb-8"
+                    className="block w-full p-1 mb-8 rounded-lg focus:ring-2 focus:ring-snoopred sm:text-lg"
                     placeholder="e.g. Customer Research Survey"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -145,7 +141,9 @@ export default function FormOnboardingModal({
                       value={formType}
                       className={({ checked, active }) =>
                         classNames(
-                          checked ? "border-transparent" : "border-lightgray-300",
+                          checked
+                            ? "border-transparent"
+                            : "border-lightgray-300",
                           active ? "border-snoopred ring-2 ring-snoopred" : "",
                           "relative bg-white border rounded-lg shadow-sm p-4 flex cursor-pointer focus:outline-none"
                         )
@@ -163,13 +161,13 @@ export default function FormOnboardingModal({
                               </RadioGroup.Label>
                               <RadioGroup.Description
                                 as="span"
-                                className="flex items-center mt-1 text-sm text-darkgray-500 whitespace-pre-wrap"
+                                className="flex items-center mt-1 text-sm whitespace-pre-wrap text-darkgray-500"
                               >
                                 {formType.description}
                               </RadioGroup.Description>
                               <RadioGroup.Description
                                 as="span"
-                                className="flex items-center mt-1 text-xs text-darkgray-500-400 whitespace-pre-wrap"
+                                className="flex items-center mt-1 text-xs whitespace-pre-wrap text-darkgray-500-400"
                               >
                                 {formType.additionalDescription}
                               </RadioGroup.Description>
@@ -185,7 +183,9 @@ export default function FormOnboardingModal({
                           <span
                             className={classNames(
                               active ? "border" : "border-2",
-                              checked ? "border-snoopred" : "border-transparent",
+                              checked
+                                ? "border-snoopred"
+                                : "border-transparent",
                               "absolute -inset-px rounded-lg pointer-events-none"
                             )}
                             aria-hidden="true"
@@ -199,7 +199,7 @@ export default function FormOnboardingModal({
               <div className="mt-5 sm:mt-6">
                 <button
                   type="submit"
-                  className="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-snoopred border border-transparent rounded-md shadow-sm hover:bg-snoopred-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred sm:text-sm"
+                  className="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white border border-transparent rounded-md shadow-sm bg-snoopred hover:bg-snoopred-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred sm:text-sm"
                 >
                   Create form
                 </button>

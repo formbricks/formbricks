@@ -1,4 +1,5 @@
 import { ApiEvent } from "./types";
+import { prisma } from "./prisma";
 
 type validationError = {
   status: number;

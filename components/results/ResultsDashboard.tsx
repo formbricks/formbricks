@@ -52,7 +52,7 @@ export default function ResultsDashboard({ formId }) {
                   className="relative px-4 bg-white rounded-lg shadow pt-5overflow-hidden sm:pt-6 sm:px-6"
                 >
                   <dt>
-                    <div className="absolute p-3 bg-red-500 rounded-md">
+                    <div className="absolute p-3 rounded-md bg-snoopred-500">
                       <item.icon
                         className="w-6 h-6 text-white"
                         aria-hidden="true"
@@ -63,7 +63,7 @@ export default function ResultsDashboard({ formId }) {
                     </p>
                   </dt>
                   <dd className="flex items-baseline ml-16 sm:pb-7">
-                    <p className="text-2xl font-semibold text-gray-900">
+                    <p className="text-xl font-semibold text-gray-800">
                       {item.stat}
                     </p>
                   </dd>
