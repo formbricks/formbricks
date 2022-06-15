@@ -1,6 +1,6 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Dialog, RadioGroup, Transition } from "@headlessui/react";
-import { CheckCircleIcon } from "@heroicons/react/solid";
+import { CheckCircleIcon, LightBulbIcon } from "@heroicons/react/solid";
 import { Fragment, useState } from "react";
 import { persistForm, useForm } from "../../lib/forms";
 import { classNames } from "../../lib/utils";
@@ -95,7 +95,7 @@ export default function FormOnboardingModal({
               onSubmit={(e) => submitForm(e)}
               className="inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-xl sm:w-full sm:p-6"
             >
-              {/* <div>
+              <div>
                 <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-snoopred-100">
                   <LightBulbIcon
                     className="w-6 h-6 text-snoopred"
@@ -107,20 +107,20 @@ export default function FormOnboardingModal({
                     as="h3"
                     className="text-lg font-medium leading-6 text-darkgray-700"
                   >
-                    Create a new form
+                    Welcome to your new form
                   </Dialog.Title>
                 </div>
-              </div> 
-              <hr className="my-4" /> */}
+              </div>
+              <hr className="my-4" />
               <div>
                 <label htmlFor="email" className="text-sm text-darkgray-500">
                   Name your form
                 </label>
-                <div className="mt-1">
+                <div className="mt-2">
                   <input
                     type="text"
                     name="name"
-                    className="block w-full p-1 mb-8 rounded-lg focus:ring-2 focus:ring-snoopred sm:text-lg"
+                    className="block w-full p-2 mb-8 rounded-lg focus:ring-2 focus:ring-snoopred sm:text-sm"
                     placeholder="e.g. Customer Research Survey"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -155,21 +155,15 @@ export default function FormOnboardingModal({
                             <span className="flex flex-col">
                               <RadioGroup.Label
                                 as="span"
-                                className="block text-lg font-medium text-darkgray-900"
+                                className="block font-medium text-center text-md text-darkgray-900"
                               >
                                 {formType.title}
                               </RadioGroup.Label>
                               <RadioGroup.Description
                                 as="span"
-                                className="flex items-center mt-1 text-sm whitespace-pre-wrap text-darkgray-500"
+                                className="flex items-center mt-1 text-xs text-center whitespace-pre-wrap text-darkgray-500"
                               >
                                 {formType.description}
-                              </RadioGroup.Description>
-                              <RadioGroup.Description
-                                as="span"
-                                className="flex items-center mt-1 text-xs whitespace-pre-wrap text-darkgray-500-400"
-                              >
-                                {formType.additionalDescription}
                               </RadioGroup.Description>
                             </span>
                           </span>
