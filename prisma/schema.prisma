@@ -29,6 +29,16 @@ model Form {
   schema              Json
   submissionSessions  SubmissionSession[]
   pipelines           Pipeline[]
+  noCodeForm          NoCodeForm?
+}
+
+model NoCodeForm {
+  id                  String    @id @default(uuid())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  form                Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId              String    @unique
+  pages               Json      @default("[]")
 }
 
 model Pipeline {

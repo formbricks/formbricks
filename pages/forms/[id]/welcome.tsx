@@ -1,47 +1,36 @@
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import Builder from "../../../components/builder/Builder";
-import FormCode from "../../../components/form/FormCode";
+import { useEffect, useState } from "react";
+import FormOnboardingModal from "../../../components/form/FormOnboardingModal";
 import LayoutFormBasics from "../../../components/layout/LayoutFormBasic";
-import LayoutFormBuilder from "../../../components/layout/LayoutFormBuilder";
 import Loading from "../../../components/Loading";
 import { useForm } from "../../../lib/forms";
 
-export default function FormPage() {
+export default function WelcomePage() {
   const router = useRouter();
   const formId = router.query.id.toString();
   const { form, isLoadingForm } = useForm(router.query.id);
+  const [openOnboardingModal, setOpenOnboardingModal] = useState(false);
+
+  useEffect(() => {
+    if (form && !form.finishedOnboarding) {
+      setOpenOnboardingModal(true);
+    }
+  }, [isLoadingForm]);
 
   if (isLoadingForm) {
     return <Loading />;
   }
 
   if (!form.finishedOnboarding) {
-    router.push(`/forms/${formId}/welcome`);
-    return <div></div>;
-  }
-
-  if (form.formType === "NOCODE") {
     return (
-      <>
-        <LayoutFormBuilder
-          title={form.title}
-          formId={formId}
-          currentStep="form"
-        >
-          <Builder formId={formId} />
-        </LayoutFormBuilder>
-      </>
+      <LayoutFormBasics title={form.title} formId={formId} currentStep="form">
+        <FormOnboardingModal open={openOnboardingModal} formId={formId} />
+      </LayoutFormBasics>
     );
   } else {
-    return (
-      <>
-        <LayoutFormBasics title={form.title} formId={formId} currentStep="form">
-          <FormCode />
-        </LayoutFormBasics>
-      </>
-    );
+    router.push(`/forms/${formId}`);
   }
 }
 

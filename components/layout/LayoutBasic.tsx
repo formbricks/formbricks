@@ -30,8 +30,13 @@ export default function Layout({ children }) {
             <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
               <div className="flex justify-between h-16">
                 <div className="flex">
-                  <div className="flex items-center flex-shrink-0">
-                  <img src="../../snoopForms_Logo_v4.svg" alt="snoopForms logo"/>
+                  <div className="flex items-center flex-shrink-0 w-48">
+                    <Image
+                      src="/img/snoopforms-logo.svg"
+                      alt="snoopForms logo"
+                      width={300}
+                      height={53}
+                    />
                   </div>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -86,7 +91,7 @@ export default function Layout({ children }) {
                 </div>
                 <div className="flex items-center -mr-2 sm:hidden">
                   {/* Mobile menu button */}
-                  <Disclosure.Button className="inline-flex items-center justify-center p-2 text-darkgray-400 bg-white rounded-md hover:text-darkgray-500 hover:bg-lightgray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred">
+                  <Disclosure.Button className="inline-flex items-center justify-center p-2 bg-white rounded-md text-darkgray-400 hover:text-darkgray-500 hover:bg-lightgray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred">
                     <span className="sr-only">Open main menu</span>
                     {open ? (
                       <XIcon className="block w-6 h-6" aria-hidden="true" />

@@ -1,8 +1,10 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Dialog, RadioGroup, Transition } from "@headlessui/react";
 import { CheckCircleIcon, LightBulbIcon } from "@heroicons/react/solid";
+import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
 import { persistForm, useForm } from "../../lib/forms";
+import { createNoCodeForm } from "../../lib/noCodeForm";
 import { classNames } from "../../lib/utils";
 import Loading from "../Loading";
 
@@ -23,15 +25,14 @@ const formTypes = [
 
 type FormOnboardingModalProps = {
   open: boolean;
-  setOpen: (o: boolean) => void;
   formId: string;
 };
 
 export default function FormOnboardingModal({
   open,
-  setOpen,
   formId,
 }: FormOnboardingModalProps) {
+  const router = useRouter();
   const { form, mutateForm, isLoadingForm } = useForm(formId);
   const [name, setName] = useState(form.name);
   const [formType, setFormType] = useState(formTypes[0]);
@@ -46,7 +47,10 @@ export default function FormOnboardingModal({
     };
     await persistForm(updatedForm);
     mutateForm(updatedForm);
-    setOpen(false);
+    if (updatedForm.formType === "NOCODE") {
+      await createNoCodeForm(formId);
+    }
+    router.push(`/forms/${formId}/form`);
   };
 
   if (isLoadingForm) {

@@ -2,6 +2,7 @@ import { getCsrfToken } from "next-auth/react";
 import { useRouter } from "next/router";
 import { XCircleIcon } from "@heroicons/react/solid";
 import { GetServerSideProps } from "next";
+import Image from "next/image";
 
 interface props {
   csrfToken: string;
@@ -34,9 +35,14 @@ export default function SignIn({ csrfToken }: props) {
           </div>
         )}
 
-        <div className="w-full bg-white rounded-xl p-8 shadow-cont max-w-sm mx-auto lg:w-96">
+        <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
           <div>
-            <img src="../../snoopForms_Logo_v4.svg" alt="snoopForms logo"/>
+            <Image
+              src="/img/snoopforms-logo.svg"
+              alt="snoopForms logo"
+              width={500}
+              height={89}
+            />
           </div>
 
           <div className="mt-8">
@@ -65,7 +71,7 @@ export default function SignIn({ csrfToken }: props) {
                       type="email"
                       autoComplete="email"
                       required
-                      className="block w-full px-3 py-2 placeholder-lightgray-400 border border-lightgray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-snoopred-500 focus:border-snoopred-500 sm:text-sm"
+                      className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-lightgray-400 border-lightgray-300 focus:outline-none focus:ring-snoopred-500 focus:border-snoopred-500 sm:text-sm"
                     />
                   </div>
                 </div>
@@ -83,7 +89,7 @@ export default function SignIn({ csrfToken }: props) {
                       type="password"
                       autoComplete="current-password"
                       required
-                      className="block w-full px-3 py-2 placeholder-lightgray-400 border border-lightgray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-snoopred-500 focus:border-snoopred-500 sm:text-sm"
+                      className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-lightgray-400 border-lightgray-300 focus:outline-none focus:ring-snoopred-500 focus:border-snoopred-500 sm:text-sm"
                     />
                   </div>
                 </div>
@@ -91,12 +97,18 @@ export default function SignIn({ csrfToken }: props) {
                 <div>
                   <button
                     type="submit"
-                    className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-snoopred border border-transparent rounded-md shadow-sm hover:bg-snoopred-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred-500"
+                    className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-snoopred hover:bg-snoopred-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred-500"
                   >
                     Sign in
                   </button>
                   <div className="text-center">
-                  <a href="" className="text-snoopred hover:text-snoopred-600 text-xs">Create an account</a></div>
+                    <a
+                      href=""
+                      className="text-xs text-snoopred hover:text-snoopred-600"
+                    >
+                      Create an account
+                    </a>
+                  </div>
                 </div>
               </form>
             </div>

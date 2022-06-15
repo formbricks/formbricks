@@ -20,6 +20,17 @@ CREATE TABLE "Form" (
 );
 
 -- CreateTable
+CREATE TABLE "NoCodeForm" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "formId" TEXT NOT NULL,
+    "pages" JSONB NOT NULL DEFAULT '[]',
+
+    CONSTRAINT "NoCodeForm_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Pipeline" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -80,6 +91,9 @@ CREATE TABLE "verification_requests" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "NoCodeForm_formId_key" ON "NoCodeForm"("formId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
@@ -87,6 +101,9 @@ CREATE UNIQUE INDEX "verification_requests_token_key" ON "verification_requests"
 
 -- AddForeignKey
 ALTER TABLE "Form" ADD CONSTRAINT "Form_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "NoCodeForm" ADD CONSTRAINT "NoCodeForm_formId_fkey" FOREIGN KEY ("formId") REFERENCES "Form"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Pipeline" ADD CONSTRAINT "Pipeline_formId_fkey" FOREIGN KEY ("formId") REFERENCES "Form"("id") ON DELETE CASCADE ON UPDATE CASCADE;
