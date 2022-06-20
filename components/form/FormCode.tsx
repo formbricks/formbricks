@@ -35,7 +35,7 @@ const libs = [
   },
 ];
 
-export default function FormCode() {
+export default function FormCode({ formId }) {
   const [selectedLib, setSelectedLib] = useState(null);
 
   return (
@@ -54,6 +54,32 @@ export default function FormCode() {
           programming language or framework.
         </p>
       </div>
+      <hr className="my-5 text-gray-600" />
+      <div>
+        <label htmlFor="formId" className="block text-base text-gray-800">
+          Your form ID
+        </label>
+        <div className="mt-5 sm:flex sm:items-center">
+          <div className="w-full sm:max-w-xs">
+            <input
+              id="formId"
+              type="text"
+              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-snoopred-500 focus:border-snoopred-500 sm:text-sm disabled:bg-gray-100"
+              value={formId}
+              disabled
+            />
+          </div>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(formId);
+            }}
+            className="inline-flex items-center justify-center w-full px-4 py-2 mt-3 font-medium text-white bg-gray-800 border border-transparent rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+          >
+            Copy
+          </button>
+        </div>
+      </div>
+      <hr className="my-5 text-gray-600 " />
       <div className="mt-5">
         <RadioGroup value={selectedLib} onChange={setSelectedLib}>
           <RadioGroup.Label className="text-xs font-medium tracking-wide text-gray-500 uppercase">

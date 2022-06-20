@@ -26,6 +26,7 @@ CREATE TABLE "NoCodeForm" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "formId" TEXT NOT NULL,
     "pages" JSONB NOT NULL DEFAULT '[]',
+    "pagesDraft" JSONB NOT NULL DEFAULT '[]',
 
     CONSTRAINT "NoCodeForm_pkey" PRIMARY KEY ("id")
 );

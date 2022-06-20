@@ -82,3 +82,11 @@
   font-style: normal;
   font-display: swap;
 }
+
+.ce-block__content,
+.ce-toolbar__content {
+  max-width: calc(100% - 80px) !important;
+}
+.cdx-block {
+  max-width: 100% !important;
+}

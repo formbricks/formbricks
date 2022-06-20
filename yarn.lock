@@ -53,6 +53,11 @@
     codex-tooltip "^1.0.5"
     nanoid "^3.1.22"
 
+"@editorjs/header@^2.6.2":
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/@editorjs/header/-/header-2.6.2.tgz#523b6dda72ff882e53f64325840ee7bfc68ee6b7"
+  integrity sha512-U1dnT+KGjwFmpWneEEyR2Nqp42hn9iKwQDgRHWQM+y6qx82pg+eAyuIf0QWt2Mluu9uPD2CzNfvJ+pxIuwX8Lw==
+
 "@editorjs/paragraph@^2.8.0":
   version "2.8.0"
   resolved "https://registry.yarnpkg.com/@editorjs/paragraph/-/paragraph-2.8.0.tgz#11cc381fcafaf8b9160517ce65d59eee93fc4af9"
@@ -229,25 +234,6 @@
   version "3.15.1-1.461d6a05159055555eb7dfb337c9fb271cbd4d7e"
   resolved "https://registry.yarnpkg.com/@prisma/engines/-/engines-3.15.1-1.461d6a05159055555eb7dfb337c9fb271cbd4d7e.tgz#f691893df506b93e3cb1ccc15ec6e5ac64e8e570"
   integrity sha512-NHlojO1DFTsSi3FtEleL9QWXeSF/UjhCW0fgpi7bumnNZ4wj/eQ+BJJ5n2pgoOliTOGv9nX2qXvmHap7rJMNmg==
-
-"@react-editor-js/client@2.0.6":
-  version "2.0.6"
-  resolved "https://registry.yarnpkg.com/@react-editor-js/client/-/client-2.0.6.tgz#be9a2704b58322bc37dc6d2acb014f0ff28fe43c"
-  integrity sha512-LMMJLAXAwk1kVMy7fxTRFK6OdouvoseqJbmVUygJb2EcfuT84nC9OAtvGEL4vsVLUcnzEV400+F9t5OKa77FGQ==
-  dependencies:
-    "@react-editor-js/core" "2.0.6"
-
-"@react-editor-js/core@2.0.6":
-  version "2.0.6"
-  resolved "https://registry.yarnpkg.com/@react-editor-js/core/-/core-2.0.6.tgz#3f20c0668d1f8502489ed7e354ff26461b270dce"
-  integrity sha512-mvHM2I+gT3AnvFpFhTZI0EFLKD9pRpgXDf286uwv6n6tngwLfnCCmtCbgiGI9ICph2GJvRZfaQubE+MHQ6YV8g==
-
-"@react-editor-js/server@2.0.6":
-  version "2.0.6"
-  resolved "https://registry.yarnpkg.com/@react-editor-js/server/-/server-2.0.6.tgz#237f11002b4db9fe754fd9a89ff76f131f8a21fb"
-  integrity sha512-soW/bV5auciYr8gEYISWK4fuIblAcc4bcwPuCKnDBj9W9r/nAxMmNgCG+z9rs9Gnroa0Ko3Hzwzs9d5MdOShzg==
-  dependencies:
-    "@react-editor-js/core" "2.0.6"
 
 "@rushstack/eslint-patch@^1.1.3":
   version "1.1.3"
@@ -788,6 +774,18 @@ doctrine@^3.0.0:
   integrity sha512-yS+Q5i3hBf7GBkd4KG8a7eBNNWNGLTaEwwYWUijIYM7zrlYDM0BFXHjjPWlWZ1Rg7UaddZeIDmi9jF3HmqiQ2w==
   dependencies:
     esutils "^2.0.2"
+
+editorjs-drag-drop@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/editorjs-drag-drop/-/editorjs-drag-drop-1.1.2.tgz#090eed9875a6bd0d0243aa52c0f30b7052917116"
+  integrity sha512-vgr0QgYScfIp1kurfh8FmceIAnS+ce3Vdtt5Z2SYTf3j0/eL3B5o5FrwOLJBv9GLumqXETZXbYcCo8Q75c7twQ==
+
+editorjs-undo@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/editorjs-undo/-/editorjs-undo-2.0.3.tgz#d1f464a08f8cac4602831b396ee60bdea0aad8a9"
+  integrity sha512-Q0XSOM2I/E7y4nkKEnYr1QuQq6/M+uuY/G0857DZ1/6QDS9OLcwwszbV/vlCxZPMVFD1GDCN+YwLYKFwwO3htg==
+  dependencies:
+    vanilla-caret-js "^1.0.1"
 
 electron-to-chromium@^1.4.147:
   version "1.4.155"
@@ -1975,21 +1973,14 @@ quick-lru@^5.1.1:
   resolved "https://registry.yarnpkg.com/quick-lru/-/quick-lru-5.1.1.tgz#366493e6b3e42a3a6885e2e99d18f80fb7a8c932"
   integrity sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==
 
-react-dom@18.1.0:
-  version "18.1.0"
-  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-18.1.0.tgz#7f6dd84b706408adde05e1df575b3a024d7e8a2f"
-  integrity sha512-fU1Txz7Budmvamp7bshe4Zi32d0ll7ect+ccxNu9FlObT605GOEB8BfO4tmRJ39R5Zj831VCpvQ05QPBW5yb+w==
+react-dom@17.0.2:
+  version "17.0.2"
+  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-17.0.2.tgz#ecffb6845e3ad8dbfcdc498f0d0a939736502c23"
+  integrity sha512-s4h96KtLDUQlsENhMn1ar8t2bEa+q/YAtj8pPPdIjPDGBDIVNsrD9aXNWqspUe6AzKCIG0C1HZZLqLV7qpOBGA==
   dependencies:
     loose-envify "^1.1.0"
-    scheduler "^0.22.0"
-
-react-editor-js@^2.0.6:
-  version "2.0.6"
-  resolved "https://registry.yarnpkg.com/react-editor-js/-/react-editor-js-2.0.6.tgz#34771596986d79513e12e5f4990da46b9e0f2430"
-  integrity sha512-8u47IbhExiFB2kGNdJYlsX5iVlSzac38A3oJ7bmnTz3Lp7Slys1xreoYdG71+KiOcfX0dEgOIavV4e6TJeB5eg==
-  dependencies:
-    "@react-editor-js/client" "2.0.6"
-    "@react-editor-js/server" "2.0.6"
+    object-assign "^4.1.1"
+    scheduler "^0.20.2"
 
 react-icons@^4.4.0:
   version "4.4.0"
@@ -2001,12 +1992,18 @@ react-is@^16.13.1, react-is@^16.7.0:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
 
-react@18.1.0:
-  version "18.1.0"
-  resolved "https://registry.yarnpkg.com/react/-/react-18.1.0.tgz#6f8620382decb17fdc5cc223a115e2adbf104890"
-  integrity sha512-4oL8ivCz5ZEPyclFQXaNksK3adutVS8l2xzZU0cqEFrE9Sb7fC0EFK5uEk74wIreL1DERyjvsU915j1pcT2uEQ==
+react-loader-spinner@^5.1.5:
+  version "5.1.5"
+  resolved "https://registry.yarnpkg.com/react-loader-spinner/-/react-loader-spinner-5.1.5.tgz#392ecc2c964363cde0572b8aaa41c29ebbe372ad"
+  integrity sha512-kHSBa3pNPNzd3UGOiOsHCC33qx5bZA7IHKau+YSTVn36Jib4eBVx/TNMggudbzW5CTnRCbP5bnYU4ACAX3mA6g==
+
+react@17.0.2:
+  version "17.0.2"
+  resolved "https://registry.yarnpkg.com/react/-/react-17.0.2.tgz#d0b5cc516d29eb3eee383f75b62864cfb6800037"
+  integrity sha512-gnhPt75i/dq/z3/6q/0asP78D0u592D5L1pd7M8P+dck6Fu/jJeL6iVVK23fptSUZj8Vjf++7wXA8UNclGQcbA==
   dependencies:
     loose-envify "^1.1.0"
+    object-assign "^4.1.1"
 
 read-cache@^1.0.0:
   version "1.0.0"
@@ -2082,12 +2079,13 @@ run-parallel@^1.1.9:
   dependencies:
     queue-microtask "^1.2.2"
 
-scheduler@^0.22.0:
-  version "0.22.0"
-  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.22.0.tgz#83a5d63594edf074add9a7198b1bae76c3db01b8"
-  integrity sha512-6QAm1BgQI88NPYymgGQLCZgvep4FyePDWFpXVK+zNSUgHwlqpJy8VEh8Et0KxTACS4VWwMousBElAZOH9nkkoQ==
+scheduler@^0.20.2:
+  version "0.20.2"
+  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.20.2.tgz#4baee39436e34aa93b4874bddcbf0fe8b8b50e91"
+  integrity sha512-2eWfGgAqqWFGqtdMmcL5zCMK1U8KlXv8SQFGglL3CEtd0aDVDWgeF/YoCmvln55m5zSk3J/20hTaSBeSObsQDQ==
   dependencies:
     loose-envify "^1.1.0"
+    object-assign "^4.1.1"
 
 semver@^6.3.0:
   version "6.3.0"
@@ -2349,6 +2347,11 @@ v8-compile-cache@^2.0.3:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/v8-compile-cache/-/v8-compile-cache-2.3.0.tgz#2de19618c66dc247dcfb6f99338035d8245a2cee"
   integrity sha512-l8lCEmLcLYZh4nbunNZvQCJc5pv7+RCwa8q/LdUx8u7lsWvPDKmpodJAJNwkAhJC//dFY48KuIEmjtd4RViDrA==
+
+vanilla-caret-js@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/vanilla-caret-js/-/vanilla-caret-js-1.0.1.tgz#96cf4e6ee154ca87c813bb4604c90a24555abc35"
+  integrity sha512-s5hXdyIMmeJ1dzfqvZSEGIXGi5xaHrWKsfRZfNUFVqDLwD2TA5QlPJqFhUhZ4D3wgyf6Pjw5ygUbOpj/QePsSw==
 
 vary@^1:
   version "1.1.2"
