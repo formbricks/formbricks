@@ -1,56 +1,37 @@
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
 import Loading from "../Loading";
 import Page from "./Page";
 import UsageIntro from "./UsageIntro";
-import LoadingModal from "../LoadingModal";
-import Link from "next/link";
 
 export default function Builder({ formId }) {
   const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
     useNoCodeForm(formId);
-  const [pagesDraft, setPagesDraft] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // autosave
-  useEffect(() => {
-    if (isInitialized) {
-      save();
-    }
-  }, [pagesDraft, isInitialized]);
-
-  const save = async () => {
-    setIsLoading(true);
+  const addPage = useCallback(async () => {
     const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
-    newNoCodeForm.pagesDraft = pagesDraft;
-    await persistNoCodeForm(newNoCodeForm);
-    mutateNoCodeForm(newNoCodeForm);
-    setIsLoading(false);
-  };
-
-  const addPage = useCallback(() => {
-    const newPagesDraft = JSON.parse(JSON.stringify(pagesDraft));
-    newPagesDraft.push({
+    newNoCodeForm.pagesDraft.push({
       id: uuidv4(),
       blocks: [],
     });
-    setPagesDraft(newPagesDraft);
-  }, [pagesDraft, setPagesDraft]);
+    await persistNoCodeForm(newNoCodeForm);
+    mutateNoCodeForm(newNoCodeForm);
+  }, [noCodeForm, mutateNoCodeForm]);
 
-  const deletePage = (pageIdx) => {
-    const newPagesDraft = JSON.parse(JSON.stringify(pagesDraft));
-    newPagesDraft.splice(pageIdx, 1);
-    setPagesDraft(newPagesDraft);
+  const deletePage = async (pageIdx) => {
+    const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
+    newNoCodeForm.pagesDraft.splice(pageIdx, 1);
+    await persistNoCodeForm(newNoCodeForm);
+    mutateNoCodeForm(newNoCodeForm);
   };
 
-  const initPages = useCallback(() => {
+  const initPages = useCallback(async () => {
     if (!isLoadingNoCodeForm && !isInitialized) {
       if (noCodeForm.pagesDraft.length === 0) {
-        addPage();
-      } else {
-        setPagesDraft(noCodeForm.pagesDraft);
+        await addPage();
       }
       setIsInitialized(true);
     }
@@ -61,7 +42,7 @@ export default function Builder({ formId }) {
   }, [isLoadingNoCodeForm, initPages]);
 
   if (isLoadingNoCodeForm) {
-    <Loading />;
+    return <Loading />;
   }
 
   return (
@@ -91,13 +72,12 @@ export default function Builder({ formId }) {
               <div className="px-10">
                 <UsageIntro />
               </div>
-              {pagesDraft.map((page, pageIdx) => (
+              {noCodeForm.pagesDraft.map((page, pageIdx) => (
                 <Page
                   key={page.id}
+                  formId={formId}
                   page={page}
                   pageIdx={pageIdx}
-                  pagesDraft={pagesDraft}
-                  setPagesDraft={setPagesDraft}
                   deletePageAction={deletePage}
                 />
               ))}
@@ -105,7 +85,6 @@ export default function Builder({ formId }) {
           </div>
         </div>
       </div>
-      <LoadingModal isLoading={isLoading} />
     </>
   );
 }

@@ -1,27 +1,31 @@
 import { TrashIcon } from "@heroicons/react/outline";
 import dynamic from "next/dynamic";
+import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
+import Loading from "../Loading";
 let Editor = dynamic(() => import("../editorjs/Editor"), {
   ssr: false,
 });
 
-export default function Page({
-  page,
-  pageIdx,
-  pagesDraft,
-  setPagesDraft,
-  deletePageAction,
-}) {
-  const updatePage = (blocks) => {
-    const newPagesDraft = JSON.parse(JSON.stringify(pagesDraft));
-    if (pageIdx < newPagesDraft.length) {
-      newPagesDraft[pageIdx].blocks = blocks;
-      setPagesDraft(newPagesDraft);
+export default function Page({ formId, page, pageIdx, deletePageAction }) {
+  const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
+    useNoCodeForm(formId);
+
+  const updatePage = async (blocks) => {
+    const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
+    if (pageIdx < newNoCodeForm.pagesDraft.length) {
+      newNoCodeForm.pagesDraft[pageIdx].blocks = blocks;
+      await persistNoCodeForm(newNoCodeForm);
+      mutateNoCodeForm(newNoCodeForm);
     } else {
       throw Error(
         `updatePage error: Page at position ${pageIdx} not found in pagesDraft`
       );
     }
   };
+
+  if (isLoadingNoCodeForm) {
+    return <Loading />;
+  }
 
   return (
     <div className="flex w-full">
@@ -46,7 +50,7 @@ export default function Page({
               id={`${page.id}-editor`}
               autofocus={pageIdx === 0}
               onChange={(blocks) => updatePage(blocks)}
-              value={pagesDraft[pageIdx]}
+              value={noCodeForm.pagesDraft[pageIdx]}
             />
           )}
         </div>

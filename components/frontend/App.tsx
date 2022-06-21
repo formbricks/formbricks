@@ -4,8 +4,7 @@ import { useNoCodeForm } from "../../lib/noCodeForm";
 import Loading from "../Loading";
 
 export default function App({ id = "", formId, draft = false }) {
-  const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
-    useNoCodeForm(formId);
+  const { noCodeForm, isLoadingNoCodeForm } = useNoCodeForm(formId);
   const pages = useMemo(() => {
     if (!isLoadingNoCodeForm) {
       return noCodeForm[draft ? "pagesDraft" : "pages"];
