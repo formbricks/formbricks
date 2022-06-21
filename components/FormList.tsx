@@ -80,7 +80,7 @@ export default function FormList() {
                     </Link>
                     <div className="divide-y divide-lightgray-200 ">
                       <div className="inline-flex text-sm ml-4 px-2 py-1 mb-2 rounded-sm bg-lightgray-400 text-darkgray-700">
-                        {isNoCode ? (
+                        {form.formType == "NOCODE" ? (
                           <div className="flex">
                             <ViewGridAddIcon className="w-4 h-4 mr-1  my-auto" />
                             No-Code
@@ -95,7 +95,7 @@ export default function FormList() {
 
                       <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                         <p className="text-xs text-lightgray-900 ">
-                          0 responses
+                          {form.totalSubmissions} responses
                         </p>
                         <Menu
                           as="div"
