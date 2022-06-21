@@ -30,3 +30,15 @@ export const createNoCodeForm = async (formId) => {
     );
   }
 };
+
+export const persistNoCodeForm = async (noCodeForm) => {
+  try {
+    await fetch(`/api/forms/${noCodeForm.formId}/nocodeform`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(noCodeForm),
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};

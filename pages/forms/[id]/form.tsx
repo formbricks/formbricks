@@ -38,7 +38,7 @@ export default function FormPage() {
     return (
       <>
         <LayoutFormBasics title={form.title} formId={formId} currentStep="form">
-          <FormCode />
+          <FormCode formId={formId} />
         </LayoutFormBasics>
       </>
     );

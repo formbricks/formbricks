@@ -1,7 +1,6 @@
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
 import FormOnboardingModal from "../../../components/form/FormOnboardingModal";
 import LayoutFormBasics from "../../../components/layout/LayoutFormBasic";
 import Loading from "../../../components/Loading";
@@ -11,13 +10,6 @@ export default function WelcomePage() {
   const router = useRouter();
   const formId = router.query.id.toString();
   const { form, isLoadingForm } = useForm(router.query.id);
-  const [openOnboardingModal, setOpenOnboardingModal] = useState(false);
-
-  useEffect(() => {
-    if (form && !form.finishedOnboarding) {
-      setOpenOnboardingModal(true);
-    }
-  }, [isLoadingForm]);
 
   if (isLoadingForm) {
     return <Loading />;
@@ -26,11 +18,12 @@ export default function WelcomePage() {
   if (!form.finishedOnboarding) {
     return (
       <LayoutFormBasics title={form.title} formId={formId} currentStep="form">
-        <FormOnboardingModal open={openOnboardingModal} formId={formId} />
+        <FormOnboardingModal open={true} formId={formId} />
       </LayoutFormBasics>
     );
   } else {
     router.push(`/forms/${formId}`);
+    return <Loading />;
   }
 }
 

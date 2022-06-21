@@ -76,11 +76,11 @@ export default function PipelinesPage() {
         </header>
         <div className="my-4">
           <p className="text-gray-700">
-            snoopHub automatically stores your data and gives you and overview
-            of your submissions and form analytics. If you want to use your
+            snoopHub automatically stores your data and gives you an overview of
+            your submissions and form analytics. If you want to use your
             submissions or form events in other systems you can set up pipelines
             to let snoopHub sent the data to these applications as soon as it
-            arrives.
+            arrives and keep everything in sync.
           </p>
         </div>
         <div>
