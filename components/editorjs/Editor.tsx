@@ -4,6 +4,7 @@ import EditorJS from "@editorjs/editorjs";
 import DragDrop from "editorjs-drag-drop";
 import Undo from "editorjs-undo";
 import TextQuestion from "./tools/TextQuestion";
+import SubmitButton from "./tools/SubmitButton";
 
 const Editor = ({ id, autofocus = false, onChange, value }) => {
   const [blocks, setBlocks] = useState([]);
@@ -43,7 +44,7 @@ const Editor = ({ id, autofocus = false, onChange, value }) => {
         setBlocks(content.blocks);
       },
       autofocus: autofocus,
-      tools: { textQuestion: TextQuestion },
+      tools: { textQuestion: TextQuestion, submitButton: SubmitButton },
     });
   };
 

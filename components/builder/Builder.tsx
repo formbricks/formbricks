@@ -5,6 +5,7 @@ import Loading from "../Loading";
 import Page from "./Page";
 import UsageIntro from "./UsageIntro";
 import LoadingModal from "../LoadingModal";
+import Link from "next/link";
 
 export default function Builder({ formId }) {
   const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
@@ -12,6 +13,13 @@ export default function Builder({ formId }) {
   const [pagesDraft, setPagesDraft] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // autosave
+  useEffect(() => {
+    if (isInitialized) {
+      save();
+    }
+  }, [pagesDraft, isInitialized]);
 
   const save = async () => {
     setIsLoading(true);
@@ -62,17 +70,16 @@ export default function Builder({ formId }) {
         <div className="flex items-center justify-center flex-1 px-4">
           <nav className="flex space-x-4" aria-label="resultModes">
             <button
-              onClick={() => save()}
-              className="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-800 rounded-md hover:text-gray-600"
-            >
-              Save
-            </button>
-            <button
               onClick={() => addPage()}
               className="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-800 rounded-md hover:text-gray-600"
             >
               Add Page
             </button>
+            <Link href={`/forms/${formId}/preview`}>
+              <a className="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-800 rounded-md hover:text-gray-600">
+                Preview Form
+              </a>
+            </Link>
           </nav>
         </div>
       </div>

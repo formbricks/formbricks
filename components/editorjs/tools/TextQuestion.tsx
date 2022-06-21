@@ -30,9 +30,6 @@ export default class TextQuestion implements BlockTool {
   }
 
   save(block: HTMLDivElement) {
-    // console.log(block)
-    // ;(window as any).x = block
-
     return {
       label: (block.firstElementChild.firstElementChild as HTMLInputElement)
         .value,
@@ -41,18 +38,12 @@ export default class TextQuestion implements BlockTool {
       ).value,
     };
   }
-  /*   renderSettings(): HTMLElement {
+
+  renderSettings(): HTMLElement {
     return document.createElement("div");
-  } */
+  }
 
   render(): HTMLElement {
-    /* this.wrapperDiv.innerHTML = "";
-    this.latexDiv.innerHTML = "";
-    this.renderLatex();
-    this.wrapperDiv.append(this.latexDiv);
-    this.wrapperDiv.append(this.editTextfield);
-
-    return this.wrapperDiv; */
     const container = document.createElement("div");
     const toolView = (
       <div className="pb-3">
@@ -60,12 +51,12 @@ export default class TextQuestion implements BlockTool {
           type="text"
           id="label"
           defaultValue={this.label}
-          className="block p-0 text-sm font-medium text-gray-700 border-0 border-transparent ring-0 focus:ring-0"
+          className="block w-full p-0 text-base font-medium text-gray-700 border-0 border-transparent ring-0 focus:ring-0"
           placeholder="Your Question"
         />
         <input
           type="text"
-          className="block w-full mt-1 text-gray-400 border-gray-300 rounded-md shadow-sm sm:text-sm placeholder:text-gray-300"
+          className="block w-full mt-1 text-gray-400 border-gray-300 rounded-md shadow-sm sm:text-base placeholder:text-gray-300"
           placeholder="optional placeholder"
           defaultValue={this.placeholder}
         />
