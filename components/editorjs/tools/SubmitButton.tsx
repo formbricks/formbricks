@@ -31,9 +31,6 @@ export default class TextQuestion implements BlockTool {
   }
 
   save(block: HTMLDivElement) {
-    console.log(
-      (block.firstElementChild.firstElementChild as HTMLInputElement).innerHTML
-    );
     return {
       label: (block.firstElementChild.firstElementChild as HTMLInputElement)
         .innerHTML,

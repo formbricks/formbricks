@@ -19,9 +19,10 @@ export default function App({ id = "", formId, draft = false }) {
     <div className="w-full px-5 py-5">
       <SnoopForm
         key={id} // used to reset form
-        domain="localhost:3000"
-        protocol="http"
-        formId="kQ1L4BLH"
+        domain={window.location.host}
+        protocol={window.location.protocol === "http:" ? "http" : "https"}
+        formId={formId}
+        localOnly={draft}
         className="w-full max-w-3xl mx-auto space-y-6"
       >
         {pages.map((page) => (
@@ -48,7 +49,7 @@ export default function App({ id = "", formId, draft = false }) {
                   label={block.data.label}
                   classNames={{
                     button:
-                      "flex justify-center px-4 py-2 mt-5 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red-600 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600",
+                      "flex justify-center px-4 py-2 mt-5 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700",
                   }}
                 />
               ) : null
