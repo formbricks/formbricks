@@ -90,3 +90,14 @@
 .cdx-block {
   max-width: 100% !important;
 }
+
+/* Recurring Tailwind Classes */
+
+@layer components {
+  .bg-snoopfade {
+    @apply bg-gradient-to-br from-snoopred to-pink-500 hover:to-snoopred;
+  }
+  .text-snoopfade {
+    @apply text-transparent bg-clip-text bg-gradient-to-br from-snoopred to-pink-500 hover:to-snoopred;
+  }
+}

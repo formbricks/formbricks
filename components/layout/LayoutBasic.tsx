@@ -23,7 +23,7 @@ export default function Layout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-lightgray-100">
+    <div className="min-h-screen bg-bggray">
       <Disclosure as="nav" className="bg-white shadow-sm">
         {({ open }) => (
           <>

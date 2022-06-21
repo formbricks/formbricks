@@ -4,7 +4,24 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    borderRadius: {
+      none: "0",
+      sm: "0.25rem", // 4px
+      DEFAULT: "0.5rem", //8px
+      DEFAULT: "8px",
+      md: "1rem", // 16px
+      lg: "1.5rem", // 24px
+      xl: "2rem", // 32px
+      "2xl": "2.5rem", // 40px
+      "3xl": "3rem",
+      "4xl": "3.5rem",
+      full: "9999px",
+    },
     extend: {
+      strokeWidth: {
+        thin: "0.5px",
+        thinner: "0.25px",
+      },
       colors: {
         snoopred: {
           DEFAULT: "#f53b57",
@@ -174,6 +191,9 @@ module.exports = {
           700: "#ebbf16",
           800: "#e1b50c",
           900: "#d7ab02",
+        },
+        bggray: {
+          DEFAULT: "#FAFAFB",
         },
         lightgray: {
           50: "#ffffff",
