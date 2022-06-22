@@ -4,7 +4,8 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import LayoutFormResults from "../../../components/layout/LayoutFormResults";
 import Loading from "../../../components/Loading";
-import ResultsDashboard from "../../../components/results/ResultsDashboard";
+import ResultsSummary from "../../../components/results/ResultsSummary";
+import ResultsAnalytics from "../../../components/results/ResultsAnalytics";
 import ResultsResponses from "../../../components/results/ResultsResponses";
 import { useForm } from "../../../lib/forms";
 
@@ -12,7 +13,7 @@ export default function Share() {
   const router = useRouter();
   const formId = router.query.id.toString();
   const { form, isLoadingForm } = useForm(router.query.id);
-  const [resultMode, setResultMode] = useState<string>("dashboard");
+  const [resultMode, setResultMode] = useState<string>("summary");
 
   if (isLoadingForm) {
     return <Loading />;
@@ -27,12 +28,9 @@ export default function Share() {
         resultMode={resultMode}
         setResultMode={setResultMode}
       >
-        {resultMode === "dashboard" && <ResultsDashboard formId={formId} />}
-        {resultMode === "responses" && (
-          <>
-            <ResultsResponses formId={formId} />
-          </>
-        )}
+        {resultMode === "summary" && <ResultsSummary formId={formId} />}
+        {resultMode === "responses" && <ResultsResponses formId={formId} />}
+        {resultMode === "analytics" && <ResultsAnalytics formId={formId} />}
       </LayoutFormResults>
     </>
   );

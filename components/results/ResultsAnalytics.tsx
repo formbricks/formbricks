@@ -6,7 +6,7 @@ import {
 } from "../../lib/submissionSessions";
 import { timeSince } from "../../lib/utils";
 
-export default function ResultsDashboard({ formId }) {
+export default function ResultsAnalytics({ formId }) {
   const { submissionSessions, isLoadingSubmissionSessions } =
     useSubmissionSessions(formId);
 
@@ -14,7 +14,7 @@ export default function ResultsDashboard({ formId }) {
     if (!isLoadingSubmissionSessions) {
       return getSubmissionAnalytics(submissionSessions);
     }
-  }, [isLoadingSubmissionSessions]);
+  }, [isLoadingSubmissionSessions, submissionSessions]);
 
   const stats = useMemo(() => {
     if (analytics) {

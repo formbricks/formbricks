@@ -11,7 +11,9 @@ const Editor = ({ id, autofocus = false, onChange, value }) => {
   const ejInstance = useRef<EditorJS | null>();
 
   useEffect(() => {
-    onChange(blocks);
+    if (ejInstance.current) {
+      onChange(blocks);
+    }
   }, [blocks]);
 
   // This will run only once

@@ -26,8 +26,9 @@ export default function LayoutFormResults({
   }
 
   const resultModes = [
-    { name: "Dashboard", id: "dashboard" },
+    { name: "Summary", id: "summary" },
     { name: "Responses", id: "responses" },
+    { name: "Analytics", id: "analytics" },
   ];
   return (
     <>

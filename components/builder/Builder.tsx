@@ -87,7 +87,7 @@ export default function Builder({ formId }) {
         </div>
       </div>
 
-      <div className="w-full bg-gray-100">
+      <div className="w-full py-6 bg-gray-100">
         <div className="flex justify-center w-full mt-10">
           <div className="w-full px-4 max-w-7xl">
             <div className="grid grid-cols-1 gap-6">
