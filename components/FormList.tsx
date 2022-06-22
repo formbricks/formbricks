@@ -101,7 +101,7 @@ export default function FormList() {
                         {({ open }) => (
                           <>
                             <div>
-                              <Menu.Button className="flex items-center p-2 -m-2 rounded-full text-darkgray-400 hover:text-darkgray-500-600 focus:outline-none">
+                              <Menu.Button className="flex items-center p-2 -m-2 rounded-full text-darkgray-400 hover:text-darkgray-500 focus:outline-none">
                                 <span className="sr-only">Open options</span>
                                 <DotsHorizontalIcon
                                   className="w-5 h-5"
@@ -122,7 +122,7 @@ export default function FormList() {
                             >
                               <Menu.Items
                                 static
-                                className="absolute left-0 w-56 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                className="absolute left-0 w-56 mt-2 origin-top-right bg-white rounded-md shadow-lg"
                               >
                                 <div className="py-1">
                                   <Menu.Item>
