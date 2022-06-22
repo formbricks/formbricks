@@ -1,24 +1,27 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Dialog, RadioGroup, Transition } from "@headlessui/react";
-import { CheckCircleIcon, LightBulbIcon } from "@heroicons/react/solid";
+import { CheckCircleIcon, XIcon } from "@heroicons/react/solid";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
 import { persistForm, useForm } from "../../lib/forms";
 import { createNoCodeForm } from "../../lib/noCodeForm";
 import { classNames } from "../../lib/utils";
 import Loading from "../Loading";
+import Button from "../StandardButton.tsx";
+import { BsPlus } from "react-icons/bs";
 
 const formTypes = [
   {
     id: "NOCODE",
     title: "No-Code Builder",
     description:
-      "Use our Notion-like form builder to build your form without a single line of code.",
+      "Use the Notion-like builder to build your form without a single line of code.",
   },
   {
     id: "CODE",
     title: "Code",
-    description: "Use our snoopReact library to code the form yourself.",
+    description:
+      "Use the snoopReact library to code the form yourself and manage the data here.",
     additionalDescription: "",
   },
 ];
@@ -76,7 +79,7 @@ export default function FormOnboardingModal({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Dialog.Overlay className="fixed inset-0 transition-opacity bg-darkgray-500 bg-opacity-10 backdrop-blur" />
+            <Dialog.Overlay className="fixed inset-0 transition-opacity bg-darkgray-300 bg-opacity-10 backdrop-blur" />
           </Transition.Child>
 
           {/* This element is to trick the browser into centering the modal contents. */}
@@ -97,34 +100,26 @@ export default function FormOnboardingModal({
           >
             <form
               onSubmit={(e) => submitForm(e)}
-              className="inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-xl sm:w-full sm:p-6"
+              className="inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-md shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6"
             >
-              <div>
-                <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-snoopred-100">
-                  <LightBulbIcon
-                    className="w-6 h-6 text-snoopred"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div className="mt-3 text-center sm:mt-5">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-darkgray-700"
-                  >
-                    Welcome to your new form
-                  </Dialog.Title>
-                </div>
+              <div className="flex flex-row justify-between">
+                <h2 className="flex-none text-darkgray-700 text-xl font-bold pb-4">
+                  Create new form
+                </h2>
+                <XIcon className="flex-initial w-6 h-6 text-gray-200 stroke-1" />
               </div>
-              <hr className="my-4" />
               <div>
-                <label htmlFor="email" className="text-sm text-darkgray-500">
+                <label
+                  htmlFor="email"
+                  className="text-sm font-light text-darkgray-700"
+                >
                   Name your form
                 </label>
                 <div className="mt-2">
                   <input
                     type="text"
                     name="name"
-                    className="block w-full p-2 mb-8 rounded-lg focus:ring-2 focus:ring-snoopred sm:text-sm"
+                    className="block w-full p-2 mb-8 rounded border-none focus:ring-2 focus:ring-snoopred sm:text-sm bg-gray-100 placeholder:font-extralight placeholder:text-darkgray-200"
                     placeholder="e.g. Customer Research Survey"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -132,10 +127,10 @@ export default function FormOnboardingModal({
                   />
                 </div>
               </div>
-              {/* <hr className="my-5" /> */}
+
               <RadioGroup value={formType} onChange={setFormType}>
-                <RadioGroup.Label className="text-sm text-darkgray-500">
-                  How would you like to build your form?
+                <RadioGroup.Label className="text-sm font-light text-darkgray-700">
+                  How do you build your form?
                 </RadioGroup.Label>
 
                 <div className="grid grid-cols-1 mt-4 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
@@ -149,7 +144,7 @@ export default function FormOnboardingModal({
                             ? "border-transparent"
                             : "border-lightgray-300",
                           active ? "border-snoopred ring-2 ring-snoopred" : "",
-                          "relative bg-white border rounded-lg shadow-sm p-4 flex cursor-pointer focus:outline-none"
+                          "relative bg-white border rounded shadow-sm p-4 flex cursor-pointer focus:outline-none"
                         )
                       }
                     >
@@ -159,13 +154,13 @@ export default function FormOnboardingModal({
                             <span className="flex flex-col">
                               <RadioGroup.Label
                                 as="span"
-                                className="block font-medium text-center text-md text-darkgray-900"
+                                className="block font-bold text-md text-darkgray-700"
                               >
                                 {formType.title}
                               </RadioGroup.Label>
                               <RadioGroup.Description
                                 as="span"
-                                className="flex items-center mt-1 text-xs text-center whitespace-pre-wrap text-darkgray-500"
+                                className="flex items-center mt-1 text-xs whitespace-pre-wrap text-darkgray-500"
                               >
                                 {formType.description}
                               </RadioGroup.Description>
@@ -173,8 +168,15 @@ export default function FormOnboardingModal({
                           </span>
                           <CheckCircleIcon
                             className={classNames(
-                              !checked ? "invisible" : "",
+                              !checked ? "hidden" : "",
                               "h-5 w-5 text-snoopred"
+                            )}
+                            aria-hidden="true"
+                          />
+                          <div
+                            className={classNames(
+                              checked ? "hidden" : "",
+                              "h-4 w-4 rounded-full border-2"
                             )}
                             aria-hidden="true"
                           />
@@ -184,7 +186,7 @@ export default function FormOnboardingModal({
                               checked
                                 ? "border-snoopred"
                                 : "border-transparent",
-                              "absolute -inset-px rounded-lg pointer-events-none"
+                              "absolute -inset-px rounded pointer-events-none"
                             )}
                             aria-hidden="true"
                           />
@@ -195,12 +197,10 @@ export default function FormOnboardingModal({
                 </div>
               </RadioGroup>
               <div className="mt-5 sm:mt-6">
-                <button
-                  type="submit"
-                  className="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white border border-transparent rounded-md shadow-sm bg-snoopred hover:bg-snoopred-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred sm:text-sm"
-                >
-                  Create form
-                </button>
+                <Button type="submit" buttonText="create form" fullwidth>
+                  create form
+                  <BsPlus className="w-6 h-6 ml-1"></BsPlus>
+                </Button>
               </div>
             </form>
           </Transition.Child>
