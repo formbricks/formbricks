@@ -24,6 +24,9 @@ export default async function handle(
         owner: {
           select: { name: true },
         },
+        submissionSessions: {
+          select: { id: true },
+        }
       },
     });
     res.json(formData);

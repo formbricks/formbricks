@@ -36,8 +36,6 @@ export default function FormList() {
     }
   };
 
-  const isNoCode = false;
-
   return (
     <div>
       {forms &&
@@ -58,9 +56,9 @@ export default function FormList() {
           <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 place-content-stretch">
             <button onClick={() => newForm()}>
               <li className="col-span-1">
-                <div className="overflow-hidden text-white font-light rounded-md shadow bg-snoopfade">
+                <div className="overflow-hidden font-light text-white rounded-md shadow bg-snoopfade">
                   <div className="px-4 py-8 sm:p-14">
-                    <PlusIcon className="w-14 h-14 mx-auto stroke-thin" />
+                    <PlusIcon className="mx-auto w-14 h-14 stroke-thin" />
                     create form
                   </div>
                 </div>
@@ -70,32 +68,32 @@ export default function FormList() {
               .sort((a, b) => b.updatedAt - a.updatedAt)
               .map((form, formIdx) => (
                 <li key={form.id} className="col-span-1 ">
-                  <div className="flex flex-col justify-between bg-white rounded-md shadow h-full">
+                  <div className="flex flex-col justify-between h-full bg-white rounded-md shadow">
                     <Link href={`/forms/${form.id}`}>
                       <a>
-                        <div className="px-4 py-5 sm:p-6 text-lg">
+                        <div className="px-4 py-5 text-lg sm:p-6">
                           {form.name}
                         </div>
                       </a>
                     </Link>
                     <div className="divide-y divide-lightgray-200 ">
-                      <div className="inline-flex text-sm ml-4 px-2 py-1 mb-2 rounded-sm bg-lightgray-400 text-darkgray-700">
+                      <div className="inline-flex px-2 py-1 mb-2 ml-4 text-sm rounded-sm bg-lightgray-400 text-darkgray-700">
                         {form.formType == "NOCODE" ? (
                           <div className="flex">
-                            <ViewGridAddIcon className="w-4 h-4 mr-1  my-auto" />
+                            <ViewGridAddIcon className="w-4 h-4 my-auto mr-1" />
                             No-Code
                           </div>
                         ) : (
                           <div className="flex">
-                            <TerminalIcon className="w-4 h-4 mr-1  my-auto" />
+                            <TerminalIcon className="w-4 h-4 my-auto mr-1" />
                             Code
                           </div>
-                        )}{" "}
+                        )}
                       </div>
 
                       <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                         <p className="text-xs text-lightgray-900 ">
-                          {form.totalSubmissions} responses
+                          {form.submissionSessions?.length} responses
                         </p>
                         <Menu
                           as="div"
