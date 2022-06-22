@@ -52,6 +52,30 @@ export type SchemaOption = {
   value: string;
 };
 
+export type SubmissionSummary = {
+  pages: SubmissionSummaryPage[];
+};
+
+export type SubmissionSummaryPage = {
+  type: "form" | "thankyou";
+  name: string;
+  elements: SubmissionSummaryElement[];
+};
+
+export type SubmissionSummaryElement = {
+  name: string;
+  type: "checkbox" | "radio" | "text" | "textarea" | "submit";
+  label?: string;
+  summary?: string[];
+  options?: SubmissionSummaryOption[];
+};
+
+export type SubmissionSummaryOption = {
+  label: string;
+  value: string;
+  summary: number;
+};
+
 export type pageSubmissionEvent = {
   id: string;
   createdAt: string;

@@ -27,33 +27,35 @@ export default function App({ id = "", formId, draft = false }) {
       >
         {pages.map((page) => (
           <SnoopPage key={page.id} name={page.id}>
-            {page.blocks.map((block) =>
-              block.type === "paragraph" ? (
-                <p>{block.data.text}</p>
-              ) : block.type === "textQuestion" ? (
-                <SnoopElement
-                  type="text"
-                  name={"name"}
-                  label={block.data.label}
-                  classNames={{
-                    label: "mt-4 block text-sm font-medium text-gray-800",
-                    element:
-                      "flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full min-w-0 rounded-md sm:text-sm border-gray-300",
-                  }}
-                  required
-                />
-              ) : block.type === "submitButton" ? (
-                <SnoopElement
-                  name="submit"
-                  type="submit"
-                  label={block.data.label}
-                  classNames={{
-                    button:
-                      "flex justify-center px-4 py-2 mt-5 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700",
-                  }}
-                />
-              ) : null
-            )}
+            {page.blocks.map((block) => (
+              <div key={block.id}>
+                {block.type === "paragraph" ? (
+                  <p key={block.id}>{block.data.text}</p>
+                ) : block.type === "textQuestion" ? (
+                  <SnoopElement
+                    type="text"
+                    name={block.id}
+                    label={block.data.label}
+                    classNames={{
+                      label: "mt-4 block text-base font-medium text-gray-800",
+                      element:
+                        "flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full min-w-0 rounded-md sm:text-base border-gray-300",
+                    }}
+                    required
+                  />
+                ) : block.type === "submitButton" ? (
+                  <SnoopElement
+                    name="submit"
+                    type="submit"
+                    label={block.data.label}
+                    classNames={{
+                      button:
+                        "flex justify-center px-4 py-2 mt-5 text-base font-medium text-white border border-transparent rounded-md shadow-sm bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700",
+                    }}
+                  />
+                ) : null}
+              </div>
+            ))}
           </SnoopPage>
         ))}
       </SnoopForm>

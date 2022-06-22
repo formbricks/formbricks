@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { SubmissionSession } from "./types";
+import { Schema, SubmissionSession, SubmissionSummary } from "./types";
 import { fetcher } from "./utils";
 
 export const useSubmissionSessions = (formId: string) => {
@@ -87,4 +87,56 @@ export const getSubmissionAnalytics = (
     uniqueUsers: uniqueUsers.length,
     totalSubmissions: totalSubmissions,
   };
+};
+
+export const getSubmissionSummary = (
+  submissionSessions: SubmissionSession[],
+  schema: Schema
+) => {
+  if (!schema) return;
+  const summary: SubmissionSummary = JSON.parse(JSON.stringify(schema));
+  // iterate through SubmissionSessions and add values to summary
+  for (const submissionSession of submissionSessions) {
+    for (const submissionEvent of submissionSession.events) {
+      if (submissionEvent.type === "pageSubmission") {
+        const summaryPage = summary.pages.find(
+          (p) => p.name === submissionEvent.data.pageName
+        );
+        if (summaryPage.type === "form") {
+          for (const [elementName, elementValue] of Object.entries(
+            submissionEvent.data.submission
+          )) {
+            const elementInSummary = summaryPage.elements.find(
+              (e) => e.name === elementName
+            );
+            if (typeof elementInSummary !== "undefined") {
+              if (
+                elementInSummary.type === "text" ||
+                elementInSummary.type === "textarea"
+              ) {
+                if (!("summary" in elementInSummary)) {
+                  elementInSummary.summary = [];
+                }
+                elementInSummary.summary.push(elementValue);
+              } else if (
+                elementInSummary.type === "radio" ||
+                elementInSummary.type === "checkbox"
+              ) {
+                const optionInSummary = elementInSummary.options.find(
+                  (o) => o.value === elementValue
+                );
+                if (typeof optionInSummary !== "undefined") {
+                  if (!("summary" in optionInSummary)) {
+                    optionInSummary.summary = 0;
+                  }
+                  optionInSummary.summary += 1;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return summary;
 };
