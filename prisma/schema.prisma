@@ -39,6 +39,7 @@ model NoCodeForm {
   form                Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId              String    @unique
   pages               Json      @default("[]")
+  pagesDraft          Json      @default("[]")
 }
 
 model Pipeline {

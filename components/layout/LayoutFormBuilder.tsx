@@ -40,18 +40,6 @@ export default function LayoutFormResults({
                 </div>
               </div>
             </div>
-            <div className="relative z-10 flex flex-shrink-0 h-16 border-b border-gray-200 shadow-inner bg-gray-50">
-              <div className="flex items-center justify-center flex-1 px-4">
-                <nav className="flex space-x-4" aria-label="resultModes">
-                  <button
-                    onClick={() => {}}
-                    className="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-800 rounded-md hover:text-gray-600"
-                  >
-                    Save
-                  </button>
-                </nav>
-              </div>
-            </div>
           </header>
 
           {/* Main content */}
