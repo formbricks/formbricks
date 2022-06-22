@@ -46,10 +46,11 @@ export default function FormList() {
               alertText="You don't have any forms yet."
               hintText="Start by creating a form."
               buttonText="create form"
-              borderStyles="border-4 border-dotted border-snoopred"
+              borderStyles="border-4 border-dotted border-red"
               icon="BsFilePlus"
+              button="true"
             >
-              <DocumentAddIcon className="w-24 h-24 mx-auto text-lightgray-700 stroke-thin" />
+              <DocumentAddIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
             </EmptyPageFiller>
           </div>
         ) : (
@@ -76,8 +77,8 @@ export default function FormList() {
                         </div>
                       </a>
                     </Link>
-                    <div className="divide-y divide-lightgray-200 ">
-                      <div className="inline-flex px-2 py-1 mb-2 ml-4 text-sm rounded-sm bg-lightgray-400 text-darkgray-700">
+                    <div className="divide-y divide-ui-gray-light ">
+                      <div className="inline-flex px-2 py-1 mb-2 ml-4 text-sm rounded-sm bg-ui-gray-light text-ui-gray-dark">
                         {form.formType == "NOCODE" ? (
                           <div className="flex">
                             <ViewGridAddIcon className="w-4 h-4 my-auto mr-1" />
@@ -92,7 +93,7 @@ export default function FormList() {
                       </div>
 
                       <div className="flex justify-between px-4 py-2 text-right sm:px-6">
-                        <p className="text-xs text-lightgray-900 ">
+                        <p className="text-xs text-ui-gray-medium ">
                           {form.submissionSessions?.length} responses
                         </p>
                         <Menu
@@ -102,7 +103,7 @@ export default function FormList() {
                           {({ open }) => (
                             <>
                               <div>
-                                <Menu.Button className="flex items-center p-2 -m-2 rounded-full text-snoopred">
+                                <Menu.Button className="flex items-center p-2 -m-2 rounded-full text-red">
                                   <span className="sr-only">Open options</span>
                                   <DotsHorizontalIcon
                                     className="w-5 h-5"
@@ -123,7 +124,7 @@ export default function FormList() {
                               >
                                 <Menu.Items
                                   static
-                                  className="absolute left-0 w-56 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                  className="absolute left-0 w-56 px-1 mt-2 origin-top-right bg-white rounded-sm shadow-lg"
                                 >
                                   <div className="py-1">
                                     <Menu.Item>
@@ -134,13 +135,13 @@ export default function FormList() {
                                           }
                                           className={classNames(
                                             active
-                                              ? "bg-lightgray-100 text-darkgray-700"
-                                              : "text-darkgray-500",
+                                              ? "bg-ui-gray-light rounded-sm text-ui-black"
+                                              : "text-ui-gray-dark",
                                             "flex px-4 py-2 text-sm w-full"
                                           )}
                                         >
                                           <TrashIcon
-                                            className="w-5 h-5 mr-3 text-darkgray-400"
+                                            className="w-5 h-5 mr-3 text-ui-gray-dark"
                                             aria-hidden="true"
                                           />
                                           <span>Delete Form</span>

@@ -43,7 +43,7 @@ export default function Page({ formId, page, pageIdx, deletePageAction }) {
           </button>
         )}
       </div>
-      <div className="relative w-full p-10 bg-white rounded-lg">
+      <div className="relative w-full p-10 rounded-md bg-ui-gray-lighter">
         <div className="relative">
           {Editor && (
             <Editor

@@ -41,7 +41,7 @@ export default function MenuSteps({ formId, currentStep }: MenuStepsProps) {
         <select
           id="tabs"
           name="tabs"
-          className="block w-full py-2 pl-3 pr-10 text-base border-lightgray-300 rounded-md focus:outline-none focus:ring-snoopred focus:border-snoopred sm:text-sm"
+          className="block w-full py-2 pl-3 pr-10 text-base border-ui-gray-medium rounded-md focus:outline-none focus:ring-red focus:border-red sm:text-sm"
           defaultValue={tabs.find((tab) => tab.id === currentStep).name}
           onChange={(e) => {
             const stepId = e.target.children[e.target.selectedIndex].id;
@@ -62,8 +62,8 @@ export default function MenuSteps({ formId, currentStep }: MenuStepsProps) {
               <a
                 className={classNames(
                   tab.id === currentStep
-                    ? "border-snoopred text-snoopred"
-                    : "border-transparent text-darkgray-500 hover:text-darkgray-500 hover:border-lightgray-300",
+                    ? "border-red text-red"
+                    : "border-transparent text-ui-gray-dark hover:text-ui-gray-dark hover:border-ui-gray-medium",
                   "whitespace-nowrap py-5 px-1 border-b-2 font-medium text-sm"
                 )}
                 aria-current={tab.id === currentStep ? "page" : undefined}

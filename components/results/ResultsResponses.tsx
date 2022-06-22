@@ -70,7 +70,7 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                             {eventIdx !==
                             activeSubmissionSession.events.length - 1 ? (
                               <span
-                                className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                                className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-ui-gray-light"
                                 aria-hidden="true"
                               />
                             ) : null}
@@ -114,7 +114,7 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
             )}
           </div>
         </main>
-        <aside className="flex-shrink-0 hidden border-r border-gray-200 md:order-first md:flex md:flex-col w-96">
+        <aside className="flex-shrink-0 hidden border-r border-ui-gray-light md:order-first md:flex md:flex-col w-96">
           <DownloadResponses formId={formId} />
           <div className="pt-6 pb-1">
             <h2 className="px-5 text-lg font-medium text-gray-900">
@@ -130,7 +130,7 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
               className="flex-1 min-h-0 overflow-y-auto"
             >
               <div className="relative">
-                <ul className="relative z-0 divide-y divide-gray-200">
+                <ul className="relative z-0 divide-y divide-ui-gray-light">
                   {submissionSessions.map((submissionSession) => (
                     <RadioGroup.Option
                       key={submissionSession.id}

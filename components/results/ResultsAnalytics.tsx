@@ -52,7 +52,7 @@ export default function ResultsAnalytics({ formId }) {
                   className="relative px-4 bg-white rounded-lg shadow pt-5overflow-hidden sm:pt-6 sm:px-6"
                 >
                   <dt>
-                    <div className="absolute p-3 rounded-md bg-snoopred-500">
+                    <div className="absolute p-3 rounded-md bg-red-500">
                       <item.icon
                         className="w-6 h-6 text-white"
                         aria-hidden="true"

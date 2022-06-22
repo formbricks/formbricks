@@ -35,10 +35,10 @@ export default function LayoutFormResults({
       <Head>
         <title>{title}</title>
       </Head>
-      <div className="flex min-h-screen overflow-hidden bg-lightgray-50">
+      <div className="flex min-h-screen overflow-hidden bg-ui-gray-lighter">
         <div className="flex flex-col flex-1 overflow-hidden">
           <header className="w-full">
-            <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-lightgray-200">
+            <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-ui-gray-light">
               <div className="flex flex-1 px-4 sm:px-6">
                 <MenuBreadcrumbs formId={formId} />
                 <MenuSteps formId={formId} currentStep={currentStep} />
@@ -48,7 +48,7 @@ export default function LayoutFormResults({
                 </div>
               </div>
             </div>
-            <div className="relative z-10 flex flex-shrink-0 h-16 border-b border-gray-200 shadow-inner bg-gray-50">
+            <div className="relative z-10 flex flex-shrink-0 h-16 border-b border-ui-gray-light shadow-inner bg-gray-50">
               <div className="flex items-center justify-center flex-1 px-4">
                 <nav className="flex space-x-4" aria-label="resultModes">
                   {resultModes.map((mode) => (
@@ -57,7 +57,7 @@ export default function LayoutFormResults({
                       onClick={() => setResultMode(mode.id)}
                       className={classNames(
                         mode.id === resultMode
-                          ? "bg-gray-200 text-gray-800"
+                          ? "bg-ui-gray-light text-gray-800"
                           : "text-gray-600 hover:text-gray-800",
                         "px-3 py-2 font-medium text-sm rounded-md"
                       )}

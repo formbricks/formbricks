@@ -25,7 +25,7 @@ export default function LayoutShare({ formId, resetApp, children }) {
       <div className="flex min-h-screen overflow-hidden bg-gray-50">
         <div className="flex flex-col flex-1 overflow-hidden">
           <header className="w-full">
-            <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b border-gray-200 shadow-sm">
+            <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b border-ui-gray-light shadow-sm">
               <div className="flex flex-1 px-4 sm:px-6">
                 <div className="flex items-center flex-1">
                   <Link href={`/forms/${formId}/form`}>
@@ -41,7 +41,7 @@ export default function LayoutShare({ formId, resetApp, children }) {
                   <button
                     type="button"
                     onClick={() => resetApp()}
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-snoopred-600 hover:bg-snoopred-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred-500"
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
                     Restart
                     <RefreshIcon

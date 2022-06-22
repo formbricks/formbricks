@@ -4,10 +4,17 @@ import { useRouter } from "next/router";
 import LayoutFormBasics from "../../../components/layout/LayoutFormBasic";
 import Loading from "../../../components/Loading";
 import { useForm } from "../../../lib/forms";
-import { BiPlug } from "react-icons/bi";
-import { SiZapier, SiAirtable, SiSlack } from "react-icons/si";
-import { FaCode, FaGoogle } from "react-icons/fa";
+import {
+  SiZapier,
+  SiAirtable,
+  SiSlack,
+  SiNotion,
+  SiGoogle,
+} from "react-icons/si";
+import { CodeIcon } from "@heroicons/react/outline";
 import { classNames } from "../../../lib/utils";
+import EmptyPageFiller from "../../../components/layout/EmptyPageFiller";
+import { PuzzleIcon } from "@heroicons/react/outline";
 
 const libs = [
   {
@@ -15,22 +22,30 @@ const libs = [
     name: "Webhook",
     href: "#",
     bgColor: "bg-red-500",
-    icon: FaCode,
+    icon: CodeIcon,
+  },
+  {
+    id: "Notion",
+    name: "Notion",
+    comingSoon: true,
+    href: "#",
+    bgColor: "bg-ui-gray-light",
+    icon: SiNotion,
   },
   {
     id: "googleSheets",
     name: "Google Sheets",
     comingSoon: true,
     href: "#",
-    bgColor: "bg-green-700",
-    icon: FaGoogle,
+    bgColor: "bg-ui-gray-light",
+    icon: SiGoogle,
   },
   {
     id: "zapier",
     name: "Zapier",
     comingSoon: true,
     href: "#",
-    bgColor: "bg-orange-500",
+    bgColor: "bg-ui-gray-light",
     icon: SiZapier,
   },
   {
@@ -38,7 +53,7 @@ const libs = [
     name: "Airtable",
     comingSoon: true,
     href: "#",
-    bgColor: "bg-sky-400",
+    bgColor: "bg-ui-gray-light",
     icon: SiAirtable,
   },
   {
@@ -46,7 +61,7 @@ const libs = [
     name: "Slack",
     comingSoon: true,
     href: "#",
-    bgColor: "bg-purple-800",
+    bgColor: "bg-ui-gray-light",
     icon: SiSlack,
   },
 ];
@@ -69,42 +84,29 @@ export default function PipelinesPage() {
       >
         <header>
           <div className="mx-auto mt-8 max-w-7xl">
-            <h1 className="text-3xl font-bold leading-tight text-gray-900">
-              Pipe your data
+            <h1 className="text-3xl font-bold leading-tight text-ui-gray-dark">
+              Data Pipelines
             </h1>
           </div>
         </header>
         <div className="my-4">
-          <p className="text-gray-700">
-            snoopHub automatically stores your data and gives you an overview of
-            your submissions and form analytics. If you want to use your
-            submissions or form events in other systems you can set up pipelines
-            to let snoopHub sent the data to these applications as soon as it
-            arrives and keep everything in sync.
+          <p className="text-ui-gray-dark">
+            Pipe your data exactly where you need it. Add conditions for
+            variable data piping.
           </p>
         </div>
+        <EmptyPageFiller
+          alertText="No active pipelines for 'form name'"
+          hintText="Setup a data pipeline below."
+        >
+          <PuzzleIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
+        </EmptyPageFiller>
         <div>
-          <div className="text-xs font-medium tracking-wide text-gray-500 uppercase">
-            Active integrations
-          </div>
-          <div className="p-3 my-5 text-center border rounded-lg shadow-inner sm:p-6">
-            <BiPlug className="w-12 h-12 mx-auto text-gray-400" />
-
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              You don&apos;t have any active pipelines
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Choose a method from the available integrations and set up your
-              pipeline
-            </p>
-          </div>
-        </div>
-        <div>
-          <div className="mt-8">
+          <div className="mt-16">
             <div>
-              <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
-                Available integrations
-              </p>
+              <h2 className="text-xl font-bold text-ui-gray-dark">
+                Integrations
+              </h2>
 
               <ul
                 role="list"
@@ -117,30 +119,39 @@ export default function PipelinesPage() {
                   >
                     <li
                       className={classNames(
-                        lib.comingSoon ? "opacity-50" : "",
-                        "flex col-span-1 rounded-md shadow-sm w-full"
+                        lib.comingSoon
+                          ? "text-ui-gray-medium"
+                          : "shadow-sm text-ui-gray-dark hover:text-black",
+                        "flex col-span-1 rounded-md w-full"
                       )}
                     >
                       <div
                         className={classNames(
                           lib.bgColor,
-                          "flex-shrink-0 flex items-center justify-center w-16 text-white text-sm font-medium rounded-l-md"
+                          "flex-shrink-0 flex items-center justify-center w-20 text-white text-sm font-medium rounded-md"
                         )}
                       >
-                        <lib.icon className="w-5 h-5" />
+                        <lib.icon
+                          className={classNames(
+                            lib.comingSoon
+                              ? "text-ui-gray-medium w-8 h-8"
+                              : "text-white stroke-1 w-10 h-10",
+                            ""
+                          )}
+                        />
                       </div>
                       <div
                         className={classNames(
                           lib.comingSoon ? "border-dashed" : "",
-                          "flex items-center justify-between flex-1 truncate bg-white border-t border-b border-r border-gray-200 rounded-r-md"
+                          "flex items-center justify-between flex-1 truncate bg-white rounded-r-md"
                         )}
                       >
                         <div className="inline-flex px-4 py-8 text-sm truncate">
-                          <p className="font-medium text-gray-900 hover:text-gray-600">
-                            {lib.name}
-                          </p>
+                          <p className="">{lib.name}</p>
                           {lib.comingSoon && (
-                            <p className="ml-1 text-gray-500">(coming soon)</p>
+                            <div className="p-1 px-3 ml-3 bg-green-100 rounded-sm">
+                              <p className="text-xs text-black">coming soon</p>
+                            </div>
                           )}
                         </div>
                       </div>

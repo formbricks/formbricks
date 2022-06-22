@@ -46,7 +46,7 @@ export default function Submission({ formId, submissionSession }) {
   return (
     <div className="bg-white shadow sm:rounded-lg max-w-">
       <div className="px-4 py-5 sm:p-6">
-        <div className="text-darkgray-500-600">
+        <div className="text-ui-gray-dark-600">
           <p className="text-sm">
             {convertDateTimeString(submission.createdAt)}
           </p>
@@ -56,9 +56,7 @@ export default function Submission({ formId, submissionSession }) {
                 (element) =>
                   element.type !== "submit" && (
                     <div key={element.name}>
-                      <p className="font-semibold text-snoopred">
-                        {element.label}
-                      </p>
+                      <p className="font-semibold text-red">{element.label}</p>
                       <p className="font-normal">
                         {element.value || "[not provided]"}
                       </p>

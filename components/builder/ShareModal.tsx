@@ -39,7 +39,7 @@ export default function ShareModal({ open, setOpen, formId }) {
                 <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
                   <button
                     type="button"
-                    className="text-gray-400 bg-white rounded-md hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred-500"
+                    className="text-gray-400 bg-white rounded-md hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     onClick={() => setOpen(false)}
                   >
                     <span className="sr-only">Close</span>
@@ -65,7 +65,7 @@ export default function ShareModal({ open, setOpen, formId }) {
                         id="surveyLink"
                         type="text"
                         placeholder="Enter your email"
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-snoopred-500 focus:border-snoopred-500 sm:text-sm"
+                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
                         value={getPublicFormUrl()}
                         disabled
                       />

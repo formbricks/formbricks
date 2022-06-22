@@ -22,7 +22,7 @@ export const getElementTypeIcon = (type) => {
     <span
       className={classNames(
         `text-white`,
-        `bg-snoopred-500`,
+        `bg-red-500`,
         "rounded-lg inline-flex p-3 ring-4 ring-white"
       )}
     >

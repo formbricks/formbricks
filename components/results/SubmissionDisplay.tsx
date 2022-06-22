@@ -20,7 +20,7 @@ export default function SubmissionDisplay({ formId, submissionSession }) {
 
   return (
     <div className="flow-root mt-6">
-      <ul role="list" className="-my-5 divide-y divide-gray-200">
+      <ul role="list" className="-my-5 divide-y divide-ui-gray-light">
         {submission.pages.map((page) =>
           page.elements?.map(
             (element) =>

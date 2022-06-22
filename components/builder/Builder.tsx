@@ -57,7 +57,7 @@ export default function Builder({ formId }) {
 
   return (
     <>
-      <div className="relative z-10 flex flex-shrink-0 h-16 border-b border-gray-200 shadow-inner bg-gray-50">
+      <div className="relative z-10 flex flex-shrink-0 h-16 shadow-inner bg-ui-gray-lighter">
         <div className="flex items-center justify-center flex-1 px-4">
           <nav className="flex space-x-4" aria-label="resultModes">
             <button
@@ -87,7 +87,7 @@ export default function Builder({ formId }) {
         </div>
       </div>
 
-      <div className="w-full py-6 bg-gray-100">
+      <div className="w-full py-6 bg-white">
         <div className="flex justify-center w-full mt-10">
           <div className="w-full px-4 max-w-7xl">
             <div className="grid grid-cols-1 gap-6">

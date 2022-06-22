@@ -1,16 +1,15 @@
-import { RadioGroup } from "@headlessui/react";
-import Link from "next/link";
-import { useState } from "react";
 import { FaReact, FaVuejs } from "react-icons/fa";
+import { DocumentSearchIcon } from "@heroicons/react/outline";
 import { classNames } from "../../lib/utils";
+import StandardButton from "../StandardButton";
 
 const libs = [
   {
     id: "react",
     name: "React",
     href: "#",
-    bgColor: "bg-cyan-500",
-    ringColor: "ring-cyan-500",
+    bgColor: "bg-snoopfade",
+    version: "v0.1",
     icon: FaReact,
   },
   {
@@ -18,9 +17,7 @@ const libs = [
     name: "React Native",
     comingSoon: true,
     href: "#",
-    members: 12,
-    bgColor: "bg-cyan-600",
-    ringColor: "ring-cyan-600",
+    bgColor: "bg-ui-gray-light",
     icon: FaReact,
   },
   {
@@ -28,231 +25,153 @@ const libs = [
     name: "Vue.js",
     comingSoon: true,
     href: "#",
-    members: 16,
-    bgColor: "bg-emerald-400",
-    ringColor: "ring-emerald-400",
+    bgColor: "bg-ui-gray-light",
     icon: FaVuejs,
+  },
+  {
+    id: "docs",
+    name: "Docs",
+    href: "#",
+    bgColor: "bg-snoopfade",
+    icon: DocumentSearchIcon,
   },
 ];
 
 export default function FormCode({ formId }) {
-  const [selectedLib, setSelectedLib] = useState(null);
-
   return (
     <>
       <header>
-        <div className="mx-auto mt-8 max-w-7xl">
-          <h1 className="text-3xl font-bold leading-tight text-gray-900">
-            Get started
-          </h1>
+        <div className="max-w-5xl">
+          <div className="mx-auto mt-8">
+            <h1 className="text-3xl font-bold leading-tight text-ui-gray-dark">
+              Connect your form
+            </h1>
+          </div>
         </div>
       </header>
-      <div className="my-4">
-        <p className="text-gray-700">
-          Welcome to your new form! To start using snoopHub with your
-          application you need to build a form using our libs for your preferred
-          programming language or framework.
-        </p>
-      </div>
-      <hr className="my-5 text-gray-600" />
-      <div>
-        <label htmlFor="formId" className="block text-base text-gray-800">
-          Your form ID
-        </label>
-        <div className="mt-5 sm:flex sm:items-center">
-          <div className="w-full sm:max-w-xs">
-            <input
-              id="formId"
-              type="text"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-snoopred-500 focus:border-snoopred-500 sm:text-sm disabled:bg-gray-100"
-              value={formId}
-              disabled
-            />
-          </div>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(formId);
-            }}
-            className="inline-flex items-center justify-center w-full px-4 py-2 mt-3 font-medium text-white bg-gray-800 border border-transparent rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-          >
-            Copy
-          </button>
+      <div className="max-w-5xl">
+        <div className="mt-4 mb-12">
+          <p className="text-ui-gray-dark">
+            To send all form submissions to this dashboard, update the form ID
+            in the <strong>{"<snoopForm>"}</strong> component.
+          </p>
         </div>
-      </div>
-      <hr className="my-5 text-gray-600 " />
-      <div className="mt-5">
-        <RadioGroup value={selectedLib} onChange={setSelectedLib}>
-          <RadioGroup.Label className="text-xs font-medium tracking-wide text-gray-500 uppercase">
-            Choose your framework
-          </RadioGroup.Label>
+        <div className="grid grid-cols-2 gap-10">
+          <div>
+            <label
+              htmlFor="formId"
+              className="block text-base text-ui-gray-dark"
+            >
+              Your form ID
+            </label>
+            <div className="mt-3">
+              <input
+                id="formId"
+                type="text"
+                className="w-full mb-3 text-lg font-bold border-gray-300 rounded-sm shadow-sm disabled:bg-gray-100"
+                value={formId}
+                disabled
+              />
 
-          <ul
-            role="list"
-            className="grid grid-cols-1 gap-5 mt-3 sm:gap-6 sm:grid-cols-3 lg:grid-cols-3"
-          >
-            {libs.map((lib) => (
-              <RadioGroup.Option
-                key={lib.id}
-                value={lib}
-                className={({ checked }) =>
-                  classNames(
-                    checked ? `ring-2 ${lib.ringColor}` : "",
-                    lib.comingSoon ? "opacity-50" : "",
-                    "flex col-span-1 rounded-md shadow-sm"
-                  )
-                }
-                disabled={lib.comingSoon}
+              <StandardButton
+                onClick={() => {
+                  navigator.clipboard.writeText(formId);
+                }}
+                fullwidth
               >
-                {({}) => (
-                  <li
-                    className={classNames(
-                      lib.comingSoon ? "opacity-50" : "",
-                      "flex col-span-1 rounded-md shadow-sm w-full"
-                    )}
-                  >
-                    <div
-                      className={classNames(
-                        lib.bgColor,
-                        "flex-shrink-0 flex items-center justify-center w-16 text-white text-sm font-medium rounded-l-md"
-                      )}
-                    >
-                      <lib.icon className="w-5 h-5" />
-                    </div>
-                    <div
-                      className={classNames(
-                        lib.comingSoon ? "border-dashed" : "",
-                        "flex items-center justify-between flex-1 truncate bg-white border-t border-b border-r border-gray-200 rounded-r-md"
-                      )}
-                    >
-                      <div className="flex-1 px-4 py-5 text-sm truncate">
-                        <RadioGroup.Label className="font-medium text-gray-900 hover:text-gray-600">
-                          {lib.name}
-                        </RadioGroup.Label>
-                        {lib.comingSoon && (
-                          <p className="inline-block ml-1 text-gray-500">
-                            (coming soon)
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                )}
-              </RadioGroup.Option>
-            ))}
-          </ul>
-        </RadioGroup>
-      </div>
-      <div className="mt-10">
-        {selectedLib?.id === "react" ? (
-          <div className="relative px-5 py-16 overflow-hidden border border-gray-200 rounded-lg shadow-inner">
-            <div className="relative px-4 sm:px-6 lg:px-8">
-              <div className="mx-auto text-lg max-w-prose">
-                <h1>
-                  <span className="block text-base font-semibold tracking-wide text-center text-red-600">
-                    snoopReact
-                  </span>
-                  <span className="block mt-2 text-3xl font-extrabold leading-8 tracking-tight text-center text-gray-900 sm:text-4xl">
-                    How to build your form
-                  </span>
-                </h1>
-              </div>
-              <div className="mx-auto mt-6 text-base prose prose-lg text-gray-500 prose-red">
-                <p>
-                  Getting the snoopForms React Library up and running with Node
-                  Package Manager:
-                </p>
-                <pre>
-                  <code className="language-js">
-                    npm install --save @snoopforms/react
-                  </code>
-                </pre>
-                <p>Then build your form using our built-in components</p>
-                <pre>
-                  <code className="language-js">
-                    {`import React from "react";
-import { SnoopForm, SnoopElement, SnoopPage } from "@snoopforms/react";
-
-export default function Example({}) {
-  return (
-    <SnoopForm
-      domain="localhost:3000"
-      protocol="http"
-      className="w-full space-y-6"
-      onSubmit={({ submission, schema }) => {
-        // do something with the data additional to sending to snoopForms
-      }}
-    >
-      <SnoopPage name="first">
-        <SnoopElement
-          type="text"
-          name={"name"}
-          label="Your name"
-          classNames={{
-            label: "your-label-class",
-            element: "your-input-class",
-          }}
-          required
-        />
-      </SnoopPage>
-      <SnoopPage name="second">
-        <SnoopElement
-          type="radio"
-          name={"importance"}
-          label="What's your favorite food?"
-          classNames={{
-            label: "your-label-class",
-            radioGroup: "your-radio-group-class",
-            radioOption: "your-radio-option-class",
-          }}
-          options={["Pizza", "Pasta", "Sushi"]}
-        />
-        <SnoopElement
-          type="submit"
-          label="Submit"
-          classNames={{
-            button: "your-submit-button-class",
-          }}
-        />
-      </SnoopPage>
-      <SnoopPage thankyou>
-        <h1>Thank you!</h1>
-      </SnoopPage>
-    </SnoopForm>
-  );
-}`}
-                  </code>
-                </pre>
-                <p>
-                  To read more about building your form with snoopReact, check
-                  out our{" "}
-                  <Link href="https://docs.snoopforms.com/">
-                    <a target="_blank">docs</a>
-                  </Link>
-                  .
-                </p>
-                <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
-                  <div className="flex">
-                    <div className="flex-1 ml-3 md:flex md:justify-between">
-                      <p className="text-sm text-gray-700">
-                        Are you ready to go live and receive submissions? Go to{" "}
-                        <Link href="pipelines">
-                          <a>Pipelines</a>
-                        </Link>{" "}
-                        to pipe your submissions to other systems or go straight
-                        to the{" "}
-                        <Link href="results">
-                          <a>Results</a>
-                        </Link>{" "}
-                        to see how your form is used and keep track of your
-                        submissions.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                copy
+              </StandardButton>
             </div>
           </div>
-        ) : null}
+          <div className="p-8 font-light text-gray-200 bg-black rounded-md">
+            <p>
+              <code>
+                {"<"}
+                <span className="text-yellow-200">SnoopForm</span>
+                {""}
+              </code>
+            </p>
+            <p>
+              <code>{'domain="localhost:3000"'}</code>
+            </p>
+            <p>
+              <code>{'protocol="http"'}</code>
+            </p>
+            <p>
+              <code className="font-bold text-red">{'formId="luHwCdbz"'}</code>
+            </p>
+            <p>
+              <code>{"onSubmit={({ submission, schema }) =>{}/>"}</code>
+            </p>
+          </div>
+        </div>
+        <div className="mt-16">
+          <h2 className="text-xl font-bold text-ui-gray-dark">
+            Code your form
+          </h2>
+          <div className="mt-4 mb-12">
+            <p className="text-ui-gray-dark">
+              Build your form with the code library of your choice. Manage your
+              data in this dashboard.
+            </p>
+          </div>
+          <ul
+            role="list"
+            className="grid grid-cols-1 gap-5 mt-3 sm:gap-6 sm:grid-cols-2"
+          >
+            {libs.map((lib) => (
+              <a className="flex col-span-1 rounded-md shadow-sm" key={lib.id}>
+                <li
+                  className={classNames(
+                    lib.comingSoon
+                      ? "text-ui-gray-medium"
+                      : "shadow-sm text-ui-gray-dark hover:text-black",
+                    "flex col-span-1 rounded-md w-full"
+                  )}
+                >
+                  <div
+                    className={classNames(
+                      lib.bgColor,
+                      "flex-shrink-0 flex items-center justify-center w-20 text-white text-sm font-medium rounded-md"
+                    )}
+                  >
+                    <lib.icon
+                      className={classNames(
+                        lib.comingSoon
+                          ? "text-ui-gray-medium"
+                          : "text-white stroke-1",
+                        "w-12 h-12"
+                      )}
+                    />
+                  </div>
+                  <div
+                    className={classNames(
+                      lib.comingSoon ? "border-dashed" : "",
+                      "flex items-center justify-between flex-1 truncate bg-white rounded-r-md"
+                    )}
+                  >
+                    <div className="inline-flex px-4 py-8 text-lg truncate">
+                      <p className="font-light">{lib.name}</p>
+                      {lib.comingSoon && (
+                        <div className="p-1 px-3 ml-3 bg-green-100 rounded">
+                          <p className="text-xs text-black">coming soon</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              </a>
+            ))}
+          </ul>
+          <div className="my-12 font-light text-center text-ui-gray-medium">
+            <p>
+              Your form is running? Go to{" "}
+              <a href="#" className="underline text-red">
+                Pipelines
+              </a>
+            </p>
+          </div>
+        </div>
       </div>
     </>
   );

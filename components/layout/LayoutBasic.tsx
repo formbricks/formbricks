@@ -27,7 +27,7 @@ export default function Layout({ children }) {
       <Disclosure as="nav" className="bg-white shadow-sm">
         {({ open }) => (
           <>
-            <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div className="max-w-5xl px-4 mx-auto sm:px-6 lg:px-8">
               <div className="flex justify-between h-16">
                 <div className="flex">
                   <div className="flex items-center flex-shrink-0 w-48">
@@ -45,7 +45,7 @@ export default function Layout({ children }) {
                     {({ open }) => (
                       <>
                         <div>
-                          <Menu.Button className="flex text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred">
+                          <Menu.Button className="flex text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red">
                             <span className="sr-only">Open user menu</span>
                             <Image
                               width={32}
@@ -75,8 +75,8 @@ export default function Layout({ children }) {
                                 <button
                                   onClick={() => signOut()}
                                   className={classNames(
-                                    active ? "bg-lightgray-100" : "",
-                                    "block px-4 py-2 text-sm text-darkgray-700 hover:text-darkgray-900 w-full text-left"
+                                    active ? "bg-gray-100" : "",
+                                    "block px-4 py-2 text-sm text-ui-gray-dark hover:text-black w-full text-left"
                                   )}
                                 >
                                   Sign Out
@@ -91,7 +91,7 @@ export default function Layout({ children }) {
                 </div>
                 <div className="flex items-center -mr-2 sm:hidden">
                   {/* Mobile menu button */}
-                  <Disclosure.Button className="inline-flex items-center justify-center p-2 bg-white rounded-md text-darkgray-400 hover:text-darkgray-500 hover:bg-lightgray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred">
+                  <Disclosure.Button className="inline-flex items-center justify-center p-2 bg-white rounded-md text-ui-gray-dark hover:text-ui-gray-dark hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red">
                     <span className="sr-only">Open main menu</span>
                     {open ? (
                       <XIcon className="block w-6 h-6" aria-hidden="true" />
@@ -104,7 +104,7 @@ export default function Layout({ children }) {
             </div>
 
             <Disclosure.Panel className="sm:hidden">
-              <div className="pt-4 pb-3 border-t border-lightgray-200">
+              <div className="pt-4 pb-3 border-t border-ui-gray-light">
                 <div className="flex items-center px-4">
                   <div className="flex-shrink-0">
                     <img
@@ -117,7 +117,7 @@ export default function Layout({ children }) {
                 <div className="mt-3 space-y-1">
                   <button
                     onClick={() => signOut()}
-                    className="block px-4 py-2 text-base font-medium text-darkgray-500 hover:text-darkgray-800 hover:bg-lightgray-100"
+                    className="block px-4 py-2 text-base font-medium text-ui-gray-dark hover:text-ui-gray-dark hover:bg-gray-100"
                   >
                     Sign Out
                   </button>

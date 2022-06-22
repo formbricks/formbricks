@@ -9,7 +9,7 @@ export default function MenuProfile({}) {
       {({ open }) => (
         <>
           <div>
-            <Menu.Button className="flex text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred-500">
+            <Menu.Button className="flex text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
               <span className="sr-only">Open user menu</span>
               <img
                 className="w-8 h-8 rounded-full"
@@ -37,8 +37,8 @@ export default function MenuProfile({}) {
                   <button
                     onClick={() => signOut()}
                     className={classNames(
-                      active ? "bg-lightgray-100" : "",
-                      "block px-4 py-2 text-sm text-darkgray-500 w-full text-left"
+                      active ? "bg-gray-100" : "",
+                      "block px-4 py-2 text-sm text-ui-gray-dark w-full text-left"
                     )}
                   >
                     Sign Out

@@ -4,7 +4,7 @@ export default function TextResults({ element }) {
   return (
     <BaseResults element={element}>
       <div className="flow-root px-8 my-4 mt-6 overflow-y-scroll text-center max-h-64">
-        <ul className="-my-5 divide-y divide-gray-200">
+        <ul className="-my-5 divide-y divide-ui-gray-light">
           {element.summary.map((answer) => (
             <li key={answer} className="py-5">
               <div className="relative focus-within:ring-2 focus-within:ring-indigo-500">

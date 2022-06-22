@@ -8,17 +8,17 @@ interface Props {
 }
 
 // button component, consuming props
-const Button: React.FC<Props> = ({
+const StandardButton: React.FC<Props> = ({
   children,
   onClick,
-  disabled,
-  fullwidth,
+  disabled = false,
+  fullwidth = false,
   ...rest
 }) => {
   return (
     <button
       className={
-        `inline-flex items-center px-4 py-2 text-sm text-white border border-transparent rounded shadow-sm bg-snoopfade focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-snoopred-500 ` +
+        `inline-flex items-center px-5 py-3 text-sm text-white rounded shadow-sm bg-snoopfade focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ` +
         (disabled ? " disabled" : "") +
         (fullwidth ? " w-full justify-center " : "")
       }
@@ -31,4 +31,4 @@ const Button: React.FC<Props> = ({
   );
 };
 
-export default Button;
+export default StandardButton;

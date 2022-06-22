@@ -1,5 +1,5 @@
 import React from "react";
-import Button from "../StandardButton.tsx";
+import StandardButton from "../StandardButton";
 
 interface Props {
   children: React.ReactNode;
@@ -8,6 +8,7 @@ interface Props {
   hintText: string;
   buttonText: string;
   borderStyles: string;
+  button: boolean;
 }
 
 const EmptyPageFiller: React.FC<Props> = ({
@@ -17,21 +18,23 @@ const EmptyPageFiller: React.FC<Props> = ({
   hintText,
   buttonText,
   borderStyles,
+  button = false,
   ...rest
 }) => {
   return (
     <div
       className={
-        `bg-white max-w-md p-8 mx-auto mt-8 rounded-lg ` + borderStyles
+        `bg-white border border-ui-gray-light text-center p-8 mx-auto mt-8 rounded-lg ` +
+        borderStyles
       }
     >
       {children}
-      <h3 className="mt-5 text-base font-bold text-lightgray-700">
+      <h3 className="mt-5 text-base font-bold text-ui-gray-medium">
         {alertText}
       </h3>
-      <p className="mt-1 text-xs font-light text-lightgray-700">{hintText}</p>
-      <div className="mt-6">
-        <Button onClick={onClick}>{buttonText}</Button>
+      <p className="mt-1 text-xs font-light text-ui-gray-medium">{hintText}</p>
+      <div className={`mt-6` + (button ? " " : " hidden")}>
+        <StandardButton onClick={onClick}>{buttonText}</StandardButton>
       </div>
     </div>
   );

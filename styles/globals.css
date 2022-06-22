@@ -95,9 +95,9 @@
 
 @layer components {
   .bg-snoopfade {
-    @apply bg-gradient-to-br from-snoopred to-pink-500 hover:to-snoopred;
+    @apply bg-gradient-to-br from-red to-pink-500 hover:to-red;
   }
   .text-snoopfade {
-    @apply text-transparent bg-clip-text bg-gradient-to-br from-snoopred to-pink-500 hover:to-snoopred;
+    @apply text-transparent bg-clip-text bg-gradient-to-br from-red to-pink-500 hover:to-red;
   }
 }

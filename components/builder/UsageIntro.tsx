@@ -6,7 +6,7 @@ export default function UsageIntro() {
   const [dismissed, setDismissed] = useState(false);
   return (
     !dismissed && (
-      <div className="p-4 bg-gray-100 border border-gray-700 rounded-md">
+      <div className="p-4 border border-gray-700 rounded-md bg-ui-gray-light">
         <div className="flex">
           <div className="flex-shrink-0">
             <InformationCircleIcon

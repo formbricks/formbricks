@@ -27,10 +27,10 @@ export default function LayoutFormResults({
       <Head>
         <title>{title}</title>
       </Head>
-      <div className="flex min-h-screen overflow-hidden bg-gray-100">
+      <div className="flex min-h-screen overflow-hidden bg-white">
         <div className="flex flex-col flex-1 overflow-hidden">
           <header className="w-full">
-            <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-lightgray-200">
+            <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-ui-gray-light">
               <div className="flex flex-1 px-4 sm:px-6">
                 <MenuBreadcrumbs formId={formId} />
                 <MenuSteps formId={formId} currentStep={currentStep} />
