@@ -1,8 +1,16 @@
-import { HomeIcon } from "@heroicons/react/outline";
+import { HomeIcon, PlusIcon } from "@heroicons/react/outline";
 import Link from "next/link";
 import { useForm } from "../../lib/forms";
+import Router from "next/router";
+import StandardButton from "../StandardButton";
+import { createForm } from "../../lib/forms";
 
 export default function MenuBreadcrumbs({ formId }) {
+  const newForm = async () => {
+    const form = await createForm();
+    await Router.push(`/forms/${form.id}/welcome`);
+  };
+
   const { form, isLoadingForm } = useForm(formId);
 
   const pages = [
@@ -18,6 +26,13 @@ export default function MenuBreadcrumbs({ formId }) {
     <div className="hidden sm:flex sm:flex-1">
       <nav className="hidden lg:flex" aria-label="Breadcrumb">
         <ol className="flex items-center space-x-4">
+          <li>
+            <div>
+              <StandardButton icon secondary onClick={() => newForm()}>
+                <PlusIcon className="w-6 h-6" />
+              </StandardButton>
+            </div>
+          </li>
           <li>
             <div>
               <Link href="/forms/">

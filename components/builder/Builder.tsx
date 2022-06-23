@@ -1,5 +1,4 @@
 import { NoCodeForm } from "@prisma/client";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { v4 as uuidv4 } from "uuid";
@@ -8,6 +7,15 @@ import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
 import Loading from "../Loading";
 import Page from "./Page";
 import ShareModal from "./ShareModal";
+import SecondNavBar from "../layout/SecondNavBar";
+import SecondNavBarItem from "../layout/SecondNavBarItem";
+import {
+  DocumentAddIcon,
+  PlusIcon,
+  EyeIcon,
+  ShareIcon,
+  PaperAirplaneIcon,
+} from "@heroicons/react/outline";
 
 export default function Builder({ formId }) {
   const { form, isLoadingForm } = useForm(formId);
@@ -117,35 +125,28 @@ export default function Builder({ formId }) {
 
   return (
     <>
-      <div className="relative z-10 flex flex-shrink-0 h-16 shadow-inner bg-ui-gray-lighter">
-        <div className="flex items-center justify-center flex-1 px-4">
-          <nav className="flex space-x-4" aria-label="resultModes">
-            <button
-              onClick={() => addPage()}
-              className="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-800 rounded-md hover:text-gray-600"
-            >
-              Add Page
-            </button>
-            <Link href={`/forms/${formId}/preview`}>
-              <a className="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-800 rounded-md hover:text-gray-600">
-                Preview Form
-              </a>
-            </Link>
-            <button
-              onClick={() => publishChanges()}
-              className="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-800 rounded-md hover:text-gray-600"
-            >
-              Publish
-            </button>
-            <button
-              onClick={() => setOpenShareModal(true)}
-              className="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-800 rounded-md hover:text-gray-600"
-            >
-              Share
-            </button>
-          </nav>
-        </div>
-      </div>
+      <SecondNavBar>
+        <SecondNavBarItem>
+          <PlusIcon className="w-8 h-8 mx-auto stroke-1" />
+          Element
+        </SecondNavBarItem>
+        <SecondNavBarItem onClick={() => addPage()}>
+          <DocumentAddIcon className="w-8 h-8 mx-auto stroke-1" />
+          Page
+        </SecondNavBarItem>
+        <SecondNavBarItem link href={`/forms/${formId}/preview`}>
+          <EyeIcon className="w-8 h-8 mx-auto stroke-1" />
+          Preview
+        </SecondNavBarItem>
+        <SecondNavBarItem onClick={() => publishChanges()}>
+          <PaperAirplaneIcon className="w-8 h-8 mx-auto stroke-1" />
+          Publish
+        </SecondNavBarItem>
+        <SecondNavBarItem onClick={() => setOpenShareModal(true)}>
+          <ShareIcon className="w-8 h-8 mx-auto stroke-1" />
+          Share
+        </SecondNavBarItem>
+      </SecondNavBar>
 
       <div className="w-full bg-ui-gray-lighter">
         <div className="flex justify-center w-full">

@@ -2,44 +2,65 @@ import { FaReact, FaVuejs } from "react-icons/fa";
 import { DocumentSearchIcon } from "@heroicons/react/outline";
 import { classNames } from "../../lib/utils";
 import StandardButton from "../StandardButton";
-
-const libs = [
-  {
-    id: "react",
-    name: "React",
-    href: "#",
-    bgColor: "bg-snoopfade",
-    version: "v0.1",
-    icon: FaReact,
-  },
-  {
-    id: "reactNative",
-    name: "React Native",
-    comingSoon: true,
-    href: "#",
-    bgColor: "bg-ui-gray-light",
-    icon: FaReact,
-  },
-  {
-    id: "vue",
-    name: "Vue.js",
-    comingSoon: true,
-    href: "#",
-    bgColor: "bg-ui-gray-light",
-    icon: FaVuejs,
-  },
-  {
-    id: "docs",
-    name: "Docs",
-    href: "#",
-    bgColor: "bg-snoopfade",
-    icon: DocumentSearchIcon,
-  },
-];
+import Link from "next/link";
+import SecondNavBar from "../layout/SecondNavBar";
+import SecondNavBarItem from "../layout/SecondNavBarItem";
 
 export default function FormCode({ formId }) {
+  const libs = [
+    {
+      id: "react",
+      name: "React",
+      href: `forms/${formId}/react`,
+      bgColor: "bg-blue",
+      version: "v0.1",
+      icon: FaReact,
+    },
+    {
+      id: "reactNative",
+      name: "React Native",
+      comingSoon: true,
+      href: "#",
+      bgColor: "bg-ui-gray-light",
+      icon: FaReact,
+    },
+    {
+      id: "vue",
+      name: "Vue.js",
+      comingSoon: true,
+      href: "#",
+      bgColor: "bg-ui-gray-light",
+      icon: FaVuejs,
+    },
+    {
+      id: "docs",
+      name: "Docs",
+      href: "https://docs.snoopforms.com",
+      bgColor: "bg-ui-gray-dark",
+      icon: DocumentSearchIcon,
+    },
+  ];
+
   return (
     <>
+      <SecondNavBar>
+        <SecondNavBarItem link href={`/forms/${formId}/react`}>
+          <FaReact className="w-8 h-8 mx-auto stroke-1" />
+          React
+        </SecondNavBarItem>
+        <SecondNavBarItem disabled>
+          <FaReact className="w-8 h-8 mx-auto stroke-1" />
+          React Native
+        </SecondNavBarItem>
+        <SecondNavBarItem disabled>
+          <FaVuejs className="w-8 h-8 mx-auto stroke-1" />
+          Vue
+        </SecondNavBarItem>
+        <SecondNavBarItem link outbound href="https://docs.snoopforms.com">
+          <DocumentSearchIcon className="w-8 h-8 mx-auto stroke-1" />
+          Docs
+        </SecondNavBarItem>
+      </SecondNavBar>
       <header>
         <div className="max-w-5xl">
           <div className="mx-auto mt-8">
@@ -53,7 +74,7 @@ export default function FormCode({ formId }) {
         <div className="mt-4 mb-12">
           <p className="text-ui-gray-dark">
             To send all form submissions to this dashboard, update the form ID
-            in the <strong>{"<snoopForm>"}</strong> component.
+            in the <code>{"<snoopForm>"}</code> component.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-10">
@@ -87,7 +108,7 @@ export default function FormCode({ formId }) {
             <p>
               <code>
                 {"<"}
-                <span className="text-yellow-200">SnoopForm</span>
+                <span className="text-yellow-200">snoopForm</span>
                 {""}
               </code>
             </p>
@@ -120,7 +141,11 @@ export default function FormCode({ formId }) {
             className="grid grid-cols-1 gap-5 mt-3 sm:gap-6 sm:grid-cols-2"
           >
             {libs.map((lib) => (
-              <a className="flex col-span-1 rounded-md shadow-sm" key={lib.id}>
+              <a
+                className="flex col-span-1 rounded-md shadow-sm"
+                key={lib.id}
+                href={lib.href}
+              >
                 <li
                   className={classNames(
                     lib.comingSoon
@@ -163,12 +188,13 @@ export default function FormCode({ formId }) {
               </a>
             ))}
           </ul>
+
           <div className="my-12 font-light text-center text-ui-gray-medium">
             <p>
               Your form is running? Go to{" "}
-              <a href="#" className="underline text-red">
-                Pipelines
-              </a>
+              <Link href={`/forms/${formId}/preview`}>
+                <a className="underline text-red">Pipelines</a>
+              </Link>
             </p>
           </div>
         </div>

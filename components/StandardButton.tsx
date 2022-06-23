@@ -6,6 +6,9 @@ interface Props {
   onClick?: () => void;
   disabled?: boolean;
   fullwidth?: boolean;
+  small?: boolean;
+  icon?: boolean;
+  secondary?: boolean;
   [key: string]: any;
 }
 
@@ -15,14 +18,20 @@ const StandardButton: React.FC<Props> = ({
   onClick = () => {},
   disabled = false,
   fullwidth = false,
+  small = false,
+  icon = false,
+  secondary = false,
   ...rest
 }) => {
   return (
     <button
       className={classNames(
-        `inline-flex items-center px-5 py-3 text-sm text-white rounded shadow-sm bg-snoopfade focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500`,
+        `inline-flex items-center rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500`,
         disabled ? "disabled:opacity-50" : "",
-        fullwidth ? " w-full justify-center " : ""
+        fullwidth ? " w-full justify-center " : "",
+        small ? "px-2.5 py-1.5 text-xs" : "px-5 py-3 text-sm",
+        icon ? "px-1.5 py-1.5 text-xs" : "px-5 py-3 text-sm",
+        secondary ? "bg-ui-gray-light text-red" : "bg-snoopfade text-white"
       )}
       onClick={onClick}
       disabled={disabled}

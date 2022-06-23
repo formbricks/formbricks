@@ -8,8 +8,8 @@ export default function MenuProfile({}) {
     <Menu as="div" className="relative flex-shrink-0">
       {({ open }) => (
         <>
-          <div>
-            <Menu.Button className="flex text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+          <div className="inline-flex items-center ">
+            <Menu.Button className="flex ml-3 text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
               <span className="sr-only">Open user menu</span>
               <img
                 className="w-8 h-8 rounded-full"
