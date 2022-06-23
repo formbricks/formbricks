@@ -3,23 +3,22 @@ import StandardButton from "../StandardButton";
 
 interface Props {
   children: React.ReactNode;
-  onClick: () => void;
+  onClick?: () => void;
   alertText: string;
   hintText: string;
-  buttonText: string;
-  borderStyles: string;
-  button: boolean;
+  buttonText?: string;
+  borderStyles?: string;
+  button?: boolean;
 }
 
 const EmptyPageFiller: React.FC<Props> = ({
   children,
-  onClick,
+  onClick = () => {},
   alertText,
   hintText,
   buttonText,
   borderStyles,
   button = false,
-  ...rest
 }) => {
   return (
     <div
@@ -33,9 +32,11 @@ const EmptyPageFiller: React.FC<Props> = ({
         {alertText}
       </h3>
       <p className="mt-1 text-xs font-light text-ui-gray-medium">{hintText}</p>
-      <div className={`mt-6` + (button ? " " : " hidden")}>
-        <StandardButton onClick={onClick}>{buttonText}</StandardButton>
-      </div>
+      {button && (
+        <div className="mt-6">
+          <StandardButton onClick={onClick}>{buttonText}</StandardButton>
+        </div>
+      )}
     </div>
   );
 };

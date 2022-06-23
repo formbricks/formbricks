@@ -1,6 +1,3 @@
-import Link from "next/link";
-import Router from "next/router";
-import { Fragment } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import {
   DocumentAddIcon,
@@ -8,11 +5,13 @@ import {
   TerminalIcon,
   ViewGridAddIcon,
 } from "@heroicons/react/outline";
-import EmptyPageFiller from "./layout/EmptyPageFiller";
 import { DotsHorizontalIcon, TrashIcon } from "@heroicons/react/solid";
-import { classNames } from "../lib/utils";
+import Link from "next/link";
+import Router from "next/router";
+import { Fragment } from "react";
 import { createForm, useForms } from "../lib/forms";
-import Image from "next/image";
+import { classNames } from "../lib/utils";
+import EmptyPageFiller from "./layout/EmptyPageFiller";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
@@ -47,8 +46,7 @@ export default function FormList() {
               hintText="Start by creating a form."
               buttonText="create form"
               borderStyles="border-4 border-dotted border-red"
-              icon="BsFilePlus"
-              button="true"
+              button={true}
             >
               <DocumentAddIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
             </EmptyPageFiller>
@@ -68,14 +66,11 @@ export default function FormList() {
             {forms
               .sort((a, b) => b.updatedAt - a.updatedAt)
               .map((form, formIdx) => (
-                <li key={form.id} className="col-span-1 ">
+                <li key={form.id} className="col-span-1 realative ">
                   <div className="flex flex-col justify-between h-full bg-white rounded-md shadow">
+                    <div className="px-4 py-5 text-lg sm:p-6">{form.name}</div>
                     <Link href={`/forms/${form.id}`}>
-                      <a>
-                        <div className="px-4 py-5 text-lg sm:p-6">
-                          {form.name}
-                        </div>
-                      </a>
+                      <a className="absolute w-full h-full" />
                     </Link>
                     <div className="divide-y divide-ui-gray-light ">
                       <div className="inline-flex px-2 py-1 mb-2 ml-4 text-sm rounded-sm bg-ui-gray-light text-ui-gray-dark">
