@@ -5,6 +5,8 @@ import DragDrop from "editorjs-drag-drop";
 import Undo from "editorjs-undo";
 import TextQuestion from "./tools/TextQuestion";
 import SubmitButton from "./tools/SubmitButton";
+import Paragraph from "@editorjs/paragraph";
+import Header from "@editorjs/header";
 
 const Editor = ({ id, autofocus = false, onChange, value }) => {
   const [blocks, setBlocks] = useState([]);
@@ -46,7 +48,26 @@ const Editor = ({ id, autofocus = false, onChange, value }) => {
         setBlocks(content.blocks);
       },
       autofocus: autofocus,
-      tools: { textQuestion: TextQuestion, submitButton: SubmitButton },
+      tools: {
+        textQuestion: TextQuestion,
+        submitButton: SubmitButton,
+        paragraph: {
+          class: Paragraph,
+          inlineToolbar: true,
+          config: {
+            placeholder:
+              "Start with your content or hit tab-key to insert block",
+          },
+        },
+        header: {
+          class: Header,
+          config: {
+            placeholder: "Enter a header",
+            levels: [1, 2, 3],
+            defaultLevel: 1,
+          },
+        },
+      },
     });
   };
 

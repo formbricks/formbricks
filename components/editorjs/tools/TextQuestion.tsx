@@ -31,8 +31,10 @@ export default class TextQuestion implements BlockTool {
 
   save(block: HTMLDivElement) {
     return {
-      label: (block.firstElementChild.firstElementChild as HTMLInputElement)
-        .value,
+      label: (
+        block.firstElementChild.firstElementChild
+          .firstElementChild as HTMLInputElement
+      ).value,
       placeholder: (
         block.firstElementChild.lastElementChild as HTMLInputElement
       ).value,
@@ -46,17 +48,19 @@ export default class TextQuestion implements BlockTool {
   render(): HTMLElement {
     const container = document.createElement("div");
     const toolView = (
-      <div className="pb-3">
+      <div className="pb-5">
+        <div className="text-lg font-bold leading-7 text-gray-800 sm:text-xl sm:truncate">
+          <input
+            type="text"
+            id="label"
+            defaultValue={this.label}
+            className="block w-full p-0 border-0 border-transparent ring-0 focus:ring-0"
+            placeholder="Your Question"
+          />
+        </div>
         <input
           type="text"
-          id="label"
-          defaultValue={this.label}
-          className="block w-full p-0 text-base font-medium text-gray-700 border-0 border-transparent ring-0 focus:ring-0"
-          placeholder="Your Question"
-        />
-        <input
-          type="text"
-          className="block w-full mt-1 text-gray-400 border-gray-300 rounded-md shadow-sm sm:text-base placeholder:text-gray-300"
+          className="block w-full mt-1 text-sm text-gray-400 border-gray-300 rounded-md shadow-sm placeholder:text-gray-300"
           placeholder="optional placeholder"
           defaultValue={this.placeholder}
         />

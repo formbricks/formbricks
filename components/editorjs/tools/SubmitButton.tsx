@@ -40,7 +40,7 @@ export default class TextQuestion implements BlockTool {
   render(): HTMLElement {
     const container = document.createElement("div");
     const toolView = (
-      <div className="inline-flex items-center px-4 py-2 pb-3 text-sm font-medium text-white bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+      <div className="inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
         <div
           contentEditable
           id="label"

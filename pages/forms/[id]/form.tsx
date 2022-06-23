@@ -25,11 +25,7 @@ export default function FormPage() {
   if (form.formType === "NOCODE") {
     return (
       <>
-        <LayoutFormBuilder
-          title={form.title}
-          formId={formId}
-          currentStep="form"
-        >
+        <LayoutFormBuilder title={form.name} formId={formId} currentStep="form">
           <Builder formId={formId} />
         </LayoutFormBuilder>
       </>
@@ -37,7 +33,7 @@ export default function FormPage() {
   } else {
     return (
       <>
-        <LayoutFormBasics title={form.title} formId={formId} currentStep="form">
+        <LayoutFormBasics title={form.name} formId={formId} currentStep="form">
           <FormCode formId={formId} />
         </LayoutFormBasics>
       </>

@@ -7,6 +7,7 @@ import LayoutPreview from "../../../components/layout/LayoutPreview";
 import Loading from "../../../components/Loading";
 import { useForm } from "../../../lib/forms";
 import { v4 as uuidv4 } from "uuid";
+import { toast } from "react-toastify";
 
 export default function Share({}) {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function Share({}) {
 
   const resetApp = () => {
     setAppId(uuidv4());
+    toast("Form reset successful");
   };
 
   if (isLoadingForm) {
