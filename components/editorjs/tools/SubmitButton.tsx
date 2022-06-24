@@ -1,5 +1,4 @@
 import { API, BlockTool, BlockToolData, ToolConfig } from "@editorjs/editorjs";
-import { ArrowRightIcon } from "@heroicons/react/solid";
 import ReactDOM from "react-dom";
 
 //styles imports in angular.json
