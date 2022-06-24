@@ -7,9 +7,7 @@ interface Props {
   KPI: string;
   typeText?: boolean;
   label: string;
-  hasToolTip?: boolean;
   toolTipText: string;
-  hasTrend?: boolean;
   trend: number;
 }
 
@@ -18,30 +16,27 @@ const AnalyticsCard: React.FC<Props> = ({
   KPI,
   typeText = false,
   label,
-  hasToolTip = false,
   toolTipText,
-  hasTrend = false,
   trend,
 }) => {
   return (
-    <div className="relative px-4 pt-5 overflow-hidden bg-white rounded-lg shadow sm:pt-6 sm:px-6s">
-      <div className="inline-flex items-center justify-center text-ui-gray-dark">
+    <div className="grid content-between px-4 py-2 bg-white rounded-md shadow-md">
+      <div className="inline-flex items-center text-sm text-ui-gray-dark">
         {label}{" "}
-        {hasToolTip && (
+        {toolTipText && (
           <QuestionMarkCircleIcon className="w-4 h-4 ml-1 text-red hover:text-ui-gray-dark" />
         )}
       </div>
       <div
         className={classNames(
-          `justify-between font-bold leading-none `,
-          typeText ? "text-2xl" : "",
-          "text-8xl"
+          `font-bold leading-none flex justify-between items-end`,
+          typeText ? "text-3xl tracking-tight leading-10" : "text-7xl"
         )}
       >
         {KPI}
-        {hasTrend && (
-          <div className="text-green-600 bg-green-200 rounded-full">
-            {trend}
+        {trend && (
+          <div className="flex items-center h-6 px-6 py-2 mb-2.5 text-sm font-light text-green-600 bg-green-200 rounded-full">
+            {trend} %
           </div>
         )}
       </div>

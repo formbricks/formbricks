@@ -8,6 +8,8 @@ import {
 import { SubmissionSummary } from "../../lib/types";
 import Loading from "../Loading";
 import TextResults from "./summary/TextResults";
+import { timeSince } from "../../lib/utils";
+import AnalyticsCard from "../layout/AnalyticsCard";
 
 export default function ResultsSummary({ formId }) {
   const { submissionSessions, isLoadingSubmissionSessions } =
@@ -27,20 +29,22 @@ export default function ResultsSummary({ formId }) {
         {
           id: "uniqueUsers",
           name: "Unique Users",
-          stat: 10,
-          icon: UsersIcon,
+          stat: summary.uniqueUsers || "NaN",
+          toolTipText: "placeholder",
+          trend: "12",
         },
         {
           id: "totalSubmissions",
           name: "Total Submissions",
-          stat: 10,
-          icon: InboxIcon,
+          stat: summary.totalSubmissions || "NaN",
+          trend: "10",
         },
         {
-          id: "uniqueUsers",
+          id: "lastSubmission",
           name: "Last Submission",
-          stat: 10,
-          icon: ClockIcon,
+          // stat: timeSince(analytics.lastSubmissionAt) || "-",
+          stat: "NaN",
+          typeText: true,
         },
       ];
     }
@@ -52,49 +56,32 @@ export default function ResultsSummary({ formId }) {
 
   return (
     <main className="bg-gray-50">
-      <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div>
-          <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2 lg:grid-cols-3">
-            {stats.map((item) => (
-              <div
-                key={item.id}
-                className="relative px-4 bg-white rounded-lg shadow pt-5overflow-hidden sm:pt-6 sm:px-6"
-              >
-                <dt>
-                  <div className="absolute p-3 rounded-md bg-red-500">
-                    <item.icon
-                      className="w-6 h-6 text-white"
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <p className="ml-16 text-sm font-medium text-gray-500 truncate">
-                    {item.name}
-                  </p>
-                </dt>
-                <dd className="flex items-baseline ml-16 sm:pb-7">
-                  <p className="text-xl font-semibold text-gray-800">
-                    {item.stat}
-                  </p>
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-        <hr className="my-8" />
+      <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
+        <h2 className="mt-8 text-xl font-bold text-ui-gray-dark">
+          Responses Overview
+        </h2>
+        <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2 lg:grid-cols-3">
+          {stats.map((item) => (
+            <AnalyticsCard
+              key={item.id}
+              KPI={item.stat}
+              label={item.name}
+              toolTipText={item.toolTipText}
+              typeText={item.typeText}
+              trend={item.trend}
+            />
+          ))}
+        </dl>
         <div>
           {summary.pages.map(
             (page, pageIdx) =>
               page.type === "form" && (
                 <div key={page.name}>
-                  <h2 className="text-xl font-bold text-gray-700">
-                    Page {pageIdx + 1}
-                  </h2>
                   {page.elements.map((element) =>
                     element.type === "text" || element.type === "textarea" ? (
                       <TextResults element={element} />
                     ) : null
                   )}
-                  <hr className="my-8" />
                 </div>
               )
           )}
