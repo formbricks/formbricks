@@ -27,7 +27,7 @@ export default function Layout({ children }) {
       <Disclosure as="nav" className="bg-white shadow-sm">
         {({ open }) => (
           <>
-            <div className="max-w-5xl px-4 mx-auto sm:px-6 lg:px-8">
+            <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
               <div className="flex justify-between h-16">
                 <div className="flex">
                   <div className="flex items-center flex-shrink-0 w-48">

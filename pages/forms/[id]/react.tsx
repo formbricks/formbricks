@@ -5,12 +5,11 @@ import LayoutFormBasics from "../../../components/layout/LayoutFormBasic";
 import Loading from "../../../components/Loading";
 import StandardButton from "../../../components/StandardButton";
 import { useForm } from "../../../lib/forms";
-import { DocumentSearchIcon } from "@heroicons/react/outline";
+import { DocumentSearchIcon, TerminalIcon } from "@heroicons/react/outline";
 import Link from "next/link";
 import SecondNavBar from "../../../components/layout/SecondNavBar";
 import SecondNavBarItem from "../../../components/layout/SecondNavBarItem";
-import { FaReact, FaVuejs } from "react-icons/fa";
-import { FaDiscord } from "react-icons/fa";
+import { FaReact, FaVuejs, FaDiscord } from "react-icons/fa";
 
 export default function ReactPage() {
   const router = useRouter();
@@ -29,6 +28,10 @@ export default function ReactPage() {
         currentStep="pipelines"
       >
         <SecondNavBar>
+          <SecondNavBarItem link href={`/forms/${formId}/form`}>
+            <TerminalIcon className="w-8 h-8 mx-auto stroke-1" />
+            formID
+          </SecondNavBarItem>
           <SecondNavBarItem link href={`/forms/${formId}/react`}>
             <FaReact className="w-8 h-8 mx-auto stroke-1" />
             React
@@ -84,7 +87,7 @@ export default function ReactPage() {
             </p>
           </div>
           <div className="p-8 font-light text-gray-200 bg-black rounded-md">
-            <code>{`<SnoopForm
+            <code className="whitespace-pre language-js">{`<SnoopForm
   domain="localhost:3000"
   protocol="http"
   className="w-full space-y-6"
@@ -100,9 +103,11 @@ export default function ReactPage() {
          element: "your-input-class",}}
          required/>
       </SnoopPage>
+
       <SnoopPage thankyou>
         <h1>Thank you!</h1>
       </SnoopPage>
+      
     </SnoopForm>`}</code>
           </div>
         </div>

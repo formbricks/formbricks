@@ -182,6 +182,9 @@ module.exports = {
       fontFamily: {
         sans: "Poppins, Arial, sans-serif",
       },
+      text: {
+        KPI: "5rem",
+      },
     },
   },
   plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],

@@ -5,6 +5,7 @@ import MenuProfile from "./MenuProfile";
 import { classNames } from "../../lib/utils";
 import { signIn, useSession } from "next-auth/react";
 import Loading from "../Loading";
+import { PresentationChartBarIcon } from "@heroicons/react/outline";
 
 export default function LayoutFormResults({
   title,
@@ -26,9 +27,9 @@ export default function LayoutFormResults({
   }
 
   const resultModes = [
-    { name: "Summary", id: "summary" },
-    { name: "Responses", id: "responses" },
-    { name: "Analytics", id: "analytics" },
+    { name: "Summary", id: "summary", icon: "" },
+    { name: "Responses", id: "responses", icon: "" },
+    { name: "Analytics", id: "analytics", icon: "" },
   ];
   return (
     <>
@@ -48,7 +49,7 @@ export default function LayoutFormResults({
                 </div>
               </div>
             </div>
-            <div className="relative z-10 flex flex-shrink-0 h-16 border-b border-ui-gray-light shadow-inner bg-gray-50">
+            <div className="relative z-10 flex flex-shrink-0 h-16 border-b shadow-inner border-ui-gray-light bg-gray-50">
               <div className="flex items-center justify-center flex-1 px-4">
                 <nav className="flex space-x-4" aria-label="resultModes">
                   {resultModes.map((mode) => (

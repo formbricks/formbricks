@@ -5,7 +5,7 @@ import { classNames } from "../../lib/utils";
 
 export default function MenuProfile({}) {
   return (
-    <Menu as="div" className="relative flex-shrink-0">
+    <Menu as="div" className="relative z-50 flex-shrink-0">
       {({ open }) => (
         <>
           <div className="inline-flex items-center ">

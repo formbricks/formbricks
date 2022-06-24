@@ -1,5 +1,5 @@
 import { FaReact, FaVuejs } from "react-icons/fa";
-import { DocumentSearchIcon } from "@heroicons/react/outline";
+import { DocumentSearchIcon, TerminalIcon } from "@heroicons/react/outline";
 import { classNames } from "../../lib/utils";
 import StandardButton from "../StandardButton";
 import Link from "next/link";
@@ -44,6 +44,10 @@ export default function FormCode({ formId }) {
   return (
     <>
       <SecondNavBar>
+        <SecondNavBarItem link href={`/forms/${formId}/form`}>
+          <TerminalIcon className="w-8 h-8 mx-auto stroke-1" />
+          formID
+        </SecondNavBarItem>
         <SecondNavBarItem link href={`/forms/${formId}/react`}>
           <FaReact className="w-8 h-8 mx-auto stroke-1" />
           React

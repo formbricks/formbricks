@@ -46,7 +46,7 @@ export default function FormList() {
               hintText="Start by creating a form."
               buttonText="create form"
               borderStyles="border-4 border-dotted border-red"
-              button={true}
+              hasButton={true}
             >
               <DocumentAddIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
             </EmptyPageFiller>
