@@ -37,7 +37,7 @@ export default function FormList() {
 
   return (
     <>
-      <div>
+      <div className="h-full px-6 py-8 lg:px-8">
         {forms &&
           (forms.length === 0 ? (
             <div className="mt-5 text-center">
@@ -53,7 +53,7 @@ export default function FormList() {
               </EmptyPageFiller>
             </div>
           ) : (
-            <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 place-content-stretch">
+            <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 place-content-stretch ">
               <button onClick={() => newForm()}>
                 <li className="col-span-1">
                   <div className="overflow-hidden font-light text-white rounded-md shadow bg-snoopfade">
@@ -67,7 +67,7 @@ export default function FormList() {
               {forms
                 .sort((a, b) => b.updatedAt - a.updatedAt)
                 .map((form, formIdx) => (
-                  <li key={form.id} className="relative col-span-1 realative ">
+                  <li key={form.id} className="relative col-span-1 ">
                     <div className="flex flex-col justify-between h-full bg-white rounded-md shadow">
                       <div className="px-4 py-5 text-lg sm:p-6">
                         {form.name}

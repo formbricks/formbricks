@@ -1,38 +1,11 @@
-import { HomeIcon, PlusIcon } from "@heroicons/react/outline";
+import { HomeIcon } from "@heroicons/react/outline";
 import Link from "next/link";
-import { useForm } from "../../lib/forms";
-import Router from "next/router";
-import StandardButton from "../StandardButton";
-import { createForm } from "../../lib/forms";
 
-export default function MenuBreadcrumbs({ formId }) {
-  const newForm = async () => {
-    const form = await createForm();
-    await Router.push(`/forms/${form.id}/welcome`);
-  };
-
-  const { form, isLoadingForm } = useForm(formId);
-
-  const pages = [
-    { name: "Forms", href: "/forms", current: false },
-    { name: form.name, href: "#", current: true },
-  ];
-
-  if (isLoadingForm) {
-    return <div />;
-  }
-
+export default function MenuBreadcrumbs({ breadcrumbs }) {
   return (
     <div className="hidden sm:flex sm:flex-1">
       <nav className="hidden lg:flex" aria-label="Breadcrumb">
         <ol className="flex items-center space-x-4">
-          <li>
-            <div>
-              <StandardButton icon secondary onClick={() => newForm()}>
-                <PlusIcon className="w-6 h-6" />
-              </StandardButton>
-            </div>
-          </li>
           <li>
             <div>
               <Link href="/forms/">
@@ -46,8 +19,8 @@ export default function MenuBreadcrumbs({ formId }) {
               </Link>
             </div>
           </li>
-          {pages.map((page) => (
-            <li key={page.name}>
+          {breadcrumbs.map((crumb) => (
+            <li key={crumb.name}>
               <div className="flex items-center">
                 <svg
                   className="flex-shrink-0 w-5 h-5 text-ui-gray-medium"
@@ -59,11 +32,10 @@ export default function MenuBreadcrumbs({ formId }) {
                   <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z" />
                 </svg>
                 <a
-                  href={page.href}
+                  href={crumb.href}
                   className="ml-4 text-sm font-medium text-ui-gray-dark hover:text-ui-gray-dark"
-                  aria-current={page.current ? "page" : undefined}
                 >
-                  {page.name}
+                  {crumb.name}
                 </a>
               </div>
             </li>

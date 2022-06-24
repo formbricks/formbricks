@@ -1,23 +1,23 @@
+import {
+  DocumentAddIcon,
+  EyeIcon,
+  PaperAirplaneIcon,
+  ShareIcon,
+} from "@heroicons/react/outline";
 import { NoCodeForm } from "@prisma/client";
+import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { v4 as uuidv4 } from "uuid";
 import { useForm } from "../../lib/forms";
 import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
+import SecondNavBar from "../layout/SecondNavBar";
 import Loading from "../Loading";
 import Page from "./Page";
 import ShareModal from "./ShareModal";
-import SecondNavBar from "../layout/SecondNavBar";
-import SecondNavBarItem from "../layout/SecondNavBarItem";
-import {
-  DocumentAddIcon,
-  PlusIcon,
-  EyeIcon,
-  ShareIcon,
-  PaperAirplaneIcon,
-} from "@heroicons/react/outline";
 
 export default function Builder({ formId }) {
+  const router = useRouter();
   const { form, isLoadingForm } = useForm(formId);
   const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
     useNoCodeForm(formId);
@@ -123,31 +123,39 @@ export default function Builder({ formId }) {
     return <Loading />;
   }
 
+  const noCodeSecondNavigation = [
+    {
+      id: "addPage",
+      onClick: () => addPage(),
+      Icon: DocumentAddIcon,
+      //Icon: PlusIcon
+      label: "Page",
+    },
+    {
+      id: "preview",
+      onClick: () => {
+        router.push(`/forms/${formId}/preview`);
+      },
+      Icon: EyeIcon,
+      label: "Preview",
+    },
+    {
+      id: "publish",
+      onClick: () => publishChanges(),
+      Icon: PaperAirplaneIcon,
+      label: "Publish",
+    },
+    {
+      id: "share",
+      onClick: () => setOpenShareModal(true),
+      Icon: ShareIcon,
+      label: "Share",
+    },
+  ];
+
   return (
     <>
-      <SecondNavBar>
-        <SecondNavBarItem>
-          <PlusIcon className="w-8 h-8 mx-auto stroke-1" />
-          Element
-        </SecondNavBarItem>
-        <SecondNavBarItem onClick={() => addPage()}>
-          <DocumentAddIcon className="w-8 h-8 mx-auto stroke-1" />
-          Page
-        </SecondNavBarItem>
-        <SecondNavBarItem link href={`/forms/${formId}/preview`}>
-          <EyeIcon className="w-8 h-8 mx-auto stroke-1" />
-          Preview
-        </SecondNavBarItem>
-        <SecondNavBarItem onClick={() => publishChanges()}>
-          <PaperAirplaneIcon className="w-8 h-8 mx-auto stroke-1" />
-          Publish
-        </SecondNavBarItem>
-        <SecondNavBarItem onClick={() => setOpenShareModal(true)}>
-          <ShareIcon className="w-8 h-8 mx-auto stroke-1" />
-          Share
-        </SecondNavBarItem>
-      </SecondNavBar>
-
+      <SecondNavBar navItems={noCodeSecondNavigation} />
       <div className="w-full bg-ui-gray-lighter">
         <div className="flex justify-center w-full">
           <div className="grid w-full grid-cols-1">

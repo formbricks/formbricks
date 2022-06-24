@@ -101,3 +101,11 @@
     @apply text-transparent bg-clip-text bg-gradient-to-br from-red to-pink-500 hover:to-red;
   }
 }
+
+.tooltip {
+  @apply absolute invisible;
+}
+
+.has-tooltip:hover .tooltip {
+  @apply z-50 visible;
+}

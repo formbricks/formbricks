@@ -13,7 +13,7 @@ export default function FormIndex() {
     if (!isLoadingSubmissionSessions) {
       // redirect to /results if there is at least one submissionSession
       if (submissionSessions.length > 0) {
-        router.push(`/forms/${formId}/results`);
+        router.push(`/forms/${formId}/results/summary`);
       } else {
         // redirect to /form if there isn't one submissionSession
         router.push(`/forms/${formId}/form`);

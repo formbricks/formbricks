@@ -35,7 +35,7 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
   }
 
   return (
-    <div className="flex flex-col flex-1 w-full mx-auto overflow-visible max-w-screen">
+    <div className="flex flex-col flex-1 w-full h-full mx-auto overflow-visible max-w-screen">
       <div className="relative z-0 flex flex-1 overflow-visible">
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none xl:order-last">
           <div className="overflow-visible sm:rounded-lg">

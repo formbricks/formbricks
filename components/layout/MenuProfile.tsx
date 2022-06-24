@@ -12,13 +12,15 @@ export default function MenuProfile({}) {
           <div className="inline-flex items-center ">
             <Menu.Button className="flex ml-3 text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
               <span className="sr-only">Open user menu</span>
-              <Image
-                className="w-8 h-8 rounded-full"
-                src="/img/avatar-placeholder.png"
-                alt="user avatar"
-                width={20}
-                height={20}
-              />
+              <div className="w-8 h-8">
+                <Image
+                  className="rounded-full"
+                  src="/img/avatar-placeholder.png"
+                  alt="user avatar"
+                  width={50}
+                  height={50}
+                />
+              </div>
             </Menu.Button>
           </div>
           <Transition

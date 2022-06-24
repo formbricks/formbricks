@@ -7,7 +7,7 @@ import {
 } from "../../lib/submissionSessions";
 import { SubmissionSummary } from "../../lib/types";
 import { timeSince } from "../../lib/utils";
-import AnalyticsCard from "../layout/AnalyticsCard";
+import AnalyticsCard from "./AnalyticsCard";
 import Loading from "../Loading";
 import TextResults from "./summary/TextResults";
 
@@ -36,20 +36,20 @@ export default function ResultsSummary({ formId }) {
           id: "uniqueUsers",
           name: "Unique Users",
           stat: analytics.uniqueUsers || "--",
-          toolTipText: "placeholder",
-          trend: 12,
+          toolTipText: "Tracked without cookies using fingerprinting technique",
+          trend: undefined,
         },
         {
           id: "totalSubmissions",
           name: "Total Submissions",
           stat: analytics.totalSubmissions || "--",
-          trend: 10,
+          trend: undefined,
         },
         {
           id: "lastSubmission",
           name: "Last Submission",
           stat: timeSince(analytics.lastSubmissionAt) || "--",
-          typeText: true,
+          smallerText: true,
         },
       ];
     }
@@ -60,25 +60,25 @@ export default function ResultsSummary({ formId }) {
   }
 
   return (
-    <main className="bg-gray-50">
-      <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
-        <h2 className="mt-8 text-xl font-bold text-ui-gray-dark">
-          Responses Overview
-        </h2>
-        <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2 lg:grid-cols-3">
-          {stats.map((item) => (
-            <AnalyticsCard
-              key={item.id}
-              KPI={item.stat}
-              label={item.name}
-              toolTipText={item.toolTipText}
-              typeText={item.typeText}
-              trend={item.trend}
-            />
-          ))}
-        </dl>
-        <div>
-          {summary.pages.map(
+    <>
+      <h2 className="mt-8 text-xl font-bold text-ui-gray-dark">
+        Responses Overview
+      </h2>
+      <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2 lg:grid-cols-3">
+        {stats.map((item) => (
+          <AnalyticsCard
+            key={item.id}
+            value={item.stat}
+            label={item.name}
+            toolTipText={item.toolTipText}
+            trend={item.trend}
+            smallerText={item.smallerText}
+          />
+        ))}
+      </dl>
+      <div>
+        {summary?.pages &&
+          summary.pages.map(
             (page) =>
               page.type === "form" && (
                 <div key={page.name}>
@@ -90,8 +90,7 @@ export default function ResultsSummary({ formId }) {
                 </div>
               )
           )}
-        </div>
       </div>
-    </main>
+    </>
   );
 }
