@@ -49,8 +49,6 @@ const Editor = ({ id, autofocus = false, onChange, value }) => {
       },
       autofocus: autofocus,
       tools: {
-        textQuestion: TextQuestion,
-        submitButton: SubmitButton,
         paragraph: {
           class: Paragraph,
           inlineToolbar: true,
@@ -67,6 +65,8 @@ const Editor = ({ id, autofocus = false, onChange, value }) => {
             defaultLevel: 1,
           },
         },
+        textQuestion: TextQuestion,
+        submitButton: SubmitButton,
       },
     });
   };

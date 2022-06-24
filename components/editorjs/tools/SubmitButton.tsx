@@ -40,7 +40,7 @@ export default class TextQuestion implements BlockTool {
   render(): HTMLElement {
     const container = document.createElement("div");
     const toolView = (
-      <div className="inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+      <div className="inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
         <div
           contentEditable
           id="label"
@@ -49,7 +49,7 @@ export default class TextQuestion implements BlockTool {
         >
           {this.label}
         </div>
-        <ArrowRightIcon className="w-5 h-5 ml-2 -mr-1" aria-hidden="true" />
+        {/*  <ArrowRightIcon className="w-5 h-5 ml-2 -mr-1" aria-hidden="true" /> */}
       </div>
     );
     ReactDOM.render(toolView, container);

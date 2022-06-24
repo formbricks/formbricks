@@ -49,7 +49,7 @@ export default class TextQuestion implements BlockTool {
     const container = document.createElement("div");
     const toolView = (
       <div className="pb-5">
-        <div className="text-lg font-bold leading-7 text-gray-800 sm:text-xl sm:truncate">
+        <div className="font-bold leading-7 text-gray-800 text-md sm:truncate">
           <input
             type="text"
             id="label"
