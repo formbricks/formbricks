@@ -8,7 +8,7 @@ interface Props {
   hintText: string;
   buttonText?: string;
   borderStyles?: string;
-  button?: boolean;
+  hasButton?: boolean;
 }
 
 const EmptyPageFiller: React.FC<Props> = ({
@@ -18,7 +18,7 @@ const EmptyPageFiller: React.FC<Props> = ({
   hintText,
   buttonText,
   borderStyles,
-  button = false,
+  hasButton = false,
 }) => {
   return (
     <div
@@ -32,7 +32,7 @@ const EmptyPageFiller: React.FC<Props> = ({
         {alertText}
       </h3>
       <p className="mt-1 text-xs font-light text-ui-gray-medium">{hintText}</p>
-      {button && (
+      {hasButton && (
         <div className="mt-6">
           <StandardButton onClick={onClick}>{buttonText}</StandardButton>
         </div>

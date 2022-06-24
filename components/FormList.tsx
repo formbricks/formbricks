@@ -7,9 +7,8 @@ import {
 } from "@heroicons/react/outline";
 import { DotsHorizontalIcon, TrashIcon } from "@heroicons/react/solid";
 import Link from "next/link";
-import Router from "next/router";
 import { Fragment, useState } from "react";
-import { createForm, useForms } from "../lib/forms";
+import { useForms } from "../lib/forms";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
 import EmptyPageFiller from "./layout/EmptyPageFiller";
@@ -52,7 +51,7 @@ export default function FormList() {
                 hintText="Start by creating a form."
                 buttonText="create form"
                 borderStyles="border-4 border-dotted border-red"
-                button={true}
+                hasButton={true}
               >
                 <DocumentAddIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
               </EmptyPageFiller>

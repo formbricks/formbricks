@@ -27,7 +27,7 @@ export default function Layout({ children }) {
       <Disclosure as="nav" className="bg-white shadow-sm">
         {({ open }) => (
           <>
-            <div className="max-w-5xl px-4 mx-auto sm:px-6 lg:px-8">
+            <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
               <div className="flex justify-between h-16">
                 <div className="flex">
                   <div className="flex items-center flex-shrink-0 w-48">
@@ -107,10 +107,12 @@ export default function Layout({ children }) {
               <div className="pt-4 pb-3 border-t border-ui-gray-light">
                 <div className="flex items-center px-4">
                   <div className="flex-shrink-0">
-                    <img
+                    <Image
                       className="w-10 h-10 rounded-full"
-                      src="https://images.unsplash.com/photo-1517365830460-955ce3ccd263?ixlib=rb-=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=8&w=256&h=256&q=80"
-                      alt=""
+                      src="/img/avatar-placeholder.png"
+                      alt="user avatar"
+                      width={20}
+                      height={20}
                     />
                   </div>
                 </div>

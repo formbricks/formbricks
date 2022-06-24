@@ -6,7 +6,7 @@ export default function TextResults({ element }) {
       <div className="flow-root px-8 my-4 mt-6 overflow-y-scroll text-center max-h-64">
         <ul className="-my-5 divide-y divide-ui-gray-light">
           {element.summary.map((answer) => (
-            <li key={answer} className="py-5">
+            <li key={answer} className="py-8">
               <div className="relative focus-within:ring-2 focus-within:ring-indigo-500">
                 <h3 className="text-sm text-gray-700">
                   {/* Extend touch target to entire panel */}

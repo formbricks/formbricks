@@ -1,10 +1,11 @@
-import { ClockIcon, InboxIcon, UsersIcon } from "@heroicons/react/outline";
+import Image from "next/image";
 import { useMemo } from "react";
 import {
   getSubmissionAnalytics,
   useSubmissionSessions,
 } from "../../lib/submissionSessions";
 import { timeSince } from "../../lib/utils";
+import AnalyticsCard from "../layout/AnalyticsCard";
 
 export default function ResultsAnalytics({ formId }) {
   const { submissionSessions, isLoadingSubmissionSessions } =
@@ -22,55 +23,72 @@ export default function ResultsAnalytics({ formId }) {
         {
           id: "uniqueUsers",
           name: "Unique Users",
-          stat: analytics.uniqueUsers,
-          icon: UsersIcon,
+          stat: analytics.uniqueUsers || "--",
+          toolTipText: "placeholder",
+          trend: 12,
         },
         {
           id: "totalSubmissions",
           name: "Total Submissions",
-          stat: analytics.totalSubmissions,
-          icon: InboxIcon,
+          stat: analytics.totalSubmissions || "--",
+          trend: 10,
         },
         {
-          id: "uniqueUsers",
+          id: "lastSubmission",
           name: "Last Submission",
-          stat: timeSince(analytics.lastSubmissionAt) || "-",
-          icon: ClockIcon,
+          stat: timeSince(analytics.lastSubmissionAt) || "--",
+          typeText: true,
         },
       ];
     }
   }, [analytics]);
   return (
     <main>
-      <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto sm:px-6 lg:px-8">
+        <h2 className="mt-8 text-xl font-bold text-ui-gray-dark">Analytics</h2>
         <div>
           {stats ? (
             <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2 lg:grid-cols-3">
               {stats.map((item) => (
-                <div
+                <AnalyticsCard
                   key={item.id}
-                  className="relative px-4 bg-white rounded-lg shadow pt-5overflow-hidden sm:pt-6 sm:px-6"
-                >
-                  <dt>
-                    <div className="absolute p-3 rounded-md bg-red-500">
-                      <item.icon
-                        className="w-6 h-6 text-white"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <p className="ml-16 text-sm font-medium text-gray-500 truncate">
-                      {item.name}
-                    </p>
-                  </dt>
-                  <dd className="flex items-baseline ml-16 sm:pb-7">
-                    <p className="text-xl font-semibold text-gray-800">
-                      {item.stat}
-                    </p>
-                  </dd>
-                </div>
+                  KPI={item.stat}
+                  label={item.name}
+                  toolTipText={item.toolTipText}
+                  typeText={item.typeText}
+                  trend={item.trend}
+                />
               ))}
             </dl>
           ) : null}
+        </div>
+        <div className="flex items-end">
+          <h2 className="mt-16 text-xl font-bold text-ui-gray-dark">
+            Optimize Form
+          </h2>
+          <div className="px-3 py-2 ml-2 text-xs text-green-800 rounded-sm bg-green-50">
+            <p>coming soon</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-10 mt-8">
+          <div className="relative p-8 bg-white rounded-md shadow-md h-60">
+            <Image
+              src="/../../img/drop-offs-v1.svg"
+              alt="drop-off"
+              objectFit="cover"
+              layout="fill"
+              className="rounded-md"
+            />
+          </div>
+          <div className="relative p-8 bg-white rounded-md shadow-md h-60">
+            <Image
+              src="/../../img/a-b-test-v1.svg"
+              alt="drop-off"
+              objectFit="cover"
+              layout="fill"
+              className="rounded-md"
+            />
+          </div>
         </div>
       </div>
     </main>

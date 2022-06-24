@@ -1,20 +1,23 @@
 import { Menu, Transition } from "@headlessui/react";
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 import { Fragment } from "react";
 import { classNames } from "../../lib/utils";
 
 export default function MenuProfile({}) {
   return (
-    <Menu as="div" className="relative flex-shrink-0">
+    <Menu as="div" className="relative z-50 flex-shrink-0">
       {({ open }) => (
         <>
           <div className="inline-flex items-center ">
             <Menu.Button className="flex ml-3 text-sm bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
               <span className="sr-only">Open user menu</span>
-              <img
+              <Image
                 className="w-8 h-8 rounded-full"
                 src="/img/avatar-placeholder.png"
-                alt=""
+                alt="user avatar"
+                width={20}
+                height={20}
               />
             </Menu.Button>
           </div>

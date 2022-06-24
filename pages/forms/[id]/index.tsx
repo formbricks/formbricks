@@ -19,7 +19,7 @@ export default function FormIndex() {
         router.push(`/forms/${formId}/form`);
       }
     }
-  }, [isLoadingSubmissionSessions]);
+  }, [isLoadingSubmissionSessions, formId, router, submissionSessions]);
 
   return <Loading />;
 }

@@ -1,4 +1,4 @@
-import { DocumentSearchIcon } from "@heroicons/react/outline";
+import { DocumentSearchIcon, TerminalIcon } from "@heroicons/react/outline";
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
@@ -26,6 +26,10 @@ export default function ReactPage() {
         currentStep="pipelines"
       >
         <SecondNavBar>
+          <SecondNavBarItem link href={`/forms/${formId}/form`}>
+            <TerminalIcon className="w-8 h-8 mx-auto stroke-1" />
+            formID
+          </SecondNavBarItem>
           <SecondNavBarItem link href={`/forms/${formId}/react`}>
             <FaReact className="w-8 h-8 mx-auto stroke-1" />
             React
@@ -81,7 +85,7 @@ export default function ReactPage() {
             </p>
           </div>
           <div className="p-8 font-light text-gray-200 bg-black rounded-md">
-            <code>{`<SnoopForm
+            <code className="whitespace-pre language-js">{`<SnoopForm
   domain="localhost:3000"
   protocol="http"
   className="w-full space-y-6"
@@ -97,9 +101,11 @@ export default function ReactPage() {
          element: "your-input-class",}}
          required/>
       </SnoopPage>
+
       <SnoopPage thankyou>
         <h1>Thank you!</h1>
       </SnoopPage>
+      
     </SnoopForm>`}</code>
           </div>
         </div>

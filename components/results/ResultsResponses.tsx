@@ -28,7 +28,7 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
     if (!isLoadingSubmissionSessions && submissionSessions.length > 0) {
       setActiveSubmissionSession(submissionSessions[0]);
     }
-  }, [isLoadingSubmissionSessions]);
+  }, [isLoadingSubmissionSessions, submissionSessions]);
 
   if (isLoadingSubmissionSessions) {
     return <Loading />;
