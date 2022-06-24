@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:prod": "node prisma/seed.js"
   },
   "dependencies": {
     "@editorjs/editorjs": "^2.24.3",

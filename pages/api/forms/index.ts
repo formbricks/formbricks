@@ -24,9 +24,9 @@ export default async function handle(
         owner: {
           select: { name: true },
         },
-        submissionSessions: {
-          select: { id: true },
-        }
+        _count: {
+          select: { submissionSessions: true },
+        },
       },
     });
     res.json(formData);

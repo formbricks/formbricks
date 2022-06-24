@@ -25,7 +25,6 @@ model Form {
   formType            FormType  @default(NOCODE)
   name                String
   published           Boolean   @default(false)
-  finishedOnboarding  Boolean   @default(false)
   schema              Json
   submissionSessions  SubmissionSession[]
   pipelines           Pipeline[]

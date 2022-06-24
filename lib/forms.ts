@@ -35,12 +35,12 @@ export const persistForm = async (form) => {
   }
 };
 
-export const createForm = async () => {
+export const createForm = async (form = {}) => {
   try {
     const res = await fetch(`/api/forms`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
+      body: JSON.stringify(form),
     });
     return await res.json();
   } catch (error) {

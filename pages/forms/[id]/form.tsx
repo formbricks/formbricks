@@ -17,11 +17,6 @@ export default function FormPage() {
     return <Loading />;
   }
 
-  if (!form.finishedOnboarding) {
-    router.push(`/forms/${formId}/welcome`);
-    return <div></div>;
-  }
-
   if (form.formType === "NOCODE") {
     return (
       <>

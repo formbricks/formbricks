@@ -9,7 +9,7 @@ async function main() {
     const passwordHash = await hash(process.env.ADMIN_PASSWORD, 12);
 
     if (typeof passwordHash === "string") {
-      const userData: Prisma.UserCreateInput[] = [
+      const users: Prisma.UserCreateInput[] = [
         {
           name: "Admin",
           email: process.env.ADMIN_EMAIL,
@@ -17,11 +17,15 @@ async function main() {
         },
       ];
 
-      for (const u of userData) {
-        const user = await prisma.user.create({
-          data: u,
+      for (const user of users) {
+        const userRes = await prisma.user.upsert({
+          where: {
+            email: user.email,
+          },
+          update: {},
+          create: user,
         });
-        console.log(`Created user with id: ${user.id}`);
+        console.log(`Created user with id: ${userRes.id}`);
       }
       console.log(`Seeding finished.`);
     }

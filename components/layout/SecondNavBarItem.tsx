@@ -5,11 +5,11 @@ import Link from "next/link";
 interface Props {
   children: React.ReactNode;
   onClick?: () => void;
-  itemLabel: string;
+  itemLabel?: string;
   disabled?: boolean;
   link?: boolean;
   outbound?: boolean;
-  href: string;
+  href?: string;
 }
 
 // button component, consuming props

@@ -91,7 +91,7 @@ yarn dev
 
 ## Deployment
 
-The easiest way to deploy snoopForms yourself on your own machine is using Docker. This requires Docker and docker-compose on your system to work.
+The easiest way to deploy snoopForms yourself on your own machine is using Docker. This requires Docker and the docker compose plugin on your system to work.
 
 Clone the repository:
 
@@ -109,11 +109,11 @@ cp .env.example .env && nano .env
 
 ```
 
-Start the docker-compose process to build and spin up the snoopForms container as well as the postgres database.
+Start the docker compose process to build and spin up the snoopForms container as well as the postgres database.
 
 ```
 
-docker-compose up -d
+docker compose up -d
 
 ```
 

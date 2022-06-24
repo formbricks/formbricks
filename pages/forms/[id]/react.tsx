@@ -1,16 +1,13 @@
+import { DocumentSearchIcon } from "@heroicons/react/outline";
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import { FaDiscord, FaReact, FaVuejs } from "react-icons/fa";
 import LayoutFormBasics from "../../../components/layout/LayoutFormBasic";
-import Loading from "../../../components/Loading";
-import StandardButton from "../../../components/StandardButton";
-import { useForm } from "../../../lib/forms";
-import { DocumentSearchIcon } from "@heroicons/react/outline";
-import Link from "next/link";
 import SecondNavBar from "../../../components/layout/SecondNavBar";
 import SecondNavBarItem from "../../../components/layout/SecondNavBarItem";
-import { FaReact, FaVuejs } from "react-icons/fa";
-import { FaDiscord } from "react-icons/fa";
+import Loading from "../../../components/Loading";
+import { useForm } from "../../../lib/forms";
 
 export default function ReactPage() {
   const router = useRouter();

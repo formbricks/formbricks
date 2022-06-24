@@ -9,7 +9,12 @@ services:
 
   snoopforms:
     build: .
-    command: [sh, -c, "yarn prisma:migrate && yarn start"]
+    command:
+      [
+        sh,
+        -c,
+        "yarn prisma migrate deploy && yarn prisma db seed && yarn start",
+      ]
     depends_on:
       - postgres
     ports:
