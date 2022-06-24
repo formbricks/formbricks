@@ -35,10 +35,6 @@ export default function FormList() {
     }
   };
 
-  {
-    console.log(JSON.stringify(forms, null, 2));
-  }
-
   return (
     <>
       <div>

@@ -37,7 +37,7 @@ export default async function handle(
   // Required fields in body: -
   // Optional fields in body: title, elements, elementsDraft
   else if (req.method === "POST") {
-    const { name, schema } = req.body;
+    const form = req.body;
 
     const session = await getSession({ req });
     // get unique alphanumeric ID
@@ -50,9 +50,8 @@ export default async function handle(
     // create form in database
     const result = await prisma.form.create({
       data: {
+        ...form,
         id,
-        name: name || "",
-        schema: schema || {},
         owner: { connect: { email: session?.user?.email } },
       },
     });

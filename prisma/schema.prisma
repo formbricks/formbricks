@@ -23,9 +23,9 @@ model Form {
   owner               User      @relation(fields: [ownerId], references: [id])
   ownerId             Int
   formType            FormType  @default(NOCODE)
-  name                String
+  name                String    @default("")
   published           Boolean   @default(false)
-  schema              Json
+  schema              Json      @default("{}")
   submissionSessions  SubmissionSession[]
   pipelines           Pipeline[]
   noCodeForm          NoCodeForm?

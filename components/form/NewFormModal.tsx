@@ -38,7 +38,7 @@ export default function NewFormModal({
   const [name, setName] = useState("");
   const [formType, setFormType] = useState(formTypes[0]);
 
-  const submitForm = async (e) => {
+  const createFormAction = async (e) => {
     e.preventDefault();
     const form = await createForm({
       name,
@@ -93,7 +93,7 @@ export default function NewFormModal({
                   </h2>
                 </div>
                 <form
-                  onSubmit={(e) => submitForm(e)}
+                  onSubmit={(e) => createFormAction(e)}
                   className="inline-block w-full p-2 overflow-hidden text-left align-bottom transition-all transform sm:align-middle"
                 >
                   <div>

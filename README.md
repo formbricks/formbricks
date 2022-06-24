@@ -75,7 +75,7 @@ cp .env.example .env
 
 ```
 
-npx prisma migrate dev
+yarn prisma migrate dev
 
 ```
 

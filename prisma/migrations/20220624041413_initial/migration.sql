@@ -11,9 +11,9 @@ CREATE TABLE "Form" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "ownerId" INTEGER NOT NULL,
     "formType" "FormType" NOT NULL DEFAULT E'NOCODE',
-    "name" TEXT NOT NULL,
+    "name" TEXT NOT NULL DEFAULT E'',
     "published" BOOLEAN NOT NULL DEFAULT false,
-    "schema" JSONB NOT NULL,
+    "schema" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Form_pkey" PRIMARY KEY ("id")
 );

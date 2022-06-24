@@ -123,10 +123,6 @@ export default function Builder({ formId }) {
     return <Loading />;
   }
 
-  {
-    console.log("loaded nocode");
-  }
-
   return (
     <>
       <SecondNavBar>
