@@ -8,12 +8,14 @@ import SecondNavBar from "../../../../components/layout/SecondNavBar";
 import Loading from "../../../../components/Loading";
 import { useForm } from "../../../../lib/forms";
 import { useCodeSecondNavigation } from "../../../../lib/navigation/formCodeSecondNavigation";
+import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
 
 export default function ReactPage() {
   const router = useRouter();
   const formId = router.query.id.toString();
   const { form, isLoadingForm } = useForm(router.query.id);
   const codeSecondNavigation = useCodeSecondNavigation(formId);
+  const formMenuSteps = useFormMenuSteps(formId);
 
   if (isLoadingForm) {
     return <Loading />;
@@ -24,6 +26,8 @@ export default function ReactPage() {
       <BaseLayoutAuthorized
         title={form.name}
         breadcrumbs={[{ name: form.name, href: "#", current: true }]}
+        steps={formMenuSteps}
+        currentStep="form"
       >
         <SecondNavBar navItems={codeSecondNavigation} currentItemId="react" />
         <LimitedWidth>

@@ -3,7 +3,7 @@ interface Props {
 }
 
 const LimitedWidth: React.FC<Props> = ({ children }) => {
-  return <main className="h-full mx-auto max-w-7xl">{children}</main>;
+  return <main className="w-full h-full max-w-5xl mx-auto">{children}</main>;
 };
 
 export default LimitedWidth;
