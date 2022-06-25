@@ -1,14 +1,23 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Dialog, Transition } from "@headlessui/react";
-import { XIcon } from "@heroicons/react/outline";
+import { InformationCircleIcon, XIcon } from "@heroicons/react/outline";
 import { Fragment } from "react";
+import { useNoCodeForm } from "../../lib/noCodeForm";
+import Loading from "../Loading";
 
 export default function ShareModal({ open, setOpen, formId }) {
+  const { noCodeForm, isLoadingNoCodeForm } = useNoCodeForm(formId);
+
   const getPublicFormUrl = () => {
     if (process.browser) {
       return `${window.location.protocol}//${window.location.host}/f/${formId}/`;
     }
   };
+
+  if (isLoadingNoCodeForm) {
+    return <Loading />;
+  }
+
   return (
     <Transition.Root show={open} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={setOpen}>
@@ -46,40 +55,60 @@ export default function ShareModal({ open, setOpen, formId }) {
                     <XIcon className="w-6 h-6" aria-hidden="true" />
                   </button>
                 </div>
-                <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">
-                    Share your form
-                  </h3>
-                  <div className="max-w-xl mt-2 text-sm text-gray-500">
-                    <p>
-                      Let your participants fill out your form by accessing it
-                      via the public link.
-                    </p>
-                  </div>
-                  <div className="mt-5 sm:flex sm:items-center">
-                    <div className="w-full sm:max-w-xs">
-                      <label htmlFor="surveyLink" className="sr-only">
-                        Public link
-                      </label>
-                      <input
-                        id="surveyLink"
-                        type="text"
-                        placeholder="Enter your email"
-                        className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
-                        value={getPublicFormUrl()}
-                        disabled
-                      />
+                {!noCodeForm.published ? (
+                  <div className="p-4 border border-gray-700 rounded-md bg-ui-gray-light">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <InformationCircleIcon
+                          className="w-5 h-5 text-blue-400"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <div className="flex-1 ml-3 md:flex md:justify-between">
+                        <p className="text-sm text-gray-700">
+                          You haven&apos;t published this form yet. Please
+                          publish this form to share it with others and get the
+                          first submissions.
+                        </p>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(getPublicFormUrl());
-                      }}
-                      className="inline-flex items-center justify-center w-full px-4 py-2 mt-3 font-medium text-white bg-gray-800 border border-transparent rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                    >
-                      Copy
-                    </button>
                   </div>
-                </div>
+                ) : (
+                  <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-lg font-medium leading-6 text-gray-900">
+                      Share your form
+                    </h3>
+                    <div className="max-w-xl mt-2 text-sm text-gray-500">
+                      <p>
+                        Let your participants fill out your form by accessing it
+                        via the public link.
+                      </p>
+                    </div>
+                    <div className="mt-5 sm:flex sm:items-center">
+                      <div className="w-full sm:max-w-xs">
+                        <label htmlFor="surveyLink" className="sr-only">
+                          Public link
+                        </label>
+                        <input
+                          id="surveyLink"
+                          type="text"
+                          placeholder="Enter your email"
+                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                          value={getPublicFormUrl()}
+                          disabled
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(getPublicFormUrl());
+                        }}
+                        className="inline-flex items-center justify-center w-full px-4 py-2 mt-3 font-medium text-white bg-gray-800 border border-transparent rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                )}
               </Dialog.Panel>
             </Transition.Child>
           </div>

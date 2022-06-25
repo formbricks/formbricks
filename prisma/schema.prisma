@@ -24,7 +24,6 @@ model Form {
   ownerId             Int
   formType            FormType  @default(NOCODE)
   name                String    @default("")
-  published           Boolean   @default(false)
   schema              Json      @default("{}")
   submissionSessions  SubmissionSession[]
   pipelines           Pipeline[]
@@ -39,6 +38,7 @@ model NoCodeForm {
   formId              String    @unique
   pages               Json      @default("[]")
   pagesDraft          Json      @default("[]")
+  published           Boolean   @default(false)
 }
 
 model Pipeline {

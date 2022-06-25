@@ -29,7 +29,10 @@ export default async function handle(
     if (!ownership) {
       return res
         .status(401)
-        .json({ message: "You are not authorized to change this noCodeForm" });
+        .json({
+          message:
+            "You are not authorized to access this form and their submissions",
+        });
     }
 
     const submissionSessionsData = await prisma.submissionSession.findMany({

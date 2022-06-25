@@ -37,7 +37,7 @@ export default function FormList() {
 
   return (
     <>
-      <div className="h-full px-6 py-8 lg:px-8">
+      <div className="h-full py-8">
         {forms &&
           (forms.length === 0 ? (
             <div className="mt-5 text-center">

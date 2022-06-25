@@ -1,20 +1,6 @@
 import { SnoopElement, SnoopForm, SnoopPage } from "@snoopforms/react";
-import { useMemo } from "react";
-import { useNoCodeForm } from "../../lib/noCodeForm";
-import Loading from "../Loading";
 
-export default function App({ id = "", formId, draft = false }) {
-  const { noCodeForm, isLoadingNoCodeForm } = useNoCodeForm(formId);
-  const pages = useMemo(() => {
-    if (!isLoadingNoCodeForm) {
-      return noCodeForm[draft ? "pagesDraft" : "pages"];
-    }
-  }, [draft, isLoadingNoCodeForm, noCodeForm]);
-
-  if (!pages) {
-    return <Loading />;
-  }
-
+export default function App({ id = "", formId, pages, localOnly = false }) {
   return (
     <div className="w-full px-5 py-5">
       <SnoopForm
@@ -22,7 +8,7 @@ export default function App({ id = "", formId, draft = false }) {
         domain={window.location.host}
         protocol={window.location.protocol === "http:" ? "http" : "https"}
         formId={formId}
-        localOnly={draft}
+        localOnly={localOnly}
         className="w-full max-w-3xl mx-auto space-y-6"
       >
         {pages.map((page) => (

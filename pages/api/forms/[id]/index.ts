@@ -15,6 +15,13 @@ export default async function handle(
 
   const formId = req.query.id.toString();
 
+  const ownership = await formHasOwnership(session, formId);
+  if (!ownership) {
+    return res
+      .status(401)
+      .json({ message: "You are not authorized to access this form" });
+  }
+
   // GET /api/forms/:id
   // Get form with specific id
   if (req.method === "GET") {
@@ -23,6 +30,7 @@ export default async function handle(
         id: formId,
       },
     });
+    if (formData === null) return res.status(404).json({ error: "not found" });
     return res.json(formData);
   }
   // POST /api/forms/:id
@@ -30,12 +38,6 @@ export default async function handle(
   // Required fields in body: -
   // Optional fields in body: title, published, finishedOnboarding, elements, elementsDraft
   else if (req.method === "POST") {
-    const ownership = await formHasOwnership(session, formId);
-    if (!ownership) {
-      return res
-        .status(401)
-        .json({ message: "You are not authorized to change this form" });
-    }
     const data = { ...req.body, updatedAt: new Date() };
     const prismaRes = await prisma.form.update({
       where: { id: formId },
@@ -43,12 +45,6 @@ export default async function handle(
     });
     return res.json(prismaRes);
   } else if (req.method === "DELETE") {
-    const ownership = await formHasOwnership(session, formId);
-    if (!ownership) {
-      return res
-        .status(401)
-        .json({ message: "You are not authorized to delete this form" });
-    }
     const prismaRes = await prisma.form.delete({
       where: { id: formId },
     });

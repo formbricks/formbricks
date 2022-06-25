@@ -1,19 +1,32 @@
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import App from "../../../components/frontend/App";
 import LayoutPreview from "../../../components/layout/LayoutPreview";
 import Loading from "../../../components/Loading";
 import { useForm } from "../../../lib/forms";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "react-toastify";
+import { useNoCodeForm } from "../../../lib/noCodeForm";
 
 export default function Share({}) {
   const router = useRouter();
   const formId = router.query.id.toString();
   const { form, isLoadingForm } = useForm(formId);
   const [appId, setAppId] = useState(uuidv4());
+
+  const { noCodeForm, isLoadingNoCodeForm, isErrorNoCodeForm } =
+    useNoCodeForm(formId);
+  const pages = useMemo(() => {
+    if (!isLoadingNoCodeForm) {
+      return noCodeForm["pagesDraft"];
+    }
+  }, [isLoadingNoCodeForm, noCodeForm]);
+
+  if (!pages) {
+    return <Loading />;
+  }
 
   const resetApp = () => {
     setAppId(uuidv4());
@@ -32,7 +45,7 @@ export default function Share({}) {
 
   return (
     <LayoutPreview formId={formId} resetApp={resetApp}>
-      <App id={appId} formId={formId} draft={true} />
+      <App id={appId} pages={pages} localOnly={true} formId={formId} />
     </LayoutPreview>
   );
 }

@@ -2,25 +2,29 @@ import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { useMemo } from "react";
 import App from "../../components/frontend/App";
 import Loading from "../../components/Loading";
-import { useForm } from "../../lib/forms";
+import { useNoCodeFormPublic } from "../../lib/noCodeForm";
 
 export default function Share({}) {
   const router = useRouter();
   const formId = router.query.id.toString();
-  const { form, isLoadingForm } = useForm(formId);
+  const { noCodeForm, isLoadingNoCodeForm, isErrorNoCodeForm } =
+    useNoCodeFormPublic(formId);
 
-  if (isLoadingForm) {
-    return <Loading />;
+  const pages = useMemo(() => {
+    if (!isLoadingNoCodeForm && !isErrorNoCodeForm) {
+      return noCodeForm["pages"];
+    }
+  }, [isLoadingNoCodeForm, noCodeForm, isErrorNoCodeForm]);
+
+  if (isErrorNoCodeForm) {
+    return <p>Not found</p>;
   }
 
-  if (form.formType !== "NOCODE") {
-    return (
-      <div>
-        Form Frontend is only avaiblable for Forms built with No-Code-Editor
-      </div>
-    );
+  if (isLoadingNoCodeForm || !pages) {
+    return <Loading />;
   }
 
   return (
@@ -28,7 +32,7 @@ export default function Share({}) {
       <Head>
         <title>SnoopForms</title>
       </Head>
-      <App formId={formId} />
+      <App formId={formId} pages={pages} />
     </>
   );
 }

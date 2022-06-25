@@ -1,7 +1,21 @@
 import intlFormat from "date-fns/intlFormat";
 import { formatDistance } from "date-fns";
 
-export const fetcher = (url) => fetch(url).then((res) => res.json());
+export const fetcher = async (url) => {
+  const res = await fetch(url);
+
+  // If the status code is not in the range 200-299,
+  // we still try to parse and throw it.
+  if (!res.ok) {
+    const error: any = new Error("An error occurred while fetching the data.");
+    // Attach extra info to the error object.
+    error.info = await res.json();
+    error.status = res.status;
+    throw error;
+  }
+
+  return res.json();
+};
 
 export const shuffle = (array) => {
   array = [...array];

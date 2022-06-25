@@ -109,6 +109,7 @@ export default function Builder({ formId }) {
   const publishChanges = async () => {
     const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
     newNoCodeForm.pages = newNoCodeForm.pagesDraft;
+    newNoCodeForm.published = true;
     await persistNoCodeForm(newNoCodeForm);
     mutateNoCodeForm(newNoCodeForm);
     setOpenShareModal(true);

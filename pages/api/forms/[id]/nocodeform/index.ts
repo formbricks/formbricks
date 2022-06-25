@@ -15,6 +15,13 @@ export default async function handle(
 
   const formId = req.query.id.toString();
 
+  const ownership = await formHasOwnership(session, formId);
+  if (!ownership) {
+    return res
+      .status(401)
+      .json({ message: "You are not authorized to access this noCodeForm" });
+  }
+
   // GET /api/forms/:id/nocodeform
   // Get noCodeForm for a form with specific id
   if (req.method === "GET") {
@@ -30,12 +37,6 @@ export default async function handle(
   // Required fields in body: -
   // Optional fields in body: title, published, finishedOnboarding, elements, elementsDraft
   else if (req.method === "POST") {
-    const ownership = await formHasOwnership(session, formId);
-    if (!ownership) {
-      return res
-        .status(401)
-        .json({ message: "You are not authorized to change this noCodeForm" });
-    }
     const data = { ...req.body, updatedAt: new Date() };
     // create or update record
     const prismaRes = await prisma.noCodeForm.upsert({
