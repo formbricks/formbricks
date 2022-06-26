@@ -45,7 +45,9 @@ export default function BaseLayoutAuthorized({
       <div
         className={classNames(
           bgClass,
-          limitHeightScreen ? "h-screen" : "min-h-screen",
+          limitHeightScreen
+            ? "h-screen max-h-screen overflow-hidden"
+            : "min-h-screen",
           "flex h-full"
         )}
       >

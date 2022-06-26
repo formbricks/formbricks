@@ -101,21 +101,19 @@ export default function Builder({ formId }) {
   return (
     <>
       <SecondNavBar navItems={noCodeSecondNavigation} />
-      <div className="w-full bg-ui-gray-lighter">
-        <div className="flex justify-center w-full">
-          <div className="relative w-full h-full py-10 bg-white">
-            <LimitedWidth>
-              {Editor && (
-                <Editor
-                  id="editor"
-                  formId={formId}
-                  editorRef={editorRef}
-                  autofocus={true}
-                  initAction={initAction}
-                />
-              )}
-            </LimitedWidth>
-          </div>
+      <div className="w-full h-full mb-20 overflow-auto bg-white">
+        <div className="flex justify-center w-full pt-10 pb-56">
+          <LimitedWidth>
+            {Editor && (
+              <Editor
+                id="editor"
+                formId={formId}
+                editorRef={editorRef}
+                autofocus={true}
+                initAction={initAction}
+              />
+            )}
+          </LimitedWidth>
         </div>
       </div>
       <ShareModal
