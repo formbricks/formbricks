@@ -1,7 +1,7 @@
 import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import { v4 as uuidv4 } from "uuid";
 import App from "../../../components/frontend/App";
@@ -16,16 +16,7 @@ export default function Share({}) {
   const { form, isLoadingForm } = useForm(formId);
   const [appId, setAppId] = useState(uuidv4());
 
-  const { noCodeForm, isLoadingNoCodeForm } = useNoCodeForm(formId);
-  const pages = useMemo(() => {
-    if (!isLoadingNoCodeForm) {
-      return noCodeForm["pagesDraft"];
-    }
-  }, [isLoadingNoCodeForm, noCodeForm]);
-
-  if (!pages) {
-    return <Loading />;
-  }
+  const { noCodeForm } = useNoCodeForm(formId);
 
   const resetApp = () => {
     setAppId(uuidv4());
@@ -44,7 +35,12 @@ export default function Share({}) {
 
   return (
     <LayoutPreview formId={formId} resetApp={resetApp}>
-      <App id={appId} pages={pages} localOnly={true} formId={formId} />
+      <App
+        id={appId}
+        blocks={noCodeForm.blocksDraft}
+        localOnly={true}
+        formId={formId}
+      />
     </LayoutPreview>
   );
 }

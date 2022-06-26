@@ -17,7 +17,7 @@ export default async function handle(
       select: {
         id: true,
         published: true,
-        pages: true,
+        blocks: true,
       },
     });
     if (data === null) return res.status(404).json({ error: "not found" });

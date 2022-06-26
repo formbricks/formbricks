@@ -13,6 +13,7 @@ interface BaseLayoutAuthorizedProps {
   steps?: any;
   currentStep?: string;
   children: React.ReactNode;
+  bgClass?: string;
   limitHeightScreen?: boolean;
 }
 
@@ -22,6 +23,7 @@ export default function BaseLayoutAuthorized({
   steps,
   currentStep,
   children,
+  bgClass = "bg-ui-gray-lighter",
   limitHeightScreen = false,
 }: BaseLayoutAuthorizedProps) {
   const { data: session, status } = useSession();
@@ -42,8 +44,9 @@ export default function BaseLayoutAuthorized({
       </Head>
       <div
         className={classNames(
+          bgClass,
           limitHeightScreen ? "h-screen" : "min-h-screen",
-          "flex bg-ui-gray-lighter h-full"
+          "flex h-full"
         )}
       >
         <div className="flex flex-col flex-1 h-full">

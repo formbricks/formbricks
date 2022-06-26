@@ -1,53 +1,73 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Fragment, useEffect, useRef, useState } from "react";
 import EditorJS from "@editorjs/editorjs";
+import Header from "@editorjs/header";
+import Paragraph from "@editorjs/paragraph";
 import DragDrop from "editorjs-drag-drop";
 import Undo from "editorjs-undo";
+import { Fragment, useEffect } from "react";
+import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
+import Loading from "../Loading";
+import PageTransition from "./tools/PageTransition";
 import TextQuestion from "./tools/TextQuestion";
-import SubmitButton from "./tools/SubmitButton";
-import Paragraph from "@editorjs/paragraph";
-import Header from "@editorjs/header";
 
-const Editor = ({ id, autofocus = false, onChange, value }) => {
-  const [blocks, setBlocks] = useState([]);
-  const ejInstance = useRef<EditorJS | null>();
+interface EditorProps {
+  id: string;
+  autofocus: boolean;
+  editorRef: { current: EditorJS | null };
+  formId: string;
+  initAction: (editor: EditorJS) => void;
+}
 
-  useEffect(() => {
-    if (ejInstance.current) {
-      onChange(blocks);
-    }
-  }, [blocks]);
+const Editor = ({
+  id,
+  autofocus = false,
+  editorRef,
+  formId,
+  initAction,
+}: EditorProps) => {
+  const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
+    useNoCodeForm(formId);
 
   // This will run only once
   useEffect(() => {
-    if (!ejInstance.current) {
-      initEditor();
+    if (!isLoadingNoCodeForm) {
+      if (!editorRef.current) {
+        initEditor();
+      }
     }
     return () => {
       destroyEditor();
     };
     async function destroyEditor() {
-      await ejInstance.current.isReady;
-      ejInstance.current.destroy();
-      ejInstance.current = null;
+      await editorRef.current.isReady;
+      editorRef.current.destroy();
+      editorRef.current = null;
     }
-  }, []);
+  }, [isLoadingNoCodeForm]);
 
   const initEditor = () => {
     const editor = new EditorJS({
       minHeight: 0,
       holder: id,
-      data: value,
+      data: { blocks: noCodeForm.blocksDraft },
       onReady: () => {
-        ejInstance.current = editor;
+        editorRef.current = editor;
         new DragDrop(editor);
         new Undo({ editor });
+        if (editor.blocks.getBlocksCount() === 1) {
+          initAction(editor);
+        }
       },
       onChange: async () => {
         let content = await editor.saver.save();
-        setBlocks(content.blocks);
+        const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
+        newNoCodeForm.blocksDraft = content.blocks;
+        await persistNoCodeForm(newNoCodeForm);
+        mutateNoCodeForm(newNoCodeForm);
+        mutateNoCodeForm(content.blocks, false);
       },
       autofocus: autofocus,
+      defaultBlock: "paragraph",
       tools: {
         paragraph: {
           class: Paragraph,
@@ -66,10 +86,14 @@ const Editor = ({ id, autofocus = false, onChange, value }) => {
           },
         },
         textQuestion: TextQuestion,
-        submitButton: SubmitButton,
+        pageTransition: PageTransition,
       },
     });
   };
+
+  if (isLoadingNoCodeForm) {
+    return <Loading />;
+  }
 
   return (
     <Fragment>

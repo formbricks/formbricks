@@ -33,6 +33,7 @@ export default function FormPage() {
           breadcrumbs={breadcrumbs}
           steps={formMenuSteps}
           currentStep="form"
+          bgClass="bg-white"
         >
           <FullWidth>
             <Builder formId={formId} />

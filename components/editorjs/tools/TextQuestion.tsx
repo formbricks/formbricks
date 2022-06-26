@@ -3,7 +3,8 @@ import ReactDOM from "react-dom";
 
 //styles imports in angular.json
 interface TextQuestionData extends BlockToolData {
-  latexString: string;
+  label: string;
+  placeholder: string;
 }
 
 export default class TextQuestion implements BlockTool {
@@ -54,7 +55,7 @@ export default class TextQuestion implements BlockTool {
             type="text"
             id="label"
             defaultValue={this.label}
-            className="block w-full p-0 border-0 border-transparent ring-0 focus:ring-0"
+            className="block w-full p-0 border-0 border-transparent ring-0 focus:ring-0 placeholder:text-gray-300"
             placeholder="Your Question"
           />
         </div>
