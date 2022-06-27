@@ -69,6 +69,8 @@ const Editor = ({
       autofocus: autofocus,
       defaultBlock: "paragraph",
       tools: {
+        textQuestion: TextQuestion,
+        pageTransition: PageTransition,
         paragraph: {
           class: Paragraph,
           inlineToolbar: true,
@@ -85,8 +87,6 @@ const Editor = ({
             defaultLevel: 1,
           },
         },
-        textQuestion: TextQuestion,
-        pageTransition: PageTransition,
       },
     });
   };
