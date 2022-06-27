@@ -68,7 +68,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                         element:
                           "flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full min-w-0 rounded-md sm:text-base border-gray-300",
                       }}
-                      required
+                      required={block.data.required}
                     />
                   </div>
                 ) : block.type === "submitButton" ? (
