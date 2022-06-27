@@ -39,7 +39,7 @@ export default function Builder({ formId }) {
 
   const initAction = async (editor: EditorJS) => {
     editor.blocks.insert("header", {
-      text: "test",
+      text: noCodeForm.form.name,
     });
     const focusBlock = editor.blocks.insert("textQuestion");
     editor.blocks.insert("pageTransition", {

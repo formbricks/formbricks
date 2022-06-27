@@ -16,14 +16,14 @@ export default function Share({}) {
   const { form, isLoadingForm } = useForm(formId);
   const [appId, setAppId] = useState(uuidv4());
 
-  const { noCodeForm } = useNoCodeForm(formId);
+  const { noCodeForm, isLoadingNoCodeForm } = useNoCodeForm(formId);
 
   const resetApp = () => {
     setAppId(uuidv4());
     toast("Form reset successful");
   };
 
-  if (isLoadingForm) {
+  if (isLoadingForm || isLoadingNoCodeForm) {
     return <Loading />;
   }
 
