@@ -42,13 +42,13 @@ export default async function handle(
   // Required fields in body: -
   // Optional fields in body: title, published, finishedOnboarding, elements, elementsDraft
   else if (req.method === "POST") {
-    const { id, createdAt, formId, blocks, blocksDraft, published } = req.body;
+    const { id, createdAt, blocks, blocksDraft, published } = req.body;
     const data = {
       id,
       createdAt,
-      formId,
       blocks,
       blocksDraft,
+      formId,
       published,
       updatedAt: new Date(),
     };

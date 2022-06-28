@@ -64,7 +64,6 @@ const Editor = ({
         newNoCodeForm.blocksDraft = content.blocks;
         await persistNoCodeForm(newNoCodeForm);
         mutateNoCodeForm(newNoCodeForm);
-        mutateNoCodeForm(content.blocks, false);
       },
       autofocus: autofocus,
       defaultBlock: "paragraph",

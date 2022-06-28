@@ -14,6 +14,7 @@ import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
 import LimitedWidth from "../layout/LimitedWidth";
 import SecondNavBar from "../layout/SecondNavBar";
 import Loading from "../Loading";
+import LoadingModal from "../LoadingModal";
 import ShareModal from "./ShareModal";
 let Editor = dynamic(() => import("../editorjs/Editor"), {
   ssr: false,
@@ -26,6 +27,7 @@ export default function Builder({ formId }) {
   const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
     useNoCodeForm(formId);
   const [openShareModal, setOpenShareModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const addPage = () => {
     editorRef.current.blocks.insert("pageTransition", {
@@ -55,13 +57,16 @@ export default function Builder({ formId }) {
   };
 
   const publishChanges = async () => {
-    const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
-    newNoCodeForm.blocks = newNoCodeForm.blocksDraft;
-    newNoCodeForm.published = true;
-    await persistNoCodeForm(newNoCodeForm);
-    mutateNoCodeForm(newNoCodeForm);
-    setOpenShareModal(true);
-    toast("Your changes are now live 🎉");
+    setLoading(true);
+    setTimeout(async () => {
+      const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
+      newNoCodeForm.blocks = newNoCodeForm.blocksDraft;
+      newNoCodeForm.published = true;
+      await persistNoCodeForm(newNoCodeForm);
+      mutateNoCodeForm(newNoCodeForm);
+      setLoading(false);
+      toast("Your changes are now live 🎉");
+    }, 500);
   };
 
   const noCodeSecondNavigation = [
@@ -121,6 +126,7 @@ export default function Builder({ formId }) {
         setOpen={setOpenShareModal}
         formId={formId}
       />
+      <LoadingModal isLoading={loading} />
     </>
   );
 }
