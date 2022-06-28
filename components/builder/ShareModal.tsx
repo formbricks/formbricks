@@ -4,6 +4,7 @@ import { InformationCircleIcon, XIcon } from "@heroicons/react/outline";
 import { Fragment } from "react";
 import { useNoCodeForm } from "../../lib/noCodeForm";
 import Loading from "../Loading";
+import { toast } from "react-toastify";
 
 export default function ShareModal({ open, setOpen, formId }) {
   const { noCodeForm, isLoadingNoCodeForm } = useNoCodeForm(formId);
@@ -101,6 +102,7 @@ export default function ShareModal({ open, setOpen, formId }) {
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(getPublicFormUrl());
+                          toast("Link copied to clipboard 🙌");
                         }}
                         className="inline-flex items-center justify-center w-full px-4 py-2 mt-3 font-medium text-white bg-gray-800 border border-transparent rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                       >

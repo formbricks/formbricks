@@ -12,7 +12,6 @@ CREATE TABLE "Form" (
     "ownerId" INTEGER NOT NULL,
     "formType" "FormType" NOT NULL DEFAULT E'NOCODE',
     "name" TEXT NOT NULL DEFAULT E'',
-    "published" BOOLEAN NOT NULL DEFAULT false,
     "schema" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Form_pkey" PRIMARY KEY ("id")
@@ -24,8 +23,9 @@ CREATE TABLE "NoCodeForm" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "formId" TEXT NOT NULL,
-    "pages" JSONB NOT NULL DEFAULT '[]',
-    "pagesDraft" JSONB NOT NULL DEFAULT '[]',
+    "blocks" JSONB NOT NULL DEFAULT '[]',
+    "blocksDraft" JSONB NOT NULL DEFAULT '[]',
+    "published" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "NoCodeForm_pkey" PRIMARY KEY ("id")
 );

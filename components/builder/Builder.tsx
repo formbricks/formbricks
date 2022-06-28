@@ -65,7 +65,7 @@ export default function Builder({ formId }) {
       await persistNoCodeForm(newNoCodeForm);
       mutateNoCodeForm(newNoCodeForm);
       setLoading(false);
-      toast("Your changes are now live 🎉");
+      toast("Your changes are now public 🎉");
     }, 500);
   };
 

@@ -20,7 +20,7 @@ export default function Share({}) {
 
   const resetApp = () => {
     setAppId(uuidv4());
-    toast("Form reset successful");
+    toast("Form resetted 👌");
   };
 
   if (isLoadingForm || isLoadingNoCodeForm) {
