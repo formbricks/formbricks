@@ -47,6 +47,9 @@ export default function Builder({ formId }) {
     editor.blocks.insert("pageTransition", {
       submitLabel: "Submit",
     });
+    editor.blocks.insert("header", {
+      text: "Thank you",
+    });
     editor.blocks.insert("paragraph", {
       text: "Thank you for taking the time to fill out this form 🙏",
     });
@@ -65,7 +68,7 @@ export default function Builder({ formId }) {
       await persistNoCodeForm(newNoCodeForm);
       mutateNoCodeForm(newNoCodeForm);
       setLoading(false);
-      toast("Your changes are now live 🎉");
+      toast("Your changes are now public 🎉");
     }, 500);
   };
 
