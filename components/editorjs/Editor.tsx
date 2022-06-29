@@ -4,7 +4,8 @@ import Header from "@editorjs/header";
 import Paragraph from "@editorjs/paragraph";
 import DragDrop from "editorjs-drag-drop";
 import Undo from "editorjs-undo";
-import { Fragment, useEffect } from "react";
+import { Fragment, useCallback, useEffect } from "react";
+import { toast } from "react-toastify";
 import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
 import Loading from "../Loading";
 import PageTransition from "./tools/PageTransition";
@@ -27,6 +28,21 @@ const Editor = ({
 }: EditorProps) => {
   const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
     useNoCodeForm(formId);
+
+  const keyPressListener = useCallback((e) => {
+    if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      toast("snoopForms autosaves your work ✌️");
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("keydown", keyPressListener);
+    // Remove event listeners on cleanup
+    return () => {
+      window.removeEventListener("keydown", keyPressListener);
+    };
+  }, [keyPressListener]);
 
   // This will run only once
   useEffect(() => {
