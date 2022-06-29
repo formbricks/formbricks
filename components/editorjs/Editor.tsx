@@ -1,54 +1,91 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Fragment, useEffect, useRef, useState } from "react";
 import EditorJS from "@editorjs/editorjs";
+import Header from "@editorjs/header";
+import Paragraph from "@editorjs/paragraph";
 import DragDrop from "editorjs-drag-drop";
 import Undo from "editorjs-undo";
+import { Fragment, useCallback, useEffect } from "react";
+import { toast } from "react-toastify";
+import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
+import Loading from "../Loading";
+import PageTransition from "./tools/PageTransition";
 import TextQuestion from "./tools/TextQuestion";
-import SubmitButton from "./tools/SubmitButton";
-import Paragraph from "@editorjs/paragraph";
-import Header from "@editorjs/header";
 
-const Editor = ({ id, autofocus = false, onChange, value }) => {
-  const [blocks, setBlocks] = useState([]);
-  const ejInstance = useRef<EditorJS | null>();
+interface EditorProps {
+  id: string;
+  autofocus: boolean;
+  editorRef: { current: EditorJS | null };
+  formId: string;
+  initAction: (editor: EditorJS) => void;
+}
+
+const Editor = ({
+  id,
+  autofocus = false,
+  editorRef,
+  formId,
+  initAction,
+}: EditorProps) => {
+  const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
+    useNoCodeForm(formId);
+
+  const keyPressListener = useCallback((e) => {
+    if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      toast("snoopForms autosaves your work ✌️");
+    }
+  }, []);
 
   useEffect(() => {
-    if (ejInstance.current) {
-      onChange(blocks);
-    }
-  }, [blocks]);
+    window.addEventListener("keydown", keyPressListener);
+    // Remove event listeners on cleanup
+    return () => {
+      window.removeEventListener("keydown", keyPressListener);
+    };
+  }, [keyPressListener]);
 
   // This will run only once
   useEffect(() => {
-    if (!ejInstance.current) {
-      initEditor();
+    if (!isLoadingNoCodeForm) {
+      if (!editorRef.current) {
+        initEditor();
+      }
     }
     return () => {
       destroyEditor();
     };
     async function destroyEditor() {
-      await ejInstance.current.isReady;
-      ejInstance.current.destroy();
-      ejInstance.current = null;
+      await editorRef.current.isReady;
+      editorRef.current.destroy();
+      editorRef.current = null;
     }
-  }, []);
+  }, [isLoadingNoCodeForm]);
 
   const initEditor = () => {
     const editor = new EditorJS({
       minHeight: 0,
       holder: id,
-      data: value,
+      data: { blocks: noCodeForm.blocksDraft },
       onReady: () => {
-        ejInstance.current = editor;
+        editorRef.current = editor;
         new DragDrop(editor);
         new Undo({ editor });
+        if (editor.blocks.getBlocksCount() === 1) {
+          initAction(editor);
+        }
       },
       onChange: async () => {
         let content = await editor.saver.save();
-        setBlocks(content.blocks);
+        const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
+        newNoCodeForm.blocksDraft = content.blocks;
+        await persistNoCodeForm(newNoCodeForm);
+        mutateNoCodeForm(newNoCodeForm);
       },
       autofocus: autofocus,
+      defaultBlock: "paragraph",
       tools: {
+        textQuestion: TextQuestion,
+        pageTransition: PageTransition,
         paragraph: {
           class: Paragraph,
           inlineToolbar: true,
@@ -65,11 +102,13 @@ const Editor = ({ id, autofocus = false, onChange, value }) => {
             defaultLevel: 1,
           },
         },
-        textQuestion: TextQuestion,
-        submitButton: SubmitButton,
       },
     });
   };
+
+  if (isLoadingNoCodeForm) {
+    return <Loading />;
+  }
 
   return (
     <Fragment>

@@ -13,6 +13,7 @@ interface BaseLayoutAuthorizedProps {
   steps?: any;
   currentStep?: string;
   children: React.ReactNode;
+  bgClass?: string;
   limitHeightScreen?: boolean;
 }
 
@@ -22,6 +23,7 @@ export default function BaseLayoutAuthorized({
   steps,
   currentStep,
   children,
+  bgClass = "bg-ui-gray-lighter",
   limitHeightScreen = false,
 }: BaseLayoutAuthorizedProps) {
   const { data: session, status } = useSession();
@@ -42,15 +44,18 @@ export default function BaseLayoutAuthorized({
       </Head>
       <div
         className={classNames(
-          limitHeightScreen ? "h-screen" : "min-h-screen",
-          "flex bg-ui-gray-lighter h-full"
+          bgClass,
+          limitHeightScreen
+            ? "h-screen max-h-screen overflow-hidden"
+            : "min-h-screen",
+          "flex h-full"
         )}
       >
         <div className="flex flex-col flex-1 h-full">
           <header className="w-full">
             <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-ui-gray-light">
               <div className="flex justify-between flex-1">
-                <div className="inline-flex flex-1 gap-8">
+                <div className="flex flex-1 space-x-8">
                   <NewFormNavButton />
                   <MenuBreadcrumbs breadcrumbs={breadcrumbs} />
                 </div>
@@ -59,8 +64,10 @@ export default function BaseLayoutAuthorized({
                     <MenuSteps steps={steps} currentStep={currentStep} />
                   )}
                 </div>
-                <div className="flex items-center justify-end flex-1 mr-4 space-x-2 text-right sm:ml-6 sm:space-x-4">
-                  <MenuProfile />
+                <div className="flex items-center justify-end flex-1 space-x-2 text-right sm:space-x-4">
+                  <div className="mr-6">
+                    <MenuProfile />
+                  </div>
                 </div>
               </div>
             </div>

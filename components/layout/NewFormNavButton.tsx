@@ -16,7 +16,7 @@ export default function NewFormNavButton({}) {
             <li>
               <div className="inline-flex items-center px-6 py-2 text-sm font-medium leading-4 bg-transparent border border-transparent hover:text-white focus:outline-none">
                 <PlusIcon className="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
-                Start New Form
+                create form
               </div>
             </li>
           </ol>

@@ -29,6 +29,11 @@ export default async function handle(
       where: {
         formId: formId,
       },
+      include: {
+        form: {
+          select: { name: true },
+        },
+      },
     });
     return res.json(data);
   }
@@ -37,7 +42,16 @@ export default async function handle(
   // Required fields in body: -
   // Optional fields in body: title, published, finishedOnboarding, elements, elementsDraft
   else if (req.method === "POST") {
-    const data = { ...req.body, updatedAt: new Date() };
+    const { id, createdAt, blocks, blocksDraft, published } = req.body;
+    const data = {
+      id,
+      createdAt,
+      blocks,
+      blocksDraft,
+      formId,
+      published,
+      updatedAt: new Date(),
+    };
     // create or update record
     const prismaRes = await prisma.noCodeForm.upsert({
       where: { formId },

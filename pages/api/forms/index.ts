@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../lib/prisma";
 import { getSession } from "next-auth/react";
+import { generateId } from "../../../lib/utils";
 
 export default async function handle(
   req: NextApiRequest,
@@ -65,17 +66,6 @@ export default async function handle(
     );
   }
 }
-
-const generateId = (length) => {
-  let result = "";
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const charactersLength = characters.length;
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-};
 
 const checkIdAvailability = async (id) => {
   const form = await prisma.form.findUnique({

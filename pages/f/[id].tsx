@@ -2,7 +2,6 @@ import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useMemo } from "react";
 import App from "../../components/frontend/App";
 import Loading from "../../components/Loading";
 import { useNoCodeFormPublic } from "../../lib/noCodeForm";
@@ -13,17 +12,11 @@ export default function Share({}) {
   const { noCodeForm, isLoadingNoCodeForm, isErrorNoCodeForm } =
     useNoCodeFormPublic(formId);
 
-  const pages = useMemo(() => {
-    if (!isLoadingNoCodeForm && !isErrorNoCodeForm) {
-      return noCodeForm["pages"];
-    }
-  }, [isLoadingNoCodeForm, noCodeForm, isErrorNoCodeForm]);
-
   if (isErrorNoCodeForm) {
     return <p>Not found</p>;
   }
 
-  if (isLoadingNoCodeForm || !pages) {
+  if (isLoadingNoCodeForm) {
     return <Loading />;
   }
 
@@ -32,7 +25,7 @@ export default function Share({}) {
       <Head>
         <title>SnoopForms</title>
       </Head>
-      <App formId={formId} pages={pages} />
+      <App formId={formId} blocks={noCodeForm.blocks} />
     </>
   );
 }

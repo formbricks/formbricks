@@ -1,6 +1,37 @@
 import { SnoopElement, SnoopForm, SnoopPage } from "@snoopforms/react";
+import { useMemo } from "react";
+import Loading from "../Loading";
 
-export default function App({ id = "", formId, pages, localOnly = false }) {
+export default function App({ id = "", formId, blocks, localOnly = false }) {
+  const pages = useMemo(() => {
+    const pages = [];
+    let currentPage = {
+      id: formId, // give the first page the formId as id by default
+      blocks: [],
+    };
+    for (const block of blocks) {
+      if (block.type !== "pageTransition") {
+        currentPage.blocks.push(block);
+      } else {
+        currentPage.blocks.push({
+          data: {
+            label: block.data.submitLabel,
+          },
+          type: "submitButton",
+        });
+        pages.push(currentPage);
+        currentPage = {
+          id: block.id,
+          blocks: [],
+        };
+      }
+    }
+    pages.push(currentPage);
+    return pages;
+  }, [blocks, formId]);
+
+  if (!pages) return <Loading />;
+
   return (
     <div className="w-full px-5 py-5">
       <SnoopForm
@@ -37,7 +68,7 @@ export default function App({ id = "", formId, pages, localOnly = false }) {
                         element:
                           "flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full min-w-0 rounded-md sm:text-base border-gray-300",
                       }}
-                      required
+                      required={block.data.required}
                     />
                   </div>
                 ) : block.type === "submitButton" ? (

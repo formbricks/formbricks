@@ -1,128 +1,76 @@
+import EditorJS from "@editorjs/editorjs";
 import {
   DocumentAddIcon,
   EyeIcon,
   PaperAirplaneIcon,
   ShareIcon,
 } from "@heroicons/react/outline";
-import { NoCodeForm } from "@prisma/client";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { v4 as uuidv4 } from "uuid";
 import { useForm } from "../../lib/forms";
 import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
+import LimitedWidth from "../layout/LimitedWidth";
 import SecondNavBar from "../layout/SecondNavBar";
 import Loading from "../Loading";
-import Page from "./Page";
+import LoadingModal from "../LoadingModal";
 import ShareModal from "./ShareModal";
+let Editor = dynamic(() => import("../editorjs/Editor"), {
+  ssr: false,
+});
 
 export default function Builder({ formId }) {
   const router = useRouter();
-  const { form, isLoadingForm } = useForm(formId);
+  const editorRef = useRef<EditorJS | null>();
+  const { isLoadingForm } = useForm(formId);
   const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
     useNoCodeForm(formId);
-  const [isInitialized, setIsInitialized] = useState(false);
   const [openShareModal, setOpenShareModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const addPage = useCallback(
-    async (page = undefined) => {
-      const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
-      newNoCodeForm.pagesDraft.push(
-        page || { id: uuidv4(), type: "form", blocks: [] }
-      );
-      await persistNoCodeForm(newNoCodeForm);
-      mutateNoCodeForm(newNoCodeForm);
-    },
-    [noCodeForm, mutateNoCodeForm]
-  );
-
-  const deletePage = async (pageIdx) => {
-    const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
-    newNoCodeForm.pagesDraft.splice(pageIdx, 1);
-    await persistNoCodeForm(newNoCodeForm);
-    mutateNoCodeForm(newNoCodeForm);
+  const addPage = () => {
+    editorRef.current.blocks.insert("pageTransition", {
+      submitLabel: "Submit",
+    });
+    const block = editorRef.current.blocks.insert("paragraph");
+    editorRef.current.caret.setToBlock(
+      editorRef.current.blocks.getBlockIndex(block.id)
+    );
   };
 
-  const initPages = useCallback(async () => {
-    if (!isLoadingNoCodeForm && !isLoadingForm && !isInitialized) {
-      if (noCodeForm.pagesDraft.length === 0) {
-        const newNoCodeForm: NoCodeForm = JSON.parse(
-          JSON.stringify(noCodeForm)
-        );
-        newNoCodeForm.pagesDraft = [
-          {
-            id: uuidv4(),
-            type: "form",
-            blocks: [
-              {
-                id: "FrEb9paDoV",
-                data: {
-                  text: form.name,
-                  level: 1,
-                },
-                type: "header",
-              },
-              {
-                id: "qtvg94SRMB",
-                data: {
-                  placeholder: "",
-                },
-                type: "textQuestion",
-              },
-              {
-                id: "e_N-JpRIfL",
-                data: {
-                  label: "Submit",
-                },
-                type: "submitButton",
-              },
-            ],
-          },
-          {
-            id: uuidv4(),
-            type: "thankyou",
-            blocks: [
-              {
-                id: "pIcLJUy0SY",
-                data: {
-                  text: "Thank you for taking the time to fill out this form 🙏",
-                },
-                type: "paragraph",
-              },
-            ],
-          },
-        ];
-        await persistNoCodeForm(newNoCodeForm);
-        mutateNoCodeForm(newNoCodeForm);
-      }
-      setIsInitialized(true);
-    }
-  }, [
-    isLoadingNoCodeForm,
-    noCodeForm,
-    isInitialized,
-    isLoadingForm,
-    form,
-    mutateNoCodeForm,
-  ]);
+  const initAction = async (editor: EditorJS) => {
+    editor.blocks.insert("header", {
+      text: noCodeForm.form.name,
+    });
+    const focusBlock = editor.blocks.insert("textQuestion");
+    editor.blocks.insert("pageTransition", {
+      submitLabel: "Submit",
+    });
+    editor.blocks.insert("header", {
+      text: "Thank you",
+    });
+    editor.blocks.insert("paragraph", {
+      text: "Thank you for taking the time to fill out this form 🙏",
+    });
+    editor.blocks.delete(0); // remove defaultBlock
+    editor.caret.setToBlock(
+      editorRef.current.blocks.getBlockIndex(focusBlock.id)
+    );
+  };
 
   const publishChanges = async () => {
-    const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
-    newNoCodeForm.pages = newNoCodeForm.pagesDraft;
-    newNoCodeForm.published = true;
-    await persistNoCodeForm(newNoCodeForm);
-    mutateNoCodeForm(newNoCodeForm);
-    setOpenShareModal(true);
-    toast("Your changes are now live 🎉");
+    setLoading(true);
+    setTimeout(async () => {
+      const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
+      newNoCodeForm.blocks = newNoCodeForm.blocksDraft;
+      newNoCodeForm.published = true;
+      await persistNoCodeForm(newNoCodeForm);
+      mutateNoCodeForm(newNoCodeForm);
+      setLoading(false);
+      toast("Your changes are now public 🎉");
+    }, 500);
   };
-
-  useEffect(() => {
-    initPages();
-  }, [isLoadingNoCodeForm, initPages]);
-
-  if (isLoadingNoCodeForm) {
-    return <Loading />;
-  }
 
   const noCodeSecondNavigation = [
     {
@@ -154,22 +102,26 @@ export default function Builder({ formId }) {
     },
   ];
 
+  if (isLoadingNoCodeForm || isLoadingForm) {
+    return <Loading />;
+  }
+
   return (
     <>
       <SecondNavBar navItems={noCodeSecondNavigation} />
-      <div className="w-full bg-ui-gray-lighter">
-        <div className="flex justify-center w-full">
-          <div className="grid w-full grid-cols-1">
-            {noCodeForm.pagesDraft.map((page, pageIdx) => (
-              <Page
-                key={page.id}
+      <div className="w-full h-full mb-20 overflow-auto bg-white">
+        <div className="flex justify-center w-full pt-10 pb-56">
+          <LimitedWidth>
+            {Editor && (
+              <Editor
+                id="editor"
                 formId={formId}
-                page={page}
-                pageIdx={pageIdx}
-                deletePageAction={deletePage}
+                editorRef={editorRef}
+                autofocus={true}
+                initAction={initAction}
               />
-            ))}
-          </div>
+            )}
+          </LimitedWidth>
         </div>
       </div>
       <ShareModal
@@ -177,6 +129,7 @@ export default function Builder({ formId }) {
         setOpen={setOpenShareModal}
         formId={formId}
       />
+      <LoadingModal isLoading={loading} />
     </>
   );
 }
