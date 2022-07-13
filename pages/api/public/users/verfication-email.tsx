@@ -10,7 +10,6 @@ export default async function handle(
   // Sends a new verification email to a user with a specific email address
   // Required fields in body: email
   if (req.method === "POST") {
-    console.log(JSON.stringify(req.body));
     const { email } = req.body;
     // create user in database
     try {
