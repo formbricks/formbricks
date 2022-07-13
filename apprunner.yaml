@@ -1,0 +1,24 @@
+version: 1.0
+runtime: nodejs14
+build:
+  commands:
+    pre-build:
+      - yarn install --frozen-lockfile
+      - yarn prisma generate
+    build:
+      - yarn build
+    post-build:
+      - yarn install --production --ignore-scripts --prefer-offline
+      - yarn prisma migrate deploy
+  env:
+    - name: NEXT_TELEMETRY_DISABLED
+      value: 1
+run:
+  runtime-version: 14
+  command: yarn start
+  network:
+    port: 3000
+    env: APP_PORT
+  env:
+    - name: NEXT_TELEMETRY_DISABLED
+      value: 1
