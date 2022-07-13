@@ -60,12 +60,6 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             throw new Error("Incorrect password");
           }
 
-          if (!user.emailVerified) {
-            throw new Error(
-              "Please verify your email address before logging in"
-            );
-          }
-
           return {
             id: user.id,
             email: user.email,
@@ -124,7 +118,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             throw new Error("Token is not valid or expired");
           }
 
-          await prisma.user.update({
+          user = await prisma.user.update({
             where: {
               id: user.id,
             },
@@ -134,11 +128,25 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           return {
             id: user.id,
             email: user.email,
-            name: user.name,
+            firstname: user.firstname,
+            lastname: user.firstname,
+            emailVerified: user.emailVerified,
           };
         },
       }),
     ],
+    callbacks: {
+      async signIn({ user }) {
+        if (user.emailVerified) {
+          return true;
+        } else {
+          // Return false to display a default error message or you can return a URL to redirect to
+          return `/auth/verification-requested?email=${encodeURIComponent(
+            user.email
+          )}`;
+        }
+      },
+    },
     secret: process.env.SECRET,
     pages: {
       signIn: "/auth/signin",

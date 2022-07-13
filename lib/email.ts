@@ -26,7 +26,7 @@ export const sendEmail = async (emailData: sendEmailData) => {
 
 export const sendVerificationEmail = async (user) => {
   const token = jwt.sign({ id: user.id }, process.env.SECRET + user.email, {
-    expiresIn: "1m",
+    expiresIn: "1d",
   });
   const verifyLink = `${
     process.env.NEXTAUTH_URL
