@@ -69,7 +69,7 @@ yarn install
 cp .env.example .env
 ```
 
-4. Use the code editor of your choice to edit the .env file.
+4. Use the code editor of your choice to edit the .env file. You need to change all fields according to your setup. The SMTP-credentials are essential for verification emails to work during user signup.
 
 5. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
 
@@ -101,7 +101,7 @@ git clone https://github.com/snoopForms/snoopforms.git && cd snoopforms
 
 ```
 
-Create a `.env` file based on `.env.example` and change it according to your setup.
+Create a `.env` file based on `.env.example` and change all fields according to your setup. The SMTP-credentials are essential for verification emails to work during user signup.
 
 ```
 

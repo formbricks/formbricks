@@ -23,7 +23,7 @@ export default async function handle(
       },
       include: {
         owner: {
-          select: { name: true },
+          select: { firstname: true },
         },
         _count: {
           select: { submissionSessions: true },
