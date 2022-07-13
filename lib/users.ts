@@ -1,4 +1,3 @@
-import jwt from "jsonwebtoken";
 import { hashPassword } from "./auth";
 
 export const createUser = async (firstname, lastname, email, password) => {
@@ -20,7 +19,6 @@ export const createUser = async (firstname, lastname, email, password) => {
     }
     return await res.json();
   } catch (error) {
-    console.error(error);
     throw Error(`${error.message}`);
   }
 };
