@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import jwt from "jsonwebtoken";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "../../../lib/prisma";
@@ -8,6 +9,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   return await NextAuth(req, res, {
     providers: [
       CredentialsProvider({
+        id: "credentials",
         // The name to display on the sign in form (e.g. "Sign in with...")
         name: "Credentials",
         // The credentials is used to generate a suitable form on the sign in page.
@@ -57,6 +59,77 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           if (!isValid) {
             throw new Error("Incorrect password");
           }
+
+          if (!user.emailVerified) {
+            throw new Error(
+              "Please verify your email address before logging in"
+            );
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          };
+        },
+      }),
+      CredentialsProvider({
+        id: "token",
+        // The name to display on the sign in form (e.g. "Sign in with...")
+        name: "Token",
+        // The credentials is used to generate a suitable form on the sign in page.
+        // You can specify whatever fields you are expecting to be submitted.
+        // e.g. domain, username, password, 2FA token, etc.
+        // You can pass any HTML attribute to the <input> tag through the object.
+        credentials: {
+          token: {
+            label: "Verification Token",
+            type: "string",
+          },
+        },
+        async authorize(credentials, _req) {
+          let user;
+          try {
+            const { id } = await jwt.decode(credentials?.token);
+            user = await prisma.user.findUnique({
+              where: {
+                id: id,
+              },
+            });
+          } catch (e) {
+            console.error(e);
+            throw Error("Internal server error. Please try again later");
+          }
+
+          if (!user) {
+            throw new Error("User not found");
+          }
+
+          if (user.emailVerified) {
+            throw new Error("Email already verified");
+          }
+
+          const isValid = await new Promise((resolve) => {
+            jwt.verify(
+              credentials?.token,
+              process.env.SECRET + user.email,
+              (err) => {
+                if (err) resolve(false);
+                if (!err) resolve(true);
+              }
+            );
+          });
+
+          if (!isValid) {
+            throw new Error("Token is not valid");
+          }
+
+          await prisma.user.update({
+            where: {
+              id: user.id,
+            },
+            data: { emailVerified: new Date().toISOString() },
+          });
 
           return {
             id: user.id,

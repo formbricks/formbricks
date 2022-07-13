@@ -20,7 +20,7 @@ model Form {
   id                  String    @id
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
-  owner               User      @relation(fields: [ownerId], references: [id])
+  owner               User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId             Int
   formType            FormType  @default(NOCODE)
   name                String    @default("")
@@ -73,24 +73,14 @@ model SessionEvent {
 
 model User {
   id            Int       @id @default(autoincrement())
-  name          String?
-  email         String?   @unique
+  firstname     String?
+  lastname      String?
+  email         String    @unique
   emailVerified DateTime? @map(name: "email_verified")
-  password      String?
+  password      String
   createdAt     DateTime  @default(now()) @map(name: "created_at")
   updatedAt     DateTime  @updatedAt @map(name: "updated_at")
   forms         Form[]
 
   @@map(name: "users")
-}
-
-model VerificationRequest {
-  id         Int      @id @default(autoincrement())
-  identifier String
-  token      String   @unique
-  expires    DateTime
-  createdAt  DateTime @default(now()) @map(name: "created_at")
-  updatedAt  DateTime @default(now()) @map(name: "updated_at")
-
-  @@map(name: "verification_requests")
 }

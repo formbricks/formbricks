@@ -1,9 +1,11 @@
 import { getCsrfToken } from "next-auth/react";
-import { useRouter } from "next/router";
 import { XCircleIcon } from "@heroicons/react/solid";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { createUser } from "../../lib/users";
+import { useState } from "react";
+import { useRouter } from "next/router";
 
 interface props {
   csrfToken: string;
@@ -11,7 +13,26 @@ interface props {
 
 export default function SignIn({ csrfToken }: props) {
   const router = useRouter();
-  const { error } = router.query;
+  const [error, setError] = useState<string>("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await createUser(
+        e.target.elements.firstname.value,
+        e.target.elements.lastname.value,
+        e.target.elements.email.value,
+        e.target.elements.password.value
+      );
+      router.push(
+        `/auth/verification-requested?email=${encodeURIComponent(
+          e.target.elements.email.value
+        )}`
+      );
+    } catch (e) {
+      setError(e.message);
+    }
+  };
   return (
     <div className="flex min-h-screen bg-ui-gray-light">
       <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
@@ -47,17 +68,53 @@ export default function SignIn({ csrfToken }: props) {
           </div>
 
           <div className="mt-8">
+            <p className="text-sm text-center text-gray-600">
+              Create your own forms and collect submissions by creating a
+              snoopForms account.
+            </p>
             <div className="mt-6">
-              <form
-                method="post"
-                action="/api/auth/callback/credentials"
-                className="space-y-6"
-              >
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <input
                   name="csrfToken"
                   type="hidden"
                   defaultValue={csrfToken}
                 />
+                <div>
+                  <label
+                    htmlFor="firstname"
+                    className="block text-sm font-medium text-ui-gray-dark"
+                  >
+                    First name
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="firstname"
+                      name="firstname"
+                      type="text"
+                      autoComplete="given-name"
+                      required
+                      className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="lastname"
+                    className="block text-sm font-medium text-ui-gray-dark"
+                  >
+                    Last name
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="lastname"
+                      name="lastname"
+                      type="text"
+                      autoComplete="family-name"
+                      required
+                      className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
                 <div>
                   <label
                     htmlFor="email"
@@ -100,16 +157,12 @@ export default function SignIn({ csrfToken }: props) {
                     type="submit"
                     className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
-                    Sign in
+                    Sign up
                   </button>
-                  <div className="mt-3 text-center">
-                    <Link href="/auth/signup">
-                      <a
-                        href=""
-                        className="text-xs text-red hover:text-red-600"
-                      >
-                        Create an account
-                      </a>
+                  <div className="mt-3 text-xs text-center text-gray-600">
+                    Already have an account?{" "}
+                    <Link href="/auth/signin">
+                      <a className="text-red hover:text-red-600">Log in.</a>
                     </Link>
                   </div>
                 </div>
