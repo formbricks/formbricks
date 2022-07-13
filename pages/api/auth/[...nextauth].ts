@@ -121,7 +121,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           });
 
           if (!isValid) {
-            throw new Error("Token is not valid");
+            throw new Error("Token is not valid or expired");
           }
 
           await prisma.user.update({

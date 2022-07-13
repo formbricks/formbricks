@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import jwt from "jsonwebtoken";
-import { sendEmail } from "../../../../lib/email";
 import { prisma } from "../../../../lib/prisma";
+import { sendVerificationEmail } from "../../../../lib/email";
 
 export default async function handle(
   req: NextApiRequest,
@@ -15,24 +14,13 @@ export default async function handle(
     const user = req.body;
     // create user in database
     try {
-      const result = await prisma.user.create({
+      const userData = await prisma.user.create({
         data: {
           ...user,
         },
       });
-      const { id, email } = result;
-      const token = jwt.sign({ id }, process.env.SECRET + email, {
-        expiresIn: "1d",
-      });
-      const verifyLink = `${
-        process.env.NEXTAUTH_URL
-      }/auth/verify?token=${encodeURIComponent(token)}`;
-      await sendEmail({
-        to: user.email,
-        subject: "Welcome to snoopForms",
-        html: `Welcome to snoopForms!<br/>Please click this link to verify your account: <a href="${verifyLink}">${verifyLink}</a>`,
-      });
-      res.json(result);
+      await sendVerificationEmail(userData);
+      res.json(userData);
     } catch (e) {
       if (e.code === "P2002") {
         return res.status(409).json({
