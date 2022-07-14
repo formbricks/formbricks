@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "migrate-and-start": "prisma migrate deploy && next start",
     "lint": "next lint"
   },
   "dependencies": {
