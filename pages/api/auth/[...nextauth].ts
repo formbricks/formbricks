@@ -1,9 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import getConfig from "next/config";
 import jwt from "jsonwebtoken";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "../../../lib/prisma";
 import { verifyPassword } from "../../../lib/auth";
+
+const { serverRuntimeConfig } = getConfig();
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   return await NextAuth(req, res, {
@@ -106,7 +109,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           const isValid = await new Promise((resolve) => {
             jwt.verify(
               credentials?.token,
-              process.env.SECRET + user.email,
+              serverRuntimeConfig.secret + user.email,
               (err) => {
                 if (err) resolve(false);
                 if (!err) resolve(true);
@@ -147,7 +150,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
         }
       },
     },
-    secret: process.env.SECRET,
+    secret: serverRuntimeConfig.secret,
     pages: {
       signIn: "/auth/signin",
       signOut: "/auth/logout",

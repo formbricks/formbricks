@@ -1,5 +1,8 @@
+import getConfig from "next/config";
 import jwt from "jsonwebtoken";
 const nodemailer = require("nodemailer");
+
+const { serverRuntimeConfig } = getConfig();
 
 interface sendEmailData {
   to: string;
@@ -10,29 +13,33 @@ interface sendEmailData {
 
 export const sendEmail = async (emailData: sendEmailData) => {
   let transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: process.env.SMTP_SECURE_ENABLED || false, // true for 465, false for other ports
+    host: serverRuntimeConfig.smtpHost,
+    port: serverRuntimeConfig.smtpPort,
+    secure: serverRuntimeConfig.smtpSecureEnabled || false, // true for 465, false for other ports
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
+      user: serverRuntimeConfig.smtpUser,
+      pass: serverRuntimeConfig.smtpPassword,
     },
   });
   const emailDefaults = {
-    from: process.env.MAIL_FROM || "noreply@snoopforms.com",
+    from: serverRuntimeConfig.mailFrom || "noreply@snoopforms.com",
   };
   await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
 
 export const sendVerificationEmail = async (user) => {
-  const token = jwt.sign({ id: user.id }, process.env.SECRET + user.email, {
-    expiresIn: "1d",
-  });
+  const token = jwt.sign(
+    { id: user.id },
+    serverRuntimeConfig.secret + user.email,
+    {
+      expiresIn: "1d",
+    }
+  );
   const verifyLink = `${
-    process.env.NEXTAUTH_URL
+    serverRuntimeConfig.nextauthUrl
   }/auth/verify?token=${encodeURIComponent(token)}`;
   const verificationRequestLink = `${
-    process.env.NEXTAUTH_URL
+    serverRuntimeConfig.nextauthUrl
   }/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
   await sendEmail({
     to: user.email,
