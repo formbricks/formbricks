@@ -24,7 +24,9 @@ export const sendEmail = async (emailData: sendEmailData) => {
     // debug: true,
   });
   const emailDefaults = {
-    from: serverRuntimeConfig.mailFrom || "noreply@snoopforms.com",
+    from: `snoopForms <${
+      serverRuntimeConfig.mailFrom || "noreply@snoopforms.com"
+    }>`,
   };
   await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
