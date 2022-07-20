@@ -27,6 +27,7 @@ export const sendEmail = async (emailData: sendEmailData) => {
   };
   console.log("sending");
   await transporter.sendMail({ ...emailDefaults, ...emailData });
+  console.log("sent");
 };
 
 export const sendVerificationEmail = async (user) => {
