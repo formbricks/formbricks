@@ -11,7 +11,7 @@ export default function SignInPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await signIn("credentials", {
-      callbackUrl: router.query.callbackUrl.toString(),
+      callbackUrl: router.query.callbackUrl?.toString(),
       email: e.target.elements.email.value,
       password: e.target.elements.password.value,
     });

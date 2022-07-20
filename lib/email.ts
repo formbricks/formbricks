@@ -13,6 +13,7 @@ interface sendEmailData {
 
 export const sendEmail = async (emailData: sendEmailData) => {
   console.log("starting send process");
+
   let transporter = nodemailer.createTransport({
     host: serverRuntimeConfig.smtpHost,
     port: serverRuntimeConfig.smtpPort,
@@ -26,7 +27,13 @@ export const sendEmail = async (emailData: sendEmailData) => {
     from: serverRuntimeConfig.mailFrom || "noreply@snoopforms.com",
   };
   console.log("sending");
-  await transporter.sendMail({ ...emailDefaults, ...emailData });
+  transporter.sendMail({ ...emailDefaults, ...emailData }, (err, info) => {
+    if (err) {
+      console.error(err);
+      throw Error("Unable to send verification email");
+    }
+    console.log("email sent:", info.messageId);
+  });
   console.log("sent");
 };
 
