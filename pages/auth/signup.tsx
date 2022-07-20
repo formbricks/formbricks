@@ -1,17 +1,11 @@
-import { getCsrfToken } from "next-auth/react";
 import { XCircleIcon } from "@heroicons/react/solid";
-import { GetServerSideProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { createUser } from "../../lib/users";
-import { useState } from "react";
 import { useRouter } from "next/router";
+import { useState } from "react";
+import { createUser } from "../../lib/users";
 
-interface props {
-  csrfToken: string;
-}
-
-export default function SignIn({ csrfToken }: props) {
+export default function SignUpPage() {
   const router = useRouter();
   const [error, setError] = useState<string>("");
 
@@ -74,11 +68,6 @@ export default function SignIn({ csrfToken }: props) {
             </p>
             <div className="mt-6">
               <form onSubmit={handleSubmit} className="space-y-6">
-                <input
-                  name="csrfToken"
-                  type="hidden"
-                  defaultValue={csrfToken}
-                />
                 <div>
                   <label
                     htmlFor="firstname"
@@ -174,10 +163,3 @@ export default function SignIn({ csrfToken }: props) {
     </div>
   );
 }
-
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const csrfToken = await getCsrfToken(context);
-  return {
-    props: { csrfToken },
-  };
-};

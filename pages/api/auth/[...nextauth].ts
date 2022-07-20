@@ -66,7 +66,9 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           return {
             id: user.id,
             email: user.email,
-            name: user.name,
+            firstname: user.firstname,
+            lastname: user.firstname,
+            emailVerified: user.emailVerified,
           };
         },
       }),
@@ -151,7 +153,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
       },
     },
     pages: {
-      //signIn: "/auth/signin",
+      signIn: "/auth/signin",
       signOut: "/auth/logout",
       error: "/auth/signin", // Error code passed in query string as ?error=
     },
