@@ -257,10 +257,10 @@
   resolved "https://registry.npmjs.org/@rushstack/eslint-patch/-/eslint-patch-1.1.3.tgz"
   integrity sha512-WiBSI6JBIhC6LRIsB2Kwh8DsGTlbBU+mLRxJmAe3LjHTdkDpwIbEOZgoXBbZilk/vlfjK8i6nKRAvIRn1XaIMw==
 
-"@snoopforms/react@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@snoopforms/react/-/react-0.0.3.tgz#8ed889dde7df914b4290189de98d6f5c4fd9a9ab"
-  integrity sha512-A7V/5MAqiIPgbNZ+2cL7otVosi0wGAbTzuZ/tcid5S2BdCxF2XDS99ztimXYLVd4ozCP7kxDa7RMtmYdftNKzQ==
+"@snoopforms/react@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@snoopforms/react/-/react-0.0.4.tgz#256c2285d0ef540c6ba4bde8d9a096d02e576fff"
+  integrity sha512-QR/G8aP5XSIpeKw5JzpNKEgDLR4FXH65k7c3/XvuZ8Xa6mYft4644vyZGAagrChXh76tx10wtsvV6kj9I/WDtA==
   dependencies:
     "@fingerprintjs/fingerprintjs" "^3.3.3"
     "@headlessui/react" "^1.6.4"

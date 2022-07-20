@@ -97,7 +97,7 @@ export default function FormCode({ formId }) {
             )}"`}</code>
           </p>
           <p>
-            <code>{`formId=${formId}`}</code>
+            <code>{`formId="${formId}"`}</code>
           </p>
           <p>
             <code>{">"}</code>
