@@ -1,17 +1,26 @@
-import { getCsrfToken } from "next-auth/react";
-import { useRouter } from "next/router";
 import { XCircleIcon } from "@heroicons/react/solid";
-import { GetServerSideProps } from "next";
+import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
-interface props {
-  csrfToken: string;
-}
-
-export default function SignIn({ csrfToken }: props) {
+export default function SignInPage() {
   const router = useRouter();
   const { error } = router.query;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await signIn("credentials", {
+      callbackUrl: router.query.callbackUrl?.toString(),
+      email: e.target.elements.email.value,
+      password: e.target.elements.password.value,
+    });
+    router.push(
+      `/auth/verification-requested?email=${encodeURIComponent(
+        e.target.elements.email.value
+      )}`
+    );
+  };
   return (
     <div className="flex min-h-screen bg-ui-gray-light">
       <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
@@ -49,15 +58,11 @@ export default function SignIn({ csrfToken }: props) {
           <div className="mt-8">
             <div className="mt-6">
               <form
+                onSubmit={handleSubmit}
                 method="post"
                 action="/api/auth/callback/credentials"
                 className="space-y-6"
               >
-                <input
-                  name="csrfToken"
-                  type="hidden"
-                  defaultValue={csrfToken}
-                />
                 <div>
                   <label
                     htmlFor="email"
@@ -121,10 +126,3 @@ export default function SignIn({ csrfToken }: props) {
     </div>
   );
 }
-
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const csrfToken = await getCsrfToken(context);
-  return {
-    props: { csrfToken },
-  };
-};

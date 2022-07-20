@@ -5,7 +5,7 @@ const nextConfig = {
   reactStrictMode: false,
   serverRuntimeConfig: {
     // Will only be available on the server side
-    secret: process.env.SECRET,
+    nextauthSecret: process.env.NEXTAUTH_SECRET,
     nextauthUrl: process.env.NEXTAUTH_URL,
     mailFrom: process.env.MAIL_FROM,
     smtpHost: process.env.SMTP_HOST,

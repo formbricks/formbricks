@@ -30,8 +30,6 @@ export default function BaseLayoutAuthorized({
   const { data: session, status } = useSession();
   const [loading, setLoading] = useState(true);
 
-  console.log(status);
-
   useEffect(() => {
     if (status !== "loading") {
       if (!session) {

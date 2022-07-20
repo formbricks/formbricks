@@ -20,9 +20,13 @@ export const sendEmail = async (emailData: sendEmailData) => {
       user: serverRuntimeConfig.smtpUser,
       pass: serverRuntimeConfig.smtpPassword,
     },
+    // logger: true,
+    // debug: true,
   });
   const emailDefaults = {
-    from: serverRuntimeConfig.mailFrom || "noreply@snoopforms.com",
+    from: `snoopForms <${
+      serverRuntimeConfig.mailFrom || "noreply@snoopforms.com"
+    }>`,
   };
   await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
@@ -30,7 +34,7 @@ export const sendEmail = async (emailData: sendEmailData) => {
 export const sendVerificationEmail = async (user) => {
   const token = jwt.sign(
     { id: user.id },
-    serverRuntimeConfig.secret + user.email,
+    serverRuntimeConfig.nextauthSecret + user.email,
     {
       expiresIn: "1d",
     }
