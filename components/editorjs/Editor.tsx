@@ -8,7 +8,9 @@ import { Fragment, useCallback, useEffect } from "react";
 import { toast } from "react-toastify";
 import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
 import Loading from "../Loading";
+import EmailQuestion from "./tools/EmailQuestion";
 import PageTransition from "./tools/PageTransition";
+import SingleChoiceQuestion from "./tools/SingleChoiceQuestion";
 import TextQuestion from "./tools/TextQuestion";
 
 interface EditorProps {
@@ -85,6 +87,8 @@ const Editor = ({
       defaultBlock: "paragraph",
       tools: {
         textQuestion: TextQuestion,
+        emailQuestion: EmailQuestion,
+        singleChoiceQuestion: SingleChoiceQuestion,
         pageTransition: PageTransition,
         paragraph: {
           class: Paragraph,

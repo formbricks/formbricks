@@ -1,14 +1,16 @@
 import { API, BlockTool, BlockToolData, ToolConfig } from "@editorjs/editorjs";
+import { RadioGroup } from "@headlessui/react";
 import ReactDOM from "react-dom";
+import { classNames } from "../../../lib/utils";
 
 //styles imports in angular.json
-interface TextQuestionData extends BlockToolData {
+interface SingleChoiceQuestionData extends BlockToolData {
   label: string;
-  placeholder: string;
+  options: string[];
   required: boolean;
 }
 
-export default class TextQuestion implements BlockTool {
+export default class SingleChoiceQuestion implements BlockTool {
   settings: { name: string; icon: string }[];
   api: API;
   data: any;
@@ -16,8 +18,10 @@ export default class TextQuestion implements BlockTool {
 
   static get toolbox(): { icon: string; title?: string } {
     return {
-      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-align-justify"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>`,
-      title: "Text Question",
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="16" height="16" viewBox="0 0 16 16">
+      <path fill="#000000" d="M8 0c-4.418 0-8 3.582-8 8s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8zM8 14c-3.314 0-6-2.686-6-6s2.686-6 6-6c3.314 0 6 2.686 6 6s-2.686 6-6 6zM5 8c0-1.657 1.343-3 3-3s3 1.343 3 3c0 1.657-1.343 3-3 3s-3-1.343-3-3z"/>
+      </svg>`,
+      title: "Single Choice Question",
     };
   }
 
@@ -26,7 +30,7 @@ export default class TextQuestion implements BlockTool {
   }: {
     api: API;
     config?: ToolConfig;
-    data?: TextQuestionData;
+    data?: SingleChoiceQuestionData;
   }) {
     this.wrapper = undefined;
     this.settings = [
@@ -38,7 +42,7 @@ export default class TextQuestion implements BlockTool {
     this.data = data;
     this.data = {
       label: data.label || "",
-      placeholder: data.placeholder || "",
+      options: data.options || ["Pizza", "Pasta", "Steak"],
       required: data.required !== undefined ? data.required : true,
     };
   }
@@ -50,9 +54,8 @@ export default class TextQuestion implements BlockTool {
         block.firstElementChild.firstElementChild
           .firstElementChild as HTMLInputElement
       ).value,
-      placeholder: (
-        block.firstElementChild.lastElementChild as HTMLInputElement
-      ).value,
+      /*  options: (block.firstElementChild.lastElementChild as HTMLInputElement)
+        .value, */
     };
   }
 
@@ -112,12 +115,45 @@ export default class TextQuestion implements BlockTool {
             *
           </div>
         </div>
-        <input
-          type="text"
-          className="block w-full max-w-sm mt-1 text-sm text-gray-400 border-gray-300 rounded-md shadow-sm placeholder:text-gray-300"
-          placeholder="optional placeholder"
-          defaultValue={this.data.placeholder}
-        />
+        <div className="mt-2">
+          <div className="sr-only">options</div>
+          <div className="relative max-w-sm -space-y-px bg-white rounded-md">
+            {this.data.options.map((option, optionIdx) => (
+              <div
+                key={option.name}
+                className={classNames(
+                  optionIdx === 0 ? "rounded-tl-md rounded-tr-md" : "",
+                  optionIdx === this.data.options.length - 1
+                    ? "rounded-bl-md rounded-br-md"
+                    : "",
+
+                  "border-gray-200",
+                  "relative border p-4 flex flex-col cursor-pointer md:pl-4 md:pr-6 focus:outline-none"
+                )}
+              >
+                <>
+                  <span className="flex items-center text-sm">
+                    <span
+                      className={classNames(
+                        "bg-white border-gray-300",
+                        "h-4 w-4 rounded-full border flex items-center justify-center"
+                      )}
+                      aria-hidden="true"
+                    >
+                      <span className="rounded-full bg-white w-1.5 h-1.5" />
+                    </span>
+                    <span
+                      className="w-full ml-3 font-medium text-gray-900 focus:outline-none"
+                      contentEditable
+                    >
+                      {option}
+                    </span>
+                  </span>
+                </>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
     ReactDOM.render(toolView, this.wrapper);
