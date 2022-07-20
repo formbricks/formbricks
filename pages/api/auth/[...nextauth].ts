@@ -23,12 +23,12 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           email: {
             label: "Email Address",
             type: "email",
-            placeholder: "lisa@example.com",
+            placeholder: "Your email address",
           },
           password: {
             label: "Password",
             type: "password",
-            placeholder: "Your super secure password",
+            placeholder: "Your password",
           },
         },
         async authorize(credentials, _req) {
@@ -109,7 +109,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           const isValid = await new Promise((resolve) => {
             jwt.verify(
               credentials?.token,
-              serverRuntimeConfig.secret + user.email,
+              serverRuntimeConfig.nextauthSecret + user.email,
               (err) => {
                 if (err) resolve(false);
                 if (!err) resolve(true);
@@ -150,9 +150,8 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
         }
       },
     },
-    secret: serverRuntimeConfig.secret,
     pages: {
-      signIn: "/auth/signin",
+      //signIn: "/auth/signin",
       signOut: "/auth/logout",
       error: "/auth/signin", // Error code passed in query string as ?error=
     },

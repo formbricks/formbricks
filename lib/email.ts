@@ -30,7 +30,7 @@ export const sendEmail = async (emailData: sendEmailData) => {
 export const sendVerificationEmail = async (user) => {
   const token = jwt.sign(
     { id: user.id },
-    serverRuntimeConfig.secret + user.email,
+    serverRuntimeConfig.nextauthSecret + user.email,
     {
       expiresIn: "1d",
     }
