@@ -25,7 +25,6 @@ export const createUser = async (firstname, lastname, email, password) => {
 
 export const resendVerificationEmail = async (email) => {
   try {
-    console.log("making api call");
     const res = await fetch(`/api/public/users/verfication-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

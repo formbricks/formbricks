@@ -12,8 +12,6 @@ interface sendEmailData {
 }
 
 export const sendEmail = async (emailData: sendEmailData) => {
-  console.log("starting send process");
-
   let transporter = nodemailer.createTransport({
     host: serverRuntimeConfig.smtpHost,
     port: serverRuntimeConfig.smtpPort,
@@ -22,25 +20,16 @@ export const sendEmail = async (emailData: sendEmailData) => {
       user: serverRuntimeConfig.smtpUser,
       pass: serverRuntimeConfig.smtpPassword,
     },
-    logger: true,
-    debug: true,
+    // logger: true,
+    // debug: true,
   });
   const emailDefaults = {
     from: serverRuntimeConfig.mailFrom || "noreply@snoopforms.com",
   };
-  console.log("sending");
-  try {
-    const info = await transporter.sendMail({ ...emailDefaults, ...emailData });
-    console.log("Email sent: %s", info.messageId);
-  } catch (e) {
-    console.error(e);
-    throw Error("Unable to send verification email");
-  }
-  console.log("sent");
+  await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
 
 export const sendVerificationEmail = async (user) => {
-  console.log("starting email process");
   const token = jwt.sign(
     { id: user.id },
     serverRuntimeConfig.nextauthSecret + user.email,
