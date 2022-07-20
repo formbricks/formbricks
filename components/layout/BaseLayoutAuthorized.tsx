@@ -1,5 +1,6 @@
 import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
+import { useEffect, useState } from "react";
 import { classNames } from "../../lib/utils";
 import Loading from "../Loading";
 import MenuBreadcrumbs from "./MenuBreadcrumbs";
@@ -27,14 +28,22 @@ export default function BaseLayoutAuthorized({
   limitHeightScreen = false,
 }: BaseLayoutAuthorizedProps) {
   const { data: session, status } = useSession();
+  const [loading, setLoading] = useState(true);
 
-  if (status === "loading") {
+  console.log(status);
+
+  useEffect(() => {
+    if (status !== "loading") {
+      if (!session) {
+        signIn();
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [session, status]);
+
+  if (status === "loading" || loading) {
     return <Loading />;
-  }
-
-  if (!session) {
-    signIn();
-    return <div>You need to be authenticated to view this page.</div>;
   }
 
   return (
