@@ -22,6 +22,8 @@ export const sendEmail = async (emailData: sendEmailData) => {
       user: serverRuntimeConfig.smtpUser,
       pass: serverRuntimeConfig.smtpPassword,
     },
+    logger: true,
+    debug: true,
   });
   const emailDefaults = {
     from: serverRuntimeConfig.mailFrom || "noreply@snoopforms.com",
