@@ -27,13 +27,13 @@ export const sendEmail = async (emailData: sendEmailData) => {
     from: serverRuntimeConfig.mailFrom || "noreply@snoopforms.com",
   };
   console.log("sending");
-  transporter.sendMail({ ...emailDefaults, ...emailData }, (err, info) => {
-    if (err) {
-      console.error(err);
-      throw Error("Unable to send verification email");
-    }
-    console.log("email sent:", info.messageId);
-  });
+  try {
+    const info = await transporter.sendMail({ ...emailDefaults, ...emailData });
+    console.log("Email sent: %s", info.messageId);
+  } catch (e) {
+    console.error(e);
+    throw Error("Unable to send verification email");
+  }
   console.log("sent");
 };
 
