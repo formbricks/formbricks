@@ -13,6 +13,7 @@ export default async function handle(
     const { email } = req.body;
     // create user in database
     try {
+      console.log("getting user");
       const user = await prisma.user.findUnique({
         where: { email },
       });
@@ -27,6 +28,7 @@ export default async function handle(
         });
       }
       await sendVerificationEmail(user);
+      console.log("sending finished");
       res.json(user);
     } catch (e) {
       return res.status(500).json({

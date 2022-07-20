@@ -12,6 +12,7 @@ interface sendEmailData {
 }
 
 export const sendEmail = async (emailData: sendEmailData) => {
+  console.log("starting send process");
   let transporter = nodemailer.createTransport({
     host: serverRuntimeConfig.smtpHost,
     port: serverRuntimeConfig.smtpPort,
@@ -24,10 +25,12 @@ export const sendEmail = async (emailData: sendEmailData) => {
   const emailDefaults = {
     from: serverRuntimeConfig.mailFrom || "noreply@snoopforms.com",
   };
+  console.log("sending");
   await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
 
 export const sendVerificationEmail = async (user) => {
+  console.log("starting email process");
   const token = jwt.sign(
     { id: user.id },
     serverRuntimeConfig.nextauthSecret + user.email,
