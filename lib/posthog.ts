@@ -26,7 +26,7 @@ export const usePosthog = (userId?: string, anonymous = false) => {
     }
     // Track page views
     const handleRouteChange = () => {
-      if (enabled && userId) {
+      if (enabled && (userId || anonymous)) {
         posthog.capture("$pageview");
       }
     };
