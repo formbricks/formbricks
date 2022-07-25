@@ -63,10 +63,9 @@ export default function SignUpPage() {
               />
             </div>
 
-            <div className="mt-8">
+            <div className="mt-4">
               <p className="text-sm text-center text-gray-600">
-                Create your own forms and collect submissions by creating a
-                snoopForms account.
+                Finally solid open-source forms 🤸
               </p>
               <div className="mt-6">
                 <form onSubmit={handleSubmit} className="space-y-6">

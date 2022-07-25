@@ -51,7 +51,7 @@ export default function Builder({ formId }) {
       text: "Thank you",
     });
     editor.blocks.insert("paragraph", {
-      text: "Thank you for taking the time to fill out this form 🙏",
+      text: "Thanks a lot for your time and insights 🙏",
     });
     editor.blocks.delete(0); // remove defaultBlock
     editor.caret.setToBlock(
