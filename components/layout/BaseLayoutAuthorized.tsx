@@ -1,6 +1,7 @@
 import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
 import { useEffect, useState } from "react";
+import { usePosthog } from "../../lib/posthog";
 import { classNames } from "../../lib/utils";
 import Loading from "../Loading";
 import MenuBreadcrumbs from "./MenuBreadcrumbs";
@@ -30,8 +31,6 @@ export default function BaseLayoutAuthorized({
   const { data: session, status } = useSession();
   const [loading, setLoading] = useState(true);
 
-  console.log(status);
-
   useEffect(() => {
     if (status !== "loading") {
       if (!session) {
@@ -41,6 +40,8 @@ export default function BaseLayoutAuthorized({
       }
     }
   }, [session, status]);
+
+  usePosthog(session?.user?.email);
 
   if (status === "loading" || loading) {
     return <Loading />;
