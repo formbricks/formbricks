@@ -115,7 +115,7 @@ export default function ReactPage() {
             <div className="flex items-center justify-center p-8 rounded-md bg-purple">
               <a
                 className="inline-flex items-center justify-center px-4 py-2 bg-white rounded-sm hover:motion-safe:animate-bounce text-purple text-bold text-md"
-                href="https://discord.gg/kT4Aq7Kq"
+                href="https://discord.gg/3YFcABF2Ts"
                 target="_blank"
                 rel="noreferrer"
               >
