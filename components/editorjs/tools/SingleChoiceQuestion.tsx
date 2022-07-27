@@ -1,20 +1,23 @@
 import { API, BlockTool, BlockToolData, ToolConfig } from "@editorjs/editorjs";
-import { RadioGroup } from "@headlessui/react";
+import { default as React } from "react";
 import ReactDOM from "react-dom";
-import { classNames } from "../../../lib/utils";
+import SingleChoiceQuestionComponent from "./SingleChoiceQuestionComponent";
 
-//styles imports in angular.json
 interface SingleChoiceQuestionData extends BlockToolData {
   label: string;
   options: string[];
   required: boolean;
 }
 
-export default class SingleChoiceQuestion implements BlockTool {
+export default class Timeline implements BlockTool {
   settings: { name: string; icon: string }[];
   api: API;
+  config: ToolConfig;
   data: any;
+  readOnly: boolean;
+  block: any;
   wrapper: undefined | HTMLElement;
+  nodes: { holder: HTMLElement };
 
   static get toolbox(): { icon: string; title?: string } {
     return {
@@ -25,37 +28,39 @@ export default class SingleChoiceQuestion implements BlockTool {
     };
   }
 
+  static get isReadOnlySupported() {
+    return true;
+  }
+
   constructor({
     data,
+    config,
+    api,
+    readOnly,
   }: {
     api: API;
     config?: ToolConfig;
     data?: SingleChoiceQuestionData;
+    block?: any;
+    readOnly: boolean;
   }) {
-    this.wrapper = undefined;
+    this.api = api;
+    this.config = config;
+    this.readOnly = readOnly;
+    this.data = {
+      label: data.label || "",
+      options: data.options || [],
+      required: data.required || false,
+    };
     this.settings = [
       {
         name: "required",
         icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512" class="w-3 h-3"><!-- Font Awesome Pro 5.15.4 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) --><path d="M471.99 334.43L336.06 256l135.93-78.43c7.66-4.42 10.28-14.2 5.86-21.86l-32.02-55.43c-4.42-7.65-14.21-10.28-21.87-5.86l-135.93 78.43V16c0-8.84-7.17-16-16.01-16h-64.04c-8.84 0-16.01 7.16-16.01 16v156.86L56.04 94.43c-7.66-4.42-17.45-1.79-21.87 5.86L2.15 155.71c-4.42 7.65-1.8 17.44 5.86 21.86L143.94 256 8.01 334.43c-7.66 4.42-10.28 14.21-5.86 21.86l32.02 55.43c4.42 7.65 14.21 10.27 21.87 5.86l135.93-78.43V496c0 8.84 7.17 16 16.01 16h64.04c8.84 0 16.01-7.16 16.01-16V339.14l135.93 78.43c7.66 4.42 17.45 1.8 21.87-5.86l32.02-55.43c4.42-7.65 1.8-17.43-5.86-21.85z"/></svg>`,
       },
     ];
-    this.data = data;
-    this.data = {
-      label: data.label || "",
-      options: data.options || ["Pizza", "Pasta", "Steak"],
-      required: data.required !== undefined ? data.required : true,
-    };
-  }
 
-  save(block: HTMLDivElement) {
-    return {
-      ...this.data,
-      label: (
-        block.firstElementChild.firstElementChild
-          .firstElementChild as HTMLInputElement
-      ).value,
-      /*  options: (block.firstElementChild.lastElementChild as HTMLInputElement)
-        .value, */
+    this.nodes = {
+      holder: null,
     };
   }
 
@@ -88,75 +93,37 @@ export default class SingleChoiceQuestion implements BlockTool {
    * @param {string} tune — tune name from this.settings
    */
   _toggleTune(tune) {
-    this.wrapper.classList.toggle(tune.name, !!this.data[tune.name]);
+    //this.wrapper.classList.toggle(tune.name, !!this.data[tune.name]);
 
     if (tune === "required") {
       this.data.required = !this.data.required;
-      this.wrapper.childNodes[0].childNodes[0].childNodes[1].textContent = this
-        .data.required
-        ? "*"
-        : "";
     }
   }
 
-  render(): HTMLElement {
-    this.wrapper = document.createElement("div");
-    const toolView = (
-      <div className="pb-5">
-        <div className="relative font-bold leading-7 text-gray-800 text-md sm:truncate">
-          <input
-            type="text"
-            id="label"
-            defaultValue={this.data.label}
-            className="w-full p-0 border-0 border-transparent ring-0 focus:ring-0 placeholder:text-gray-300"
-            placeholder="Your Question"
-          />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-red-500 pointer-events-none">
-            *
-          </div>
-        </div>
-        <div className="mt-2">
-          <div className="sr-only">options</div>
-          <div className="relative max-w-sm -space-y-px bg-white rounded-md">
-            {this.data.options.map((option, optionIdx) => (
-              <div
-                key={option.name}
-                className={classNames(
-                  optionIdx === 0 ? "rounded-tl-md rounded-tr-md" : "",
-                  optionIdx === this.data.options.length - 1
-                    ? "rounded-bl-md rounded-br-md"
-                    : "",
+  render() {
+    const rootNode = document.createElement("div");
+    //rootNode.setAttribute("class", this.CSS.wrapper);
+    this.nodes.holder = rootNode;
 
-                  "border-gray-200",
-                  "relative border p-4 flex flex-col cursor-pointer md:pl-4 md:pr-6 focus:outline-none"
-                )}
-              >
-                <>
-                  <span className="flex items-center text-sm">
-                    <span
-                      className={classNames(
-                        "bg-white border-gray-300",
-                        "h-4 w-4 rounded-full border flex items-center justify-center"
-                      )}
-                      aria-hidden="true"
-                    >
-                      <span className="rounded-full bg-white w-1.5 h-1.5" />
-                    </span>
-                    <span
-                      className="w-full ml-3 font-medium text-gray-900 focus:outline-none"
-                      contentEditable
-                    >
-                      {option}
-                    </span>
-                  </span>
-                </>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+    const onDataChange = (newData) => {
+      this.data = {
+        ...newData,
+      };
+    };
+
+    ReactDOM.render(
+      <SingleChoiceQuestionComponent
+        onDataChange={onDataChange}
+        readOnly={this.readOnly}
+        data={this.data}
+      />,
+      rootNode
     );
-    ReactDOM.render(toolView, this.wrapper);
-    return this.wrapper;
+
+    return this.nodes.holder;
+  }
+
+  save() {
+    return this.data;
   }
 }

@@ -39,7 +39,7 @@ export default class EmailQuestion implements BlockTool {
     this.data = data;
     this.data = {
       label: data.label || "",
-      placeholder: data.placeholder || "",
+      placeholder: data.placeholder || "your email",
       required: data.required !== undefined ? data.required : true,
     };
   }
