@@ -1,15 +1,15 @@
 import { API, BlockTool, BlockToolData, ToolConfig } from "@editorjs/editorjs";
-import { MailIcon } from "@heroicons/react/solid";
+import { PhoneIcon } from "@heroicons/react/solid";
 import ReactDOM from "react-dom";
 
 //styles imports in angular.json
-interface EmailQuestionData extends BlockToolData {
+interface PhoneQuestionData extends BlockToolData {
   label: string;
   placeholder: string;
   required: boolean;
 }
 
-export default class EmailQuestion implements BlockTool {
+export default class PhoneQuestion implements BlockTool {
   settings: { name: string; icon: string }[];
   api: API;
   data: any;
@@ -18,9 +18,9 @@ export default class EmailQuestion implements BlockTool {
   static get toolbox(): { icon: string; title?: string } {
     return {
       icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M14.243 5.757a6 6 0 10-.986 9.284 1 1 0 111.087 1.678A8 8 0 1118 10a3 3 0 01-4.8 2.401A4 4 0 1114 10a1 1 0 102 0c0-1.537-.586-3.07-1.757-4.243zM12 10a2 2 0 10-4 0 2 2 0 004 0z" clip-rule="evenodd" />
+      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
     </svg>`,
-      title: "Email Question",
+      title: "Phone Question",
     };
   }
 
@@ -29,7 +29,7 @@ export default class EmailQuestion implements BlockTool {
   }: {
     api: API;
     config?: ToolConfig;
-    data?: EmailQuestionData;
+    data?: PhoneQuestionData;
   }) {
     this.wrapper = undefined;
     this.settings = [
@@ -41,7 +41,7 @@ export default class EmailQuestion implements BlockTool {
     this.data = data;
     this.data = {
       label: data.label || "",
-      placeholder: data.placeholder || "your email",
+      placeholder: data.placeholder || "+1 (555) 987-6543",
       required: data.required !== undefined ? data.required : true,
     };
   }
@@ -118,11 +118,11 @@ export default class EmailQuestion implements BlockTool {
         </div>
         <div className="relative max-w-sm mt-1 rounded-md shadow-sm">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <MailIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
+            <PhoneIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
           </div>
           <input
             type="text"
-            name="email"
+            name="website"
             className="block w-full pl-10 text-gray-300 border-gray-300 rounded-md sm:text-sm"
             defaultValue={this.data.placeholder}
           />

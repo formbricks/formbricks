@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { Switch } from "@headlessui/react";
 import { TrashIcon } from "@heroicons/react/solid";
 import { default as React } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -8,10 +9,11 @@ const DEFAULT_INITIAL_DATA = () => {
   return {
     label: "",
     required: false,
+    multipleChoice: false,
     options: [
       {
         id: uuidv4(),
-        label: "Label",
+        label: "",
       },
     ],
   };
@@ -36,7 +38,7 @@ const SingleChoiceQuestion = (props) => {
     };
     newData.options.push({
       id: uuidv4(),
-      label: "Label",
+      label: "",
     });
     updateData(newData);
   };
@@ -64,13 +66,13 @@ const SingleChoiceQuestion = (props) => {
       const newData = {
         ...choiceData,
       };
-      newData.options[index][fieldName] = e.currentTarget.textContent;
+      newData.options[index][fieldName] = e.currentTarget.value;
       updateData(newData);
     };
   };
 
   return (
-    <>
+    <div className="pb-5">
       <div className="relative font-bold leading-7 text-gray-800 text-md sm:truncate">
         <input
           type="text"
@@ -100,19 +102,21 @@ const SingleChoiceQuestion = (props) => {
           >
             <span className="flex items-center text-sm">
               <span
-                className="flex items-center justify-center w-4 h-4 bg-white border border-gray-300 rounded-full"
+                className={classNames(
+                  choiceData.multipleChoice ? "rounded-sm" : "rounded-full",
+                  "flex items-center justify-center w-4 h-4 bg-white border border-gray-300"
+                )}
                 aria-hidden="true"
               >
                 <span className="rounded-full bg-white w-1.5 h-1.5" />
               </span>
-              <span
-                className="ml-3 font-medium text-gray-900 focus:outline-none"
+              <input
+                type="text"
+                defaultValue={option.label}
                 onBlur={onOptionChange(optionIdx, "label")}
-                suppressContentEditableWarning={!props.readOnly}
-                contentEditable={!props.readOnly}
-              >
-                {option.label}
-              </span>
+                className="p-0 ml-3 font-medium text-gray-900 border-0 border-transparent outline-none focus:ring-0 focus:outline-none placeholder:text-gray-300"
+                placeholder={`Option ${optionIdx + 1}`}
+              />
             </span>
             {optionIdx !== 0 && (
               <button
@@ -125,13 +129,45 @@ const SingleChoiceQuestion = (props) => {
           </div>
         ))}
       </div>
-      <button
-        className="mt-2 inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
-        onClick={onAddOption}
-      >
-        Add option
-      </button>
-    </>
+      <div className="relative z-0 flex mt-2 divide-x divide-gray-200">
+        <button
+          className="mr-3 justify-center mt-2 inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+          onClick={onAddOption}
+        >
+          Add option
+        </button>
+        <Switch.Group as="div" className="flex items-center pl-3">
+          <Switch
+            checked={choiceData.multipleChoice}
+            onChange={() => {
+              const newData = {
+                ...choiceData,
+              };
+              newData.multipleChoice = !newData.multipleChoice;
+              updateData(newData);
+            }}
+            className={classNames(
+              choiceData.multipleChoice ? "bg-red-600" : "bg-gray-200",
+              "relative inline-flex flex-shrink-0 h-4 w-7 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className={classNames(
+                choiceData.multipleChoice ? "translate-x-3" : "translate-x-0",
+                "pointer-events-none inline-block h-3 w-3 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"
+              )}
+            />
+          </Switch>
+          <Switch.Label as="span" className="ml-3">
+            <span className="text-sm font-medium text-gray-700">
+              Multiple Selection{" "}
+            </span>
+            {/*  <span className="text-sm text-gray-500">(Save 10%)</span> */}
+          </Switch.Label>
+        </Switch.Group>
+      </div>
+    </div>
   );
 };
 

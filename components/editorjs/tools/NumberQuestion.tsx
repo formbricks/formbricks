@@ -1,15 +1,14 @@
 import { API, BlockTool, BlockToolData, ToolConfig } from "@editorjs/editorjs";
-import { MailIcon } from "@heroicons/react/solid";
 import ReactDOM from "react-dom";
 
 //styles imports in angular.json
-interface EmailQuestionData extends BlockToolData {
+interface NumberQuestionData extends BlockToolData {
   label: string;
   placeholder: string;
   required: boolean;
 }
 
-export default class EmailQuestion implements BlockTool {
+export default class NumberQuestion implements BlockTool {
   settings: { name: string; icon: string }[];
   api: API;
   data: any;
@@ -18,9 +17,9 @@ export default class EmailQuestion implements BlockTool {
   static get toolbox(): { icon: string; title?: string } {
     return {
       icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M14.243 5.757a6 6 0 10-.986 9.284 1 1 0 111.087 1.678A8 8 0 1118 10a3 3 0 01-4.8 2.401A4 4 0 1114 10a1 1 0 102 0c0-1.537-.586-3.07-1.757-4.243zM12 10a2 2 0 10-4 0 2 2 0 004 0z" clip-rule="evenodd" />
+      <path fill-rule="evenodd" d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.53 6H17a1 1 0 110 2h-2.97l-1 4H15a1 1 0 110 2h-2.47l-.56 2.242a1 1 0 11-1.94-.485L10.47 14H7.53l-.56 2.242a1 1 0 11-1.94-.485L5.47 14H3a1 1 0 110-2h2.97l1-4H5a1 1 0 110-2h2.47l.56-2.243a1 1 0 011.213-.727zM9.03 8l-1 4h2.938l1-4H9.031z" clip-rule="evenodd" />
     </svg>`,
-      title: "Email Question",
+      title: "Number Question",
     };
   }
 
@@ -29,19 +28,19 @@ export default class EmailQuestion implements BlockTool {
   }: {
     api: API;
     config?: ToolConfig;
-    data?: EmailQuestionData;
+    data?: NumberQuestionData;
   }) {
     this.wrapper = undefined;
     this.settings = [
       {
         name: "required",
-        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512" class="w-3 h-3"><path d="M471.99 334.43L336.06 256l135.93-78.43c7.66-4.42 10.28-14.2 5.86-21.86l-32.02-55.43c-4.42-7.65-14.21-10.28-21.87-5.86l-135.93 78.43V16c0-8.84-7.17-16-16.01-16h-64.04c-8.84 0-16.01 7.16-16.01 16v156.86L56.04 94.43c-7.66-4.42-17.45-1.79-21.87 5.86L2.15 155.71c-4.42 7.65-1.8 17.44 5.86 21.86L143.94 256 8.01 334.43c-7.66 4.42-10.28 14.21-5.86 21.86l32.02 55.43c4.42 7.65 14.21 10.27 21.87 5.86l135.93-78.43V496c0 8.84 7.17 16 16.01 16h64.04c8.84 0 16.01-7.16 16.01-16V339.14l135.93 78.43c7.66 4.42 17.45 1.8 21.87-5.86l32.02-55.43c4.42-7.65 1.8-17.43-5.86-21.85z"/></svg>`,
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512" class="w-3 h-3"><!-- Font Awesome Pro 5.15.4 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) --><path d="M471.99 334.43L336.06 256l135.93-78.43c7.66-4.42 10.28-14.2 5.86-21.86l-32.02-55.43c-4.42-7.65-14.21-10.28-21.87-5.86l-135.93 78.43V16c0-8.84-7.17-16-16.01-16h-64.04c-8.84 0-16.01 7.16-16.01 16v156.86L56.04 94.43c-7.66-4.42-17.45-1.79-21.87 5.86L2.15 155.71c-4.42 7.65-1.8 17.44 5.86 21.86L143.94 256 8.01 334.43c-7.66 4.42-10.28 14.21-5.86 21.86l32.02 55.43c4.42 7.65 14.21 10.27 21.87 5.86l135.93-78.43V496c0 8.84 7.17 16 16.01 16h64.04c8.84 0 16.01-7.16 16.01-16V339.14l135.93 78.43c7.66 4.42 17.45 1.8 21.87-5.86l32.02-55.43c4.42-7.65 1.8-17.43-5.86-21.85z"/></svg>`,
       },
     ];
     this.data = data;
     this.data = {
       label: data.label || "",
-      placeholder: data.placeholder || "your email",
+      placeholder: data.placeholder || "",
       required: data.required !== undefined ? data.required : true,
     };
   }
@@ -54,8 +53,7 @@ export default class EmailQuestion implements BlockTool {
           .firstElementChild as HTMLInputElement
       ).value,
       placeholder: (
-        block.firstElementChild.lastElementChild
-          .lastElementChild as HTMLInputElement
+        block.firstElementChild.lastElementChild as HTMLInputElement
       ).value,
     };
   }
@@ -116,17 +114,12 @@ export default class EmailQuestion implements BlockTool {
             *
           </div>
         </div>
-        <div className="relative max-w-sm mt-1 rounded-md shadow-sm">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <MailIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
-          </div>
-          <input
-            type="text"
-            name="email"
-            className="block w-full pl-10 text-gray-300 border-gray-300 rounded-md sm:text-sm"
-            defaultValue={this.data.placeholder}
-          />
-        </div>
+        <input
+          type="text"
+          className="block w-full max-w-sm mt-1 text-sm text-gray-400 border-gray-300 rounded-md shadow-sm placeholder:text-gray-300"
+          placeholder="optional placeholder"
+          defaultValue={this.data.placeholder}
+        />
       </div>
     );
     ReactDOM.render(toolView, this.wrapper);

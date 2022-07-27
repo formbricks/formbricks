@@ -10,8 +10,11 @@ import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
 import Loading from "../Loading";
 import EmailQuestion from "./tools/EmailQuestion";
 import PageTransition from "./tools/PageTransition";
-import SingleChoiceQuestion from "./tools/SingleChoiceQuestion";
+import MultipleChoiceQuestion from "./tools/MultipleChoiceQuestion";
 import TextQuestion from "./tools/TextQuestion";
+import WebsiteQuestion from "./tools/WebsiteQuestion";
+import PhoneQuestion from "./tools/PhoneQuestion";
+import NumberQuestion from "./tools/NumberQuestion";
 
 interface EditorProps {
   id: string;
@@ -88,7 +91,10 @@ const Editor = ({
       tools: {
         textQuestion: TextQuestion,
         emailQuestion: EmailQuestion,
-        singleChoiceQuestion: SingleChoiceQuestion,
+        multipleChoiceQuestion: MultipleChoiceQuestion,
+        numberQuestion: NumberQuestion,
+        phoneQuestion: PhoneQuestion,
+        websiteQuestion: WebsiteQuestion,
         pageTransition: PageTransition,
         paragraph: {
           class: Paragraph,
