@@ -1,13 +1,6 @@
+import "chart.js/auto";
 import { Chart } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-} from "chart.js";
 import BaseResults from "./BaseResults";
-
-ChartJS.register(CategoryScale, LinearScale, BarElement);
 
 export default function ChoiceResults({ element }) {
   const data = {
