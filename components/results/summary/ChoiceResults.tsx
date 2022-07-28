@@ -10,7 +10,6 @@ import BaseResults from "./BaseResults";
 ChartJS.register(CategoryScale, LinearScale, BarElement);
 
 export default function ChoiceResults({ element }) {
-  console.log("element", JSON.stringify(element, null, 2));
   const data = {
     //labels: element.data.options,
     labels: element.options.map((o) => o.label),
