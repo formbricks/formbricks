@@ -44,7 +44,9 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
         localOnly={localOnly}
         className="w-full max-w-3xl mx-auto space-y-6"
         onSubmit={() => {
-          trackPosthogEvent("submitForm", { formId });
+          if (!localOnly) {
+            trackPosthogEvent("submitForm", { formId });
+          }
         }}
       >
         {pages.map((page, pageIdx) => (
