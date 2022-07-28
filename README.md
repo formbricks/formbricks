@@ -87,7 +87,7 @@ yarn dev
 
 ```
 
-**You can now access the app on [https://localhost:3000](https://localhost:3000)**
+**You can now access the app on [https://localhost:3000](https://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of snoopForms, create a new account.
 
 ## Deployment
 
@@ -117,7 +117,7 @@ docker compose up -d
 
 ```
 
-You can now access the app on [https://localhost:3000](https://localhost:3000)
+You can now access the app on [https://localhost:3000](https://localhost:3000). You will be automatically redirected to the login. To use your local installation of snoopForms, create a new account.
 
 ## Contributing
 

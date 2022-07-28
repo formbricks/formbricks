@@ -1,3 +1,4 @@
+import { GlobeAltIcon, MailIcon, PhoneIcon } from "@heroicons/react/solid";
 import { SnoopElement, SnoopForm, SnoopPage } from "@snoopforms/react";
 import { useMemo } from "react";
 import { trackPosthogEvent } from "../../lib/posthog";
@@ -43,11 +44,17 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
         localOnly={localOnly}
         className="w-full max-w-3xl mx-auto space-y-6"
         onSubmit={() => {
-          trackPosthogEvent("submitForm", { formId });
+          if (!localOnly) {
+            trackPosthogEvent("submitForm", { formId });
+          }
         }}
       >
-        {pages.map((page) => (
-          <SnoopPage key={page.id} name={page.id}>
+        {pages.map((page, pageIdx) => (
+          <SnoopPage
+            key={page.id}
+            name={page.id}
+            thankyou={pageIdx === pages.length - 1}
+          >
             {page.blocks.map((block) => (
               <div key={block.id}>
                 {block.type === "paragraph" ? (
@@ -61,20 +68,81 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                     <h3 className="ce-header">{block.data.text}</h3>
                   ) : null
                 ) : block.type === "textQuestion" ? (
-                  <div className="pb-5">
-                    <SnoopElement
-                      type="text"
-                      name={block.id}
-                      label={block.data.label}
-                      classNames={{
-                        label:
-                          "mt-4 mb-2 block text-md font-bold leading-7 text-gray-800 sm:truncate",
-                        element:
-                          "flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full min-w-0 rounded-md sm:text-base border-gray-300",
-                      }}
-                      required={block.data.required}
-                    />
-                  </div>
+                  <SnoopElement
+                    type="text"
+                    name={block.id}
+                    label={block.data.label}
+                    placeholder={block.data.placeholder}
+                    classNames={{
+                      label:
+                        "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                    }}
+                    required={block.data.required}
+                  />
+                ) : block.type === "emailQuestion" ? (
+                  <SnoopElement
+                    type="email"
+                    name={block.id}
+                    label={block.data.label}
+                    placeholder={block.data.placeholder}
+                    icon={<MailIcon className="w-5 h-5" />}
+                    classNames={{
+                      label:
+                        "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                    }}
+                    required={block.data.required}
+                  />
+                ) : block.type === "multipleChoiceQuestion" &&
+                  block.data.multipleChoice ? (
+                  <SnoopElement
+                    type="checkbox"
+                    name={block.id}
+                    label={block.data.label}
+                    options={block.data.options.map((o) => o.label)}
+                    classNames={{
+                      label:
+                        "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                    }}
+                    required={block.data.required}
+                  />
+                ) : block.type === "multipleChoiceQuestion" &&
+                  !block.data.multipleChoice ? (
+                  <SnoopElement
+                    type="radio"
+                    name={block.id}
+                    label={block.data.label}
+                    options={block.data.options.map((o) => o.label)}
+                    classNames={{
+                      label:
+                        "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                    }}
+                    required={block.data.required}
+                  />
+                ) : block.type === "numberQuestion" ? (
+                  <SnoopElement
+                    type="number"
+                    name={block.id}
+                    label={block.data.label}
+                    placeholder={block.data.placeholder}
+                    classNames={{
+                      label:
+                        "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                    }}
+                    required={block.data.required}
+                  />
+                ) : block.type === "phoneQuestion" ? (
+                  <SnoopElement
+                    type="phone"
+                    name={block.id}
+                    label={block.data.label}
+                    placeholder={block.data.placeholder}
+                    icon={<PhoneIcon className="w-5 h-5" />}
+                    classNames={{
+                      label:
+                        "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                    }}
+                    required={block.data.required}
+                  />
                 ) : block.type === "submitButton" ? (
                   <SnoopElement
                     name="submit"
@@ -84,6 +152,19 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                       button:
                         "inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500",
                     }}
+                  />
+                ) : block.type === "websiteQuestion" ? (
+                  <SnoopElement
+                    type="website"
+                    name={block.id}
+                    label={block.data.label}
+                    placeholder={block.data.placeholder}
+                    icon={<GlobeAltIcon className="w-5 h-5" />}
+                    classNames={{
+                      label:
+                        "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                    }}
+                    required={block.data.required}
                   />
                 ) : null}
               </div>

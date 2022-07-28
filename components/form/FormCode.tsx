@@ -127,53 +127,53 @@ export default function FormCode({ formId }) {
           className="grid grid-cols-1 gap-5 mt-3 sm:gap-6 sm:grid-cols-2"
         >
           {libs.map((lib) => (
-            <a
-              className="flex col-span-1 rounded-md shadow-sm"
-              key={lib.id}
-              href={lib.href}
-              target={lib.target || ""}
-              rel="noreferrer"
-            >
-              <li
-                className={classNames(
-                  lib.comingSoon
-                    ? "text-ui-gray-medium"
-                    : "shadow-sm text-ui-gray-dark hover:text-black",
-                  "flex col-span-1 rounded-md w-full"
-                )}
+            <Link key={lib.id} href={lib.href}>
+              <a
+                className="flex col-span-1 rounded-md shadow-sm"
+                target={lib.target || ""}
+                rel="noreferrer"
               >
-                <div
+                <li
                   className={classNames(
-                    lib.bgColor,
-                    "flex-shrink-0 flex items-center justify-center w-20 text-white text-sm font-medium rounded-l-md"
+                    lib.comingSoon
+                      ? "text-ui-gray-medium"
+                      : "shadow-sm text-ui-gray-dark hover:text-black",
+                    "flex col-span-1 rounded-md w-full"
                   )}
                 >
-                  <lib.icon
+                  <div
                     className={classNames(
-                      lib.comingSoon
-                        ? "text-ui-gray-medium"
-                        : "text-white stroke-1",
-                      "w-10 h-10"
+                      lib.bgColor,
+                      "flex-shrink-0 flex items-center justify-center w-20 text-white text-sm font-medium rounded-l-md"
                     )}
-                  />
-                </div>
-                <div
-                  className={classNames(
-                    lib.comingSoon ? "border-dashed" : "",
-                    "flex items-center justify-between flex-1 truncate bg-white rounded-r-md"
-                  )}
-                >
-                  <div className="inline-flex px-4 py-6 text-lg truncate">
-                    <p className="font-light">{lib.name}</p>
-                    {lib.comingSoon && (
-                      <div className="p-1 px-3 ml-3 bg-green-100 rounded">
-                        <p className="text-xs text-black">coming soon</p>
-                      </div>
-                    )}
+                  >
+                    <lib.icon
+                      className={classNames(
+                        lib.comingSoon
+                          ? "text-ui-gray-medium"
+                          : "text-white stroke-1",
+                        "w-10 h-10"
+                      )}
+                    />
                   </div>
-                </div>
-              </li>
-            </a>
+                  <div
+                    className={classNames(
+                      lib.comingSoon ? "border-dashed" : "",
+                      "flex items-center justify-between flex-1 truncate bg-white rounded-r-md"
+                    )}
+                  >
+                    <div className="inline-flex px-4 py-6 text-lg truncate">
+                      <p className="font-light">{lib.name}</p>
+                      {lib.comingSoon && (
+                        <div className="p-1 px-3 ml-3 bg-green-100 rounded">
+                          <p className="text-xs text-black">coming soon</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              </a>
+            </Link>
           ))}
         </ul>
 

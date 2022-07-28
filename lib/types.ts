@@ -40,9 +40,20 @@ export type SchemaPage = {
   elements: SchemaElement[];
 };
 
+export type SnoopType =
+  | "checkbox"
+  | "email"
+  | "number"
+  | "phone"
+  | "radio"
+  | "submit"
+  | "text"
+  | "textarea"
+  | "website";
+
 export type SchemaElement = {
   name: string;
-  type: "checkbox" | "radio" | "text" | "textarea" | "submit";
+  type: SnoopType;
   label?: string;
   options?: SchemaOption[];
 };
@@ -64,7 +75,7 @@ export type SubmissionSummaryPage = {
 
 export type SubmissionSummaryElement = {
   name: string;
-  type: "checkbox" | "radio" | "text" | "textarea" | "submit";
+  type: SnoopType;
   label?: string;
   summary?: string[];
   options?: SubmissionSummaryOption[];

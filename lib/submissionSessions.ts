@@ -111,17 +111,33 @@ export const getSubmissionSummary = (
             );
             if (typeof elementInSummary !== "undefined") {
               if (
-                elementInSummary.type === "text" ||
-                elementInSummary.type === "textarea"
+                [
+                  "email",
+                  "number",
+                  "phone",
+                  "text",
+                  "textarea",
+                  "website",
+                ].includes(elementInSummary.type)
               ) {
                 if (!("summary" in elementInSummary)) {
                   elementInSummary.summary = [];
                 }
                 elementInSummary.summary.push(elementValue);
-              } else if (
-                elementInSummary.type === "radio" ||
-                elementInSummary.type === "checkbox"
-              ) {
+              } else if (elementInSummary.type === "checkbox") {
+                // checkbox values are a list of values
+                for (const value of elementValue) {
+                  const optionInSummary = elementInSummary.options.find(
+                    (o) => o.value === value
+                  );
+                  if (typeof optionInSummary !== "undefined") {
+                    if (!("summary" in optionInSummary)) {
+                      optionInSummary.summary = 0;
+                    }
+                    optionInSummary.summary += 1;
+                  }
+                }
+              } else if (elementInSummary.type === "radio") {
                 const optionInSummary = elementInSummary.options.find(
                   (o) => o.value === elementValue
                 );
