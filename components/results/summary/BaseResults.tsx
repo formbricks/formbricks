@@ -1,7 +1,26 @@
-import { CheckCircleIcon, MenuAlt1Icon } from "@heroicons/react/outline";
+import {
+  AtSymbolIcon,
+  CheckCircleIcon,
+  GlobeAltIcon,
+  HashtagIcon,
+  MenuAlt1Icon,
+  PhoneIcon,
+} from "@heroicons/react/outline";
 import { classNames } from "../../../lib/utils";
 
 export const elementTypes = [
+  {
+    type: "email",
+    icon: AtSymbolIcon,
+  },
+  {
+    type: "number",
+    icon: HashtagIcon,
+  },
+  {
+    type: "phone",
+    icon: PhoneIcon,
+  },
   {
     type: "text",
     icon: MenuAlt1Icon,
@@ -13,6 +32,10 @@ export const elementTypes = [
   {
     type: "checkbox",
     icon: CheckCircleIcon,
+  },
+  {
+    type: "website",
+    icon: GlobeAltIcon,
   },
 ];
 

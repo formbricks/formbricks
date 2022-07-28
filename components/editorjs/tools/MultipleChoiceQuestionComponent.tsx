@@ -32,7 +32,7 @@ const SingleChoiceQuestion = (props) => {
     }
   };
 
-  const onAddOption = (e) => {
+  const onAddOption = () => {
     const newData = {
       ...choiceData,
     };
