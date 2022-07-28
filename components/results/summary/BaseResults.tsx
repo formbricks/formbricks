@@ -6,6 +6,7 @@ import {
   MenuAlt1Icon,
   PhoneIcon,
 } from "@heroicons/react/outline";
+import { IoMdRadioButtonOn } from "react-icons/io";
 import { classNames } from "../../../lib/utils";
 
 export const elementTypes = [
@@ -32,6 +33,10 @@ export const elementTypes = [
   {
     type: "checkbox",
     icon: CheckCircleIcon,
+  },
+  {
+    type: "radio",
+    icon: IoMdRadioButtonOn,
   },
   {
     type: "website",
