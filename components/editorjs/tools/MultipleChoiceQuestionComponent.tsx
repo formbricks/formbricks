@@ -88,17 +88,11 @@ const SingleChoiceQuestion = (props) => {
           </div>
         )}
       </div>
-      <div className="relative max-w-sm mt-3 -space-y-px bg-white rounded-md">
+      <div className="max-w-sm mt-2 space-y-2">
         {choiceData.options.map((option, optionIdx) => (
           <div
             key={option.label}
-            className={classNames(
-              optionIdx === 0 ? "rounded-tl-md rounded-tr-md" : "",
-              optionIdx === choiceData.options.length - 1
-                ? "rounded-bl-md rounded-br-md"
-                : "",
-              "relative border p-4 flex flex-col cursor-pointer md:pl-4 md:pr-6 focus:outline-none border-gray-200"
-            )}
+            className={classNames("relative flex items-start")}
           >
             <span className="flex items-center text-sm">
               <span
