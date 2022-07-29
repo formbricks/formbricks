@@ -26,9 +26,11 @@ const AnalyticsCard: React.FC<Props> = ({
           {toolTipText && (
             <QuestionMarkCircleIcon className="w-4 h-4 ml-1 text-red hover:text-ui-gray-dark" />
           )}
-          <span className="flex p-1 px-4 -mt-6 -ml-8 text-xs text-center text-white bg-gray-600 rounded shadow-lg grow tooltip">
-            {toolTipText}
-          </span>
+          {toolTipText && (
+            <span className="flex p-1 px-4 -mt-6 -ml-8 text-xs text-center text-white bg-gray-600 rounded shadow-lg grow tooltip">
+              {toolTipText}
+            </span>
+          )}
         </dt>
         <dd className="flex items-baseline justify-between mt-1 md:block lg:flex">
           <div
