@@ -10,7 +10,13 @@ import { useForm } from "../../../../lib/forms";
 import { useCodeSecondNavigation } from "../../../../lib/navigation/formCodeSecondNavigation";
 import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
 
+hljs.registerLanguage("javascript", javascript);
+
 export default function ReactPage() {
+  useEffect(() => {
+    hljs.initHighlighting();
+  }, []);
+
   const router = useRouter();
   const formId = router.query.id.toString();
   const { form, isLoadingForm } = useForm(router.query.id);
@@ -69,28 +75,36 @@ export default function ReactPage() {
               </p>
             </div>
             <div className="p-8 font-light text-gray-200 bg-black rounded-md">
-              <code className="whitespace-pre language-js">{`<SnoopForm
-  domain="localhost:3000"
-  protocol="http"
-  className="w-full space-y-6"
-  onSubmit={({ submission, schema })=>{}}>
+              <pre>
+                <code className="language-javascript">
+                  {`<SnoopForm
+  domain="app.snoopforms.com"
+  protocol="https">
      
      <SnoopPage name="first">
        <SnoopElement
          type="text"
          name={"name"}
          label="Your name"
-         classNames={{
-         label: "your-label-class",
-         element: "your-input-class",}}
          required/>
       </SnoopPage>
+
+      <SnoopElement
+      type="checkboxes"
+      label="Tools you love"
+      options={[
+        "TailwindCSS",
+        "React",
+        "snoopForms" ]}
+    />
 
       <SnoopPage thankyou>
         <h1>Thank you!</h1>
       </SnoopPage>
       
-    </SnoopForm>`}</code>
+    </SnoopForm>`}
+                </code>
+              </pre>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-10 my-16">
