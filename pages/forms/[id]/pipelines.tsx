@@ -107,7 +107,7 @@ export default function PipelinesPage() {
             <PuzzleIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
           </EmptyPageFiller>
           <div>
-            <div className="mt-16">
+            <div className="my-16">
               <div>
                 <h2 className="text-xl font-bold text-ui-gray-dark">
                   Integrations
