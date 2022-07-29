@@ -10,6 +10,7 @@ import { timeSince } from "../../lib/utils";
 import AnalyticsCard from "./AnalyticsCard";
 import Loading from "../Loading";
 import TextResults from "./summary/TextResults";
+import ChoiceResults from "./summary/ChoiceResults";
 
 export default function ResultsSummary({ formId }) {
   const { submissionSessions, isLoadingSubmissionSessions } =
@@ -83,8 +84,17 @@ export default function ResultsSummary({ formId }) {
               page.type === "form" && (
                 <div key={page.name}>
                   {page.elements.map((element) =>
-                    element.type === "text" || element.type === "textarea" ? (
+                    [
+                      "email",
+                      "number",
+                      "phone",
+                      "text",
+                      "textarea",
+                      "website",
+                    ].includes(element.type) ? (
                       <TextResults element={element} />
+                    ) : ["checkbox", "radio"].includes(element.type) ? (
+                      <ChoiceResults element={element} />
                     ) : null
                   )}
                 </div>

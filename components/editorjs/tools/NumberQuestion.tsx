@@ -2,13 +2,13 @@ import { API, BlockTool, BlockToolData, ToolConfig } from "@editorjs/editorjs";
 import ReactDOM from "react-dom";
 
 //styles imports in angular.json
-interface TextQuestionData extends BlockToolData {
+interface NumberQuestionData extends BlockToolData {
   label: string;
   placeholder: string;
   required: boolean;
 }
 
-export default class TextQuestion implements BlockTool {
+export default class NumberQuestion implements BlockTool {
   settings: { name: string; icon: string }[];
   api: API;
   data: any;
@@ -16,8 +16,10 @@ export default class TextQuestion implements BlockTool {
 
   static get toolbox(): { icon: string; title?: string } {
     return {
-      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-align-justify"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>`,
-      title: "Text Question",
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M9.243 3.03a1 1 0 01.727 1.213L9.53 6h2.94l.56-2.243a1 1 0 111.94.486L14.53 6H17a1 1 0 110 2h-2.97l-1 4H15a1 1 0 110 2h-2.47l-.56 2.242a1 1 0 11-1.94-.485L10.47 14H7.53l-.56 2.242a1 1 0 11-1.94-.485L5.47 14H3a1 1 0 110-2h2.97l1-4H5a1 1 0 110-2h2.47l.56-2.243a1 1 0 011.213-.727zM9.03 8l-1 4h2.938l1-4H9.031z" clip-rule="evenodd" />
+    </svg>`,
+      title: "Number Question",
     };
   }
 
@@ -26,7 +28,7 @@ export default class TextQuestion implements BlockTool {
   }: {
     api: API;
     config?: ToolConfig;
-    data?: TextQuestionData;
+    data?: NumberQuestionData;
   }) {
     this.wrapper = undefined;
     this.settings = [

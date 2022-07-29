@@ -27,7 +27,6 @@ export default function ResultsSummaryPage() {
       breadcrumbs={[{ name: form.name, href: "#", current: true }]}
       steps={formMenuSteps}
       currentStep="results"
-      limitHeightScreen={true}
     >
       <SecondNavBar
         navItems={formResultsSecondNavigation}

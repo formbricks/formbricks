@@ -29,11 +29,11 @@ Spin up forms in minutes. Pipe your data exactly where you need it. Maximize you
 
 ### Features
 
-- Work with the React Lib or use our No Code Builder to build exactly the forms you need.
-- Pipe your data where you need it. Don’t wait for your form provider to finally build the integration you desperately need.
-- Since you can self-host Snoop Forms, it’s 100% compliant with all privacy regulations.
-- How users interact with your form can be as important as their input. Don’t miss anything with our best-in-class analytics.
-- We aim for the best possible developer experience. Use what you like, build on top what you need. Everything is possible.
+- React Lib & No Code Builder to build & integrate forms rapidly.
+- 100% compliant with all privacy regulations (self-hosted).
+- (next) Put your data to work with integrations.
+- (next) Juicy analytics out of the box.
+- (always) smooth Developer Experience comes first.
 
 ### Built With
 
@@ -87,11 +87,11 @@ yarn dev
 
 ```
 
-**You can now access the app on [https://localhost:3000](https://localhost:3000)**
+**You can now access the app on [https://localhost:3000](https://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of snoopForms, create a new account.
 
 ## Deployment
 
-The easiest way to deploy snoopForms yourself on your own machine is using Docker. This requires Docker and the docker compose plugin on your system to work.
+The easiest way to deploy the snoopHub on your own machine is using Docker. This requires Docker and the docker compose plugin on your system to work.
 
 Clone the repository:
 
@@ -117,7 +117,7 @@ docker compose up -d
 
 ```
 
-You can now access the app on [https://localhost:3000](https://localhost:3000)
+You can now access the app on [https://localhost:3000](https://localhost:3000). You will be automatically redirected to the login. To use your local installation of snoopForms, create a new account.
 
 ## Contributing
 
