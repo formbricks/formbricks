@@ -20,19 +20,21 @@ export default class PageTransition implements BlockTool {
 
   constructor({
     data,
+    api,
   }: {
     api: API;
     config?: ToolConfig;
     data?: PageTransitionData;
   }) {
-    this.submitLabel = data.label || "Submit";
+    this.api = api;
+    this.submitLabel = data.submitLabel || "Submit";
   }
 
   save(block: HTMLDivElement) {
     return {
       submitLabel: (
         block.firstElementChild.firstElementChild
-          .firstElementChild as HTMLInputElement
+          .firstElementChild as HTMLElement
       ).innerHTML,
     };
   }
@@ -40,8 +42,8 @@ export default class PageTransition implements BlockTool {
   render(): HTMLElement {
     const container = document.createElement("div");
     const toolView = (
-      <div className="my-8">
-        <div className="inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+      <div className="relative mt-16 mb-8">
+        <div className="absolute inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-700 border border-transparent rounded-md shadow-sm left -top-14 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
           <div
             contentEditable
             id="label"

@@ -257,10 +257,10 @@
   resolved "https://registry.npmjs.org/@sentry/types/-/types-7.8.0.tgz"
   integrity sha512-X9D2jlcAzbJdCHA+eCMv2t5HI9769Qpx48e+sZiK7Oasy1jwQtqzQRaiI9fy/zZ+p7Fyerj/4WjW/E2c4dJ63w==
 
-"@snoopforms/react@^0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@snoopforms/react/-/react-0.2.1.tgz#fb02ff7e1fefd07045b829546fd046aed58a0c51"
-  integrity sha512-FWYQWg28mtgcR0/HEJy3+6P4XB+rKfNsjAq3lul5jbyuE5DA+dbvtsOtvZBlFy9demjzvF/0k8yiRoWRZTf1Aw==
+"@snoopforms/react@^0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@snoopforms/react/-/react-0.2.2.tgz#9f3020cca581d72056c405bbf1278d16aea7d30e"
+  integrity sha512-YPApJFEDv3L+9aMTg3Kzr+aFHFhfMHbYrxzvBRIgvVoOzUIL/wtVwskJtCzP2C+YPS7NvQFjaWJFvxTGRzVE0g==
   dependencies:
     "@fingerprintjs/fingerprintjs" "^3.3.3"
     "@headlessui/react" "^1.6.6"

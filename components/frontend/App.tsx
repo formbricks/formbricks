@@ -2,6 +2,7 @@ import { GlobeAltIcon, MailIcon, PhoneIcon } from "@heroicons/react/solid";
 import { SnoopElement, SnoopForm, SnoopPage } from "@snoopforms/react";
 import { useMemo } from "react";
 import { trackPosthogEvent } from "../../lib/posthog";
+import { generateId } from "../../lib/utils";
 import Loading from "../Loading";
 
 export default function App({ id = "", formId, blocks, localOnly = false }) {
@@ -16,6 +17,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
         currentPage.blocks.push(block);
       } else {
         currentPage.blocks.push({
+          id: generateId(10),
           data: {
             label: block.data.submitLabel,
           },
