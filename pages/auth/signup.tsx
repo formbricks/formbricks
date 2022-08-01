@@ -2,9 +2,12 @@ import { XCircleIcon } from "@heroicons/react/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import getConfig from "next/config";
 import { useState } from "react";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { createUser } from "../../lib/users";
+
+const { publicRuntimeConfig } = getConfig();
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -155,29 +158,27 @@ export default function SignUpPage() {
                         <a className="text-red hover:text-red-600">Log in.</a>
                       </Link>
                     </div>
-                    {(process.env.NEXT_PUBLIC_TERMS_URL ||
-                      process.env.NEXT_PUBLIC_PRIVACY_URL) && (
+                    {(publicRuntimeConfig.termsUrl ||
+                      publicRuntimeConfig.privacyUrl) && (
                       <div className="mt-3 text-xs text-center text-gray-400">
                         By clicking &quot;Sign Up&quot;, you agree to our
                         <br />
-                        {process.env.NEXT_PUBLIC_TERMS_URL && (
+                        {publicRuntimeConfig.termsUrl && (
                           <a
                             className="text-red hover:text-red-600"
-                            href={process.env.NEXT_PUBLIC_TERMS_URL}
+                            href={publicRuntimeConfig.termsUrl}
                             rel="noreferrer"
                             target="_blank"
                           >
                             terms of service
                           </a>
                         )}
-                        {process.env.NEXT_PUBLIC_TERMS_URL &&
-                          process.env.NEXT_PUBLIC_PRIVACY_URL && (
-                            <span> and </span>
-                          )}
-                        {process.env.NEXT_PUBLIC_PRIVACY_URL && (
+                        {publicRuntimeConfig.termsUrl &&
+                          publicRuntimeConfig.privacyUrl && <span> and </span>}
+                        {publicRuntimeConfig.privacyUrl && (
                           <a
                             className="text-red hover:text-red-600"
-                            href={process.env.NEXT_PUBLIC_PRIVACY_URL}
+                            href={publicRuntimeConfig.privacyUrl}
                             rel="noreferrer"
                             target="_blank"
                           >

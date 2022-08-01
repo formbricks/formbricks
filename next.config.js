@@ -18,6 +18,8 @@ const nextConfig = {
     // Will be available on both server and client
     posthogApiHost: process.env.POSTHOG_API_HOST,
     posthogApiKey: process.env.POSTHOG_API_KEY,
+    termsUrl: process.env.NEXT_PUBLIC_TERMS_URL,
+    privacyUrl: process.env.NEXT_PUBLIC_PRIVACY_URL,
   },
   async redirects() {
     return [
