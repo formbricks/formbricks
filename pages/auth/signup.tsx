@@ -148,12 +148,46 @@ export default function SignUpPage() {
                     >
                       Sign up
                     </button>
+
                     <div className="mt-3 text-xs text-center text-gray-600">
                       Already have an account?{" "}
                       <Link href="/auth/signin">
                         <a className="text-red hover:text-red-600">Log in.</a>
                       </Link>
                     </div>
+                    {(process.env.NEXT_PUBLIC_TERMS_URL ||
+                      process.env.NEXT_PUBLIC_PRIVACY_URL) && (
+                      <div className="mt-3 text-xs text-center text-gray-400">
+                        By clicking &quot;Sign Up&quot;, you agree to our
+                        <br />
+                        {process.env.NEXT_PUBLIC_TERMS_URL && (
+                          <a
+                            className="text-red hover:text-red-600"
+                            href={process.env.NEXT_PUBLIC_TERMS_URL}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            terms of service
+                          </a>
+                        )}
+                        {process.env.NEXT_PUBLIC_TERMS_URL &&
+                          process.env.NEXT_PUBLIC_PRIVACY_URL && (
+                            <span> and </span>
+                          )}
+                        {process.env.NEXT_PUBLIC_PRIVACY_URL && (
+                          <a
+                            className="text-red hover:text-red-600"
+                            href={process.env.NEXT_PUBLIC_PRIVACY_URL}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            privacy policy
+                          </a>
+                        )}
+                        .<br />
+                        We&apos;ll occasionally send you account related emails.
+                      </div>
+                    )}
                   </div>
                 </form>
               </div>
