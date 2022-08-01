@@ -7,26 +7,23 @@ const { publicRuntimeConfig } = getConfig();
 const enabled =
   publicRuntimeConfig.posthogApiKey && publicRuntimeConfig.posthogApiHost;
 
-export const usePosthog = (userId?: string, anonymous = false) => {
+export const usePosthog = () => {
   const router = useRouter();
 
   useEffect(() => {
-    if (enabled && (userId || anonymous)) {
+    if (enabled) {
       // Init PostHog
       posthog.init(publicRuntimeConfig.posthogApiKey, {
         api_host: publicRuntimeConfig.posthogApiHost,
         loaded: function (posthog) {
           if (process.env.NODE_ENV === "development")
             posthog.opt_out_capturing();
-          if (userId && !anonymous) {
-            posthog.identify(userId);
-          }
         },
       });
     }
     // Track page views
     const handleRouteChange = () => {
-      if (enabled && (userId || anonymous)) {
+      if (enabled) {
         posthog.capture("$pageview");
       }
     };
@@ -35,7 +32,7 @@ export const usePosthog = (userId?: string, anonymous = false) => {
     return () => {
       router.events.off("routeChangeComplete", handleRouteChange);
     };
-  }, [router.events, userId, anonymous]);
+  }, [router.events]);
 };
 
 export const trackPosthogEvent = (eventName: string, attributes: object) => {

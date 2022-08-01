@@ -5,15 +5,12 @@ import App from "../../components/frontend/App";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import Loading from "../../components/Loading";
 import { useNoCodeFormPublic } from "../../lib/noCodeForm";
-import { usePosthog } from "../../lib/posthog";
 
 export default function Share({}) {
   const router = useRouter();
   const formId = router.query.id.toString();
   const { noCodeForm, isLoadingNoCodeForm, isErrorNoCodeForm } =
     useNoCodeFormPublic(formId);
-
-  usePosthog(null, true);
 
   if (isErrorNoCodeForm) {
     return <p>Not found</p>;

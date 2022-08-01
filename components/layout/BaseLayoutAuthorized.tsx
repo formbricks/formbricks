@@ -1,7 +1,7 @@
 import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { usePosthog } from "../../lib/posthog";
+import { identifyPoshogUser } from "../../lib/posthog";
 import { classNames } from "../../lib/utils";
 import Loading from "../Loading";
 import MenuBreadcrumbs from "./MenuBreadcrumbs";
@@ -37,11 +37,10 @@ export default function BaseLayoutAuthorized({
         signIn();
       } else {
         setLoading(false);
+        identifyPoshogUser(session.user.email);
       }
     }
   }, [session, status]);
-
-  usePosthog(session?.user?.email);
 
   if (status === "loading" || loading) {
     return <Loading />;
