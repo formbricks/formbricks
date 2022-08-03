@@ -5,9 +5,9 @@
   <h3 align="center">snoopForms</h3>
 
   <p align="center">
-    The Open-Source Typeform Alternative
+    Finally, good open-source forms!
     <br />
-    <a href="https://snoopforms.com/">Website</a>  |  <a href="https://discord.gg/3YFcABF2Ts">Join Discord community</a>
+    <a href="https://snoopforms.com/">Website & Hosted version</a>  |  <a href="https://discord.gg/3YFcABF2Ts">Join Discord community</a>
   </p>
 </p>
 
@@ -23,9 +23,15 @@
 
 ## About snoopForms
 
-<img width="937" alt="screenshot-snoopForms" src="https://user-images.githubusercontent.com/675065/172094334-b5ca09d0-2058-42e3-9b05-75c79c098d06.svg">
+<img width="937" alt="snoopForms-architecture" src="https://user-images.githubusercontent.com/675065/182550268-09794c9e-1187-470e-b795-697ceb2a93b8.svg">
 
 Spin up forms in minutes. Pipe your data exactly where you need it. Maximize your results with juicy analytics.
+
+## What is snoopHub?
+
+The snoopHub is the heart of snoopForms. In it, all form submissions are processed, analyzed, forwarded and you can even build your own forms with the help of the no-code editor.
+
+If you prefer to build your forms completely customizable and send the submissions directly to snoopHub, check out our [React library](https://github.com/snoopForms/snoopforms-react).
 
 ### Features
 
