@@ -1,16 +1,15 @@
-import { GetServerSideProps } from "next";
-import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import BaseLayoutAuthorized from "../../../../components/layout/BaseLayoutAuthorized";
+import BaseLayoutManagement from "../../../../components/layout/BaseLayoutManagement";
 import LimitedWidth from "../../../../components/layout/LimitedWidth";
 import SecondNavBar from "../../../../components/layout/SecondNavBar";
+import withAuthentication from "../../../../components/layout/WithAuthentication";
 import Loading from "../../../../components/Loading";
 import ResultsSummary from "../../../../components/results/ResultsSummary";
 import { useForm } from "../../../../lib/forms";
 import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
 import { useFormResultsSecondNavigation } from "../../../../lib/navigation/formResultsSecondNavigation";
 
-export default function ResultsSummaryPage() {
+function ResultsSummaryPage() {
   const router = useRouter();
   const formId = router.query.id.toString();
   const { form, isLoadingForm } = useForm(router.query.id);
@@ -22,7 +21,7 @@ export default function ResultsSummaryPage() {
   }
 
   return (
-    <BaseLayoutAuthorized
+    <BaseLayoutManagement
       title={`${form.name} - snoopForms`}
       breadcrumbs={[{ name: form.name, href: "#", current: true }]}
       steps={formMenuSteps}
@@ -36,14 +35,8 @@ export default function ResultsSummaryPage() {
       <LimitedWidth>
         <ResultsSummary formId={formId} />
       </LimitedWidth>
-    </BaseLayoutAuthorized>
+    </BaseLayoutManagement>
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const session = await getSession({ req });
-  if (!session) {
-    res.statusCode = 403;
-  }
-  return { props: {} };
-};
+export default withAuthentication(ResultsSummaryPage);

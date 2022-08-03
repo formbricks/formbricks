@@ -1,4 +1,3 @@
-import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import Loading from "../../../components/Loading";
 import { formHasOwnership } from "../../../lib/api";
@@ -8,21 +7,27 @@ export default function FormIndex() {
   return <Loading />;
 }
 
-export const getServerSideProps: GetServerSideProps = async ({
-  req,
-  res,
-  params,
-}) => {
+export async function getServerSideProps({ req, params, resolvedUrl }) {
   const session = await getSession({ req });
   if (!session) {
-    res.statusCode = 403;
-    return { props: {} };
+    return {
+      redirect: {
+        destination: `/auth/signin?callbackUrl=${encodeURIComponent(
+          resolvedUrl
+        )}`,
+        statusCode: 302,
+      },
+    };
   }
   const formId = params.id.toString();
   const ownership = await formHasOwnership(session, formId);
   if (!ownership) {
-    res.statusCode = 403;
-    return { props: {} };
+    return {
+      redirect: {
+        destination: resolvedUrl,
+        statusCode: 404,
+      },
+    };
   }
   // redirect based on number of submissionSession
   const submissionSessionsData = await prisma.submissionSession.findMany({
@@ -36,7 +41,6 @@ export const getServerSideProps: GetServerSideProps = async ({
         permanent: false,
         destination: `/forms/${formId}/results/summary`,
       },
-      props: {},
     };
   } else {
     // redirect to /form if there isn't one submissionSession
@@ -45,7 +49,6 @@ export const getServerSideProps: GetServerSideProps = async ({
         permanent: false,
         destination: `/forms/${formId}/form`,
       },
-      props: {},
     };
   }
-};
+}

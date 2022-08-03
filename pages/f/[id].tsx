@@ -1,5 +1,3 @@
-import { GetServerSideProps } from "next";
-import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import App from "../../components/frontend/App";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
@@ -26,11 +24,3 @@ export default function Share({}) {
     </BaseLayoutUnauthorized>
   );
 }
-
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const session = await getSession({ req });
-  if (!session) {
-    res.statusCode = 403;
-  }
-  return { props: {} };
-};
