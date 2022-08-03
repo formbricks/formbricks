@@ -37,7 +37,9 @@ export default function ResultsAnalytics({ formId }) {
         {
           id: "lastSubmission",
           name: "Last Submission",
-          stat: timeSince(analytics.lastSubmissionAt) || "--",
+          stat: analytics.lastSubmissionAt
+            ? timeSince(analytics.lastSubmissionAt)
+            : "--",
           smallerText: true,
         },
       ];

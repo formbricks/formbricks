@@ -6,10 +6,7 @@ import { SessionProvider } from "next-auth/react";
 import { ToastContainer } from "react-toastify";
 import { usePosthog } from "../lib/posthog";
 
-export default function App({
-  Component,
-  pageProps: { session, ...pageProps },
-}: AppProps) {
+function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   usePosthog();
   return (
     <SessionProvider session={session}>
@@ -18,3 +15,12 @@ export default function App({
     </SessionProvider>
   );
 }
+
+/* App.getInitialProps = async (appContext) => {
+  // calls page's `getInitialProps` and fills `appProps.pageProps`
+  const appProps = await App.getInitialProps(appContext);
+
+  return { ...appProps };
+}; */
+
+export default App;
