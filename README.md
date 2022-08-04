@@ -63,34 +63,43 @@ To get the project running locally on your machine you need to have the followin
 git clone https://github.com/snoopForms/snoopforms.git && cd snoopforms
 ```
 
-2. Install Node.JS packages:
+2. Install Node.JS packages via yarn. Don't have yarn? Use `npm install --global yarn`.
 
 ```
 yarn install
 ```
 
-3. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database.
+3. Make sure you have a running database instance, e.g. by using docker. A quick and dirty instance can be spun up via:
+
+```
+docker run --name snoopformsDB -p 5432:5432 -e POSTGRES_USER=snoopforms -e POSTGRES_PASSWORD=password -e POSTGRES_DB=snoopforms -d postgres
+```
+
+
+4. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database. For the signup process, an email server with valid SMTP data is necessary.
 
 ```
 cp .env.example .env
 ```
 
-4. Use the code editor of your choice to edit the .env file. You need to change all fields according to your setup. The SMTP-credentials are essential for verification emails to work during user signup.
-
-5. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
+For the example above, use the following:
 
 ```
+DATABASE_URL='postgresql://snoopforms:password@localhost:5432/snoopforms?schema=public'
+```
 
+5. Use the code editor of your choice to edit the .env file. You need to change all fields according to your setup. The SMTP-credentials are essential for verification emails to work during user signup.
+
+6. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
+
+```
 yarn prisma migrate dev
-
 ```
 
 6. Start the development server:
 
 ```
-
 yarn dev
-
 ```
 
 **You can now access the app on [https://localhost:3000](https://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of snoopForms, create a new account.
