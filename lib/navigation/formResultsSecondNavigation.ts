@@ -25,12 +25,12 @@ export const useFormResultsSecondNavigation = (formId) => {
       label: "Responses",
     },
     {
-      id: "analytics",
+      id: "insights",
       onClick: () => {
-        router.push(`/forms/${formId}/results/analytics`);
+        router.push(`/forms/${formId}/results/insights`);
       },
       Icon: TrendingUpIcon,
-      label: "Analytics",
+      label: "Insights",
     },
   ];
 };

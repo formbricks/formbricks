@@ -5,12 +5,12 @@ import BaseLayoutAuthorized from "../../../../components/layout/BaseLayoutAuthor
 import LimitedWidth from "../../../../components/layout/LimitedWidth";
 import SecondNavBar from "../../../../components/layout/SecondNavBar";
 import Loading from "../../../../components/Loading";
-import ResultsAnalytics from "../../../../components/results/ResultsAnalytics";
+import ResultsInsights from "../../../../components/results/ResultsInsights";
 import { useForm } from "../../../../lib/forms";
 import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
 import { useFormResultsSecondNavigation } from "../../../../lib/navigation/formResultsSecondNavigation";
 
-export default function ResultsAnalyticsPage() {
+export default function ResultsInsightsPage() {
   const router = useRouter();
   const formId = router.query.id.toString();
   const { form, isLoadingForm } = useForm(router.query.id);
@@ -31,11 +31,11 @@ export default function ResultsAnalyticsPage() {
     >
       <SecondNavBar
         navItems={formResultsSecondNavigation}
-        currentItemId="analytics"
+        currentItemId="insights"
       />
 
       <LimitedWidth>
-        <ResultsAnalytics formId={formId} />
+        <ResultsInsights formId={formId} />
       </LimitedWidth>
     </BaseLayoutAuthorized>
   );

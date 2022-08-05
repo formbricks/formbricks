@@ -18,7 +18,7 @@ export default function ResultsSummary({ formId }) {
 
   const { form, isLoadingForm } = useForm(formId);
 
-  const analytics = useMemo(() => {
+  const insights = useMemo(() => {
     if (!isLoadingSubmissionSessions) {
       return getSubmissionAnalytics(submissionSessions);
     }
@@ -31,34 +31,34 @@ export default function ResultsSummary({ formId }) {
   }, [isLoadingSubmissionSessions, submissionSessions, isLoadingForm, form]);
 
   const stats = useMemo(() => {
-    if (analytics) {
+    if (insights) {
       return [
         {
           id: "uniqueUsers",
           name: "Unique Users",
-          stat: analytics.uniqueUsers || "--",
+          stat: insights.uniqueUsers || "--",
           toolTipText: "Tracked without cookies using fingerprinting technique",
           trend: undefined,
         },
         {
           id: "totalSubmissions",
           name: "Total Submissions",
-          stat: analytics.totalSubmissions || "--",
+          stat: insights.totalSubmissions || "--",
           trend: undefined,
         },
         {
           id: "lastSubmission",
           name: "Last Submission",
-          stat: analytics.lastSubmissionAt
-            ? timeSince(analytics.lastSubmissionAt)
+          stat: insights.lastSubmissionAt
+            ? timeSince(insights.lastSubmissionAt)
             : "--",
           smallerText: true,
         },
       ];
     }
-  }, [analytics]);
+  }, [insights]);
 
-  if (!summary || !analytics) {
+  if (!summary || !insights) {
     return <Loading />;
   }
 
