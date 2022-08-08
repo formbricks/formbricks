@@ -1,18 +1,18 @@
-import { useRouter } from "next/router";
-import { FaDiscord } from "react-icons/fa";
 import hljs from "highlight.js";
+import bash from "highlight.js/lib/languages/bash";
+import javascript from "highlight.js/lib/languages/javascript";
+import { useRouter } from "next/router";
 import { useEffect } from "react";
+import { FaDiscord } from "react-icons/fa";
 import BaseLayoutManagement from "../../../../components/layout/BaseLayoutManagement";
 import LimitedWidth from "../../../../components/layout/LimitedWidth";
 import SecondNavBar from "../../../../components/layout/SecondNavBar";
 import withAuthentication from "../../../../components/layout/WithAuthentication";
 import Loading from "../../../../components/Loading";
+import MessagePage from "../../../../components/MessagePage";
 import { useForm } from "../../../../lib/forms";
 import { useCodeSecondNavigation } from "../../../../lib/navigation/formCodeSecondNavigation";
 import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
-import javascript from "highlight.js/lib/languages/javascript";
-import bash from "highlight.js/lib/languages/bash";
-import MessagePage from "../../../../components/MessagePage";
 
 hljs.registerLanguage("javascript", javascript);
 hljs.registerLanguage("bash", bash);
@@ -93,8 +93,8 @@ function ReactPage() {
               <pre>
                 <code className="javascript">
                   {`<SnoopForm
-  domain="app.snoopforms.com"
-  protocol="https">
+  domain="${window?.location.host}"
+  protocol="${window?.location.protocol.replace(":", "")}">
      
      <SnoopPage name="first">
        <SnoopElement
