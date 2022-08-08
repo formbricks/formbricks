@@ -1,10 +1,9 @@
-import { GetServerSideProps } from "next";
-import { getSession } from "next-auth/react";
-import { useRouter } from "next/router";
 import App from "../../components/frontend/App";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import Loading from "../../components/Loading";
+import MessagePage from "../../components/MessagePage";
 import { useNoCodeFormPublic } from "../../lib/noCodeForm";
+import { useRouter } from "next/router";
 
 export default function Share({}) {
   const router = useRouter();
@@ -13,7 +12,9 @@ export default function Share({}) {
     useNoCodeFormPublic(formId);
 
   if (isErrorNoCodeForm) {
-    return <p>Not found</p>;
+    return (
+      <MessagePage text="Form not found. Are you sure this is the right URL?" />
+    );
   }
 
   if (isLoadingNoCodeForm) {
@@ -26,11 +27,3 @@ export default function Share({}) {
     </BaseLayoutUnauthorized>
   );
 }
-
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const session = await getSession({ req });
-  if (!session) {
-    res.statusCode = 403;
-  }
-  return { props: {} };
-};

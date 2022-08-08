@@ -1,30 +1,30 @@
-import { GetServerSideProps } from "next";
-import { getSession } from "next-auth/react";
-import { useRouter } from "next/router";
-import { FaDiscord } from "react-icons/fa";
 import hljs from "highlight.js";
+import bash from "highlight.js/lib/languages/bash";
+import javascript from "highlight.js/lib/languages/javascript";
+import { useRouter } from "next/router";
 import { useEffect } from "react";
-import BaseLayoutAuthorized from "../../../../components/layout/BaseLayoutAuthorized";
+import { FaDiscord } from "react-icons/fa";
+import BaseLayoutManagement from "../../../../components/layout/BaseLayoutManagement";
 import LimitedWidth from "../../../../components/layout/LimitedWidth";
 import SecondNavBar from "../../../../components/layout/SecondNavBar";
+import withAuthentication from "../../../../components/layout/WithAuthentication";
 import Loading from "../../../../components/Loading";
+import MessagePage from "../../../../components/MessagePage";
 import { useForm } from "../../../../lib/forms";
 import { useCodeSecondNavigation } from "../../../../lib/navigation/formCodeSecondNavigation";
 import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
-import javascript from "highlight.js/lib/languages/javascript";
-import bash from "highlight.js/lib/languages/bash";
 
 hljs.registerLanguage("javascript", javascript);
 hljs.registerLanguage("bash", bash);
 
-export default function ReactPage() {
+function ReactPage() {
   useEffect(() => {
     hljs.initHighlighting();
   }, []);
 
   const router = useRouter();
   const formId = router.query.id.toString();
-  const { form, isLoadingForm } = useForm(router.query.id);
+  const { form, isLoadingForm, isErrorForm } = useForm(router.query.id);
   const codeSecondNavigation = useCodeSecondNavigation(formId);
   const formMenuSteps = useFormMenuSteps(formId);
 
@@ -32,9 +32,15 @@ export default function ReactPage() {
     return <Loading />;
   }
 
+  if (isErrorForm) {
+    return (
+      <MessagePage text="Unable to load this page. Maybe you don't have enough rights." />
+    );
+  }
+
   return (
     <>
-      <BaseLayoutAuthorized
+      <BaseLayoutManagement
         title={form.name}
         breadcrumbs={[{ name: form.name, href: "#", current: true }]}
         steps={formMenuSteps}
@@ -87,8 +93,8 @@ export default function ReactPage() {
               <pre>
                 <code className="javascript">
                   {`<SnoopForm
-  domain="app.snoopforms.com"
-  protocol="https">
+  domain="${window?.location.host}"
+  protocol="${window?.location.protocol.replace(":", "")}">
      
      <SnoopPage name="first">
        <SnoopElement
@@ -147,15 +153,9 @@ export default function ReactPage() {
             </div>
           </div>
         </LimitedWidth>
-      </BaseLayoutAuthorized>
+      </BaseLayoutManagement>
     </>
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const session = await getSession({ req });
-  if (!session) {
-    res.statusCode = 403;
-  }
-  return { props: {} };
-};
+export default withAuthentication(ReactPage);

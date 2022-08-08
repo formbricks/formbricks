@@ -1,34 +1,45 @@
-import { GetServerSideProps } from "next";
-import { getSession } from "next-auth/react";
-import { useRouter } from "next/router";
+import BaseLayoutManagement from "../../../../components/layout/BaseLayoutManagement";
 import Builder from "../../../../components/builder/Builder";
 import FormCode from "../../../../components/form/FormCode";
-import BaseLayoutAuthorized from "../../../../components/layout/BaseLayoutAuthorized";
 import FullWidth from "../../../../components/layout/FullWidth";
 import LimitedWidth from "../../../../components/layout/LimitedWidth";
-import SecondNavBar from "../../../../components/layout/SecondNavBar";
 import Loading from "../../../../components/Loading";
-import { useForm } from "../../../../lib/forms";
+import MessagePage from "../../../../components/MessagePage";
+import SecondNavBar from "../../../../components/layout/SecondNavBar";
 import { useCodeSecondNavigation } from "../../../../lib/navigation/formCodeSecondNavigation";
+import { useForm } from "../../../../lib/forms";
 import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
+import { useMemo } from "react";
+import { useRouter } from "next/router";
+import withAuthentication from "../../../../components/layout/WithAuthentication";
 
-export default function FormPage() {
+function FormPage() {
   const router = useRouter();
   const formId = router.query.id.toString();
-  const { form, isLoadingForm } = useForm(router.query.id);
+  const { form, isLoadingForm, isErrorForm } = useForm(router.query.id);
   const codeSecondNavigation = useCodeSecondNavigation(formId);
   const formMenuSteps = useFormMenuSteps(formId);
+
+  const breadcrumbs = useMemo(() => {
+    if (form) {
+      return [{ name: form.name, href: "#", current: true }];
+    }
+  }, [form]);
 
   if (isLoadingForm) {
     return <Loading />;
   }
 
-  const breadcrumbs = [{ name: form.name, href: "#", current: true }];
-
-  if (form.formType === "NOCODE") {
+  if (isErrorForm) {
     return (
-      <>
-        <BaseLayoutAuthorized
+      <MessagePage text="Unable to load this page. Maybe you don't have enough rights." />
+    );
+  }
+
+  return (
+    <>
+      {form.formType === "NOCODE" ? (
+        <BaseLayoutManagement
           title={`${form.name} - snoopForms`}
           breadcrumbs={breadcrumbs}
           steps={formMenuSteps}
@@ -39,31 +50,26 @@ export default function FormPage() {
           <FullWidth>
             <Builder formId={formId} />
           </FullWidth>
-        </BaseLayoutAuthorized>
-      </>
-    );
-  } else {
-    return (
-      <BaseLayoutAuthorized
-        title={`${form.name} - snoopForms`}
-        breadcrumbs={breadcrumbs}
-        steps={formMenuSteps}
-        currentStep="form"
-      >
-        <SecondNavBar navItems={codeSecondNavigation} currentItemId="formId" />
+        </BaseLayoutManagement>
+      ) : (
+        <BaseLayoutManagement
+          title={`${form.name} - snoopForms`}
+          breadcrumbs={breadcrumbs}
+          steps={formMenuSteps}
+          currentStep="form"
+        >
+          <SecondNavBar
+            navItems={codeSecondNavigation}
+            currentItemId="formId"
+          />
 
-        <LimitedWidth>
-          <FormCode formId={formId} />
-        </LimitedWidth>
-      </BaseLayoutAuthorized>
-    );
-  }
+          <LimitedWidth>
+            <FormCode formId={formId} />
+          </LimitedWidth>
+        </BaseLayoutManagement>
+      )}
+    </>
+  );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const session = await getSession({ req });
-  if (!session) {
-    res.statusCode = 403;
-  }
-  return { props: {} };
-};
+export default withAuthentication(FormPage);

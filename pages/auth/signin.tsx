@@ -12,15 +12,15 @@ export default function SignInPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await signIn("credentials", {
-      callbackUrl: router.query.callbackUrl?.toString(),
+      callbackUrl: router.query.callbackUrl?.toString() || "/forms",
       email: e.target.elements.email.value,
       password: e.target.elements.password.value,
     });
-    router.push(
+    /* router.push(
       `/auth/verification-requested?email=${encodeURIComponent(
         e.target.elements.email.value
       )}`
-    );
+    ); */
   };
   return (
     <BaseLayoutUnauthorized title="Sign in">

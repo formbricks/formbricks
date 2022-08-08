@@ -1,15 +1,11 @@
-import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
-import { useEffect, useState } from "react";
-import { identifyPoshogUser } from "../../lib/posthog";
 import { classNames } from "../../lib/utils";
-import Loading from "../Loading";
 import MenuBreadcrumbs from "./MenuBreadcrumbs";
 import MenuProfile from "./MenuProfile";
 import MenuSteps from "./MenuSteps";
 import NewFormNavButton from "./NewFormNavButton";
 
-interface BaseLayoutAuthorizedProps {
+interface BaseLayoutManagementProps {
   title: string;
   breadcrumbs: any;
   steps?: any;
@@ -19,7 +15,7 @@ interface BaseLayoutAuthorizedProps {
   limitHeightScreen?: boolean;
 }
 
-export default function BaseLayoutAuthorized({
+export default function BaseLayoutManagement({
   title,
   breadcrumbs,
   steps,
@@ -27,25 +23,7 @@ export default function BaseLayoutAuthorized({
   children,
   bgClass = "bg-ui-gray-lighter",
   limitHeightScreen = false,
-}: BaseLayoutAuthorizedProps) {
-  const { data: session, status } = useSession();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (status !== "loading") {
-      if (!session) {
-        signIn();
-      } else {
-        setLoading(false);
-        identifyPoshogUser(session.user.email);
-      }
-    }
-  }, [session, status]);
-
-  if (status === "loading" || loading) {
-    return <Loading />;
-  }
-
+}: BaseLayoutManagementProps) {
   return (
     <>
       <Head>
