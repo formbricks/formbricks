@@ -12,6 +12,7 @@ import EmptyPageFiller from "../../../components/layout/EmptyPageFiller";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
+import MessagePage from "../../../components/MessagePage";
 import { useForm } from "../../../lib/forms";
 import { useFormMenuSteps } from "../../../lib/navigation/formMenuSteps";
 import { classNames } from "../../../lib/utils";
@@ -70,11 +71,17 @@ const libs = [
 function PipelinesPage() {
   const router = useRouter();
   const formId = router.query.id.toString();
-  const { form, isLoadingForm } = useForm(router.query.id);
+  const { form, isLoadingForm, isErrorForm } = useForm(router.query.id);
   const formMenuSteps = useFormMenuSteps(formId);
 
   if (isLoadingForm) {
     return <Loading />;
+  }
+
+  if (isErrorForm) {
+    return (
+      <MessagePage text="Unable to load this page. Maybe you don't have enough rights." />
+    );
   }
 
   return (

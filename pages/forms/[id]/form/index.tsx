@@ -1,21 +1,22 @@
-import { useRouter } from "next/router";
-import { useMemo } from "react";
+import BaseLayoutManagement from "../../../../components/layout/BaseLayoutManagement";
 import Builder from "../../../../components/builder/Builder";
 import FormCode from "../../../../components/form/FormCode";
-import BaseLayoutManagement from "../../../../components/layout/BaseLayoutManagement";
 import FullWidth from "../../../../components/layout/FullWidth";
 import LimitedWidth from "../../../../components/layout/LimitedWidth";
-import SecondNavBar from "../../../../components/layout/SecondNavBar";
-import withAuthentication from "../../../../components/layout/WithAuthentication";
 import Loading from "../../../../components/Loading";
-import { useForm } from "../../../../lib/forms";
+import MessagePage from "../../../../components/MessagePage";
+import SecondNavBar from "../../../../components/layout/SecondNavBar";
 import { useCodeSecondNavigation } from "../../../../lib/navigation/formCodeSecondNavigation";
+import { useForm } from "../../../../lib/forms";
 import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
+import { useMemo } from "react";
+import { useRouter } from "next/router";
+import withAuthentication from "../../../../components/layout/WithAuthentication";
 
 function FormPage() {
   const router = useRouter();
   const formId = router.query.id.toString();
-  const { form, isLoadingForm } = useForm(router.query.id);
+  const { form, isLoadingForm, isErrorForm } = useForm(router.query.id);
   const codeSecondNavigation = useCodeSecondNavigation(formId);
   const formMenuSteps = useFormMenuSteps(formId);
 
@@ -27,6 +28,12 @@ function FormPage() {
 
   if (isLoadingForm) {
     return <Loading />;
+  }
+
+  if (isErrorForm) {
+    return (
+      <MessagePage text="Unable to load this page. Maybe you don't have enough rights." />
+    );
   }
 
   return (

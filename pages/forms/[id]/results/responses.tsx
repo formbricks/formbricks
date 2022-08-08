@@ -1,23 +1,30 @@
-import { useRouter } from "next/router";
 import BaseLayoutManagement from "../../../../components/layout/BaseLayoutManagement";
 import FullWidth from "../../../../components/layout/FullWidth";
-import SecondNavBar from "../../../../components/layout/SecondNavBar";
-import withAuthentication from "../../../../components/layout/WithAuthentication";
 import Loading from "../../../../components/Loading";
+import MessagePage from "../../../../components/MessagePage";
 import ResultsResponses from "../../../../components/results/ResultsResponses";
+import SecondNavBar from "../../../../components/layout/SecondNavBar";
 import { useForm } from "../../../../lib/forms";
 import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
 import { useFormResultsSecondNavigation } from "../../../../lib/navigation/formResultsSecondNavigation";
+import { useRouter } from "next/router";
+import withAuthentication from "../../../../components/layout/WithAuthentication";
 
 function ResultsResponsesPage() {
   const router = useRouter();
   const formId = router.query.id.toString();
-  const { form, isLoadingForm } = useForm(router.query.id);
+  const { form, isLoadingForm, isErrorForm } = useForm(router.query.id);
   const formMenuSteps = useFormMenuSteps(formId);
   const formResultsSecondNavigation = useFormResultsSecondNavigation(formId);
 
   if (isLoadingForm) {
     return <Loading />;
+  }
+
+  if (isErrorForm) {
+    return (
+      <MessagePage text="Unable to load this page. Maybe you don't have enough rights." />
+    );
   }
 
   return (

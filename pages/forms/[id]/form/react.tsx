@@ -12,6 +12,7 @@ import { useCodeSecondNavigation } from "../../../../lib/navigation/formCodeSeco
 import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
 import javascript from "highlight.js/lib/languages/javascript";
 import bash from "highlight.js/lib/languages/bash";
+import MessagePage from "../../../../components/MessagePage";
 
 hljs.registerLanguage("javascript", javascript);
 hljs.registerLanguage("bash", bash);
@@ -23,12 +24,18 @@ function ReactPage() {
 
   const router = useRouter();
   const formId = router.query.id.toString();
-  const { form, isLoadingForm } = useForm(router.query.id);
+  const { form, isLoadingForm, isErrorForm } = useForm(router.query.id);
   const codeSecondNavigation = useCodeSecondNavigation(formId);
   const formMenuSteps = useFormMenuSteps(formId);
 
   if (isLoadingForm) {
     return <Loading />;
+  }
+
+  if (isErrorForm) {
+    return (
+      <MessagePage text="Unable to load this page. Maybe you don't have enough rights." />
+    );
   }
 
   return (
