@@ -1,10 +1,11 @@
-import "../styles/globals.css";
-import "../styles/editorjs.css";
-import "../styles/toastify.css";
 import App, { AppProps } from "next/app";
 import { SessionProvider } from "next-auth/react";
 import { ToastContainer } from "react-toastify";
 import { usePosthog } from "../lib/posthog";
+import "highlight.js/styles/tokyo-night-dark.css";
+import "../styles/globals.css";
+import "../styles/editorjs.css";
+import "../styles/toastify.css";
 
 function SnoopApp({
   Component,
