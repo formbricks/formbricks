@@ -12,8 +12,10 @@ import { useForm } from "../../../../lib/forms";
 import { useCodeSecondNavigation } from "../../../../lib/navigation/formCodeSecondNavigation";
 import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
 import javascript from "highlight.js/lib/languages/javascript";
+import bash from "highlight.js/lib/languages/bash";
 
 hljs.registerLanguage("javascript", javascript);
+hljs.registerLanguage("bash", bash);
 
 export default function ReactPage() {
   useEffect(() => {
@@ -63,8 +65,12 @@ export default function ReactPage() {
                 snoopforms/react.
               </p>
             </div>
-            <div className="p-8 font-light text-gray-200 bg-black rounded-md">
-              <code>{"npm install --save @snoopforms/react"}</code>
+            <div className="p-8 font-light text-gray-200 bg-[#1a1b26] rounded-md">
+              <pre>
+                <code className="bash">
+                  npm install --save @snoopforms/react
+                </code>
+              </pre>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-10 mt-16">
@@ -77,9 +83,9 @@ export default function ReactPage() {
                 snoopElement to build exactly the form you want.
               </p>
             </div>
-            <div className="p-8 font-light text-gray-200 bg-black rounded-md">
+            <div className="p-8 font-light text-gray-200 bg-[#1a1b26] rounded-md">
               <pre>
-                <code className="language-javascript">
+                <code className="javascript">
                   {`<SnoopForm
   domain="app.snoopforms.com"
   protocol="https">
