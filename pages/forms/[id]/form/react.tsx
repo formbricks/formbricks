@@ -2,6 +2,8 @@ import { GetServerSideProps } from "next";
 import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { FaDiscord } from "react-icons/fa";
+import hljs from "highlight.js";
+import { useEffect } from "react";
 import BaseLayoutAuthorized from "../../../../components/layout/BaseLayoutAuthorized";
 import LimitedWidth from "../../../../components/layout/LimitedWidth";
 import SecondNavBar from "../../../../components/layout/SecondNavBar";
@@ -9,6 +11,7 @@ import Loading from "../../../../components/Loading";
 import { useForm } from "../../../../lib/forms";
 import { useCodeSecondNavigation } from "../../../../lib/navigation/formCodeSecondNavigation";
 import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
+import javascript from "highlight.js/lib/languages/javascript";
 
 hljs.registerLanguage("javascript", javascript);
 

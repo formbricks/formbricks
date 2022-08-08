@@ -28,13 +28,10 @@ export default function Document() {
           color="#5bbad5"
         />
         <meta name="theme-color" content="#0D0010" />
-
-        <link rel="stylesheet" href="prism.css"></link>
       </Head>
       <body>
         <Main />
         <NextScript />
-        <script src="prism.js"></script>
       </body>
     </Html>
   );
