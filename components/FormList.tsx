@@ -96,7 +96,7 @@ export default function FormList() {
                           </p>
                           <Menu
                             as="div"
-                            className="relative inline-block text-left"
+                            className="relative z-10 inline-block text-left"
                           >
                             {({ open }) => (
                               <>
