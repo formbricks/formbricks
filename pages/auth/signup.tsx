@@ -16,16 +16,21 @@ export default function SignUpPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await createUser(
+
+      // Extracts emailVerified property from user which is only set on signup if SMTP data is not provided
+      const { emailVerified } = await createUser(
         e.target.elements.firstname.value,
         e.target.elements.lastname.value,
         e.target.elements.email.value,
         e.target.elements.password.value
       );
-      router.push(
-        `/auth/verification-requested?email=${encodeURIComponent(
+
+      const url = !!emailVerified ? `/auth/signup-without-verification-success` : `/auth/verification-requested?email=${encodeURIComponent(
           e.target.elements.email.value
-        )}`
+      )}`
+
+      router.push(
+        url
       );
     } catch (e) {
       setError(e.message);
