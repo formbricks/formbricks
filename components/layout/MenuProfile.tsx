@@ -1,4 +1,5 @@
 import { Menu, Transition } from "@headlessui/react";
+import { LogoutIcon } from "@heroicons/react/solid";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { Fragment } from "react";
@@ -35,17 +36,23 @@ export default function MenuProfile({}) {
           >
             <Menu.Items
               static
-              className="absolute right-0 w-48 py-1 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+              className="absolute right-0 w-48 p-1 mt-2 origin-top-right bg-white rounded-sm shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
             >
               <Menu.Item>
                 {({ active }) => (
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
                     className={classNames(
-                      active ? "bg-gray-100" : "",
-                      "block px-4 py-2 text-sm text-ui-gray-dark w-full text-left"
+                      active
+                        ? "bg-ui-gray-light rounded-sm text-ui-black"
+                        : "text-ui-gray-dark",
+                      "flex px-4 py-2 text-sm w-full"
                     )}
                   >
+                    <LogoutIcon
+                      className="w-5 h-5 mr-3 text-ui-gray-dark"
+                      aria-hidden="true"
+                    />
                     Sign Out
                   </button>
                 )}
