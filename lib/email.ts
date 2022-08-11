@@ -57,11 +57,3 @@ export const sendVerificationEmail = async (user) => {
     Your snoopForms Team`,
   });
 };
-
-export const canSendEmails = (): boolean => {
-  return serverRuntimeConfig.smtpHost
-      && serverRuntimeConfig.smtpPort
-      && serverRuntimeConfig.smtpUser
-      && serverRuntimeConfig.smtpPassword
-      && serverRuntimeConfig.mailFrom
-}

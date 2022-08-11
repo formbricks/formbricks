@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../../lib/prisma";
-import { canSendEmails, sendVerificationEmail } from "../../../../lib/email";
+import { sendVerificationEmail } from "../../../../lib/email";
+import getConfig from "next/config";
+
+const { publicRuntimeConfig } = getConfig();
 
 export default async function handle(
   req: NextApiRequest,
@@ -13,17 +16,16 @@ export default async function handle(
   if (req.method === "POST") {
     const user = req.body;
 
-    const shouldSendVerificationEmail = canSendEmails()
+    const { emailVerificationDisabled } = publicRuntimeConfig
 
     // create user in database
     try {
       const userData = await prisma.user.create({
         data: {
-          ...user,
-          emailVerified: shouldSendVerificationEmail ? undefined : new Date().toISOString()
+          ...user
         },
       });
-      if (shouldSendVerificationEmail) await sendVerificationEmail(userData);
+      if (!emailVerificationDisabled) await sendVerificationEmail(userData);
       res.json(userData);
     } catch (e) {
       if (e.code === "P2002") {
