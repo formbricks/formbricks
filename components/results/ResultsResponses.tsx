@@ -3,12 +3,14 @@ import { useEffect, useState } from "react";
 import { RadioGroup } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/solid";
 import { getEventName } from "../../lib/events";
-import { useSubmissionSessions } from "../../lib/submissionSessions";
+import { useSubmissionSessions} from "../../lib/submissionSessions";
 import { SubmissionSession } from "../../lib/types";
 import { convertDateTimeString, convertTimeString } from "../../lib/utils";
 import SubmissionDisplay from "./SubmissionDisplay";
 import DownloadResponses from "./DownloadResponses";
 import Loading from "../Loading";
+import {TrashIcon} from "@heroicons/react/outline";
+import {toast} from "react-toastify";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -19,10 +21,26 @@ type ResultsResponseProps = {
 };
 
 export default function ResultsResponses({ formId }: ResultsResponseProps) {
-  const { submissionSessions, isLoadingSubmissionSessions } =
+
+  const { submissionSessions, isLoadingSubmissionSessions, mutateSubmissionSessions } =
     useSubmissionSessions(formId);
   const [activeSubmissionSession, setActiveSubmissionSession] =
     useState<SubmissionSession | null>(null);
+
+  const handleDelete = async (submissionSession: SubmissionSession) => {
+    try {
+      await fetch(`/api/forms/${formId}/submissionSessions/${submissionSession.id}`, {
+        method: "DELETE",
+      });
+
+      await mutateSubmissionSessions()
+      setActiveSubmissionSession(null)
+      toast("Successfully deleted");
+
+    } catch (error) {
+      toast(error)
+    }
+  }
 
   useEffect(() => {
     if (!isLoadingSubmissionSessions && submissionSessions.length > 0) {
@@ -49,7 +67,7 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                 </span>
               </button>
             ) : (
-              <div className="px-4 py-5 bg-white shadow sm:p-12">
+              <div className="px-4 py-5 bg-white shadow sm:px-12 sm:pb-4 sm:pt-12">
                 <div className="grid grid-cols-2 gap-8 divide-x">
                   <div className="flow-root">
                     <h1 className="mb-8 text-gray-700">
@@ -88,7 +106,7 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                                   />
                                 </span>
                               </div>
-                              <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                              <div className="min-w-0 flex-1 pt-1.5 flex justify-between flex-wrap gap-4">
                                 <div>
                                   <p className="text-sm text-gray-500">
                                     {getEventName(event.type)}
@@ -109,6 +127,15 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                       ))}
                     </ul>
                   </div>
+                </div>
+                <div className="w-full px-4 pt-8">
+                  <button
+                      className="flex justify-center items-center gap-2 w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      onClick={() => handleDelete(activeSubmissionSession)}
+                  >
+                    <TrashIcon className="w-4 h-4"/>
+                    Delete Submission
+                  </button>
                 </div>
               </div>
             )}
