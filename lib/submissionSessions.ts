@@ -102,7 +102,7 @@ export const getSubmissionSummary = (
         const summaryPage = summary.pages.find(
           (p) => p.name === submissionEvent.data.pageName
         );
-        if (summaryPage.type === "form") {
+        if (summaryPage.type === "form" && submissionEvent.data.submission) {
           for (const [elementName, elementValue] of Object.entries(
             submissionEvent.data.submission
           )) {
