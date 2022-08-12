@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.1",
+    "@tailwindcss/line-clamp": "^0.4.0",
     "@tailwindcss/typography": "^0.5.2",
     "@types/bcryptjs": "^2.4.2",
     "@types/node": "17.0.32",

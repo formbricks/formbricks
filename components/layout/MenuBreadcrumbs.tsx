@@ -33,7 +33,7 @@ export default function MenuBreadcrumbs({ breadcrumbs }) {
                 </svg>
                 <a
                   href={crumb.href}
-                  className="ml-4 text-sm font-medium text-ui-gray-dark hover:text-ui-gray-dark"
+                  className="ml-4 text-sm font-medium truncate text-ui-gray-dark hover:text-ui-gray-dark"
                 >
                   {crumb.name}
                 </a>

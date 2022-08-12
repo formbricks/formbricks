@@ -55,8 +55,8 @@ export default function FormList() {
           ) : (
             <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 place-content-stretch ">
               <button onClick={() => newForm()}>
-                <li className="col-span-1">
-                  <div className="overflow-hidden font-light text-white rounded-md shadow bg-snoopfade">
+                <li className="col-span-1 h-28 sm:h-56">
+                  <div className="flex items-center justify-center h-full overflow-hidden font-light text-white rounded-md shadow bg-snoopfade">
                     <div className="px-4 py-8 sm:p-14">
                       <PlusIcon className="mx-auto w-14 h-14 stroke-thin" />
                       create form
@@ -67,9 +67,9 @@ export default function FormList() {
               {forms
                 .sort((a, b) => b.updatedAt - a.updatedAt)
                 .map((form, formIdx) => (
-                  <li key={form.id} className="relative col-span-1 ">
+                  <li key={form.id} className="relative h-56 col-span-1">
                     <div className="flex flex-col justify-between h-full bg-white rounded-md shadow">
-                      <div className="px-4 py-5 text-lg sm:p-6">
+                      <div className="h-full px-4 py-5 text-lg sm:p-6 line-clamp-2">
                         {form.name}
                       </div>
                       <Link href={`/forms/${form.id}`}>
