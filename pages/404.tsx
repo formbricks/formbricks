@@ -1,12 +1,8 @@
-import {XCircleIcon} from "@heroicons/react/solid";
 import Image from "next/image";
-import {useRouter} from "next/router";
 import BaseLayoutUnauthorized from "../components/layout/BaseLayoutUnauthorized";
 import Link from "next/link";
 
 export default function Error404Page() {
-    const router = useRouter();
-
     return (
         <BaseLayoutUnauthorized title="Page not found">
             <div className="flex min-h-screen bg-ui-gray-light">
@@ -26,7 +22,7 @@ export default function Error404Page() {
                                 This page does not exist!
                             </h1>
                             <p className="text-center">
-                                Sorry, the page you were looking for could net be found.
+                                Sorry, the page you were looking for could not be found.
                                 Please make sure the URL is correct or <span className="underline"><Link href="/">go back to the homepage</Link></span>.
                             </p>
                         </div>
