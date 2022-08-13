@@ -1,8 +1,9 @@
 import EditorJS from "@editorjs/editorjs";
 import {
+  BanIcon,
   DocumentAddIcon,
   EyeIcon,
-  PaperAirplaneIcon,
+  PaperAirplaneIcon, SaveIcon,
   ShareIcon,
 } from "@heroicons/react/outline";
 import dynamic from "next/dynamic";
@@ -59,16 +60,27 @@ export default function Builder({ formId }) {
     );
   };
 
-  const publishChanges = async () => {
+  const publishOrUnpublish = async () => {
+    setLoading(true);
+    setTimeout(async () => {
+      const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
+      newNoCodeForm.published = !noCodeForm.published;
+      await persistNoCodeForm(newNoCodeForm);
+      mutateNoCodeForm(newNoCodeForm);
+      setLoading(false);
+      toast(newNoCodeForm.published ? "Your form is now published 🎉" : "Your form is now unpublished 😶‍🌫️");
+    }, 500);
+  };
+
+  const saveChanges = async () => {
     setLoading(true);
     setTimeout(async () => {
       const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
       newNoCodeForm.blocks = newNoCodeForm.blocksDraft;
-      newNoCodeForm.published = true;
       await persistNoCodeForm(newNoCodeForm);
       mutateNoCodeForm(newNoCodeForm);
       setLoading(false);
-      toast("Your changes are now public 🎉");
+      toast("Your changes have been saved 🎉");
     }, 500);
   };
 
@@ -89,10 +101,16 @@ export default function Builder({ formId }) {
       label: "Preview",
     },
     {
+      id: "save",
+      onClick: () => saveChanges(),
+      Icon: SaveIcon,
+      label: 'Save Changes',
+    },
+    {
       id: "publish",
-      onClick: () => publishChanges(),
-      Icon: PaperAirplaneIcon,
-      label: "Publish",
+      onClick: () => publishOrUnpublish(),
+      Icon: noCodeForm?.published ? BanIcon : PaperAirplaneIcon,
+      label: noCodeForm?.published ? 'Unpublish' : 'Publish',
     },
     {
       id: "share",
