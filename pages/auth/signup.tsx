@@ -13,19 +13,25 @@ export default function SignUpPage() {
   const router = useRouter();
   const [error, setError] = useState<string>("");
 
+  const { emailVerificationDisabled, privacyUrl, termsUrl } = publicRuntimeConfig
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+
       await createUser(
         e.target.elements.firstname.value,
         e.target.elements.lastname.value,
         e.target.elements.email.value,
         e.target.elements.password.value
       );
-      router.push(
-        `/auth/verification-requested?email=${encodeURIComponent(
+
+      const url = emailVerificationDisabled ? `/auth/signup-without-verification-success` : `/auth/verification-requested?email=${encodeURIComponent(
           e.target.elements.email.value
-        )}`
+      )}`
+
+      router.push(
+        url
       );
     } catch (e) {
       setError(e.message);
@@ -158,36 +164,34 @@ export default function SignUpPage() {
                         <a className="text-red hover:text-red-600">Log in.</a>
                       </Link>
                     </div>
-                    {(publicRuntimeConfig.termsUrl ||
-                      publicRuntimeConfig.privacyUrl) && (
-                      <div className="mt-3 text-xs text-center text-gray-400">
-                        By clicking &quot;Sign Up&quot;, you agree to our
-                        <br />
-                        {publicRuntimeConfig.termsUrl && (
-                          <a
-                            className="text-red hover:text-red-600"
-                            href={publicRuntimeConfig.termsUrl}
-                            rel="noreferrer"
-                            target="_blank"
-                          >
-                            terms of service
-                          </a>
-                        )}
-                        {publicRuntimeConfig.termsUrl &&
-                          publicRuntimeConfig.privacyUrl && <span> and </span>}
-                        {publicRuntimeConfig.privacyUrl && (
-                          <a
-                            className="text-red hover:text-red-600"
-                            href={publicRuntimeConfig.privacyUrl}
-                            rel="noreferrer"
-                            target="_blank"
-                          >
-                            privacy policy
-                          </a>
-                        )}
-                        .<br />
-                        We&apos;ll occasionally send you account related emails.
-                      </div>
+                    {(termsUrl || privacyUrl) && (
+                        <div className="mt-3 text-xs text-center text-gray-400">
+                          By clicking &quot;Sign Up&quot;, you agree to our
+                          <br/>
+                          {termsUrl && (
+                              <a
+                                  className="text-red hover:text-red-600"
+                                  href={termsUrl}
+                                  rel="noreferrer"
+                                  target="_blank"
+                              >
+                                terms of service
+                              </a>
+                          )}
+                          {termsUrl && privacyUrl && <span> and </span>}
+                          {privacyUrl && (
+                              <a
+                                  className="text-red hover:text-red-600"
+                                  href={privacyUrl}
+                                  rel="noreferrer"
+                                  target="_blank"
+                              >
+                                privacy policy
+                              </a>
+                          )}
+                          .<br/>
+                          We&apos;ll occasionally send you account related emails.
+                        </div>
                     )}
                   </div>
                 </form>

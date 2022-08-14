@@ -20,6 +20,7 @@ const nextConfig = {
     posthogApiKey: process.env.POSTHOG_API_KEY,
     termsUrl: process.env.TERMS_URL,
     privacyUrl: process.env.PRIVACY_URL,
+    emailVerificationDisabled: process.env.EMAIL_VERIFICATION_DISABLED === '1'
   },
   async redirects() {
     return [

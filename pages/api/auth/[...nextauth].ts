@@ -6,7 +6,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "../../../lib/prisma";
 import { verifyPassword } from "../../../lib/auth";
 
-const { serverRuntimeConfig } = getConfig();
+const { serverRuntimeConfig, publicRuntimeConfig } = getConfig();
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   return await NextAuth(req, res, {
@@ -142,7 +142,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     ],
     callbacks: {
       async signIn({ user }) {
-        if (user.emailVerified) {
+        if (user.emailVerified || publicRuntimeConfig.emailVerificationDisabled) {
           return true;
         } else {
           // Return false to display a default error message or you can return a URL to redirect to
