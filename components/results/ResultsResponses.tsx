@@ -3,14 +3,14 @@ import { useEffect, useState } from "react";
 import { RadioGroup } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/solid";
 import { getEventName } from "../../lib/events";
-import { useSubmissionSessions} from "../../lib/submissionSessions";
+import { useSubmissionSessions } from "../../lib/submissionSessions";
 import { SubmissionSession } from "../../lib/types";
 import { convertDateTimeString, convertTimeString } from "../../lib/utils";
 import SubmissionDisplay from "./SubmissionDisplay";
 import DownloadResponses from "./DownloadResponses";
 import Loading from "../Loading";
-import {TrashIcon} from "@heroicons/react/outline";
-import {toast} from "react-toastify";
+import { TrashIcon } from "@heroicons/react/outline";
+import { toast } from "react-toastify";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -21,26 +21,30 @@ type ResultsResponseProps = {
 };
 
 export default function ResultsResponses({ formId }: ResultsResponseProps) {
-
-  const { submissionSessions, isLoadingSubmissionSessions, mutateSubmissionSessions } =
-    useSubmissionSessions(formId);
+  const {
+    submissionSessions,
+    isLoadingSubmissionSessions,
+    mutateSubmissionSessions,
+  } = useSubmissionSessions(formId);
   const [activeSubmissionSession, setActiveSubmissionSession] =
     useState<SubmissionSession | null>(null);
 
   const handleDelete = async (submissionSession: SubmissionSession) => {
     try {
-      await fetch(`/api/forms/${formId}/submissionSessions/${submissionSession.id}`, {
-        method: "DELETE",
-      });
+      await fetch(
+        `/api/forms/${formId}/submissionSessions/${submissionSession.id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
-      await mutateSubmissionSessions()
-      setActiveSubmissionSession(null)
+      await mutateSubmissionSessions();
+      setActiveSubmissionSession(null);
       toast("Successfully deleted");
-
     } catch (error) {
-      toast(error)
+      toast(error);
     }
-  }
+  };
 
   useEffect(() => {
     if (!isLoadingSubmissionSessions && submissionSessions.length > 0) {
@@ -67,77 +71,91 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                 </span>
               </button>
             ) : (
-              <div className="px-4 py-5 bg-white shadow sm:px-12 sm:pb-4 sm:pt-12">
-                <div className="grid grid-cols-2 gap-8 divide-x">
-                  <div className="flow-root">
-                    <h1 className="mb-8 text-gray-700">
-                      {convertDateTimeString(activeSubmissionSession.createdAt)}
-                    </h1>
-                    <SubmissionDisplay
-                      key={activeSubmissionSession.id}
-                      submissionSession={activeSubmissionSession}
-                      formId={formId}
-                    />
-                  </div>
-                  <div className="flow-root pl-10">
-                    <h1 className="mb-8 text-gray-700">Session Activity</h1>
-                    <ul role="list" className="-mb-8">
-                      {activeSubmissionSession.events.map((event, eventIdx) => (
-                        <li key={event.id}>
-                          <div className="relative pb-8">
-                            {eventIdx !==
-                            activeSubmissionSession.events.length - 1 ? (
-                              <span
-                                className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-ui-gray-light"
-                                aria-hidden="true"
-                              />
-                            ) : null}
-                            <div className="relative flex space-x-3">
-                              <div>
-                                <span
-                                  className={classNames(
-                                    "bg-red-200",
-                                    "h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white"
-                                  )}
-                                >
-                                  <CheckIcon
-                                    className="w-5 h-5 text-white"
+              <>
+                <div className="px-4 py-5 bg-white shadow sm:px-12 sm:pb-4 sm:pt-12">
+                  <div className="grid grid-cols-2 gap-8 divide-x">
+                    <div className="flow-root">
+                      <h1 className="mb-8 text-gray-700">
+                        {convertDateTimeString(
+                          activeSubmissionSession.createdAt
+                        )}
+                      </h1>
+                      <SubmissionDisplay
+                        key={activeSubmissionSession.id}
+                        submissionSession={activeSubmissionSession}
+                        formId={formId}
+                      />
+                    </div>
+                    <div className="flow-root pl-10">
+                      <h1 className="mb-8 text-gray-700">Session Activity</h1>
+                      <ul role="list" className="-mb-8">
+                        {activeSubmissionSession.events.map(
+                          (event, eventIdx) => (
+                            <li key={event.id}>
+                              <div className="relative pb-8">
+                                {eventIdx !==
+                                activeSubmissionSession.events.length - 1 ? (
+                                  <span
+                                    className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-ui-gray-light"
                                     aria-hidden="true"
                                   />
-                                </span>
-                              </div>
-                              <div className="min-w-0 flex-1 pt-1.5 flex justify-between flex-wrap gap-4">
-                                <div>
-                                  <p className="text-sm text-gray-500">
-                                    {getEventName(event.type)}
-                                    {/* <span className="font-medium text-gray-900">
+                                ) : null}
+                                <div className="relative flex space-x-3">
+                                  <div>
+                                    <span
+                                      className={classNames(
+                                        "bg-red-200",
+                                        "h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white"
+                                      )}
+                                    >
+                                      <CheckIcon
+                                        className="w-5 h-5 text-white"
+                                        aria-hidden="true"
+                                      />
+                                    </span>
+                                  </div>
+                                  <div className="min-w-0 flex-1 pt-1.5 flex justify-between flex-wrap gap-4">
+                                    <div>
+                                      <p className="text-sm text-gray-500">
+                                        {getEventName(event.type)}
+                                        {/* <span className="font-medium text-gray-900">
                                       {event.data.pageName || ""}
                                     </span> */}
-                                  </p>
-                                </div>
-                                <div className="text-sm text-right text-gray-500 whitespace-nowrap">
-                                  <time dateTime={event.createdAt}>
-                                    {convertTimeString(event.createdAt)}
-                                  </time>
+                                      </p>
+                                    </div>
+                                    <div className="text-sm text-right text-gray-500 whitespace-nowrap">
+                                      <time dateTime={event.createdAt}>
+                                        {convertTimeString(event.createdAt)}
+                                      </time>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
                   </div>
                 </div>
-                <div className="w-full px-4 pt-8">
+                <div className="w-full">
                   <button
-                      className="flex justify-center items-center gap-2 w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                      onClick={() => handleDelete(activeSubmissionSession)}
+                    className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-300 border border-transparent shadow-sm hover:bg-red-500 focus:outline-none"
+                    onClick={() => {
+                      if (
+                        confirm(
+                          "Are you sure you want to delete this submission? It will be gone forever!"
+                        )
+                      ) {
+                        handleDelete(activeSubmissionSession);
+                      }
+                    }}
                   >
-                    <TrashIcon className="w-4 h-4"/>
+                    <TrashIcon className="w-4 h-4" />
                     Delete Submission
                   </button>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </main>
