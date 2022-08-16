@@ -39,6 +39,7 @@ model NoCodeForm {
   blocks              Json      @default("[]")
   blocksDraft         Json      @default("[]")
   published           Boolean   @default(false)
+  closed              Boolean   @default(false)
 }
 
 model Pipeline {

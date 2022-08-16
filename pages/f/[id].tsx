@@ -24,32 +24,32 @@ export default function NoCodeFormPublic() {
 
     return (
         <BaseLayoutUnauthorized title="snoopForms">
-            {noCodeForm.published ? (
-                <App formId={formId} blocks={noCodeForm.blocks}/>
-            ) : (
+            {noCodeForm.closed ? (
                 <div className="flex min-h-screen bg-ui-gray-light">
-                  <div
-                      className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
-                    <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
-                      <div>
-                        <Image
-                            src="/img/snoopforms-logo.svg"
-                            alt="snoopForms logo"
-                            width={500}
-                            height={89}
-                        />
-                      </div>
-                      <div className="mt-8">
-                        <h1 className="mb-4 font-bold text-center leading-2">
-                          Form unavailable!
-                        </h1>
-                        <p className="text-center">
-                          This form is not available anymore.
-                        </p>
-                      </div>
+                    <div
+                        className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+                        <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
+                            <div>
+                                <Image
+                                    src="/img/snoopforms-logo.svg"
+                                    alt="snoopForms logo"
+                                    width={500}
+                                    height={89}
+                                />
+                            </div>
+                            <div className="mt-8">
+                                <h1 className="mb-4 font-bold text-center leading-2">
+                                    Form closed!
+                                </h1>
+                                <p className="text-center">
+                                    This form is closed for any further submissions.
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                  </div>
                 </div>
+            ) : (
+                <App formId={formId} blocks={noCodeForm.blocks}/>
             )}
         </BaseLayoutUnauthorized>
     );

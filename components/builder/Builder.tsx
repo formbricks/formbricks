@@ -1,9 +1,9 @@
 import EditorJS from "@editorjs/editorjs";
 import {
-  BanIcon,
+  CogIcon,
   DocumentAddIcon,
   EyeIcon,
-  PaperAirplaneIcon, SaveIcon,
+  PaperAirplaneIcon,
   ShareIcon,
 } from "@heroicons/react/outline";
 import dynamic from "next/dynamic";
@@ -17,6 +17,7 @@ import SecondNavBar from "../layout/SecondNavBar";
 import Loading from "../Loading";
 import LoadingModal from "../LoadingModal";
 import ShareModal from "./ShareModal";
+import SettingsModal from "./SettingsModal";
 let Editor = dynamic(() => import("../editorjs/Editor"), {
   ssr: false,
 });
@@ -28,6 +29,7 @@ export default function Builder({ formId }) {
   const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
     useNoCodeForm(formId);
   const [openShareModal, setOpenShareModal] = useState(false);
+  const [openSettingsModal, setOpenSettingsModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const addPage = () => {
@@ -60,7 +62,7 @@ export default function Builder({ formId }) {
     );
   };
 
-  const publishOrUnpublish = async () => {
+  const publishChanges = async () => {
     setLoading(true);
     setTimeout(async () => {
       const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
@@ -69,18 +71,6 @@ export default function Builder({ formId }) {
       mutateNoCodeForm(newNoCodeForm);
       setLoading(false);
       toast(newNoCodeForm.published ? "Your form is now published 🎉" : "Your form is now unpublished 😶‍🌫️");
-    }, 500);
-  };
-
-  const saveChanges = async () => {
-    setLoading(true);
-    setTimeout(async () => {
-      const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
-      newNoCodeForm.blocks = newNoCodeForm.blocksDraft;
-      await persistNoCodeForm(newNoCodeForm);
-      mutateNoCodeForm(newNoCodeForm);
-      setLoading(false);
-      toast("Your changes have been saved 🎉");
     }, 500);
   };
 
@@ -101,16 +91,10 @@ export default function Builder({ formId }) {
       label: "Preview",
     },
     {
-      id: "save",
-      onClick: () => saveChanges(),
-      Icon: SaveIcon,
-      label: 'Save Changes',
-    },
-    {
       id: "publish",
-      onClick: () => publishOrUnpublish(),
-      Icon: noCodeForm?.published ? BanIcon : PaperAirplaneIcon,
-      label: noCodeForm?.published ? 'Unpublish' : 'Publish',
+      onClick: () => publishChanges(),
+      Icon: PaperAirplaneIcon,
+      label: 'Publish',
     },
     {
       id: "share",
@@ -118,6 +102,12 @@ export default function Builder({ formId }) {
       Icon: ShareIcon,
       label: "Share",
     },
+    {
+      id: "settings",
+      onClick: () => setOpenSettingsModal(true),
+      Icon: CogIcon,
+      label: "Settings",
+    }
   ];
 
   if (isLoadingNoCodeForm || isLoadingForm) {
@@ -146,6 +136,11 @@ export default function Builder({ formId }) {
         open={openShareModal}
         setOpen={setOpenShareModal}
         formId={formId}
+      />
+      <SettingsModal
+          open={openSettingsModal}
+          setOpen={setOpenSettingsModal}
+          formId={formId}
       />
       <LoadingModal isLoading={loading} />
     </>
