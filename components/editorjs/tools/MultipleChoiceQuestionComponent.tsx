@@ -8,6 +8,7 @@ import { classNames } from "../../../lib/utils";
 const DEFAULT_INITIAL_DATA = () => {
   return {
     label: "",
+    helperText: "",
     required: false,
     multipleChoice: false,
     options: [
@@ -87,6 +88,14 @@ const SingleChoiceQuestion = (props) => {
             *
           </div>
         )}
+        <input
+            type="text"
+            id="helper-text"
+            defaultValue={choiceData.helperText}
+            onBlur={onInputChange("helperText")}
+            className="block w-full max-w-sm mt-1 mb-2 text-sm text-gray-900 font-light p-0 border-0 border-transparent ring-0 focus:ring-0"
+            placeholder="optional helper text"
+        />
       </div>
       <div className="max-w-sm mt-2 space-y-2">
         {choiceData.options.map((option, optionIdx) => (
