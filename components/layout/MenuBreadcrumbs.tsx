@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function MenuBreadcrumbs({ breadcrumbs }) {
   return (
-    <div className="hidden sm:flex sm:flex-1">
+    <div className="hidden overflow-hidden sm:flex sm:flex-1 text-ellipsis">
       <nav className="hidden lg:flex" aria-label="Breadcrumb">
         <ol className="flex items-center space-x-4">
           <li>
