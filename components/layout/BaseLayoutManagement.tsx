@@ -38,11 +38,11 @@ export default function BaseLayoutManagement({
           "flex h-full"
         )}
       >
-        <div className="flex flex-col flex-1 h-full">
+        <div className="flex flex-col flex-1 w-full h-full">
           <header className="w-full">
             <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-ui-gray-light">
-              <div className="flex justify-between flex-1">
-                <div className="flex flex-1 space-x-8">
+              <div className="grid w-full grid-cols-2 sm:grid-cols-3">
+                <div className="flex-1 hidden space-x-8 sm:flex">
                   <NewFormNavButton />
                   <MenuBreadcrumbs breadcrumbs={breadcrumbs} />
                 </div>

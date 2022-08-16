@@ -11,7 +11,7 @@ export default function NewFormNavButton({}) {
         className="items-center hidden text-sm border-r border-ui-gray-light sm:flex bg-ui-gray-lighter text-ui-gray-dark hover:text-white hover:bg-red-500"
         onClick={() => setOpenNewFormModal(true)}
       >
-        <nav className="hidden lg:flex" aria-label="Breadcrumb">
+        <nav className="hidden sm:flex" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-4">
             <li>
               <div className="inline-flex items-center px-6 py-2 text-sm font-medium leading-4 bg-transparent border border-transparent hover:text-white focus:outline-none">
