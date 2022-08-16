@@ -58,8 +58,8 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
 
   return (
     <div className="flex flex-col flex-1 w-full h-full mx-auto overflow-visible max-w-screen">
-      <div className="relative z-0 flex flex-1 overflow-visible">
-        <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none xl:order-last">
+      <div className="relative z-0 flex flex-1 h-full overflow-visible">
+        <main className="relative z-0 flex-1 mb-32 overflow-y-auto focus:outline-none xl:order-last">
           <div className="overflow-visible sm:rounded-lg">
             {!activeSubmissionSession ? (
               <button
@@ -86,7 +86,7 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                         formId={formId}
                       />
                     </div>
-                    <div className="flow-root pl-10">
+                    <div className="hidden pl-10 md:flow-root">
                       <h1 className="mb-8 text-gray-700">Session Activity</h1>
                       <ul role="list" className="-mb-8">
                         {activeSubmissionSession.events.map(
@@ -159,9 +159,9 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
             )}
           </div>
         </main>
-        <aside className="flex-shrink-0 hidden border-r border-ui-gray-light md:order-first md:flex md:flex-col w-96">
+        <aside className="flex flex-col flex-1 flex-shrink-0 order-first h-full border-r border-ui-gray-light md:flex-none md:w-96">
           <DownloadResponses formId={formId} />
-          <div className="pt-6 pb-1">
+          <div className="pt-4 pb-2">
             <h2 className="px-5 text-lg font-medium text-gray-900">
               Responses
             </h2>
@@ -172,7 +172,8 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
             <RadioGroup
               value={activeSubmissionSession}
               onChange={setActiveSubmissionSession}
-              className="flex-1 min-h-0 overflow-y-auto"
+              className="flex-1 min-h-0 mb-32 overflow-y-auto shadow-inner"
+              as="div"
             >
               <div className="relative">
                 <ul className="relative z-0 divide-y divide-ui-gray-light">

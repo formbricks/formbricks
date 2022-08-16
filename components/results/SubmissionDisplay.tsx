@@ -19,8 +19,8 @@ export default function SubmissionDisplay({ formId, submissionSession }) {
   }
 
   return (
-    <div className="flow-root mt-6">
-      <ul role="list" className="-my-5 divide-y divide-ui-gray-light">
+    <div className="flow-root">
+      <ul role="list" className="divide-y divide-ui-gray-light">
         {submission.pages.map((page) =>
           page.elements?.map(
             (element) =>
@@ -33,7 +33,7 @@ export default function SubmissionDisplay({ formId, submissionSession }) {
                   <p
                     className={classNames(
                       element.value ? "text-gray-600" : "text-gray-400",
-                      "mt-1 text-sm text-gray-600 line-clamp-2"
+                      "pt-1 text-sm text-gray-600 line-clamp-2"
                     )}
                   >
                     {element.value || "[not provided]"}
