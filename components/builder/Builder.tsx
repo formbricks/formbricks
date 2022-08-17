@@ -66,11 +66,17 @@ export default function Builder({ formId }) {
     setLoading(true);
     setTimeout(async () => {
       const newNoCodeForm = JSON.parse(JSON.stringify(noCodeForm));
-      newNoCodeForm.published = !noCodeForm.published;
+      const firstPublish = newNoCodeForm.published ? false : true;
+      newNoCodeForm.blocks = newNoCodeForm.blocksDraft;
+      newNoCodeForm.published = true;
       await persistNoCodeForm(newNoCodeForm);
       mutateNoCodeForm(newNoCodeForm);
       setLoading(false);
-      toast(newNoCodeForm.published ? "Your form is now published 🎉" : "Your form is now unpublished 😶‍🌫️");
+      toast(
+        firstPublish
+          ? "Your form is now published 🎉"
+          : "Your changes are now published 🎉"
+      );
     }, 500);
   };
 
@@ -94,7 +100,7 @@ export default function Builder({ formId }) {
       id: "publish",
       onClick: () => publishChanges(),
       Icon: PaperAirplaneIcon,
-      label: 'Publish',
+      label: "Publish",
     },
     {
       id: "share",
@@ -107,7 +113,7 @@ export default function Builder({ formId }) {
       onClick: () => setOpenSettingsModal(true),
       Icon: CogIcon,
       label: "Settings",
-    }
+    },
   ];
 
   if (isLoadingNoCodeForm || isLoadingForm) {
@@ -138,9 +144,9 @@ export default function Builder({ formId }) {
         formId={formId}
       />
       <SettingsModal
-          open={openSettingsModal}
-          setOpen={setOpenSettingsModal}
-          formId={formId}
+        open={openSettingsModal}
+        setOpen={setOpenSettingsModal}
+        formId={formId}
       />
       <LoadingModal isLoading={loading} />
     </>
