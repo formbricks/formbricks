@@ -12,7 +12,8 @@
 </p>
 
 <p align="center">
-<a href="https://github.com/snoopForms/snoopforms/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a> <a href="https://discord.gg/3YFcABF2Ts"><img src="https://img.shields.io/badge/Discord-SnoopForms-%234A154B" alt="Join snoopForms Discord"></a>
+<a href="https://github.com/snoopForms/snoopforms/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a> <a href="https://discord.gg/3YFcABF2Ts"><img src="https://img.shields.io/badge/Discord-SnoopForms-%234A154B" alt="Join snoopForms Discord"></a> <a href="https://github.com/snoopForms/snoopforms/stargazers"><img src="https://img.shields.io/github/stars/snoopForms/snoopforms" alt="Github Stars"></a>
+   <a href="https://news.ycombinator.com/item?id=32303986"><img src="https://img.shields.io/badge/Hacker%20News-122-%23FF6600" alt="Hacker News"></a>
 </p>
 
 <br/>
@@ -27,11 +28,9 @@
 
 Spin up forms in minutes. Pipe your data exactly where you need it. Maximize your results with juicy analytics.
 
-## What is snoopHub?
+## What is snoopForms?
 
-The snoopHub is the heart of snoopForms. In it, all form submissions are processed, analyzed, forwarded and you can even build your own forms with the help of the no-code editor.
-
-If you prefer to build your forms completely customizable and send the submissions directly to snoopHub, check out our [React library](https://github.com/snoopForms/snoopforms-react).
+With snoopForms you can build complex multi-page forms in minutes using either our built-in No Code Builder or our [React library](https://github.com/snoopForms/snoopforms-react). All form submissions are automatically sent to the snoopForms platform for processing and analysis. You can view the submission within the platform or you can easily configure pipelines to send your data to other systems, services or databases.
 
 ### Features
 
@@ -75,8 +74,7 @@ yarn install
 docker run --name snoopformsDB -p 5432:5432 -e POSTGRES_USER=snoopforms -e POSTGRES_PASSWORD=password -e POSTGRES_DB=snoopforms -d postgres
 ```
 
-
-4. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database. For the signup process, an email server with valid SMTP data is necessary.
+1. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database.
 
 ```
 cp .env.example .env
@@ -88,9 +86,9 @@ For the example above, use the following:
 DATABASE_URL='postgresql://snoopforms:password@localhost:5432/snoopforms?schema=public'
 ```
 
-5. Use the code editor of your choice to edit the .env file. You need to change all fields according to your setup. The SMTP-credentials are essential for verification emails to work during user signup.
+1. Use the code editor of your choice to edit the .env file. You need to change all fields according to your setup.
 
-6. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
+2. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
 
 ```
 yarn prisma migrate dev
