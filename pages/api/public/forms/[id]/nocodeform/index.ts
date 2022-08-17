@@ -17,6 +17,7 @@ export default async function handle(
       select: {
         id: true,
         published: true,
+        closed: true,
         blocks: true,
       },
     });
