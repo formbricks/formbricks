@@ -12,14 +12,14 @@ export default function NoCodeFormPublic() {
   const { noCodeForm, isLoadingNoCodeForm, isErrorNoCodeForm } =
     useNoCodeFormPublic(formId);
 
+  if (isLoadingNoCodeForm) {
+    return <Loading />;
+  }
+
   if (isErrorNoCodeForm || !noCodeForm?.published) {
     return (
       <MessagePage text="Form not found. Are you sure this is the right URL?" />
     );
-  }
-
-  if (isLoadingNoCodeForm) {
-    return <Loading />;
   }
 
   return (
