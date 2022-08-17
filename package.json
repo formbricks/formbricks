@@ -29,7 +29,7 @@
     "next-auth": "^4.10.1",
     "nextjs-cors": "^2.1.1",
     "nodemailer": "^6.7.7",
-    "posthog-js": "^1.26.0",
+    "posthog-node": "^2.0.1",
     "react": "17.0.2",
     "react-chartjs-2": "^4.3.1",
     "react-dom": "17.0.2",
