@@ -24,7 +24,7 @@ export default function ForgotPasswordEmailSent() {
               </h1>
               <p className="text-center">
                 Check your email for a link to reset your password.
-                If it doesn't appear within a few minutes, check your spam folder.
+                If it doesn&apos;t appear within a few minutes, check your spam folder.
               </p>
               <div className="mt-3 text-center">
                 <Link href="/auth/signin">
