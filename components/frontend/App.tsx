@@ -1,7 +1,6 @@
 import { GlobeAltIcon, MailIcon, PhoneIcon } from "@heroicons/react/solid";
 import { SnoopElement, SnoopForm, SnoopPage } from "@snoopforms/react";
 import { useMemo } from "react";
-import { trackPosthogEvent } from "../../lib/posthog";
 import { generateId } from "../../lib/utils";
 import Loading from "../Loading";
 
@@ -45,11 +44,6 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
         formId={formId}
         localOnly={localOnly}
         className="w-full max-w-3xl mx-auto space-y-6"
-        onSubmit={() => {
-          if (!localOnly) {
-            trackPosthogEvent("submitForm", { formId });
-          }
-        }}
       >
         {pages.map((page, pageIdx) => (
           <SnoopPage

@@ -6,7 +6,6 @@ import { Fragment, useState } from "react";
 import { BsPlus } from "react-icons/bs";
 import { createForm } from "../../lib/forms";
 import { createNoCodeForm } from "../../lib/noCodeForm";
-import { trackPosthogEvent } from "../../lib/posthog";
 import { classNames } from "../../lib/utils";
 import StandardButton from "../StandardButton";
 
@@ -48,7 +47,6 @@ export default function NewFormModal({
     if (form.formType === "NOCODE") {
       await createNoCodeForm(form.id);
     }
-    trackPosthogEvent("newForm", { formType: form.formType });
     router.push(`/forms/${form.id}/form`);
   };
 

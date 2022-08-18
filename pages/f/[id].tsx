@@ -8,7 +8,7 @@ import Image from "next/image";
 
 export default function NoCodeFormPublic() {
   const router = useRouter();
-  const formId = router.query.id.toString();
+  const formId = router.query.id?.toString();
   const { noCodeForm, isLoadingNoCodeForm, isErrorNoCodeForm } =
     useNoCodeFormPublic(formId);
 

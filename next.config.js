@@ -13,14 +13,14 @@ const nextConfig = {
     smtpUser: process.env.SMTP_USER,
     smtpPassword: process.env.SMTP_PASSWORD,
     smtpSecureEnabled: process.env.SMTP_SECURE_ENABLED,
+    posthogApiHost: process.env.POSTHOG_API_HOST,
+    posthogApiKey: process.env.POSTHOG_API_KEY,
   },
   publicRuntimeConfig: {
     // Will be available on both server and client
-    posthogApiHost: process.env.POSTHOG_API_HOST,
-    posthogApiKey: process.env.POSTHOG_API_KEY,
     termsUrl: process.env.TERMS_URL,
     privacyUrl: process.env.PRIVACY_URL,
-    emailVerificationDisabled: process.env.EMAIL_VERIFICATION_DISABLED === '1'
+    emailVerificationDisabled: process.env.EMAIL_VERIFICATION_DISABLED === "1",
   },
   async redirects() {
     return [
