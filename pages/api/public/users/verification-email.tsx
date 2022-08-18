@@ -6,7 +6,7 @@ export default async function handle(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // POST /api/public/users
+  // POST /api/public/users/verification-email
   // Sends a new verification email to a user with a specific email address
   // Required fields in body: email
   if (req.method === "POST") {

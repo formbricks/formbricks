@@ -15,7 +15,8 @@ export default async function handle(
   // Required fields in body: email, password (hashed)
   // Optional fields in body: firstname, lastname
   if (req.method === "POST") {
-    const user = req.body;
+    let user = req.body;
+    user = { ...user, ...{ email: user.email.toLowerCase() } }
 
     const { emailVerificationDisabled } = publicRuntimeConfig;
 

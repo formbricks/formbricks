@@ -57,3 +57,28 @@ export const sendVerificationEmail = async (user) => {
     Your snoopForms Team`,
   });
 };
+
+export const sendForgotPasswordEmail = async (user) => {
+  const token = jwt.sign(
+    { id: user.id },
+    serverRuntimeConfig.nextauthSecret + user.email,
+    {
+      expiresIn: "1d",
+    }
+  );
+  const verifyLink = `${
+    serverRuntimeConfig.nextauthUrl
+  }/auth/reset-password?token=${encodeURIComponent(token)}`;
+  await sendEmail({
+    to: user.email,
+    subject: "Reset your snoopForms password",
+    html: `Someone has requested a link to change your password. You can do this through the link below:<br/>
+    <a href="${verifyLink}">${verifyLink}</a><br/>
+    <br/>
+    The link is valid for one day. If you didn't request this, please ignore this email.<br/>
+    <br/>
+    Your password won't change until you access the link above and create a new one.<br/>
+    <br/>
+    Your snoopForms Team`,
+  });
+};
