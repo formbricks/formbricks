@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import jwt from "jsonwebtoken";
 import { prisma } from "../../../../lib/prisma";
+import { sendPasswordResetNotifyEmail } from "../../../../lib/email";
 
 export default async function handle(
   req: NextApiRequest,
@@ -28,6 +29,7 @@ export default async function handle(
         where: { id: user.id },
         data: { password: hashedPassword }
       })
+      await sendPasswordResetNotifyEmail(user)
       res.json({});
     } catch (e) {
       return res.status(500).json({

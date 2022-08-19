@@ -82,3 +82,13 @@ export const sendForgotPasswordEmail = async (user) => {
     Your snoopForms Team`,
   });
 };
+
+export const sendPasswordResetNotifyEmail = async (user) => {
+  await sendEmail({
+    to: user.email,
+    subject: "Your snoopForms password has been changed",
+    html: `We're contacting you to notify you that your password has been changed.<br/>
+    <br/>
+    Your snoopForms Team`,
+  });
+};
