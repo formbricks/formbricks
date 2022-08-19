@@ -72,10 +72,10 @@ export const sendForgotPasswordEmail = async (user) => {
   await sendEmail({
     to: user.email,
     subject: "Reset your snoopForms password",
-    html: `Someone has requested a link to change your password. You can do this through the link below:<br/>
+    html: `You have requested a link to change your password. You can do this through the link below:<br/>
     <a href="${verifyLink}">${verifyLink}</a><br/>
     <br/>
-    The link is valid for one day. If you didn't request this, please ignore this email.<br/>
+    The link is valid for 24 hours. If you didn't request this, please ignore this email.<br/>
     <br/>
     Your password won't change until you access the link above and create a new one.<br/>
     <br/>
