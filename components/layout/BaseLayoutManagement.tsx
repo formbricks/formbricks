@@ -38,7 +38,12 @@ export default function BaseLayoutManagement({
           "flex h-full"
         )}
       >
-        <div className="flex flex-col flex-1 w-full h-full">
+        <div
+          className={classNames(
+            limitHeightScreen ? "max-h-full" : "h-full",
+            "flex flex-col flex-1 w-full"
+          )}
+        >
           <header className="w-full">
             <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-ui-gray-light">
               <div className="grid w-full grid-cols-2 sm:grid-cols-3">
