@@ -20,6 +20,8 @@ const nextConfig = {
     // Will be available on both server and client
     termsUrl: process.env.TERMS_URL,
     privacyUrl: process.env.PRIVACY_URL,
+    publicImprintUrl: process.env.PUBLIC_IMPRINT_URL,
+    publicPrivacyUrl: process.env.PUBLIC_PRIVACY_URL,
     emailVerificationDisabled: process.env.EMAIL_VERIFICATION_DISABLED === "1",
   },
   async redirects() {
