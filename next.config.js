@@ -12,7 +12,7 @@ const nextConfig = {
     smtpPort: process.env.SMTP_PORT,
     smtpUser: process.env.SMTP_USER,
     smtpPassword: process.env.SMTP_PASSWORD,
-    smtpSecureEnabled: process.env.SMTP_SECURE_ENABLED,
+    smtpSecureEnabled: process.env.SMTP_SECURE_ENABLED === "1",
     posthogApiHost: process.env.POSTHOG_API_HOST,
     posthogApiKey: process.env.POSTHOG_API_KEY,
     telemetryDisabled: process.env.TELEMETRY_DISABLED === "1",

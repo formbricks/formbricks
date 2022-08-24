@@ -15,7 +15,7 @@ export const sendEmail = async (emailData: sendEmailData) => {
   let transporter = nodemailer.createTransport({
     host: serverRuntimeConfig.smtpHost,
     port: serverRuntimeConfig.smtpPort,
-    secure: serverRuntimeConfig.smtpSecureEnabled || false, // true for 465, false for other ports
+    secure: serverRuntimeConfig.smtpSecureEnabled, // true for 465, false for other ports
     auth: {
       user: serverRuntimeConfig.smtpUser,
       pass: serverRuntimeConfig.smtpPassword,

@@ -11,7 +11,6 @@ const { serverRuntimeConfig } = getConfig();
 
 export const sendTelemetry = (event: string) => {
   if (
-    process.env.NODE_ENV === "production" &&
     serverRuntimeConfig.nextauthUrl !== "http://localhost:3000" &&
     !serverRuntimeConfig.telemetryDisabled
   ) {
