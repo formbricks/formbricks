@@ -1,13 +1,18 @@
 import { XCircleIcon } from "@heroicons/react/solid";
 import { signIn } from "next-auth/react";
+import getConfig from "next/config";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 
+const { publicRuntimeConfig } = getConfig();
+
 export default function SignInPage() {
   const router = useRouter();
   const { error } = router.query;
+
+  const { passwordResetDisabled } = publicRuntimeConfig
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -110,14 +115,16 @@ export default function SignInPage() {
                       Sign in
                     </button>
                     <div className="mt-3 text-center">
-                      <Link href="/auth/forgot-password">
-                        <a
-                          href=""
-                          className="text-xs text-red hover:text-red-600 block"
-                        >
-                          Forgot your password?
-                        </a>
-                      </Link>
+                      {passwordResetDisabled ? null : (
+                        <Link href="/auth/forgot-password">
+                          <a
+                            href=""
+                            className="text-xs text-red hover:text-red-600 block"
+                          >
+                            Forgot your password?
+                          </a>
+                        </Link>
+                      )}
 
                       <Link href="/auth/signup">
                         <a

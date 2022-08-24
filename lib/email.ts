@@ -1,5 +1,5 @@
 import getConfig from "next/config";
-import jwt from "jsonwebtoken";
+import { createToken } from "./jwt";
 const nodemailer = require("nodemailer");
 
 const { serverRuntimeConfig } = getConfig();
@@ -32,13 +32,9 @@ export const sendEmail = async (emailData: sendEmailData) => {
 };
 
 export const sendVerificationEmail = async (user) => {
-  const token = jwt.sign(
-    { id: user.id },
-    serverRuntimeConfig.nextauthSecret + user.email,
-    {
-      expiresIn: "1d",
-    }
-  );
+  const token = createToken(user.id, user.email, {
+    expiresIn: "1d",
+  })
   const verifyLink = `${
     serverRuntimeConfig.nextauthUrl
   }/auth/verify?token=${encodeURIComponent(token)}`;
@@ -59,13 +55,9 @@ export const sendVerificationEmail = async (user) => {
 };
 
 export const sendForgotPasswordEmail = async (user) => {
-  const token = jwt.sign(
-    { id: user.id },
-    serverRuntimeConfig.nextauthSecret + user.email,
-    {
-      expiresIn: "1d",
-    }
-  );
+  const token = createToken(user.id, user.email, {
+    expiresIn: "1d",
+  })
   const verifyLink = `${
     serverRuntimeConfig.nextauthUrl
   }/auth/reset-password?token=${encodeURIComponent(token)}`;

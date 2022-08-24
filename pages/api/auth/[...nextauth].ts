@@ -1,12 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import getConfig from "next/config";
-import jwt from "jsonwebtoken";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "../../../lib/prisma";
 import { verifyPassword } from "../../../lib/auth";
+import { verifyToken } from "../../../lib/jwt";
 
-const { serverRuntimeConfig, publicRuntimeConfig } = getConfig();
+const { publicRuntimeConfig } = getConfig();
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   return await NextAuth(req, res, {
@@ -89,7 +89,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
         async authorize(credentials, _req) {
           let user;
           try {
-            const { id } = await jwt.decode(credentials?.token);
+            const { id } = await verifyToken(credentials?.token)
             user = await prisma.user.findUnique({
               where: {
                 id: id,
@@ -97,7 +97,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             });
           } catch (e) {
             console.error(e);
-            throw Error("Internal server error. Please try again later");
+            throw new Error("Token is not valid or expired");
           }
 
           if (!user) {
@@ -106,21 +106,6 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
 
           if (user.emailVerified) {
             throw new Error("Email already verified");
-          }
-
-          const isValid = await new Promise((resolve) => {
-            jwt.verify(
-              credentials?.token,
-              serverRuntimeConfig.nextauthSecret + user.email,
-              (err) => {
-                if (err) resolve(false);
-                if (!err) resolve(true);
-              }
-            );
-          });
-
-          if (!isValid) {
-            throw new Error("Token is not valid or expired");
           }
 
           user = await prisma.user.update({

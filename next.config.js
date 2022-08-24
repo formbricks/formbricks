@@ -21,6 +21,7 @@ const nextConfig = {
     termsUrl: process.env.TERMS_URL,
     privacyUrl: process.env.PRIVACY_URL,
     emailVerificationDisabled: process.env.EMAIL_VERIFICATION_DISABLED === "1",
+    passwordResetDisabled: process.env.PASSWORD_RESET_DISABLED === "1",
   },
   async redirects() {
     return [

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import jwt from "jsonwebtoken";
 import { prisma } from "../../../../lib/prisma";
 import { sendPasswordResetNotifyEmail } from "../../../../lib/email";
+import { verifyToken } from "../../../../lib/jwt";
 
 export default async function handle(
   req: NextApiRequest,
@@ -14,7 +14,7 @@ export default async function handle(
     const { token, hashedPassword } = req.body;
 
     try {
-      const { id } = await jwt.decode(token);
+      const { id } = await verifyToken(token)
       const user = await prisma.user.findUnique({
         where: {
           id: id,
