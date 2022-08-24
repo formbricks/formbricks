@@ -15,6 +15,7 @@ const nextConfig = {
     smtpSecureEnabled: process.env.SMTP_SECURE_ENABLED,
     posthogApiHost: process.env.POSTHOG_API_HOST,
     posthogApiKey: process.env.POSTHOG_API_KEY,
+    telemetryDisabled: process.env.TELEMETRY_DISABLED === "1",
   },
   publicRuntimeConfig: {
     // Will be available on both server and client

@@ -724,6 +724,11 @@ cross-spawn@^7.0.2:
     shebang-command "^2.0.0"
     which "^2.0.1"
 
+crypto@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/crypto/-/crypto-1.0.1.tgz#2af1b7cad8175d24c8a1b0778255794a21803037"
+  integrity sha512-VxBKmeNcqQdiUQUW2Tzq0t377b54N2bMtXO/qiLa+6eRRmmC4qT3D4OnTGoT/U6O9aklQ/jTwbOtRMTTY8G0Ig==
+
 cssesc@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/cssesc/-/cssesc-3.0.0.tgz#37741919903b868565e1c09ea747445cd18983ee"
@@ -2121,10 +2126,10 @@ postcss@^8.4.13, postcss@^8.4.14:
     picocolors "^1.0.0"
     source-map-js "^1.0.2"
 
-posthog-node@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/posthog-node/-/posthog-node-2.0.1.tgz#9e9a7da9a4c5618681369d698f1bd8bf8dd43872"
-  integrity sha512-VCn8bZMw2JkDr6V+S0c7hT3+yb3j8t9h7rpyVlYc+JGBcdrWzOtYCKvdCuvKw36JJTUej8MLVeVtr+hf6rdT8A==
+posthog-node@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/posthog-node/-/posthog-node-2.0.2.tgz#f2a5b087d512508dd5b7cf996c0bc7a873840742"
+  integrity sha512-lB7y5znEGHhL6CP+Xwq4v+js4x0oGqyJXwZM2SXPXakZzPq+UQo/HLYZCOnsCpk8DnXLZOKjut9vYLqkTCjGJQ==
   dependencies:
     undici "^5.8.0"
 

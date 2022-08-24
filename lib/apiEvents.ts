@@ -2,6 +2,7 @@ import { ApiEvent } from "./types";
 import { prisma } from "./prisma";
 import { caputurePosthogEvent } from "./posthog";
 import { generateId } from "./utils";
+import { sendTelemetry } from "./telemetry";
 
 type validationError = {
   status: number;
@@ -45,7 +46,8 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
         submissionSession: { connect: { id: data.submissionSessionId } },
       },
     });
-    caputurePosthogEvent(generateId(10), "pageSubmission", { formId });
+    caputurePosthogEvent(generateId(10), "pageSubmission sent", { formId });
+    sendTelemetry("pageSubmission sent");
   } else if (event.type === "submissionCompleted") {
     // TODO
   } else if (event.type === "updateSchema") {
