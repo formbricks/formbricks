@@ -1,15 +1,15 @@
-import getConfig from "next/config";
+/* import getConfig from "next/config";
 import { PostHog } from "posthog-node";
 import crypto from "crypto";
 
-const { serverRuntimeConfig } = getConfig();
+const { serverRuntimeConfig } = getConfig(); */
 
 /* We use this telemetry service to better understand how snoopForms is being used
    and how we can improve it. All data including the IP address is collected anonymously
    and we cannot trace anything back to you or your customers. If you still want to
    disable telemetry, set the environment variable TELEMETRY_DISABLED=1 */
 
-export const sendTelemetry = (event: string) => {
+/* export const sendTelemetry = (event: string) => {
   if (
     serverRuntimeConfig.nextauthUrl !== "http://localhost:3000" &&
     !serverRuntimeConfig.telemetryDisabled
@@ -26,4 +26,8 @@ export const sendTelemetry = (event: string) => {
       event,
     });
   }
+}; */
+
+export const sendTelemetry = (event: string) => {
+  return event;
 };
