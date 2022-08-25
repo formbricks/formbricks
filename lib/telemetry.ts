@@ -9,17 +9,13 @@ const { serverRuntimeConfig } = getConfig();
    disable telemetry, set the environment variable TELEMETRY_DISABLED=1 */
 
 export const sendTelemetry = async (eventName: string) => {
-  console.log(!serverRuntimeConfig.telemetryDisabled);
-  console.log(process.env.NODE_ENV === "production");
-  console.log(serverRuntimeConfig.nextauthUrl !== "http://localhost:3000");
   if (
     !serverRuntimeConfig.telemetryDisabled &&
     process.env.NODE_ENV === "production" &&
     serverRuntimeConfig.nextauthUrl !== "http://localhost:3000"
   ) {
-    console.log("inside");
     try {
-      await fetch(`${serverRuntimeConfig.posthogApiHost}/capture/`, {
+      await fetch("https://posthog.snoopforms.com/capture/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
