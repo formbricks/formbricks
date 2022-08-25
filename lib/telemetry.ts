@@ -10,8 +10,9 @@ const { serverRuntimeConfig } = getConfig();
 
 export const sendTelemetry = async (eventName: string) => {
   if (
-    serverRuntimeConfig.nextauthUrl !== "http://localhost:3000" &&
-    !serverRuntimeConfig.telemetryDisabled
+    !serverRuntimeConfig.telemetryDisabled &&
+    process.env.NODE_ENV === "production" &&
+    serverRuntimeConfig.nextauthUrl !== "http://localhost:3000"
   ) {
     try {
       await fetch(`${serverRuntimeConfig.posthogApiHost}/capture/`, {

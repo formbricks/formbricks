@@ -30,6 +30,6 @@ export const caputurePosthogEvent = async (
       }),
     });
   } catch (error) {
-    console.error(error);
+    console.error("error sending posthog event:", error);
   }
 };
