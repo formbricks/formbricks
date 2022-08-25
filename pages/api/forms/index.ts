@@ -57,7 +57,7 @@ export default async function handle(
         owner: { connect: { email: session?.user?.email } },
       },
     });
-    caputurePosthogEvent(session.user.email, "formCreated");
+    caputurePosthogEvent(session.user.email, "form created");
     res.json(result);
   }
 

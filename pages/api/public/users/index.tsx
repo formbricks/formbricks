@@ -28,7 +28,7 @@ export default async function handle(
         },
       });
       if (!emailVerificationDisabled) await sendVerificationEmail(userData);
-      caputurePosthogEvent(user.email, "userCreated");
+      caputurePosthogEvent(user.email, "user created");
       res.json(userData);
     } catch (e) {
       if (e.code === "P2002") {

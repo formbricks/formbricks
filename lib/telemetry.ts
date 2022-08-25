@@ -1,6 +1,5 @@
 import getConfig from "next/config";
-import { PostHog } from "posthog-node";
-import crypto from "crypto";
+import { hashString } from "./utils";
 
 const { serverRuntimeConfig } = getConfig();
 
@@ -9,21 +8,27 @@ const { serverRuntimeConfig } = getConfig();
    and we cannot trace anything back to you or your customers. If you still want to
    disable telemetry, set the environment variable TELEMETRY_DISABLED=1 */
 
-export const sendTelemetry = (event: string) => {
+export const sendTelemetry = async (eventName: string) => {
   if (
-    serverRuntimeConfig.nextauthUrl !== "http://localhost:3000" &&
-    !serverRuntimeConfig.telemetryDisabled
+    !serverRuntimeConfig.telemetryDisabled &&
+    process.env.NODE_ENV === "production" &&
+    serverRuntimeConfig.nextauthUrl !== "http://localhost:3000"
   ) {
-    const client = new PostHog(
-      "phc_BTq4eagaCzPyUSURXVYwlScTQRvcmBDXjYh7OG6kiqw",
-      { host: "https://posthog.snoopforms.com" }
-    );
-    client.capture({
-      distinctId: crypto
-        .createHash("sha256")
-        .update(serverRuntimeConfig.nextauthUrl)
-        .digest("hex"),
-      event,
-    });
+    try {
+      await fetch("https://posthog.snoopforms.com/capture/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          api_key: "phc_BTq4eagaCzPyUSURXVYwlScTQRvcmBDXjYh7OG6kiqw",
+          event: eventName,
+          properties: {
+            distinct_id: hashString(serverRuntimeConfig.nextauthUrl),
+          },
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch (error) {
+      console.log("error sending telemetry:", error);
+    }
   }
 };

@@ -2126,13 +2126,6 @@ postcss@^8.4.13, postcss@^8.4.14:
     picocolors "^1.0.0"
     source-map-js "^1.0.2"
 
-posthog-node@^2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/posthog-node/-/posthog-node-2.0.2.tgz#f2a5b087d512508dd5b7cf996c0bc7a873840742"
-  integrity sha512-lB7y5znEGHhL6CP+Xwq4v+js4x0oGqyJXwZM2SXPXakZzPq+UQo/HLYZCOnsCpk8DnXLZOKjut9vYLqkTCjGJQ==
-  dependencies:
-    undici "^5.8.0"
-
 preact-render-to-string@^5.1.19:
   version "5.2.1"
   resolved "https://registry.yarnpkg.com/preact-render-to-string/-/preact-render-to-string-5.2.1.tgz#71f3e8cda65f33dbc8ad8d904ff58e3f532e59f3"
@@ -2669,11 +2662,6 @@ unbox-primitive@^1.0.2:
     has-bigints "^1.0.2"
     has-symbols "^1.0.3"
     which-boxed-primitive "^1.0.2"
-
-undici@^5.8.0:
-  version "5.9.1"
-  resolved "https://registry.yarnpkg.com/undici/-/undici-5.9.1.tgz#fc9fd85dd488f965f153314a63d9426a11f3360b"
-  integrity sha512-6fB3a+SNnWEm4CJbgo0/CWR8RGcOCQP68SF4X0mxtYTq2VNN8T88NYrWVBAeSX+zb7bny2dx2iYhP3XHi00omg==
 
 update-browserslist-db@^1.0.5:
   version "1.0.5"

@@ -1,5 +1,6 @@
 import intlFormat from "date-fns/intlFormat";
 import { formatDistance } from "date-fns";
+import crypto from "crypto";
 
 export const fetcher = async (url) => {
   const res = await fetch(url);
@@ -126,4 +127,8 @@ export const generateId = (length) => {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
   return result;
+};
+
+export const hashString = (string: string) => {
+  return crypto.createHash("sha256").update(string).digest("hex");
 };
