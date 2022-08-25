@@ -126,7 +126,7 @@ Start the docker compose process to build and spin up the snoopForms container a
 
 ```
 
-docker-compose up -d
+docker compose up -d
 
 ```
 
