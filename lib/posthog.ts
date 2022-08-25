@@ -1,5 +1,5 @@
 import getConfig from "next/config";
-import PostHog from "posthog-node";
+import { PostHog } from "posthog-node";
 
 const { serverRuntimeConfig } = getConfig();
 const enabled =
@@ -13,8 +13,6 @@ export const caputurePosthogEvent = (userId, eventName, properties = {}) => {
     serverRuntimeConfig.posthogApiKey,
     { host: serverRuntimeConfig.posthogApiHost } // You can omit this line if using PostHog Cloud
   );
-
-  console.log("send event!!!!!");
 
   client.capture({
     distinctId: userId,
