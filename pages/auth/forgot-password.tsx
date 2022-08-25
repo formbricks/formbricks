@@ -1,34 +1,30 @@
 import { XCircleIcon } from "@heroicons/react/solid";
-import { signIn } from "next-auth/react";
-import getConfig from "next/config";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useState } from "react";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
+import { forgotPassword } from "../../lib/users";
 
-const { publicRuntimeConfig } = getConfig();
-
-export default function SignInPage() {
+export default function ForgotPasswordPage() {
   const router = useRouter();
-  const { error } = router.query;
-
-  const { passwordResetDisabled } = publicRuntimeConfig
+  const [error, setError] = useState<string>("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await signIn("credentials", {
-      callbackUrl: router.query.callbackUrl?.toString() || "/forms",
-      email: e.target.elements.email.value,
-      password: e.target.elements.password.value,
-    });
-    /* router.push(
-      `/auth/verification-requested?email=${encodeURIComponent(
-        e.target.elements.email.value
-      )}`
-    ); */
+    try {
+      await forgotPassword(
+        e.target.elements.email.value,
+      );
+
+      router.push('/auth/forgot-password-email-sent');
+    } catch (e) {
+      setError(e.message);
+    }
   };
+
   return (
-    <BaseLayoutUnauthorized title="Sign in">
+    <BaseLayoutUnauthorized title="Forgot password">
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           {error && (
@@ -42,7 +38,7 @@ export default function SignInPage() {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">
-                    An error occurred when logging you in
+                    An error occurred when resetting your password
                   </h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p className="space-y-1 whitespace-pre-wrap">{error}</p>
@@ -66,8 +62,6 @@ export default function SignInPage() {
               <div className="mt-6">
                 <form
                   onSubmit={handleSubmit}
-                  method="post"
-                  action="/api/auth/callback/credentials"
                   className="space-y-6"
                 >
                   <div>
@@ -88,50 +82,21 @@ export default function SignInPage() {
                       />
                     </div>
                   </div>
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-ui-gray-dark"
-                    >
-                      Password
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        id="password"
-                        name="password"
-                        type="password"
-                        autoComplete="current-password"
-                        required
-                        className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
-                      />
-                    </div>
-                  </div>
 
                   <div>
                     <button
                       type="submit"
                       className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
-                      Sign in
+                      Send password reset email
                     </button>
                     <div className="mt-3 text-center">
-                      {passwordResetDisabled ? null : (
-                        <Link href="/auth/forgot-password">
-                          <a
-                            href=""
-                            className="text-xs text-red hover:text-red-600 block"
-                          >
-                            Forgot your password?
-                          </a>
-                        </Link>
-                      )}
-
-                      <Link href="/auth/signup">
+                      <Link href="/auth/signin">
                         <a
                           href=""
-                          className="text-xs text-red hover:text-red-600"
+                          className="text-xs text-red hover:text-red-600 block"
                         >
-                          Create an account
+                          Back to login
                         </a>
                       </Link>
                     </div>

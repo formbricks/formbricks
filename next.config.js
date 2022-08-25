@@ -24,6 +24,7 @@ const nextConfig = {
     publicImprintUrl: process.env.PUBLIC_IMPRINT_URL,
     publicPrivacyUrl: process.env.PUBLIC_PRIVACY_URL,
     emailVerificationDisabled: process.env.EMAIL_VERIFICATION_DISABLED === "1",
+    passwordResetDisabled: process.env.PASSWORD_RESET_DISABLED === "1",
   },
   async redirects() {
     return [

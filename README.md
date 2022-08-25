@@ -124,9 +124,10 @@ cp .env.example .env && nano .env
 
 Start the docker compose process to build and spin up the snoopForms container as well as the postgres database.
 
-```
+```bash
 
 docker compose up -d
+# (use docker-compose if you are on an older docker version)
 
 ```
 
