@@ -7,12 +7,11 @@ import { useRouter } from "next/router";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 
 const { publicRuntimeConfig } = getConfig();
+const { passwordResetDisabled } = publicRuntimeConfig;
 
 export default function SignInPage() {
   const router = useRouter();
   const { error } = router.query;
-
-  const { passwordResetDisabled } = publicRuntimeConfig
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,11 +20,6 @@ export default function SignInPage() {
       email: e.target.elements.email.value,
       password: e.target.elements.password.value,
     });
-    /* router.push(
-      `/auth/verification-requested?email=${encodeURIComponent(
-        e.target.elements.email.value
-      )}`
-    ); */
   };
   return (
     <BaseLayoutUnauthorized title="Sign in">
@@ -115,11 +109,11 @@ export default function SignInPage() {
                       Sign in
                     </button>
                     <div className="mt-3 text-center">
-                      {passwordResetDisabled ? null : (
+                      {!passwordResetDisabled && (
                         <Link href="/auth/forgot-password">
                           <a
                             href=""
-                            className="text-xs text-red hover:text-red-600 block"
+                            className="block text-xs text-red hover:text-red-600"
                           >
                             Forgot your password?
                           </a>
