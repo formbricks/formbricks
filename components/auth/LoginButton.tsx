@@ -17,7 +17,7 @@ const LoginButton = ({
   return (
     <StandardButton
       onClick={onClick}
-      className="grow relative flex items-center gap-3 bg-black-700 justify-center w-full pl-2 pr-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm"
+      className={`grow relative flex items-center gap-3 justify-center w-full pl-2 pr-4 py-2 text-sm font-medium border border-transparent rounded-md shadow-sm ${className}`}
       icon
     >
       <div className="grow-0 absolute left-2">{Icon && <Icon size={25} />}</div>
