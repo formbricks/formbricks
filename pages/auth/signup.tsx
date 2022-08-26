@@ -1,17 +1,18 @@
-import { XCircleIcon } from "@heroicons/react/solid";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import getConfig from "next/config";
-import { useState } from "react";
-import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
-import { createUser } from "../../lib/users";
+import { XCircleIcon } from '@heroicons/react/solid';
+import getConfig from 'next/config';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useState } from 'react';
+import SocialLoginButtons from '../../components/auth/SocialLoginButtons';
+import BaseLayoutUnauthorized from '../../components/layout/BaseLayoutUnauthorized';
+import { createUser } from '../../lib/users';
 
 const { publicRuntimeConfig } = getConfig();
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
 
   const { emailVerificationDisabled, privacyUrl, termsUrl } =
     publicRuntimeConfig;
@@ -159,7 +160,7 @@ export default function SignUpPage() {
                     </button>
 
                     <div className="mt-3 text-xs text-center text-gray-600">
-                      Already have an account?{" "}
+                      Already have an account?{' '}
                       <Link href="/auth/signin">
                         <a className="text-red hover:text-red-600">Log in.</a>
                       </Link>
@@ -195,6 +196,7 @@ export default function SignUpPage() {
                     )}
                   </div>
                 </form>
+                <SocialLoginButtons text="OR" />
               </div>
             </div>
           </div>

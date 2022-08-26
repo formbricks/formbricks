@@ -4,10 +4,8 @@ import getConfig from 'next/config';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import GithubLoginButton from '../../components/auth/GithubLoginButton';
-import GoogleLoginButton from '../../components/auth/GoogleLoginButton';
+import SocialLoginButtons from '../../components/auth/SocialLoginButtons';
 import BaseLayoutUnauthorized from '../../components/layout/BaseLayoutUnauthorized';
-import Spacer from '../../components/Spacer';
 
 const { publicRuntimeConfig } = getConfig();
 const { passwordResetDisabled } = publicRuntimeConfig;
@@ -136,12 +134,7 @@ export default function SignInPage() {
                   </div>
                 </form>
 
-                <Spacer text="OR" />
-
-                <div className="flex flex-col items-center">
-                  <GithubLoginButton noMx />
-                  <GoogleLoginButton noMx />
-                </div>
+                <SocialLoginButtons text="OR" />
               </div>
             </div>
           </div>
