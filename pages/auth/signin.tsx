@@ -1,10 +1,10 @@
-import { XCircleIcon } from "@heroicons/react/solid";
-import { signIn } from "next-auth/react";
-import getConfig from "next/config";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
+import { XCircleIcon } from '@heroicons/react/solid';
+import { signIn } from 'next-auth/react';
+import getConfig from 'next/config';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import BaseLayoutUnauthorized from '../../components/layout/BaseLayoutUnauthorized';
 
 const { publicRuntimeConfig } = getConfig();
 const { passwordResetDisabled } = publicRuntimeConfig;
@@ -15,12 +15,20 @@ export default function SignInPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await signIn("credentials", {
-      callbackUrl: router.query.callbackUrl?.toString() || "/forms",
+    await signIn('credentials', {
+      callbackUrl: router.query.callbackUrl?.toString() || '/forms',
       email: e.target.elements.email.value,
       password: e.target.elements.password.value,
     });
   };
+
+  const loginGithub = async (e) => {
+    await signIn('github', {
+      redirect: true,
+      callbackUrl: '/',
+    });
+  };
+
   return (
     <BaseLayoutUnauthorized title="Sign in">
       <div className="flex min-h-screen bg-ui-gray-light">
@@ -132,6 +140,7 @@ export default function SignInPage() {
                   </div>
                 </form>
               </div>
+              <button onClick={loginGithub}>Login with Github</button>
             </div>
           </div>
         </div>

@@ -127,6 +127,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
       GitHubProvider({
         clientId: serverRuntimeConfig.githubClientId,
         clientSecret: serverRuntimeConfig.githubClientSecret,
+        checks: 'pkce',
       }),
     ],
     callbacks: {
