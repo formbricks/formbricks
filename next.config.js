@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-var path = require("path");
+var path = require('path');
 
 const nextConfig = {
   reactStrictMode: false,
@@ -12,10 +12,12 @@ const nextConfig = {
     smtpPort: process.env.SMTP_PORT,
     smtpUser: process.env.SMTP_USER,
     smtpPassword: process.env.SMTP_PASSWORD,
-    smtpSecureEnabled: process.env.SMTP_SECURE_ENABLED === "1",
+    smtpSecureEnabled: process.env.SMTP_SECURE_ENABLED === '1',
     posthogApiHost: process.env.POSTHOG_API_HOST,
     posthogApiKey: process.env.POSTHOG_API_KEY,
-    telemetryDisabled: process.env.TELEMETRY_DISABLED === "1",
+    telemetryDisabled: process.env.TELEMETRY_DISABLED === '1',
+    githubClientId: process.env.GITHUB_CLIENT_ID,
+    githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
   },
   publicRuntimeConfig: {
     // Will be available on both server and client
@@ -23,20 +25,20 @@ const nextConfig = {
     privacyUrl: process.env.PRIVACY_URL,
     publicImprintUrl: process.env.PUBLIC_IMPRINT_URL,
     publicPrivacyUrl: process.env.PUBLIC_PRIVACY_URL,
-    emailVerificationDisabled: process.env.EMAIL_VERIFICATION_DISABLED === "1",
-    passwordResetDisabled: process.env.PASSWORD_RESET_DISABLED === "1",
+    emailVerificationDisabled: process.env.EMAIL_VERIFICATION_DISABLED === '1',
+    passwordResetDisabled: process.env.PASSWORD_RESET_DISABLED === '1',
   },
   async redirects() {
     return [
       {
-        source: "/",
-        destination: "/forms/",
+        source: '/',
+        destination: '/forms/',
         permanent: false,
       },
     ];
   },
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    config.resolve.alias["react"] = path.resolve("./node_modules/react");
+    config.resolve.alias['react'] = path.resolve('./node_modules/react');
     // Important: return the modified config
     return config;
   },
