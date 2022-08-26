@@ -21,7 +21,6 @@ const LoginButton = ({
       icon
     >
       <div className="grow-0 absolute left-2">{Icon && <Icon size={25} />}</div>
-      {/* // className={`flex  text-sm items-center p-3 rounded-lg align-middle ${className}`} */}
       <p className="text-center m-auto w-100">{text}</p>
     </StandardButton>
   );
