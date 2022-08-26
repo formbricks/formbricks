@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GitHubProvider from 'next-auth/providers/github';
+import GoogleProvider from 'next-auth/providers/google';
 import getConfig from 'next/config';
 import { verifyPassword } from '../../../lib/auth';
 import { verifyToken } from '../../../lib/jwt';
@@ -128,6 +129,17 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
         clientId: serverRuntimeConfig.githubClientId,
         clientSecret: serverRuntimeConfig.githubClientSecret,
         checks: 'pkce',
+      }),
+      GoogleProvider({
+        clientId: serverRuntimeConfig.googleClientId,
+        clientSecret: serverRuntimeConfig.googleClientSecret,
+        authorization: {
+          params: {
+            prompt: 'consent',
+            access_type: 'offline',
+            response_type: 'code',
+          },
+        },
       }),
     ],
     callbacks: {
