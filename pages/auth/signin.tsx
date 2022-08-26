@@ -4,7 +4,9 @@ import getConfig from 'next/config';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import GithubLoginButton from '../../components/auth/GithubLoginButton';
 import BaseLayoutUnauthorized from '../../components/layout/BaseLayoutUnauthorized';
+import Spacer from '../../components/Spacer';
 
 const { publicRuntimeConfig } = getConfig();
 const { passwordResetDisabled } = publicRuntimeConfig;
@@ -19,13 +21,6 @@ export default function SignInPage() {
       callbackUrl: router.query.callbackUrl?.toString() || '/forms',
       email: e.target.elements.email.value,
       password: e.target.elements.password.value,
-    });
-  };
-
-  const loginGithub = async (e) => {
-    await signIn('github', {
-      redirect: true,
-      callbackUrl: '/',
     });
   };
 
@@ -139,8 +134,14 @@ export default function SignInPage() {
                     </div>
                   </div>
                 </form>
+
+                {/* <Spacer /> */}
+                <Spacer text="OR" />
+
+                <div className="flex items-center">
+                  <GithubLoginButton noMx />
+                </div>
               </div>
-              <button onClick={loginGithub}>Login with Github</button>
             </div>
           </div>
         </div>
