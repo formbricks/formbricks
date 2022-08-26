@@ -135,7 +135,6 @@ export default function SignInPage() {
                   </div>
                 </form>
 
-                {/* <Spacer /> */}
                 <Spacer text="OR" />
 
                 <div className="flex items-center">
