@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import GithubLoginButton from '../../components/auth/GithubLoginButton';
+import GoogleLoginButton from '../../components/auth/GoogleLoginButton';
 import BaseLayoutUnauthorized from '../../components/layout/BaseLayoutUnauthorized';
 import Spacer from '../../components/Spacer';
 
@@ -137,8 +138,9 @@ export default function SignInPage() {
 
                 <Spacer text="OR" />
 
-                <div className="flex items-center">
+                <div className="flex flex-col items-center">
                   <GithubLoginButton noMx />
+                  <GoogleLoginButton noMx />
                 </div>
               </div>
             </div>

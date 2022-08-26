@@ -13,7 +13,7 @@ const GithubLoginButton = ({ noMx = false }: { noMx?: boolean }) => {
   return (
     <LoginButton
       icon={FaGithub}
-      text="Login With Github"
+      text="Login with Github"
       onClick={handleLogin}
       className={`${noMx ? '' : 'mx-2'} bg-black-700 text-white my-2`}
     />
