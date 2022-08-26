@@ -18,6 +18,8 @@ const nextConfig = {
     telemetryDisabled: process.env.TELEMETRY_DISABLED === '1',
     githubClientId: process.env.GITHUB_CLIENT_ID,
     githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+    googleClientId: process.env.GOOGLE_CLIENT_ID,
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
   },
   publicRuntimeConfig: {
     // Will be available on both server and client
