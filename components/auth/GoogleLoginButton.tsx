@@ -14,7 +14,7 @@ const GoogleLoginButton = ({ noMx = false }: { noMx?: boolean }) => {
     <LoginButton
       icon={FcGoogle}
       onClick={handleLogin}
-      text="Login With Google"
+      text="Login with Google"
       className={`${noMx ? '' : 'mx-2'} bg-white text-black my-2`}
     />
   );
