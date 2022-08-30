@@ -1,4 +1,4 @@
-import { DocumentSearchIcon } from "@heroicons/react/outline";
+import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { FaReact, FaVuejs } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -36,7 +36,7 @@ export default function FormCode({ formId }) {
       name: "Docs",
       href: "https://docs.snoopforms.com",
       bgColor: "bg-ui-gray-dark",
-      icon: DocumentSearchIcon,
+      icon: DocumentMagnifyingGlassIcon,
       target: "_blank",
     },
   ];

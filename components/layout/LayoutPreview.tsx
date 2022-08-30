@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 
-import { ArrowLeftIcon, RefreshIcon } from "@heroicons/react/outline";
+import { ArrowLeftIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useSession, signIn } from "next-auth/react";
 import Loading from "../Loading";
 
@@ -44,7 +44,7 @@ export default function LayoutShare({ formId, resetApp, children }) {
                     className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
                     Restart
-                    <RefreshIcon
+                    <ArrowPathIcon
                       className="w-5 h-5 ml-2 -mr-1"
                       aria-hidden="true"
                     />

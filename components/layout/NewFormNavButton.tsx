@@ -1,4 +1,4 @@
-import { PlusIcon } from "@heroicons/react/outline";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import NewFormModal from "../form/NewFormModal";
 

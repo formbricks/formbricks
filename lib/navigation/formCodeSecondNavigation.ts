@@ -1,4 +1,7 @@
-import { DocumentSearchIcon, TerminalIcon } from "@heroicons/react/outline";
+import {
+  DocumentMagnifyingGlassIcon,
+  CommandLineIcon,
+} from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
 import { FaReact } from "react-icons/fa";
 
@@ -10,7 +13,7 @@ export const useCodeSecondNavigation = (formId) => {
       onClick: () => {
         router.push(`/forms/${formId}/form`);
       },
-      Icon: TerminalIcon,
+      Icon: CommandLineIcon,
       label: "Form ID",
     },
     {
@@ -31,7 +34,7 @@ export const useCodeSecondNavigation = (formId) => {
     {
       id: "vueJs",
       onClick: () => {},
-      Icon: TerminalIcon,
+      Icon: CommandLineIcon,
       label: "VueJs",
       disabled: true,
     },
@@ -40,7 +43,7 @@ export const useCodeSecondNavigation = (formId) => {
       onClick: () => {
         window.open("https://docs.snoopforms.com", "_ blank");
       },
-      Icon: DocumentSearchIcon,
+      Icon: DocumentMagnifyingGlassIcon,
       label: "Docs",
     },
   ];

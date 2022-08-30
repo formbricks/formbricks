@@ -1,5 +1,5 @@
 import { API, BlockTool, BlockToolData, ToolConfig } from "@editorjs/editorjs";
-import { GlobeAltIcon } from "@heroicons/react/solid";
+import { GlobeAltIcon } from "@heroicons/react/24/solid";
 import ReactDOM from "react-dom";
 
 //styles imports in angular.json

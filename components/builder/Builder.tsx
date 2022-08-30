@@ -1,11 +1,11 @@
 import EditorJS from "@editorjs/editorjs";
 import {
   CogIcon,
-  DocumentAddIcon,
+  DocumentPlusIcon,
   EyeIcon,
   PaperAirplaneIcon,
   ShareIcon,
-} from "@heroicons/react/outline";
+} from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { useRef, useState } from "react";
@@ -84,7 +84,7 @@ export default function Builder({ formId }) {
     {
       id: "addPage",
       onClick: () => addPage(),
-      Icon: DocumentAddIcon,
+      Icon: DocumentPlusIcon,
       //Icon: PlusIcon
       label: "Page",
     },

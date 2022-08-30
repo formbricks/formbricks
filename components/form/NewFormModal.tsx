@@ -1,6 +1,6 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Dialog, RadioGroup, Transition } from "@headlessui/react";
-import { CheckCircleIcon, XIcon } from "@heroicons/react/solid";
+import { CheckCircleIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
 import { BsPlus } from "react-icons/bs";
@@ -84,7 +84,7 @@ export default function NewFormModal({
                     onClick={() => setOpen(false)}
                   >
                     <span className="sr-only">Close</span>
-                    <XIcon className="w-6 h-6" aria-hidden="true" />
+                    <XMarkIcon className="w-6 h-6" aria-hidden="true" />
                   </button>
                 </div>
                 <div className="flex flex-row justify-between">

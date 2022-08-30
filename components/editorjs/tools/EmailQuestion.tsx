@@ -1,5 +1,5 @@
 import { API, BlockTool, BlockToolData, ToolConfig } from "@editorjs/editorjs";
-import { MailIcon } from "@heroicons/react/solid";
+import { EnvelopeIcon } from "@heroicons/react/24/solid";
 import ReactDOM from "react-dom";
 
 //styles imports in angular.json
@@ -118,7 +118,10 @@ export default class EmailQuestion implements BlockTool {
         </div>
         <div className="relative max-w-sm mt-1 rounded-md shadow-sm">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <MailIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
+            <EnvelopeIcon
+              className="w-5 h-5 text-gray-400"
+              aria-hidden="true"
+            />
           </div>
           <input
             type="text"

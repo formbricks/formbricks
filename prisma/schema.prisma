@@ -16,6 +16,10 @@ enum PipelineType {
   WEBHOOK
 }
 
+enum PipelineEvent {
+  PAGE_SUBMISSION
+}
+
 model Form {
   id                  String    @id
   createdAt           DateTime  @default(now())
@@ -43,13 +47,16 @@ model NoCodeForm {
 }
 
 model Pipeline {
-  id              String        @id @default(uuid())
-  createdAt       DateTime      @default(now()) @map(name: "created_at")
-  updatedAt       DateTime      @updatedAt @map(name: "updated_at")
+  id              String          @id @default(uuid())
+  createdAt       DateTime        @default(now()) @map(name: "created_at")
+  updatedAt       DateTime        @updatedAt @map(name: "updated_at")
+  name            String
   type            PipelineType
-  form            Form          @relation(fields: [formId], references: [id], onDelete: Cascade)
+  form            Form            @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId          String
-  data            Json
+  enabled         Boolean         @default(false)
+  events          PipelineEvent[]
+  data            Json            @default("{}")
 }
 
 model SubmissionSession {

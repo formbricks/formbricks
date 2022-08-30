@@ -13,7 +13,7 @@ import withAuthentication from "../../../../components/layout/WithAuthentication
 function ResultsInsightsPage() {
   const router = useRouter();
   const formId = router.query.id.toString();
-  const { form, isLoadingForm, isErrorForm } = useForm(router.query.id);
+  const { form, isLoadingForm, isErrorForm } = useForm(formId);
   const formMenuSteps = useFormMenuSteps(formId);
   const formResultsSecondNavigation = useFormResultsSecondNavigation(formId);
 

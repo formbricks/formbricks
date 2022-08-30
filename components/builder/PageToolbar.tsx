@@ -1,5 +1,5 @@
 /* This example requires Tailwind CSS v2.0+ */
-import { TrashIcon } from "@heroicons/react/solid";
+import { TrashIcon } from "@heroicons/react/24/solid";
 import { MdWavingHand } from "react-icons/md";
 import { classNames } from "../../lib/utils";
 
