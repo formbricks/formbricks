@@ -92,7 +92,16 @@ function ReactPage() {
             <div className="p-8 font-light text-gray-200 bg-[#1a1b26] rounded-md">
               <pre>
                 <code className="javascript">
-                  {`<SnoopForm
+                  {`import {
+  SnoopForm,
+  SnoopPage,
+  SnoopElement
+} from "@snoopforms/react";
+import "@snoopforms/react/dist/styles.css";
+
+...
+                  
+<SnoopForm
   domain="${window?.location.host}"
   protocol="${window?.location.protocol.replace(":", "")}">
      
