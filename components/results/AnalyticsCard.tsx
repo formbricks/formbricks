@@ -1,5 +1,5 @@
-import { QuestionMarkCircleIcon } from "@heroicons/react/outline";
-import { ArrowSmDownIcon, ArrowSmUpIcon } from "@heroicons/react/solid";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
+import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import React from "react";
 import { classNames } from "../../lib/utils";
 
@@ -52,12 +52,12 @@ const AnalyticsCard: React.FC<Props> = ({
               )}
             >
               {trend >= 0 ? (
-                <ArrowSmUpIcon
+                <ArrowUpIcon
                   className="-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-green-500"
                   aria-hidden="true"
                 />
               ) : (
-                <ArrowSmDownIcon
+                <ArrowDownIcon
                   className="-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-red-500"
                   aria-hidden="true"
                 />

@@ -1,11 +1,11 @@
 import { Menu, Transition } from "@headlessui/react";
 import {
-  DocumentAddIcon,
+  DocumentPlusIcon,
   PlusIcon,
-  TerminalIcon,
-  ViewGridAddIcon,
-} from "@heroicons/react/outline";
-import { DotsHorizontalIcon, TrashIcon } from "@heroicons/react/solid";
+  CommandLineIcon,
+  SquaresPlusIcon,
+} from "@heroicons/react/24/outline";
+import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { useForms } from "../lib/forms";
@@ -49,7 +49,7 @@ export default function FormList() {
                 borderStyles="border-4 border-dotted border-red"
                 hasButton={true}
               >
-                <DocumentAddIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
+                <DocumentPlusIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
               </EmptyPageFiller>
             </div>
           ) : (
@@ -79,12 +79,12 @@ export default function FormList() {
                         <div className="inline-flex px-2 py-1 mb-2 ml-4 text-sm rounded-sm bg-ui-gray-light text-ui-gray-dark">
                           {form.formType == "NOCODE" ? (
                             <div className="flex">
-                              <ViewGridAddIcon className="w-4 h-4 my-auto mr-1" />
+                              <SquaresPlusIcon className="w-4 h-4 my-auto mr-1" />
                               No-Code
                             </div>
                           ) : (
                             <div className="flex">
-                              <TerminalIcon className="w-4 h-4 my-auto mr-1" />
+                              <CommandLineIcon className="w-4 h-4 my-auto mr-1" />
                               Code
                             </div>
                           )}
@@ -105,7 +105,7 @@ export default function FormList() {
                                     <span className="sr-only">
                                       Open options
                                     </span>
-                                    <DotsHorizontalIcon
+                                    <EllipsisHorizontalIcon
                                       className="w-5 h-5"
                                       aria-hidden="true"
                                     />

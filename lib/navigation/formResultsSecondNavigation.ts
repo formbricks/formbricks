@@ -1,8 +1,8 @@
 import {
   ChartBarIcon,
   InboxIcon,
-  TrendingUpIcon,
-} from "@heroicons/react/outline";
+  ArrowTrendingUpIcon,
+} from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
 
 export const useFormResultsSecondNavigation = (formId) => {
@@ -29,7 +29,7 @@ export const useFormResultsSecondNavigation = (formId) => {
       onClick: () => {
         router.push(`/forms/${formId}/results/insights`);
       },
-      Icon: TrendingUpIcon,
+      Icon: ArrowTrendingUpIcon,
       label: "Insights",
     },
   ];

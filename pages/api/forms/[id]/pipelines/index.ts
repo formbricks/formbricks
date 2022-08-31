@@ -51,12 +51,8 @@ export default async function handle(
   // Required fields in body: -
   // Optional fields in body: -
   if (req.method === "POST") {
-    const { type, data } = req.body;
-    if (!["WEBHOOK"].includes(type)) {
-      return res.status(400).json({ message: "Unknown pipeline type" });
-    }
     const prismaRes = await prisma.pipeline.create({
-      data: { type, data, form: { connect: { id: formId } } },
+      data: { ...req.body, form: { connect: { id: formId } } },
     });
     return res.json(prismaRes);
   }

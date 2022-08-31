@@ -24,7 +24,7 @@ function ReactPage() {
 
   const router = useRouter();
   const formId = router.query.id.toString();
-  const { form, isLoadingForm, isErrorForm } = useForm(router.query.id);
+  const { form, isLoadingForm, isErrorForm } = useForm(formId);
   const codeSecondNavigation = useCodeSecondNavigation(formId);
   const formMenuSteps = useFormMenuSteps(formId);
 

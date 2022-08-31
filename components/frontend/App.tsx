@@ -1,4 +1,8 @@
-import { GlobeAltIcon, MailIcon, PhoneIcon } from "@heroicons/react/solid";
+import {
+  GlobeAltIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+} from "@heroicons/react/24/solid";
 import { SnoopElement, SnoopForm, SnoopPage } from "@snoopforms/react";
 import { useMemo } from "react";
 import { generateId } from "../../lib/utils";
@@ -81,7 +85,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                     name={block.id}
                     label={block.data.label}
                     placeholder={block.data.placeholder}
-                    icon={<MailIcon className="w-5 h-5" />}
+                    icon={<EnvelopeIcon className="w-5 h-5" />}
                     classNames={{
                       label:
                         "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",

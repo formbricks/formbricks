@@ -12,7 +12,7 @@ export const useForms = () => {
   };
 };
 
-export const useForm = (id) => {
+export const useForm = (id: string) => {
   const { data, error, mutate } = useSWR(`/api/forms/${id}/`, fetcher);
 
   return {

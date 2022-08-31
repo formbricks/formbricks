@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { RadioGroup } from "@headlessui/react";
-import { CheckIcon } from "@heroicons/react/solid";
+import { CheckIcon } from "@heroicons/react/24/solid";
 import { getEventName } from "../../lib/events";
 import { useSubmissionSessions } from "../../lib/submissionSessions";
 import { SubmissionSession } from "../../lib/types";
@@ -9,7 +9,7 @@ import { convertDateTimeString, convertTimeString } from "../../lib/utils";
 import SubmissionDisplay from "./SubmissionDisplay";
 import DownloadResponses from "./DownloadResponses";
 import Loading from "../Loading";
-import { TrashIcon } from "@heroicons/react/outline";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 
 function classNames(...classes) {

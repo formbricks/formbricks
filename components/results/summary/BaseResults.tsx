@@ -3,9 +3,9 @@ import {
   CheckCircleIcon,
   GlobeAltIcon,
   HashtagIcon,
-  MenuAlt1Icon,
+  Bars4Icon,
   PhoneIcon,
-} from "@heroicons/react/outline";
+} from "@heroicons/react/24/outline";
 import { IoMdRadioButtonOn } from "react-icons/io";
 import { classNames } from "../../../lib/utils";
 
@@ -24,11 +24,11 @@ export const elementTypes = [
   },
   {
     type: "text",
-    icon: MenuAlt1Icon,
+    icon: Bars4Icon,
   },
   {
     type: "textarea",
-    icon: MenuAlt1Icon,
+    icon: Bars4Icon,
   },
   {
     type: "checkbox",

@@ -1,8 +1,9 @@
-import { ApiEvent } from "./types";
-import { prisma } from "./prisma";
+import { handleWebhook } from "../components/pipelines/webhook";
 import { caputurePosthogEvent } from "./posthog";
-import { generateId } from "./utils";
+import { prisma } from "./prisma";
 import { sendTelemetry } from "./telemetry";
+import { ApiEvent } from "./types";
+import { generateId } from "./utils";
 
 type validationError = {
   status: number;
@@ -34,6 +35,7 @@ export const validateEvents = (
 };
 
 export const processApiEvent = async (event: ApiEvent, formId) => {
+  // save submission
   if (event.type === "pageSubmission") {
     const data = event.data;
     await prisma.sessionEvent.create({
@@ -60,5 +62,22 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
     throw Error(
       `apiEvents: unsupported event type in event ${JSON.stringify(event)}`
     );
+  }
+  // handle integrations
+  const pipelines = await prisma.pipeline.findMany({
+    where: {
+      form: { id: formId },
+      enabled: true,
+    },
+    orderBy: [
+      {
+        createdAt: "desc",
+      },
+    ],
+  });
+  for (const pipeline of pipelines) {
+    if (pipeline.type === "WEBHOOK") {
+      handleWebhook(pipeline, event);
+    }
   }
 };

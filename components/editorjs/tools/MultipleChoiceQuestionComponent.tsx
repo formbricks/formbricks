@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Switch } from "@headlessui/react";
-import { TrashIcon } from "@heroicons/react/solid";
+import { TrashIcon } from "@heroicons/react/24/solid";
 import { default as React } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { classNames } from "../../../lib/utils";

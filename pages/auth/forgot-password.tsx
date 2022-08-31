@@ -1,4 +1,4 @@
-import { XCircleIcon } from "@heroicons/react/solid";
+import { XCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -13,11 +13,9 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await forgotPassword(
-        e.target.elements.email.value,
-      );
+      await forgotPassword(e.target.elements.email.value);
 
-      router.push('/auth/forgot-password-email-sent');
+      router.push("/auth/forgot-password-email-sent");
     } catch (e) {
       setError(e.message);
     }
@@ -60,10 +58,7 @@ export default function ForgotPasswordPage() {
 
             <div className="mt-8">
               <div className="mt-6">
-                <form
-                  onSubmit={handleSubmit}
-                  className="space-y-6"
-                >
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label
                       htmlFor="email"

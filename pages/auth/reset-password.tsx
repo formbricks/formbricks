@@ -1,4 +1,4 @@
-import { XCircleIcon } from "@heroicons/react/solid";
+import { XCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -13,12 +13,9 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await resetPassword(
-        token,
-        e.target.elements.password.value,
-      );
+      await resetPassword(token, e.target.elements.password.value);
 
-      router.push('/auth/reset-password-success');
+      router.push("/auth/reset-password-success");
     } catch (e) {
       setError(e.message);
     }
@@ -61,10 +58,7 @@ export default function ResetPasswordPage() {
 
             <div className="mt-8">
               <div className="mt-6">
-                <form
-                  onSubmit={handleSubmit}
-                  className="space-y-6"
-                >
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label
                       htmlFor="email"

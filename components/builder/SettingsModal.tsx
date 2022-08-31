@@ -4,7 +4,7 @@ import { Fragment, useState } from "react";
 import { TailSpin } from "react-loader-spinner";
 import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
 import Loading from "../Loading";
-import { XIcon } from "@heroicons/react/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { classNames } from "../../lib/utils";
 
@@ -67,7 +67,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                     onClick={() => setOpen(false)}
                   >
                     <span className="sr-only">Close</span>
-                    <XIcon className="w-6 h-6" aria-hidden="true" />
+                    <XMarkIcon className="w-6 h-6" aria-hidden="true" />
                   </button>
                 </div>
                 <div className="px-4 py-5 sm:p-6">

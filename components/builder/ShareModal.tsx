@@ -1,6 +1,6 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Dialog, Transition } from "@headlessui/react";
-import { InformationCircleIcon, XIcon } from "@heroicons/react/outline";
+import { InformationCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { Fragment } from "react";
 import { useNoCodeForm } from "../../lib/noCodeForm";
@@ -53,7 +53,7 @@ export default function ShareModal({ open, setOpen, formId }) {
                     onClick={() => setOpen(false)}
                   >
                     <span className="sr-only">Close</span>
-                    <XIcon className="w-6 h-6" aria-hidden="true" />
+                    <XMarkIcon className="w-6 h-6" aria-hidden="true" />
                   </button>
                 </div>
                 {!noCodeForm.published ? (
