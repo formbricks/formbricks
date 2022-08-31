@@ -51,7 +51,6 @@ export default async function handle(
   // Required fields in body: -
   // Optional fields in body: -
   if (req.method === "POST") {
-    console.log(JSON.stringify(req.body, null, 2));
     const prismaRes = await prisma.pipeline.create({
       data: { ...req.body, form: { connect: { id: formId } } },
     });
