@@ -1,9 +1,8 @@
 import { handleWebhook } from "../components/pipelines/webhook";
-import { caputurePosthogEvent } from "./posthog";
+import { capturePosthogEvent } from "./posthog";
 import { prisma } from "./prisma";
 import { sendTelemetry } from "./telemetry";
 import { ApiEvent } from "./types";
-import { generateId } from "./utils";
 
 type validationError = {
   status: number;
@@ -48,8 +47,13 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
         submissionSession: { connect: { id: data.submissionSessionId } },
       },
     });
-    caputurePosthogEvent(generateId(10), "pageSubmission sent", { formId });
-    sendTelemetry("pageSubmission sent");
+    const form = await prisma.form.findUnique({
+      where: {
+        id: formId,
+      },
+    });
+    capturePosthogEvent(form.ownerId, "pageSubmission received", { formId });
+    sendTelemetry("pageSubmission received");
   } else if (event.type === "submissionCompleted") {
     // TODO
   } else if (event.type === "updateSchema") {

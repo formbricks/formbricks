@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../../lib/prisma";
-import { caputurePosthogEvent } from "../../../../lib/posthog";
+import { capturePosthogEvent } from "../../../../lib/posthog";
 import { sendForgotPasswordEmail } from "../../../../lib/email";
 
 export default async function handle(
@@ -16,18 +16,18 @@ export default async function handle(
     try {
       const foundUser = await prisma.user.findUnique({
         where: {
-          email: email.toLowerCase()
-        }
-      })
+          email: email.toLowerCase(),
+        },
+      });
 
       if (!foundUser) {
         return res.status(409).json({
-          error: "no user with this email found"
+          error: "no user with this email found",
         });
       }
 
       await sendForgotPasswordEmail(foundUser);
-      caputurePosthogEvent(foundUser.email, "requestedForgotPasswordEmail");
+      capturePosthogEvent(foundUser.email, "requestedForgotPasswordEmail");
       res.json({});
     } catch (e) {
       return res.status(500).json({

@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../../lib/prisma";
 import { sendVerificationEmail } from "../../../../lib/email";
 import getConfig from "next/config";
-import { caputurePosthogEvent } from "../../../../lib/posthog";
+import { capturePosthogEvent } from "../../../../lib/posthog";
 
 const { publicRuntimeConfig } = getConfig();
 
@@ -16,7 +16,7 @@ export default async function handle(
   // Optional fields in body: firstname, lastname
   if (req.method === "POST") {
     let user = req.body;
-    user = { ...user, ...{ email: user.email.toLowerCase() } }
+    user = { ...user, ...{ email: user.email.toLowerCase() } };
 
     const { emailVerificationDisabled } = publicRuntimeConfig;
 
@@ -28,7 +28,7 @@ export default async function handle(
         },
       });
       if (!emailVerificationDisabled) await sendVerificationEmail(userData);
-      caputurePosthogEvent(user.email, "user created");
+      capturePosthogEvent(user.email, "user created");
       res.json(userData);
     } catch (e) {
       if (e.code === "P2002") {

@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../lib/prisma";
 import { getSession } from "next-auth/react";
 import { generateId } from "../../../lib/utils";
-import { caputurePosthogEvent } from "../../../lib/posthog";
+import { capturePosthogEvent } from "../../../lib/posthog";
 
 export default async function handle(
   req: NextApiRequest,
@@ -57,7 +57,7 @@ export default async function handle(
         owner: { connect: { email: session?.user?.email } },
       },
     });
-    caputurePosthogEvent(session.user.email, "form created");
+    capturePosthogEvent(session.user.email, "form created");
     res.json(result);
   }
 

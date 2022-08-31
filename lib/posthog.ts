@@ -7,7 +7,7 @@ const enabled =
   serverRuntimeConfig.posthogApiKey &&
   serverRuntimeConfig.posthogApiHost;
 
-export const caputurePosthogEvent = async (
+export const capturePosthogEvent = async (
   userId,
   eventName,
   properties = {}
