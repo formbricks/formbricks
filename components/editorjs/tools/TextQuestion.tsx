@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 //styles imports in angular.json
 interface TextQuestionData extends BlockToolData {
   label: string;
-  helperText: string;
+  help: string;
   placeholder: string;
   required: boolean;
 }
@@ -38,7 +38,7 @@ export default class TextQuestion implements BlockTool {
     ];
     this.data = {
       label: data.label || "",
-      helperText: data.helperText || "",
+      help: data.help || "",
       placeholder: data.placeholder || "",
       required: data.required !== undefined ? data.required : true,
     };
@@ -51,12 +51,10 @@ export default class TextQuestion implements BlockTool {
         block.firstElementChild.firstElementChild
           .firstElementChild as HTMLInputElement
       ).value,
-      helperText: (
-        block.firstElementChild.firstElementChild.lastElementChild as HTMLInputElement
-      ).value,
-      placeholder: (
-        block.firstElementChild.lastElementChild as HTMLInputElement
-      ).value,
+      placeholder: (block.firstElementChild.childNodes[1] as HTMLInputElement)
+        .value,
+      help: (block.firstElementChild.lastElementChild as HTMLInputElement)
+        .value,
     };
   }
 
@@ -115,19 +113,19 @@ export default class TextQuestion implements BlockTool {
           <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-red-500 pointer-events-none">
             *
           </div>
-          <input
-            type="text"
-            id="helper-text"
-            defaultValue={this.data.helperText}
-            className="block w-full max-w-sm mt-1 mb-2 text-sm text-gray-900 font-light p-0 border-0 border-transparent ring-0 focus:ring-0"
-            placeholder="optional helper text"
-          />
         </div>
         <input
           type="text"
           className="block w-full max-w-sm mt-1 text-sm text-gray-400 border-gray-300 rounded-md shadow-sm placeholder:text-gray-300"
           placeholder="optional placeholder"
           defaultValue={this.data.placeholder}
+        />
+        <input
+          type="text"
+          id="help-text"
+          defaultValue={this.data.help}
+          className="block w-full max-w-sm p-0 mt-2 text-sm font-light text-gray-500 border-0 border-transparent ring-0 focus:ring-0 placeholder:text-gray-300"
+          placeholder="optional help text"
         />
       </div>
     );

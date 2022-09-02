@@ -5,7 +5,7 @@ import ReactDOM from "react-dom";
 //styles imports in angular.json
 interface WebsiteQuestionData extends BlockToolData {
   label: string;
-  helperText: string;
+  help: string;
   placeholder: string;
   required: boolean;
 }
@@ -41,7 +41,7 @@ export default class WebsiteQuestion implements BlockTool {
     ];
     this.data = {
       label: data.label || "",
-      helperText: data.helperText || "",
+      help: data.help || "",
       placeholder: data.placeholder || "https://",
       required: data.required !== undefined ? data.required : true,
     };
@@ -54,14 +54,12 @@ export default class WebsiteQuestion implements BlockTool {
         block.firstElementChild.firstElementChild
           .firstElementChild as HTMLInputElement
       ).value,
-      helperText: (
-        block.firstElementChild.firstElementChild
-          .lastElementChild as HTMLInputElement
-      ).value,
       placeholder: (
-        block.firstElementChild.lastElementChild
+        (block.firstElementChild.childNodes[1] as HTMLInputElement)
           .lastElementChild as HTMLInputElement
       ).value,
+      help: (block.firstElementChild.lastElementChild as HTMLInputElement)
+        .value,
     };
   }
 
@@ -120,13 +118,6 @@ export default class WebsiteQuestion implements BlockTool {
           <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-red-500 pointer-events-none">
             *
           </div>
-          <input
-              type="text"
-              id="helper-text"
-              defaultValue={this.data.helperText}
-              className="block w-full max-w-sm mt-1 mb-2 text-sm text-gray-900 font-light p-0 border-0 border-transparent ring-0 focus:ring-0"
-              placeholder="optional helper text"
-          />
         </div>
         <div className="relative max-w-sm mt-1 rounded-md shadow-sm">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -142,6 +133,13 @@ export default class WebsiteQuestion implements BlockTool {
             defaultValue={this.data.placeholder}
           />
         </div>
+        <input
+          type="text"
+          id="help-text"
+          defaultValue={this.data.help}
+          className="block w-full max-w-sm p-0 mt-2 text-sm font-light text-gray-500 border-0 border-transparent ring-0 focus:ring-0 placeholder:text-gray-300"
+          placeholder="optional help text"
+        />
       </div>
     );
     ReactDOM.render(toolView, this.wrapper);
