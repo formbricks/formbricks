@@ -27,12 +27,10 @@ export default async function handle(
     // check if user is form owner
     const ownership = await formHasOwnership(session, formId);
     if (!ownership) {
-      return res
-        .status(401)
-        .json({
-          message:
-            "You are not authorized to access this form and their submissions",
-        });
+      return res.status(401).json({
+        message:
+          "You are not authorized to access this form and their submissions",
+      });
     }
 
     const submissionSessionsData = await prisma.submissionSession.findMany({
@@ -57,9 +55,8 @@ export default async function handle(
   // Required fields in body: -
   // Optional fields in body: -
   if (req.method === "POST") {
-    const { userFingerprint } = req.body;
     const prismaRes = await prisma.submissionSession.create({
-      data: { userFingerprint, form: { connect: { id: formId } } },
+      data: { form: { connect: { id: formId } } },
     });
     return res.json(prismaRes);
   }

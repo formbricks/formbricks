@@ -22,17 +22,11 @@ export default function ResultsAnalytics({ formId }) {
     if (analytics) {
       return [
         {
-          id: "uniqueUsers",
-          name: "Unique Users",
-          stat: analytics.uniqueUsers || "--",
-          toolTipText: "Tracked without cookies using fingerprinting technique",
-          trend: undefined,
-        },
-        {
           id: "totalSubmissions",
           name: "Total Submissions",
           stat: analytics.totalSubmissions || "--",
           trend: undefined,
+          toolTipText: undefined,
         },
         {
           id: "lastSubmission",
@@ -41,6 +35,7 @@ export default function ResultsAnalytics({ formId }) {
             ? timeSince(analytics.lastSubmissionAt)
             : "--",
           smallerText: true,
+          toolTipText: undefined,
         },
       ];
     }
@@ -51,10 +46,10 @@ export default function ResultsAnalytics({ formId }) {
   }
 
   return (
-    <>
-      <h2 className="mt-8 text-xl font-bold text-ui-gray-dark">Analytics</h2>
+    <div className="my-8">
+      <h2 className="text-xl font-bold text-ui-gray-dark">Analytics</h2>
       <div>
-        <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2">
           {stats.map((item) => (
             <AnalyticsCard
               key={item.id}
@@ -95,6 +90,6 @@ export default function ResultsAnalytics({ formId }) {
           />
         </div>
       </div>
-    </>
+    </div>
   );
 }

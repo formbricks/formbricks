@@ -16,7 +16,7 @@
     "@headlessui/react": "^1.6.1",
     "@heroicons/react": "^2.0.8",
     "@prisma/client": "^4.2.1",
-    "@snoopforms/react": "^0.2.2",
+    "@snoopforms/react": "^0.3.0",
     "bcryptjs": "^2.4.3",
     "chart.js": "^3.8.2",
     "crypto": "^1.0.1",

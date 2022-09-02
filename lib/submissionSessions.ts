@@ -61,14 +61,10 @@ export const getSubmission = (submissionSession, schema) => {
 export const getSubmissionAnalytics = (
   submissionSessions: SubmissionSession[]
 ) => {
-  const uniqueUsers = [];
   let totalSubmissions = 0;
   let lastSubmissionAt = null;
   for (const submissionSession of submissionSessions) {
     // collect unique users
-    if (!uniqueUsers.includes(submissionSession.userFingerprint)) {
-      uniqueUsers.push(submissionSession.userFingerprint);
-    }
     if (submissionSession.events.length > 0) {
       totalSubmissions += 1;
       const lastSubmission =
@@ -84,7 +80,6 @@ export const getSubmissionAnalytics = (
   }
   return {
     lastSubmissionAt,
-    uniqueUsers: uniqueUsers.length,
     totalSubmissions: totalSubmissions,
   };
 };

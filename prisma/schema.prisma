@@ -65,7 +65,6 @@ model SubmissionSession {
   updatedAt       DateTime  @updatedAt @map(name: "updated_at")
   form            Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId          String
-  userFingerprint String
   events          SessionEvent[]
 }
 

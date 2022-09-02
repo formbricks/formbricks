@@ -33,7 +33,7 @@ function ResultsInsightsPage() {
       breadcrumbs={[{ name: form?.name, href: "#", current: true }]}
       steps={formMenuSteps}
       currentStep="results"
-      limitHeightScreen={true}
+      limitHeightScreen={false}
     >
       <SecondNavBar
         navItems={formResultsSecondNavigation}

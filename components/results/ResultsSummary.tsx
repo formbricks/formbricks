@@ -34,17 +34,11 @@ export default function ResultsSummary({ formId }) {
     if (insights) {
       return [
         {
-          id: "uniqueUsers",
-          name: "Unique Users",
-          stat: insights.uniqueUsers || "--",
-          toolTipText: "Tracked without cookies using fingerprinting technique",
-          trend: undefined,
-        },
-        {
           id: "totalSubmissions",
           name: "Total Submissions",
           stat: insights.totalSubmissions || "--",
           trend: undefined,
+          toolTipText: undefined,
         },
         {
           id: "lastSubmission",
@@ -53,6 +47,7 @@ export default function ResultsSummary({ formId }) {
             ? timeSince(insights.lastSubmissionAt)
             : "--",
           smallerText: true,
+          toolTipText: undefined,
         },
       ];
     }
@@ -67,7 +62,7 @@ export default function ResultsSummary({ formId }) {
       <h2 className="mt-8 text-xl font-bold text-ui-gray-dark">
         Responses Overview
       </h2>
-      <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2 lg:grid-cols-3">
+      <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2">
         {stats.map((item) => (
           <AnalyticsCard
             key={item.id}

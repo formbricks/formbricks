@@ -58,13 +58,6 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@fingerprintjs/fingerprintjs@^3.3.3":
-  version "3.3.4"
-  resolved "https://registry.yarnpkg.com/@fingerprintjs/fingerprintjs/-/fingerprintjs-3.3.4.tgz#5d65fe0ab7220195c436851d02b02f92ac3b5bec"
-  integrity sha512-px1imhVDAEp0pI7LBcsUYAMlGsJZxReXVsJbla6e1+hSePZU7oPEtauyGhJH0cSXrQS5w/uhu5btmltkUgvUTw==
-  dependencies:
-    tslib "^2.0.1"
-
 "@headlessui/react@^1.6.1", "@headlessui/react@^1.6.6":
   version "1.6.6"
   resolved "https://registry.yarnpkg.com/@headlessui/react/-/react-1.6.6.tgz#3073c066b85535c9d28783da0a4d9288b5354d0c"
@@ -232,12 +225,11 @@
   resolved "https://registry.yarnpkg.com/@rushstack/eslint-patch/-/eslint-patch-1.1.4.tgz#0c8b74c50f29ee44f423f7416829c0bf8bb5eb27"
   integrity sha512-LwzQKA4vzIct1zNZzBmRKI9QuNpLgTQMEjsQLf3BXuGYb3QPTP4Yjf6mkdX+X1mYttZ808QpOwAzZjv28kq7DA==
 
-"@snoopforms/react@^0.2.2":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@snoopforms/react/-/react-0.2.2.tgz#9f3020cca581d72056c405bbf1278d16aea7d30e"
-  integrity sha512-YPApJFEDv3L+9aMTg3Kzr+aFHFhfMHbYrxzvBRIgvVoOzUIL/wtVwskJtCzP2C+YPS7NvQFjaWJFvxTGRzVE0g==
+"@snoopforms/react@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@snoopforms/react/-/react-0.3.0.tgz#00060b6b626eb53ac85a6ed9c0f5ebe50d2c992a"
+  integrity sha512-IPlBDE3A46uLffzs/F4HXyuWyHekU0TY23aybBVCfqmGBWw+Iz22MHv6ak2BT5TwFAg+97APoLg0c/Oi5oydmw==
   dependencies:
-    "@fingerprintjs/fingerprintjs" "^3.3.3"
     "@headlessui/react" "^1.6.6"
 
 "@swc/helpers@0.4.2":
@@ -2617,7 +2609,7 @@ tslib@^1.8.1:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
 
-tslib@^2.0.1, tslib@^2.4.0:
+tslib@^2.4.0:
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.4.0.tgz#7cecaa7f073ce680a05847aa77be941098f36dc3"
   integrity sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==
