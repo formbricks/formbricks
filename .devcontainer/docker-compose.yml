@@ -10,6 +10,7 @@ services:
 
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/snoopformsdev?schema=public
+      NEXTAUTH_URL: http://localhost:3000
       NEXT_TELEMETRY_DISABLED: 1
       
       MAIL_FROM: noreply@example.com
