@@ -57,7 +57,9 @@ export default async function handle(
         owner: { connect: { email: session?.user?.email } },
       },
     });
-    capturePosthogEvent(session.user.email, "form created");
+    capturePosthogEvent(session.user.email, "form created", {
+      formType: form.formType,
+    });
     res.json(result);
   }
 
