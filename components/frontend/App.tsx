@@ -72,6 +72,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                     type="text"
                     name={block.id}
                     label={block.data.label}
+                    help={block.data.help}
                     placeholder={block.data.placeholder}
                     classNames={{
                       label:
@@ -84,6 +85,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                     type="email"
                     name={block.id}
                     label={block.data.label}
+                    help={block.data.help}
                     placeholder={block.data.placeholder}
                     icon={<EnvelopeIcon className="w-5 h-5" />}
                     classNames={{
@@ -98,6 +100,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                     type="checkbox"
                     name={block.id}
                     label={block.data.label}
+                    help={block.data.help}
                     options={block.data.options.map((o) => o.label)}
                     classNames={{
                       label:
@@ -111,6 +114,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                     type="radio"
                     name={block.id}
                     label={block.data.label}
+                    help={block.data.help}
                     options={block.data.options.map((o) => o.label)}
                     classNames={{
                       label:
@@ -123,6 +127,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                     type="number"
                     name={block.id}
                     label={block.data.label}
+                    help={block.data.help}
                     placeholder={block.data.placeholder}
                     classNames={{
                       label:
@@ -135,6 +140,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                     type="phone"
                     name={block.id}
                     label={block.data.label}
+                    help={block.data.help}
                     placeholder={block.data.placeholder}
                     icon={<PhoneIcon className="w-5 h-5" />}
                     classNames={{
@@ -158,6 +164,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                     type="website"
                     name={block.id}
                     label={block.data.label}
+                    help={block.data.help}
                     placeholder={block.data.placeholder}
                     icon={<GlobeAltIcon className="w-5 h-5" />}
                     classNames={{

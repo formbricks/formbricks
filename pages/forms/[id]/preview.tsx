@@ -35,7 +35,7 @@ function SharePage({}) {
 
   if (form.formType !== "NOCODE") {
     return (
-      <div>Preview is only avaiblable for Forms built with No-Code-Editor</div>
+      <div>Preview is only available for Forms built with No-Code-Editor</div>
     );
   }
 

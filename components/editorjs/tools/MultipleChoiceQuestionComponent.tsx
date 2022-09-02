@@ -8,6 +8,7 @@ import { classNames } from "../../../lib/utils";
 const DEFAULT_INITIAL_DATA = () => {
   return {
     label: "",
+    help: "",
     required: false,
     multipleChoice: false,
     options: [
@@ -123,6 +124,14 @@ const SingleChoiceQuestion = (props) => {
           </div>
         ))}
       </div>
+      <input
+        type="text"
+        id="help-text"
+        defaultValue={choiceData.help}
+        onBlur={onInputChange("help")}
+        className="block w-full max-w-sm p-0 mt-2 text-sm font-light text-gray-500 border-0 border-transparent ring-0 focus:ring-0 placeholder:text-gray-300"
+        placeholder="optional help text"
+      />
       <div className="relative z-0 flex mt-2 divide-x divide-gray-200">
         <button
           className="mr-3 justify-center mt-2 inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"

@@ -5,6 +5,7 @@ import MultipleChoiceQuestionComponent from "./MultipleChoiceQuestionComponent";
 
 interface MultipleChoiceQuestionData extends BlockToolData {
   label: string;
+  help: string;
   options: string[];
   required: boolean;
 }
@@ -49,6 +50,7 @@ export default class MultipleChoiceQuestion implements BlockTool {
     this.readOnly = readOnly;
     this.data = {
       label: data.label || "",
+      help: data.help || "",
       options: data.options || [],
       required: data.required || false,
       multipleChoice: data.multipleChoice || false,
