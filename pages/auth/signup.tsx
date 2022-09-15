@@ -11,6 +11,7 @@ const { publicRuntimeConfig } = getConfig();
 
 export default function SignUpPage() {
   const router = useRouter();
+  const role="public";
   const [error, setError] = useState<string>("");
 
   const { emailVerificationDisabled, privacyUrl, termsUrl } =
@@ -25,7 +26,8 @@ export default function SignUpPage() {
         e.target.elements.gender.value,
         e.target.elements.phone.value,
         e.target.elements.email.value,
-        e.target.elements.password.value
+        e.target.elements.password.value,
+        role
       );
 
       const url = emailVerificationDisabled
