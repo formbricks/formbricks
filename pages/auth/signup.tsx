@@ -69,8 +69,8 @@ export default function SignUpPage() {
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
             <div>
               <Image
-                src="/img/snoopforms-logo.svg"
-                alt="snoopForms logo"
+                src="/img/kda_logo.svg"
+                alt="Kinshasa Digital Academy logo"
                 width={500}
                 height={89}
               />
@@ -162,7 +162,9 @@ export default function SignUpPage() {
                       <input
                         id="phone"
                         name="phone"
-                        type="tel"
+                        type="text"
+                        placeholder="+243891341236 or 0891341236"
+                        pattern="/^\+243|0[0-9]{9}$/g"
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
