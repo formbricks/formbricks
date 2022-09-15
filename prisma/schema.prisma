@@ -82,6 +82,8 @@ model User {
   id            Int       @id @default(autoincrement())
   firstname     String?
   lastname      String?
+  gender        String
+  phone         String    @unique
   email         String    @unique
   emailVerified DateTime? @map(name: "email_verified")
   password      String
