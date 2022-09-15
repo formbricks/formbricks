@@ -23,7 +23,7 @@ export const capturePosthogEvent = async (
         api_key: serverRuntimeConfig.posthogApiKey,
         event: eventName,
         properties: {
-          distinct_id: hashString(userId),
+          distinct_id: hashString(userId.toString()),
           ...properties,
         },
         timestamp: new Date().toISOString(),
