@@ -162,9 +162,9 @@ export default function SignUpPage() {
                       <input
                         id="phone"
                         name="phone"
-                        type="text"
+                        type="tel"
                         placeholder="+243891341236 or 0891341236"
-                        pattern="/^\+243|0[0-9]{9}$/g"
+                        pattern="^\+243|0[0-9]{9}$" //^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$ //^\+243|0[0-9]{9}$
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
