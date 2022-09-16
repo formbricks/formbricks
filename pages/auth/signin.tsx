@@ -27,7 +27,7 @@ export default function SignInPage() {
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           {error && (
-            <div className="absolute p-4 rounded-md top-10 bg-red-50">
+            <div className="absolute p-4 rounded-md top-10 bg-red-50 z-50">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <XCircleIcon
