@@ -16,7 +16,16 @@ export default function SignUpPage() {
 
   const { emailVerificationDisabled, privacyUrl, termsUrl } =
     publicRuntimeConfig;
-
+  const handlePhoneNumberValidity=(phone)=>{
+     console.log(`la valeur du champs est: ${phone}`);
+    
+    const validity=/^(\+243|0)[0-9]{9}$/.test(phone);
+    if(validity===false){
+      console.log(`the phone number ${phone} is incorrect`);
+      throw new Error("the phone number is incorrect");
+    }
+    return phone;
+  }
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -24,7 +33,7 @@ export default function SignUpPage() {
         e.target.elements.firstname.value,
         e.target.elements.lastname.value,
         e.target.elements.gender.value,
-        e.target.elements.phone.value,
+        handlePhoneNumberValidity(e.target.elements.phone.value),
         e.target.elements.email.value,
         e.target.elements.password.value,
         role
@@ -46,7 +55,7 @@ export default function SignUpPage() {
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           {error && (
-            <div className="absolute p-4 rounded-md top-10 bg-red-50">
+            <div className="absolute p-4 rounded-md top-10 bg-red-50 z-50">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <XCircleIcon
@@ -164,8 +173,9 @@ export default function SignUpPage() {
                         name="phone"
                         type="tel"
                         placeholder="+243891341236 or 0891341236"
-                        pattern="^\+243|0[0-9]{9}$" //^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$ //^\+243|0[0-9]{9}$
+                        //pattern="^\+243|0[0-9]{9}$" //^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$ //^\+243|0[0-9]{9}$
                         required
+                        //onChange={handleChangePhoneNumber}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>
