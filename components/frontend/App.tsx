@@ -3,7 +3,7 @@ import {
   EnvelopeIcon,
   PhoneIcon,
 } from "@heroicons/react/24/solid";
-import { SnoopElement, SnoopForm, SnoopPage } from "@snoopforms/react";
+import { SnoopElement, SnoopForm, SnoopPage } from "../../kda-snoopforms-react/src";
 import { useMemo } from "react";
 import { generateId } from "../../lib/utils";
 import Loading from "../Loading";
@@ -54,6 +54,9 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
             key={page.id}
             name={page.id}
             thankyou={pageIdx === pages.length - 1}
+            initialTime={6}
+            countDown={true} 
+            startDate={new Date('2022/09/15 14:00:00')}
           >
             {page.blocks.map((block) => (
               <div key={block.id}>
