@@ -33,7 +33,7 @@ export default function SubmissionDisplay({ formId, submissionSession }) {
                   <p
                     className={classNames(
                       element.value ? "text-gray-600" : "text-gray-400",
-                      "pt-1 text-sm text-gray-600"
+                      "pt-1 text-sm text-gray-600 whitespace-pre-line"
                     )}
                   >
                     {element.value || "[not provided]"}

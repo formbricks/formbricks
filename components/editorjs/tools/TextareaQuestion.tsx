@@ -2,14 +2,14 @@ import { API, BlockTool, BlockToolData, ToolConfig } from "@editorjs/editorjs";
 import ReactDOM from "react-dom";
 
 //styles imports in angular.json
-interface TextQuestionData extends BlockToolData {
+interface TextareaQuestionData extends BlockToolData {
   label: string;
   help: string;
   placeholder: string;
   required: boolean;
 }
 
-export default class TextQuestion implements BlockTool {
+export default class TextareaQuestion implements BlockTool {
   settings: { name: string; icon: string }[];
   api: API;
   data: any;
@@ -17,8 +17,8 @@ export default class TextQuestion implements BlockTool {
 
   static get toolbox(): { icon: string; title?: string } {
     return {
-      icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"> <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" /> </svg>`,
-      title: "Text Question",
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-align-justify"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>`,
+      title: "Long Text Question",
     };
   }
 
@@ -27,13 +27,13 @@ export default class TextQuestion implements BlockTool {
   }: {
     api: API;
     config?: ToolConfig;
-    data?: TextQuestionData;
+    data?: TextareaQuestionData;
   }) {
     this.wrapper = undefined;
     this.settings = [
       {
         name: "required",
-        icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"> <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" /> </svg>`,
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512" class="w-3 h-3"><!-- Font Awesome Pro 5.15.4 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) --><path d="M471.99 334.43L336.06 256l135.93-78.43c7.66-4.42 10.28-14.2 5.86-21.86l-32.02-55.43c-4.42-7.65-14.21-10.28-21.87-5.86l-135.93 78.43V16c0-8.84-7.17-16-16.01-16h-64.04c-8.84 0-16.01 7.16-16.01 16v156.86L56.04 94.43c-7.66-4.42-17.45-1.79-21.87 5.86L2.15 155.71c-4.42 7.65-1.8 17.44 5.86 21.86L143.94 256 8.01 334.43c-7.66 4.42-10.28 14.21-5.86 21.86l32.02 55.43c4.42 7.65 14.21 10.27 21.87 5.86l135.93-78.43V496c0 8.84 7.17 16 16.01 16h64.04c8.84 0 16.01-7.16 16.01-16V339.14l135.93 78.43c7.66 4.42 17.45 1.8 21.87-5.86l32.02-55.43c4.42-7.65 1.8-17.43-5.86-21.85z"/></svg>`,
       },
     ];
     this.data = {
@@ -114,8 +114,8 @@ export default class TextQuestion implements BlockTool {
             *
           </div>
         </div>
-        <input
-          type="text"
+        <textarea
+          rows={4}
           className="block w-full max-w-sm mt-1 text-sm text-gray-400 border-gray-300 rounded-md shadow-sm placeholder:text-gray-300"
           placeholder="optional placeholder"
           defaultValue={this.data.placeholder}

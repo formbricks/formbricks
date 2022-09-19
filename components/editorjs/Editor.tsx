@@ -15,6 +15,7 @@ import TextQuestion from "./tools/TextQuestion";
 import WebsiteQuestion from "./tools/WebsiteQuestion";
 import PhoneQuestion from "./tools/PhoneQuestion";
 import NumberQuestion from "./tools/NumberQuestion";
+import TextareaQuestion from "./tools/TextareaQuestion";
 
 interface EditorProps {
   id: string;
@@ -90,6 +91,7 @@ const Editor = ({
       defaultBlock: "paragraph",
       tools: {
         textQuestion: TextQuestion,
+        textareaQuestion: TextareaQuestion,
         emailQuestion: EmailQuestion,
         multipleChoiceQuestion: MultipleChoiceQuestion,
         numberQuestion: NumberQuestion,
