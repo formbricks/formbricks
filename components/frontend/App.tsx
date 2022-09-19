@@ -5,6 +5,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { SnoopElement, SnoopForm, SnoopPage } from "../../kda-snoopforms-react/src";
 import { useMemo } from "react";
+import Router from 'next/router';
 import { generateId } from "../../lib/utils";
 import Loading from "../Loading";
 
@@ -39,6 +40,10 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
 
   if (!pages) return <Loading />;
 
+  const onSubmit = () => {
+    //TODO Redirect to /sourcings/${formId
+    Router.push(`/f/${formId}`)
+  }
   return (
     <div className="w-full px-5 py-5">
       <SnoopForm
@@ -48,13 +53,14 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
         formId={formId}
         localOnly={localOnly}
         className="w-full max-w-3xl mx-auto space-y-6"
+        onSubmit={onSubmit}
       >
         {pages.map((page, pageIdx) => (
           <SnoopPage
             key={page.id}
             name={page.id}
             thankyou={pageIdx === pages.length - 1}
-            initialTime={6}
+            initialTime={4}
             countDown={true} 
             startDate={new Date('2022/09/15 14:00:00')}
           >
