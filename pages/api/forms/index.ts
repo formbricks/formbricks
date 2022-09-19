@@ -20,7 +20,7 @@ export default async function handle(
     const session = await getSession({ req });
     const formData = await prisma.form.findMany({
       where: {
-        owner: { email: session.user.email },
+        owner: { email: session.user?.email },
       },
       include: {
         owner: {
@@ -31,6 +31,7 @@ export default async function handle(
         },
       },
     });
+    if(!formData.length) return res.status(204)
     res.json(formData);
   }
 

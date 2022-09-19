@@ -1,5 +1,10 @@
 import { hashPassword } from "./auth";
 
+export enum UserRoles{
+  Public ="PUBLIC",
+  Admin = "ADMIN"
+}
+
 export const createUser = async (firstname, lastname, gender, phone, email, password, role) => {
   const hashedPassword = await hashPassword(password);
   try {
@@ -13,7 +18,6 @@ export const createUser = async (firstname, lastname, gender, phone, email, pass
         phone,
         email,
         password: hashedPassword,
-        role: "public"
       }),
     });
     if (res.status !== 200) {

@@ -20,6 +20,11 @@ enum PipelineEvent {
   PAGE_SUBMISSION
 }
 
+enum UserRole {
+  PUBLIC
+  ADMIN
+}
+
 model Form {
   id                 String              @id
   createdAt          DateTime            @default(now())
@@ -87,7 +92,7 @@ model User {
   email         String    @unique
   emailVerified DateTime? @map(name: "email_verified")
   password      String
-  role          String    @default(value: "public")
+  role          UserRole  @default(PUBLIC)
   createdAt     DateTime  @default(now()) @map(name: "created_at")
   updatedAt     DateTime  @updatedAt @map(name: "updated_at")
   forms         Form[]
