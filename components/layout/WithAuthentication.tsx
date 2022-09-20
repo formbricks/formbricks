@@ -3,13 +3,16 @@ import Loading from "../Loading";
 
 const withAuthentication = (Component) =>
   function WithAuth(props) {
-    const { status } = useSession({
+    const { status, data: session } = useSession({
+      
       required: true,
       onUnauthenticated() {
         // The user is not authenticated, handle it here.
         return signIn();
       },
     });
+    //console.log(session.user);
+    
 
     if (status === "loading") {
       return <Loading />;

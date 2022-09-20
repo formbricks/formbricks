@@ -1,6 +1,6 @@
 import { hashPassword } from "./auth";
 
-export const createUser = async (firstname, lastname, email, password) => {
+export const createUser = async (firstname, lastname, gender, phone, email, password, role) => {
   const hashedPassword = await hashPassword(password);
   try {
     const res = await fetch(`/api/public/users`, {
@@ -9,12 +9,26 @@ export const createUser = async (firstname, lastname, email, password) => {
       body: JSON.stringify({
         firstname,
         lastname,
+        gender,
+        phone,
         email,
         password: hashedPassword,
+        role: "public"
       }),
     });
     if (res.status !== 200) {
+      console.log({
+        firstname,
+        lastname,
+        gender,
+        phone,
+        email,
+        password, 
+        role
+      });
+
       const json = await res.json();
+      
       throw Error(json.error);
     }
     return await res.json();
