@@ -50,6 +50,27 @@ With snoopForms you can build complex multi-page forms in minutes using either o
 
 ## Getting started
 
+you can develop in a VS Code [dev container](https://code.visualstudio.com/docs/remote/containers) or using any editor/IDE with local tool installation.
+
+### Getting started using VS Code dev container
+
+You need
+- Docker, e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- [VS Code](https://code.visualstudio.com/download) with the extension [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
+
+Either use the command `Open Folder in Container...` in the cloned repo, or use `Remote Containers: Clone Repository in Container Volume...`, for example to inspect a PR.
+
+The dev container comes with 
+- Node.JS, yarn etc pre-installed
+- a `postgres` container and environment variables preset to reach it, 
+- a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
+
+upon start, it executes the `yarn install` and `yarn prisma migrate dev` automatically once.
+
+When your dev container is ready, you can simply hit `F5` to start the application in debug mode.
+
+### Getting started using local development setup
+
 To get the project running locally on your machine you need to have the following development tools installed:
 
 - Node.JS (we recommend v16)
@@ -74,7 +95,7 @@ yarn install
 docker run --name snoopformsDB -p 5432:5432 -e POSTGRES_USER=snoopforms -e POSTGRES_PASSWORD=password -e POSTGRES_DB=snoopforms -d postgres
 ```
 
-1. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database.
+4. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database.
 
 ```
 cp .env.example .env
@@ -86,15 +107,15 @@ For the example above, use the following:
 DATABASE_URL='postgresql://snoopforms:password@localhost:5432/snoopforms?schema=public'
 ```
 
-1. Use the code editor of your choice to edit the .env file. You need to change all fields according to your setup.
+5. Use the code editor of your choice to edit the .env file. You need to change all fields according to your setup.
 
-2. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
+6. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
 
 ```
 yarn prisma migrate dev
 ```
 
-6. Start the development server:
+7. Start the development server:
 
 ```
 yarn dev
