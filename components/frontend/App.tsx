@@ -80,6 +80,20 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                     }}
                     required={block.data.required}
                   />
+                ) : block.type === "textareaQuestion" ? (
+                  <SnoopElement
+                    type="textarea"
+                    rows={4}
+                    name={block.id}
+                    label={block.data.label}
+                    help={block.data.help}
+                    placeholder={block.data.placeholder}
+                    classNames={{
+                      label:
+                        "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                    }}
+                    required={block.data.required}
+                  />
                 ) : block.type === "emailQuestion" ? (
                   <SnoopElement
                     type="email"
