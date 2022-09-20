@@ -82,7 +82,7 @@ export default function FormList() {
                       <div className="p-6">
                         <p className="text-lg line-clamp-3">{form.name}</p>
                       </div>
-                      <Link href={session.user.role===UserRole.PUBLIC?`/f/${form.id}`:`/forms/${form.id}/form`}>
+                      <Link href={session.user.role===UserRole.PUBLIC?`/sourcings/${form.id}`:`/forms/${form.id}/form`}>
                         <a className="absolute w-full h-full" />
                       </Link>
                       <div className="divide-y divide-ui-gray-light ">
