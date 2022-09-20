@@ -19,8 +19,8 @@ const router=useRouter()
     if (status === "loading") {
       return <Loading />;
     }
-     if(session.user?.role === UserRoles.Public) { 
-      router.push('/f/sourcings') 
+     if(session.user?.role === UserRoles.Public && router.pathname !== "/sourcings") { 
+      router.push('/sourcings') 
     }
 
     return <Component {...props} />;

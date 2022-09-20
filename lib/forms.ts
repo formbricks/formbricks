@@ -36,6 +36,7 @@ export const persistForm = async (form) => {
 };
 
 export const createForm = async (form = {}) => {
+  
   try {
     const res = await fetch(`/api/forms`, {
       method: "POST",
