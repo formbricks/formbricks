@@ -44,7 +44,10 @@ export const getSubmission = (submissionSession, schema) => {
         if (typeof pageSubmission !== "undefined") {
           for (const [elementIdx, element] of page.elements.entries()) {
             if (element.type !== "submit") {
-              if (element.name in pageSubmission.data?.submission) {
+              if (
+                "submission" in pageSubmission.data &&
+                element.name in pageSubmission.data?.submission
+              ) {
                 submissionPage.elements[elementIdx].value =
                   pageSubmission.data.submission[element.name];
               }
