@@ -1,12 +1,12 @@
 //import App from "../../components/frontend/App";
-import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
-import Loading from "../../components/Loading";
-import MessagePage from "../../components/MessagePage";
-import { useNoCodeFormPublic } from "../../lib/noCodeForm";
+import BaseLayoutUnauthorized from "../../../components/layout/BaseLayoutUnauthorized";
+import Loading from "../../../components/Loading";
+import MessagePage from "../../../components/MessagePage";
+import { useNoCodeFormPublic } from "../../../lib/noCodeForm";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import getConfig from "next/config";
-import usePages from "../../hooks/usePages";
+import usePages from "../../../hooks/usePages";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
@@ -62,9 +62,10 @@ function NoCodeFormPublic() {
           <ul>
             {
               pages.map((page, index)=>{
-                console.log(page);
+                if(pages.length-1!==index) return <li key={index}>{(page.length)?"":page.blocks[0].data.text}</li>
+                console.log(`page length: ${page.length}`);
                 
-                return <li key={index}>{page.blocks[0].data.text}</li>
+
               })
             }
           </ul>
