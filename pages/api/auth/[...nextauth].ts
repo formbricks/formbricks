@@ -68,6 +68,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             email: user.email,
             firstname: user.firstname,
             lastname: user.firstname,
+            role: user.role,
             emailVerified: user.emailVerified,
           };
         },
@@ -120,6 +121,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             email: user.email,
             firstname: user.firstname,
             lastname: user.firstname,
+            role:user.role,
             emailVerified: user.emailVerified,
           };
         },

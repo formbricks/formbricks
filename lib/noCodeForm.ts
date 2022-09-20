@@ -29,6 +29,20 @@ export const useNoCodeFormPublic = (formId) => {
   };
 };
 
+export const useNoCodePagePublic = (formId) => {
+  const { data, error, mutate } = useSWR(
+    `/api/public/forms/${formId}/nocodeform`,
+    fetcher
+  );
+
+  return {
+    noCodeForm: data,
+    isLoadingNoCodeForm: !error && !data,
+    isErrorNoCodeForm: error,
+    mutateNoCodeForm: mutate,
+  };
+};
+
 export const createNoCodeForm = async (formId) => {
   try {
     const res = await fetch(`/api/forms/${formId}/nocodeform`, {

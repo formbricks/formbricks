@@ -1,8 +1,8 @@
-import App from "../../components/frontend/App";
-import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
-import Loading from "../../components/Loading";
-import MessagePage from "../../components/MessagePage";
-import { useNoCodeFormPublic } from "../../lib/noCodeForm";
+import App from "../../../components/frontend/App";
+import BaseLayoutUnauthorized from "../../../components/layout/BaseLayoutUnauthorized";
+import Loading from "../../../components/Loading";
+import MessagePage from "../../../components/MessagePage";
+import { useNoCodeFormPublic } from "../../../lib/noCodeForm";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import getConfig from "next/config";
