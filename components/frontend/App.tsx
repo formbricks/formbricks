@@ -4,7 +4,7 @@ import {
   PhoneIcon,
 } from "@heroicons/react/24/solid";
 import { SnoopElement, SnoopForm, SnoopPage } from "../../kda-snoopforms-react/src";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { generateId } from "../../lib/utils";
 import Loading from "../Loading";
 
@@ -193,6 +193,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                   ) : block.type === "dashboardRedirectButton" ? (
                     <SnoopElement
                       type="button-link"
+                      link={`/sourcings/${formId}`}
                       name={block.id}
                       label={block.data.submitLabel}
                       classNames={{
