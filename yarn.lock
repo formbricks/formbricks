@@ -225,10 +225,10 @@
   resolved "https://registry.yarnpkg.com/@rushstack/eslint-patch/-/eslint-patch-1.1.4.tgz#0c8b74c50f29ee44f423f7416829c0bf8bb5eb27"
   integrity sha512-LwzQKA4vzIct1zNZzBmRKI9QuNpLgTQMEjsQLf3BXuGYb3QPTP4Yjf6mkdX+X1mYttZ808QpOwAzZjv28kq7DA==
 
-"@snoopforms/react@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@snoopforms/react/-/react-0.3.0.tgz#00060b6b626eb53ac85a6ed9c0f5ebe50d2c992a"
-  integrity sha512-IPlBDE3A46uLffzs/F4HXyuWyHekU0TY23aybBVCfqmGBWw+Iz22MHv6ak2BT5TwFAg+97APoLg0c/Oi5oydmw==
+"@snoopforms/react@^0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@snoopforms/react/-/react-0.3.2.tgz#254781504879af1cda40c578af5c01bb09b59a30"
+  integrity sha512-ACfWFEsfypqhQD+PxB/qSLJu+BUnVz0VKCzFLGJV9p38tpdRR0dEaEZeHmTunxOuZ9QN0tXlOypjmfvBz/M07A==
   dependencies:
     "@headlessui/react" "^1.6.6"
 
