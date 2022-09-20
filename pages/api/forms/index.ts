@@ -18,19 +18,24 @@ export default async function handle(
   // GET /api/forms
   // Gets all forms of a user
   if (req.method === "GET") {
+    //TODO : query Nocodeforms
     const formData = await prisma.form.findMany({
-
+      
       include: {
         owner: {
           select: { firstname: true },
+        },
+        noCodeForm:{
+          select:{published:true}
         },
         _count: {
           select: { submissionSessions: true },
         },
       },
     });
+    
     if(!formData.length) return res.status(204)
-    res.json(formData);
+    res.json(formData.filter((f)=>f.noCodeForm.published));
   }
 
   // POST /api/forms
