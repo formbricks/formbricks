@@ -16,6 +16,7 @@ import WebsiteQuestion from "./tools/WebsiteQuestion";
 import PhoneQuestion from "./tools/PhoneQuestion";
 import NumberQuestion from "./tools/NumberQuestion";
 import TimerToolboxOption from "./tools/TimerToolboxOption";
+import DashboardRedirectButton from "./tools/DashboardRedirectButton";
 
 interface EditorProps {
   id: string;
@@ -98,6 +99,7 @@ const Editor = ({
         phoneQuestion: PhoneQuestion,
         websiteQuestion: WebsiteQuestion,
         pageTransition: PageTransition,
+        dashboardRedirectButton: DashboardRedirectButton,
         paragraph: {
           class: Paragraph,
           inlineToolbar: true,

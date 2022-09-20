@@ -173,6 +173,16 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
                     }}
                     required={block.data.required}
                   />
+                ) : block.type === "dashboardRedirectButton" ? (
+                  <SnoopElement
+                    type="submit"
+                    name={block.id}
+                    label={block.data.submitLabel}
+                    classNames={{
+                      button:
+                        "inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-white border border-transparent rounded-md shadow-sm bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
+                    }}
+                  />
                 ) : null}
               </div>
             ))}
