@@ -8,38 +8,11 @@ import { useMemo } from "react";
 import { generateId } from "../../lib/utils";
 import Loading from "../Loading";
 
-export default function App({ id = "", formId, blocks, localOnly = false }) {
-  const pages = useMemo(() => {
-    const pages = [];
-    let currentPage = {
-      id: formId, // give the first page the formId as id by default
-      blocks: [],
-    };
-    for (const block of blocks) {
-      if (block.type !== "pageTransition") {
-        currentPage.blocks.push(block);
-      } else {
-        currentPage.blocks.push({
-          id: generateId(10),
-          data: {
-            label: block.data.submitLabel,
-          },
-          type: "submitButton",
-        });
-        pages.push(currentPage);
-        currentPage = {
-          id: block.id,
-          blocks: [],
-        };
-      }
-    }
-    pages.push(currentPage);
-    return pages;
-  }, [blocks, formId]);
-
-  if (!pages){
-     return <Loading />
-  } 
+export default function App({ id = "", formId, pages=[], localOnly = false }) {
+  
+  // if (!pages){
+  //    return <Loading />
+  // } 
 
   const onSubmit = () => {
     //TODO Redirect to /sourcings/${formId
@@ -62,7 +35,7 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
         onSubmit={onSubmit}
       >
         {
-          [pages[0], pages[pages.length -1]].map((page, pageIdx) =>(
+          pages.map((page, pageIdx) =>(
             <>
               <SnoopPage
               key={page.id}

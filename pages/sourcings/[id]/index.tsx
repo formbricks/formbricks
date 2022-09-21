@@ -16,7 +16,7 @@ const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
 function NoCodeFormPublic() {
   const router = useRouter();
   const formId = router.query.id?.toString();
-  const completed=true;
+  const completed=false;
   const { noCodeForm, isLoadingNoCodeForm, isErrorNoCodeForm } =
     useNoCodeFormPublic(formId);
       //
@@ -35,6 +35,11 @@ function NoCodeFormPublic() {
     );
   }
 
+  const goToPage  = (pageId) => {
+    console.log(pageId);
+    router.push(`/sourcings/${formId}/${pageId}`)
+    
+  }
   return (
     <BaseLayoutManagement       
     title={"Forms - snoopForms"}
@@ -77,7 +82,7 @@ function NoCodeFormPublic() {
                            if(pages.length-1!==index) return (
                             <tr key={index} className="w-full py-4 border-y-2 border-slate-100 flex justify-between">
                                <td className="pl-12">{(page.length)?"":page.blocks[0].data.text}</td>
-                               <td className="flex w-1/4"><ClockIcon className="w-12 pr-5"/>{<button disabled={completed?true:false} className="w-107 rounded-full bg-green-800 p-2.5 text-white font-bold">{completed?"Complete":"Start"}</button>}</td>
+                               <td className="flex w-1/4"><ClockIcon className="w-12 pr-5"/>{<button onClick={() => goToPage(`${page.id}`)} disabled={completed?true:false} className="w-107 rounded-full bg-green-800 p-2.5 text-white font-bold">{completed?"Complete":"Start"}</button>}</td>
                             </tr>
                             )
                         })    
