@@ -11,7 +11,7 @@ export default function ShareModal({ open, setOpen, formId }) {
 
   const getPublicFormUrl = () => {
     if (process.browser) {
-      return `${window.location.protocol}//${window.location.host}/f/${formId}/`;
+      return `${window.location.protocol}//${window.location.host}/sourcings/${formId}/`;
     }
   };
 
