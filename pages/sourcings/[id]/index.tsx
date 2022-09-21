@@ -1,5 +1,5 @@
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
-import BaseLayoutUnauthorized from "../../../components/layout/BaseLayoutUnauthorized";
+import { ClockIcon } from "@heroicons/react/24/solid";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -16,9 +16,10 @@ const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
 function NoCodeFormPublic() {
   const router = useRouter();
   const formId = router.query.id?.toString();
+  const completed=true;
   const { noCodeForm, isLoadingNoCodeForm, isErrorNoCodeForm } =
     useNoCodeFormPublic(formId);
-      
+      //
   
   if (isLoadingNoCodeForm) {
     return <Loading />;
@@ -65,23 +66,18 @@ function NoCodeFormPublic() {
             </div>
           </div>
         ) : (
-          <div>
-            <h2>Lorem ipsum dolor sit amet consectetur adipisicing elit. Debitis nulla amet explicabo aliquam. Qui tempore ipsum consequuntur est iure quibusdam provident. Incidunt quia accusamus numquam! Praesentium, accusamus voluptatibus. Nam, quos.</h2>
-            <table className="fixed">
-                <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Label</th>
-                        <th>State</th>
-                    </tr>
-                </thead>
-                <tbody>
+          <div className="flex-col" >
+            <h1 className="text-2xl mt-5 mx-auto font-bold" >FORM NAME</h1>
+            <table className="fixed mt-5 w-1/2
+            ">
+
+                <tbody className="w-full text-xl">
                     {
                         pages.map((page, index)=>{
                            if(pages.length-1!==index) return (
-                            <tr key={index}>
-                                <td>{index}</td>
-                               <td>{(page.length)?"":page.blocks[0].data.text}</td>
+                            <tr key={index} className="w-full py-4 border-y-2 border-slate-100 flex justify-between">
+                               <td className="pl-12">{(page.length)?"":page.blocks[0].data.text}</td>
+                               <td className="flex w-1/4"><ClockIcon className="w-12 pr-5"/>{<button disabled={completed?true:false} className="w-107 rounded-full bg-green-800 p-2.5 text-white font-bold">{completed?"Complete":"Start"}</button>}</td>
                             </tr>
                             )
                         })    
