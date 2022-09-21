@@ -76,17 +76,19 @@ function NoCodeFormPublic() {
           </div>
         ) : (
           <div className="flex-col" >
-            <h1 className="text-2xl mt-5 mx-auto font-bold" >{noCodeForm.form.name}</h1>
-            <table className="fixed mt-5 w-7/12
-            ">
+            <h1 className="text-2xl ml-12 mt-5 mx-auto font-bold" >{noCodeForm.form.name}</h1>
+            <table className="auto mt-5 w-full">
 
                 <tbody className="w-full text-xl">
                     {
                         pages.map((page, index)=>{
                            if(pages.length-1!==index) return (
-                            <tr key={index} className="w-11/12 py-4 border-y-2 border-slate-100 flex justify-between">
-                               <td className="pl-12">{(page.length)?"":page.blocks[0].data.text}</td>
-                               <td className="flex w-1/4"><ClockIcon className="w-12 pr-5"/>{<button onClick={() => goToPage(`${page.id}`)} disabled={completed?true:false} className="w-107 rounded-full bg-green-800 p-2.5 text-white font-bold">{completed?"Complete":"Start"}</button>}</td>
+                            <tr key={index} className="w-full py-4 border-y-2 border-slate-100 flex justify-between">
+                               <td className="pl-12 flex items-center">{(page.length)?"":page.blocks[0].data.text}</td>
+                               <td className="flex items-center justify-between w-1/3">
+                                   <div className="flex items-center w-4/5">{page.blocks[1].type==="timerToolboxOption"?<span className="flex items-center"><ClockIcon className="w-10 mr-2"/>{page.blocks[1].data.timerDuration} minutes</span>:<></>}</div>
+                                   <button onClick={() => goToPage(`${page.id}`)} disabled={completed} className="w-107 rounded-full bg-green-800 p-2.5 text-white font-bold">{completed?"Complete":"Start"}</button>
+                               </td>
                             </tr>
                             )
                         })    
