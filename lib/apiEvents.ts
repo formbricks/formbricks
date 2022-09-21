@@ -41,6 +41,7 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateEmail) =
       data: {
         type: "pageSubmission",
         data: {
+          formId,
           candidateEmail,
           pageName: data.pageName,
           submission: data.submission,
