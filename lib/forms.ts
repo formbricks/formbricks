@@ -1,5 +1,4 @@
 import useSWR from "swr";
-import form from "../pages/forms/[id]/form";
 import { fetcher } from "./utils";
 
 export const useForms = () => {
