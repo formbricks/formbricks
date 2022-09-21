@@ -9,6 +9,8 @@ import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { useForms } from "../lib/forms";
+import { UserRole } from "@prisma/client";
+import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
 import EmptyPageFiller from "./layout/EmptyPageFiller";
@@ -16,6 +18,14 @@ import EmptyPageFiller from "./layout/EmptyPageFiller";
 export default function FormList() {
   const { forms, mutateForms } = useForms();
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
+  const { data: session } = useSession({
+      
+    required: true,
+    onUnauthenticated() {
+      // The user is not authenticated, handle it here.
+      return signIn();
+    },
+  });
 
   const newForm = async () => {
     setOpenNewFormModal(true);
@@ -41,7 +51,7 @@ export default function FormList() {
         {forms &&
           (forms.length === 0 ? (
             <div className="mt-5 text-center">
-              <EmptyPageFiller
+              {/* <EmptyPageFiller
                 onClick={() => newForm()}
                 alertText="You don't have any forms yet."
                 hintText="Start by creating a form."
@@ -50,11 +60,11 @@ export default function FormList() {
                 hasButton={true}
               >
                 <DocumentPlusIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
-              </EmptyPageFiller>
+              </EmptyPageFiller> */}
             </div>
           ) : (
             <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 place-content-stretch ">
-              <button onClick={() => newForm()}>
+            {session.user.role!==UserRole.ADMIN ? <></> : (  <button onClick={() => newForm()}>
                 <li className="h-56 col-span-1">
                   <div className="flex items-center justify-center h-full overflow-hidden font-light text-white rounded-md shadow bg-snoopfade">
                     <div className="px-4 py-8 sm:p-14">
@@ -63,7 +73,7 @@ export default function FormList() {
                     </div>
                   </div>
                 </li>
-              </button>
+              </button>)}
               {forms
                 .sort((a, b) => b.updatedAt - a.updatedAt)
                 .map((form, formIdx) => (
@@ -72,7 +82,7 @@ export default function FormList() {
                       <div className="p-6">
                         <p className="text-lg line-clamp-3">{form.name}</p>
                       </div>
-                      <Link href={`/forms/${form.id}`}>
+                      <Link href={session.user.role===UserRole.PUBLIC?`/sourcings/${form.id}`:`/forms/${form.id}/form`}>
                         <a className="absolute w-full h-full" />
                       </Link>
                       <div className="divide-y divide-ui-gray-light ">
