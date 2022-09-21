@@ -4,9 +4,6 @@ import {
   PhoneIcon,
 } from "@heroicons/react/24/solid";
 import { SnoopElement, SnoopForm, SnoopPage } from "../../kda-snoopforms-react/src";
-import { useMemo } from "react";
-import { generateId } from "../../lib/utils";
-import Loading from "../Loading";
 
 export default function App({ id = "", formId, pages=[], localOnly = false }) {
   

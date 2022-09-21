@@ -20,9 +20,11 @@ const router=useRouter()
       return <Loading />;
    
     }
+
+    
     const publicRoutes=["/sourcings", "/sourcings/[id]", "/sourcings/[id]/[pageId]"]
 
-     if(session.user?.role === UserRoles.Public && !publicRoutes.includes(router.pathname)) {  
+     if(session.user.role === UserRoles.Public && !publicRoutes.includes(router.pathname)) {  
       router.push('/sourcings') 
     }
 

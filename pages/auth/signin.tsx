@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
-import { UserRole } from "@prisma/client";
 
 const { publicRuntimeConfig } = getConfig();
 const { passwordResetDisabled } = publicRuntimeConfig;

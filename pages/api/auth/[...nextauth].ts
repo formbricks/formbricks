@@ -128,10 +128,21 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
       }),
     ],
     callbacks: {
-      async session({session}){
-        if(!session) return
-        const user= await prisma.user.findUnique({where:{email:session.user.email}})
-        return {user}
+      async session({session, token}){
+        if (token) {
+          const user= await prisma.user.findUnique({where:{email:session.user.email}})
+          session.user = {
+              id : user.id,
+              firstname: user.firstname,
+              lastname: user.lastname,
+              email: user.email,
+              phone: user.phone,
+              role: user.role,
+              gender: user.gender,
+        
+          }
+        }
+        return session
       },
       async signIn({ user }) {
         if (user.emailVerified || publicRuntimeConfig.emailVerificationDisabled) {
