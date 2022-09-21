@@ -46,7 +46,6 @@ function Form() {
       </div>
     );
   }
-  console.log("isErrorNoCodeForm", isErrorNoCodeForm);
 
   const pages = usePages({ blocks: noCodeForm.blocks, formId: formId });
 
@@ -55,9 +54,7 @@ function Form() {
     pages[pages.length - 1],
   ];
 
-  console.log(currentPages);
-
-  return <App pages={currentPages} />;
+  return <App pages={currentPages} formId={formId} />;
 }
 
 export default withAuthentication(Form);
