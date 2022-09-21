@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
+import { UserRole } from "@prisma/client";
 
 const { publicRuntimeConfig } = getConfig();
 const { passwordResetDisabled } = publicRuntimeConfig;
@@ -15,18 +16,19 @@ export default function SignInPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await signIn("credentials", {
-      callbackUrl: router.query.callbackUrl?.toString() || "/forms",
+     await signIn("credentials", {
+      callbackUrl: router.query.callbackUrl?.toString() || "/forms", //UserRole.PUBLIC?'/forms': '/f/sourcings',
       email: e.target.elements.email.value,
       password: e.target.elements.password.value,
-    });
+    })
+    
   };
   return (
     <BaseLayoutUnauthorized title="Sign in">
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           {error && (
-            <div className="absolute p-4 rounded-md top-10 bg-red-50">
+            <div className="absolute p-4 rounded-md top-10 bg-red-50 z-50">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <XCircleIcon
@@ -49,7 +51,7 @@ export default function SignInPage() {
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
             <div>
               <Image
-                src="/img/snoopforms-logo.svg"
+                src="/img/kda_logo.svg"
                 alt="snoopForms logo"
                 width={500}
                 height={89}

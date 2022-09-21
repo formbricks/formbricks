@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../lib/prisma";
 import { getSession } from "next-auth/react";
-import { generateId } from "../../../lib/utils";
+import { generateId, isNotAdmin, isAdmin } from "../../../lib/utils";
 import { capturePosthogEvent } from "../../../lib/posthog";
+import { UserRole } from "@prisma/client";
 
 export default async function handle(
   req: NextApiRequest,
@@ -17,21 +18,24 @@ export default async function handle(
   // GET /api/forms
   // Gets all forms of a user
   if (req.method === "GET") {
-    const session = await getSession({ req });
+    //TODO : query Nocodeforms
     const formData = await prisma.form.findMany({
-      where: {
-        owner: { email: session.user.email },
-      },
+      
       include: {
         owner: {
           select: { firstname: true },
+        },
+        noCodeForm:{
+          select:{published:true}
         },
         _count: {
           select: { submissionSessions: true },
         },
       },
     });
-    res.json(formData);
+    
+    if(!formData.length) return res.status(204)
+    res.json(formData.filter((f)=>f.noCodeForm.published));
   }
 
   // POST /api/forms
@@ -40,9 +44,16 @@ export default async function handle(
   // Optional fields in body: title, elements, elementsDraft
   else if (req.method === "POST") {
     const form = req.body;
-
     const session = await getSession({ req });
-    // get unique alphanumeric ID
+    //isNotAdmin(session, res)
+    //if(!isAdmin(session)) console.log("Erreur 403");
+
+    if(session.user.role!=="ADMIN"){
+      console.log(`The user ${session.user.email} isn't authorised`);
+      return res.status(403).json({message: "Unauthorized"})
+    }
+
+// get unique alphanumeric ID
     let validId = false;
     let id;
     while (!validId) {
@@ -60,9 +71,8 @@ export default async function handle(
     capturePosthogEvent(session.user.email, "form created", {
       formType: form.formType,
     });
-    res.json(result);
+     res.json(result);
   }
-
   // Unknown HTTP Method
   else {
     throw new Error(
@@ -81,3 +91,4 @@ const checkIdAvailability = async (id) => {
     return false;
   }
 };
+

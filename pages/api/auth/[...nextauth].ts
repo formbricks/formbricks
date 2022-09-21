@@ -62,12 +62,13 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           if (!isValid) {
             throw new Error("Incorrect password");
           }
-
+//test here
           return {
             id: user.id,
             email: user.email,
             firstname: user.firstname,
             lastname: user.firstname,
+            role: user.role,
             emailVerified: user.emailVerified,
           };
         },
@@ -120,12 +121,18 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             email: user.email,
             firstname: user.firstname,
             lastname: user.firstname,
+            role:user.role,
             emailVerified: user.emailVerified,
           };
         },
       }),
     ],
     callbacks: {
+      async session({session}){
+        if(!session) return
+        const user= await prisma.user.findUnique({where:{email:session.user.email}})
+        return {user}
+      },
       async signIn({ user }) {
         if (user.emailVerified || publicRuntimeConfig.emailVerificationDisabled) {
           return true;

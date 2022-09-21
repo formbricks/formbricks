@@ -6,24 +6,38 @@ import getConfig from "next/config";
 import { useState } from "react";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { createUser } from "../../lib/users";
+import { UserRole } from "@prisma/client";
 
 const { publicRuntimeConfig } = getConfig();
 
 export default function SignUpPage() {
   const router = useRouter();
+  const role= UserRole.PUBLIC;
   const [error, setError] = useState<string>("");
 
   const { emailVerificationDisabled, privacyUrl, termsUrl } =
     publicRuntimeConfig;
-
+  const handlePhoneNumberValidity=(phone)=>{
+     console.log(`la valeur du champs est: ${phone}`);
+    
+    const validity=/^(\+243|0)[0-9]{9}$/.test(phone);
+    if(validity===false){
+      console.log(`the phone number ${phone} is incorrect`);
+      throw new Error("the phone number is incorrect");
+    }
+    return phone;
+  }
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await createUser(
         e.target.elements.firstname.value,
         e.target.elements.lastname.value,
+        e.target.elements.gender.value,
+        handlePhoneNumberValidity(e.target.elements.phone.value),
         e.target.elements.email.value,
-        e.target.elements.password.value
+        e.target.elements.password.value,
+        role
       );
 
       const url = emailVerificationDisabled
@@ -42,7 +56,7 @@ export default function SignUpPage() {
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           {error && (
-            <div className="absolute p-4 rounded-md top-10 bg-red-50">
+            <div className="absolute p-4 rounded-md top-10 bg-red-50 z-50">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <XCircleIcon
@@ -65,8 +79,8 @@ export default function SignUpPage() {
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
             <div>
               <Image
-                src="/img/snoopforms-logo.svg"
-                alt="snoopForms logo"
+                src="/img/kda_logo.svg"
+                alt="Kinshasa Digital Academy logo"
                 width={500}
                 height={89}
               />
@@ -110,6 +124,59 @@ export default function SignUpPage() {
                         type="text"
                         autoComplete="family-name"
                         required
+                        className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="gender"
+                      className="block text-sm font-medium text-ui-gray-dark"
+                    >
+                      Gender
+                    </label>
+                    <div className="mt-1 flex">
+                      <div className="flex items-center mr-5">
+                      <input
+                        id="male"
+                        name="gender"
+                        type="radio"
+                        value="male"
+                        required
+                        className="block form-check-input border rounded-md shadow-sm appearance-none  border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 mr-1.5"
+                      />
+                      <label className="form-check-label inline-block text-gray-800" htmlFor="male">Male</label>
+                      </div>
+                       <div className="flex items-center">
+                         <input
+                        id="female"
+                        name="gender"
+                        type="radio"
+                        value="female"
+                        required
+                        className="block form-check-input border rounded-md shadow-sm appearance-none  border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 mr-1.5 "
+                      />
+                      <label className="form-check-label inline-block text-gray-800" htmlFor="female">Female</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="phone"
+                      className="block text-sm font-medium text-ui-gray-dark"
+                    >
+                      Phone Number
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        placeholder="+243891341236 or 0891341236"
+                        //pattern="^\+243|0[0-9]{9}$" //^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$ //^\+243|0[0-9]{9}$
+                        required
+                        //onChange={handleChangePhoneNumber}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>

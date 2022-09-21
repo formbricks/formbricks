@@ -15,6 +15,8 @@ import TextQuestion from "./tools/TextQuestion";
 import WebsiteQuestion from "./tools/WebsiteQuestion";
 import PhoneQuestion from "./tools/PhoneQuestion";
 import NumberQuestion from "./tools/NumberQuestion";
+import TimerToolboxOption from "./tools/TimerToolboxOption";
+import DashboardRedirectButton from "./tools/DashboardRedirectButton";
 
 interface EditorProps {
   id: string;
@@ -89,6 +91,7 @@ const Editor = ({
       autofocus: autofocus,
       defaultBlock: "paragraph",
       tools: {
+        timerToolboxOption: TimerToolboxOption,
         textQuestion: TextQuestion,
         emailQuestion: EmailQuestion,
         multipleChoiceQuestion: MultipleChoiceQuestion,
@@ -96,6 +99,7 @@ const Editor = ({
         phoneQuestion: PhoneQuestion,
         websiteQuestion: WebsiteQuestion,
         pageTransition: PageTransition,
+        dashboardRedirectButton: DashboardRedirectButton,
         paragraph: {
           class: Paragraph,
           inlineToolbar: true,
