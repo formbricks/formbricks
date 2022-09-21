@@ -52,7 +52,10 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
         id: formId,
       },
     });
-    capturePosthogEvent(form.ownerId, "pageSubmission received", { formId });
+    capturePosthogEvent(form.ownerId, "pageSubmission received", {
+      formId,
+      formType: form.formType,
+    });
     sendTelemetry("pageSubmission received");
   } else if (event.type === "submissionCompleted") {
     // TODO
