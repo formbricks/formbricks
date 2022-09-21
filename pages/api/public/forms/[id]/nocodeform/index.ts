@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../../../../lib/prisma";
+import form from "../../../../../forms/[id]/form";
 
 export default async function handle(
   req: NextApiRequest,
@@ -16,6 +17,9 @@ export default async function handle(
       },
       select: {
         id: true,
+        form:{select: {
+          name:true,
+        }},
         published: true,
         closed: true,
         blocks: true,

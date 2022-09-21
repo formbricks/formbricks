@@ -4,6 +4,7 @@ import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
 import { useNoCodeFormPublic } from "../../../lib/noCodeForm";
+import {useForm} from "../../../lib/forms"
 import { useRouter } from "next/router";
 import Image from "next/image";
 import getConfig from "next/config";
@@ -16,17 +17,19 @@ const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
 function NoCodeFormPublic() {
   const router = useRouter();
   const formId = router.query.id?.toString();
-  const completed=true;
+  const completed=false;
   const { noCodeForm, isLoadingNoCodeForm, isErrorNoCodeForm } =
     useNoCodeFormPublic(formId);
-      //
+ // const {form, isLoadingForm, isErrorForm}= useForm(user)
+    
   
   if (isLoadingNoCodeForm) {
     return <Loading />;
   }
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const pages = usePages({blocks:noCodeForm.blocks, formId:formId})
-  console.log(noCodeForm.blocks[0].data.text);
+  console.log(noCodeForm.form.name);
 
 
   if (isErrorNoCodeForm || !noCodeForm?.published) {
@@ -35,10 +38,15 @@ function NoCodeFormPublic() {
     );
   }
 
+  const goToPage  = (pageId) => {
+    console.log(pageId);
+    router.push(`/sourcings/${formId}/${pageId}`)
+    
+  }
   return (
     <BaseLayoutManagement       
     title={"Forms - snoopForms"}
-    breadcrumbs={[{ name: `My Sourcings / Form ${formId}`, href: "#", current: true }]}
+    breadcrumbs={[{ name: `My Sourcings / ${noCodeForm.form.name}`, href: "#", current: true }]}
     >
         <LimitedWidth>
       <div className="flex flex-col justify-between h-screen bg-white">
@@ -67,33 +75,23 @@ function NoCodeFormPublic() {
           </div>
         ) : (
           <div className="flex-col" >
-            <h1 className="text-2xl mt-5 mx-auto font-bold" >{noCodeForm.blocks[0].data.text}</h1>
-            <table className="fixed mt-5 w-1/2
+            <h1 className="text-2xl mt-5 mx-auto font-bold" >{noCodeForm.form.name}</h1>
+            <table className="fixed mt-5 w-7/12
             ">
 
                 <tbody className="w-full text-xl">
                     {
                         pages.map((page, index)=>{
                            if(pages.length-1!==index) return (
-                            <tr key={index} className="w-full py-4 border-y-2 border-slate-100 flex justify-between">
+                            <tr key={index} className="w-11/12 py-4 border-y-2 border-slate-100 flex justify-between">
                                <td className="pl-12">{(page.length)?"":page.blocks[0].data.text}</td>
-                               <td className="flex w-1/4"><ClockIcon className="w-12 pr-5"/>{<button disabled={completed?true:false} className="w-107 rounded-full bg-green-800 p-2.5 text-white font-bold">{completed?"Complete":"Start"}</button>}</td>
+                               <td className="flex w-1/4"><ClockIcon className="w-12 pr-5"/>{<button onClick={() => goToPage(`${page.id}`)} disabled={completed?true:false} className="w-107 rounded-full bg-green-800 p-2.5 text-white font-bold">{completed?"Complete":"Start"}</button>}</td>
                             </tr>
                             )
                         })    
                     }      
                 </tbody>
             </table>
-            {/* <ul>
-                {
-                pages.map((page, index)=>{
-                    if(pages.length-1!==index) return <li key={index}>{(page.length)?"":page.blocks[0].data.text}</li>
-                    console.log(`page length: ${page.length}`);
-                    
-
-                })
-                }
-            </ul> */}
           </div>
         )}
         {(publicPrivacyUrl || publicImprintUrl) && (
