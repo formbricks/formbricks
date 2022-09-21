@@ -25,6 +25,7 @@ function NoCodeFormPublic() {
     return <Loading />;
   }
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const pages = usePages({blocks:noCodeForm.blocks, formId:formId})
   console.log(noCodeForm.blocks[0].data.text);
 
