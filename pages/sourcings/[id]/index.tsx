@@ -26,7 +26,7 @@ function NoCodeFormPublic() {
   }
 
   const pages = usePages({blocks:noCodeForm.blocks, formId:formId})
-  console.log(pages);
+  console.log(noCodeForm.blocks[0].data.text);
 
 
   if (isErrorNoCodeForm || !noCodeForm?.published) {
@@ -67,7 +67,7 @@ function NoCodeFormPublic() {
           </div>
         ) : (
           <div className="flex-col" >
-            <h1 className="text-2xl mt-5 mx-auto font-bold" >FORM NAME</h1>
+            <h1 className="text-2xl mt-5 mx-auto font-bold" >{noCodeForm.blocks[0].data.text}</h1>
             <table className="fixed mt-5 w-1/2
             ">
 
