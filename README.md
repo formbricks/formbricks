@@ -1,5 +1,5 @@
 <p align="center">
-<a href="https://github.com/snoopForms/snoopforms">
+<a href="https://github.com/formbricks/snoopforms">
     <img src="https://user-images.githubusercontent.com/72809645/172191504-808da997-025b-4b1f-90c0-b8ef658af2dd.svg" alt="Logo" width="500">
   </a>
   <h3 align="center">snoopForms</h3>
@@ -7,12 +7,12 @@
   <p align="center">
     Finally, good open-source forms!
     <br />
-    <a href="https://snoopforms.com/">Website & Hosted version</a>  |  <a href="https://discord.gg/3YFcABF2Ts">Join Discord community</a>
+    <a href="https://snoopforms.com/">Website & Hosted version</a>  |  <a href="https://snoopforms.com/discord">Join Discord community</a>
   </p>
 </p>
 
 <p align="center">
-<a href="https://github.com/snoopForms/snoopforms/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a> <a href="https://discord.gg/3YFcABF2Ts"><img src="https://img.shields.io/badge/Discord-SnoopForms-%234A154B" alt="Join snoopForms Discord"></a> <a href="https://github.com/snoopForms/snoopforms/stargazers"><img src="https://img.shields.io/github/stars/snoopForms/snoopforms" alt="Github Stars"></a>
+<a href="https://github.com/formbricks/snoopforms/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a> <a href="https://discord.gg/3YFcABF2Ts"><img src="https://img.shields.io/badge/Discord-SnoopForms-%234A154B" alt="Join snoopForms Discord"></a> <a href="https://github.com/formbricks/snoopforms/stargazers"><img src="https://img.shields.io/github/stars/snoopForms/snoopforms" alt="Github Stars"></a>
    <a href="https://news.ycombinator.com/item?id=32303986"><img src="https://img.shields.io/badge/Hacker%20News-122-%23FF6600" alt="Hacker News"></a>
 </p>
 
@@ -30,7 +30,7 @@ Spin up forms in minutes. Pipe your data exactly where you need it. Maximize you
 
 ## What is snoopForms?
 
-With snoopForms you can build complex multi-page forms in minutes using either our built-in No Code Builder or our [React library](https://github.com/snoopForms/snoopforms-react). All form submissions are automatically sent to the snoopForms platform for processing and analysis. You can view the submission within the platform or you can easily configure pipelines to send your data to other systems, services or databases.
+With snoopForms you can build complex multi-page forms in minutes using either our built-in No Code Builder or our [React library](https://github.com/formbricks/snoopforms-react). All form submissions are automatically sent to the snoopForms platform for processing and analysis. You can view the submission within the platform or you can easily configure pipelines to send your data to other systems, services or databases.
 
 ### Features
 
@@ -55,14 +55,16 @@ you can develop in a VS Code [dev container](https://code.visualstudio.com/docs/
 ### Getting started using VS Code dev container
 
 You need
+
 - Docker, e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop)
 - [VS Code](https://code.visualstudio.com/download) with the extension [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
 
 Either use the command `Open Folder in Container...` in the cloned repo, or use `Remote Containers: Clone Repository in Container Volume...`, for example to inspect a PR.
 
-The dev container comes with 
+The dev container comes with
+
 - Node.JS, yarn etc pre-installed
-- a `postgres` container and environment variables preset to reach it, 
+- a `postgres` container and environment variables preset to reach it,
 - a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
 
 upon start, it executes the `yarn install` and `yarn prisma migrate dev` automatically once.
@@ -80,7 +82,7 @@ To get the project running locally on your machine you need to have the followin
 1. Clone the project:
 
 ```
-git clone https://github.com/snoopForms/snoopforms.git && cd snoopforms
+git clone https://github.com/formbricks/snoopforms.git && cd snoopforms
 ```
 
 2. Install Node.JS packages via yarn. Don't have yarn? Use `npm install --global yarn`.
@@ -131,7 +133,7 @@ Clone the repository:
 
 ```
 
-git clone https://github.com/snoopForms/snoopforms.git && cd snoopforms
+git clone https://github.com/formbricks/snoopforms.git && cd snoopforms
 
 ```
 
