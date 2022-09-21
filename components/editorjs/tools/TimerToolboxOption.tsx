@@ -40,7 +40,7 @@ export default class TimerToolboxOption implements BlockTool {
 
   save(block: HTMLDivElement) {  
     return {
-      timerDuration: parseInt((block.firstElementChild.childNodes[1] as HTMLInputElement).value),
+      timerDuration: parseFloat((block.firstElementChild.childNodes[1] as HTMLInputElement).value),
     };
   }
 

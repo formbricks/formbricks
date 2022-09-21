@@ -33,12 +33,7 @@ export const validateEvents = (
   }
 };
 
-export const processApiEvent = async (event: ApiEvent, formId) => {
-
-  console.log("event.type", event.type);
-
-  // console.table(formId)
-  
+export const processApiEvent = async (event: ApiEvent, formId, candidateEmail) => {
   // save submission
   if (event.type === "pageSubmission") {
     const data = event.data;
@@ -46,6 +41,8 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
       data: {
         type: "pageSubmission",
         data: {
+          formId,
+          candidateEmail,
           pageName: data.pageName,
           submission: data.submission,
         },
