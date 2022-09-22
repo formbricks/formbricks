@@ -134,20 +134,11 @@ export const hashString = (string: string) => {
   return crypto.createHash("sha256").update(string).digest("hex");
 };
 
-export const isNotAdmin = (session, res) =>{
-  if(session.user.role!==UserRole.ADMIN) {return res.status(403)}
-   
-}
-export const isAdmin = (session)=>{
-  if(session.user.role===UserRole.ADMIN){
-    return true;
-  }else{
-    return false
+export const isNotAdmin = (session, res) => {
+  if (session.user.role !== UserRole.ADMIN) {
+    return res.status(403);
   }
-}
-
-// export const isAdmin = (session, res) =>{
-//   console.log(session.user.role);
-//   if(session.user.role===UserRole.ADMIN) {return res.status(200)} else{res.status(403)}
-   
-// }
+};
+export const isAdmin = (session) => {
+  return session.user.role === UserRole.ADMIN;
+};
