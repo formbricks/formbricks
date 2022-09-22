@@ -16,7 +16,10 @@ function SharePage({}) {
   const { form, isLoadingForm, isErrorForm } = useForm(formId);
   const [appId, setAppId] = useState(uuidv4());
 
-  const { noCodeForm, isLoadingNoCodeForm } = useNoCodeForm(formId);
+  const { 
+    // noCodeForm, 
+    isLoadingNoCodeForm 
+  } = useNoCodeForm(formId);
 
   const resetApp = () => {
     setAppId(uuidv4());
@@ -43,7 +46,8 @@ function SharePage({}) {
     <LayoutPreview formId={formId} resetApp={resetApp}>
       <App
         id={appId}
-        blocks={noCodeForm.blocksDraft}
+        //TODO Update pages
+        pages={[]}
         localOnly={true}
         formId={formId}
       />

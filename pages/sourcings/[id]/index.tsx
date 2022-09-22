@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
 import { ClockIcon } from "@heroicons/react/24/solid";
 import withAuthentication from "../../../components/layout/WithAuthentication";
@@ -6,10 +7,13 @@ import MessagePage from "../../../components/MessagePage";
 import { useNoCodeFormPublic } from "../../../lib/noCodeForm";
 import {useForm} from "../../../lib/forms"
 import { useRouter } from "next/router";
+import { Fragment, useState } from "react";
 import Image from "next/image";
 import getConfig from "next/config";
 import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
+import Modal from "../../../components/Modal"
+import StandardButton from "../../../components/StandardButton";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
@@ -20,8 +24,8 @@ function NoCodeFormPublic() {
   const completed=false;
   const { noCodeForm, isLoadingNoCodeForm, isErrorNoCodeForm } =
     useNoCodeFormPublic(formId);
- // const {form, isLoadingForm, isErrorForm}= useForm(user)
-    
+  const [openDisclaimer, setOpenDisclaimer]= useState(false);
+  const [link, setLink]= useState("");
   
   if (isLoadingNoCodeForm) {
     return <Loading />;
@@ -37,9 +41,14 @@ function NoCodeFormPublic() {
       <MessagePage text="Form not found. Are you sure this is the right URL?" />
     );
   }
-
-  const goToPage  = (pageId) => {
+  const disclaimer=(pageId)=>{
+    setOpenDisclaimer(true);
+    setLink(pageId)
     console.log(pageId);
+    
+}
+  const goToPage  = (pageId) => {
+    console.log(`redirect to ${pageId}`);
     router.push(`/sourcings/${formId}/${pageId}`)
     
   }
@@ -86,8 +95,24 @@ function NoCodeFormPublic() {
                                <td className="pl-12 flex items-center">{(page.length)?"":page.blocks[0].data.text}</td>
                                <td className="flex items-center justify-between w-1/3">
                                    <div className="flex items-center w-4/5">{page.blocks[1].type==="timerToolboxOption"?<span className="flex items-center"><ClockIcon className="w-10 mr-2"/>{page.blocks[1].data.timerDuration} minutes</span>:<></>}</div>
-                                   <button onClick={() => goToPage(`${page.id}`)} disabled={completed} className="w-107 rounded-full bg-green-800 p-2.5 text-white font-bold">{completed?"Complete":"Start"}</button>
+                                   <button onClick={page.blocks[1].type==="timerToolboxOption" ? ()=>disclaimer(`${page.id}`) : () => goToPage(`${page.id}`)} disabled={completed} className="w-107 rounded-full bg-green-800 p-2.5 text-white font-bold">{completed?"Complete":"Start"}</button> 
+                                   {/* onClick={() => goToPage(`${page.id}`)} */}
                                </td>
+                               <Modal open={openDisclaimer} setOpen={setOpenDisclaimer} link={link} setLink={setLink}>
+                                    <span className="flex flex-row justify-center items-center ">
+                                    <h2 className="flex-none p-2 text-xl font-bold text-ui-gray-dark">
+                                        DISCLAIMER
+                                    </h2>
+                                    </span>
+                                    <span>
+                                        Vous etes sur le point de debuter un questionnaire timer
+                                    </span>
+                                    <span className="mt-5 sm:mt-6">
+                                        <StandardButton onClick={() => goToPage(`${link}`)} fullwidth>
+                                            I Agree
+                                        </StandardButton>
+                                    </span>
+                               </Modal>
                             </tr>
                             )
                         })    

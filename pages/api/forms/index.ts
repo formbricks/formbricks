@@ -1,9 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../lib/prisma";
 import { getSession } from "next-auth/react";
-import { generateId, isNotAdmin, isAdmin } from "../../../lib/utils";
+import { generateId } from "../../../lib/utils";
 import { capturePosthogEvent } from "../../../lib/posthog";
-import { UserRole } from "@prisma/client";
 
 export default async function handle(
   req: NextApiRequest,

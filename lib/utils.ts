@@ -2,7 +2,6 @@ import intlFormat from "date-fns/intlFormat";
 import { formatDistance } from "date-fns";
 import crypto from "crypto";
 import { UserRole } from "@prisma/client";
-import { getSession } from "next-auth/react";
 
 export const fetcher = async (url) => {
   const res = await fetch(url);
@@ -136,7 +135,6 @@ export const hashString = (string: string) => {
 };
 
 export const isNotAdmin = (session, res) =>{
-  console.log(session.user.role);
   if(session.user.role!==UserRole.ADMIN) {return res.status(403)}
    
 }

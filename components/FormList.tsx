@@ -1,6 +1,5 @@
 import { Menu, Transition } from "@headlessui/react";
 import {
-  DocumentPlusIcon,
   PlusIcon,
   CommandLineIcon,
   SquaresPlusIcon,
@@ -13,7 +12,6 @@ import { UserRole } from "@prisma/client";
 import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
-import EmptyPageFiller from "./layout/EmptyPageFiller";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
