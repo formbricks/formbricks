@@ -1,10 +1,10 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { Fragment } from "react";
+import { Children, Fragment } from "react";
 import StandardButton from "../../components/StandardButton";
 
-export default function Modal({ open, setOpen, link, onClick }) {
+export default function Modal({ open, setOpen, onClick, message }) {
   return (
     <Transition.Root show={open} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={setOpen}>
@@ -49,7 +49,7 @@ export default function Modal({ open, setOpen, link, onClick }) {
                         </h2>
                     </span>
                     <span>
-                        Vous etes sur le point de debuter un questionnaire timer
+                        {message}
                     </span>
                     <span className="mt-5 sm:mt-6">
                         <StandardButton onClick={onClick} fullwidth>

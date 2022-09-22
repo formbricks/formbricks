@@ -98,7 +98,7 @@ function NoCodeFormPublic() {
                                    <div className="flex items-center w-4/5">{page.blocks[1].type==="timerToolboxOption"?<span className="flex items-center"><ClockIcon className="w-10 mr-2"/>{page.blocks[1].data.timerDuration} minutes</span>:<></>}</div>
                                    <button onClick={page.blocks[1].type==="timerToolboxOption" ? ()=>disclaimer(`${page.id}`) : () => goToPage(`${page.id}`)} disabled={completed} className="w-107 rounded-full bg-green-800 p-2.5 text-white font-bold">{completed?"Complete":"Start"}</button> 
                                </td>
-                               <DisclaimerModal open={openDisclaimer} setOpen={setOpenDisclaimer} link={link} onClick={() => goToPage(`${link}`)}/>
+                               <DisclaimerModal open={openDisclaimer} setOpen={setOpenDisclaimer} message="You are about to start a timed form" onClick={() => goToPage(`${link}`)}/>
                             </tr>
                             )
                         })    
