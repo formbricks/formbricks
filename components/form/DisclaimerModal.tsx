@@ -1,7 +1,7 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Dialog, Transition } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import { Fragment } from "react";
+import { XMarkIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { Children, Fragment } from "react";
 import StandardButton from "../../components/StandardButton";
 
 export default function Modal({ open, setOpen, onClick, message }) {
@@ -44,9 +44,10 @@ export default function Modal({ open, setOpen, onClick, message }) {
                 </div>
                 <div className="flex-col sm:flex sm:items-start">
                     <span className="flex flex-row justify-center items-center ">
-                        <h2 className="flex-none p-2 text-xl font-bold text-ui-gray-dark">
-                            DISCLAIMER
-                        </h2>
+                      <ExclamationTriangleIcon className="w-10"/>
+                      <h2 className="flex-none p-2 text-xl font-bold text-ui-gray-dark">
+                        DISCLAIMER
+                      </h2>
                     </span>
                     <span>
                         {message}
