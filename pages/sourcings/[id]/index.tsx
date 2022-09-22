@@ -19,9 +19,12 @@ const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
 function NoCodeFormPublic() {
   const router = useRouter();
   const formId = router.query.id?.toString();
-  const completed = false;
-  const { noCodeForm, isLoadingNoCodeForm, isErrorNoCodeForm } =
-    useNoCodeFormPublic(formId);
+  const {
+    noCodeForm,
+    candidateSubmissions,
+    isLoadingNoCodeForm,
+    isErrorNoCodeForm,
+  } = useNoCodeFormPublic(formId);
   const [openDisclaimer, setOpenDisclaimer] = useState(false);
   const [pageIdOnModal, setPageIdOnModal] = useState("");
 
@@ -40,6 +43,10 @@ function NoCodeFormPublic() {
   const isTimed = (page: any) => {
     const timers = page.blocks.filter((p) => p.type === "timerToolboxOption");
     return !!timers.length;
+  };
+
+  const pageIsCompleted = (pageId: string) => {
+    return candidateSubmissions.includes(pageId);
   };
 
   const getPageTimer = (pageBlocks: any) => {
@@ -120,13 +127,22 @@ function NoCodeFormPublic() {
                                 <></>
                               )}
                             </div>
-                            <button
-                              onClick={() => handleClickAction(page)}
-                              disabled={completed}
-                              className="w-107 rounded-full bg-green-800 p-2.5 text-white font-bold"
-                            >
-                              {completed ? "Complete" : "Start"}
-                            </button>
+                            {pageIsCompleted(page.id) ? (
+                              <button
+                                onClick={() => handleClickAction(page)}
+                                disabled={isTimed(page)}
+                                className="w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold"
+                              >
+                                {isTimed(page) ? "Completed" : "Update answer"}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleClickAction(page)}
+                                className="w-107 rounded-full bg-gray-800 p-2.5 text-white font-bold"
+                              >
+                                Start
+                              </button>
+                            )}
                           </td>
                           <DisclaimerModal
                             open={openDisclaimer}
