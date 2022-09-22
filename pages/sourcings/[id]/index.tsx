@@ -101,30 +101,29 @@ function NoCodeFormPublic() {
             </div>
           ) : (
             <div className="flex-col">
-              <h1 className="text-2xl ml-12 mt-5 mx-auto font-bold">
+              <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold">
                 {noCodeForm.form.name}
               </h1>
-              <table className="auto mt-5 w-full">
-                <tbody className="w-full text-xl">
-                  {pages.map((page, index) => {
-                    if (pages.length - 1 !== index)
-                      return (
-                        <tr
-                          key={index}
-                          className="w-full py-4 border-y-2 border-slate-100 flex justify-between"
-                        >
-                          <td className="pl-12 flex items-center">
-                            {page.length ? "" : page.blocks[0].data.text}
-                          </td>
-                          <td className="flex items-center justify-between w-1/3">
-                            <div className="flex items-center w-4/5">
-                              {page.blocks[1].type === "timerToolboxOption" ? (
-                                <span className="flex items-center">
-                                  <ClockIcon className="w-10 mr-2" />
-                                  {getPageTimer(page.blocks)} minutes
-                                </span>
-                              ) : (
-                                <></>
+                {pages.map((page, index) => {
+                  if (pages.length - 1 !== index)
+                    return (
+                      <div
+                        className="w-full py-4 border-y-2 border-slate-100 flex justify-between"
+                        key={index}
+                      >
+                        <div className="pl-12 flex items-center">
+                          {page.length ? "" : page.blocks[0].data.text}
+                        </div>
+                        <div className="flex items-center justify-between w-1/3 pr-12">
+                          <div className="flex items-center w-3/6">
+                            {page.blocks[1].type === "timerToolboxOption" ? (
+                            <span className="flex items-center">
+                              <ClockIcon className="w-10 mr-2" />
+                              {getPageTimer(page.blocks)} minutes
+                            </span>
+                              ) : 
+                              (
+                            <></>
                               )}
                             </div>
                             {pageIsCompleted(page.id) ? (
@@ -143,18 +142,16 @@ function NoCodeFormPublic() {
                                 Start
                               </button>
                             )}
-                          </td>
+                          </div>
                           <DisclaimerModal
                             open={openDisclaimer}
                             setOpen={setOpenDisclaimer}
                             message="You are about to start a timed form"
                             onClick={() => handleClickAction(page, true)}
                           />
-                        </tr>
+                        </div>
                       );
                   })}
-                </tbody>
-              </table>
             </div>
           )}
           {(publicPrivacyUrl || publicImprintUrl) && (
