@@ -94,7 +94,7 @@ export default function FormList() {
                         <a className="absolute w-full h-full" />
                       </Link>
                       <div className="divide-y divide-ui-gray-light ">
-                        <div className="inline-flex px-2 py-1 mb-2 ml-4 text-sm rounded-sm bg-ui-gray-light text-ui-gray-dark">
+                        {/* <div className="inline-flex px-2 py-1 mb-2 ml-4 text-sm rounded-sm bg-ui-gray-light text-ui-gray-dark">
                           {form.formType == "NOCODE" ? (
                             <div className="flex">
                               <SquaresPlusIcon className="w-4 h-4 my-auto mr-1" />
@@ -106,8 +106,9 @@ export default function FormList() {
                               Code
                             </div>
                           )}
-                        </div>
+                        </div> */}
 
+                        {session.user.role===UserRole.PUBLIC?<></>:
                         <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                           <p className="text-xs text-ui-gray-medium ">
                             {form._count?.submissionSessions} responses
@@ -173,6 +174,7 @@ export default function FormList() {
                             )}
                           </Menu>
                         </div>
+                        }
                       </div>
                     </div>
                   </li>
