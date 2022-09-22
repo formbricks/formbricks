@@ -61,9 +61,9 @@ export default function FormList() {
                 <FolderOpenIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" /></EmptyPageFiller> : 
               <EmptyPageFiller
                 onClick={() => newForm()}
-                alertText="You don't have any forms yet."
-                hintText="Start by creating a form."
-                buttonText="create form"
+                alertText="You don't have any sourcings yet."
+                hintText="Start by creating a sourcing."
+                buttonText="create sourcing"
                 borderStyles="border-4 border-dotted border-red"
                 hasButton={true}
               >
