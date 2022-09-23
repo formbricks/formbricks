@@ -89,38 +89,38 @@ const SingleChoiceQuestion = (props) => {
           </div>
         )}
       </div>
-      <div className="max-w-sm mt-2 space-y-2">
+      <div className="mt-2 space-y-2">
         {choiceData.options.map((option, optionIdx) => (
           <div
             key={option.label}
-            className={classNames("relative flex items-start")}
+            className="relative flex items-start pr-2 hover:bg-gray-50 hover:rounded"
           >
-            <span className="flex items-center text-sm">
+            <span className="flex items-center w-full text-sm ">
               <span
                 className={classNames(
                   choiceData.multipleChoice ? "rounded-sm" : "rounded-full",
-                  "flex items-center justify-center w-4 h-4 bg-white border border-gray-300"
+                  "flex items-center justify-center w-4 h-4 border border-gray-300"
                 )}
                 aria-hidden="true"
               >
-                <span className="rounded-full bg-white w-1.5 h-1.5" />
+                <span className="rounded-full  w-1.5 h-1.5" />
               </span>
               <input
                 type="text"
                 defaultValue={option.label}
                 onBlur={onOptionChange(optionIdx, "label")}
-                className="p-0 ml-3 font-medium text-gray-900 border-0 border-transparent outline-none focus:ring-0 focus:outline-none placeholder:text-gray-300"
+                className="w-full p-0 ml-3 font-medium text-gray-900 bg-transparent border-0 border-transparent outline-none focus:ring-0 focus:outline-none placeholder:text-gray-300"
                 placeholder={`Option ${optionIdx + 1}`}
               />
+              {optionIdx !== 0 && (
+                <button
+                  onClick={() => onDeleteOption(optionIdx)}
+                  className="pl-4 right-3"
+                >
+                  <TrashIcon className="w-4 h-4 text-gray-300" />
+                </button>
+              )}
             </span>
-            {optionIdx !== 0 && (
-              <button
-                onClick={() => onDeleteOption(optionIdx)}
-                className="absolute p-1 right-3"
-              >
-                <TrashIcon className="w-4 h-4 text-gray-300" />
-              </button>
-            )}
           </div>
         ))}
       </div>
