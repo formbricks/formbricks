@@ -33,6 +33,8 @@ model Form {
   ownerId            Int
   formType           FormType            @default(NOCODE)
   name               String              @default("")
+  description        String              @default("")
+  dueDate            DateTime            @default(now())
   schema             Json                @default("{}")
   submissionSessions SubmissionSession[]
   pipelines          Pipeline[]

@@ -8,6 +8,7 @@ import { createForm } from "../../lib/forms";
 import { createNoCodeForm } from "../../lib/noCodeForm";
 import { classNames } from "../../lib/utils";
 import StandardButton from "../StandardButton";
+import dayjs from "dayjs";
 
 const formTypes = [
   {
@@ -36,14 +37,22 @@ export default function NewFormModal({
 }: FormOnboardingModalProps) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [formType, setFormType] = useState(formTypes[0]);
+  const [dueDate, setDueDate] = useState(Date());
+  const [description, setDescription] = useState("");
+  const [formType, setFormType] = useState(formTypes[0].id); //formTypes[0]
 
+  console.log(`#### sourcingName: ${name} dueDate: ${dayjs(dueDate).toDate()} and description: ${description} formtype: ${formType}`);
+  
   const createFormAction = async (e) => {
     e.preventDefault();
     const form = await createForm({
       name,
-      formType: formType.id,
+      dueDate:dayjs(dueDate).toDate(),
+      description,
+      formType, //formType: formType.id
     });
+    // console.log(`@@@@@ form: ${form}`);
+    
     if (form.formType === "NOCODE") {
       await createNoCodeForm(form.id);
     }
@@ -89,7 +98,7 @@ export default function NewFormModal({
                 </div>
                 <div className="flex flex-row justify-between">
                   <h2 className="flex-none p-2 text-xl font-bold text-ui-gray-dark">
-                    Create new form
+                    Create new sourcing
                   </h2>
                 </div>
                 <form
@@ -101,7 +110,7 @@ export default function NewFormModal({
                       htmlFor="email"
                       className="text-sm font-light text-ui-gray-dark"
                     >
-                      Name your form
+                      Name your sourcing
                     </label>
                     <div className="mt-2">
                       <input
@@ -115,9 +124,51 @@ export default function NewFormModal({
                         required
                       />
                     </div>
+                    
                   </div>
 
-                  <RadioGroup value={formType} onChange={setFormType}>
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="text-sm font-light text-ui-gray-dark"
+                    >
+                      Due date for your sourcing
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        type="date"
+                        name="dueDate"
+                        className="block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
+                        placeholder="e.g. Customer Research Survey"
+                        value={dueDate}
+                        onChange={(e) => setDueDate(e.target.value)}
+                        autoFocus
+                        required
+                      />
+                    </div>
+                    
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="text-sm font-light text-ui-gray-dark"
+                    >
+                      Describe your sourcing
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        name="description"
+                        className="block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        autoFocus
+                        required
+                      />
+                    </div>
+                    
+                  </div>
+                  {/* <RadioGroup value={formType} onChange={setFormType}>
                     <RadioGroup.Label className="text-sm font-light text-ui-gray-dark">
                       How do you build your form?
                     </RadioGroup.Label>
@@ -182,10 +233,10 @@ export default function NewFormModal({
                         </RadioGroup.Option>
                       ))}
                     </div>
-                  </RadioGroup>
+                  </RadioGroup> */}
                   <div className="mt-5 sm:mt-6">
                     <StandardButton fullwidth type="submit">
-                      create form
+                      create sourcing
                       <BsPlus className="w-6 h-6 ml-1"></BsPlus>
                     </StandardButton>
                   </div>
