@@ -12,8 +12,9 @@
 </p>
 
 <p align="center">
-<a href="https://github.com/formbricks/snoopforms/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a> <a href="https://discord.gg/3YFcABF2Ts"><img src="https://img.shields.io/badge/Discord-SnoopForms-%234A154B" alt="Join snoopForms Discord"></a> <a href="https://github.com/formbricks/snoopforms/stargazers"><img src="https://img.shields.io/github/stars/snoopForms/snoopforms" alt="Github Stars"></a>
+<a href="https://github.com/formbricks/snoopforms/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a> <a href="https://discord.gg/3YFcABF2Ts"><img src="https://img.shields.io/discord/979077669410979880?label=Discord&logo=discord&logoColor=%23fff" alt="Join snoopForms Discord"></a> <a href="https://github.com/formbricks/snoopforms/stargazers"><img src="https://img.shields.io/github/stars/snoopForms/snoopforms?logo=github" alt="Github Stars"></a>
    <a href="https://news.ycombinator.com/item?id=32303986"><img src="https://img.shields.io/badge/Hacker%20News-122-%23FF6600" alt="Hacker News"></a>
+   <a href="https://www.producthunt.com/products/snoopforms"><img src="https://img.shields.io/badge/Product%20Hunt-%232%20Product%20of%20the%20Day-orange?logo=producthunt&logoColor=%23fff" alt="Product Hunt"></a>
 </p>
 
 <br/>
