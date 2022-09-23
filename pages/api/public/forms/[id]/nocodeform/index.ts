@@ -21,8 +21,8 @@ export default async function handle(
         form: {
           select: {
             name: true,
-            // description: true,
-            // dueDate: true,
+            description: true,
+            dueDate: true,
           },
         },
         published: true,
