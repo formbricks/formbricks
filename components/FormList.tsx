@@ -3,6 +3,8 @@ import {
   PlusIcon,
   CommandLineIcon,
   SquaresPlusIcon,
+  FolderOpenIcon,
+  DocumentPlusIcon,
 } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -12,6 +14,7 @@ import { UserRole } from "@prisma/client";
 import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
+import EmptyPageFiller from "./layout/EmptyPageFiller";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
@@ -49,16 +52,23 @@ export default function FormList() {
         {forms &&
           (forms.length === 0 ? (
             <div className="mt-5 text-center">
-              {/* <EmptyPageFiller
+              {session.user.role!==UserRole.ADMIN ?
+              <EmptyPageFiller
+                alertText="You don't have any sourcings yet."
+                hintText="Wait for sourcing to be created"
+                borderStyles="border-4 border-dotted border-red"
+              >
+                <FolderOpenIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" /></EmptyPageFiller> : 
+              <EmptyPageFiller
                 onClick={() => newForm()}
-                alertText="You don't have any forms yet."
-                hintText="Start by creating a form."
-                buttonText="create form"
+                alertText="You don't have any sourcings yet."
+                hintText="Start by creating a sourcing."
+                buttonText="create sourcing"
                 borderStyles="border-4 border-dotted border-red"
                 hasButton={true}
               >
                 <DocumentPlusIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
-              </EmptyPageFiller> */}
+              </EmptyPageFiller> }
             </div>
           ) : (
             <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 place-content-stretch ">
@@ -84,7 +94,7 @@ export default function FormList() {
                         <a className="absolute w-full h-full" />
                       </Link>
                       <div className="divide-y divide-ui-gray-light ">
-                        <div className="inline-flex px-2 py-1 mb-2 ml-4 text-sm rounded-sm bg-ui-gray-light text-ui-gray-dark">
+                        {/* <div className="inline-flex px-2 py-1 mb-2 ml-4 text-sm rounded-sm bg-ui-gray-light text-ui-gray-dark">
                           {form.formType == "NOCODE" ? (
                             <div className="flex">
                               <SquaresPlusIcon className="w-4 h-4 my-auto mr-1" />
@@ -96,8 +106,9 @@ export default function FormList() {
                               Code
                             </div>
                           )}
-                        </div>
+                        </div> */}
 
+                        {session.user.role===UserRole.PUBLIC?<></>:
                         <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                           <p className="text-xs text-ui-gray-medium ">
                             {form._count?.submissionSessions} responses
@@ -163,6 +174,7 @@ export default function FormList() {
                             )}
                           </Menu>
                         </div>
+                        }
                       </div>
                     </div>
                   </li>
