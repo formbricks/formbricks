@@ -1,7 +1,7 @@
 import { Menu, Transition } from "@headlessui/react";
 import {
   PlusIcon,
-  CommandLineIcon,
+  CalendarDaysIcon,
   SquaresPlusIcon,
   FolderOpenIcon,
   DocumentPlusIcon,
@@ -15,6 +15,7 @@ import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
 import EmptyPageFiller from "./layout/EmptyPageFiller";
+import moment from "moment";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
@@ -89,6 +90,10 @@ export default function FormList() {
                     <div className="flex flex-col justify-between h-full bg-white rounded-md shadow">
                       <div className="p-6">
                         <p className="text-lg line-clamp-3">{form.name}</p>
+                      </div>
+                      <div className="px-6 flex items-center justify-between border-y">
+                        <CalendarDaysIcon className="w-8 h-8 stroke-thin" />
+                        <p className="text-xs  line-clamp-3">{moment(form.dueDate).format("MMM Do, YYYY")}</p>
                       </div>
                       <Link href={session.user.role===UserRole.PUBLIC?`/sourcings/${form.id}`:`/forms/${form.id}/form`}>
                         <a className="absolute w-full h-full" />
