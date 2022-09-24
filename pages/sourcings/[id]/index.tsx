@@ -12,6 +12,7 @@ import getConfig from "next/config";
 import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
+import moment from "moment";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
@@ -104,6 +105,8 @@ function NoCodeFormPublic() {
               <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold">
                 {noCodeForm.form.name}
               </h1>
+              <p className="text-lg mb-10 ml-12 mx-auto">{noCodeForm.form.description}</p>
+              <p className="text-lg mb-10 ml-12 mx-auto">{moment(noCodeForm.form.dueDate).format("MMMM Do, YYYY")}</p>
                 {pages.map((page, index) => {
                   if (pages.length - 1 !== index)
                     return (

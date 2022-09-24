@@ -15,9 +15,15 @@ import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
 import EmptyPageFiller from "./layout/EmptyPageFiller";
-import moment from "moment";
+import relativeTime from "dayjs/plugin/relativeTime";
+import advancedFormat from "dayjs/plugin/advancedFormat"
+import dayjs from "dayjs";
+
+dayjs.extend(advancedFormat);
+dayjs.extend(relativeTime);
 
 export default function FormList() {
+  
   const { forms, mutateForms } = useForms();
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
   const { data: session } = useSession({
@@ -91,9 +97,9 @@ export default function FormList() {
                       <div className="p-6">
                         <p className="text-lg line-clamp-3">{form.name}</p>
                       </div>
-                      <div className="px-6 flex items-center justify-between border-y">
-                        <CalendarDaysIcon className="w-8 h-8 stroke-thin" />
-                        <p className="text-xs  line-clamp-3">{moment(form.dueDate).format("MMM Do, YYYY")}</p>
+                      <div className="px-3 flex items-center justify-between border-y">
+                        <CalendarDaysIcon className="w-6 h-6 stroke-thin" />
+                        {dayjs(form.dueDate) < dayjs() ? <p className="text-xs font-bold text-red-700 line-clamp-3">{"closed " + dayjs(form.dueDate).fromNow()}</p> : <p className="text-xs font-bold text-neutral-400 line-clamp-3">{dayjs(form.dueDate).format("MMM Do, YYYY")}</p> }
                       </div>
                       <Link href={session.user.role===UserRole.PUBLIC?`/sourcings/${form.id}`:`/forms/${form.id}/form`}>
                         <a className="absolute w-full h-full" />
