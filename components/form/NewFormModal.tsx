@@ -49,9 +49,8 @@ export default function NewFormModal({
       name,
       dueDate:dayjs(dueDate).toDate(),
       description,
-      formType, //formType: formType.id
+      formType,
     });
-    // console.log(`@@@@@ form: ${form}`);
     
     if (form.formType === "NOCODE") {
       await createNoCodeForm(form.id);
@@ -156,84 +155,9 @@ export default function NewFormModal({
                       Describe your sourcing
                     </label>
                     <div className="mt-2">
-                      <input
-                        type="text"
-                        name="description"
-                        className="block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        autoFocus
-                        required
-                      />
+                      <textarea name="description" id="description" value={description} autoFocus onChange={(e) => setDescription(e.target.value)} cols={30} rows={5}                         className="block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"/>
                     </div>
-                    
                   </div>
-                  {/* <RadioGroup value={formType} onChange={setFormType}>
-                    <RadioGroup.Label className="text-sm font-light text-ui-gray-dark">
-                      How do you build your form?
-                    </RadioGroup.Label>
-
-                    <div className="grid grid-cols-1 mt-4 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
-                      {formTypes.map((formType) => (
-                        <RadioGroup.Option
-                          key={formType.id}
-                          value={formType}
-                          className={({ checked, active }) =>
-                            classNames(
-                              checked ? "border-transparent" : "",
-                              active
-                                ? "border-red ring-2 ring-red"
-                                : "bg-ui-gray-lighter",
-                              "relative bg-white border rounded shadow-sm p-4 flex cursor-pointer focus:outline-none"
-                            )
-                          }
-                        >
-                          {({ checked, active }) => (
-                            <>
-                              <span className="flex flex-1">
-                                <span className="flex flex-col">
-                                  <RadioGroup.Label
-                                    as="span"
-                                    className="block font-bold text-md text-ui-gray-dark"
-                                  >
-                                    {formType.title}
-                                  </RadioGroup.Label>
-                                  <RadioGroup.Description
-                                    as="span"
-                                    className="flex items-center mt-1 text-xs whitespace-pre-wrap text-ui-gray-dark"
-                                  >
-                                    {formType.description}
-                                  </RadioGroup.Description>
-                                </span>
-                              </span>
-                              <CheckCircleIcon
-                                className={classNames(
-                                  !checked ? "hidden" : "",
-                                  "h-5 w-5 text-red"
-                                )}
-                                aria-hidden="true"
-                              />
-                              <div
-                                className={classNames(
-                                  checked ? "hidden" : "",
-                                  "h-4 w-4 rounded-full border-2 border-ui-gray-light"
-                                )}
-                                aria-hidden="true"
-                              />
-                              <span
-                                className={classNames(
-                                  active ? "border" : "border-2",
-                                  checked ? "border-red" : "border-transparent",
-                                  "absolute -inset-px rounded pointer-events-none"
-                                )}
-                                aria-hidden="true"
-                              />
-                            </>
-                          )}
-                        </RadioGroup.Option>
-                      ))}
-                    </div>
-                  </RadioGroup> */}
                   <div className="mt-5 sm:mt-6">
                     <StandardButton fullwidth type="submit">
                       create sourcing
