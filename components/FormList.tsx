@@ -99,7 +99,7 @@ export default function FormList() {
                       </div>
                       <div className="px-3 flex items-center justify-between border-y">
                         <CalendarDaysIcon className="w-6 h-6 stroke-thin" />
-                        {dayjs(form.dueDate) < dayjs() ? <p className="text-xs font-bold text-red-700 line-clamp-3">{"closed " + dayjs(form.dueDate).fromNow()}</p> : <p className="text-xs font-bold text-neutral-400 line-clamp-3">{dayjs(form.dueDate).format("MMM Do, YYYY")}</p> }
+                        {dayjs(form.dueDate) < dayjs() ? <p className="text-xs font-bold text-red-700 line-clamp-3">{"Closed " + dayjs(form.dueDate).fromNow()}</p> : <p className="text-xs font-bold text-neutral-400 line-clamp-3">{dayjs(form.dueDate).format("MMM Do, YYYY")}</p> }
                       </div>
                       <Link href={session.user.role===UserRole.PUBLIC?`/sourcings/${form.id}`:`/forms/${form.id}/form`}>
                         <a className="absolute w-full h-full" />

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
-import { ClockIcon } from "@heroicons/react/24/solid";
+import { ClockIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -105,8 +105,8 @@ function NoCodeFormPublic() {
               <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold">
                 {noCodeForm.form.name}
               </h1>
-              <p className="text-lg mb-10 ml-12 mx-auto">{noCodeForm.form.description}</p>
-              <p className="text-lg mb-10 ml-12 mx-auto">{moment(noCodeForm.form.dueDate).format("MMMM Do, YYYY")}</p>
+              <p className="text-lg mb-3 ml-12 mx-auto">{noCodeForm.form.description}</p>
+              <p className="flex  items-center text-sm mb-10 ml-12 mx-auto"><CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" /><span className="font-bold mr-1">Due date :</span> {moment(noCodeForm.form.dueDate).format("MMMM Do, YYYY")}</p>
                 {pages.map((page, index) => {
                   if (pages.length - 1 !== index)
                     return (
