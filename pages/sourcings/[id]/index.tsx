@@ -105,7 +105,7 @@ function NoCodeFormPublic() {
               <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold">
                 {noCodeForm.form.name}
               </h1>
-              <p className="text-lg mb-3 ml-12 mx-auto">{noCodeForm.form.description}</p>
+              <p className="text-lg mb-3 ml-12  mr-11">{noCodeForm.form.description}</p>
               <p className="flex  items-center text-sm mb-10 ml-12 mx-auto"><CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" /><span className="font-bold mr-1">Due date :</span> {moment(noCodeForm.form.dueDate).format("MMMM Do, YYYY")}</p>
                 {pages.map((page, index) => {
                   if (pages.length - 1 !== index)
