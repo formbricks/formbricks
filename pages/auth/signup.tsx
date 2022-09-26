@@ -6,13 +6,11 @@ import getConfig from "next/config";
 import { useState } from "react";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { createUser } from "../../lib/users";
-import { UserRole } from "@prisma/client";
 
 const { publicRuntimeConfig } = getConfig();
 
 export default function SignUpPage() {
   const router = useRouter();
-  const role = UserRole.PUBLIC;
   const [error, setError] = useState<string>("");
 
   const { emailVerificationDisabled, privacyUrl, termsUrl } =
@@ -32,7 +30,6 @@ export default function SignUpPage() {
         handlePhoneNumberValidity(e.target.elements.phone.value),
         e.target.elements.email.value,
         e.target.elements.password.value,
-        role
       );
 
       const url = emailVerificationDisabled

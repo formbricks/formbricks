@@ -1,7 +1,7 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { Children, Fragment } from "react";
+import { Fragment } from "react";
 import StandardButton from "../../components/StandardButton";
 
 export default function Modal({ open, setOpen, onClick, message }) {

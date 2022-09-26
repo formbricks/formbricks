@@ -49,12 +49,9 @@ function Form() {
 
   const pages = usePages({ blocks: noCodeForm.blocks, formId: formId });
 
-  const currentPages = [
-    ...pages.filter((page) => page.id === pageId),
-    pages[pages.length - 1],
-  ];
+  const currentPages = pages.find((page) => page.id === pageId);
 
-  return <App pages={currentPages} formId={formId} />;
+  return <App page={currentPages} formId={formId} />;
 }
 
 export default withAuthentication(Form);

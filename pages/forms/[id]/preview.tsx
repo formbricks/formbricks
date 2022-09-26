@@ -47,7 +47,7 @@ function SharePage({}) {
       <App
         id={appId}
         //TODO Update pages
-        pages={[]}
+        // page={[]}
         localOnly={true}
         formId={formId}
       />
