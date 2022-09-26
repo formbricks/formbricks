@@ -12,7 +12,6 @@ export const createUser = async (
   phone,
   email,
   password,
-  role
 ) => {
   const hashedPassword = await hashPassword(password);
   try {

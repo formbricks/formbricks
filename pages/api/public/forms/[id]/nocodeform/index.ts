@@ -40,7 +40,7 @@ export default async function handle(
           },
         },
       })
-    ).map((s) => s.data.pageName);
+    ).map(({ data }:{ data: any }) => data.pageName);
 
     if (form === null) return res.status(404).json({ error: "not found" });
     return res.json({ form, events: sessionEvents });
