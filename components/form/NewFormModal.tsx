@@ -133,7 +133,7 @@ export default function NewFormModal({
                       Describe your sourcing
                     </label>
                     <div className="mt-2">
-                      <textarea name="description" id="description" value={description} autoFocus onChange={(e) => setDescription(e.target.value)} cols={30} rows={5}                         className="block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"/>
+                      <textarea name="description" id="description" value={description} autoFocus onChange={(e) => setDescription(e.target.value)} cols={30} rows={5} className="resize-none block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"/>
                     </div>
                   </div>
                   <div className="mt-5 sm:mt-6">
