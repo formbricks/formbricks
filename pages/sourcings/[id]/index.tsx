@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
-import { ClockIcon } from "@heroicons/react/24/solid";
+import { ClockIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -65,7 +65,7 @@ function NoCodeFormPublic() {
 
   return (
     <BaseLayoutManagement
-      title={"Forms - snoopForms"}
+      title={"Forms - KDA Sourcing"}
       breadcrumbs={[
         {
           name: `My Sourcings / ${noCodeForm.form.name}`,
@@ -101,60 +101,64 @@ function NoCodeFormPublic() {
             </div>
           ) : (
             <div className="flex-col">
-              <h1 className="text-2xl ml-12 mt-5 mx-auto font-bold">
+              <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold">
                 {noCodeForm.form.name}
               </h1>
-              <table className="auto mt-5 w-full">
-                <tbody className="w-full text-xl">
-                  {pages.map((page, index) => {
-                    if (pages.length - 1 !== index)
-                      return (
-                        <tr
-                          key={index}
-                          className="w-full py-4 border-y-2 border-slate-100 flex justify-between"
-                        >
-                          <td className="pl-12 flex items-center">
-                            {page.length ? "" : page.blocks[0].data.text}
-                          </td>
-                          <td className="flex items-center justify-between w-1/3">
-                            <div className="flex items-center w-4/5">
-                              {page.blocks[1].type === "timerToolboxOption" ? (
-                                <span className="flex items-center">
-                                  <ClockIcon className="w-10 mr-2" />
-                                  {getPageTimer(page.blocks)} minutes
-                                </span>
-                              ) : (
-                                <></>
-                              )}
-                            </div>
-                            {pageIsCompleted(page.id) ? (
-                              <button
-                                onClick={() => handleClickAction(page)}
-                                disabled={isTimed(page)}
-                                className="w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold"
-                              >
-                                {isTimed(page) ? "Completed" : "Update answer"}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleClickAction(page)}
-                                className="w-107 rounded-full bg-gray-800 p-2.5 text-white font-bold"
-                              >
-                                Start
-                              </button>
-                            )}
-                          </td>
-                          <DisclaimerModal
-                            open={openDisclaimer}
-                            setOpen={setOpenDisclaimer}
-                            message="You are about to start a timed form"
-                            onClick={() => handleClickAction(page, true)}
-                          />
-                        </tr>
-                      );
-                  })}
-                </tbody>
-              </table>
+              <p className="text-lg mb-3 ml-12  mr-11">
+                {noCodeForm.form.description}
+              </p>
+              <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
+                <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
+                <span className="font-bold mr-1">Due date :</span>{" "}
+                {new Date(noCodeForm.form.dueDate).toLocaleDateString()}
+              </p>
+              {pages.map((page, index) => {
+                if (pages.length - 1 !== index)
+                  return (
+                    <div
+                      className="w-full py-4 border-y-2 border-slate-100 flex justify-between"
+                      key={index}
+                    >
+                      <div className="pl-12 flex items-center">
+                        {page.length ? "" : page.blocks[0].data.text}
+                      </div>
+                      <div className="flex items-center justify-between w-1/3 pr-12">
+                        <div className="flex items-center w-3/6">
+                          {page.blocks[1].type === "timerToolboxOption" ? (
+                            <span className="flex items-center">
+                              <ClockIcon className="w-10 mr-2" />
+                              {getPageTimer(page.blocks)} minutes
+                            </span>
+                          ) : (
+                            <></>
+                          )}
+                        </div>
+                        {pageIsCompleted(page.id) ? (
+                          <button
+                            onClick={() => handleClickAction(page)}
+                            disabled={isTimed(page)}
+                            className="w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold"
+                          >
+                            {isTimed(page) ? "Completed" : "Update answer"}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleClickAction(page)}
+                            className="w-107 rounded-full bg-gray-800 p-2.5 text-white font-bold"
+                          >
+                            Start
+                          </button>
+                        )}
+                      </div>
+                      <DisclaimerModal
+                        open={openDisclaimer}
+                        setOpen={setOpenDisclaimer}
+                        message="You are about to start a timed form"
+                        onClick={() => handleClickAction(page, true)}
+                      />
+                    </div>
+                  );
+              })}
             </div>
           )}
           {(publicPrivacyUrl || publicImprintUrl) && (

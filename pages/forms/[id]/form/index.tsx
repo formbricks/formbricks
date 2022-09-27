@@ -40,7 +40,7 @@ function FormPage() {
     <>
       {form.formType === "NOCODE" ? (
         <BaseLayoutManagement
-          title={`${form.name} - snoopForms`}
+          title={`${form.name} - KDA Sourcing`}
           breadcrumbs={breadcrumbs}
           steps={formMenuSteps}
           currentStep="form"
@@ -53,7 +53,7 @@ function FormPage() {
         </BaseLayoutManagement>
       ) : (
         <BaseLayoutManagement
-          title={`${form.name} - snoopForms`}
+          title={`${form.name} - KDA Sourcing`}
           breadcrumbs={breadcrumbs}
           steps={formMenuSteps}
           currentStep="form"

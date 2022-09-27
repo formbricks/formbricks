@@ -148,7 +148,7 @@ function PipelinesPage() {
 
   return (
     <BaseLayoutManagement
-      title={`${form.name} - snoopForms`}
+      title={`${form.name} - KDA Sourcing`}
       breadcrumbs={[{ name: form.name, href: "#", current: true }]}
       steps={formMenuSteps}
       currentStep="pipelines"
