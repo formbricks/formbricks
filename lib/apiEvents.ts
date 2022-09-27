@@ -33,7 +33,7 @@ export const validateEvents = (
   }
 };
 
-export const processApiEvent = async (event: ApiEvent, formId, candidateEmail) => {
+export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
   // save submission
   if (event.type === "pageSubmission") {
     const data = event.data;
@@ -42,7 +42,7 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateEmail) =
         type: "pageSubmission",
         data: {
           formId,
-          candidateEmail,
+          candidateId,
           pageName: data.pageName,
           submission: data.submission,
         },

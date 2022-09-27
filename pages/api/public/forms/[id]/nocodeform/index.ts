@@ -37,7 +37,7 @@ export default async function handle(
           data: {
             array_contains: {
               formId,
-              candidateEmail: session.user?.email,
+              candidateId: session.user.id,
             },
           },
         },
