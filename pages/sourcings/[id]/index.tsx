@@ -68,7 +68,7 @@ function NoCodeFormPublic() {
       title={"Forms - KDA Sourcing"}
       breadcrumbs={[
         {
-          name: `My Sourcings / ${noCodeForm.form.name}`,
+          name: `${noCodeForm.form.name}`,
           href: "/sourcings",
           current: true,
         },

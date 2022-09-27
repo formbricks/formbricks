@@ -22,7 +22,7 @@ function FormPage() {
 
   const breadcrumbs = useMemo(() => {
     if (form) {
-      return [{ name: form.name, href: "#", current: true }];
+      return [{ name: form.name, href: "/forms", current: true }];
     }
   }, [form]);
 
