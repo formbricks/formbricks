@@ -1,5 +1,10 @@
 import { Menu, Transition } from "@headlessui/react";
-import { PlusIcon, CalendarDaysIcon, FolderOpenIcon, DocumentPlusIcon } from "@heroicons/react/24/outline";
+import {
+  PlusIcon,
+  CalendarDaysIcon,
+  FolderOpenIcon,
+  DocumentPlusIcon,
+} from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState } from "react";
@@ -58,7 +63,7 @@ export default function FormList() {
                   onClick={() => newForm()}
                   alertText="You don't have any sourcings yet."
                   hintText="Start by creating a sourcing."
-                  buttonText="create sourcing"
+                  buttonText="New sourcing"
                   borderStyles="border-4 border-dotted border-red"
                   hasButton={true}
                 >
@@ -76,7 +81,7 @@ export default function FormList() {
                     <div className="flex items-center justify-center h-full overflow-hidden font-light text-white rounded-md shadow bg-snoopfade">
                       <div className="px-4 py-8 sm:p-14">
                         <PlusIcon className="mx-auto w-14 h-14 stroke-thin" />
-                        create form
+                        New sourcing
                       </div>
                     </div>
                   </li>
@@ -93,14 +98,14 @@ export default function FormList() {
                       <div className="px-3 flex items-center justify-between border-y">
                         <CalendarDaysIcon className="w-6 h-6 stroke-thin" />
                         {new Date(form.dueDate) < new Date() ? (
-                          <p className="text-xs font-bold text-red-700 line-clamp-3">
-                            {"Closed " +
+                          <span className="text-xs font-bold text-red-700 line-clamp-3">
+                            {"Closed on " +
                               new Date(form.dueDate).toLocaleDateString()}
-                          </p>
+                          </span>
                         ) : (
-                          <p className="text-xs font-bold text-neutral-400 line-clamp-3">
+                          <span className="text-xs font-bold text-neutral-400 line-clamp-3">
                             {new Date(form.dueDate).toLocaleDateString()}
-                          </p>
+                          </span>
                         )}
                       </div>
                       <Link

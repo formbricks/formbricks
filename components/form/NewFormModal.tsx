@@ -138,7 +138,7 @@ export default function NewFormModal({
                   </div>
                   <div className="mt-5 sm:mt-6">
                     <StandardButton fullwidth type="submit">
-                      create sourcing
+                      New sourcing
                       <BsPlus className="w-6 h-6 ml-1"></BsPlus>
                     </StandardButton>
                   </div>

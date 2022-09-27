@@ -173,6 +173,11 @@ export type Submission = {
   pages?: SubmissionPage[];
 };
 
+export type FormWhereClause = {
+  noCodeForm?: any;
+  dueDate?: any
+};
+
 type SubmissionPage = {
   name: string;
   type: string;
