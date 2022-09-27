@@ -2,7 +2,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/router";
-import { Fragment, useState } from "react";
+import { Fragment, useState, useRef } from "react";
 import { BsPlus } from "react-icons/bs";
 import { createForm } from "../../lib/forms";
 import { createNoCodeForm } from "../../lib/noCodeForm";
@@ -19,9 +19,9 @@ export default function NewFormModal({
 }: FormOnboardingModalProps) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [dueDate, setDueDate] = useState(Date());
+  const [dueDate, setDueDate] = useState("");
   const [description, setDescription] = useState("");
-  
+
   const createFormAction = async (e) => {
     e.preventDefault();
     const form = await createForm({
@@ -35,7 +35,7 @@ export default function NewFormModal({
     }
     router.push(`/forms/${form.id}/form`);
   };
-
+  const ref = useRef();
   return (
     <Transition.Root show={open} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={setOpen}>
@@ -113,12 +113,14 @@ export default function NewFormModal({
                     </label>
                     <div className="mt-2">
                       <input
-                        type="date"
+                        type="text"
                         name="dueDate"
                         className="block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
-                        placeholder="e.g. Customer Research Survey"
+                        placeholder="e.g. mm/dd/yyyy"
                         value={dueDate}
                         onChange={(e) => setDueDate(e.target.value)}
+                        onFocus={(e) => (e.target.type = "date")}
+                        onBlur={(e) => (e.target.type = "text")}
                         autoFocus
                         required
                       />
