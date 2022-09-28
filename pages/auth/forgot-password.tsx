@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
             <div>
               <Image
                 src="/img/kda_logo.svg"
-                alt="snoopForms logo"
+                alt="kinshasa digital academy logo"
                 width={500}
                 height={89}
               />

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
-import { ClockIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
+import { ClockIcon, CalendarDaysIcon, InboxArrowDownIcon } from "@heroicons/react/24/solid";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -89,7 +89,7 @@ function NoCodeFormPublic() {
                   <div>
                     <Image
                       src="/img/kda_logo.svg"
-                      alt="snoopForms logo"
+                      alt="kinshasa digital academy logo"
                       width={500}
                       height={89}
                     />
@@ -128,13 +128,19 @@ function NoCodeFormPublic() {
                       <div className="pl-12 flex items-center">
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
-                      <div className="flex items-center justify-between w-1/3 pr-12">
-                        <div className="flex items-center w-3/6">
+                      <div className="flex items-center justify-between w-2/5 pr-8">
+                        <div className="flex items-center w-3/8" >
                           {page.blocks[1].type === "timerToolboxOption" ? (
-                            <span className="flex items-center">
-                              <ClockIcon className="w-10 mr-2" />
-                              {getPageTimer(page.blocks)} minutes
-                            </span>
+                            <div className="border flex w-full">
+                              <span className="flex items-center mr-7">
+                                <ClockIcon className="w-10 mr-2" />
+                                {getPageTimer(page.blocks)} minutes
+                              </span>
+                              <span className="flex items-center">
+                                <InboxArrowDownIcon className="w-10 mr-2" />
+                                1 attempt
+                              </span>
+                            </div>
                           ) : (
                             <></>
                           )}
