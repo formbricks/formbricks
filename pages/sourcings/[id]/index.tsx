@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
-import { ClockIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
+import { ClockIcon, CalendarDaysIcon, InboxArrowDownIcon } from "@heroicons/react/24/solid";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -27,6 +27,12 @@ function NoCodeFormPublic() {
   } = useNoCodeFormPublic(formId);
   const [openDisclaimer, setOpenDisclaimer] = useState(false);
   const [pageIdOnModal, setPageIdOnModal] = useState("");
+
+  const options = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  };
 
   if (isLoadingNoCodeForm) {
     return <Loading />;
@@ -88,8 +94,8 @@ function NoCodeFormPublic() {
                 <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
                   <div>
                     <Image
-                      src="/img/snoopforms-logo.svg"
-                      alt="snoopForms logo"
+                      src="/img/kda_logo.svg"
+                      alt="kinshasa digital academy logo"
                       width={500}
                       height={89}
                     />
@@ -116,7 +122,7 @@ function NoCodeFormPublic() {
               <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
                 <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
                 <span className="font-bold mr-1">Due date :</span>{" "}
-                {new Date(noCodeForm.form.dueDate).toLocaleDateString()}
+                {new Date(noCodeForm.form.dueDate).toLocaleDateString('en-US', options)}
               </p>
               {pages.map((page, index) => {
                 if (pages.length - 1 !== index)
@@ -128,13 +134,19 @@ function NoCodeFormPublic() {
                       <div className="pl-12 flex items-center">
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
-                      <div className="flex items-center justify-between w-1/3 pr-12">
-                        <div className="flex items-center w-3/6">
+                      <div className="flex items-center justify-between w-2/5 pr-8">
+                        <div className="flex items-center w-3/8" >
                           {page.blocks[1].type === "timerToolboxOption" ? (
-                            <span className="flex items-center">
-                              <ClockIcon className="w-10 mr-2" />
-                              {getPageTimer(page.blocks)} minutes
-                            </span>
+                            <div className="flex w-full">
+                              <span className="flex items-center mr-7 text-gray-800">
+                                <ClockIcon className="w-6 mr-2" />
+                                {getPageTimer(page.blocks)} minutes
+                              </span>
+                              <span className="flex items-center text-gray-800">
+                                <InboxArrowDownIcon className="w-5 mr-2" />
+                                1 attempt
+                              </span>
+                            </div>
                           ) : (
                             <></>
                           )}

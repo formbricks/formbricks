@@ -79,9 +79,6 @@ export default function SignUpPage() {
             </div>
 
             <div className="mt-4">
-              <p className="text-sm text-center text-gray-600">
-                Finally solid open-source forms 🤸
-              </p>
               <div className="mt-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
