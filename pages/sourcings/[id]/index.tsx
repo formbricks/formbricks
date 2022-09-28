@@ -46,7 +46,7 @@ function NoCodeFormPublic() {
   };
 
   const pageIsCompleted = (pageId: string) => {
-    return candidateSubmissions.includes(pageId);
+    return candidateSubmissions.map(({ data }:{ data: any }) => data.pageName).includes(pageId);
   };
 
   const getPageTimer = (pageBlocks: any) => {
@@ -60,7 +60,9 @@ function NoCodeFormPublic() {
         setOpenDisclaimer(true);
         setPageIdOnModal(page.id);
       } else router.push(`/sourcings/${formId}/${page.id}`);
-    } else router.push(`/sourcings/${formId}/${pageIdOnModal}`);
+    } else {
+      router.push(`/sourcings/${formId}/${pageIdOnModal}`)
+    };
   };
 
   return (

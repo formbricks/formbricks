@@ -43,8 +43,7 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
         data: {
           formId,
           candidateId,
-          pageName: data.pageName,
-          submission: data.submission,
+          ...data,
         },
         submissionSession: { connect: { id: data.submissionSessionId } },
       },
