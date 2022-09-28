@@ -28,6 +28,12 @@ function NoCodeFormPublic() {
   const [openDisclaimer, setOpenDisclaimer] = useState(false);
   const [pageIdOnModal, setPageIdOnModal] = useState("");
 
+  const options = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  };
+
   if (isLoadingNoCodeForm) {
     return <Loading />;
   }
@@ -116,7 +122,7 @@ function NoCodeFormPublic() {
               <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
                 <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
                 <span className="font-bold mr-1">Due date :</span>{" "}
-                {new Date(noCodeForm.form.dueDate).toLocaleDateString()}
+                {new Date(noCodeForm.form.dueDate).toLocaleDateString('en-US', options)}
               </p>
               {pages.map((page, index) => {
                 if (pages.length - 1 !== index)
