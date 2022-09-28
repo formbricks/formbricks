@@ -1,6 +1,5 @@
 import type { NextApiResponse, NextApiRequest } from "next";
 import { getSession } from "next-auth/react";
-import { formHasOwnership } from "../../../../lib/api";
 import { prisma } from "../../../../lib/prisma";
 
 export default async function handle(
@@ -14,13 +13,6 @@ export default async function handle(
   }
 
   const formId = req.query.id.toString();
-
-  const ownership = await formHasOwnership(session, formId);
-  if (!ownership) {
-    return res
-      .status(401)
-      .json({ message: "You are not authorized to access this form" });
-  }
 
   // GET /api/forms/:id
   // Get form with specific id
