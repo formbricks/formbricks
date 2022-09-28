@@ -138,12 +138,12 @@ function NoCodeFormPublic() {
                         <div className="flex items-center w-3/8" >
                           {page.blocks[1].type === "timerToolboxOption" ? (
                             <div className="flex w-full">
-                              <span className="flex items-center mr-7">
-                                <ClockIcon className="w-10 mr-2" />
+                              <span className="flex items-center mr-7 text-gray-800">
+                                <ClockIcon className="w-6 mr-2" />
                                 {getPageTimer(page.blocks)} minutes
                               </span>
-                              <span className="flex items-center">
-                                <InboxArrowDownIcon className="w-10 mr-2" />
+                              <span className="flex items-center text-gray-800">
+                                <InboxArrowDownIcon className="w-5 mr-2" />
                                 1 attempt
                               </span>
                             </div>
