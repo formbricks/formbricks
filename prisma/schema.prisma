@@ -34,7 +34,7 @@ model Form {
   formType           FormType            @default(NOCODE)
   name               String              @default("")
   description        String              @default("")
-  dueDate            DateTime            @default(now())
+  dueDate            DateTime?
   schema             Json                @default("{}")
   submissionSessions SubmissionSession[]
   pipelines          Pipeline[]
