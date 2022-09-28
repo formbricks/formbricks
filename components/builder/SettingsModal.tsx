@@ -23,10 +23,9 @@ export default function SettingsModal({ open, setOpen, formId }) {
   const handleBlurSourcingName = async () =>{
       const newFormName = JSON.parse(JSON.stringify(form));
       newFormName.name = name;
-      console.log("#####newFormName: ",newFormName);
-
       await persistForm(newFormName);
-      mutateForm(newFormName);;
+      mutateForm(newFormName);
+      toast("Your sourcing name has changed 🎉")
   }
 
   const toggleClose = async () => {
