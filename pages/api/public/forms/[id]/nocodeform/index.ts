@@ -31,18 +31,16 @@ export default async function handle(
       },
     });
 
-    const sessionEvents = (
-      await prisma.sessionEvent.findMany({
-        where: {
-          data: {
-            array_contains: {
-              formId,
-              candidateId: session.user.id,
-            },
+    const sessionEvents = await prisma.sessionEvent.findMany({
+      where: {
+        data: {
+          array_contains: {
+            formId,
+            candidateId: session.user.id,
           },
         },
-      })
-    ).map(({ data }:{ data: any }) => data.pageName);
+      },
+    });
 
     if (form === null) return res.status(404).json({ error: "not found" });
     return res.json({ form, events: sessionEvents });

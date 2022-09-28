@@ -37,18 +37,43 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
   // save submission
   if (event.type === "pageSubmission") {
     const data = event.data;
-    await prisma.sessionEvent.create({
-      data: {
-        type: "pageSubmission",
+
+    const sessionEvent = await prisma.sessionEvent.findFirst({
+      where: {
         data: {
-          formId,
-          candidateId,
-          pageName: data.pageName,
-          submission: data.submission,
+          array_contains: {
+            formId,
+            candidateId,
+            pageName: event.data.pageName,
+          },
         },
-        submissionSession: { connect: { id: data.submissionSessionId } },
       },
     });
+
+    if (sessionEvent) {
+      sessionEvent.data = data;
+      await prisma.sessionEvent.update({
+        where: {
+          id: sessionEvent.id,
+        },
+        data: {
+          data: { ...sessionEvent.data, formId, candidateId },
+        },
+      });
+    } else {
+      await prisma.sessionEvent.create({
+        data: {
+          type: "pageSubmission",
+          data: {
+            formId,
+            candidateId,
+            ...data,
+          },
+          submissionSession: { connect: { id: data.submissionSessionId } },
+        },
+      });
+    }
+
     const form = await prisma.form.findUnique({
       where: {
         id: formId,
