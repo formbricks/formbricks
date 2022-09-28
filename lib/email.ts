@@ -43,14 +43,14 @@ export const sendVerificationEmail = async (user) => {
   }/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
   await sendEmail({
     to: user.email,
-    subject: "Welcome to snoopForms",
-    html: `Welcome to snoopForms!<br/><br/>To verify your email address and start using snoopForms please click this link:<br/>
+    subject: "Welcome to KDA Sourcing",
+    html: `Welcome to KDA Sourcing!<br/><br/>To verify your email address and start using KDA Sourcing please click this link:<br/>
     <a href="${verifyLink}">${verifyLink}</a><br/>
     <br/>
     The link is valid for one day. If it has expired please request a new token here:<br/>
     <a href="${verificationRequestLink}">${verificationRequestLink}</a><br/>
     <br/>
-    Your snoopForms Team`,
+    Your KDA Team`,
   });
 };
 
@@ -63,7 +63,7 @@ export const sendForgotPasswordEmail = async (user) => {
   }/auth/reset-password?token=${encodeURIComponent(token)}`;
   await sendEmail({
     to: user.email,
-    subject: "Reset your snoopForms password",
+    subject: "Reset your KDA Sourcing password",
     html: `You have requested a link to change your password. You can do this through the link below:<br/>
     <a href="${verifyLink}">${verifyLink}</a><br/>
     <br/>
@@ -71,16 +71,16 @@ export const sendForgotPasswordEmail = async (user) => {
     <br/>
     Your password won't change until you access the link above and create a new one.<br/>
     <br/>
-    Your snoopForms Team`,
+    Your KDA Team`,
   });
 };
 
 export const sendPasswordResetNotifyEmail = async (user) => {
   await sendEmail({
     to: user.email,
-    subject: "Your snoopForms password has been changed",
+    subject: "Your KDA Sourcing password has been changed",
     html: `We're contacting you to notify you that your password has been changed.<br/>
     <br/>
-    Your snoopForms Team`,
+    Your KDA Team`,
   });
 };
