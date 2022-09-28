@@ -88,7 +88,7 @@ function NoCodeFormPublic() {
                 <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
                   <div>
                     <Image
-                      src="/img/snoopforms-logo.svg"
+                      src="/img/kda_logo.svg"
                       alt="snoopForms logo"
                       width={500}
                       height={89}
