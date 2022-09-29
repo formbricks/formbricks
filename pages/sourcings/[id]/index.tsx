@@ -1,6 +1,10 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
-import { ClockIcon, CalendarDaysIcon, InboxArrowDownIcon } from "@heroicons/react/24/solid";
+import {
+  ClockIcon,
+  CalendarDaysIcon,
+  InboxArrowDownIcon,
+} from "@heroicons/react/24/solid";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -30,9 +34,9 @@ function NoCodeFormPublic() {
   const [pageIdOnModal, setPageIdOnModal] = useState("");
 
   const options = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   };
 
   if (isLoadingNoCodeForm) {
@@ -48,14 +52,16 @@ function NoCodeFormPublic() {
   }
 
   const pageIsCompleted = (pageId: string) => {
-    const startDate = candidateSubmissions.find(submission => submission.data.pageName === pageId)?.data.startDate;
+    const startDate = candidateSubmissions.find(
+      (submission) => submission.data.pageName === pageId
+    )?.data.startDate;
     if (!startDate) return false;
 
-    const currentPage = pages.find(page => page.id === pageId)
-    const time = findTimer(currentPage, startDate)
-    const leftTime = getLeftTime(startDate, time)
+    const currentPage = pages.find((page) => page.id === pageId);
+    const time = findTimer(currentPage, startDate);
+    const leftTime = getLeftTime(startDate, time);
 
-    return leftTime > 0
+    return leftTime > 0;
   };
 
   const getPageTimer = (pageBlocks: any) => {
@@ -70,8 +76,8 @@ function NoCodeFormPublic() {
         setPageIdOnModal(page.id);
       } else router.push(`/sourcings/${formId}/${page.id}`);
     } else {
-      router.push(`/sourcings/${formId}/${pageIdOnModal}`)
-    };
+      router.push(`/sourcings/${formId}/${pageIdOnModal}`);
+    }
   };
 
   return (
@@ -88,7 +94,6 @@ function NoCodeFormPublic() {
           href: "#",
           current: true,
         },
-
       ]}
     >
       <LimitedWidth>
@@ -127,7 +132,10 @@ function NoCodeFormPublic() {
               <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
                 <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
                 <span className="font-bold mr-1">Due date :</span>{" "}
-                {new Date(noCodeForm.form.dueDate).toLocaleDateString('en-US', options)}
+                {new Date(noCodeForm.form.dueDate).toLocaleDateString(
+                  "en-US",
+                  options
+                )}
               </p>
               {pages.map((page, index) => {
                 if (pages.length - 1 !== index)
@@ -142,14 +150,16 @@ function NoCodeFormPublic() {
                       <div className="flex items-center justify-between w-1/3 pr-12">
                         <div className="flex items-center w-3/6">
                           {isTimedPage(page) ? (
-                            <span className="flex items-center">
-                              <ClockIcon className="w-10 mr-2" />
-                              {getPageTimer(page.blocks) } minutes
-                            </span>
-                            <span className="flex items-center text-gray-800">
-                                <InboxArrowDownIcon className="w-5 mr-2" />
-                                1 attempt
-                             </span>
+                            <>
+                              <span className="flex items-center">
+                                <ClockIcon className="w-10 mr-2" />
+                                {getPageTimer(page.blocks)} minutes
+                              </span>
+                              <span className="flex items-center text-gray-800">
+                                <InboxArrowDownIcon className="w-5 mr-2" />1
+                                attempt
+                              </span>
+                            </>
                           ) : (
                             <></>
                           )}
