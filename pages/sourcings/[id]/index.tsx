@@ -138,12 +138,12 @@ function NoCodeFormPublic() {
                       <div className="pl-12 flex items-center">
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
-                      <div className="flex items-center justify-between w-1/3 pr-12">
-                        <div className="flex items-center w-3/6">
-                          {isTimedPage(page) ? (
-                            <>
-                              <span className="flex items-center">
-                                <ClockIcon className="w-6 mr-2" />
+                      <div className="flex items-center justify-between w-2/5 pr-8">
+                        <div className="flex items-center w-3/8" >
+                          {page.blocks[1].type === "timerToolboxOption" ? (
+                            <div className="flex w-full">
+                              <span className="flex items-center mr-7 text-gray-800">
+                                <ClockIcon className="w-7 mr-2" />
                                 {getPageTimer(page.blocks)} minutes
                               </span>
                               <span className="flex items-center text-gray-800">
