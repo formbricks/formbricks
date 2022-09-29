@@ -9,7 +9,7 @@ import { useNoCodeFormPublic } from "../../../lib/noCodeForm";
 import Loading from "../../../components/Loading";
 import App from "../../../components/frontend/App";
 import withAuthentication from "../../../components/layout/WithAuthentication";
-
+import { isTimedPage } from "../../../lib/utils";
 function Form() {
   const session = useSession();
   const router = useRouter();
@@ -94,13 +94,14 @@ function Form() {
     }
   };
 
-  startFom();
-
   const pages = usePages({ blocks: noCodeForm.blocks, formId: formId });
 
-  const currentPages = pages.find((page) => page.id === pageId);
+  const currentPage = pages.find((page) => page.id === pageId);
 
-  return <App page={currentPages} formId={formId} startDate={startDate} />;
+  if (isTimedPage(currentPage)) {
+    startFom();
+  }
+  return <App page={currentPage} formId={formId} startDate={startDate} />;
 }
 
 export default withAuthentication(Form);

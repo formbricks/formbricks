@@ -12,6 +12,7 @@ import getConfig from "next/config";
 import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
+import { findTimer, getLeftTime, isTimedPage } from "../../../lib/utils";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
@@ -40,13 +41,15 @@ function NoCodeFormPublic() {
     );
   }
 
-  const isTimed = (page: any) => {
-    const timers = page.blocks.filter((p) => p.type === "timerToolboxOption");
-    return !!timers.length;
-  };
-
   const pageIsCompleted = (pageId: string) => {
-    return candidateSubmissions.map(({ data }:{ data: any }) => data.pageName).includes(pageId);
+    const startDate = candidateSubmissions.find(submission => submission.data.pageName === pageId)?.data.startDate;
+    if (!startDate) return false;
+
+    const currentPage = pages.find(page => page.id === pageId)
+    const time = findTimer(currentPage, startDate)
+    const leftTime = getLeftTime(startDate, time)
+
+    return leftTime > 0
   };
 
   const getPageTimer = (pageBlocks: any) => {
@@ -56,7 +59,7 @@ function NoCodeFormPublic() {
 
   const handleClickAction = (page, fromModal: Boolean = false) => {
     if (!fromModal) {
-      if (isTimed(page)) {
+      if (isTimedPage(page)) {
         setOpenDisclaimer(true);
         setPageIdOnModal(page.id);
       } else router.push(`/sourcings/${formId}/${page.id}`);
@@ -126,10 +129,10 @@ function NoCodeFormPublic() {
                       </div>
                       <div className="flex items-center justify-between w-1/3 pr-12">
                         <div className="flex items-center w-3/6">
-                          {page.blocks[1].type === "timerToolboxOption" ? (
+                          {isTimedPage(page) ? (
                             <span className="flex items-center">
                               <ClockIcon className="w-10 mr-2" />
-                              {getPageTimer(page.blocks)} minutes
+                              {getPageTimer(page.blocks) } minutes
                             </span>
                           ) : (
                             <></>
@@ -138,10 +141,10 @@ function NoCodeFormPublic() {
                         {pageIsCompleted(page.id) ? (
                           <button
                             onClick={() => handleClickAction(page)}
-                            disabled={isTimed(page)}
+                            disabled={isTimedPage(page)}
                             className="w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold"
                           >
-                            {isTimed(page) ? "Completed" : "Update answer"}
+                            {isTimedPage(page) ? "Completed" : "Update answer"}
                           </button>
                         ) : (
                           <button
