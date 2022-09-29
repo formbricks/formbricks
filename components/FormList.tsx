@@ -4,6 +4,7 @@ import {
   CalendarDaysIcon,
   FolderOpenIcon,
   DocumentPlusIcon,
+  UserCircleIcon
 } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -14,10 +15,16 @@ import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
 import EmptyPageFiller from "./layout/EmptyPageFiller";
+import { format } from "date-fns";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
+  enum options  {
+    year = "numeric",
+    month = "long",
+    day = "numeric",
+  };
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -95,19 +102,24 @@ export default function FormList() {
                       <div className="p-6">
                         <p className="text-lg line-clamp-3">{form.name}</p>
                       </div>
-                      <div className="px-3 flex items-center justify-between border-y">
-                        <CalendarDaysIcon className="w-6 h-6 stroke-thin" />
-                        {new Date(form.dueDate) < new Date() ? (
-                          <span className="text-xs font-bold text-red-700 line-clamp-3">
-                            {"Closed on " +
-                              new Date(form.dueDate).toLocaleDateString()}
-                          </span>
-                        ) : (
-                          <span className="text-xs font-bold text-neutral-400 line-clamp-3">
-                            {new Date(form.dueDate).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
+                      <div className="border-y">
+                        <span className="flex  items-center  px-3 py-1">
+                          <CalendarDaysIcon className="w-5 h-5 text-black mr-2" />
+                          {new Date(form.dueDate) < new Date() ? (
+                            <span className="text-xs font-bold text-red-700 line-clamp-3">
+                              {format(new Date(form.dueDate), 'MMMM dd, yyyy')}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-neutral-500 line-clamp-3">
+                              {new Date(form.dueDate).toLocaleDateString("en-US", options)}
+                            </span>
+                          )}
+                        </span>
+                        <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
+                          <UserCircleIcon className="w-5 h-5 text-black mr-2" />
+                          {form.owner.firstname}
+                        </span>
+                      </div>    
                       <Link
                         href={
                           session.user.role === UserRole.PUBLIC
