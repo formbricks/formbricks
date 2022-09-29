@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { getSession } from "next-auth/react";
 import { prisma } from "../../../../../../lib/prisma";
 
 export default async function handle(
@@ -6,22 +7,42 @@ export default async function handle(
   res: NextApiResponse
 ) {
   const formId = req.query.id.toString();
+  const session = await getSession({ req });
 
   // GET /api/forms/:id/nocodeform
   // Get noCodeForm for a form with specific id
   if (req.method === "GET") {
-    const data = await prisma.noCodeForm.findUnique({
+    const form = await prisma.noCodeForm.findUnique({
       where: {
         formId: formId,
       },
       select: {
         id: true,
+        form: {
+          select: {
+            name: true,
+            description: true,
+            dueDate: true,
+          },
+        },
         published: true,
         closed: true,
         blocks: true,
       },
     });
-    if (data === null) return res.status(404).json({ error: "not found" });
-    return res.json(data);
+
+    const sessionEvents = await prisma.sessionEvent.findMany({
+      where: {
+        data: {
+          array_contains: {
+            formId,
+            candidateId: session.user.id,
+          },
+        },
+      },
+    });
+
+    if (form === null) return res.status(404).json({ error: "not found" });
+    return res.json({ form, events: sessionEvents });
   }
 }

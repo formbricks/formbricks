@@ -3,6 +3,8 @@ import { prisma } from "../../../lib/prisma";
 import { getSession } from "next-auth/react";
 import { generateId } from "../../../lib/utils";
 import { capturePosthogEvent } from "../../../lib/posthog";
+import { FormWhereClause } from "../../../lib/types";
+import { UserRole } from "@prisma/client";
 
 export default async function handle(
   req: NextApiRequest,
@@ -15,26 +17,31 @@ export default async function handle(
   }
 
   // GET /api/forms
-  // Gets all forms of a user
+  // Gets all sourcings for admins and all public for candidates
   if (req.method === "GET") {
-    //TODO : query Nocodeforms
+    let whereClause: FormWhereClause = {};
+    if (session.user.role === UserRole.PUBLIC)
+      whereClause = {
+        dueDate: { gte: new Date() },
+        noCodeForm: { published: true },
+      };
     const formData = await prisma.form.findMany({
-      
+      where: whereClause,
       include: {
         owner: {
           select: { firstname: true },
         },
-        noCodeForm:{
-          select:{published:true}
+        noCodeForm: {
+          select: { published: true },
         },
         _count: {
           select: { submissionSessions: true },
         },
       },
     });
-    
-    if(!formData.length) return res.status(204)
-    res.json(formData.filter((f)=>f.noCodeForm.published));
+
+    if (!formData.length) return res.status(204);
+    res.json(formData);
   }
 
   // POST /api/forms
@@ -44,15 +51,12 @@ export default async function handle(
   else if (req.method === "POST") {
     const form = req.body;
     const session = await getSession({ req });
-    //isNotAdmin(session, res)
-    //if(!isAdmin(session)) console.log("Erreur 403");
 
-    if(session.user.role!=="ADMIN"){
-      console.log(`The user ${session.user.email} isn't authorised`);
-      return res.status(403).json({message: "Unauthorized"})
+    if (session.user.role !== UserRole.ADMIN) {
+      return res.status(403).json({ message: "Unauthorized" });
     }
 
-// get unique alphanumeric ID
+    // get unique alphanumeric ID
     let validId = false;
     let id;
     while (!validId) {
@@ -70,7 +74,7 @@ export default async function handle(
     capturePosthogEvent(session.user.email, "form created", {
       formType: form.formType,
     });
-     res.json(result);
+    res.json(result);
   }
   // Unknown HTTP Method
   else {
@@ -90,4 +94,3 @@ const checkIdAvailability = async (id) => {
     return false;
   }
 };
-

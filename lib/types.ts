@@ -1,7 +1,7 @@
+import { JSXElementConstructor, ReactElement, ReactFragment } from "react";
+
 export type Form = {
   id: string;
-  createdAt: string;
-  updatedAt: string;
   title: string;
   finishedOnboarding: boolean;
   published: boolean;
@@ -9,7 +9,43 @@ export type Form = {
   owner: string;
   elements: [Element];
   elementsDraft: [Element];
+  createdAt: Date;
+  updatedAt: Date;
 };
+
+export type Page = {
+  id: string;
+  blocks: PageBlock[]
+}
+
+export type PageBlock = {
+  id: string;
+  type: string;
+  level?: number;
+  data: PageBlockData
+}
+
+
+
+export type PageBlockData = {
+  text: 
+    |string 
+    | number 
+    | boolean 
+    | ReactElement<any, string 
+    | JSXElementConstructor<any>> 
+    | ReactFragment; 
+    
+  level: number; 
+  label: string; 
+  help: string; 
+  placeholder: string; 
+  required: boolean; 
+  multipleChoice: any; 
+  options: any[]; 
+  submitLabel: string; 
+}
+
 
 export type AnswerSession = {
   id: string;
@@ -135,6 +171,11 @@ export type Submission = {
   id?: string;
   createdAt?: string;
   pages?: SubmissionPage[];
+};
+
+export type FormWhereClause = {
+  noCodeForm?: any;
+  dueDate?: any
 };
 
 type SubmissionPage = {

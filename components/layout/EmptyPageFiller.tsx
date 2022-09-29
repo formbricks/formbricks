@@ -29,12 +29,12 @@ const EmptyPageFiller: React.FC<Props> = ({
     >
       {children}
       <h3 className="mt-5 text-base font-bold text-ui-gray-medium">
-        {alertText}
+        {alertText?alertText:""}
       </h3>
-      <p className="mt-1 text-xs font-light text-ui-gray-medium">{hintText}</p>
+      <p className="mt-1 text-xs font-light text-ui-gray-medium">{hintText?hintText:""}</p>
       {hasButton && (
         <div className="mt-6">
-          <StandardButton onClick={onClick}>{buttonText}</StandardButton>
+          <StandardButton onClick={onClick}>{buttonText?buttonText:""}</StandardButton>
         </div>
       )}
     </div>

@@ -22,7 +22,8 @@ export const useNoCodeFormPublic = (formId) => {
   );
 
   return {
-    noCodeForm: data,
+    noCodeForm: data?.form,
+    candidateSubmissions: data?.events,
     isLoadingNoCodeForm: !error && !data,
     isErrorNoCodeForm: error,
     mutateNoCodeForm: mutate,

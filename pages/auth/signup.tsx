@@ -6,27 +6,20 @@ import getConfig from "next/config";
 import { useState } from "react";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { createUser } from "../../lib/users";
-import { UserRole } from "@prisma/client";
 
 const { publicRuntimeConfig } = getConfig();
 
 export default function SignUpPage() {
   const router = useRouter();
-  const role= UserRole.PUBLIC;
   const [error, setError] = useState<string>("");
 
   const { emailVerificationDisabled, privacyUrl, termsUrl } =
     publicRuntimeConfig;
-  const handlePhoneNumberValidity=(phone)=>{
-     console.log(`la valeur du champs est: ${phone}`);
-    
-    const validity=/^(\+243|0)[0-9]{9}$/.test(phone);
-    if(validity===false){
-      console.log(`the phone number ${phone} is incorrect`);
-      throw new Error("the phone number is incorrect");
-    }
+  const handlePhoneNumberValidity = (phone) => {
+    const validity = /^(\+243|0)[0-9]{9}$/.test(phone);
+    if (validity === false) throw new Error("the phone number is incorrect");
     return phone;
-  }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -37,7 +30,6 @@ export default function SignUpPage() {
         handlePhoneNumberValidity(e.target.elements.phone.value),
         e.target.elements.email.value,
         e.target.elements.password.value,
-        role
       );
 
       const url = emailVerificationDisabled
@@ -137,26 +129,36 @@ export default function SignUpPage() {
                     </label>
                     <div className="mt-1 flex">
                       <div className="flex items-center mr-5">
-                      <input
-                        id="male"
-                        name="gender"
-                        type="radio"
-                        value="male"
-                        required
-                        className="block form-check-input border rounded-md shadow-sm appearance-none  border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 mr-1.5"
-                      />
-                      <label className="form-check-label inline-block text-gray-800" htmlFor="male">Male</label>
+                        <input
+                          id="male"
+                          name="gender"
+                          type="radio"
+                          value="male"
+                          required
+                          className="block form-check-input border rounded-md shadow-sm appearance-none  border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 mr-1.5"
+                        />
+                        <label
+                          className="form-check-label inline-block text-gray-800"
+                          htmlFor="male"
+                        >
+                          Male
+                        </label>
                       </div>
-                       <div className="flex items-center">
-                         <input
-                        id="female"
-                        name="gender"
-                        type="radio"
-                        value="female"
-                        required
-                        className="block form-check-input border rounded-md shadow-sm appearance-none  border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 mr-1.5 "
-                      />
-                      <label className="form-check-label inline-block text-gray-800" htmlFor="female">Female</label>
+                      <div className="flex items-center">
+                        <input
+                          id="female"
+                          name="gender"
+                          type="radio"
+                          value="female"
+                          required
+                          className="block form-check-input border rounded-md shadow-sm appearance-none  border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 mr-1.5 "
+                        />
+                        <label
+                          className="form-check-label inline-block text-gray-800"
+                          htmlFor="female"
+                        >
+                          Female
+                        </label>
                       </div>
                     </div>
                   </div>

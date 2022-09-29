@@ -31,7 +31,7 @@ export default async function handle(
     }
     res.json({ success: true });
     for (const event of events) {
-      processApiEvent(event, formId, session.user.email);
+      processApiEvent(event, formId, session.user.id);
     }
   }
   // Unknown HTTP Method
