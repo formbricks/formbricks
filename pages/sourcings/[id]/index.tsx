@@ -139,7 +139,7 @@ function NoCodeFormPublic() {
                           {page.blocks[1].type === "timerToolboxOption" ? (
                             <div className="flex w-full">
                               <span className="flex items-center mr-7 text-gray-800">
-                                <ClockIcon className="w-6 mr-2" />
+                                <ClockIcon className="w-7 mr-2" />
                                 {getPageTimer(page.blocks)} minutes
                               </span>
                               <span className="flex items-center text-gray-800">
