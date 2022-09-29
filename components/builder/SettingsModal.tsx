@@ -12,7 +12,7 @@ import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
 //HiRefresh
 
 export default function SettingsModal({ open, setOpen, formId }) {
-  const { form, isLoadingForm, mutateForm } =
+  const { form, mutateForm } =
   useForm(formId);
   const {noCodeForm, mutateNoCodeForm, isLoadingNoCodeForm} = useNoCodeForm(formId)
   const [loading, setLoading] = useState(false);
@@ -20,31 +20,13 @@ export default function SettingsModal({ open, setOpen, formId }) {
   const [dueDate, setDueDate] = useState(form.dueDate);
   const [description, setDescription] = useState(form.description);
 
-  const handleBlurSourcingName = async () =>{
-      const newForm = JSON.parse(JSON.stringify(form));
-      newForm.name = name;
-      await persistForm(newForm);
-      mutateForm(newForm);
-      toast("Your sourcing name has changed 🎉")
-  }
-
-  const handleBlurSourcingDueDate = async () =>{
+  const handleBlurInputs = async (inputName:any)=>{
     const newForm = JSON.parse(JSON.stringify(form));
-    newForm.dueDate = new Date(dueDate); //new Date(dueDate)
+    inputName === "dueDate" ? newForm.dueDate = new Date(dueDate) : inputName === "name" ? newForm.name = name : newForm.description = description;
     await persistForm(newForm);
     mutateForm(newForm);
-    
-    toast("Your sourcing due date has changed 🎉")
-}
-
-const handleBlurSourcingDescription = async () =>{
-  const newForm = JSON.parse(JSON.stringify(form));
-  newForm.description = description;
-  await persistForm(newForm);
-  mutateForm(newForm);
-  
-  toast("Your sourcing description has changed 🎉")
-}
+    toast(`Your sourcing has been updated successfully 🎉`)
+  }
 
   const toggleClose = async () => {
     setLoading(true);
@@ -128,7 +110,7 @@ const handleBlurSourcingDescription = async () =>{
                           placeholder="e.g. Customer Research Survey"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          onBlur={handleBlurSourcingName}
+                          onBlur={(e)=> handleBlurInputs(e.target.name)} //handleBlurSourcingName
                           autoFocus
                           required
                         />
@@ -149,7 +131,7 @@ const handleBlurSourcingDescription = async () =>{
                           placeholder="e.g. mm/dd/yyyy"
                           value={format((new Date(dueDate)), 'yyyy-MM-dd')}
                           onChange={(e) => setDueDate(e.target.value)}
-                          onBlur={handleBlurSourcingDueDate}
+                          onBlur={(e)=> handleBlurInputs(e.target.name)} //handleBlurSourcingDueDate
                           autoFocus
                           required
                         />
@@ -163,7 +145,7 @@ const handleBlurSourcingDescription = async () =>{
                         Describe your sourcing
                       </label>
                       <div className="mt-1">
-                        <textarea name="description" id="description" value={description} autoFocus onChange={(e) => setDescription(e.target.value)} onBlur={handleBlurSourcingDescription} cols={30} rows={5} className="resize-none block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"/>
+                        <textarea name="description" id="description" value={description} autoFocus onChange={(e) => setDescription(e.target.value)} onBlur={(e)=> handleBlurInputs(e.target.name)} cols={30} rows={5} className="resize-none block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"/>
                       </div>
                     </div>
                   </form>
