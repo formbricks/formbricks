@@ -1,6 +1,10 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
-import { ClockIcon, CalendarDaysIcon, InboxArrowDownIcon } from "@heroicons/react/24/solid";
+import {
+  ClockIcon,
+  CalendarDaysIcon,
+  InboxArrowDownIcon,
+} from "@heroicons/react/24/solid";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -12,6 +16,7 @@ import getConfig from "next/config";
 import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
+import { isTimedPage } from "../../../lib/utils";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
@@ -28,10 +33,10 @@ function NoCodeFormPublic() {
   const [openDisclaimer, setOpenDisclaimer] = useState(false);
   const [pageIdOnModal, setPageIdOnModal] = useState("");
 
-  const options = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  enum options  {
+    year = "numeric",
+    month = "long",
+    day = "numeric",
   };
 
   if (isLoadingNoCodeForm) {
@@ -46,13 +51,8 @@ function NoCodeFormPublic() {
     );
   }
 
-  const isTimed = (page: any) => {
-    const timers = page.blocks.filter((p) => p.type === "timerToolboxOption");
-    return !!timers.length;
-  };
-
-  const pageIsCompleted = (pageId: string) => {
-    return candidateSubmissions.includes(pageId);
+  const pageIsCompleted = (pageId: string) => {    
+    return candidateSubmissions.map(submission => submission.data.pageName).includes(pageId);
   };
 
   const getPageTimer = (pageBlocks: any) => {
@@ -62,11 +62,13 @@ function NoCodeFormPublic() {
 
   const handleClickAction = (page, fromModal: Boolean = false) => {
     if (!fromModal) {
-      if (isTimed(page)) {
+      if (isTimedPage(page)) {
         setOpenDisclaimer(true);
         setPageIdOnModal(page.id);
       } else router.push(`/sourcings/${formId}/${page.id}`);
-    } else router.push(`/sourcings/${formId}/${pageIdOnModal}`);
+    } else {
+      router.push(`/sourcings/${formId}/${pageIdOnModal}`);
+    }
   };
 
   return (
@@ -83,7 +85,6 @@ function NoCodeFormPublic() {
           href: "#",
           current: true,
         },
-
       ]}
     >
       <LimitedWidth>
@@ -122,7 +123,10 @@ function NoCodeFormPublic() {
               <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
                 <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
                 <span className="font-bold mr-1">Due date :</span>{" "}
-                {new Date(noCodeForm.form.dueDate).toLocaleDateString('en-US', options)}
+                {new Date(noCodeForm.form.dueDate).toLocaleDateString(
+                  "en-US",
+                  options
+                )}
               </p>
               {pages.map((page, index) => {
                 if (pages.length - 1 !== index)
@@ -143,10 +147,10 @@ function NoCodeFormPublic() {
                                 {getPageTimer(page.blocks)} minutes
                               </span>
                               <span className="flex items-center text-gray-800">
-                                <InboxArrowDownIcon className="w-5 mr-2" />
-                                1 attempt
+                                <InboxArrowDownIcon className="w-5 mr-2" />1
+                                attempt
                               </span>
-                            </div>
+                            </>
                           ) : (
                             <></>
                           )}
@@ -154,10 +158,10 @@ function NoCodeFormPublic() {
                         {pageIsCompleted(page.id) ? (
                           <button
                             onClick={() => handleClickAction(page)}
-                            disabled={isTimed(page)}
+                            disabled={isTimedPage(page)}
                             className="w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold"
                           >
-                            {isTimed(page) ? "Completed" : "Update answer"}
+                            {isTimedPage(page) ? "Completed" : "Update answer"}
                           </button>
                         ) : (
                           <button

@@ -50,6 +50,7 @@ function SharePage({}) {
         // page={[]}
         localOnly={true}
         formId={formId}
+        startDate={new Date()}
       />
     </LayoutPreview>
   );

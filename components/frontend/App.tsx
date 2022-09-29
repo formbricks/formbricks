@@ -5,19 +5,20 @@ import {
   PhoneIcon,
 } from "@heroicons/react/24/solid";
 import { useRouter } from "next/router";
+import Image from "next/image";
 import { SnoopElement, SnoopForm, SnoopPage } from "../../kda-snoopforms-react/src";
 import { Page, PageBlock } from '../../lib/types';
-
+import {findTimer, isTimedPage} from '../../lib/utils'
 
 interface IProps  {  
   id: string;
   formId: string;
   page?: Page;
-  localOnly: boolean
-
+  localOnly: boolean;
+  startDate: Date
 }
 
-const App: FC<IProps> = ({ id = "", formId, page, localOnly = false }) => {
+const App: FC<IProps> = ({ id = "", formId, page, localOnly = false, startDate = new Date()}) => {
   
   const router = useRouter()
 
@@ -25,11 +26,36 @@ const App: FC<IProps> = ({ id = "", formId, page, localOnly = false }) => {
     router.push(`/sourcings/${formId}`);
   }
 
-  const findTimer = (page) => {
-   return  page.blocks.find(e => e.type === "timerToolboxOption")?.data.timerDuration 
+ 
+//TODO Find better way to handle this
+  if (findTimer(page, startDate) < 0 && isTimedPage(page)) {
+    return (
+      <div className="flex min-h-screen bg-ui-gray-light">
+        <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+          <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
+            <div>
+              <Image
+                src="/img/snoopforms-logo.svg"
+                alt="snoopForms logo"
+                width={500}
+                height={89}
+              />
+            </div>
+            <div className="mt-8">
+              <h1 className="mb-4 font-bold text-center leading-2">
+                Time Over 
+              </h1>
+              <p className="text-center">
+                You no longer have access to this form because your time is up
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+    
   }
 
- 
   return (
     <div className="w-full px-5 py-5">
       <SnoopForm
@@ -43,12 +69,11 @@ const App: FC<IProps> = ({ id = "", formId, page, localOnly = false }) => {
       >
         
         <SnoopPage
-        name={page.id}
-        thankyou={false}
-        initialTime={findTimer(page)}
-        countDown={findTimer(page)} 
-        startDate={new Date('2022/09/15 14:00:00')}
-      >
+          name={page.id}
+          thankyou={false}
+          time={(findTimer(page, startDate))}
+          countDown={isTimedPage(page)} 
+        >
         {page.blocks.map((block: PageBlock) => (
           <div key={block.id}>
             {block.type === "paragraph" ? (

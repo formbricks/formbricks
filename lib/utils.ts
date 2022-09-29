@@ -142,3 +142,25 @@ export const isNotAdmin = (session, res) => {
 export const isAdmin = (session) => {
   return session.user.role === UserRole.ADMIN;
 };
+
+function diff_minutes(dt2: Date, dt1: Date) {
+  let diff = (dt2.getTime() - dt1.getTime()) / 1000;
+  diff /= 60;
+  return diff;
+}
+
+export const getLeftTime = (startDate: Date, time: number) => {
+  const finshDate = +startDate + time * 1000 * 60;
+  return diff_minutes(new Date(finshDate), new Date());
+};
+
+export const findTimer = (page, startDate: Date) => {
+  const timer = page.blocks.find((e) => e.type === "timerToolboxOption")?.data
+    .timerDuration;
+  return getLeftTime(startDate, timer || 0) * 1000 * 60;
+};
+
+export const isTimedPage = (page) => {
+  return page.blocks.find((e) => e.type === "timerToolboxOption")?.data
+    .timerDuration;
+};
