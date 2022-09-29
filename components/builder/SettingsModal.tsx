@@ -21,19 +21,29 @@ export default function SettingsModal({ open, setOpen, formId }) {
   const [description, setDescription] = useState(form.description);
 
   const handleBlurSourcingName = async () =>{
-      const newFormName = JSON.parse(JSON.stringify(form));
-      newFormName.name = name;
-      await persistForm(newFormName);
-      mutateForm(newFormName);
+      const newForm = JSON.parse(JSON.stringify(form));
+      newForm.name = name;
+      await persistForm(newForm);
+      mutateForm(newForm);
       toast("Your sourcing name has changed 🎉")
   }
 
   const handleBlurSourcingDueDate = async () =>{
-    const newFormName = JSON.parse(JSON.stringify(form));
-    newFormName.dueDate = new Date(dueDate); //new Date(dueDate)
-    await persistForm(newFormName);
-    mutateForm(newFormName);
+    const newForm = JSON.parse(JSON.stringify(form));
+    newForm.dueDate = new Date(dueDate); //new Date(dueDate)
+    await persistForm(newForm);
+    mutateForm(newForm);
+    
     toast("Your sourcing due date has changed 🎉")
+}
+
+const handleBlurSourcingDescription = async () =>{
+  const newForm = JSON.parse(JSON.stringify(form));
+  newForm.description = description;
+  await persistForm(newForm);
+  mutateForm(newForm);
+  
+  toast("Your sourcing description has changed 🎉")
 }
 
   const toggleClose = async () => {
@@ -105,7 +115,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                   <form className="w-full mt-2 text-sm text-gray-900">
                     <div className="mt-1">
                       <label
-                        htmlFor="email"
+                        htmlFor="name"
                         className="text-sm text-gray-500"
                       >
                         Name your sourcing
@@ -126,7 +136,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                     </div>
                     <div className="mt-1">
                       <label
-                        htmlFor="email"
+                        htmlFor="dueDate"
                         className="text-sm text-gray-500"
                       >
                         Due date for your sourcing
@@ -147,13 +157,13 @@ export default function SettingsModal({ open, setOpen, formId }) {
                     </div>
                     <div className="mt-1">
                       <label
-                        htmlFor="email"
+                        htmlFor="description"
                         className="text-sm text-gray-500"
                       >
                         Describe your sourcing
                       </label>
                       <div className="mt-1">
-                        <textarea name="description" id="description" value={description} autoFocus onChange={(e) => setDescription(e.target.value)} cols={30} rows={5} className="resize-none block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"/>
+                        <textarea name="description" id="description" value={description} autoFocus onChange={(e) => setDescription(e.target.value)} onBlur={handleBlurSourcingDescription} cols={30} rows={5} className="resize-none block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"/>
                       </div>
                     </div>
                   </form>
