@@ -5,6 +5,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   reactStrictMode: false,
   serverRuntimeConfig: {
     // Will only be available on the server side
