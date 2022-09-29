@@ -151,7 +151,16 @@ function diff_minutes(dt2: Date, dt1: Date) {
 
 export const getLeftTime = (startDate: Date, time: number) => {
   const finshDate = +startDate + time * 1000 * 60;
-  console.log(diff_minutes(new Date(finshDate), new Date()));
-
   return diff_minutes(new Date(finshDate), new Date());
+};
+
+export const findTimer = (page, startDate: Date) => {
+  const timer = page.blocks.find((e) => e.type === "timerToolboxOption")?.data
+    .timerDuration;
+  return getLeftTime(startDate, timer || 0) * 1000 * 60;
+};
+
+export const isTimedPage = (page) => {
+  return page.blocks.find((e) => e.type === "timerToolboxOption")?.data
+    .timerDuration;
 };
