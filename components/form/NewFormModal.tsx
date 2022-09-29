@@ -35,7 +35,7 @@ export default function NewFormModal({
     }
     router.push(`/forms/${form.id}/form`);
   };
-  const ref = useRef();
+  
   return (
     <Transition.Root show={open} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={setOpen}>
@@ -103,7 +103,6 @@ export default function NewFormModal({
                     </div>
                     
                   </div>
-
                   <div>
                     <label
                       htmlFor="email"
@@ -126,7 +125,7 @@ export default function NewFormModal({
                       />
                     </div>
                     
-                  </div>
+                  </div> 
                   <div>
                     <label
                       htmlFor="email"
@@ -141,7 +140,7 @@ export default function NewFormModal({
                   <div className="mt-5 sm:mt-6">
                     <StandardButton fullwidth type="submit">
                       New sourcing
-                      <BsPlus className="w-6 h-6 ml-1"></BsPlus>
+                      <BsPlus className="w-6 h-6 ml-1"/>
                     </StandardButton>
                   </div>
                 </form>

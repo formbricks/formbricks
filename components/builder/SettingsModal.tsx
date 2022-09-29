@@ -2,16 +2,31 @@
 import { Dialog, Switch, Transition } from "@headlessui/react";
 import { Fragment, useState } from "react";
 import { TailSpin } from "react-loader-spinner";
-import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
 import Loading from "../Loading";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { classNames } from "../../lib/utils";
+import format from "date-fns/format";
+import { persistForm, useForm } from "../../lib/forms";
+import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
+//HiRefresh
 
 export default function SettingsModal({ open, setOpen, formId }) {
-  const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
-    useNoCodeForm(formId);
+  const { form, mutateForm } =
+  useForm(formId);
+  const {noCodeForm, mutateNoCodeForm, isLoadingNoCodeForm} = useNoCodeForm(formId)
   const [loading, setLoading] = useState(false);
+  const [name, setName] = useState(form.name);
+  const [dueDate, setDueDate] = useState(form.dueDate);
+  const [description, setDescription] = useState(form.description);
+
+  const handleBlurInputs = async (inputName:any)=>{
+    const newForm = JSON.parse(JSON.stringify(form));
+    inputName === "dueDate" ? newForm.dueDate = new Date(dueDate) : inputName === "name" ? newForm.name = name : newForm.description = description;
+    await persistForm(newForm);
+    mutateForm(newForm);
+    toast(`Your sourcing has been updated successfully 🎉`)
+  }
 
   const toggleClose = async () => {
     setLoading(true);
@@ -23,8 +38,8 @@ export default function SettingsModal({ open, setOpen, formId }) {
       setLoading(false);
       toast(
         newNoCodeForm.closed
-          ? "Your form is now closed for submissions "
-          : "Your form is now open for submissions 🎉"
+          ? "Your sourcing is now closed for submissions "
+          : "Your sourcing is now open for submissions 🎉"
       );
     }, 500);
   };
@@ -77,6 +92,64 @@ export default function SettingsModal({ open, setOpen, formId }) {
                     </h1>
                   </div>
                   <h3 className="text-lg font-medium leading-6 text-gray-900">
+                    Details
+                  </h3>
+                  <form className="w-full mt-2 text-sm text-gray-900">
+                    <div className="mt-1">
+                      <label
+                        htmlFor="name"
+                        className="text-sm text-gray-500"
+                      >
+                        Name your sourcing
+                      </label>
+                      <div className="mt-1">
+                        <input
+                          type="text"
+                          name="name"
+                          className="block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
+                          placeholder="e.g. Customer Research Survey"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          onBlur={(e)=> handleBlurInputs(e.target.name)} //handleBlurSourcingName
+                          autoFocus
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-1">
+                      <label
+                        htmlFor="dueDate"
+                        className="text-sm text-gray-500"
+                      >
+                        Due date for your sourcing
+                      </label>
+                      <div className="mt-1">
+                        <input
+                          type="date"
+                          name="dueDate"
+                          className="block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
+                          placeholder="e.g. mm/dd/yyyy"
+                          value={format((new Date(dueDate)), 'yyyy-MM-dd')}
+                          onChange={(e) => setDueDate(e.target.value)}
+                          onBlur={(e)=> handleBlurInputs(e.target.name)} 
+                          autoFocus
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-1">
+                      <label
+                        htmlFor="description"
+                        className="text-sm text-gray-500"
+                      >
+                        Describe your sourcing
+                      </label>
+                      <div className="mt-1">
+                        <textarea name="description" id="description" value={description} autoFocus onChange={(e) => setDescription(e.target.value)} onBlur={(e)=> handleBlurInputs(e.target.name)} cols={30} rows={5} className="resize-none block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"/>
+                      </div>
+                    </div>
+                  </form>
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">
                     Access
                   </h3>
                   <div className="w-full mt-2 text-sm text-gray-500">
@@ -90,13 +163,13 @@ export default function SettingsModal({ open, setOpen, formId }) {
                           className="text-sm font-medium text-gray-900"
                           passive={true}
                         >
-                          Close form for new submissions?
+                          Close sourcing for new submissions?
                         </Switch.Label>
                         <Switch.Description
                           as="span"
                           className="text-sm text-gray-500"
                         >
-                          Your form is currently{" "}
+                          Your sourcing is currently{" "}
                           <span className="font-bold">
                             {noCodeForm.closed ? "closed" : "open"}
                           </span>{" "}
