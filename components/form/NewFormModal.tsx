@@ -2,7 +2,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/router";
-import { Fragment, useState, useRef } from "react";
+import { Fragment, useState } from "react";
 import { BsPlus } from "react-icons/bs";
 import { createForm } from "../../lib/forms";
 import { createNoCodeForm } from "../../lib/noCodeForm";

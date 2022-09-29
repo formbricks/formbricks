@@ -16,7 +16,7 @@ import getConfig from "next/config";
 import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
-import { findTimer, getLeftTime, isTimedPage } from "../../../lib/utils";
+import { isTimedPage } from "../../../lib/utils";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
@@ -33,10 +33,10 @@ function NoCodeFormPublic() {
   const [openDisclaimer, setOpenDisclaimer] = useState(false);
   const [pageIdOnModal, setPageIdOnModal] = useState("");
 
-  const options = {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+  enum options  {
+    year = "numeric",
+    month = "long",
+    day = "numeric",
   };
 
   if (isLoadingNoCodeForm) {
@@ -143,7 +143,7 @@ function NoCodeFormPublic() {
                           {isTimedPage(page) ? (
                             <>
                               <span className="flex items-center">
-                                <ClockIcon className="w-10 mr-2" />
+                                <ClockIcon className="w-6 mr-2" />
                                 {getPageTimer(page.blocks)} minutes
                               </span>
                               <span className="flex items-center text-gray-800">
