@@ -131,7 +131,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                           placeholder="e.g. mm/dd/yyyy"
                           value={format((new Date(dueDate)), 'yyyy-MM-dd')}
                           onChange={(e) => setDueDate(e.target.value)}
-                          onBlur={(e)=> handleBlurInputs(e.target.name)} //handleBlurSourcingDueDate
+                          onBlur={(e)=> handleBlurInputs(e.target.name)} 
                           autoFocus
                           required
                         />
