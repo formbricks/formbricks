@@ -51,17 +51,8 @@ function NoCodeFormPublic() {
     );
   }
 
-  const pageIsCompleted = (pageId: string) => {
-    const startDate = candidateSubmissions.find(
-      (submission) => submission.data.pageName === pageId
-    )?.data.startDate;
-    if (!startDate) return false;
-
-    const currentPage = pages.find((page) => page.id === pageId);
-    const time = findTimer(currentPage, startDate);
-    const leftTime = getLeftTime(startDate, time);
-
-    return leftTime > 0;
+  const pageIsCompleted = (pageId: string) => {    
+    return candidateSubmissions.map(submission => submission.data.pageName).includes(pageId);
   };
 
   const getPageTimer = (pageBlocks: any) => {
