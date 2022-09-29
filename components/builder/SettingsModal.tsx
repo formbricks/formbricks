@@ -28,6 +28,14 @@ export default function SettingsModal({ open, setOpen, formId }) {
       toast("Your sourcing name has changed 🎉")
   }
 
+  const handleBlurSourcingDueDate = async () =>{
+    const newFormName = JSON.parse(JSON.stringify(form));
+    newFormName.dueDate = new Date(dueDate); //new Date(dueDate)
+    await persistForm(newFormName);
+    mutateForm(newFormName);
+    toast("Your sourcing due date has changed 🎉")
+}
+
   const toggleClose = async () => {
     setLoading(true);
     setTimeout(async () => {
@@ -131,8 +139,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                           placeholder="e.g. mm/dd/yyyy"
                           value={format((new Date(dueDate)), 'yyyy-MM-dd')}
                           onChange={(e) => setDueDate(e.target.value)}
-                          
-                          
+                          onBlur={handleBlurSourcingDueDate}
                           autoFocus
                           required
                         />
