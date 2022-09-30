@@ -115,10 +115,15 @@ export default function FormList() {
                             </span>
                           )}
                         </span>
-                        <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
-                          <UserCircleIcon className="w-5 h-5 text-black mr-2" />
-                          {form.owner.firstname}
-                        </span>
+                        {
+                          session.user.role === UserRole.ADMIN ? 
+                          <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
+                            <UserCircleIcon className="w-5 h-5 text-black mr-2" />
+                            {form.owner.firstname}
+                          </span>
+                          :
+                          <></>  
+                        }
                       </div>    
                       <Link
                         href={
