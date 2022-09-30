@@ -44,11 +44,9 @@ export const sendVerificationEmail = async (user) => {
   await sendEmail({
     to: user.email,
     subject: "Welcome to KDA Sourcing",
-    html: `Welcome to KDA Sourcing!<br/><br/>To verify your email address and start using KDA Sourcing please click this link:<br/>
-    <a href="${verifyLink}">${verifyLink}</a><br/>
+    html: `Welcome to KDA Sourcing!<br/><br/>To verify your email address and start using KDA Sourcing please click this <a href="${verifyLink}">link</a>!
     <br/>
-    The link is valid for one day. If it has expired please request a new token here:<br/>
-    <a href="${verificationRequestLink}">${verificationRequestLink}</a><br/>
+    The link is valid for one day. If it has expired please <a href="${verificationRequestLink}">request a new token</a>!<br/>
     <br/>
     Your KDA Team`,
   });
