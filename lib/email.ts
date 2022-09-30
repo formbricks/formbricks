@@ -24,7 +24,7 @@ export const sendEmail = async (emailData: sendEmailData) => {
     // debug: true,
   });
   const emailDefaults = {
-    from: `snoopForms <${
+    from: `Kinshasa Digital Academy <${
       serverRuntimeConfig.mailFrom || "noreply@snoopforms.com"
     }>`,
   };
