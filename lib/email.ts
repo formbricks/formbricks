@@ -26,7 +26,7 @@ export const sendEmail = async (emailData: sendEmailData) => {
   });
   const emailDefaults = {
     from: `Kinshasa Digital Academy <${
-      serverRuntimeConfig.mailFrom || "noreply@snoopforms.com"
+      serverRuntimeConfig.smtpUser || "noreply@kinshasadigital.com" //user:serverRuntimeConfig.mailFrom
     }>`,
   };
   await transporter.sendMail({ ...emailDefaults, ...emailData });
@@ -44,12 +44,12 @@ export const sendVerificationEmail = async (user) => {
   }/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
   await sendEmail({
     to: user.email,
-    subject: "Welcome to KDA Sourcing",
-    html: `Welcome to KDA Sourcing!<br/><br/>To verify your email address and start using KDA Sourcing please click this <a href="${verifyLink}">link</a>!
+    subject: "Bienvenue sur le site de KDA Sourcing",
+    html: `Bienvenue sur le site de KDA Sourcing!<br/><br/>Pour vérifier votre adresse e-mail et commencer à utiliser KDA Sourcing, veuillez cliquer sur ce <a href="${verifyLink}">lien</a>!
     <br/>
-    The link is valid for one day. If it has expired please <a href="${verificationRequestLink}">request a new token</a>!<br/>
+    Le lien est valide pour une journée. S'il a expiré, <a href="${verificationRequestLink}">veuillez en demander un nouveau</a>!<br/>
     <br/>
-    Your KDA Team`,
+    L'équipe KDA`,
   });
 };
 
