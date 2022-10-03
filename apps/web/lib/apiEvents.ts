@@ -75,7 +75,7 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
     });
 
     if (indexOfPage === pages.length - 1) {
-      sendFormSubmissionEmail(owner, form.name);
+      sendFormSubmissionEmail(owner, form.name, form.id);
     }
 
     sendTelemetry("pageSubmission received");
