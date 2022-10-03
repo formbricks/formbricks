@@ -20,6 +20,7 @@ export const sendEmail = async (emailData: sendEmailData) => {
       user: serverRuntimeConfig.smtpUser,
       pass: serverRuntimeConfig.smtpPassword,
     },
+    from: serverRuntimeConfig.smtpUser,
     // logger: true,
     // debug: true,
   });
