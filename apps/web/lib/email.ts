@@ -75,3 +75,12 @@ export const sendPasswordResetNotifyEmail = async (user) => {
     Your snoopForms Team`,
   });
 };
+
+export const sendFormSubmissionEmail = async (user, formName: string) => {
+  await sendEmail({
+    to: user.email,
+    subject: `${formName} new submission`,
+    html: `Hi ${user.firstname}, someone just filled out ${formName}.<br/>
+    <br/>`,
+  });
+};

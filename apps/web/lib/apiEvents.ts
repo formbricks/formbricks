@@ -1,8 +1,9 @@
 import { handleWebhook } from "../components/pipelines/webhook";
+import { sendFormSubmissionEmail } from "./email";
 import { capturePosthogEvent } from "./posthog";
 import { prisma } from "@formbricks/database";
 import { sendTelemetry } from "./telemetry";
-import { ApiEvent } from "./types";
+import { ApiEvent, Schema } from "./types";
 
 type validationError = {
   status: number;
@@ -32,6 +33,8 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
   // save submission
   if (event.type === "pageSubmission") {
     const data = event.data;
+    const { pageName } = data;
+
     await prisma.sessionEvent.create({
       data: {
         type: "pageSubmission",
@@ -42,15 +45,39 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
         submissionSession: { connect: { id: data.submissionSessionId } },
       },
     });
+
     const form = await prisma.form.findUnique({
       where: {
         id: formId,
       },
+      select: {
+        owner: true,
+        schema: true,
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        noCodeForm: true,
+        name: true,
+        formType: true,
+      },
     });
-    capturePosthogEvent(form.ownerId, "pageSubmission received", {
+
+    const schema = form.schema as Schema;
+    const owner = form.owner;
+
+    const pages = schema.pages.filter((page) => page.type === "form");
+
+    const indexOfPage = pages.findIndex((page) => page.name === pageName);
+
+    capturePosthogEvent(form.owner.id, "pageSubmission received", {
       formId,
       formType: form.formType,
     });
+
+    if (indexOfPage === pages.length - 1) {
+      sendFormSubmissionEmail(owner, form.name);
+    }
+
     sendTelemetry("pageSubmission received");
   } else if (event.type === "submissionCompleted") {
     // TODO
