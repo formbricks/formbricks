@@ -4,7 +4,8 @@ import {
   CalendarDaysIcon,
   FolderOpenIcon,
   DocumentPlusIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -50,6 +51,7 @@ export default function FormList() {
       console.error(error);
     }
   };
+  console.log("****form's number of pages", forms);
 
   return (
     <>
@@ -121,7 +123,10 @@ export default function FormList() {
                           <UserCircleIcon className="w-5 h-5 text-black mr-2" />
                           {form.owner.firstname}
                         </span> :
-                        <></>
+                        <span className="flex items-center px-3 py-1 text-xs font-bold text-neutral-500">
+                          <CheckCircleIcon className="w-5 h-5 text-black mr-2" />
+                          {form.schema.pages?`${form.schema.pages.length}  / ${form.schema.pages.length}` : `0 / ${form.schema.pages.length}`}
+                        </span>
                         }
 
                       </div>
