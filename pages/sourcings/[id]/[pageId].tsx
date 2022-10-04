@@ -101,7 +101,7 @@ function Form() {
   if (isTimedPage(currentPage)) {
     startFom();
   }
-  return <App page={currentPage} formId={formId} startDate={startDate} />;
+  return <App page={currentPage} formId={formId} startDate={startDate} id={""} localOnly={false} />;
 }
 
 export default withAuthentication(Form);

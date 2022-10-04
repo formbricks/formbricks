@@ -175,7 +175,7 @@ function NoCodeFormPublic() {
                       <DisclaimerModal
                         open={openDisclaimer}
                         setOpen={setOpenDisclaimer}
-                        message="You are about to start a timed form"
+                        message={`You are about to start a timed form and You have ${page.blocks[1].data.timerDuration} minutes to complete this form. Once started, you cannot leave the form, under penalty of seeing your answers considered to be submitted.`}
                         onClick={() => handleClickAction(page, true)}
                       />
                     </div>
