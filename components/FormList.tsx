@@ -10,7 +10,7 @@ import {
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState } from "react";
-import { useForms } from "../lib/forms";
+import { getFormPages, useForms } from "../lib/forms";
 import { UserRole } from "@prisma/client";
 import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
@@ -51,8 +51,13 @@ export default function FormList() {
       console.error(error);
     }
   };
-  console.log("****form's number of pages", forms);
-
+  // const formPages = async (formId)=>{
+  //   const pages = await getFormPages(formId)
+  //   console.log("****form's number of pages", pages);
+  //   return pages
+  // }
+  console.log("****form's number of forms", forms);
+  //formPages(forms[0].id)
   return (
     <>
       <div className="h-full px-6 py-8">
@@ -125,7 +130,7 @@ export default function FormList() {
                         </span> :
                         <span className="flex items-center px-3 py-1 text-xs font-bold text-neutral-500">
                           <CheckCircleIcon className="w-5 h-5 text-black mr-2" />
-                          {form.schema.pages?`${form.schema.pages.length}  / ${form.schema.pages.length}` : `0 / ${form.schema.pages.length}`}
+                          {form.schema ? `m  / n` : `0 / n`}
                         </span>
                         }
 

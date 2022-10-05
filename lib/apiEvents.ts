@@ -2,7 +2,7 @@ import { handleWebhook } from "../components/pipelines/webhook";
 import { capturePosthogEvent } from "./posthog";
 import { prisma } from "./prisma";
 import { sendTelemetry } from "./telemetry";
-import { ApiEvent } from "./types";
+import { ApiEvent, Schema } from "./types";
 
 type validationError = {
   status: number;
@@ -84,10 +84,24 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
   } else if (event.type === "submissionCompleted") {
     // TODO
   } else if (event.type === "updateSchema") {
-    const data = { schema: event.data, updatedAt: new Date() };
+    
+    //const data = { schema: event.data, updatedAt: new Date() };
+    
+    const form = await prisma.form.findUnique({where:{id:formId}})
+    console.log("xxxxxxxxxxxxx",form.schema);
+
+    //const data = {pages:[...form.schema, event.data]}
+    //const data = { schema: event.data, updatedAt: new Date() };
+    console.log("++++++++", event.data);
+    const schema = form.schema as Schema;
+
+    const data = {schema:{pages:[...event.data.pages, ...schema.pages]}, updatedAt: new Date()}
+console.log("ooooooo", data );
+
+    
     await prisma.form.update({
       where: { id: formId },
-      data,
+      data
     });
   } else {
     throw Error(

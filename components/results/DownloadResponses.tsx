@@ -21,10 +21,10 @@ export default function DownloadResponses({ formId }) {
     const submissions: Submission[] = submissionSessions.map((s) =>
       getSubmission(s, form.schema)
     );
+    
     // build data fields for csv/excel file
     const data = [];
     for (const submission of submissions) {
-      console.log("**********submission of ", submission, " is : ", submission.pages[0].elements[0].value);
       
       const dataEntry = { createdAt: submission.createdAt };
       for (const page of submission.pages) {
