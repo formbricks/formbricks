@@ -36,10 +36,10 @@ const App: FC<IProps> = ({ id = "", formId, page, localOnly = false, startDate =
           <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
             <div>
               <Image
-                src="/img/snoopforms-logo.svg"
-                alt="snoopForms logo"
-                width={500}
-                height={89}
+                src="/img/kda_logo.png"
+                alt="kda logo"
+                width={300}
+                height={79}
               />
             </div>
             <div className="mt-8">

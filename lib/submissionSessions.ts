@@ -1,4 +1,5 @@
 import useSWR from "swr";
+import PageId from "../pages/sourcings/[id]/[pageId]";
 import { Schema, SubmissionSession, SubmissionSummary } from "./types";
 import { fetcher } from "./utils";
 
@@ -32,6 +33,7 @@ export const getSubmission = (submissionSession, schema) => {
       const submissionPage = {
         name: page.name,
         type: page.type,
+        user: submissionSession,
         elements: page.elements
           ? JSON.parse(JSON.stringify(page.elements))
           : [],
@@ -97,6 +99,7 @@ export const getSubmissionSummary = (
         const summaryPage = summary.pages.find(
           (p) => p.name === submissionEvent.data.pageName
         );
+        console.log(summaryPage);
         if (summaryPage.type === "form" && submissionEvent.data.submission) {
           for (const [elementName, elementValue] of Object.entries(
             submissionEvent.data.submission

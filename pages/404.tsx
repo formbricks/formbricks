@@ -11,10 +11,10 @@ export default function Error404Page() {
                     <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
                         <div>
                             <Image
-                                src="/img/kda_logo.svg"
+                                src="/img/kda_logo.png"
                                 alt="kinshasa digital academy logo"
-                                width={500}
-                                height={89}
+                                width={300}
+                                height={79}
                             />
                         </div>
                         <div className="mt-8">
