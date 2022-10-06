@@ -2,6 +2,7 @@ import intlFormat from "date-fns/intlFormat";
 import { formatDistance } from "date-fns";
 import crypto from "crypto";
 import { UserRole } from "@prisma/client";
+import AWS from "aws-sdk";
 
 export const fetcher = async (url) => {
   const res = await fetch(url);
@@ -36,7 +37,32 @@ export const shuffle = (array) => {
 
   return array;
 };
+export const upload = async (file)=>{
+  const endpointUrl = `ams3.digitaloceanspaces.com`;
+  const S3 = new AWS.S3({
+      endpoint: endpointUrl,
+      accessKeyId: process.env.NEXT_PUBLIC_APP_DO_KEY,
+      secretAccessKey: process.env.NEXT_PUBLIC_APP_DO_SECRET_KEY,
+  });
+  const blob = file;
+  const params = {
+    Body: blob,
+    Bucket: process.env.NEXT_PUBLIC_APP_BUCKET_NAME,
+    Key: `${new Date()}-${blob.name}`,
+    ACL: "public-read",
+  };
+console.log("*****", params);
 
+  return S3.upload(params, async (err, data) => {
+    if (err) {
+        alert(err);
+    } else {
+      console.log("+++++", data);
+      return data;
+
+    }
+});
+}
 export const classNames = (...classes) => {
   return classes.filter(Boolean).join(" ");
 };

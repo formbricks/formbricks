@@ -12,7 +12,6 @@ import Loading from "../Loading";
 import EmailQuestion from "./tools/EmailQuestion";
 import PageTransition from "./tools/PageTransition";
 import ImageQuestion from "./tools/ImageQuestion";
-import AWS from "aws-sdk";
 import getConfig from "next/config";
 import MultipleChoiceQuestion from "./tools/MultipleChoiceQuestion";
 import TextQuestion from "./tools/TextQuestion";
@@ -21,6 +20,7 @@ import PhoneQuestion from "./tools/PhoneQuestion";
 import NumberQuestion from "./tools/NumberQuestion";
 import TimerToolboxOption from "./tools/TimerToolboxOption";
 import DashboardRedirectButton from "./tools/DashboardRedirectButton";
+import {upload} from "../../lib/utils" 
 
 interface EditorProps {
   id: string;
@@ -30,13 +30,6 @@ interface EditorProps {
   initAction: (editor: EditorJS) => void;
 }
 
-const { publicRuntimeConfig } = getConfig();
-const {bucketName, bucketEndPoint, bucketSecretKey, bucketKey} = publicRuntimeConfig;
-const S3 = new AWS.S3({
-  endpoint: bucketEndPoint,
-  accessKeyId: bucketKey,
-  secretAccessKey: bucketSecretKey
-})
 
 const Editor = ({
   id,
@@ -51,7 +44,7 @@ const Editor = ({
   const keyPressListener = useCallback((e) => {
     if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      toast("snoopForms autosaves your work ✌️");
+      toast("KDA Sourcing autosaves your work ✌️");
     }
   }, []);
 
@@ -62,6 +55,7 @@ const Editor = ({
       window.removeEventListener("keydown", keyPressListener);
     };
   }, [keyPressListener]);
+  console.log(editorRef);
 
   // This will run only once
   useEffect(() => {
@@ -125,8 +119,16 @@ const Editor = ({
           class: ImageTool,
           config: {
             uploader:{
-              params:{
-
+              uploadByFile(file){
+                return upload(file).then((data)=>{                  
+                  return {
+                    success: 1,
+                    file: {
+                      url: data.Location,
+                      // any other image data you want to store, such as width, height, color, extension, etc
+                    }
+                  };
+                });
               }
               
             }
