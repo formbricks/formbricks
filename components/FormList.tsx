@@ -51,9 +51,7 @@ export default function FormList() {
       console.error(error);
     }
   };
-console.log("**********", forms);
-
-  //formPages(forms[0].id)
+  
   return (
     <>
       <div className="h-full px-6 py-8">

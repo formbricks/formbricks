@@ -11,8 +11,6 @@ import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
 import Loading from "../Loading";
 import EmailQuestion from "./tools/EmailQuestion";
 import PageTransition from "./tools/PageTransition";
-import ImageQuestion from "./tools/ImageQuestion";
-import getConfig from "next/config";
 import MultipleChoiceQuestion from "./tools/MultipleChoiceQuestion";
 import TextQuestion from "./tools/TextQuestion";
 import WebsiteQuestion from "./tools/WebsiteQuestion";
@@ -20,7 +18,7 @@ import PhoneQuestion from "./tools/PhoneQuestion";
 import NumberQuestion from "./tools/NumberQuestion";
 import TimerToolboxOption from "./tools/TimerToolboxOption";
 import DashboardRedirectButton from "./tools/DashboardRedirectButton";
-import {upload} from "../../lib/utils" 
+import { upload } from "../../lib/utils";
 
 interface EditorProps {
   id: string;
@@ -29,7 +27,6 @@ interface EditorProps {
   formId: string;
   initAction: (editor: EditorJS) => void;
 }
-
 
 const Editor = ({
   id,
@@ -114,30 +111,22 @@ const Editor = ({
               "Start with your content or hit tab-key to insert block",
           },
         },
-        //imageQuestion: ImageQuestion,
         image: {
           class: ImageTool,
           config: {
-            uploader:{
-              uploadByFile(file){
-                return upload(file).then((data)=>{                  
+            uploader: {
+              async uploadByFile(file) {
+                return await upload(file).then((data) => {
                   return {
                     success: 1,
                     file: {
                       url: data.Location,
-                      // any other image data you want to store, such as width, height, color, extension, etc
-                    }
+                    },
                   };
                 });
-              }
-              
-            }
-            // endpoints: {
-            //   accept: 'image/*',
-            //   byFile: '', // Your backend file uploader endpoint
-            //   byUrl: '', // Your endpoint that provides uploading by Url
-            // }
-          }
+              },
+            },
+          },
         },
         header: {
           class: Header,
