@@ -88,16 +88,9 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
     //const data = { schema: event.data, updatedAt: new Date() };
     
     const form = await prisma.form.findUnique({where:{id:formId}})
-    console.log("xxxxxxxxxxxxx",form.schema);
-
-    //const data = {pages:[...form.schema, event.data]}
-    //const data = { schema: event.data, updatedAt: new Date() };
-    console.log("++++++++", event.data);
     const schema = form.schema as Schema;
 
-    const data = {schema:{pages:[...event.data.pages, ...schema.pages]}, updatedAt: new Date()}
-console.log("ooooooo", data );
-
+    const data = {schema:[...event.data.pages, ...schema.pages], updatedAt: new Date()}
     
     await prisma.form.update({
       where: { id: formId },

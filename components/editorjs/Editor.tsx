@@ -2,6 +2,7 @@
 import EditorJS from "@editorjs/editorjs";
 import Header from "@editorjs/header";
 import Paragraph from "@editorjs/paragraph";
+import ImageTool from "@editorjs/image";
 import DragDrop from "editorjs-drag-drop";
 import Undo from "editorjs-undo";
 import { Fragment, useCallback, useEffect } from "react";
@@ -10,6 +11,9 @@ import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
 import Loading from "../Loading";
 import EmailQuestion from "./tools/EmailQuestion";
 import PageTransition from "./tools/PageTransition";
+import ImageQuestion from "./tools/ImageQuestion";
+import AWS from "aws-sdk";
+import getConfig from "next/config";
 import MultipleChoiceQuestion from "./tools/MultipleChoiceQuestion";
 import TextQuestion from "./tools/TextQuestion";
 import WebsiteQuestion from "./tools/WebsiteQuestion";
@@ -25,6 +29,14 @@ interface EditorProps {
   formId: string;
   initAction: (editor: EditorJS) => void;
 }
+
+const { publicRuntimeConfig } = getConfig();
+const {bucketName, bucketEndPoint, bucketSecretKey, bucketKey} = publicRuntimeConfig;
+const S3 = new AWS.S3({
+  endpoint: bucketEndPoint,
+  accessKeyId: bucketKey,
+  secretAccessKey: bucketSecretKey
+})
 
 const Editor = ({
   id,
@@ -107,6 +119,23 @@ const Editor = ({
             placeholder:
               "Start with your content or hit tab-key to insert block",
           },
+        },
+        //imageQuestion: ImageQuestion,
+        image: {
+          class: ImageTool,
+          config: {
+            uploader:{
+              params:{
+
+              }
+              
+            }
+            // endpoints: {
+            //   accept: 'image/*',
+            //   byFile: '', // Your backend file uploader endpoint
+            //   byUrl: '', // Your endpoint that provides uploading by Url
+            // }
+          }
         },
         header: {
           class: Header,

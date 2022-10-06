@@ -94,3 +94,5 @@ const checkIdAvailability = async (id) => {
     return false;
   }
 };
+
+// POST IMAGE

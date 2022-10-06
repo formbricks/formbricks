@@ -28,6 +28,8 @@ export default function DownloadResponses({ formId }) {
       
       const dataEntry = { createdAt: submission.createdAt };
       for (const page of submission.pages) {
+        console.log("ppppp", page);
+        
         if (page.elements) {
           for (const element of page.elements) {
             if (element.type !== "submit") {

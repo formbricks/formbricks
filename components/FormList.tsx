@@ -51,12 +51,8 @@ export default function FormList() {
       console.error(error);
     }
   };
-  // const formPages = async (formId)=>{
-  //   const pages = await getFormPages(formId)
-  //   console.log("****form's number of pages", pages);
-  //   return pages
-  // }
-  console.log("****form's number of forms", forms);
+console.log("**********", forms);
+
   //formPages(forms[0].id)
   return (
     <>
@@ -130,7 +126,7 @@ export default function FormList() {
                         </span> :
                         <span className="flex items-center px-3 py-1 text-xs font-bold text-neutral-500">
                           <CheckCircleIcon className="w-5 h-5 text-black mr-2" />
-                          {form.schema ? `m  / n` : `0 / n`}
+                          {form.schema.pages !== "undefined" ? `0  / n` : `${form.schema.pages.length} / n`}
                         </span>
                         }
 

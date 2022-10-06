@@ -28,6 +28,10 @@ const nextConfig = {
     publicPrivacyUrl: process.env.PUBLIC_PRIVACY_URL,
     emailVerificationDisabled: process.env.EMAIL_VERIFICATION_DISABLED === "1",
     passwordResetDisabled: process.env.PASSWORD_RESET_DISABLED === "1",
+    bucketName: process.env.NEXT_APP_BUCKET_NAME,
+    bucketEndPoint: process.env.NEXT_APP_DO_END_POINT,
+    bucketSecretKey: process.env.NEXT_APP_DO_SECRET_KEY,
+    bucketKey: process.env.NEXT_APP_DO_KEY,
   },
   async redirects() {
     return [
