@@ -147,7 +147,21 @@ const App: FC<IProps> = ({
                   }}
                   required={block.data.required}
                 />
-              ) : block.type === "numberQuestion" ? (
+              ): block.type === "multipleImageChoiceQuestion" &&
+              !block.data.multipleChoice ? (
+              <SnoopElement
+                type="radio"
+                name={block.id}
+                label={block.data.label}
+                help={block.data.help}
+                options={block.data.options.map((o) => <img key={o.id} src={o.data.file.url} alt={o.data.caption} />)}
+                classNames={{
+                  label:
+                    "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                }}
+                required={block.data.required}
+              />
+            ) : block.type === "numberQuestion" ? (
                 <SnoopElement
                   type="number"
                   name={block.id}
