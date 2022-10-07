@@ -20,11 +20,14 @@ export default async function handle(
   // Gets all sourcings for admins and all public for candidates
   if (req.method === "GET") {
     let whereClause: FormWhereClause = {};
+    const today = new Date();
+    today.setUTCHours(0,0,0,0);
     if (session.user.role === UserRole.PUBLIC)
       whereClause = {
-        dueDate: { gte: new Date() },
+        dueDate: { gte: today},
         noCodeForm: { published: true },
       };
+
     const formData = await prisma.form.findMany({
       where: whereClause,
       include: {
