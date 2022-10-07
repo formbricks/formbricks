@@ -121,7 +121,6 @@ export default function NewFormModal({
                         onFocus={(e) => (e.target.type = "date")}
                         onBlur={(e) => (e.target.type = "text")}
                         autoFocus
-                        required
                       />
                     </div>
                     
