@@ -3,6 +3,7 @@ import {
   EnvelopeIcon,
   PhoneIcon,
 } from "@heroicons/react/24/solid";
+import sanitizeHtml from "sanitize-html";
 import { SnoopElement, SnoopForm, SnoopPage } from "@snoopforms/react";
 import { useMemo } from "react";
 import { generateId } from "../../lib/utils";
@@ -58,7 +59,12 @@ export default function App({ id = "", formId, blocks, localOnly = false }) {
             {page.blocks.map((block) => (
               <div key={block.id}>
                 {block.type === "paragraph" ? (
-                  <p className="ce-paragraph">{block.data.text}</p>
+                  <div
+                    className="ce-paragraph"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(block.data.text),
+                    }}
+                  ></div>
                 ) : block.type === "header" ? (
                   block.data.level === 1 ? (
                     <h1 className="ce-header">{block.data.text}</h1>
