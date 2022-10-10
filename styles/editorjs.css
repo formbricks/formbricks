@@ -2,6 +2,10 @@
   @apply font-light text-gray-800;
 }
 
+.ce-paragraph a {
+  @apply underline;
+}
+
 h1.ce-header {
   @apply pb-5 text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate;
 }
