@@ -126,7 +126,7 @@ const App: FC<IProps> = ({
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
-                  options={block.data.options.map((o) => o.label)}
+                  options={block.data.options.map((o) => o.image ? o.image.Location : o.label )}
                   classNames={{
                     label:
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
@@ -154,7 +154,7 @@ const App: FC<IProps> = ({
                 name={block.id}
                 label={block.data.label}
                 help={block.data.help}
-                options={block.data.options.map((o) => <img key={o.id} src={o.data.file.url} alt={o.data.caption} />)}
+                options={block.data.options.map((o) => o.id)} //<img key={o.id} src={o.data.file.url} alt={o.data.caption} />
                 classNames={{
                   label:
                     "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",

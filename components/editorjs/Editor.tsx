@@ -12,7 +12,6 @@ import Loading from "../Loading";
 import EmailQuestion from "./tools/EmailQuestion";
 import PageTransition from "./tools/PageTransition";
 import MultipleChoiceQuestion from "./tools/MultipleChoiceQuestion";
-import MultipleImageChoiceQuestion from "./tools/MultipleImageChoiceQuestion";
 import TextQuestion from "./tools/TextQuestion";
 import WebsiteQuestion from "./tools/WebsiteQuestion";
 import PhoneQuestion from "./tools/PhoneQuestion";
@@ -99,7 +98,6 @@ const Editor = ({
         textQuestion: TextQuestion,
         emailQuestion: EmailQuestion,
         multipleChoiceQuestion: MultipleChoiceQuestion,
-        multipleImageChoiceQuestion: MultipleImageChoiceQuestion,
         numberQuestion: NumberQuestion,
         phoneQuestion: PhoneQuestion,
         websiteQuestion: WebsiteQuestion,
