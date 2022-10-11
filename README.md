@@ -19,7 +19,7 @@
 
 <br/>
 
-> :warning: **Note**: This repository is still in an early stage of development. We love the open source community and want to show what we are working on early. We will update this readme with more information once it is safe to use. Until then, feel free to share your thoughts, contact us, and contribute if you'd like.
+> :warning: This repository is still in an early stage of development. We love the open source community and want to show what we are working on early. We will update this readme with more information once it is safe to use. Until then, feel free to share your thoughts, contact us, and contribute if you'd like.
 
 <br/>
 
@@ -49,86 +49,70 @@ With snoopForms you can build complex multi-page forms in minutes using either o
 - [TailwindCSS](https://tailwindcss.com/)
 - [Prisma](https://prisma.io/)
 
-## Getting started
+## Get started with development
 
-you can develop in a VS Code [dev container](https://code.visualstudio.com/docs/remote/containers) or using any editor/IDE with local tool installation.
+This repository is a monorepository using [Turborepo](https://turborepo.org/) and [pnpm](https://pnpm.io/). It contains the snoopForms [server application](https://github.com/formbricks/snoopforms/tree/main/apps/web), the [react library](https://github.com/formbricks/snoopforms/tree/main/packages/react) and other helper packages like database or UI library.
 
-### Getting started using VS Code dev container
-
-You need
-
-- Docker, e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop)
-- [VS Code](https://code.visualstudio.com/download) with the extension [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) (`ms-vscode-remote.remote-containers`)
-
-Either use the command `Open Folder in Container...` in the cloned repo, or use `Remote Containers: Clone Repository in Container Volume...`, for example to inspect a PR.
-
-The dev container comes with
-
-- Node.JS, yarn etc pre-installed
-- a `postgres` container and environment variables preset to reach it,
-- a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
-
-upon start, it executes the `yarn install` and `yarn prisma migrate dev` automatically once.
-
-When your dev container is ready, you can simply hit `F5` to start the application in debug mode.
-
-### Getting started using local development setup
+### How to run locally
 
 To get the project running locally on your machine you need to have the following development tools installed:
 
 - Node.JS (we recommend v16)
-- Yarn
-- PostgreSQL
+- [pnpm](https://pnpm.io/)
+- [Docker](https://www.docker.com/) (to run PostgreSQL / MailHog)
 
 1. Clone the project:
 
 ```
-git clone https://github.com/formbricks/snoopforms.git && cd snoopforms
+git clone https://github.com/formbricks/snoopforms.git
 ```
 
-2. Install Node.JS packages via yarn. Don't have yarn? Use `npm install --global yarn`.
+and move into the directory
 
 ```
-yarn install
+cd snoopforms
 ```
 
-3. Make sure you have a running database instance, e.g. by using docker. A quick and dirty instance can be spun up via:
+2. Install Node.JS packages via pnpm. Don't have pnpm? Get it [here](https://pnpm.io/installation)
 
 ```
-docker run --name snoopformsDB -p 5432:5432 -e POSTGRES_USER=snoopforms -e POSTGRES_PASSWORD=password -e POSTGRES_DB=snoopforms -d postgres
+pnpm install
 ```
 
-4. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database.
+1. To make the process of installing a dev dependencies easier, we offer a [`docker-compose.yml`](https://docs.docker.com/compose/) file to deploy a PostgreSQL server locally with a new database named `turborepo` (To change this update the `MYSQL_DATABASE` environment variable in the `docker-compose.yml` file)
+
+- a `postgres` container and environment variables preset to reach it,
+- a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
+
+```
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+3. Create a `.env` file based on `.env.example` and change it according to your setup. If you are using a cloud based database or another mail server, you will need to update the `DATABASE_URL` and SMTP settings in your `.env` accordingly.
 
 ```
 cp .env.example .env
 ```
 
-For the example above, use the following:
+4. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
 
 ```
-DATABASE_URL='postgresql://snoopforms:password@localhost:5432/snoopforms?schema=public'
-```
-
-5. Use the code editor of your choice to edit the .env file. You need to change all fields according to your setup.
-
-6. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
-
-```
-yarn prisma migrate dev
+pnpm dlx prisma migrate dev
 ```
 
 7. Start the development server:
 
 ```
-yarn dev
+pnpm dev
 ```
 
 **You can now access the app on [https://localhost:3000](https://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of snoopForms, create a new account.
 
-## Deployment
+For viewing the confirmation email and other emails the system sends you, you can access mailhog at [https://localhost:8025](https://localhost:8025)
 
-The easiest way to deploy the snoopHub on your own machine is using Docker. This requires Docker and the docker compose plugin on your system to work.
+## Deployment for Production Setup
+
+The easiest way to deploy snoopForms on your own machine is using Docker. This requires Docker and the docker compose plugin on your system to work.
 
 Clone the repository:
 
@@ -138,7 +122,7 @@ git clone https://github.com/formbricks/snoopforms.git && cd snoopforms
 
 ```
 
-Create a `.env` file based on `.env.example` and change all fields according to your setup. The SMTP-credentials are essential for verification emails to work during user signup.
+Create a `.env` file based on `.env.example` and change all fields according to your setup. You need to configure the SMTP settings for the signup process with verification emails to work. If you don't have a mail server for sending email, you need to disable email verification (`EMAIL_VERIFICATION_DISABLED=1`) and password reset (`PASSWORD_RESET_DISABLED=1`)
 
 ```
 
@@ -146,7 +130,7 @@ cp .env.example .env && nano .env
 
 ```
 
-Start the docker compose process to build and spin up the snoopForms container as well as the postgres database.
+Start the docker compose process to build and spin up the snoopForms container as well as the PostgreSQL database.
 
 ```bash
 
