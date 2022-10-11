@@ -79,7 +79,7 @@ cd snoopforms
 pnpm install
 ```
 
-1. To make the process of installing a dev dependencies easier, we offer a [`docker-compose.yml`](https://docs.docker.com/compose/) file to deploy a PostgreSQL server locally with a new database named `turborepo` (To change this update the `MYSQL_DATABASE` environment variable in the `docker-compose.yml` file)
+3. To make the process of installing a dev dependencies easier, we offer a [`docker-compose.yml`](https://docs.docker.com/compose/) file to deploy a PostgreSQL server locally with a new database named `turborepo` (To change this update the `MYSQL_DATABASE` environment variable in the `docker-compose.yml` file)
 
 - a `postgres` container and environment variables preset to reach it,
 - a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
@@ -88,19 +88,19 @@ pnpm install
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
-3. Create a `.env` file based on `.env.example` and change it according to your setup. If you are using a cloud based database or another mail server, you will need to update the `DATABASE_URL` and SMTP settings in your `.env` accordingly.
+4. Create a `.env` file based on `.env.example` and change it according to your setup. If you are using a cloud based database or another mail server, you will need to update the `DATABASE_URL` and SMTP settings in your `.env` accordingly.
 
 ```
 cp .env.example .env
 ```
 
-4. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
+5. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
 
 ```
 pnpm dlx prisma migrate dev
 ```
 
-7. Start the development server:
+6. Start the development server:
 
 ```
 pnpm dev
@@ -122,11 +122,13 @@ git clone https://github.com/formbricks/snoopforms.git && cd snoopforms
 
 ```
 
-Create a `.env` file based on `.env.example` and change all fields according to your setup. You need to configure the SMTP settings for the signup process with verification emails to work. If you don't have a mail server for sending email, you need to disable email verification (`EMAIL_VERIFICATION_DISABLED=1`) and password reset (`PASSWORD_RESET_DISABLED=1`)
+Create a `.env` file based on `.env.example` and change all fields according to your setup. You need to configure the SMTP settings for the signup process with verification emails to work. If you don't have a mail server for sending email, you need to disable email verification (`EMAIL_VERIFICATION_DISABLED=1`) and password reset (`PASSWORD_RESET_DISABLED=1`).
+
+Copy the `.env.example` file to `.env` and edit it with an editor of your choice.
 
 ```
 
-cp .env.example .env && nano .env
+cp .env.example .env
 
 ```
 
