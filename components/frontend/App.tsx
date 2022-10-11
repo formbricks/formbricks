@@ -126,7 +126,7 @@ const App: FC<IProps> = ({
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
-                  options={block.data.options.map((o) => o.image ? o.image.Location : o.label )}
+                  options={block.data.options.map((o) => o.label)} //o.image ? <img src={o.image.Location} alt={o.label} /> : o.label 
                   classNames={{
                     label:
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
@@ -135,33 +135,26 @@ const App: FC<IProps> = ({
                 />
               ) : block.type === "multipleChoiceQuestion" &&
                 !block.data.multipleChoice ? (
+                  <>
+                  {
+                    console.log(block.data.options)
+                  }
+                  
+                  
                 <SnoopElement
                   type="radio"
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
-                  options={block.data.options.map((o) => o.label)}
+                  options={block.data.options} //o.image ? o.image.Location : o.label
                   classNames={{
                     label:
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
                   }}
                   required={block.data.required}
                 />
-              ): block.type === "multipleImageChoiceQuestion" &&
-              !block.data.multipleChoice ? (
-              <SnoopElement
-                type="radio"
-                name={block.id}
-                label={block.data.label}
-                help={block.data.help}
-                options={block.data.options.map((o) => o.id)} //<img key={o.id} src={o.data.file.url} alt={o.data.caption} />
-                classNames={{
-                  label:
-                    "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
-                }}
-                required={block.data.required}
-              />
-            ) : block.type === "numberQuestion" ? (
+                </>
+              ): block.type === "numberQuestion" ? (
                 <SnoopElement
                   type="number"
                   name={block.id}
