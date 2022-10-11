@@ -6,7 +6,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { useRouter } from "next/router";
 import Image from "next/image";
-// import { SnoopElement, SnoopForm, SnoopPage } from "../../kda-snoopforms-react/src";
 import { SnoopElement, SnoopForm, SnoopPage } from "@snoopforms/react";
 import { Page, PageBlock } from "../../lib/types";
 import { findTimer, isTimedPage } from "../../lib/utils";
@@ -126,7 +125,7 @@ const App: FC<IProps> = ({
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
-                  options={block.data.options.map((o) => o.label)} //o.image ? <img src={o.image.Location} alt={o.label} /> : o.label 
+                  options={block.data.options.map((o) => o.label)}
                   classNames={{
                     label:
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
@@ -135,26 +134,19 @@ const App: FC<IProps> = ({
                 />
               ) : block.type === "multipleChoiceQuestion" &&
                 !block.data.multipleChoice ? (
-                  <>
-                  {
-                    console.log(block.data.options)
-                  }
-                  
-                  
                 <SnoopElement
                   type="radio"
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
-                  options={block.data.options} //o.image ? o.image.Location : o.label
+                  options={block.data.options}
                   classNames={{
                     label:
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
                   }}
                   required={block.data.required}
                 />
-                </>
-              ): block.type === "numberQuestion" ? (
+              ) : block.type === "numberQuestion" ? (
                 <SnoopElement
                   type="number"
                   name={block.id}
