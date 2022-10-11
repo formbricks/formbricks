@@ -159,8 +159,8 @@ export const isNotAdmin = (session, res) => {
     return res.status(403);
   }
 };
-export const isAdmin = (session) => {
-  return session.user.role === UserRole.ADMIN;
+export const isAdmin = (user) => {
+  return user.role === UserRole.ADMIN;
 };
 
 function diff_minutes(dt2: Date, dt1: Date) {

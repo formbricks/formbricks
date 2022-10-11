@@ -128,10 +128,6 @@ export default function FormList() {
                             <CheckCircleIcon className="w-5 h-5 text-black mr-2" />
                             {form.schema !== "undefined" ?  `m / n`: `0  / n`}
                           </span>
-                          {/* <span className="flex items-center">
-                            <LockClosedIcon className="w-5 h-5 text-black mr-2" />
-                            {new Date() === new Date(form.dueDate) ? `Closing soon` :`Open` }
-                          </span> */}
                         </div>
                         }
 

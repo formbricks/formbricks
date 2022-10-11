@@ -36,7 +36,7 @@ const SingleChoiceQuestion = (props) => {
   };
   const uploadImage = async (file, optionId) => {
    
-    const imgUrl =  await upload(file);
+    const imgUrl =  (await upload(file)).Location;
     choiceData.options.map(option =>{
         if(optionId === option.id) return option.image = imgUrl;
       }
@@ -105,9 +105,9 @@ const SingleChoiceQuestion = (props) => {
           option &&
           <div
             key={optionIdx}
-            className={classNames("w-3/4 flex items-center border border-red")}
+            className={classNames("w-3/4 flex items-center")}
           >    
-            <span className="w-full flex items-center text-sm border border-green">
+            <span className="w-full flex items-center text-sm">
               <span
                 className={classNames(
                   choiceData.multipleChoice ? "rounded-sm" : "rounded-full",
@@ -126,19 +126,22 @@ const SingleChoiceQuestion = (props) => {
               />
             </span>
             <input type="file" hidden id={option? option.id : ""} onChange={(e)=>uploadImage(e.target.files[0], option.id)} />
-            {option.image && <img src={option.image.Location} alt={option.label} className = "border border-black" />}
-            <button className="p-1 right-3">
-                <label htmlFor={option.id}><PhotoIcon className="w-4 h-4 text-gray-300" /></label>                
-            </button>
-            {optionIdx !== 0 && (
-              
-              <button
-                onClick={() => onDeleteOption(optionIdx)}
-                className="absolute p-1 right-3"
-              >
-                <TrashIcon className="w-4 h-4 text-gray-300" />
+            {option.image && <img src={option.image} alt={option.label} className = "" />}
+            <div className="flex items-center">
+              <button className="p-1 mx-2 right-3">
+                  <label htmlFor={option.id}><PhotoIcon className="w-4 h-4 text-gray-300" /></label>                
               </button>
-            )}
+              {optionIdx !== 0 && (
+                
+                <button
+                  onClick={() => onDeleteOption(optionIdx)}
+                  className="p-1 mx-2 right-3"
+                >
+                  <TrashIcon className="w-4 h-4 text-gray-300" />
+                </button>
+              )}
+            </div>
+
           </div>
         ))}
       </div>
