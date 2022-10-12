@@ -21,10 +21,10 @@ export default async function handle(
   if (req.method === "GET") {
     let whereClause: FormWhereClause = {};
     const today = new Date();
-    today.setUTCHours(0,0,0,0);
+    today.setUTCHours(0, 0, 0, 0);
     if (session.user.role === UserRole.PUBLIC)
       whereClause = {
-        dueDate: { gte: today},
+        dueDate: { gte: today },
         noCodeForm: { published: true },
       };
 
@@ -32,10 +32,10 @@ export default async function handle(
       where: whereClause,
       include: {
         owner: {
-          select: { firstname: true },
+          select: { firstname: true, lastname: true },
         },
         noCodeForm: {
-          select: { published: true },
+          select: { published: true, blocks: true },
         },
         _count: {
           select: { submissionSessions: true },

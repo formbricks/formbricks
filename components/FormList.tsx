@@ -18,15 +18,17 @@ import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
 import EmptyPageFiller from "./layout/EmptyPageFiller";
 import { format } from "date-fns";
+import CandidateProgress from "./form/CandidateProgress";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
-  enum options  {
+
+  enum options {
     year = "numeric",
     month = "long",
     day = "numeric",
-  };
+  }
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -52,7 +54,7 @@ export default function FormList() {
       console.error(error);
     }
   };
-  
+
   return (
     <>
       <div className="h-full px-6 py-8">
@@ -109,30 +111,27 @@ export default function FormList() {
                           <CalendarDaysIcon className="w-5 h-5 text-black mr-2" />
                           {new Date(form.dueDate) < new Date() ? (
                             <span className="text-xs font-bold text-red-700 line-clamp-3">
-                              {format(new Date(form.dueDate), 'MMMM dd, yyyy')}
+                              {format(new Date(form.dueDate), "MMMM dd, yyyy")}
                             </span>
                           ) : (
                             <span className="text-xs font-bold text-neutral-500 line-clamp-3">
-                              {new Date(form.dueDate).toLocaleDateString("en-US", options)}
+                              {new Date(form.dueDate).toLocaleDateString(
+                                "en-US",
+                                options
+                              )}
                             </span>
                           )}
                         </span>
-                        {
-                          session.user.role === UserRole.ADMIN ? 
-                        <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
-                          <UserCircleIcon className="w-5 h-5 text-black mr-2" />
-                          {form.owner.firstname}
-                        </span> :
-                        <div className="flex items-center px-3 py-1 text-xs font-bold text-neutral-500">
-                          <span className="flex items-center mr-1">
-                            <CheckCircleIcon className="w-5 h-5 text-black mr-2" />
-                            {form.schema !== "undefined" ?  `m / n`: `0  / n`}
+                        {session.user.role === UserRole.ADMIN ? (
+                          <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
+                            <UserCircleIcon className="w-5 h-5 text-black mr-2" />
+                            {form.owner.firstname + " " + form.owner.lastname}
                           </span>
-                        </div>
-                        }
-
+                        ) : (
+                          <CandidateProgress formId={form.id} />
+                        )}
                       </div>
-                      
+
                       <Link
                         href={
                           session.user.role === UserRole.PUBLIC
