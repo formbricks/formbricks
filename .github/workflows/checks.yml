@@ -10,6 +10,10 @@ jobs:
         node: ["16.x"]
         os: [ubuntu-latest, windows-latest, macOS-latest]
 
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
