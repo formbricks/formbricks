@@ -19,10 +19,6 @@
 
 <br/>
 
-> :warning: This repository is still in an early stage of development. We love the open source community and want to show what we are working on early. We will update this readme with more information once it is safe to use. Until then, feel free to share your thoughts, contact us, and contribute if you'd like.
-
-<br/>
-
 ## About snoopForms
 
 <img width="937" alt="snoopForms-architecture" src="https://user-images.githubusercontent.com/675065/182550268-09794c9e-1187-470e-b795-697ceb2a93b8.svg">
