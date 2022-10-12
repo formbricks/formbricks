@@ -11,7 +11,6 @@ services:
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile
-    command: [sh, -c, "yarn prisma migrate deploy && yarn start"]
     depends_on:
       - postgres
     ports:

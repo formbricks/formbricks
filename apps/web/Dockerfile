@@ -1,12 +1,3 @@
-FROM node:16-alpine AS builder
-RUN apk update
-# Set working directory
-WORKDIR /app
-RUN apk add --no-cache libc6-compat
-RUN npm install -g turbo
-COPY . .
-RUN turbo prune --scope=web --docker
-
 # Add lockfile and package.json's of isolated subworkspace
 FROM node:16-alpine AS installer
 RUN apk update
@@ -15,9 +6,7 @@ RUN curl -fsSL "https://github.com/pnpm/pnpm/releases/latest/download/pnpm-linux
 WORKDIR /app
 
 # First install the dependencies (as they change less often)
-COPY .gitignore .gitignore
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY . .
 RUN pnpm install
 
 # Build the project
@@ -27,7 +16,6 @@ RUN pnpm dlx prisma generate
 RUN pnpm turbo run build --filter=web...
 
 FROM node:16-alpine AS runner
-WORKDIR /app
 
 RUN apk --no-cache add curl libc6-compat
 RUN curl -fsSL "https://github.com/pnpm/pnpm/releases/latest/download/pnpm-linuxstatic-x64" -o /bin/pnpm; chmod +x /bin/pnpm;
@@ -37,6 +25,8 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 USER nextjs
 
+WORKDIR /home/nextjs
+
 COPY --from=installer /app/apps/web/next.config.js .
 COPY --from=installer /app/apps/web/package.json .
 
@@ -45,5 +35,6 @@ COPY --from=installer /app/apps/web/package.json .
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+COPY --from=installer --chown=nextjs:nodejs /app/packages/database/prisma/schema.prisma ./packages/database/prisma/schema.prisma
 
-CMD pnpm start
+CMD pnpm dlx prisma migrate deploy && node apps/web/server.js
