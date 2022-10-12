@@ -21,7 +21,7 @@
   "devDependencies": {
     "prettier": "latest",
     "tsx": "^3.7.1",
-    "turbo": "latest"
+    "turbo": "1.5.5"
   },
   "engines": {
     "node": ">=14.0.0"
