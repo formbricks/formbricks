@@ -10,8 +10,6 @@ COPY . .
 RUN pnpm install
 
 # Build the project
-COPY --from=builder /app/out/full/ .
-COPY turbo.json turbo.json
 RUN pnpm dlx prisma generate
 RUN pnpm turbo run build --filter=web...
 
