@@ -3,7 +3,7 @@ RUN apk update
 # Set working directory
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
-RUN npm install -g turbo@1.5.5
+RUN npm install -g turbo
 COPY . .
 RUN turbo prune --scope=web --docker
 
@@ -18,12 +18,12 @@ WORKDIR /app
 COPY .gitignore .gitignore
 COPY --from=builder /app/out/json/ .
 COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-RUN npm install -g turbo@1.5.5
 RUN pnpm install
 
 # Build the project
 COPY --from=builder /app/out/full/ .
 COPY turbo.json turbo.json
+RUN pnpm dlx prisma generate
 RUN pnpm turbo run build --filter=web...
 
 FROM node:16-alpine AS runner
@@ -44,5 +44,6 @@ COPY --from=installer /app/apps/web/package.json .
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
 CMD pnpm start
