@@ -3,6 +3,10 @@ var path = require("path");
 
 const nextConfig = {
   reactStrictMode: false,
+  output: "standalone",
+  experimental: {
+    outputFileTracingRoot: path.join(__dirname, "../../"),
+  },
   serverRuntimeConfig: {
     // Will only be available on the server side
     nextauthSecret: process.env.NEXTAUTH_SECRET,
