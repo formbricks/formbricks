@@ -45,6 +45,14 @@ With snoopForms you can build complex multi-page forms in minutes using either o
 - [TailwindCSS](https://tailwindcss.com/)
 - [Prisma](https://prisma.io/)
 
+## Cloud vs. self-hosted
+
+We offer you a ready hosted and maintained version of snoopForms on [snoopforms.com](https://snoopforms.com). It is always up to date and offers a generous free plan. If you want to try snoopForms, or save yourself the hassle and stress of self-hosting, this is the place to start.
+
+The version of snoopForms you'll find in this repository is the same version that runs in the cloud, and you can easily host it yourself on your servers. See the readme below for the deployment instructions.
+
+(In the future we may develop additional features that aren't in the free Open-Source version)
+
 ## Get started with development
 
 This repository is a monorepository using [Turborepo](https://turborepo.org/) and [pnpm](https://pnpm.io/). It contains the snoopForms [server application](https://github.com/formbricks/snoopforms/tree/main/apps/web), the [react library](https://github.com/formbricks/snoopforms/tree/main/packages/react) and other helper packages like database or UI library.
