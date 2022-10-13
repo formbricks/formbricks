@@ -11,7 +11,7 @@ import {
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState } from "react";
-import { getFormPages, useForms } from "../lib/forms";
+import { useForms } from "../lib/forms";
 import { UserRole } from "@prisma/client";
 import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
@@ -128,7 +128,7 @@ export default function FormList() {
                             {form.owner.firstname + " " + form.owner.lastname}
                           </span>
                         ) : (
-                          <CandidateProgress formId={form.id} />
+                          <CandidateProgress form={form} />
                         )}
                       </div>
 
