@@ -108,7 +108,7 @@ const App: FC<IProps> = ({
                 <SnoopElement
                   type="email"
                   name={block.id}
-                  label={block.data.required? `${block.data.label} *`: block.data.label}
+                  label={block.data.label}
                   help={block.data.help}
                   placeholder={block.data.placeholder}
                   icon={<EnvelopeIcon className="w-5 h-5" />}
