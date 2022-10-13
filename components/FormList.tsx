@@ -5,8 +5,7 @@ import {
   FolderOpenIcon,
   DocumentPlusIcon,
   UserCircleIcon,
-  CheckCircleIcon,
-  LockClosedIcon,
+
 } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -20,6 +19,7 @@ import EmptyPageFiller from "./layout/EmptyPageFiller";
 import { format } from "date-fns";
 import CandidateProgress from "./form/CandidateProgress";
 import { timeSince } from "../lib/utils";
+import SearchBar from "./form/SearchBar";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
@@ -63,6 +63,10 @@ export default function FormList() {
 
   return (
     <>
+      <div className = "w-full flex justify-center">
+        <SearchBar className="w-3/4 my-3 py-2 flex gap-4" />
+      </div>
+       
       <div className="h-full px-6 py-8">
         {forms &&
           (forms.length === 0 ? (
@@ -114,7 +118,7 @@ export default function FormList() {
                       </div>
                       <div className="border-y">
                         <span className="flex  items-center  px-3 py-1">
-                          <CalendarDaysIcon className="w-5 h-5 text-black mr-2" />
+                          <CalendarDaysIcon className={format(new Date(form.dueDate), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") ? "w-5 h-5 text-red-800 mr-2" : timeSince(form.dueDate) !== "in 7 days"? "w-5 h-5 text-black mr-2" : "w-5 h-5 text-rose-500 mr-2" } />
                             { format(new Date(form.dueDate), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") ? (
                               <span className="text-xs font-bold text-red-800 line-clamp-3">
                                 closing today
