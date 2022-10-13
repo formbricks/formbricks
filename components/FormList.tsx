@@ -19,6 +19,7 @@ import NewFormModal from "./form/NewFormModal";
 import EmptyPageFiller from "./layout/EmptyPageFiller";
 import { format } from "date-fns";
 import CandidateProgress from "./form/CandidateProgress";
+import { timeSince } from "../lib/utils";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
@@ -29,6 +30,11 @@ export default function FormList() {
     month = "long",
     day = "numeric",
   }
+
+  // DATE DIFF
+
+  
+
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -109,7 +115,21 @@ export default function FormList() {
                       <div className="border-y">
                         <span className="flex  items-center  px-3 py-1">
                           <CalendarDaysIcon className="w-5 h-5 text-black mr-2" />
-                          {new Date(form.dueDate) < new Date() ? (
+                            { format(new Date(form.dueDate), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") ? (
+                              <span className="text-xs font-bold text-red-800 line-clamp-3">
+                                closing today
+                              </span>
+                            ): timeSince(form.dueDate) !== "in 7 days"? (
+                              <span className="text-xs font-bold text-neutral-500 line-clamp-3">
+                                {format(new Date(form.dueDate), "MMMM dd, yyyy")}
+                              </span>
+                              ) : (
+                              <span className="text-xs font-bold text-rose-500 line-clamp-3">
+                                closing {timeSince(form.dueDate)} 
+                              </span>
+                              )
+                            }
+                          {/* {new Date(form.dueDate) < new Date() ? (
                             <span className="text-xs font-bold text-red-700 line-clamp-3">
                               {format(new Date(form.dueDate), "MMMM dd, yyyy")}
                             </span>
@@ -120,7 +140,7 @@ export default function FormList() {
                                 options
                               )}
                             </span>
-                          )}
+                          )} */}
                         </span>
                         {session.user.role === UserRole.ADMIN ? (
                           <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
