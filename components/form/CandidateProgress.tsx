@@ -5,7 +5,7 @@ import usePages from "../../hooks/usePages";
 
 function CandidateProgress({ form }) {
 
-  const [progress, setProgress] = useState();
+  const [progress, setProgress] = useState(0);
   const pages = usePages({ blocks: form.noCodeForm.blocks, formId: form.id });
 
   const candidateProgress = async () => {
@@ -18,7 +18,7 @@ function CandidateProgress({ form }) {
         console.error("error");
       }
       const data = await progress.json();
-      setProgress(data.events.length);
+      setProgress(data ? data.events.length : 0);
     } catch (error) {}
   };
   useEffect(() => {
