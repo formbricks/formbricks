@@ -26,9 +26,9 @@ function CandidateProgress({ form }) {
   }, []);
 
   return (
-    <div className="flex items-center px-3 py-1 text-xs font-bold text-neutral-500">
+    <div className={progress < (pages.length - 1)? "flex items-center px-3 py-1 text-xs font-bold text-neutral-500" : "flex items-center px-3 py-1 text-xs font-bold text-green-700"}>
       <span className="flex items-center mr-1">
-        <CheckCircleIcon className="w-5 h-5 text-black mr-2" />
+        <CheckCircleIcon className={progress < (pages.length - 1) ? "w-5 h-5 text-black mr-2" : "w-5 h-5 text-green-700 mr-2"} />
         { progress < (pages.length - 1)?`${progress} / ${(pages.length - 1)}`: "completed"}
       </span>
     </div>
