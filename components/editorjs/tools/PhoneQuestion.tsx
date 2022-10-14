@@ -2,6 +2,7 @@ import { API, BlockTool, BlockToolData, ToolConfig } from "@editorjs/editorjs";
 import { PhoneIcon } from "@heroicons/react/24/solid";
 import ReactDOM from "react-dom";
 
+
 //styles imports in angular.json
 interface PhoneQuestionData extends BlockToolData {
   label: string;
@@ -42,7 +43,7 @@ export default class PhoneQuestion implements BlockTool {
     this.data = {
       label: data.label || "",
       help: data.help || "",
-      placeholder: data.placeholder || "+1 (555) 987-6543",
+      placeholder: data.placeholder || "+243825216845",
       required: data.required !== undefined ? data.required : true,
     };
   }
