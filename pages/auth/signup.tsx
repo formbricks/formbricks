@@ -6,6 +6,7 @@ import getConfig from "next/config";
 import { useState } from "react";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { createUser } from "../../lib/users";
+import { handlePhoneNumberValidity } from "../../lib/utils";
 
 const { publicRuntimeConfig } = getConfig();
 
@@ -15,11 +16,7 @@ export default function SignUpPage() {
 
   const { emailVerificationDisabled, privacyUrl, termsUrl } =
     publicRuntimeConfig;
-  const handlePhoneNumberValidity = (phone) => {
-    const validity = /^(\+243|0)[0-9]{9}$/.test(phone);
-    if (validity === false) throw new Error("the phone number is incorrect");
-    return phone;
-  };
+    
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
