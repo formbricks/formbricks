@@ -19,14 +19,10 @@ import EmptyPageFiller from "./layout/EmptyPageFiller";
 import { format } from "date-fns";
 import CandidateProgress from "./form/CandidateProgress";
 import { timeSince } from "../lib/utils";
-import SearchBar from "./form/SearchBar";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
-  const [formData, setFormData] = useState([]);
-  const [queryValue, setQueryValue] = useState("");
-
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -63,16 +59,6 @@ export default function FormList() {
 
   return (
     <>
-      <div className="w-full flex justify-center">
-        <SearchBar
-          className="w-3/4 my-3 py-2 flex gap-4"
-          queryValue={queryValue}
-          setQueryValue={setQueryValue}
-          formData={forms}
-          setFormData={setFormData}
-        />
-      </div>
-
       <div className="h-full px-6 py-8">
         {forms &&
           (forms.length === 0 ? (
