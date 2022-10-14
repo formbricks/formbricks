@@ -71,7 +71,6 @@ function NoCodeFormPublic() {
       router.push(`/sourcings/${formId}/${pageIdOnModal}`);
     }
   };
-console.log("****", noCodeForm.form);
 
   return (
     <BaseLayoutManagement

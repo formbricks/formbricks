@@ -24,7 +24,8 @@ import SearchBar from "./form/SearchBar";
 export default function FormList() {
   const { forms, mutateForms } = useForms();
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
-  const [formData, setFormData] = useState(forms);
+  const [formData, setFormData] = useState([]);
+  const [queryValue, setQueryValue] = useState("");
 
   const { data: session } = useSession({
     required: true,
@@ -60,12 +61,16 @@ export default function FormList() {
     }
   };
 
-  // console.log("days_diff : ", dateDayDiff(forms[4].dueDate));
-
   return (
     <>
       <div className="w-full flex justify-center">
-        <SearchBar className="w-3/4 my-3 py-2 flex gap-4" />
+        <SearchBar
+          className="w-3/4 my-3 py-2 flex gap-4"
+          queryValue={queryValue}
+          setQueryValue={setQueryValue}
+          formData={forms}
+          setFormData={setFormData}
+        />
       </div>
 
       <div className="h-full px-6 py-8">
