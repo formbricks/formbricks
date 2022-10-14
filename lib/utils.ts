@@ -73,6 +73,12 @@ export const slugify = (...args: (string | number)[]): string => {
     .replace(/\s+/g, "-"); // separator
 };
 
+export const handlePhoneNumberValidity = (phone) => {
+  const validity = /^(\+243|0)[0-9]{9}$/.test(phone);
+  if (validity === false) throw new Error("the phone number is incorrect");
+  return phone;
+};
+
 export const getFieldSetter = (obj, objSetter) => {
   return (input, field) => setField(obj, objSetter, input, field);
 };
