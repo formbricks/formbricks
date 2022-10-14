@@ -7,6 +7,7 @@ import {
   UserCircleIcon,
 
 } from "@heroicons/react/24/outline";
+import {HiOutlineLocationMarker} from "react-icons/hi";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState } from "react";
@@ -107,7 +108,8 @@ export default function FormList() {
                       <div className="p-6">
                         <p className="text-lg line-clamp-3">{form.name}</p>
                       </div>
-                      <div className="border-y">
+                      <div className="border-t">
+                        {form.place === "" ? <></> : <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500"><HiOutlineLocationMarker className="w-5 h-5 text-black mr-2" />{form.place}</span>}
                         <span className="flex  items-center  px-3 py-1">
                           <CalendarDaysIcon className={format(new Date(form.dueDate), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") ? "w-5 h-5 text-red-800 mr-2" : timeSince(form.dueDate) !== "in 7 days"? "w-5 h-5 text-black mr-2" : "w-5 h-5 text-rose-500 mr-2" } />
                             { format(new Date(form.dueDate), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") ? (

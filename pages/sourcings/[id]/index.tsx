@@ -5,6 +5,7 @@ import {
   CalendarDaysIcon,
   InboxArrowDownIcon,
 } from "@heroicons/react/24/solid";
+import {HiOutlineLocationMarker} from "react-icons/hi";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -70,6 +71,7 @@ function NoCodeFormPublic() {
       router.push(`/sourcings/${formId}/${pageIdOnModal}`);
     }
   };
+console.log("****", noCodeForm.form);
 
   return (
     <BaseLayoutManagement
@@ -128,6 +130,12 @@ function NoCodeFormPublic() {
                   options
                 )}
               </p>
+              {noCodeForm.form.place === ""? <></> :
+              <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
+                <HiOutlineLocationMarker className="w-6 h-6 stroke-thin mr-2" />
+                <span className="font-bold mr-1">Place :</span>{" "}
+                {noCodeForm.form.place}
+              </p>}
               {pages.map((page, index) => {
                 if (pages.length - 1 !== index)
                   return (
