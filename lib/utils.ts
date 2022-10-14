@@ -139,7 +139,8 @@ export const convertTimeString = (dateString: string) => {
 };
 
 export const timeSince = (dateString: string) => {
-  const date = new Date(dateString);
+  var date = new Date(dateString);
+  date.setDate(date.getDate() + 1);
   return formatDistance(date, new Date(), {
     addSuffix: true,
   });

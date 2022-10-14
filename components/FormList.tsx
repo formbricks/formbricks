@@ -5,9 +5,8 @@ import {
   FolderOpenIcon,
   DocumentPlusIcon,
   UserCircleIcon,
-
 } from "@heroicons/react/24/outline";
-import {HiOutlineLocationMarker} from "react-icons/hi";
+import { HiOutlineLocationMarker } from "react-icons/hi";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState } from "react";
@@ -25,7 +24,7 @@ import SearchBar from "./form/SearchBar";
 export default function FormList() {
   const { forms, mutateForms } = useForms();
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
-  const [formData, setFormData] = useState(forms)
+  const [formData, setFormData] = useState(forms);
 
   const { data: session } = useSession({
     required: true,
@@ -34,6 +33,14 @@ export default function FormList() {
       return signIn();
     },
   });
+
+  const dateDayDiff = (date) => {
+    const today = new Date();
+    const dueDate = new Date(date);
+    var total_seconds = Math.abs(dueDate - today) / 1000;
+    var days_difference = Math.floor(total_seconds / (60 * 60 * 24));
+    return days_difference;
+  };
 
   const newForm = async () => {
     setOpenNewFormModal(true);
@@ -53,12 +60,14 @@ export default function FormList() {
     }
   };
 
+  // console.log("days_diff : ", dateDayDiff(forms[4].dueDate));
+
   return (
     <>
-      <div className = "w-full flex justify-center">
+      <div className="w-full flex justify-center">
         <SearchBar className="w-3/4 my-3 py-2 flex gap-4" />
       </div>
-       
+
       <div className="h-full px-6 py-8">
         {forms &&
           (forms.length === 0 ? (
@@ -109,24 +118,39 @@ export default function FormList() {
                         <p className="text-lg line-clamp-3">{form.name}</p>
                       </div>
                       <div className="border-t">
-                        {form.place === "" ? <></> : <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500"><HiOutlineLocationMarker className="w-5 h-5 text-black mr-2" />{form.place}</span>}
+                        {form.place === "" ? (
+                          <></>
+                        ) : (
+                          <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
+                            <HiOutlineLocationMarker className="w-5 h-5 text-black mr-2" />
+                            {form.place}
+                          </span>
+                        )}
                         <span className="flex  items-center  px-3 py-1">
-                          <CalendarDaysIcon className={format(new Date(form.dueDate), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") ? "w-5 h-5 text-red-800 mr-2" : timeSince(form.dueDate) !== "in 7 days"? "w-5 h-5 text-black mr-2" : "w-5 h-5 text-rose-500 mr-2" } />
-                            { format(new Date(form.dueDate), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") ? (
-                              <span className="text-xs font-bold text-red-800 line-clamp-3">
-                                closing today
-                              </span>
-                            ): timeSince(form.dueDate) !== "in 7 days"? (
-                              <span className="text-xs font-bold text-neutral-500 line-clamp-3">
-                                {format(new Date(form.dueDate), "MMMM dd, yyyy")}
-                              </span>
-                              ) : (
-                              <span className="text-xs font-bold text-rose-500 line-clamp-3">
-                                closing {timeSince(form.dueDate)} 
-                              </span>
-                              )
+                          <CalendarDaysIcon
+                            className={
+                              format(new Date(form.dueDate), "yyyy-MM-dd") ===
+                              format(new Date(), "yyyy-MM-dd")
+                                ? "w-5 h-5 text-red-800 mr-2"
+                                : dateDayDiff(form.dueDate) > 7
+                                ? "w-5 h-5 text-black mr-2"
+                                : "w-5 h-5 text-rose-500 mr-2"
                             }
-                  
+                          />
+                          {format(new Date(form.dueDate), "yyyy-MM-dd") ===
+                          format(new Date(), "yyyy-MM-dd") ? (
+                            <span className="text-xs font-bold text-red-800 line-clamp-3">
+                              closing today
+                            </span>
+                          ) : dateDayDiff(form.dueDate) > 7 ? (
+                            <span className="text-xs font-bold text-neutral-500 line-clamp-3">
+                              {format(new Date(form.dueDate), "MMMM dd, yyyy")}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-rose-500 line-clamp-3">
+                              closing {timeSince(form.dueDate)}
+                            </span>
+                          )}
                         </span>
                         {session.user.role === UserRole.ADMIN ? (
                           <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
