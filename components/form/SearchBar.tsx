@@ -5,9 +5,9 @@ import {AdjustmentsVerticalIcon} from '@heroicons/react/24/solid'
 import {MdSortByAlpha, MdToday} from 'react-icons/md'
 
 function SearchBar({className}) {
-    const [searchValue, setSearchValue] = useState("");
+    const [queryValue, setQueryValue] = useState("");
 
-    console.log("searched value", searchValue);
+    console.log("Queryed value", queryValue);
     
 
     return (
@@ -17,13 +17,13 @@ function SearchBar({className}) {
             name="name"
             className="block w-full p-3 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
             placeholder="e.g. Registration for the Kinshasa Digital Academy"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
+            value={queryValue}
+            onChange={(e) => setQueryValue(e.target.value)}
             autoFocus
         />
         <Menu as="div" className="relative inline-block text-left">
             <div>
-                <Menu.Button className="inline-flex w-full justify-center rounded bg-red bg-opacity-50 px-4 py-3 text-sm font-medium text-white hover:bg-opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75">
+                <Menu.Button className="inline-flex w-full justify-center rounded bg-snoopfade bg-opacity-50 px-4 py-3 text-sm font-medium text-white hover:bg-opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75">
                     <AdjustmentsVerticalIcon className='w-5 mr-2'/>
                     options
                     <ChevronDownIcon
@@ -55,7 +55,7 @@ function SearchBar({className}) {
                                     className="mr-2 h-5 w-5"
                                     aria-hidden="true"
                                 />
-                                Filter by name
+                                Sort by name
                             </button>
                         )}
                         </Menu.Item>
@@ -72,7 +72,7 @@ function SearchBar({className}) {
                                     className="mr-2 h-5 w-5"
                                     aria-hidden="true"
                                 />
-                                Filter by due date
+                                Sort by due date
                             </button>
                         )}
                         </Menu.Item>
