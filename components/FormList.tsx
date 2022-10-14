@@ -24,16 +24,7 @@ import SearchBar from "./form/SearchBar";
 export default function FormList() {
   const { forms, mutateForms } = useForms();
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
-
-  enum options {
-    year = "numeric",
-    month = "long",
-    day = "numeric",
-  }
-
-  // DATE DIFF
-
-  
+  const [formData, setFormData] = useState(forms)
 
   const { data: session } = useSession({
     required: true,
@@ -133,18 +124,7 @@ export default function FormList() {
                               </span>
                               )
                             }
-                          {/* {new Date(form.dueDate) < new Date() ? (
-                            <span className="text-xs font-bold text-red-700 line-clamp-3">
-                              {format(new Date(form.dueDate), "MMMM dd, yyyy")}
-                            </span>
-                          ) : (
-                            <span className="text-xs font-bold text-neutral-500 line-clamp-3">
-                              {new Date(form.dueDate).toLocaleDateString(
-                                "en-US",
-                                options
-                              )}
-                            </span>
-                          )} */}
+                  
                         </span>
                         {session.user.role === UserRole.ADMIN ? (
                           <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
