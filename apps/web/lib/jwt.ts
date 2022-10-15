@@ -1,11 +1,8 @@
 import jwt from "jsonwebtoken";
-import getConfig from "next/config";
 import { prisma } from "database";
 
-const { serverRuntimeConfig } = getConfig();
-
 export function createToken(userId, userEmail, options = {}) {
-  return jwt.sign({ id: userId }, serverRuntimeConfig.nextauthSecret + userEmail, options);
+  return jwt.sign({ id: userId }, process.env.NEXTAUTH_SECRET + userEmail, options);
 }
 
 export async function verifyToken(token, userEmail = "") {
@@ -23,5 +20,5 @@ export async function verifyToken(token, userEmail = "") {
     userEmail = foundUser.email;
   }
 
-  return jwt.verify(token, serverRuntimeConfig.nextauthSecret + userEmail);
+  return jwt.verify(token, process.env.NEXTAUTH_SECRET + userEmail);
 }

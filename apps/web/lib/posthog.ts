@@ -1,22 +1,18 @@
-import getConfig from "next/config";
 import { hashString } from "./utils";
 
-const { serverRuntimeConfig } = getConfig();
 const enabled =
-  process.env.NODE_ENV === "production" &&
-  serverRuntimeConfig.posthogApiKey &&
-  serverRuntimeConfig.posthogApiHost;
+  process.env.NODE_ENV === "production" && process.env.POSTHOG_API_HOST && process.env.POSTHOG_API_KEY;
 
 export const capturePosthogEvent = async (userId, eventName, properties = {}) => {
   if (!enabled) {
     return;
   }
   try {
-    await fetch(`${serverRuntimeConfig.posthogApiHost}/capture/`, {
+    await fetch(`${process.env.POSTHOG_API_HOST}/capture/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        api_key: serverRuntimeConfig.posthogApiKey,
+        api_key: process.env.POSTHOG_API_KEY,
         event: eventName,
         properties: {
           distinct_id: hashString(userId.toString()),
