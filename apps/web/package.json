@@ -14,7 +14,7 @@
     "@editorjs/paragraph": "^2.8.0",
     "@headlessui/react": "^1.7.3",
     "@heroicons/react": "^2.0.12",
-    "@snoopforms/react": "^0.3.5",
+    "@snoopforms/react": "workspace:*",
     "bcryptjs": "^2.4.3",
     "chart.js": "^3.9.1",
     "crypto": "^1.0.1",
