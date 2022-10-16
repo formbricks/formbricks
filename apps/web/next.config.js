@@ -14,6 +14,11 @@ const nextConfig = {
         destination: "/forms/",
         permanent: false,
       },
+      {
+        source: "/forms/:id",
+        destination: "/forms/:id/form",
+        permanent: false,
+      },
     ];
   },
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
