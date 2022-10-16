@@ -7,6 +7,9 @@ WORKDIR /app
 
 # First install the dependencies (as they change less often)
 COPY . .
+# Copy .env file because Docker don't follow symlinks
+COPY .env /app/apps/web/
+
 RUN pnpm install
 
 # Build the project

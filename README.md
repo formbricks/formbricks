@@ -136,7 +136,9 @@ cp .env.docker .env
 
 ```
 
-Start the docker compose process to build and spin up the snoopForms container as well as the PostgreSQL database.
+Note: The environment variables are used at build time. When you change environment variables later, you need to rebuild the image with `docker compose build` for the changes to take effect.
+
+Finally start the docker compose process to build and spin up the snoopForms container as well as the PostgreSQL database.
 
 ```bash
 
