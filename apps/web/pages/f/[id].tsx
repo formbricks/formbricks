@@ -63,8 +63,4 @@ function NoCodeFormPublic() {
   );
 }
 
-NoCodeFormPublic.getInitialProps = () => {
-  return {};
-};
-
 export default NoCodeFormPublic;
