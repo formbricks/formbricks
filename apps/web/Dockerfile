@@ -7,6 +7,9 @@ WORKDIR /app
 
 # First install the dependencies (as they change less often)
 COPY . .
+# Copy .env file because Docker don't follow symlinks
+COPY .env /app/apps/web/
+
 RUN pnpm install
 
 # Build the project
@@ -33,7 +36,6 @@ COPY --from=installer /app/apps/web/package.json .
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
-COPY --from=installer --chown=nextjs:nodejs /.env ./apps/web/.env
 COPY --from=installer --chown=nextjs:nodejs /app/packages/database/prisma ./packages/database/prisma
 
 CMD pnpm dlx prisma migrate deploy && node apps/web/server.js

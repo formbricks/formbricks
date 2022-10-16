@@ -1,7 +1,4 @@
-import getConfig from "next/config";
 import { hashString } from "./utils";
-
-const { serverRuntimeConfig } = getConfig();
 
 /* We use this telemetry service to better understand how snoopForms is being used
    and how we can improve it. All data including the IP address is collected anonymously
@@ -10,9 +7,9 @@ const { serverRuntimeConfig } = getConfig();
 
 export const sendTelemetry = async (eventName: string) => {
   if (
-    !serverRuntimeConfig.telemetryDisabled &&
+    process.env.TELEMETRY_DISABLED !== "1" &&
     process.env.NODE_ENV === "production" &&
-    serverRuntimeConfig.nextauthUrl !== "http://localhost:3000"
+    process.env.NEXTAUTH_URL !== "http://localhost:3000"
   ) {
     try {
       await fetch("https://posthog.snoopforms.com/capture/", {
@@ -22,7 +19,7 @@ export const sendTelemetry = async (eventName: string) => {
           api_key: "phc_BTq4eagaCzPyUSURXVYwlScTQRvcmBDXjYh7OG6kiqw",
           event: eventName,
           properties: {
-            distinct_id: hashString(serverRuntimeConfig.nextauthUrl),
+            distinct_id: hashString(process.env.NEXTAUTH_URL),
           },
           timestamp: new Date().toISOString(),
         }),

@@ -3,7 +3,27 @@
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**"]
+      "outputs": ["dist/**", ".next/**"],
+      "env": [
+        "MAIL_FROM",
+        "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL",
+        "NODE_ENV",
+        "NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED",
+        "NEXT_PUBLIC_IMPRINT_URL",
+        "NEXT_PUBLIC_PASSWORD_RESET_DISABLED",
+        "NEXT_PUBLIC_PRIVACY_URL",
+        "NEXT_PUBLIC_PRIVACY_URL",
+        "NEXT_PUBLIC_TERMS_URL",
+        "POSTHOG_API_HOST",
+        "POSTHOG_API_KEY",
+        "SMTP_HOST",
+        "SMTP_PORT",
+        "SMTP_USER",
+        "SMTP_PASSWORD",
+        "SMTP_SECURE_ENABLED",
+        "TELEMETRY_DISABLED"
+      ]
     },
     "db:migrate:deploy": {
       "outputs": []
@@ -23,6 +43,5 @@
     "lint": {
       "outputs": []
     }
-  },
-  "globalEnv": ["NODE_ENV"]
+  }
 }

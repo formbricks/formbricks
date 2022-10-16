@@ -126,7 +126,7 @@ git clone https://github.com/formbricks/snoopforms.git && cd snoopforms
 
 ```
 
-Create a `.env` file based on `.env.docker` and change all fields according to your setup. This file comes with a basic setup and snoopForms works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings in the `.env` file. If you configured your email credentials, you can also comment the following lines to enable email verification (`# EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# PASSWORD_RESET_DISABLED=1`).
+Create a `.env` file based on `.env.docker` and change all fields according to your setup. This file comes with a basic setup and snoopForms works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings in the `.env` file. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`).
 
 Copy the `.env.docker` file to `.env` and edit it with an editor of your choice if needed.
 
@@ -136,7 +136,9 @@ cp .env.docker .env
 
 ```
 
-Start the docker compose process to build and spin up the snoopForms container as well as the PostgreSQL database.
+Note: The environment variables are used at build time. When you change environment variables later, you need to rebuild the image with `docker compose build` for the changes to take effect.
+
+Finally start the docker compose process to build and spin up the snoopForms container as well as the PostgreSQL database.
 
 ```bash
 

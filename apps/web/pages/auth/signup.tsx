@@ -2,18 +2,13 @@ import { XCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import getConfig from "next/config";
 import { useState } from "react";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { createUser } from "../../lib/users";
 
-const { publicRuntimeConfig } = getConfig();
-
 export default function SignUpPage() {
   const router = useRouter();
   const [error, setError] = useState<string>("");
-
-  const { emailVerificationDisabled, privacyUrl, termsUrl } = publicRuntimeConfig;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,9 +20,10 @@ export default function SignUpPage() {
         e.target.elements.password.value
       );
 
-      const url = emailVerificationDisabled
-        ? `/auth/signup-without-verification-success`
-        : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
+      const url =
+        process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED === "1"
+          ? `/auth/signup-without-verification-success`
+          : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
 
       router.push(url);
     } catch (e) {
@@ -136,24 +132,26 @@ export default function SignUpPage() {
                         <a className="text-red hover:text-red-600">Log in.</a>
                       </Link>
                     </div>
-                    {(termsUrl || privacyUrl) && (
+                    {(process.env.NEXT_PUBLIC_TERMS_URL || process.env.NEXT_PUBLIC_PRIVACY_URL) && (
                       <div className="mt-3 text-center text-xs text-gray-400">
                         By clicking &quot;Sign Up&quot;, you agree to our
                         <br />
-                        {termsUrl && (
+                        {process.env.NEXT_PUBLIC_TERMS_URL && (
                           <a
                             className="text-red hover:text-red-600"
-                            href={termsUrl}
+                            href={process.env.NEXT_PUBLIC_TERMS_URL}
                             rel="noreferrer"
                             target="_blank">
                             terms of service
                           </a>
                         )}
-                        {termsUrl && privacyUrl && <span> and </span>}
-                        {privacyUrl && (
+                        {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && (
+                          <span> and </span>
+                        )}
+                        {process.env.NEXT_PUBLIC_PRIVACY_URL && (
                           <a
                             className="text-red hover:text-red-600"
-                            href={privacyUrl}
+                            href={process.env.NEXT_PUBLIC_PRIVACY_URL}
                             rel="noreferrer"
                             target="_blank">
                             privacy policy
