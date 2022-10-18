@@ -1,14 +1,14 @@
-import { Meta, Story } from '@storybook/react';
-import React from 'react';
-import { SnoopElement, SnoopForm, SnoopPage } from '../src';
-import { SnoopElementProps } from '../src/components/SnoopElement/SnoopElement';
+import { Meta, Story } from "@storybook/react";
+import React from "react";
+import { SnoopElement, SnoopForm, SnoopPage } from "../src";
+import { SnoopElementProps } from "../src/components/SnoopElement/SnoopElement";
 
 const meta: Meta = {
-  title: 'Snoop/SnoopElement',
+  title: "Snoop/SnoopElement",
   component: SnoopElement,
   argTypes: {
     type: {
-      defaultValue: 'text',
+      defaultValue: "text",
     },
   },
   parameters: {
@@ -28,7 +28,7 @@ const Template: Story<SnoopElementProps> = (args) => (
 
 export const Default = Template.bind({});
 Default.args = {
-  type: 'text',
-  name: 'myInput',
+  type: "text",
+  name: "myInput",
   options: [],
 };

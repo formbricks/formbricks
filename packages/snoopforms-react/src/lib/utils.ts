@@ -1,3 +1,3 @@
 export const classNamesConcat = (...classes: any) => {
-  return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(" ");
 };

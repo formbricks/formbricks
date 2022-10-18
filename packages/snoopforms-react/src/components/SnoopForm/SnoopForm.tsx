@@ -1,5 +1,5 @@
-import React, { createContext, FC, ReactNode, useState } from 'react';
-import { classNamesConcat } from '../../lib/utils';
+import React, { createContext, FC, ReactNode, useState } from "react";
+import { classNamesConcat } from "../../lib/utils";
 
 export const SchemaContext = createContext({
   schema: { pages: [] },
@@ -34,7 +34,7 @@ interface onSubmitProps {
 interface Props {
   domain?: string;
   formId?: string;
-  protocol?: 'http' | 'https';
+  protocol?: "http" | "https";
   localOnly?: boolean;
   className?: string;
   onSubmit?: (obj: onSubmitProps) => void;
@@ -42,18 +42,18 @@ interface Props {
 }
 
 export const SnoopForm: FC<Props> = ({
-  domain = 'app.snoopforms.com',
+  domain = "app.snoopforms.com",
   formId,
-  protocol = 'https',
+  protocol = "https",
   localOnly = false,
-  className = '',
+  className = "",
   onSubmit = (): any => {},
   children,
 }) => {
   const [schema, setSchema] = useState<any>({ pages: [] });
   const [submission, setSubmission] = useState<any>({});
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
-  const [submissionSessionId, setSubmissionSessionId] = useState('');
+  const [submissionSessionId, setSubmissionSessionId] = useState("");
 
   const handleSubmit = async (pageName: string) => {
     let _submissionSessionId = submissionSessionId;
@@ -61,9 +61,7 @@ export const SnoopForm: FC<Props> = ({
       // create answer session if it don't exist
       try {
         if (!formId) {
-          console.warn(
-            `🦝 SnoopForms: formId not set. Skipping sending submission to snoopHub.`
-          );
+          console.warn(`🦝 SnoopForms: formId not set. Skipping sending submission to snoopHub.`);
           return;
         }
         if (!_submissionSessionId) {
@@ -72,8 +70,8 @@ export const SnoopForm: FC<Props> = ({
           const submissionSessionRes: any = await fetch(
             `${protocol}://${domain}/api/forms/${formId}/submissionSessions`,
             {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({}),
             }
           );
@@ -83,12 +81,12 @@ export const SnoopForm: FC<Props> = ({
         }
         // send answer to snoop platform
         await fetch(`${protocol}://${domain}/api/forms/${formId}/event`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             events: [
               {
-                type: 'pageSubmission',
+                type: "pageSubmission",
                 data: {
                   pageName,
                   submissionSessionId: _submissionSessionId,
@@ -97,18 +95,16 @@ export const SnoopForm: FC<Props> = ({
               },
               // update schema
               // TODO: do conditionally only when requested by the snoopHub
-              { type: 'updateSchema', data: schema },
+              { type: "updateSchema", data: schema },
             ],
           }),
         });
       } catch (e) {
-        console.error(
-          `🦝 SnoopForms: Unable to send submission to snoopHub. Error: ${e}`
-        );
+        console.error(`🦝 SnoopForms: Unable to send submission to snoopHub. Error: ${e}`);
       }
     }
     const maxPageIdx = schema.pages.length - 1;
-    const hasThankYou = schema.pages[maxPageIdx].type === 'thankyou';
+    const hasThankYou = schema.pages[maxPageIdx].type === "thankyou";
     if (currentPageIdx < maxPageIdx) {
       setCurrentPageIdx(currentPageIdx + 1);
     }
@@ -124,12 +120,8 @@ export const SnoopForm: FC<Props> = ({
     <SubmitHandlerContext.Provider value={handleSubmit}>
       <SchemaContext.Provider value={{ schema, setSchema }}>
         <SubmissionContext.Provider value={{ submission, setSubmission }}>
-          <CurrentPageContext.Provider
-            value={{ currentPageIdx, setCurrentPageIdx }}
-          >
-            <div className={classNamesConcat('max-w-lg', className)}>
-              {children}
-            </div>
+          <CurrentPageContext.Provider value={{ currentPageIdx, setCurrentPageIdx }}>
+            <div className={classNamesConcat("max-w-lg", className)}>{children}</div>
           </CurrentPageContext.Provider>
         </SubmissionContext.Provider>
       </SchemaContext.Provider>

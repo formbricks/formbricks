@@ -1,12 +1,10 @@
 {
   "name": "@formbricks/tailwind-config",
   "version": "1.0.0",
+  "private": true,
   "main": "index.js",
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.3",
     "tailwindcss": "^3.1.8"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

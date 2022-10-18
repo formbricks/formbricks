@@ -1,4 +1,4 @@
-import { Option } from '../types';
+import { Option } from "../types";
 
 export const setSubmissionValue = (
   v: any,
@@ -20,14 +20,10 @@ export const getOptionsSchema = (options: any[] | undefined) => {
   const newOptions = [];
   if (options) {
     for (const option of options) {
-      if (typeof option === 'string') {
+      if (typeof option === "string") {
         newOptions.push({ label: option, value: option });
       }
-      if (
-        typeof option === 'object' &&
-        'value' in option &&
-        'label' in option
-      ) {
+      if (typeof option === "object" && "value" in option && "label" in option) {
         newOptions.push({ label: option.label, value: option.value });
       }
     }
@@ -36,5 +32,5 @@ export const getOptionsSchema = (options: any[] | undefined) => {
 };
 
 export function getOptionValue(option: string | Option) {
-  return typeof option === 'object' ? option.value : option;
+  return typeof option === "object" ? option.value : option;
 }

@@ -1,6 +1,7 @@
 {
   "name": "eslint-config-formbricks",
   "version": "1.0.0",
+  "private": true,
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
@@ -12,8 +13,5 @@
   },
   "devDependencies": {
     "typescript": "^4.8.4"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

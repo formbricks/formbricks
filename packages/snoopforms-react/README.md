@@ -27,20 +27,8 @@ Use the SnoopForm components to build your form easily.
 ```jsx
 <SnoopForm formId="abcd">
   <SnoopPage name="basicInfo">
-    <SnoopElement
-      type="text"
-      name="name"
-      label="Your name"
-      help="Please use your real name"
-      required
-    />
-    <SnoopElement
-      type="textarea"
-      name="about"
-      label="About you"
-      help="e.g. your hobbies etc."
-      required
-    />
+    <SnoopElement type="text" name="name" label="Your name" help="Please use your real name" required />
+    <SnoopElement type="textarea" name="about" label="About you" help="e.g. your hobbies etc." required />
     <SnoopElement name="submit" type="submit" label="Submit" />
   </SnoopPage>
   <SnoopPage name="advancedInfo">
@@ -48,7 +36,7 @@ Use the SnoopForm components to build your form easily.
       type="checkbox"
       name="programming-lanuguages"
       label="What programming languages do you love?"
-      options={['C++', 'Javascript', 'Scala', 'Assembler']}
+      options={["C++", "Javascript", "Scala", "Assembler"]}
     />
     <SnoopElement name="submit" type="submit" label="Submit" />
   </SnoopPage>

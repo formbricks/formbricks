@@ -1,18 +1,18 @@
-import React, { FC, useContext, useEffect } from 'react';
-import { getOptionsSchema } from '../../lib/elements';
-import { ClassNames } from '../../types';
-import { Cards } from '../Elements/Cards';
-import { Checkbox } from '../Elements/Checkbox';
-import { Email } from '../Elements/Email';
-import { Number } from '../Elements/Number';
-import { Phone } from '../Elements/Phone';
-import { Radio } from '../Elements/Radio';
-import { Submit } from '../Elements/Submit';
-import { Text } from '../Elements/Text';
-import { Textarea } from '../Elements/Textarea';
-import { Website } from '../Elements/Website';
-import { CurrentPageContext, SchemaContext } from '../SnoopForm/SnoopForm';
-import { PageContext } from '../SnoopPage/SnoopPage';
+import React, { FC, useContext, useEffect } from "react";
+import { getOptionsSchema } from "../../lib/elements";
+import { ClassNames } from "../../types";
+import { Cards } from "../Elements/Cards";
+import { Checkbox } from "../Elements/Checkbox";
+import { Email } from "../Elements/Email";
+import { Number } from "../Elements/Number";
+import { Phone } from "../Elements/Phone";
+import { Radio } from "../Elements/Radio";
+import { Submit } from "../Elements/Submit";
+import { Text } from "../Elements/Text";
+import { Textarea } from "../Elements/Textarea";
+import { Website } from "../Elements/Website";
+import { CurrentPageContext, SchemaContext } from "../SnoopForm/SnoopForm";
+import { PageContext } from "../SnoopPage/SnoopPage";
 
 interface Option {
   label: string;
@@ -54,10 +54,8 @@ export const SnoopElement: FC<SnoopElementProps> = ({
 
   useEffect(() => {
     setSchema((schema: any) => {
-      if (pageName === '') {
-        console.warn(
-          `🦝 SnoopForms: An Element must always be a child of a page!`
-        );
+      if (pageName === "") {
+        console.warn(`🦝 SnoopForms: An Element must always be a child of a page!`);
         return;
       }
       const newSchema = { ...schema };
@@ -66,9 +64,7 @@ export const SnoopElement: FC<SnoopElementProps> = ({
         console.warn(`🦝 SnoopForms: Error accessing page`);
         return;
       }
-      let elementIdx = newSchema.pages[pageIdx].elements.findIndex(
-        (e: any) => e.name === name
-      );
+      let elementIdx = newSchema.pages[pageIdx].elements.findIndex((e: any) => e.name === name);
       if (elementIdx === -1) {
         newSchema.pages[pageIdx].elements.push({ name });
         elementIdx = newSchema.pages[pageIdx].elements.length - 1;
@@ -76,9 +72,8 @@ export const SnoopElement: FC<SnoopElementProps> = ({
       newSchema.pages[pageIdx].elements[elementIdx].type = type;
       newSchema.pages[pageIdx].elements[elementIdx].label = label;
       newSchema.pages[pageIdx].elements[elementIdx].help = help;
-      if (['checkbox', 'radio'].includes(type)) {
-        newSchema.pages[pageIdx].elements[elementIdx].options =
-          getOptionsSchema(options);
+      if (["checkbox", "radio"].includes(type)) {
+        newSchema.pages[pageIdx].elements[elementIdx].options = getOptionsSchema(options);
       }
       return newSchema;
     });
@@ -86,10 +81,9 @@ export const SnoopElement: FC<SnoopElementProps> = ({
 
   return (
     <div>
-      {currentPageIdx ===
-        schema.pages.findIndex((p: any) => p.name === pageName) && (
+      {currentPageIdx === schema.pages.findIndex((p: any) => p.name === pageName) && (
         <div>
-          {type === 'cards' ? (
+          {type === "cards" ? (
             <Cards
               name={name}
               label={label}
@@ -100,7 +94,7 @@ export const SnoopElement: FC<SnoopElementProps> = ({
               options={options || []}
               autoSubmit={autoSubmit}
             />
-          ) : type === 'checkbox' ? (
+          ) : type === "checkbox" ? (
             <Checkbox
               name={name}
               label={label}
@@ -109,7 +103,7 @@ export const SnoopElement: FC<SnoopElementProps> = ({
               required={required}
               options={options || []}
             />
-          ) : type === 'email' ? (
+          ) : type === "email" ? (
             <Email
               name={name}
               label={label}
@@ -119,7 +113,7 @@ export const SnoopElement: FC<SnoopElementProps> = ({
               classNames={classNames}
               required={required}
             />
-          ) : type === 'number' ? (
+          ) : type === "number" ? (
             <Number
               name={name}
               label={label}
@@ -129,7 +123,7 @@ export const SnoopElement: FC<SnoopElementProps> = ({
               classNames={classNames}
               required={required}
             />
-          ) : type === 'phone' ? (
+          ) : type === "phone" ? (
             <Phone
               name={name}
               label={label}
@@ -139,7 +133,7 @@ export const SnoopElement: FC<SnoopElementProps> = ({
               classNames={classNames}
               required={required}
             />
-          ) : type === 'radio' ? (
+          ) : type === "radio" ? (
             <Radio
               name={name}
               label={label}
@@ -148,9 +142,9 @@ export const SnoopElement: FC<SnoopElementProps> = ({
               required={required}
               options={options || []}
             />
-          ) : type === 'submit' ? (
+          ) : type === "submit" ? (
             <Submit label={label} classNames={classNames} />
-          ) : type === 'text' ? (
+          ) : type === "text" ? (
             <Text
               name={name}
               label={label}
@@ -160,7 +154,7 @@ export const SnoopElement: FC<SnoopElementProps> = ({
               classNames={classNames}
               required={required}
             />
-          ) : type === 'textarea' ? (
+          ) : type === "textarea" ? (
             <Textarea
               name={name}
               label={label}
@@ -170,7 +164,7 @@ export const SnoopElement: FC<SnoopElementProps> = ({
               classNames={classNames}
               required={required}
             />
-          ) : type === 'website' ? (
+          ) : type === "website" ? (
             <Website
               name={name}
               label={label}
