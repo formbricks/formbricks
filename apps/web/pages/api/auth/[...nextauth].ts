@@ -1,12 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import getConfig from "next/config";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "database";
 import { verifyPassword } from "../../../lib/auth";
 import { verifyToken } from "../../../lib/jwt";
-
-const { publicRuntimeConfig } = getConfig();
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   return await NextAuth(req, res, {
@@ -124,7 +121,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     ],
     callbacks: {
       async signIn({ user }: any) {
-        if (user.emailVerified || publicRuntimeConfig.emailVerificationDisabled) {
+        if (user.emailVerified || process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED === "1") {
           return true;
         } else {
           // Return false to display a default error message or you can return a URL to redirect to

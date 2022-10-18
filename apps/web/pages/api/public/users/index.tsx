@@ -1,10 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "database";
 import { sendVerificationEmail } from "../../../../lib/email";
-import getConfig from "next/config";
 import { capturePosthogEvent } from "../../../../lib/posthog";
-
-const { publicRuntimeConfig } = getConfig();
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // POST /api/public/users
@@ -12,10 +9,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Required fields in body: email, password (hashed)
   // Optional fields in body: firstname, lastname
   if (req.method === "POST") {
+    if (process.env.NEXT_PUBLIC_SIGNUP_DISABLED) {
+      res.status(403).json({ error: "Signup disabled" });
+      return;
+    }
     let user = req.body;
     user = { ...user, ...{ email: user.email.toLowerCase() } };
-
-    const { emailVerificationDisabled } = publicRuntimeConfig;
 
     // create user in database
     try {
@@ -24,7 +23,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           ...user,
         },
       });
-      if (!emailVerificationDisabled) await sendVerificationEmail(userData);
+      if (process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") await sendVerificationEmail(userData);
       capturePosthogEvent(user.email, "user created");
       res.json(userData);
     } catch (e) {
