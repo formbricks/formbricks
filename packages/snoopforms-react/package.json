@@ -68,5 +68,8 @@
   },
   "dependencies": {
     "@headlessui/react": "^1.7.3"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
