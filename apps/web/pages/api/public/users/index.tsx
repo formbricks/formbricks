@@ -9,6 +9,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Required fields in body: email, password (hashed)
   // Optional fields in body: firstname, lastname
   if (req.method === "POST") {
+    if (process.env.NEXT_PUBLIC_SIGNUP_DISABLED) {
+      res.status(403).json({ error: "Signup disabled" });
+      return;
+    }
     let user = req.body;
     user = { ...user, ...{ email: user.email.toLowerCase() } };
 
