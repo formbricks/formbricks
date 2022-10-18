@@ -95,7 +95,7 @@ export default function SignInPage() {
                         </Link>
                       )}
 
-                      {!process.env.NEXT_PUBLIC_SIGNUP_DISABLED && (
+                      {process.env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
                         <Link href="/auth/signup">
                           <a href="" className="text-red text-xs hover:text-red-600">
                             Create an account
