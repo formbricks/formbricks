@@ -1,4 +1,6 @@
 import { hashPassword } from "./auth";
+import useSWR from "swr";
+import { fetcher, isAdmin } from "./utils";
 
 export enum UserRoles {
   Public = "PUBLIC",
@@ -96,3 +98,28 @@ export const resetPassword = async (token, password) => {
     throw Error(`${error.message}`);
   }
 };
+
+export const useUsers = () => {
+  const {data, error, mutate } = useSWR(`/api/public/users`, fetcher);
+
+  return {
+    users: data,
+    isLoadingUsers: !error && !data,
+    isErrorUsers: error,
+    mutateUsers: mutate,
+  };
+}
+
+export const persistUserRole = async (data)=>{
+
+  try {
+    await fetch(`/api/public/users/${data.id}`,{
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data.role),
+    })
+    
+  } catch (error) {
+    console.error(error)
+  }
+}

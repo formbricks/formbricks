@@ -27,6 +27,7 @@ export default async function handle(
             name: true,
             dueDate: true,
             description: true,
+            place: true,
            },
         },
       },

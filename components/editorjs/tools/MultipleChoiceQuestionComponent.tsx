@@ -1,9 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Switch } from "@headlessui/react";
-import { TrashIcon } from "@heroicons/react/24/solid";
+import { TrashIcon, PhotoIcon } from "@heroicons/react/24/solid";
 import { default as React } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { classNames } from "../../../lib/utils";
+import { upload } from "../../../lib/utils";
 
 const DEFAULT_INITIAL_DATA = () => {
   return {
@@ -15,6 +16,7 @@ const DEFAULT_INITIAL_DATA = () => {
       {
         id: uuidv4(),
         label: "",
+        image:""
       },
     ],
   };
@@ -32,7 +34,15 @@ const SingleChoiceQuestion = (props) => {
       props.onDataChange(newData);
     }
   };
-
+  const uploadImage = async (file, optionId) => {
+   
+    const imgUrl =  (await upload(file)).Location;
+      choiceData.options.map(option =>{
+        if(optionId === option.id) return option.image = imgUrl;
+      }
+    )
+   setChoiceData({...choiceData})
+  };
   const onAddOption = () => {
     const newData = {
       ...choiceData,
@@ -40,6 +50,7 @@ const SingleChoiceQuestion = (props) => {
     newData.options.push({
       id: uuidv4(),
       label: "",
+      image:""
     });
     updateData(newData);
   };
@@ -91,11 +102,12 @@ const SingleChoiceQuestion = (props) => {
       </div>
       <div className="max-w-sm mt-2 space-y-2">
         {choiceData.options.map((option, optionIdx) => (
+          option &&
           <div
-            key={option.label}
-            className={classNames("relative flex items-start")}
-          >
-            <span className="flex items-center text-sm">
+            key={optionIdx}
+            className={classNames("w-3/4 flex items-center")}
+          >    
+            <span className="w-full flex items-center text-sm">
               <span
                 className={classNames(
                   choiceData.multipleChoice ? "rounded-sm" : "rounded-full",
@@ -107,20 +119,29 @@ const SingleChoiceQuestion = (props) => {
               </span>
               <input
                 type="text"
-                defaultValue={option.label}
+                defaultValue={option?.label}
                 onBlur={onOptionChange(optionIdx, "label")}
                 className="p-0 ml-3 font-medium text-gray-900 border-0 border-transparent outline-none focus:ring-0 focus:outline-none placeholder:text-gray-300"
                 placeholder={`Option ${optionIdx + 1}`}
               />
             </span>
-            {optionIdx !== 0 && (
-              <button
-                onClick={() => onDeleteOption(optionIdx)}
-                className="absolute p-1 right-3"
-              >
-                <TrashIcon className="w-4 h-4 text-gray-300" />
+            <input type="file" hidden id={option? option.id : ""} onChange={(e)=>uploadImage(e.target.files[0], option.id)} />
+            {option.image && <img src={option.image} alt={option.label}/>}
+            <div className="flex items-center">
+              <button className="p-1 mx-2 right-3">
+                  <label htmlFor={option.id}><PhotoIcon className="w-4 h-4 text-gray-300" /></label>                
               </button>
-            )}
+              {optionIdx !== 0 && (
+                
+                <button
+                  onClick={() => onDeleteOption(optionIdx)}
+                  className="p-1 mx-2 right-3"
+                >
+                  <TrashIcon className="w-4 h-4 text-gray-300" />
+                </button>
+              )}
+            </div>
+
           </div>
         ))}
       </div>
@@ -132,6 +153,7 @@ const SingleChoiceQuestion = (props) => {
         className="block w-full max-w-sm p-0 mt-2 text-sm font-light text-gray-500 border-0 border-transparent ring-0 focus:ring-0 placeholder:text-gray-300"
         placeholder="optional help text"
       />
+      
       <div className="relative z-0 flex mt-2 divide-x divide-gray-200">
         <button
           className="mr-3 justify-center mt-2 inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
@@ -166,7 +188,6 @@ const SingleChoiceQuestion = (props) => {
             <span className="text-sm font-medium text-gray-700">
               Multiple Selection{" "}
             </span>
-            {/*  <span className="text-sm text-gray-500">(Save 10%)</span> */}
           </Switch.Label>
         </Switch.Group>
       </div>

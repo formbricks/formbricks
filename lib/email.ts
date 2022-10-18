@@ -20,12 +20,13 @@ export const sendEmail = async (emailData: sendEmailData) => {
       user: serverRuntimeConfig.smtpUser,
       pass: serverRuntimeConfig.smtpPassword,
     },
+    from: serverRuntimeConfig.smtpUser,
     // logger: true,
     // debug: true,
   });
   const emailDefaults = {
-    from: `snoopForms <${
-      serverRuntimeConfig.mailFrom || "noreply@snoopforms.com"
+    from: `Kinshasa Digital Academy <${
+      serverRuntimeConfig.smtpUser || "noreply@kinshasadigital.com" //user:serverRuntimeConfig.mailFrom
     }>`,
   };
   await transporter.sendMail({ ...emailDefaults, ...emailData });
@@ -43,14 +44,12 @@ export const sendVerificationEmail = async (user) => {
   }/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
   await sendEmail({
     to: user.email,
-    subject: "Welcome to KDA Sourcing",
-    html: `Welcome to KDA Sourcing!<br/><br/>To verify your email address and start using KDA Sourcing please click this link:<br/>
-    <a href="${verifyLink}">${verifyLink}</a><br/>
+    subject: "Bienvenue sur le site de KDA Sourcing",
+    html: `Bienvenue sur le site de KDA Sourcing!<br/><br/>Pour vérifier votre adresse e-mail et commencer à utiliser KDA Sourcing, veuillez cliquer sur ce <a href="${verifyLink}">lien</a>!
     <br/>
-    The link is valid for one day. If it has expired please request a new token here:<br/>
-    <a href="${verificationRequestLink}">${verificationRequestLink}</a><br/>
+    Le lien est valide pour une journée. S'il a expiré, <a href="${verificationRequestLink}">veuillez en demander un nouveau</a>!<br/>
     <br/>
-    Your KDA Team`,
+    L'équipe KDA`,
   });
 };
 
@@ -63,24 +62,24 @@ export const sendForgotPasswordEmail = async (user) => {
   }/auth/reset-password?token=${encodeURIComponent(token)}`;
   await sendEmail({
     to: user.email,
-    subject: "Reset your KDA Sourcing password",
-    html: `You have requested a link to change your password. You can do this through the link below:<br/>
+    subject: "Réinitialiser votre mot de passe KDA Sourcing",
+    html: `Vous avez demandé un lien pour changer votre mot de passe. Vous pouvez le faire en cliquant sur le lien ci-dessous :<br/>
     <a href="${verifyLink}">${verifyLink}</a><br/>
     <br/>
-    The link is valid for 24 hours. If you didn't request this, please ignore this email.<br/>
+    Le lien est valable pendant 24 heures. Si vous ne l'avez pas demandé, veuillez ignorer cet e-mail.<br/>
     <br/>
-    Your password won't change until you access the link above and create a new one.<br/>
+    Votre mot de passe ne changera pas tant que vous n'aurez pas accédé au lien ci-dessus et créé un nouveau mot de passe.<br/>
     <br/>
-    Your KDA Team`,
+    L'équipe KDA`,
   });
 };
 
 export const sendPasswordResetNotifyEmail = async (user) => {
   await sendEmail({
     to: user.email,
-    subject: "Your KDA Sourcing password has been changed",
-    html: `We're contacting you to notify you that your password has been changed.<br/>
+    subject: "Votre mot de passe KDA Sourcing a été changé",
+    html: `Nous vous contactons pour vous informer que votre mot de passe a été modifié.<br/>
     <br/>
-    Your KDA Team`,
+    L'équipe KDA`,
   });
 };

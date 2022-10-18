@@ -5,6 +5,7 @@ import {
   CalendarDaysIcon,
   InboxArrowDownIcon,
 } from "@heroicons/react/24/solid";
+import {HiOutlineLocationMarker} from "react-icons/hi";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -95,10 +96,10 @@ function NoCodeFormPublic() {
                 <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
                   <div>
                     <Image
-                      src="/img/kda_logo.svg"
+                      src="/img/kda_logo.png"
                       alt="kinshasa digital academy logo"
-                      width={500}
-                      height={89}
+                      width={300}
+                      height={79}
                     />
                   </div>
                   <div className="mt-8">
@@ -128,6 +129,12 @@ function NoCodeFormPublic() {
                   options
                 )}
               </p>
+              {noCodeForm.form.place === ""? <></> :
+              <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
+                <HiOutlineLocationMarker className="w-6 h-6 stroke-thin mr-2" />
+                <span className="font-bold mr-1">Place :</span>{" "}
+                {noCodeForm.form.place}
+              </p>}
               {pages.map((page, index) => {
                 if (pages.length - 1 !== index)
                   return (
@@ -175,7 +182,7 @@ function NoCodeFormPublic() {
                       <DisclaimerModal
                         open={openDisclaimer}
                         setOpen={setOpenDisclaimer}
-                        message="You are about to start a timed form"
+                        message={`You are about to start a timed form and You have ${page.blocks[1].data.timerDuration} minutes to complete this form. Once started, you cannot leave the form, under penalty of seeing your answers considered to be submitted.`}
                         onClick={() => handleClickAction(page, true)}
                       />
                     </div>

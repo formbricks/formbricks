@@ -2,6 +2,7 @@ import intlFormat from "date-fns/intlFormat";
 import { formatDistance } from "date-fns";
 import crypto from "crypto";
 import { UserRole } from "@prisma/client";
+import AWS from "aws-sdk";
 
 export const fetcher = async (url) => {
   const res = await fetch(url);
@@ -36,7 +37,26 @@ export const shuffle = (array) => {
 
   return array;
 };
+export const upload = async (file) => {
+  const endpointUrl = process.env.NEXT_PUBLIC_APP_DO_END_POINT;
+  const S3 = new AWS.S3({
+    endpoint: endpointUrl,
+    accessKeyId: process.env.NEXT_PUBLIC_APP_DO_KEY,
+    secretAccessKey: process.env.NEXT_PUBLIC_APP_DO_SECRET_KEY,
+  });
 
+  const params = {
+    Body: file,
+    Bucket: process.env.NEXT_PUBLIC_APP_BUCKET_NAME,
+    Key: `${new Date()}-${file.name}`,
+    ACL: "public-read",
+  };
+
+  return S3.upload(params, async (err, data) => {
+    if (err) alert(err);
+    else return data;
+  }).promise();
+};
 export const classNames = (...classes) => {
   return classes.filter(Boolean).join(" ");
 };
@@ -51,6 +71,12 @@ export const slugify = (...args: (string | number)[]): string => {
     .trim()
     .replace(/[^a-z0-9 ]/g, "") // remove all chars not letters, numbers and spaces (to be replaced)
     .replace(/\s+/g, "-"); // separator
+};
+
+export const handlePhoneNumberValidity = (phone) => {
+  const validity = /^(\+243|0)[0-9]{9}$/.test(phone);
+  if (validity === false) throw new Error("the phone number is incorrect");
+  return phone;
 };
 
 export const getFieldSetter = (obj, objSetter) => {
@@ -113,7 +139,8 @@ export const convertTimeString = (dateString: string) => {
 };
 
 export const timeSince = (dateString: string) => {
-  const date = new Date(dateString);
+  var date = new Date(dateString);
+  date.setDate(date.getDate() + 1);
   return formatDistance(date, new Date(), {
     addSuffix: true,
   });
@@ -139,8 +166,8 @@ export const isNotAdmin = (session, res) => {
     return res.status(403);
   }
 };
-export const isAdmin = (session) => {
-  return session.user.role === UserRole.ADMIN;
+export const isAdmin = (user) => {
+  return user.role === UserRole.ADMIN;
 };
 
 function diff_minutes(dt2: Date, dt1: Date) {

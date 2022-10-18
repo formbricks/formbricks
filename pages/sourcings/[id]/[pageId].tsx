@@ -35,10 +35,10 @@ function Form() {
           <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
             <div>
               <Image
-                src="/img/kda_logo.svg"
+                src="/img/kda_logo.png"
                 alt="kinshasa digital academy logo"
-                width={500}
-                height={89}
+                width={300}
+                height={79}
               />
             </div>
             <div className="mt-8">
@@ -60,6 +60,8 @@ function Form() {
       submission.data.candidateId === user.id &&
       submission.data.pageName === pageId
   );
+
+  console.log("submission : ", currentSubmission);
 
   const startFom = async () => {
     if (!currentSubmission) {
@@ -101,7 +103,16 @@ function Form() {
   if (isTimedPage(currentPage)) {
     startFom();
   }
-  return <App page={currentPage} formId={formId} startDate={startDate} />;
+  return (
+    <App
+      page={currentPage}
+      submission={currentSubmission?currentSubmission:{}}
+      formId={formId}
+      startDate={startDate}
+      id={""}
+      localOnly={false}
+    />
+  );
 }
 
 export default withAuthentication(Form);

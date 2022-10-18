@@ -2,6 +2,7 @@
 import EditorJS from "@editorjs/editorjs";
 import Header from "@editorjs/header";
 import Paragraph from "@editorjs/paragraph";
+import ImageTool from "@editorjs/image";
 import DragDrop from "editorjs-drag-drop";
 import Undo from "editorjs-undo";
 import { Fragment, useCallback, useEffect } from "react";
@@ -17,6 +18,7 @@ import PhoneQuestion from "./tools/PhoneQuestion";
 import NumberQuestion from "./tools/NumberQuestion";
 import TimerToolboxOption from "./tools/TimerToolboxOption";
 import DashboardRedirectButton from "./tools/DashboardRedirectButton";
+import { upload } from "../../lib/utils";
 
 interface EditorProps {
   id: string;
@@ -39,7 +41,7 @@ const Editor = ({
   const keyPressListener = useCallback((e) => {
     if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      toast("snoopForms autosaves your work ✌️");
+      toast("KDA Sourcing autosaves your work ✌️");
     }
   }, []);
 
@@ -50,6 +52,7 @@ const Editor = ({
       window.removeEventListener("keydown", keyPressListener);
     };
   }, [keyPressListener]);
+  console.log(editorRef);
 
   // This will run only once
   useEffect(() => {
@@ -106,6 +109,23 @@ const Editor = ({
           config: {
             placeholder:
               "Start with your content or hit tab-key to insert block",
+          },
+        },
+        image: {
+          class: ImageTool,
+          config: {
+            uploader: {
+              async uploadByFile(file) {
+                return await upload(file).then((data) => {
+                  return {
+                    success: 1,
+                    file: {
+                      url: data.Location,
+                    },
+                  };
+                });
+              },
+            },
           },
         },
         header: {

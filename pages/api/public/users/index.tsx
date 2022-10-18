@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { getSession } from "next-auth/react";
 import { prisma } from "../../../../lib/prisma";
+import { UserRole } from "@prisma/client";
 import { sendVerificationEmail } from "../../../../lib/email";
 import getConfig from "next/config";
 import { capturePosthogEvent } from "../../../../lib/posthog";
@@ -44,11 +46,31 @@ export default async function handle(
       }
     }
   }
-
+  // GET /api/public/users
+  else if(req.method === "GET"){
+    // Check Authentication and user role
+    const session = await getSession({ req: req });
+    if (!session) return res.status(401).json({ message: "Not authenticated" });
+    
+    if(session.user.role === UserRole.PUBLIC) return res.status(403).json({ message: "Forbidden" });
+    const usersData = await prisma.user.findMany({
+      select:{
+        id:true,
+        firstname: true,
+        lastname: true,
+        email: true,
+        gender: true,
+        phone: true,
+        role: true,
+      }
+    })
+    if (!usersData.length) return res.status(204);
+    res.json(usersData); 
+    }
   // Unknown HTTP Method
-  else {
-    throw new Error(
-      `The HTTP ${req.method} method is not supported by this route.`
-    );
-  }
+    else {
+      throw new Error(
+        `The HTTP ${req.method} method is not supported by this route.`
+      );
+    }
 }

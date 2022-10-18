@@ -4,7 +4,9 @@ import {
   CalendarDaysIcon,
   FolderOpenIcon,
   DocumentPlusIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
+import { HiOutlineLocationMarker } from "react-icons/hi";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState } from "react";
@@ -14,10 +16,16 @@ import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
 import EmptyPageFiller from "./layout/EmptyPageFiller";
+import { format } from "date-fns";
+import CandidateProgress from "./form/CandidateProgress";
+import { timeSince } from "../lib/utils";
+import SearchBar from "./form/SearchBar";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
+  const [queryValue, setQueryValue] = useState("");
+  const [formData, setFormData] = useState({});
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -25,6 +33,14 @@ export default function FormList() {
       return signIn();
     },
   });
+
+  const dateDayDiff = (date) => {
+    const today = new Date();
+    const dueDate = new Date(date);
+    var total_seconds = Math.abs(dueDate - today) / 1000;
+    var days_difference = Math.floor(total_seconds / (60 * 60 * 24));
+    return days_difference;
+  };
 
   const newForm = async () => {
     setOpenNewFormModal(true);
@@ -46,6 +62,7 @@ export default function FormList() {
 
   return (
     <>
+      {forms && forms.length > 100? (<SearchBar className="mt-5 flex gap-4" queryValue={queryValue} setQueryValue={setQueryValue} formData={formData} setFormData={setFormData} />):<></>}
       <div className="h-full px-6 py-8">
         {forms &&
           (forms.length === 0 ? (
@@ -95,19 +112,51 @@ export default function FormList() {
                       <div className="p-6">
                         <p className="text-lg line-clamp-3">{form.name}</p>
                       </div>
-                      <div className="px-3 flex items-center justify-between border-y">
-                        <CalendarDaysIcon className="w-6 h-6 stroke-thin" />
-                        {new Date(form.dueDate) < new Date() ? (
-                          <span className="text-xs font-bold text-red-700 line-clamp-3">
-                            {"Closed on " +
-                              new Date(form.dueDate).toLocaleDateString()}
-                          </span>
+                      <div className="border-t">
+                        {form.place === "" ? (
+                          <></>
                         ) : (
-                          <span className="text-xs font-bold text-neutral-400 line-clamp-3">
-                            {new Date(form.dueDate).toLocaleDateString()}
+                          <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
+                            <HiOutlineLocationMarker className="w-5 h-5 text-black mr-2" />
+                            {form.place}
                           </span>
                         )}
+                        <span className="flex  items-center  px-3 py-1">
+                          <CalendarDaysIcon
+                            className={
+                              format(new Date(form.dueDate), "yyyy-MM-dd") ===
+                              format(new Date(), "yyyy-MM-dd")
+                                ? "w-5 h-5 text-red-800 mr-2"
+                                : dateDayDiff(form.dueDate) > 7
+                                ? "w-5 h-5 text-black mr-2"
+                                : "w-5 h-5 text-rose-500 mr-2"
+                            }
+                          />
+                          {format(new Date(form.dueDate), "yyyy-MM-dd") ===
+                          format(new Date(), "yyyy-MM-dd") ? (
+                            <span className="text-xs font-bold text-red-800 line-clamp-3">
+                              closing today
+                            </span>
+                          ) : dateDayDiff(form.dueDate) > 7 ? (
+                            <span className="text-xs font-bold text-neutral-500 line-clamp-3">
+                              {format(new Date(form.dueDate), "MMMM dd, yyyy")}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-rose-500 line-clamp-3">
+                              {format(new Date(form.dueDate), "yyyy-MM-dd") < format(new Date(), "yyyy-MM-dd") ? "closed": "closing"} {timeSince(form.dueDate)}
+                            </span>
+                          )}
+                        </span>
+                        {session.user.role === UserRole.ADMIN ? (
+                          <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
+                            <UserCircleIcon className="w-5 h-5 text-black mr-2" />
+                            {form.owner.firstname + " " + form.owner.lastname}
+                          </span>
+                        ) : (
+                          <CandidateProgress form={form} />
+                        )}
                       </div>
+
                       <Link
                         href={
                           session.user.role === UserRole.PUBLIC
