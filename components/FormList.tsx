@@ -19,10 +19,13 @@ import EmptyPageFiller from "./layout/EmptyPageFiller";
 import { format } from "date-fns";
 import CandidateProgress from "./form/CandidateProgress";
 import { timeSince } from "../lib/utils";
+import SearchBar from "./form/SearchBar";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
+  const [queryValue, setQueryValue] = useState("");
+  const [formData, setFormData] = useState({});
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -59,6 +62,7 @@ export default function FormList() {
 
   return (
     <>
+      {forms && forms.length > 100? (<SearchBar className="mt-5 flex gap-4" queryValue={queryValue} setQueryValue={setQueryValue} formData={formData} setFormData={setFormData} />):<></>}
       <div className="h-full px-6 py-8">
         {forms &&
           (forms.length === 0 ? (
@@ -139,7 +143,7 @@ export default function FormList() {
                             </span>
                           ) : (
                             <span className="text-xs font-bold text-rose-500 line-clamp-3">
-                              closing {timeSince(form.dueDate)}
+                              {format(new Date(form.dueDate), "yyyy-MM-dd") < format(new Date(), "yyyy-MM-dd") ? "closed": "closing"} {timeSince(form.dueDate)}
                             </span>
                           )}
                         </span>

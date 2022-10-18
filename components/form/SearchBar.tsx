@@ -13,7 +13,8 @@ function SearchBar({
 }) {
   const searchFormByName = async () => {
     try {
-      await fetch(`/api/public/forms/search?${queryValue}`);
+      await fetch(`/api/public/forms/search?name=${queryValue}`);
+      
     } catch (error) {
       console.error(error);
     }
@@ -26,7 +27,7 @@ function SearchBar({
         return 0;
       })
     );
-    console.log("PPPPP", formData);
+
     return formData;
   };
   console.log("Queryed value", queryValue, "formData", formData);
