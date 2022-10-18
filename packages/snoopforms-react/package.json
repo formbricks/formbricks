@@ -1,0 +1,89 @@
+{
+  "version": "0.3.5",
+  "name": "@snoopforms/react",
+  "author": "snoopForms <hola@snoopforms.com>",
+  "description": "React library with form- & survey-elements for the snoopForms platform",
+  "homepage": "https://snoopforms.com",
+  "keywords": [
+    "react",
+    "forms",
+    "snoop",
+    "snoopforms",
+    "checkbox",
+    "survey"
+  ],
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --external react && tailwindcss -i ./src/styles.css -o ./dist/styles.css",
+    "dev": "concurrently \"tsup src/index.ts --format esm,cjs --dts --external react --watch\" \"tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch\"",
+    "clean": "rm -rf dist",
+    "size": "size-limit",
+    "analyze": "size-limit --why",
+    "build-tailwind": "cross-env NODE_ENV=production npx tailwindcss -i ./tailwind.css -o ./dist/styles.css --minify"
+  },
+  "peerDependencies": {
+    "react": ">=16"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "module": "dist/react.esm.js",
+  "size-limit": [
+    {
+      "path": "dist/react.cjs.production.min.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/react.esm.js",
+      "limit": "10 KB"
+    }
+  ],
+  "devDependencies": {
+    "@babel/core": "^7.19.3",
+    "@size-limit/preset-small-lib": "^8.1.0",
+    "@storybook/addon-essentials": "^6.5.12",
+    "@storybook/addon-info": "^5.3.21",
+    "@storybook/addon-links": "^6.5.12",
+    "@storybook/addon-postcss": "^2.0.0",
+    "@storybook/addons": "^6.5.12",
+    "@storybook/react": "^6.5.12",
+    "@tailwindcss/forms": "^0.5.3",
+    "@types/react": "^18.0.21",
+    "@types/react-dom": "^18.0.6",
+    "autoprefixer": "^10.4.12",
+    "babel-loader": "^8.2.5",
+    "cross-env": "^7.0.3",
+    "eslint-config-custom": "workspace:*",
+    "husky": "^8.0.1",
+    "postcss": "^8.4.18",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-is": "^18.2.0",
+    "size-limit": "^8.1.0",
+    "tailwind-config": "workspace:*",
+    "tailwindcss": "^3.1.8",
+    "tslib": "^2.4.0",
+    "tsconfig": "workspace:*",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.7.3"
+  }
+}
