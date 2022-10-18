@@ -1,4 +1,4 @@
-import { prisma } from "database";
+import { prisma } from "@formbricks/database";
 
 export const formHasOwnership = async (session, formId) => {
   try {

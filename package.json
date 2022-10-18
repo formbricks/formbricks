@@ -16,9 +16,11 @@
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "release": "turbo run build --filter=web^... && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.22.0",
     "prettier": "latest",
     "tsx": "^3.7.1",
     "turbo": "latest"

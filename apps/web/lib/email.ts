@@ -1,8 +1,5 @@
-import getConfig from "next/config";
 import { createToken } from "./jwt";
 const nodemailer = require("nodemailer");
-
-const { serverRuntimeConfig } = getConfig();
 
 interface sendEmailData {
   to: string;
@@ -13,18 +10,18 @@ interface sendEmailData {
 
 export const sendEmail = async (emailData: sendEmailData) => {
   let transporter = nodemailer.createTransport({
-    host: serverRuntimeConfig.smtpHost,
-    port: serverRuntimeConfig.smtpPort,
-    secure: serverRuntimeConfig.smtpSecureEnabled, // true for 465, false for other ports
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: process.env.SMTP_SECURE_ENABLED === "1", // true for 465, false for other ports
     auth: {
-      user: serverRuntimeConfig.smtpUser,
-      pass: serverRuntimeConfig.smtpPassword,
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
     },
     // logger: true,
     // debug: true,
   });
   const emailDefaults = {
-    from: `snoopForms <${serverRuntimeConfig.mailFrom || "noreply@snoopforms.com"}>`,
+    from: `snoopForms <${process.env.MAIL_FROM || "noreply@snoopforms.com"}>`,
   };
   await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
@@ -33,9 +30,9 @@ export const sendVerificationEmail = async (user) => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
-  const verifyLink = `${serverRuntimeConfig.nextauthUrl}/auth/verify?token=${encodeURIComponent(token)}`;
+  const verifyLink = `${process.env.NEXTAUTH_URL}/auth/verify?token=${encodeURIComponent(token)}`;
   const verificationRequestLink = `${
-    serverRuntimeConfig.nextauthUrl
+    process.env.NEXTAUTH_URL
   }/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
   await sendEmail({
     to: user.email,
@@ -54,9 +51,7 @@ export const sendForgotPasswordEmail = async (user) => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
-  const verifyLink = `${serverRuntimeConfig.nextauthUrl}/auth/reset-password?token=${encodeURIComponent(
-    token
-  )}`;
+  const verifyLink = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${encodeURIComponent(token)}`;
   await sendEmail({
     to: user.email,
     subject: "Reset your snoopForms password",

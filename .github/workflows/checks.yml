@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         node: ["16.x"]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-latest]
 
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}

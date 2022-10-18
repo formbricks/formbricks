@@ -5,10 +5,6 @@ import MessagePage from "../../components/MessagePage";
 import { useNoCodeFormPublic } from "../../lib/noCodeForm";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import getConfig from "next/config";
-
-const { publicRuntimeConfig } = getConfig();
-const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
 
 function NoCodeFormPublic() {
   const router = useRouter();
@@ -43,18 +39,20 @@ function NoCodeFormPublic() {
         ) : (
           <App formId={formId} blocks={noCodeForm.blocks} />
         )}
-        {(publicPrivacyUrl || publicImprintUrl) && (
+        {(process.env.NEXT_PUBLIC_PRIVACY_URL || process.env.NEXT_PUBLIC_IMPRINT_URL) && (
           <footer className="flex h-10 w-full items-center justify-center text-xs text-gray-300">
-            {publicImprintUrl && (
+            {process.env.NEXT_PUBLIC_IMPRINT_URL && (
               <>
-                <a href={publicImprintUrl} target="_blank" rel="noreferrer">
+                <a href={process.env.NEXT_PUBLIC_IMPRINT_URL} target="_blank" rel="noreferrer">
                   Imprint
                 </a>
               </>
             )}
-            {publicImprintUrl && publicPrivacyUrl && <span className="px-2">|</span>}
-            {publicPrivacyUrl && (
-              <a href={publicPrivacyUrl} target="_blank" rel="noreferrer">
+            {process.env.NEXT_PUBLIC_IMPRINT_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && (
+              <span className="px-2">|</span>
+            )}
+            {process.env.NEXT_PUBLIC_PRIVACY_URL && (
+              <a href={process.env.NEXT_PUBLIC_PRIVACY_URL} target="_blank" rel="noreferrer">
                 Privacy Policy
               </a>
             )}
@@ -64,9 +62,5 @@ function NoCodeFormPublic() {
     </BaseLayoutUnauthorized>
   );
 }
-
-NoCodeFormPublic.getInitialProps = () => {
-  return {};
-};
 
 export default NoCodeFormPublic;

@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { prisma } from "database";
+import { prisma } from "@formbricks/database";
 import { sendVerificationEmail } from "../../../../lib/email";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
