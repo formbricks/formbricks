@@ -61,6 +61,8 @@ function Form() {
       submission.data.pageName === pageId
   );
 
+  console.log("submission : ", currentSubmission);
+
   const startFom = async () => {
     if (!currentSubmission) {
       const submissionSessionRes = await fetch(
@@ -101,7 +103,16 @@ function Form() {
   if (isTimedPage(currentPage)) {
     startFom();
   }
-  return <App page={currentPage} formId={formId} startDate={startDate} id={""} localOnly={false} />;
+  return (
+    <App
+      page={currentPage}
+      submission={currentSubmission?currentSubmission:{}}
+      formId={formId}
+      startDate={startDate}
+      id={""}
+      localOnly={false}
+    />
+  );
 }
 
 export default withAuthentication(Form);

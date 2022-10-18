@@ -7,13 +7,14 @@ import {
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { SnoopElement, SnoopForm, SnoopPage } from "@snoopforms/react";
-import { Page, PageBlock } from "../../lib/types";
+import { Page, PageBlock, pageSubmissionEvent } from "../../lib/types";
 import { findTimer, isTimedPage } from "../../lib/utils";
 
 interface IProps {
   id: string;
   formId: string;
   page?: Page;
+  submission?:pageSubmissionEvent;
   localOnly: boolean;
   startDate: Date;
 }
@@ -22,6 +23,7 @@ const App: FC<IProps> = ({
   id = "",
   formId,
   page,
+  submission,
   localOnly = false,
   startDate = new Date(),
 }) => {
@@ -30,7 +32,10 @@ const App: FC<IProps> = ({
   const onSubmit = () => {
     router.push(`/sourcings/${formId}`);
   };
+console.log("*****", page);
+console.log("#####", submission);
 
+ 
   //TODO Find better way to handle this
   if (findTimer(page, startDate) < 0 && isTimedPage(page)) {
     return (

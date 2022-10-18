@@ -37,7 +37,7 @@ const SingleChoiceQuestion = (props) => {
   const uploadImage = async (file, optionId) => {
    
     const imgUrl =  (await upload(file)).Location;
-    choiceData.options.map(option =>{
+      choiceData.options.map(option =>{
         if(optionId === option.id) return option.image = imgUrl;
       }
     )
@@ -126,7 +126,7 @@ const SingleChoiceQuestion = (props) => {
               />
             </span>
             <input type="file" hidden id={option? option.id : ""} onChange={(e)=>uploadImage(e.target.files[0], option.id)} />
-            {option.image && <img src={option.image} alt={option.label} className = "" />}
+            {option.image && <img src={option.image} alt={option.label}/>}
             <div className="flex items-center">
               <button className="p-1 mx-2 right-3">
                   <label htmlFor={option.id}><PhotoIcon className="w-4 h-4 text-gray-300" /></label>                
