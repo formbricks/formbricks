@@ -23,8 +23,8 @@
     "node": ">=10"
   },
   "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts --external react && tailwindcss -i ./src/styles.css -o ./dist/styles.css",
-    "dev": "concurrently \"tsup src/index.tsx --format esm,cjs --dts --external react --watch\" \"tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch\"",
+    "build": "tsup src/index.ts --format esm,cjs --dts --external react && tailwindcss -i ./src/styles.css -o ./dist/styles.css",
+    "dev": "concurrently \"tsup src/index.ts --format esm,cjs --dts --external react --watch\" \"tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch\"",
     "clean": "rm -rf dist",
     "size": "size-limit",
     "analyze": "size-limit --why",
@@ -56,34 +56,34 @@
     }
   ],
   "devDependencies": {
-    "@babel/core": "^7.18.9",
-    "@size-limit/preset-small-lib": "^7.0.8",
-    "@storybook/addon-essentials": "^6.5.9",
+    "@babel/core": "^7.19.3",
+    "@size-limit/preset-small-lib": "^8.1.0",
+    "@storybook/addon-essentials": "^6.5.12",
     "@storybook/addon-info": "^5.3.21",
-    "@storybook/addon-links": "^6.5.9",
+    "@storybook/addon-links": "^6.5.12",
     "@storybook/addon-postcss": "^2.0.0",
-    "@storybook/addons": "^6.5.9",
-    "@storybook/react": "^6.5.9",
-    "@tailwindcss/forms": "^0.5.2",
-    "@types/react": "^18.0.15",
+    "@storybook/addons": "^6.5.12",
+    "@storybook/react": "^6.5.12",
+    "@tailwindcss/forms": "^0.5.3",
+    "@types/react": "^18.0.21",
     "@types/react-dom": "^18.0.6",
-    "autoprefixer": "^10.4.7",
+    "autoprefixer": "^10.4.12",
     "babel-loader": "^8.2.5",
     "cross-env": "^7.0.3",
     "eslint-config-custom": "workspace:*",
     "husky": "^8.0.1",
-    "postcss": "^8.4.14",
+    "postcss": "^8.4.18",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-is": "^18.2.0",
-    "size-limit": "^7.0.8",
+    "size-limit": "^8.1.0",
     "tailwind-config": "workspace:*",
     "tailwindcss": "^3.1.8",
     "tslib": "^2.4.0",
     "tsconfig": "workspace:*",
-    "typescript": "^4.7.4"
+    "typescript": "^4.8.4"
   },
   "dependencies": {
-    "@headlessui/react": "^1.6.6"
+    "@headlessui/react": "^1.7.3"
   }
 }
