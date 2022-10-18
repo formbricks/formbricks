@@ -67,19 +67,19 @@ To get the project running locally on your machine you need to have the followin
 
 1. Clone the project:
 
-```
+```bash
 git clone https://github.com/formbricks/snoopforms.git
 ```
 
 and move into the directory
 
-```
+```bash
 cd snoopforms
 ```
 
 2. Install Node.JS packages via pnpm. Don't have pnpm? Get it [here](https://pnpm.io/installation)
 
-```
+```bash
 pnpm install
 ```
 
@@ -88,25 +88,25 @@ pnpm install
 - a `postgres` container and environment variables preset to reach it,
 - a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
 
-```
+```bash
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
 4. Create a `.env` file based on `.env.example` and change it according to your setup. If you are using a cloud based database or another mail server, you will need to update the `DATABASE_URL` and SMTP settings in your `.env` accordingly.
 
-```
+```bash
 cp .env.example .env
 ```
 
 5. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
 
-```
+```bash
 pnpm dlx prisma migrate dev
 ```
 
 6. Start the development server:
 
-```
+```bash
 pnpm dev
 ```
 
@@ -120,25 +120,16 @@ The easiest way to deploy snoopForms on your own machine is using Docker. This r
 
 Clone the repository:
 
-```
-
+```bash
 git clone https://github.com/formbricks/snoopforms.git && cd snoopforms
-
 ```
 
-<<<<<<< HEAD
-Create a `.env` file based on `.env.docker` and change all fields according to your setup. This file comes with a basic setup and snoopForms works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings in the `.env` file. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`).
-=======
-Create a `.env` file based on `.env.docker` and change all fields according to your setup. This file comes with a basic setup and snoopForms works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings in the `.env` file. If you configured your email credentials, you can also comment the following lines to enable email verification (`# EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# PASSWORD_RESET_DISABLED=1`).
-
-> > > > > > > 7ab8b81 (add basic react package)
+Create a `.env` file based on `.env.docker` and change all fields according to your setup. This file comes with a basic setup and snoopForms works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings in the `.env` file. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_PASSWORD_RESET_DISABLED=1`)
 
 Copy the `.env.docker` file to `.env` and edit it with an editor of your choice if needed.
 
-```
-
+```bash
 cp .env.docker .env
-
 ```
 
 Note: The environment variables are used at build time. When you change environment variables later, you need to rebuild the image with `docker compose build` for the changes to take effect.
@@ -146,10 +137,8 @@ Note: The environment variables are used at build time. When you change environm
 Finally start the docker compose process to build and spin up the snoopForms container as well as the PostgreSQL database.
 
 ```bash
-
 docker compose up -d
 # (use docker-compose if you are on an older docker version)
-
 ```
 
 You can now access the app on [https://localhost:3000](https://localhost:3000). You will be automatically redirected to the login. To use your local installation of snoopForms, create a new account.
