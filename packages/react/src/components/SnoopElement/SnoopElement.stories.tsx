@@ -18,7 +18,7 @@ const meta: Meta = {
 
 export default meta;
 
-const Template: Story<SnoopElementProps> = args => (
+const Template: Story<SnoopElementProps> = (args) => (
   <SnoopForm localOnly={true}>
     <SnoopPage name="snoopElement">
       <SnoopElement {...args} />

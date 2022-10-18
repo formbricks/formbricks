@@ -38,7 +38,7 @@ export const Radio: FC<Props> = ({
       <fieldset className="mt-2">
         <legend className="sr-only">Please choose an option</legend>
         <div className="space-y-2">
-          {options.map(option => (
+          {options.map((option) => (
             <div key={getOptionValue(option)} className="flex items-center">
               <input
                 id={`${name}-${getOptionValue(option)}`}

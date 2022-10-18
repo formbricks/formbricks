@@ -93,7 +93,7 @@ export const Cards: FC<Props> = ({
               : 'grid-cols-1 sm:grid-cols-6'
           )}
         >
-          {options.map(option => (
+          {options.map((option) => (
             <RadioGroup.Option
               key={getOptionValue(option)}
               id={`${name}-${getOptionValue(option)}`}

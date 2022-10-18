@@ -46,7 +46,7 @@ export const Checkbox: FC<Props> = ({
         </label>
       )}
       <div className="mt-2 space-y-2">
-        {options.map(option => (
+        {options.map((option) => (
           <div
             className="relative flex items-start"
             key={typeof option === 'object' ? option.value : option}
@@ -65,14 +65,14 @@ export const Checkbox: FC<Props> = ({
                     ? checked.includes(option.value)
                     : checked.includes(option)
                 }
-                onChange={e => {
+                onChange={(e) => {
                   const newChecked: string[] = [...checked];
                   const value =
                     typeof option === 'object' ? option.value : option;
                   if (e.target.checked) {
                     newChecked.push(value);
                   } else {
-                    const idx = newChecked.findIndex(v => v === value);
+                    const idx = newChecked.findIndex((v) => v === value);
                     if (idx >= 0) {
                       newChecked.splice(idx, 1);
                     }

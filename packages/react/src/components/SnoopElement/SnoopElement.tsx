@@ -77,9 +77,8 @@ export const SnoopElement: FC<SnoopElementProps> = ({
       newSchema.pages[pageIdx].elements[elementIdx].label = label;
       newSchema.pages[pageIdx].elements[elementIdx].help = help;
       if (['checkbox', 'radio'].includes(type)) {
-        newSchema.pages[pageIdx].elements[
-          elementIdx
-        ].options = getOptionsSchema(options);
+        newSchema.pages[pageIdx].elements[elementIdx].options =
+          getOptionsSchema(options);
       }
       return newSchema;
     });

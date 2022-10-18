@@ -55,7 +55,7 @@ export const Phone: FC<Props> = ({
               'block w-full border-gray-300 rounded-md focus:ring-slate-500 focus:border-slate-500 sm:text-sm'
           )}
           placeholder={placeholder}
-          onChange={e =>
+          onChange={(e) =>
             setSubmissionValue(e.target.value, pageName, name, setSubmission)
           }
           required={required}

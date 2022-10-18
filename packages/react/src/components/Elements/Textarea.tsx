@@ -48,7 +48,7 @@ export const Textarea: FC<Props> = ({
             classNames.element
           )}
           placeholder={placeholder}
-          onChange={e =>
+          onChange={(e) =>
             setSubmissionValue(e.target.value, pageName, name, setSubmission)
           }
           required={required}
