@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { prisma } from "database";
+import { prisma } from "@formbricks/database";
 import { getSession } from "next-auth/react";
 import { generateId } from "../../../lib/utils";
 import { capturePosthogEvent } from "../../../lib/posthog";

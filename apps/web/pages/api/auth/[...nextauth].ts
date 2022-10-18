@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "database";
+import { prisma } from "@formbricks/database";
 import { verifyPassword } from "../../../lib/auth";
 import { verifyToken } from "../../../lib/jwt";
 

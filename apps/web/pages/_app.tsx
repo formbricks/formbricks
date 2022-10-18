@@ -2,7 +2,7 @@ import "highlight.js/styles/tokyo-night-dark.css";
 import { SessionProvider } from "next-auth/react";
 import { ToastContainer } from "react-toastify";
 import "../styles/editorjs.css";
-import "ui/styles.css";
+// import "@formbricks/ui/styles.css";
 import "../styles/globals.css";
 import "../styles/toastify.css";
 

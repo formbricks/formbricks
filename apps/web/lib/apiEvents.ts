@@ -1,6 +1,6 @@
 import { handleWebhook } from "../components/pipelines/webhook";
 import { capturePosthogEvent } from "./posthog";
-import { prisma } from "database";
+import { prisma } from "@formbricks/database";
 import { sendTelemetry } from "./telemetry";
 import { ApiEvent } from "./types";
 

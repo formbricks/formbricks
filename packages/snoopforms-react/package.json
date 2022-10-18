@@ -33,17 +33,6 @@
   "peerDependencies": {
     "react": ">=16"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
-  "prettier": {
-    "printWidth": 80,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5"
-  },
   "module": "dist/react.esm.js",
   "size-limit": [
     {
@@ -58,29 +47,23 @@
   "devDependencies": {
     "@babel/core": "^7.19.3",
     "@size-limit/preset-small-lib": "^8.1.0",
-    "@storybook/addon-essentials": "^6.5.12",
-    "@storybook/addon-info": "^5.3.21",
-    "@storybook/addon-links": "^6.5.12",
-    "@storybook/addon-postcss": "^2.0.0",
-    "@storybook/addons": "^6.5.12",
-    "@storybook/react": "^6.5.12",
     "@tailwindcss/forms": "^0.5.3",
     "@types/react": "^18.0.21",
     "@types/react-dom": "^18.0.6",
     "autoprefixer": "^10.4.12",
     "babel-loader": "^8.2.5",
     "cross-env": "^7.0.3",
-    "eslint-config-custom": "workspace:*",
-    "husky": "^8.0.1",
+    "eslint": "8.25.0",
+    "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.18",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-is": "^18.2.0",
     "size-limit": "^8.1.0",
-    "tailwind-config": "workspace:*",
+    "@formbricks/tailwind-config": "workspace:*",
     "tailwindcss": "^3.1.8",
     "tslib": "^2.4.0",
-    "tsconfig": "workspace:*",
+    "@formbricks/tsconfig": "workspace:*",
     "typescript": "^4.8.4"
   },
   "dependencies": {

@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
 import NextCors from "nextjs-cors";
 import { formHasOwnership } from "../../../../../lib/api";
-import { prisma } from "database";
+import { prisma } from "@formbricks/database";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const formId = req.query.id.toString();

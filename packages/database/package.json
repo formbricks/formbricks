@@ -1,5 +1,5 @@
 {
-  "name": "database",
+  "name": "@formbricks/database",
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
@@ -29,10 +29,10 @@
   "devDependencies": {
     "@types/node": "18.8.3",
     "eslint": "^8.25.0",
-    "eslint-config-custom": "workspace:*",
+    "eslint-config-formbricks": "workspace:*",
     "prisma": "^4.4.0",
     "rimraf": "^3.0.2",
-    "tsconfig": "workspace:*",
+    "@formbricks/tsconfig": "workspace:*",
     "tsup": "^6.2.3",
     "tsx": "^3.10.1",
     "typescript": "^4.8.4"

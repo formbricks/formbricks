@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { prisma } from "database";
+import { prisma } from "@formbricks/database";
 import { sendVerificationEmail } from "../../../../lib/email";
 import { capturePosthogEvent } from "../../../../lib/posthog";
 

@@ -1,7 +1,6 @@
 {
-  "name": "prettier-config",
+  "name": "@snoopforms/prettier-config",
   "version": "1.0.0",
-  "private": true,
   "license": "MIT",
   "publishConfig": {
     "access": "public"

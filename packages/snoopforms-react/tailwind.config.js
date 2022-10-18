@@ -1,7 +1,3 @@
-module.exports = {
-  content: ['./src/**/*.{js,jsx,ts,tsx}', './stories/*'],
-  theme: {
-    extend: {},
-  },
-  plugins: [require('@tailwindcss/forms')],
-};
+const config = require("@formbricks/tailwind-config/tailwind.config.js");
+
+module.exports = config;
