@@ -95,11 +95,13 @@ export default function SignInPage() {
                         </Link>
                       )}
 
-                      <Link href="/auth/signup">
-                        <a href="" className="text-red text-xs hover:text-red-600">
-                          Create an account
-                        </a>
-                      </Link>
+                      {!process.env.NEXT_PUBLIC_SIGNUP_DISABLED && (
+                        <Link href="/auth/signup">
+                          <a href="" className="text-red text-xs hover:text-red-600">
+                            Create an account
+                          </a>
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </form>
