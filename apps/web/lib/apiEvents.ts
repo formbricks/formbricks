@@ -1,5 +1,5 @@
 import { handleWebhook } from "../components/pipelines/webhook";
-import { sendFormSubmissionEmail } from "./email";
+import { sendFormSubmissionEmail, sendPageSubmissionEmail } from "./email";
 import { capturePosthogEvent } from "./posthog";
 import { prisma } from "@formbricks/database";
 import { sendTelemetry } from "./telemetry";
@@ -30,57 +30,77 @@ export const validateEvents = (events: ApiEvent[]): validationError | undefined 
 };
 
 export const processApiEvent = async (event: ApiEvent, formId) => {
+  const form = await prisma.form.findUnique({
+    where: {
+      id: formId,
+    },
+    select: {
+      owner: true,
+      schema: true,
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      noCodeForm: true,
+      name: true,
+      formType: true,
+    },
+  });
+
   // save submission
   if (event.type === "pageSubmission") {
-    const data = event.data;
-    const { pageName } = data;
+    const schema = form.schema as Schema;
+    const { pageName } = event.data;
+    const pages = schema.pages.filter((page) => page.type === "form");
+
+    const indexOfPage = pages.findIndex((page) => page.name === pageName);
+    // const owner = form.owner;
+
+    if (indexOfPage === pages.length - 1) {
+      processApiEvent(
+        {
+          ...event,
+          type: "submissionCompleted",
+        },
+        formId
+      );
+      return;
+    }
 
     await prisma.sessionEvent.create({
       data: {
         type: "pageSubmission",
         data: {
-          pageName: data.pageName,
-          submission: data.submission,
+          pageName: event.data.pageName,
+          submission: event.data.submission,
         },
-        submissionSession: { connect: { id: data.submissionSessionId } },
+        submissionSession: { connect: { id: event.data.submissionSessionId } },
       },
     });
-
-    const form = await prisma.form.findUnique({
-      where: {
-        id: formId,
-      },
-      select: {
-        owner: true,
-        schema: true,
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        noCodeForm: true,
-        name: true,
-        formType: true,
-      },
-    });
-
-    const schema = form.schema as Schema;
-    const owner = form.owner;
-
-    const pages = schema.pages.filter((page) => page.type === "form");
-
-    const indexOfPage = pages.findIndex((page) => page.name === pageName);
 
     capturePosthogEvent(form.owner.id, "pageSubmission received", {
       formId,
       formType: form.formType,
     });
 
-    if (indexOfPage === pages.length - 1) {
-      sendFormSubmissionEmail(owner, form.name, form.id);
-    }
-
     sendTelemetry("pageSubmission received");
   } else if (event.type === "submissionCompleted") {
-    // TODO
+    await prisma.sessionEvent.create({
+      data: {
+        type: "submissionCompleted",
+        data: {
+          pageName: event.data.pageName,
+          submission: event.data.submission,
+        },
+        submissionSession: { connect: { id: event.data.submissionSessionId } },
+      },
+    });
+
+    capturePosthogEvent(form.owner.id, "pageSubmission received", {
+      formId,
+      formType: form.formType,
+    });
+
+    sendTelemetry("submissionCompleted received");
   } else if (event.type === "updateSchema") {
     const data = { schema: event.data, updatedAt: new Date() };
     await prisma.form.update({
@@ -105,6 +125,25 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
   for (const pipeline of pipelines) {
     if (pipeline.type === "WEBHOOK") {
       handleWebhook(pipeline, event);
+    }
+    if (pipeline.type === "EMAIL_NOTIFICATION") {
+      if (!pipeline.data.hasOwnProperty("email")) return;
+
+      const { email } = pipeline.data.valueOf() as { email: string };
+
+      console.log(event.type);
+
+      if (
+        event.type === "pageSubmission" &&
+        pipeline.events.includes("PAGE_SUBMISSION")
+      ) {
+        await sendPageSubmissionEmail(email, form.name, pipeline.formId);
+      } else if (
+        event.type === "submissionCompleted" &&
+        pipeline.events.includes("FORM_COMPLETED")
+      ) {
+        await sendFormSubmissionEmail(email, form.name, pipeline.formId);
+      }
     }
   }
 };

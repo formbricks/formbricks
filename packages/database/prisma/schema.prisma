@@ -14,58 +14,60 @@ enum FormType {
 
 enum PipelineType {
   WEBHOOK
+  EMAIL_NOTIFICATION
 }
 
 enum PipelineEvent {
   PAGE_SUBMISSION
+  FORM_COMPLETED
 }
 
 model Form {
-  id                  String    @id
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  owner               User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  ownerId             Int
-  formType            FormType  @default(NOCODE)
-  name                String    @default("")
-  schema              Json      @default("{}")
-  submissionSessions  SubmissionSession[]
-  pipelines           Pipeline[]
-  noCodeForm          NoCodeForm?
+  id                 String              @id
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  owner              User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId            Int
+  formType           FormType            @default(NOCODE)
+  name               String              @default("")
+  schema             Json                @default("{}")
+  submissionSessions SubmissionSession[]
+  pipelines          Pipeline[]
+  noCodeForm         NoCodeForm?
 }
 
 model NoCodeForm {
-  id                  String    @id @default(uuid())
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  form                Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId              String    @unique
-  blocks              Json      @default("[]")
-  blocksDraft         Json      @default("[]")
-  published           Boolean   @default(false)
-  closed              Boolean   @default(false)
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId      String   @unique
+  blocks      Json     @default("[]")
+  blocksDraft Json     @default("[]")
+  published   Boolean  @default(false)
+  closed      Boolean  @default(false)
 }
 
 model Pipeline {
-  id              String          @id @default(uuid())
-  createdAt       DateTime        @default(now()) @map(name: "created_at")
-  updatedAt       DateTime        @updatedAt @map(name: "updated_at")
-  name            String
-  type            PipelineType
-  form            Form            @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId          String
-  enabled         Boolean         @default(false)
-  events          PipelineEvent[]
-  data            Json            @default("{}")
+  id        String          @id @default(uuid())
+  createdAt DateTime        @default(now()) @map(name: "created_at")
+  updatedAt DateTime        @updatedAt @map(name: "updated_at")
+  name      String
+  type      PipelineType
+  form      Form            @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId    String
+  enabled   Boolean         @default(false)
+  events    PipelineEvent[]
+  data      Json            @default("{}")
 }
 
 model SubmissionSession {
-  id              String    @id @default(uuid())
-  createdAt       DateTime  @default(now()) @map(name: "created_at")
-  updatedAt       DateTime  @updatedAt @map(name: "updated_at")
-  form            Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId          String
-  events          SessionEvent[]
+  id        String         @id @default(uuid())
+  createdAt DateTime       @default(now()) @map(name: "created_at")
+  updatedAt DateTime       @updatedAt @map(name: "updated_at")
+  form      Form           @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId    String
+  events    SessionEvent[]
 }
 
 model SessionEvent {

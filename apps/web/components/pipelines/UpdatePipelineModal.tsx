@@ -1,7 +1,7 @@
 import { persistPipeline, usePipeline, usePipelines } from "../../lib/pipelines";
 import Loading from "../Loading";
 import Modal from "../Modal";
-import { WebhookSettings } from "./webhook";
+import PipelineSettings from "./PipelineSettings";
 
 export default function UpdatePipelineModal({ open, setOpen, formId, pipelineId }) {
   const { pipeline, isLoadingPipeline, mutatePipeline } = usePipeline(formId, pipelineId);
@@ -16,7 +16,7 @@ export default function UpdatePipelineModal({ open, setOpen, formId, pipelineId 
       newPipelines[pipelineIdx] = pipeline;
       mutatePipelines(newPipelines);
     }
-    setOpen(false);
+    setOpen(false); 
   };
 
   return (
@@ -24,10 +24,11 @@ export default function UpdatePipelineModal({ open, setOpen, formId, pipelineId 
       {isLoadingPipeline ? (
         <Loading />
       ) : (
-        <form className="w-full space-y-8 divide-y divide-gray-200" onSubmit={handleSubmit}>
-          {pipeline.type === "WEBHOOK" ? (
-            <WebhookSettings pipeline={pipeline} setPipeline={(p) => mutatePipeline(p, false)} />
-          ) : null}
+        <form
+          className="w-full space-y-8 divide-y divide-gray-200"
+          onSubmit={handleSubmit}
+        >
+          <PipelineSettings typeId={pipeline.type } pipeline={pipeline} setPipeline={(p) => mutatePipeline(p, false)} /> 
           <div className="pt-5">
             <div className="flex justify-end">
               <button
