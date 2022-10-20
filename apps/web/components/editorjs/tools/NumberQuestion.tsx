@@ -48,15 +48,6 @@ export default class NumberQuestion implements BlockTool {
     };
   }
 
-  // save(block: HTMLDivElement) {
-  //   return {
-  //     ...this.data,
-  //     label: (block.firstElementChild.firstElementChild.firstElementChild as HTMLInputElement).value,
-  //     placeholder: (block.firstElementChild.childNodes[1] as HTMLInputElement).value,
-  //     help: (block.firstElementChild.lastElementChild as HTMLInputElement).value,
-  //   };
-  // }
-
   renderSettings(): HTMLElement {
     const wrapper = document.createElement("div");
 
