@@ -49,9 +49,11 @@ const NumberQuestionComponent = (props: Props) => {
           placeholder="Your Question"
           onChange={onInputChange("label")}
         />
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-red-500">
-          *
-        </div>
+        {data.required && (
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-red-500">
+            *
+          </div>
+        )}
       </div>
       <input
         type="text"

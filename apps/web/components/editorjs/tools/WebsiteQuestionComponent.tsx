@@ -50,9 +50,11 @@ const WebsiteQuestionComponent = (props: Props) => {
           placeholder="Your Question"
           onChange={onInputChange("label")}
         />
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-red-500">
-          *
-        </div>
+        {data.required && (
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-red-500">
+            *
+          </div>
+        )}
       </div>
       <div className="relative mt-1 max-w-sm rounded-md shadow-sm">
         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
