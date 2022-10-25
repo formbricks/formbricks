@@ -40,18 +40,20 @@ export default function MenuSteps({ steps, currentStep }: MenuStepsProps) {
       <div className="hidden sm:block">
         <nav className="-mb-px flex space-x-8" aria-label="steps">
           {steps.map((step) => (
-            <Link key={step.name} href={step.href}>
-              <a
-                className={classNames(
-                  step.id === currentStep
-                    ? "border-red text-red"
-                    : "text-ui-gray-dark hover:text-ui-gray-dark hover:border-ui-gray-medium border-transparent",
-                  "whitespace-nowrap border-b-2 py-5 px-1 text-sm font-medium"
-                )}
-                aria-current={step.id === currentStep ? "page" : undefined}>
-                {step.name}
-              </a>
-            </Link>
+            (<Link
+              key={step.name}
+              href={step.href}
+              className={classNames(
+                step.id === currentStep
+                  ? "border-red text-red"
+                  : "text-ui-gray-dark hover:text-ui-gray-dark hover:border-ui-gray-medium border-transparent",
+                "whitespace-nowrap border-b-2 py-5 px-1 text-sm font-medium"
+              )}
+              aria-current={step.id === currentStep ? "page" : undefined}>
+
+              {step.name}
+
+            </Link>)
           ))}
         </nav>
       </div>

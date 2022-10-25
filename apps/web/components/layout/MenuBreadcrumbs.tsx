@@ -8,11 +8,11 @@ export default function MenuBreadcrumbs({ breadcrumbs }) {
         <ol className="flex items-center space-x-4">
           <li>
             <div>
-              <Link href="/forms/">
-                <a className="text-ui-gray-dark hover:text-ui-gray-dark">
-                  <HomeIcon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
-                  <span className="sr-only">Home</span>
-                </a>
+              <Link href="/forms/" className="text-ui-gray-dark hover:text-ui-gray-dark">
+
+                <HomeIcon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                <span className="sr-only">Home</span>
+
               </Link>
             </div>
           </li>
