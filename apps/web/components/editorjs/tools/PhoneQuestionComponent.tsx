@@ -49,6 +49,7 @@ const PhoneQuestionComponent = (props: Props) => {
           defaultValue={data.label}
           className="w-full border-0 border-transparent p-0 ring-0 placeholder:text-gray-300 focus:ring-0"
           placeholder="Your Question"
+          onChange={onInputChange("label")}
         />
         {data.required && (
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-red-500">
@@ -65,6 +66,7 @@ const PhoneQuestionComponent = (props: Props) => {
           name="website"
           className="block w-full rounded-md border-gray-300 pl-10 text-gray-300 sm:text-sm"
           defaultValue={data.placeholder}
+          onChange={onInputChange("placeholder")}
         />
       </div>
       <input
@@ -73,6 +75,7 @@ const PhoneQuestionComponent = (props: Props) => {
         defaultValue={data.help}
         className="mt-2 block w-full max-w-sm border-0 border-transparent p-0 text-sm font-light text-gray-500 ring-0 placeholder:text-gray-300 focus:ring-0"
         placeholder="optional help text"
+        onChange={onInputChange("help")}
       />
     </div>
   );
