@@ -1,16 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import NextCors from "nextjs-cors";
 import { processApiEvent, validateEvents } from "../../../../lib/apiEvents";
 
 ///api/submissionSession
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-  await NextCors(req, res, {
-    // Options
-    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
-    origin: "*",
-    optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-  });
-
   const formId = req.query.id.toString();
 
   // POST /api/forms/:id/schema
@@ -25,19 +17,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(status).json({ error: message });
     }
     for (const event of events) {
-      await fetch(`${process.env.POSTHOG_API_HOST}/capture/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          api_key: process.env.POSTHOG_API_KEY,
-          event: eventName,
-          properties: {
-            distinct_id: hashString(userId.toString()),
-            ...properties,
-          },
-          timestamp: new Date().toISOString(),
-        }),
-      });
       await processApiEvent(event, formId);
     }
     res.json({ success: true });
