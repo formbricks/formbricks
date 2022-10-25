@@ -120,6 +120,7 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
     ],
   });
   for (const pipeline of pipelines) {
+    console.log("checking pipeline:", JSON.stringify(pipeline, null, 2));
     if (pipeline.type === "WEBHOOK") {
       handleWebhook(pipeline, event);
     }
@@ -129,6 +130,7 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
       const { email } = pipeline.data.valueOf() as { email: string };
 
       if (event.type === "pageSubmission" && pipeline.events.includes("PAGE_SUBMISSION")) {
+        console.log("sending page submission email");
         await sendPageSubmissionEmail(email, form.name, pipeline.formId);
       } else if (event.type === "formCompleted" && pipeline.events.includes("FORM_COMPLETED")) {
         await sendFormSubmissionEmail(email, form.name, pipeline.formId);
