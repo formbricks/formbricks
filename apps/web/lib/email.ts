@@ -1,7 +1,3 @@
-<<<<<<< HEAD:apps/web/lib/email.ts
-=======
-import getConfig from "next/config";
->>>>>>> 8f71566 (feat: add email notification pipeline):lib/email.ts
 import { createToken } from "./jwt";
 const nodemailer = require("nodemailer");
 
@@ -80,11 +76,7 @@ export const sendPasswordResetNotifyEmail = async (user) => {
   });
 };
 
-export const sendPageSubmissionEmail = async (
-  email: string,
-  formName: string,
-  formId: string
-) => {
+export const sendPageSubmissionEmail = async (email: string, formName: string, formId: string) => {
   await sendEmail({
     to: email,
     subject: `${formName} new page  submission`,
@@ -94,11 +86,7 @@ export const sendPageSubmissionEmail = async (
   });
 };
 
-export const sendFormSubmissionEmail = async (
-  email: string,
-  formName: string,
-  formId: string
-) => {
+export const sendFormSubmissionEmail = async (email: string, formName: string, formId: string) => {
   await sendEmail({
     to: email,
     subject: `${formName} new submission`,

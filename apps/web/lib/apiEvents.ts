@@ -16,9 +16,7 @@ export const validateEvents = (events: ApiEvent[]): validationError | undefined 
   }
   for (const event of events) {
     if (
-      !["createSubmissionSession", "pageSubmission", "submissionCompleted", "updateSchema"].includes(
-        event.type
-      )
+      !["createSubmissionSession", "pageSubmission", "formCompleted", "updateSchema"].includes(event.type)
     ) {
       return {
         status: 400,
@@ -77,7 +75,7 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
       processApiEvent(
         {
           ...event,
-          type: "submissionCompleted",
+          type: "formCompleted",
           data: {
             submissionSessionId: event.data.submissionSessionId,
           },
@@ -85,10 +83,10 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
         formId
       );
     }
-  } else if (event.type === "submissionCompleted") {
+  } else if (event.type === "formCompleted") {
     await prisma.sessionEvent.create({
       data: {
-        type: "submissionCompleted",
+        type: "formCompleted",
         data: {},
         submissionSession: { connect: { id: event.data.submissionSessionId } },
       },
@@ -99,7 +97,7 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
       formType: form.formType,
     });
 
-    sendTelemetry("submissionCompleted received");
+    sendTelemetry("formCompleted received");
   } else if (event.type === "updateSchema") {
     const data = { schema: event.data, updatedAt: new Date() };
     await prisma.form.update({
@@ -130,15 +128,9 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
 
       const { email } = pipeline.data.valueOf() as { email: string };
 
-      if (
-        event.type === "pageSubmission" &&
-        pipeline.events.includes("PAGE_SUBMISSION")
-      ) {
+      if (event.type === "pageSubmission" && pipeline.events.includes("PAGE_SUBMISSION")) {
         await sendPageSubmissionEmail(email, form.name, pipeline.formId);
-      } else if (
-        event.type === "submissionCompleted" &&
-        pipeline.events.includes("FORM_COMPLETED")
-      ) {
+      } else if (event.type === "formCompleted" && pipeline.events.includes("FORM_COMPLETED")) {
         await sendFormSubmissionEmail(email, form.name, pipeline.formId);
       }
     }

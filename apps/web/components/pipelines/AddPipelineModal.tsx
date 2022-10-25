@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPipeline, usePipelines } from "../../lib/pipelines";
 import Modal from "../Modal";
 import { webhook } from "./webhook";
-import { emailNotification } from './emailNotification'
+import { emailNotification } from "./emailNotification";
 import PipelineSettings from "./PipelineSettings";
 
 const availablePipelines = [webhook, emailNotification];
@@ -52,9 +52,8 @@ export default function AddPipelineModal({ open, setOpen }) {
             </h2>
             {availablePipelines.map((pipeline) => (
               <div
-                className="w-full mb-5 bg-white border shadow border-ui-gray-light sm:rounded"
-                key={pipeline.title}
-              >
+                className="border-ui-gray-light mb-5 w-full border bg-white shadow sm:rounded"
+                key={pipeline.title}>
                 <div className="px-4 py-5 sm:p-6">
                   <h3 className="text-lg font-medium leading-6 text-gray-900">{pipeline.title}</h3>
                   <div className="mt-2 sm:flex sm:items-start sm:justify-between">
@@ -67,7 +66,7 @@ export default function AddPipelineModal({ open, setOpen }) {
                         onClick={() => {
                           setTypeId(pipeline.typeId);
                         }}
-                        className="inline-flex items-center rounded-md border border-transparent bg-red-600 px-4 py-2 font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:text-sm">
+                        className="focus:outline-none inline-flex items-center rounded-md border border-transparent bg-red-600 px-4 py-2 font-medium text-white shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:text-sm">
                         Select
                       </button>
                     </div>
@@ -77,22 +76,19 @@ export default function AddPipelineModal({ open, setOpen }) {
             ))}
           </>
         ) : (
-          <form
-            className="w-full space-y-8 divide-y divide-gray-200"
-            onSubmit={handleSubmit}
-          >
-            <PipelineSettings typeId={typeId} pipeline={pipeline} setPipeline={setPipeline} /> 
+          <form className="w-full space-y-8 divide-y divide-gray-200" onSubmit={handleSubmit}>
+            <PipelineSettings typeId={typeId} pipeline={pipeline} setPipeline={setPipeline} />
             <div className="pt-5">
               <div className="flex justify-end">
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                  className="focus:outline-none rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="ml-3 inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                  className="focus:outline-none ml-3 inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                   Create
                 </button>
               </div>

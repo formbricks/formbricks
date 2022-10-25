@@ -99,11 +99,11 @@ export type submissionEvent = {
   };
 };
 
-export type submissionCompletedEvent = {
+export type formCompletedEvent = {
   id: string;
   createdAt: string;
   updatedAt: string;
-  type: "submissionCompleted";
+  type: "formCompleted";
   data: {
     submissionSessionId: string;
   };
@@ -117,10 +117,7 @@ export type updateSchemaEvent = {
   data: Schema;
 };
 
-export type ApiEvent =
-  | submissionEvent
-  | submissionCompletedEvent
-  | updateSchemaEvent;
+export type ApiEvent = submissionEvent | formCompletedEvent | updateSchemaEvent;
 
 export type WebhookEvent = Event & { formId: string; timestamp: string };
 
