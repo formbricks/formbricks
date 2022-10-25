@@ -16,7 +16,7 @@ export default function UpdatePipelineModal({ open, setOpen, formId, pipelineId 
       newPipelines[pipelineIdx] = pipeline;
       mutatePipelines(newPipelines);
     }
-    setOpen(false); 
+    setOpen(false);
   };
 
   return (
@@ -24,11 +24,12 @@ export default function UpdatePipelineModal({ open, setOpen, formId, pipelineId 
       {isLoadingPipeline ? (
         <Loading />
       ) : (
-        <form
-          className="w-full space-y-8 divide-y divide-gray-200"
-          onSubmit={handleSubmit}
-        >
-          <PipelineSettings typeId={pipeline.type } pipeline={pipeline} setPipeline={(p) => mutatePipeline(p, false)} /> 
+        <form className="w-full space-y-8 divide-y divide-gray-200" onSubmit={handleSubmit}>
+          <PipelineSettings
+            typeId={pipeline.type}
+            pipeline={pipeline}
+            setPipeline={(p) => mutatePipeline(p, false)}
+          />
           <div className="pt-5">
             <div className="flex justify-end">
               <button

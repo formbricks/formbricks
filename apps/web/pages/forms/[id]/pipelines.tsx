@@ -3,13 +3,7 @@ import { BoltIcon, Cog6ToothIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { CodeBracketSquareIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
-import {
-  SiAirtable, 
-  SiGoogle,
-  SiNotion,
-  SiSlack,
-  SiZapier,
-} from "react-icons/si";
+import { SiAirtable, SiGoogle, SiNotion, SiSlack, SiZapier } from "react-icons/si";
 import { AiOutlineMail } from "react-icons/ai";
 
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
