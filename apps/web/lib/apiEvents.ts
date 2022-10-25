@@ -54,6 +54,8 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
     const indexOfPage = pages.findIndex((page) => page.name === pageName);
     // const owner = form.owner;
 
+    console.log("creating sessionEvent");
+
     await prisma.sessionEvent.create({
       data: {
         type: "pageSubmission",
@@ -64,6 +66,8 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
         submissionSession: { connect: { id: event.data.submissionSessionId } },
       },
     });
+
+    console.log("created sessionEvent");
 
     capturePosthogEvent(form.owner.id, "pageSubmission received", {
       formId,
