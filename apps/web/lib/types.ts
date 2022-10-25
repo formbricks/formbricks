@@ -91,7 +91,7 @@ export type submissionEvent = {
   id: string;
   createdAt: string;
   updatedAt: string;
-  type: "pageSubmission" | "submissionCompleted";
+  type: "pageSubmission";
   data: {
     submissionSessionId: string;
     pageName: string;
@@ -104,7 +104,9 @@ export type submissionCompletedEvent = {
   createdAt: string;
   updatedAt: string;
   type: "submissionCompleted";
-  data: { [key: string]: string };
+  data: {
+    submissionSessionId: string;
+  };
 };
 
 export type updateSchemaEvent = {

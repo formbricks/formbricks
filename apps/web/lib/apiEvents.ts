@@ -55,17 +55,6 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
     const indexOfPage = pages.findIndex((page) => page.name === pageName);
     // const owner = form.owner;
 
-    if (indexOfPage === pages.length - 1) {
-      processApiEvent(
-        {
-          ...event,
-          type: "submissionCompleted",
-        },
-        formId
-      );
-      return;
-    }
-
     await prisma.sessionEvent.create({
       data: {
         type: "pageSubmission",
@@ -83,14 +72,24 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
     });
 
     sendTelemetry("pageSubmission received");
+
+    if (indexOfPage === pages.length - 1) {
+      processApiEvent(
+        {
+          ...event,
+          type: "submissionCompleted",
+          data: {
+            submissionSessionId: event.data.submissionSessionId,
+          },
+        },
+        formId
+      );
+    }
   } else if (event.type === "submissionCompleted") {
     await prisma.sessionEvent.create({
       data: {
         type: "submissionCompleted",
-        data: {
-          pageName: event.data.pageName,
-          submission: event.data.submission,
-        },
+        data: {},
         submissionSession: { connect: { id: event.data.submissionSessionId } },
       },
     });
@@ -130,8 +129,6 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
       if (!pipeline.data.hasOwnProperty("email")) return;
 
       const { email } = pipeline.data.valueOf() as { email: string };
-
-      console.log(event.type);
 
       if (
         event.type === "pageSubmission" &&
