@@ -28,6 +28,7 @@ export const validateEvents = (events: ApiEvent[]): validationError | undefined 
 };
 
 export const processApiEvent = async (event: ApiEvent, formId) => {
+  console.log("process API Event");
   const form = await prisma.form.findUnique({
     where: {
       id: formId,
@@ -119,6 +120,7 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
       },
     ],
   });
+  console.log("handle pipelines");
   for (const pipeline of pipelines) {
     console.log("checking pipeline:", JSON.stringify(pipeline, null, 2));
     if (pipeline.type === "WEBHOOK") {
