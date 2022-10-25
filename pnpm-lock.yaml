@@ -32,6 +32,7 @@ importers:
       '@types/bcryptjs': ^2.4.2
       '@types/node': 18.11.0
       '@types/react': ^18.0.21
+      '@vercel/analytics': ^0.1.1
       autoprefixer: ^10.4.12
       bcryptjs: ^2.4.3
       chart.js: ^3.9.1
@@ -70,6 +71,7 @@ importers:
       '@headlessui/react': 1.7.3_biqbaboplfbrettd7655fr4n2y
       '@heroicons/react': 2.0.12_react@18.2.0
       '@snoopforms/react': link:../../packages/snoopforms-react
+      '@vercel/analytics': 0.1.1_react@18.2.0
       bcryptjs: 2.4.3
       chart.js: 3.9.1
       crypto: 1.0.1
@@ -1129,7 +1131,7 @@ packages:
       tailwindcss: '>=3.0.0 || >= 3.0.0-alpha.1'
     dependencies:
       mini-svg-data-uri: 1.4.4
-      tailwindcss: 3.1.8_postcss@8.4.18
+      tailwindcss: 3.1.8_neo3lunb2qpadwxplzw7r2isgm
     dev: true
 
   /@tailwindcss/line-clamp/0.4.2_tailwindcss@3.1.8:
@@ -1324,6 +1326,14 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.39.0
       eslint-visitor-keys: 3.3.0
+    dev: false
+
+  /@vercel/analytics/0.1.1_react@18.2.0:
+    resolution: {integrity: sha512-34on7YtVt/yT8+QX7c5K2bcKYXnax06sQiK2PUdlQ1ABg5699mPdLGOSpS1gF//kR1s9oig4MCJ+N9nOjpaS6g==}
+    peerDependencies:
+      react: ^16.8||^17||^18
+    dependencies:
+      react: 18.2.0
     dev: false
 
   /@webassemblyjs/ast/1.11.1:

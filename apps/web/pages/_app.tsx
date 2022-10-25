@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import "highlight.js/styles/tokyo-night-dark.css";
 import { SessionProvider } from "next-auth/react";
 import { ToastContainer } from "react-toastify";
@@ -11,6 +12,7 @@ function SnoopApp({ Component, pageProps: { session, ...pageProps } }) {
     <SessionProvider session={session}>
       <Component {...pageProps} />
       <ToastContainer />
+      <Analytics />
     </SessionProvider>
   );
 }
