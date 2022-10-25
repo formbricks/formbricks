@@ -16,10 +16,13 @@ export default function ResetPasswordSuccess() {
               <h1 className="leading-2 mb-4 text-center font-bold">Password successfully reset</h1>
               <p className="text-center">You can now log in with your new password</p>
               <div className="mt-3 text-center">
-                <Link href="/auth/signin">
-                  <a href="" className="text-red block text-xs hover:text-red-600">
+                <Link
+                  href="/auth/signin"
+                  href=""
+                  className="text-red block text-xs hover:text-red-600">
+                  
                     Go to login
-                  </a>
+                  
                 </Link>
               </div>
             </div>

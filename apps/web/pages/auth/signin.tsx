@@ -88,18 +88,24 @@ export default function SignInPage() {
                     </button>
                     <div className="mt-3 text-center">
                       {process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && (
-                        <Link href="/auth/forgot-password">
-                          <a href="" className="text-red block text-xs hover:text-red-600">
+                        <Link
+                          href="/auth/forgot-password"
+                          href=""
+                          className="text-red block text-xs hover:text-red-600">
+                          
                             Forgot your password?
-                          </a>
+                          
                         </Link>
                       )}
 
                       {process.env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
-                        <Link href="/auth/signup">
-                          <a href="" className="text-red text-xs hover:text-red-600">
+                        <Link
+                          href="/auth/signup"
+                          href=""
+                          className="text-red text-xs hover:text-red-600">
+                          
                             Create an account
-                          </a>
+                          
                         </Link>
                       )}
                     </div>

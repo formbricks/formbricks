@@ -74,10 +74,13 @@ export default function ForgotPasswordPage() {
                       Send password reset email
                     </button>
                     <div className="mt-3 text-center">
-                      <Link href="/auth/signin">
-                        <a href="" className="text-red block text-xs hover:text-red-600">
+                      <Link
+                        href="/auth/signin"
+                        href=""
+                        className="text-red block text-xs hover:text-red-600">
+                        
                           Back to login
-                        </a>
+                        
                       </Link>
                     </div>
                   </div>
