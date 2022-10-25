@@ -28,7 +28,7 @@ export const validateEvents = (events: ApiEvent[]): validationError | undefined 
 };
 
 export const processApiEvent = async (event: ApiEvent, formId) => {
-  console.log("process API Event");
+  console.log("process API Event", event.type);
   const form = await prisma.form.findUnique({
     where: {
       id: formId,
@@ -84,6 +84,7 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
         formId
       );
     }
+    console.log("pageSubmission completed");
   } else if (event.type === "formCompleted") {
     await prisma.sessionEvent.create({
       data: {
@@ -101,7 +102,7 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
     sendTelemetry("formCompleted received");
   } else if (event.type === "updateSchema") {
     const data = { schema: event.data, updatedAt: new Date() };
-    await prisma.form.update({
+    prisma.form.update({
       where: { id: formId },
       data,
     });
