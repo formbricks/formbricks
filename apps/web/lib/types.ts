@@ -87,7 +87,7 @@ export type SubmissionSummaryOption = {
   summary: number;
 };
 
-export type pageSubmissionEvent = {
+export type submissionEvent = {
   id: string;
   createdAt: string;
   updatedAt: string;
@@ -99,12 +99,14 @@ export type pageSubmissionEvent = {
   };
 };
 
-export type submissionCompletedEvent = {
+export type formCompletedEvent = {
   id: string;
   createdAt: string;
   updatedAt: string;
-  type: "submissionCompleted";
-  data: { [key: string]: string };
+  type: "formCompleted";
+  data: {
+    submissionSessionId: string;
+  };
 };
 
 export type updateSchemaEvent = {
@@ -115,7 +117,7 @@ export type updateSchemaEvent = {
   data: Schema;
 };
 
-export type ApiEvent = pageSubmissionEvent | submissionCompletedEvent | updateSchemaEvent;
+export type ApiEvent = submissionEvent | formCompletedEvent | updateSchemaEvent;
 
 export type WebhookEvent = Event & { formId: string; timestamp: string };
 

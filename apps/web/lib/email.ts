@@ -75,3 +75,24 @@ export const sendPasswordResetNotifyEmail = async (user) => {
     Your snoopForms Team`,
   });
 };
+
+export const sendPageSubmissionEmail = async (email: string, formName: string, formId: string) => {
+  await sendEmail({
+    to: email,
+    subject: `${formName} new page  submission`,
+    html: `someone just filled out a page of ${formName}.<br/>
+    
+    Click <a href="${process.env.NEXTAUTH_URL}/forms/${formId}/results/responses">here</a> to see new submission`,
+  });
+};
+
+export const sendFormSubmissionEmail = async (email: string, formName: string, formId: string) => {
+  await sendEmail({
+    to: email,
+    subject: `${formName} new submission`,
+    html: `Hey, someone just filled out ${formName}.<br/>
+    <br/>
+    
+    Click <a href="${process.env.NEXTAUTH_URL}/forms/${formId}/results/responses">here</a> to see new submission`,
+  });
+};
