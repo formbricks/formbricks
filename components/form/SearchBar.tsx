@@ -1,4 +1,4 @@
-import { useState, Fragment } from "react";
+import { Fragment } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { AdjustmentsVerticalIcon } from "@heroicons/react/24/solid";
@@ -11,14 +11,6 @@ function SearchBar({
   formData,
   setFormData,
 }) {
-  const searchFormByName = async () => {
-    try {
-      await fetch(`/api/public/forms/search?name=${queryValue}`);
-      
-    } catch (error) {
-      console.error(error);
-    }
-  };
   const filterByName = (data) => {
     setFormData(
       data.sort(function (a, b) {
@@ -71,7 +63,7 @@ function SearchBar({
                     className={`${
                       active ? "bg-red-500 text-white" : "text-gray-900"
                     } group flex w-full items-center rounded px-2 py-2 text-sm`}
-                    onClick={(e) => filterByName(formData)}
+                    onClick={() => filterByName(formData)}
                   >
                     <MdSortByAlpha
                       className="mr-2 h-5 w-5"

@@ -37,7 +37,7 @@ export default function FormList() {
   const dateDayDiff = (date) => {
     const today = new Date();
     const dueDate = new Date(date);
-    var total_seconds = Math.abs(dueDate - today) / 1000;
+    var total_seconds = Math.abs(+dueDate - +today) / 1000;
     var days_difference = Math.floor(total_seconds / (60 * 60 * 24));
     return days_difference;
   };
@@ -62,7 +62,17 @@ export default function FormList() {
 
   return (
     <>
-      {forms && forms.length > 100? (<SearchBar className="mt-5 flex gap-4" queryValue={queryValue} setQueryValue={setQueryValue} formData={formData} setFormData={setFormData} />):<></>}
+      {forms && forms.length > 100 ? (
+        <SearchBar
+          className="mt-5 flex gap-4"
+          queryValue={queryValue}
+          setQueryValue={setQueryValue}
+          formData={formData}
+          setFormData={setFormData}
+        />
+      ) : (
+        <></>
+      )}
       <div className="h-full px-6 py-8">
         {forms &&
           (forms.length === 0 ? (
@@ -143,7 +153,11 @@ export default function FormList() {
                             </span>
                           ) : (
                             <span className="text-xs font-bold text-rose-500 line-clamp-3">
-                              {format(new Date(form.dueDate), "yyyy-MM-dd") < format(new Date(), "yyyy-MM-dd") ? "closed": "closing"} {timeSince(form.dueDate)}
+                              {format(new Date(form.dueDate), "yyyy-MM-dd") <
+                              format(new Date(), "yyyy-MM-dd")
+                                ? "closed"
+                                : "closing"}{" "}
+                              {timeSince(form.dueDate)}
                             </span>
                           )}
                         </span>
