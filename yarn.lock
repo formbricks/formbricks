@@ -134,7 +134,7 @@
 
 "@next/swc-darwin-arm64@12.2.2":
   version "12.2.2"
-  resolved "https://registry.yarnpkg.com/@next/swc-darwin-arm64/-/swc-darwin-arm64-12.2.2.tgz#80157c91668eff95b72d052428c353eab0fc4c50"
+  resolved "https://registry.npmjs.org/@next/swc-darwin-arm64/-/swc-darwin-arm64-12.2.2.tgz"
   integrity sha512-JCoGySHKGt+YBk7xRTFGx1QjrnCcwYxIo3yGepcOq64MoiocTM3yllQWeOAJU2/k9MH0+B5E9WUSme4rOCBbpA==
 
 "@next/swc-darwin-x64@12.2.2":
@@ -184,7 +184,7 @@
 
 "@next/swc-win32-x64-msvc@12.2.2":
   version "12.2.2"
-  resolved "https://registry.npmjs.org/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-12.2.2.tgz"
+  resolved "https://registry.yarnpkg.com/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-12.2.2.tgz#7460be700a60d75816f01109400b51fe929d7e89"
   integrity sha512-2D2iinWUL6xx8D9LYVZ5qi7FP6uLAoWymt8m8aaG2Ld/Ka8/k723fJfiklfuAcwOxfufPJI+nRbT5VcgHGzHAQ==
 
 "@nodelib/fs.scandir@2.1.5":
@@ -236,8 +236,8 @@
   integrity sha512-LwzQKA4vzIct1zNZzBmRKI9QuNpLgTQMEjsQLf3BXuGYb3QPTP4Yjf6mkdX+X1mYttZ808QpOwAzZjv28kq7DA==
 
 "@snoopforms/react@git+https://github.com/KinshasaDigitalAcademy/kda-snoopforms-react.git":
-  version "0.3.0"
-  resolved "git+https://github.com/KinshasaDigitalAcademy/kda-snoopforms-react.git#409161dfea648ebed73e2ab1db6fd4ab60a38ed7"
+  version "0.3.5"
+  resolved "git+https://github.com/KinshasaDigitalAcademy/kda-snoopforms-react.git#5dc9d28a9cb6e8e10ac8f84d2ab6459153a78fad"
   dependencies:
     "@headlessui/react" "^1.6.6"
     react-countdown-hook "^1.1.1"
@@ -1308,7 +1308,7 @@ fs.realpath@^1.0.0:
 
 fsevents@~2.3.2:
   version "2.3.2"
-  resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.2.tgz#8a526f78b8fdf4623b709e0b975c52c24c02fd1a"
+  resolved "https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz"
   integrity sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==
 
 function-bind@^1.1.1:
