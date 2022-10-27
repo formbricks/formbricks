@@ -99,7 +99,7 @@ const App: FC<IProps> = ({
                   label={block.data.label}
                   help={block.data.help}
                   placeholder={block.data.placeholder}
-                  defaultValue={submission.data?.submission[block.id]}
+                  defaultValue={submission?.data?.submission[block.id]}
                   classNames={{
                     label:
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
@@ -111,7 +111,11 @@ const App: FC<IProps> = ({
                   type="email"
                   name={block.id}
                   label={block.data.label}
-                  defaultValue={submission.data?.submission[block.id]}
+                  defaultValue={
+                    !isTimedPage(page)
+                      ? submission.data?.submission[block.id]
+                      : ""
+                  }
                   help={block.data.help}
                   placeholder={block.data.placeholder}
                   icon={<EnvelopeIcon className="w-5 h-5" />}
@@ -125,7 +129,11 @@ const App: FC<IProps> = ({
                 block.data.multipleChoice ? (
                 <SnoopElement
                   type="checkbox"
-                  defaultValue={submission.data?.submission[block.id]}
+                  defaultValue={
+                    !isTimedPage(page)
+                      ? submission.data?.submission[block.id]
+                      : ""
+                  }
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
@@ -141,7 +149,11 @@ const App: FC<IProps> = ({
                 <SnoopElement
                   type="radio"
                   name={block.id}
-                  defaultValue={submission.data?.submission[block.id]}
+                  defaultValue={
+                    !isTimedPage(page)
+                      ? submission.data?.submission[block.id]
+                      : ""
+                  }
                   label={block.data.label}
                   help={block.data.help}
                   options={block.data.options}
@@ -156,7 +168,11 @@ const App: FC<IProps> = ({
                   type="number"
                   name={block.id}
                   label={block.data.label}
-                  defaultValue={submission.data?.submission[block.id]}
+                  defaultValue={
+                    !isTimedPage(page)
+                      ? submission.data?.submission[block.id]
+                      : ""
+                  }
                   help={block.data.help}
                   placeholder={block.data.placeholder}
                   classNames={{
@@ -172,7 +188,11 @@ const App: FC<IProps> = ({
                   label={block.data.label}
                   help={block.data.help}
                   placeholder={block.data.placeholder}
-                  defaultValue={submission.data?.submission[block.id]}
+                  defaultValue={
+                    !isTimedPage(page)
+                      ? submission.data?.submission[block.id]
+                      : ""
+                  }
                   icon={<PhoneIcon className="w-5 h-5" />}
                   classNames={{
                     label:
@@ -196,7 +216,11 @@ const App: FC<IProps> = ({
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
-                  defaultValue={submission.data?.submission[block.id]}
+                  defaultValue={
+                    !isTimedPage(page)
+                      ? submission.data?.submission[block.id]
+                      : ""
+                  }
                   placeholder={block.data.placeholder}
                   icon={<GlobeAltIcon className="w-5 h-5" />}
                   classNames={{
