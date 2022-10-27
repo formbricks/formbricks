@@ -14,7 +14,7 @@ interface IProps {
   id: string;
   formId: string;
   page?: Page;
-  submission?:pageSubmissionEvent;
+  submission?: pageSubmissionEvent;
   localOnly: boolean;
   startDate: Date;
 }
@@ -32,10 +32,6 @@ const App: FC<IProps> = ({
   const onSubmit = () => {
     router.push(`/sourcings/${formId}`);
   };
-console.log("*****", page);
-console.log("#####", submission);
-
- 
   //TODO Find better way to handle this
   if (findTimer(page, startDate) < 0 && isTimedPage(page)) {
     return (
@@ -103,6 +99,7 @@ console.log("#####", submission);
                   label={block.data.label}
                   help={block.data.help}
                   placeholder={block.data.placeholder}
+                  defaultValue={submission.data?.submission[block.id]}
                   classNames={{
                     label:
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
@@ -114,6 +111,7 @@ console.log("#####", submission);
                   type="email"
                   name={block.id}
                   label={block.data.label}
+                  defaultValue={submission.data?.submission[block.id]}
                   help={block.data.help}
                   placeholder={block.data.placeholder}
                   icon={<EnvelopeIcon className="w-5 h-5" />}
@@ -127,6 +125,7 @@ console.log("#####", submission);
                 block.data.multipleChoice ? (
                 <SnoopElement
                   type="checkbox"
+                  defaultValue={submission.data?.submission[block.id]}
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
@@ -142,6 +141,7 @@ console.log("#####", submission);
                 <SnoopElement
                   type="radio"
                   name={block.id}
+                  defaultValue={submission.data?.submission[block.id]}
                   label={block.data.label}
                   help={block.data.help}
                   options={block.data.options}
@@ -156,6 +156,7 @@ console.log("#####", submission);
                   type="number"
                   name={block.id}
                   label={block.data.label}
+                  defaultValue={submission.data?.submission[block.id]}
                   help={block.data.help}
                   placeholder={block.data.placeholder}
                   classNames={{
@@ -171,6 +172,7 @@ console.log("#####", submission);
                   label={block.data.label}
                   help={block.data.help}
                   placeholder={block.data.placeholder}
+                  defaultValue={submission.data?.submission[block.id]}
                   icon={<PhoneIcon className="w-5 h-5" />}
                   classNames={{
                     label:
@@ -194,6 +196,7 @@ console.log("#####", submission);
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
+                  defaultValue={submission.data?.submission[block.id]}
                   placeholder={block.data.placeholder}
                   icon={<GlobeAltIcon className="w-5 h-5" />}
                   classNames={{
