@@ -35,6 +35,7 @@ model Form {
   name               String              @default("")
   description        String              @default("")
   dueDate            DateTime?
+  place              String?             @default("")
   schema             Json                @default("{}")
   submissionSessions SubmissionSession[]
   pipelines          Pipeline[]

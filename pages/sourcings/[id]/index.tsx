@@ -1,6 +1,11 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
-import { ClockIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
+import {
+  ClockIcon,
+  CalendarDaysIcon,
+  InboxArrowDownIcon,
+} from "@heroicons/react/24/solid";
+import {HiOutlineLocationMarker} from "react-icons/hi";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -12,7 +17,7 @@ import getConfig from "next/config";
 import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
-import { findTimer, getLeftTime, isTimedPage } from "../../../lib/utils";
+import { isTimedPage } from "../../../lib/utils";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
@@ -29,6 +34,12 @@ function NoCodeFormPublic() {
   const [openDisclaimer, setOpenDisclaimer] = useState(false);
   const [pageIdOnModal, setPageIdOnModal] = useState("");
 
+  enum options  {
+    year = "numeric",
+    month = "long",
+    day = "numeric",
+  };
+
   if (isLoadingNoCodeForm) {
     return <Loading />;
   }
@@ -41,15 +52,8 @@ function NoCodeFormPublic() {
     );
   }
 
-  const pageIsCompleted = (pageId: string) => {
-    const startDate = candidateSubmissions.find(submission => submission.data.pageName === pageId)?.data.startDate;
-    if (!startDate) return false;
-
-    const currentPage = pages.find(page => page.id === pageId)
-    const time = findTimer(currentPage, startDate)
-    const leftTime = getLeftTime(startDate, time)
-
-    return leftTime > 0
+  const pageIsCompleted = (pageId: string) => {    
+    return candidateSubmissions.map(submission => submission.data.pageName).includes(pageId);
   };
 
   const getPageTimer = (pageBlocks: any) => {
@@ -64,8 +68,8 @@ function NoCodeFormPublic() {
         setPageIdOnModal(page.id);
       } else router.push(`/sourcings/${formId}/${page.id}`);
     } else {
-      router.push(`/sourcings/${formId}/${pageIdOnModal}`)
-    };
+      router.push(`/sourcings/${formId}/${pageIdOnModal}`);
+    }
   };
 
   return (
@@ -73,7 +77,12 @@ function NoCodeFormPublic() {
       title={"Forms - KDA Sourcing"}
       breadcrumbs={[
         {
-          name: `My Sourcings / ${noCodeForm.form.name}`,
+          name: `Sourcings`,
+          href: "/sourcings",
+          current: true,
+        },
+        {
+          name: `${noCodeForm.form.name}`,
           href: "#",
           current: true,
         },
@@ -87,10 +96,10 @@ function NoCodeFormPublic() {
                 <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
                   <div>
                     <Image
-                      src="/img/snoopforms-logo.svg"
-                      alt="snoopForms logo"
-                      width={500}
-                      height={89}
+                      src="/img/kda_logo.png"
+                      alt="kinshasa digital academy logo"
+                      width={300}
+                      height={79}
                     />
                   </div>
                   <div className="mt-8">
@@ -115,8 +124,17 @@ function NoCodeFormPublic() {
               <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
                 <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
                 <span className="font-bold mr-1">Due date :</span>{" "}
-                {new Date(noCodeForm.form.dueDate).toLocaleDateString()}
+                {new Date(noCodeForm.form.dueDate).toLocaleDateString(
+                  "en-US",
+                  options
+                )}
               </p>
+              {noCodeForm.form.place === ""? <></> :
+              <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
+                <HiOutlineLocationMarker className="w-6 h-6 stroke-thin mr-2" />
+                <span className="font-bold mr-1">Place :</span>{" "}
+                {noCodeForm.form.place}
+              </p>}
               {pages.map((page, index) => {
                 if (pages.length - 1 !== index)
                   return (
@@ -127,13 +145,19 @@ function NoCodeFormPublic() {
                       <div className="pl-12 flex items-center">
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
-                      <div className="flex items-center justify-between w-1/3 pr-12">
-                        <div className="flex items-center w-3/6">
+                      <div className="flex items-center justify-between w-2/5 pr-8">
+                        <div className="flex items-center w-3/8" >
                           {isTimedPage(page) ? (
-                            <span className="flex items-center">
-                              <ClockIcon className="w-10 mr-2" />
-                              {getPageTimer(page.blocks) } minutes
-                            </span>
+                            <>
+                              <span className="flex items-center mr-7 text-gray-800">
+                                <ClockIcon className="w-7 mr-2" />
+                                {getPageTimer(page.blocks)} minutes
+                              </span>
+                              <span className="flex items-center text-gray-800">
+                                <InboxArrowDownIcon className="w-5 mr-2" />1
+                                attempt
+                              </span>
+                            </>
                           ) : (
                             <></>
                           )}
@@ -158,7 +182,7 @@ function NoCodeFormPublic() {
                       <DisclaimerModal
                         open={openDisclaimer}
                         setOpen={setOpenDisclaimer}
-                        message="You are about to start a timed form"
+                        message={`You are about to start a timed form and You have ${page.blocks[1].data.timerDuration} minutes to complete this form. Once started, you cannot leave the form, under penalty of seeing your answers considered to be submitted.`}
                         onClick={() => handleClickAction(page, true)}
                       />
                     </div>

@@ -50,10 +50,10 @@ export default function SignInPage() {
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
             <div>
               <Image
-                src="/img/kda_logo.svg"
-                alt="snoopForms logo"
-                width={500}
-                height={89}
+                src="/img/kda_logo.png"
+                alt="kinshasa digital academy logo"
+                width={300}
+                height={79}
               />
             </div>
 

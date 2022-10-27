@@ -15,37 +15,35 @@ export type Form = {
 
 export type Page = {
   id: string;
-  blocks: PageBlock[]
-}
+  blocks: PageBlock[];
+};
 
 export type PageBlock = {
   id: string;
   type: string;
   level?: number;
-  data: PageBlockData
-}
-
-
+  data: PageBlockData;
+};
 
 export type PageBlockData = {
-  text: 
-    |string 
-    | number 
-    | boolean 
-    | ReactElement<any, string 
-    | JSXElementConstructor<any>> 
-    | ReactFragment; 
-    
-  level: number; 
-  label: string; 
-  help: string; 
-  placeholder: string; 
-  required: boolean; 
-  multipleChoice: any; 
-  options: any[]; 
-  submitLabel: string; 
-}
+  caption: string;
+  file: any;
+  text:
+    | string
+    | number
+    | boolean
+    | ReactElement<any, string | JSXElementConstructor<any>>
+    | ReactFragment;
 
+  level: number;
+  label: string;
+  help: string;
+  placeholder: string;
+  required: boolean;
+  multipleChoice: any;
+  options: any[];
+  submitLabel: string;
+};
 
 export type AnswerSession = {
   id: string;
@@ -175,7 +173,7 @@ export type Submission = {
 
 export type FormWhereClause = {
   noCodeForm?: any;
-  dueDate?: any
+  dueDate?: any;
 };
 
 type SubmissionPage = {

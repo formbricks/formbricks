@@ -1,11 +1,12 @@
-import FormList from "../../components/FormList";
+// import FormList from "../../components/FormList";
+import UserList from "../../components/UserList";
 import BaseLayoutManagement from "../../components/layout/BaseLayoutManagement";
 import LimitedWidth from "../../components/layout/LimitedWidth";
 import withAuthentication from "../../components/layout/WithAuthentication";
 import Loading from "../../components/Loading";
 import { useForms } from "../../lib/forms";
 
-function FormsPage({}) {
+function UsersPage({}) {
   const { isLoadingForms } = useForms();
 
   if (isLoadingForms) {
@@ -13,14 +14,14 @@ function FormsPage({}) {
   }
   return (
     <BaseLayoutManagement
-      title={"Sourcings - KDA Sourcing"}
-      breadcrumbs={[{ name: "Sourcings", href: "#", current: true }]}
+      title={"Sourcings - KDA"}
+      breadcrumbs={[{ name: "User Management", href: "#", current: true }]}
     >
       <LimitedWidth>
-        <FormList />
+        <UserList />
       </LimitedWidth>
     </BaseLayoutManagement>
   );
 }
 
-export default withAuthentication(FormsPage);
+export default withAuthentication(UsersPage);

@@ -27,7 +27,7 @@ export default function Builder({ formId }) {
   const editorRef = useRef<EditorJS | null>();
   const { isLoadingForm } = useForm(formId);
   const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
-    useNoCodeForm(formId);
+    useNoCodeForm(formId); //useNoCodeFormPublic(formId)
   const [openShareModal, setOpenShareModal] = useState(false);
   const [openSettingsModal, setOpenSettingsModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -79,7 +79,7 @@ export default function Builder({ formId }) {
       );
     }, 500);
   };
-
+  
   const noCodeSecondNavigation = [
     {
       id: "addPage",

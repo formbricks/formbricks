@@ -20,19 +20,22 @@ export default async function handle(
   // Gets all sourcings for admins and all public for candidates
   if (req.method === "GET") {
     let whereClause: FormWhereClause = {};
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
     if (session.user.role === UserRole.PUBLIC)
       whereClause = {
-        dueDate: { gte: new Date() },
+        dueDate: { gte: today },
         noCodeForm: { published: true },
       };
+
     const formData = await prisma.form.findMany({
       where: whereClause,
       include: {
         owner: {
-          select: { firstname: true },
+          select: { firstname: true, lastname: true },
         },
         noCodeForm: {
-          select: { published: true },
+          select: { published: true, blocks: true },
         },
         _count: {
           select: { submissionSessions: true },
@@ -94,3 +97,5 @@ const checkIdAvailability = async (id) => {
     return false;
   }
 };
+
+// POST IMAGE

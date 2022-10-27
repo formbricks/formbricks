@@ -23,7 +23,12 @@ export default async function handle(
       },
       include: {
         form: {
-          select: { name: true },
+          select: { 
+            name: true,
+            dueDate: true,
+            description: true,
+            place: true,
+           },
         },
       },
     });

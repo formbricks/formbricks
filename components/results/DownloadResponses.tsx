@@ -21,11 +21,15 @@ export default function DownloadResponses({ formId }) {
     const submissions: Submission[] = submissionSessions.map((s) =>
       getSubmission(s, form.schema)
     );
+    
     // build data fields for csv/excel file
     const data = [];
     for (const submission of submissions) {
+      
       const dataEntry = { createdAt: submission.createdAt };
       for (const page of submission.pages) {
+        console.log("ppppp", page);
+        
         if (page.elements) {
           for (const element of page.elements) {
             if (element.type !== "submit") {
@@ -43,6 +47,10 @@ export default function DownloadResponses({ formId }) {
         label: "Timestamp",
         value: "createdAt",
       },
+      // {
+      //   label: "candidateId",
+      //   value: "candidateId"
+      // }
     ];
 
     for (const page of submissions[0].pages) {
