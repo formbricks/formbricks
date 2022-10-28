@@ -10,15 +10,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Required fields in body: schema
   // Optional fields in body: -
   if (req.method === "POST") {
-    const { events } = req.body;
-    const error = validateEvents(events);
-    if (error) {
-      const { status, message } = error;
-      return res.status(status).json({ error: message });
-    }
-    for (const event of events) {
-      await processApiEvent(event, formId);
-    }
+    const { event } = req.body;
+    await processApiEvent(event, formId);
     res.json({ success: true });
   }
   // Unknown HTTP Method
