@@ -1,6 +1,7 @@
 version: "3.3"
 services:
   postgres:
+    restart: unless-stopped
     image: postgres:13-alpine
     volumes:
       - postgres:/var/lib/postgresql/data
@@ -12,6 +13,7 @@ services:
       - 5432:5432
 
   mailhog:
+    restart: unless-stopped
     image: mailhog/mailhog
     # network_mode: service:app
     logging:

@@ -3,12 +3,7 @@ on: [push]
 jobs:
   build:
     name: Build, lint, and test on Node ${{ matrix.node }} and ${{ matrix.os }}
-
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        node: ["16.x"]
-        os: [ubuntu-latest]
+    runs-on: ubuntu-latest
 
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -18,10 +13,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Use Node ${{ matrix.node }}
-        uses: actions/setup-node@v1
+      - name: Setup Node.js 16.x
+        uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 16.x
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2.2.2
@@ -31,6 +26,3 @@ jobs:
 
       - name: Lint
         run: pnpm lint
-
-      - name: Build
-        run: pnpm build

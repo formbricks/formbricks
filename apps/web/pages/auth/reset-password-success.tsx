@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "next/legacy/image";
 import Link from "next/link";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 
@@ -16,10 +16,8 @@ export default function ResetPasswordSuccess() {
               <h1 className="leading-2 mb-4 text-center font-bold">Password successfully reset</h1>
               <p className="text-center">You can now log in with your new password</p>
               <div className="mt-3 text-center">
-                <Link href="/auth/signin">
-                  <a href="" className="text-red block text-xs hover:text-red-600">
-                    Go to login
-                  </a>
+                <Link href="/auth/signin" className="text-red block text-xs hover:text-red-600">
+                  Go to login
                 </Link>
               </div>
             </div>

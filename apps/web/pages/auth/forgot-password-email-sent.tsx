@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "next/legacy/image";
 import Link from "next/link";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 
@@ -19,10 +19,8 @@ export default function ForgotPasswordEmailSent() {
                 minutes, check your spam folder.
               </p>
               <div className="mt-3 text-center">
-                <Link href="/auth/signin">
-                  <a href="" className="text-red block text-xs hover:text-red-600">
-                    Back to login
-                  </a>
+                <Link href="/auth/signin" className="text-red block text-xs hover:text-red-600">
+                  Back to login
                 </Link>
               </div>
             </div>

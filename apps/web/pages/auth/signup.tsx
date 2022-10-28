@@ -1,5 +1,5 @@
 import { XCircleIcon } from "@heroicons/react/24/solid";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -156,8 +156,8 @@ export default function SignUpPage() {
 
                       <div className="mt-3 text-center text-xs text-gray-600">
                         Already have an account?{" "}
-                        <Link href="/auth/signin">
-                          <a className="text-red hover:text-red-600">Log in.</a>
+                        <Link href="/auth/signin" className="text-red hover:text-red-600">
+                          Log in.
                         </Link>
                       </div>
                       {(process.env.NEXT_PUBLIC_TERMS_URL || process.env.NEXT_PUBLIC_PRIVACY_URL) && (

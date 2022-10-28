@@ -1,7 +1,7 @@
 import { Menu, Transition } from "@headlessui/react";
 import { ArrowLeftOnRectangleIcon } from "@heroicons/react/24/solid";
 import { signOut } from "next-auth/react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { Fragment } from "react";
 import { classNames } from "../../lib/utils";
 

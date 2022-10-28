@@ -4,7 +4,7 @@ import Loading from "../../components/Loading";
 import MessagePage from "../../components/MessagePage";
 import { useNoCodeFormPublic } from "../../lib/noCodeForm";
 import { useRouter } from "next/router";
-import Image from "next/image";
+import Image from "next/legacy/image";
 
 function NoCodeFormPublic() {
   const router = useRouter();

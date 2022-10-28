@@ -1,6 +1,6 @@
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
@@ -86,21 +86,21 @@ export default function SignInPage() {
                       className="bg-red flex w-full justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                       Sign in
                     </button>
-                    <div className="mt-3 text-center">
+                    <div className="text-red mt-3 text-center text-xs hover:text-red-600">
                       {process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && (
-                        <Link href="/auth/forgot-password">
-                          <a href="" className="text-red block text-xs hover:text-red-600">
+                        <div>
+                          <Link href="/auth/forgot-password" id="forgot-password">
                             Forgot your password?
-                          </a>
-                        </Link>
+                          </Link>
+                        </div>
                       )}
 
                       {process.env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
-                        <Link href="/auth/signup">
-                          <a href="" className="text-red text-xs hover:text-red-600">
+                        <div>
+                          <Link href="/auth/signup" id="create-account">
                             Create an account
-                          </a>
-                        </Link>
+                          </Link>
+                        </div>
                       )}
                     </div>
                   </div>
