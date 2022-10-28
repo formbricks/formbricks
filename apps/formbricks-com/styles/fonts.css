@@ -1,0 +1,23 @@
+@font-face {
+  font-family: "Lexend";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(/fonts/lexend.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-weight: 100 900;
+  font-display: block;
+  font-style: normal;
+  font-named-instance: "Regular";
+  src: url("/fonts/Inter-roman.var.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-weight: 100 900;
+  font-display: block;
+  font-style: italic;
+  font-named-instance: "Italic";
+  src: url("/fonts/Inter-italic.var.woff2") format("woff2");
+}
