@@ -23,7 +23,8 @@
         "SMTP_USER",
         "SMTP_PASSWORD",
         "SMTP_SECURE_ENABLED",
-        "TELEMETRY_DISABLED"
+        "TELEMETRY_DISABLED",
+        "VERCEL_URL"
       ]
     },
     "db:migrate:deploy": {
