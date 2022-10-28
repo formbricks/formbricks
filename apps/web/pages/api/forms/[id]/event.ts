@@ -25,13 +25,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(status).json({ error: message });
     }
     for (const event of events) {
-      fetch(`${process.env.VERCEL_URL || process.env.NEXTAUTH_URL}/api/forms/${formId}/handleEvent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event,
-        }),
-      });
+      fetch(
+        `${
+          process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : process.env.NEXTAUTH_URL
+        }/api/forms/${formId}/handleEvent`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event,
+          }),
+        }
+      );
     }
     res.json({ success: true });
   }
