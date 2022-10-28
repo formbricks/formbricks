@@ -86,27 +86,21 @@ export default function SignInPage() {
                       className="bg-red flex w-full justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                       Sign in
                     </button>
-                    <div className="mt-3 text-center">
+                    <div className="text-red mt-3 text-center text-xs hover:text-red-600">
                       {process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && (
-                        <Link
-                          href="/auth/forgot-password"
-                          href=""
-                          className="text-red block text-xs hover:text-red-600">
-                          
+                        <div>
+                          <Link href="/auth/forgot-password" id="forgot-password">
                             Forgot your password?
-                          
-                        </Link>
+                          </Link>
+                        </div>
                       )}
 
                       {process.env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
-                        <Link
-                          href="/auth/signup"
-                          href=""
-                          className="text-red text-xs hover:text-red-600">
-                          
+                        <div>
+                          <Link href="/auth/signup" id="create-account">
                             Create an account
-                          
-                        </Link>
+                          </Link>
+                        </div>
                       )}
                     </div>
                   </div>

@@ -19,13 +19,8 @@ export default function ForgotPasswordEmailSent() {
                 minutes, check your spam folder.
               </p>
               <div className="mt-3 text-center">
-                <Link
-                  href="/auth/signin"
-                  href=""
-                  className="text-red block text-xs hover:text-red-600">
-                  
-                    Back to login
-                  
+                <Link href="/auth/signin" className="text-red block text-xs hover:text-red-600">
+                  Back to login
                 </Link>
               </div>
             </div>
