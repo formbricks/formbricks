@@ -95,5 +95,4 @@ export const sendFormSubmissionEmail = async (email: string, formName: string, f
     
     Click <a href="${process.env.NEXTAUTH_URL}/forms/${formId}/results/responses">here</a> to see new submission`,
   });
-  console.log("email sent");
 };

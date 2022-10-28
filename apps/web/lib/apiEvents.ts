@@ -28,7 +28,6 @@ export const validateEvents = (events: ApiEvent[]): validationError | undefined 
 };
 
 export const processApiEvent = async (event: ApiEvent, formId) => {
-  console.log("process API Event", event.type);
   const form = await prisma.form.findUnique({
     where: {
       id: formId,
@@ -54,8 +53,6 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
     const indexOfPage = pages.findIndex((page) => page.name === pageName);
     // const owner = form.owner;
 
-    console.log("creating sessionEvent");
-
     await prisma.sessionEvent.create({
       data: {
         type: "pageSubmission",
@@ -66,8 +63,6 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
         submissionSession: { connect: { id: event.data.submissionSessionId } },
       },
     });
-
-    console.log("created sessionEvent");
 
     capturePosthogEvent(form.owner.id, "pageSubmission received", {
       formId,
@@ -88,7 +83,6 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
         formId
       );
     }
-    console.log("pageSubmission completed");
   } else if (event.type === "formCompleted") {
     await prisma.sessionEvent.create({
       data: {
@@ -113,7 +107,6 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
   } else {
     throw Error(`apiEvents: unsupported event type in event ${JSON.stringify(event)}`);
   }
-  console.log("getting pipelines");
   // handle integrations
   const pipelines = await prisma.pipeline.findMany({
     where: {
@@ -126,9 +119,7 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
       },
     ],
   });
-  console.log("handle pipelines");
   for (const pipeline of pipelines) {
-    console.log("checking pipeline:", JSON.stringify(pipeline, null, 2));
     if (pipeline.type === "WEBHOOK") {
       handleWebhook(pipeline, event);
     }
@@ -138,7 +129,6 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
       const { email } = pipeline.data.valueOf() as { email: string };
 
       if (event.type === "pageSubmission" && pipeline.events.includes("PAGE_SUBMISSION")) {
-        console.log("sending page submission email");
         await sendPageSubmissionEmail(email, form.name, pipeline.formId);
       } else if (event.type === "formCompleted" && pipeline.events.includes("FORM_COMPLETED")) {
         await sendFormSubmissionEmail(email, form.name, pipeline.formId);
