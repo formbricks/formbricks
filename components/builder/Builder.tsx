@@ -2,12 +2,12 @@ import EditorJS from "@editorjs/editorjs";
 import {
   CogIcon,
   DocumentPlusIcon,
-  EyeIcon,
+  // EyeIcon,
   PaperAirplaneIcon,
   ShareIcon,
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/router";
+// import { useRouter } from "next/router";
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useForm } from "../../lib/forms";
@@ -23,7 +23,7 @@ let Editor = dynamic(() => import("../editorjs/Editor"), {
 });
 
 export default function Builder({ formId }) {
-  const router = useRouter();
+  // const router = useRouter();
   const editorRef = useRef<EditorJS | null>();
   const { isLoadingForm } = useForm(formId);
   const { noCodeForm, isLoadingNoCodeForm, mutateNoCodeForm } =
