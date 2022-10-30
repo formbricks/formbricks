@@ -63,7 +63,7 @@ export default class PageTransition implements BlockTool {
           </div>
           <div className="relative flex justify-center">
             <span className="px-2 text-sm text-gray-500 bg-white">
-              Next Page
+              Page suivante
             </span>
           </div>
         </div>

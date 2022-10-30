@@ -60,7 +60,7 @@ export default function ResultsSummary({ formId }) {
   return (
     <>
       <h2 className="mt-8 text-xl font-bold text-ui-gray-dark">
-        Responses Overview
+        Aperçu des réponses
       </h2>
       <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2">
         {stats.map((item) => (

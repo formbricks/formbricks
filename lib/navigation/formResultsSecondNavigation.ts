@@ -22,7 +22,7 @@ export const useFormResultsSecondNavigation = (formId) => {
         router.push(`/forms/${formId}/results/responses`);
       },
       Icon: InboxIcon,
-      label: "Responses",
+      label: "Réponses",
     },
     {
       id: "insights",

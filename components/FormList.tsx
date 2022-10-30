@@ -90,7 +90,7 @@ export default function FormList() {
                   onClick={() => newForm()}
                   alertText="You don't have any sourcings yet."
                   hintText="Start by creating a sourcing."
-                  buttonText="New sourcing"
+                  buttonText="Nouveau Sourcing"
                   borderStyles="border-4 border-dotted border-red"
                   hasButton={true}
                 >
@@ -108,7 +108,7 @@ export default function FormList() {
                     <div className="flex items-center justify-center h-full overflow-hidden font-light text-white rounded-md shadow bg-snoopfade">
                       <div className="px-4 py-8 sm:p-14">
                         <PlusIcon className="mx-auto w-14 h-14 stroke-thin" />
-                        New sourcing
+                        Nouveau Sourcing
                       </div>
                     </div>
                   </li>
@@ -145,7 +145,7 @@ export default function FormList() {
                           {format(new Date(form.dueDate), "yyyy-MM-dd") ===
                           format(new Date(), "yyyy-MM-dd") ? (
                             <span className="text-xs font-bold text-red-800 line-clamp-3">
-                              closing today
+                              ferme aujourd&apos;hui
                             </span>
                           ) : dateDayDiff(form.dueDate) > 7 ? (
                             <span className="text-xs font-bold text-neutral-500 line-clamp-3">
@@ -155,8 +155,8 @@ export default function FormList() {
                             <span className="text-xs font-bold text-rose-500 line-clamp-3">
                               {format(new Date(form.dueDate), "yyyy-MM-dd") <
                               format(new Date(), "yyyy-MM-dd")
-                                ? "closed"
-                                : "closing"}{" "}
+                                ? "fermé"
+                                : "ferme"}{" "}
                               {timeSince(form.dueDate)}
                             </span>
                           )}
@@ -186,7 +186,7 @@ export default function FormList() {
                         ) : (
                           <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                             <p className="text-xs text-ui-gray-medium ">
-                              {form._count?.submissionSessions} responses
+                              {form._count?.submissionSessions} réponses
                             </p>
                             <Menu
                               as="div"
@@ -238,7 +238,7 @@ export default function FormList() {
                                                 className="w-5 h-5 mr-3 text-ui-gray-dark"
                                                 aria-hidden="true"
                                               />
-                                              <span>Delete Form</span>
+                                              <span>Supprimer</span>
                                             </button>
                                           )}
                                         </Menu.Item>

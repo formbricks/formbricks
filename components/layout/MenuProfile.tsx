@@ -53,7 +53,7 @@ export default function MenuProfile({}) {
                       className="w-5 h-5 mr-3 text-ui-gray-dark"
                       aria-hidden="true"
                     />
-                    Sign Out
+                    Se déconnecter
                   </button>
                 )}
               </Menu.Item>

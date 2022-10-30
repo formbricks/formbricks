@@ -1,5 +1,6 @@
 import intlFormat from "date-fns/intlFormat";
 import { formatDistance } from "date-fns";
+import { fr } from "date-fns/locale";
 import crypto from "crypto";
 import { UserRole } from "@prisma/client";
 import AWS from "aws-sdk";
@@ -143,6 +144,7 @@ export const timeSince = (dateString: string) => {
   date.setDate(date.getDate() + 1);
   return formatDistance(date, new Date(), {
     addSuffix: true,
+    locale: fr,
   });
 };
 

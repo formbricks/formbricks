@@ -1,7 +1,7 @@
 export const useFormMenuSteps = (formId) => [
   {
     id: "form",
-    name: "Form",
+    name: "Formulaire",
     href: `/forms/${formId}/form`,
   },
   {
@@ -11,7 +11,7 @@ export const useFormMenuSteps = (formId) => [
   },
   {
     id: "results",
-    name: "Results",
+    name: "Résultats",
     href: `/forms/${formId}/results/summary`,
   },
 ];

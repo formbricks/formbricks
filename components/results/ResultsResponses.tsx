@@ -162,9 +162,7 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
         <aside className="flex flex-col flex-1 flex-shrink-0 order-first h-full border-r border-ui-gray-light md:flex-none md:w-96">
           <DownloadResponses formId={formId} />
           <div className="pt-4 pb-2">
-            <h2 className="px-5 text-lg font-medium text-gray-900">
-              Responses
-            </h2>
+            <h2 className="px-5 text-lg font-medium text-gray-900">Réponses</h2>
           </div>
           {submissionSessions.length === 0 ? (
             <p className="px-5 mt-3 text-sm text-gray-500">No responses yet</p>

@@ -100,19 +100,19 @@ export default function Builder({ formId }) {
       id: "publish",
       onClick: () => publishChanges(),
       Icon: PaperAirplaneIcon,
-      label: "Publish",
+      label: "Publier",
     },
     {
       id: "share",
       onClick: () => setOpenShareModal(true),
       Icon: ShareIcon,
-      label: "Share",
+      label: "Partager",
     },
     {
       id: "settings",
       onClick: () => setOpenSettingsModal(true),
       Icon: CogIcon,
-      label: "Settings",
+      label: "Paramètres",
     },
   ];
 

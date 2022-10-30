@@ -1,6 +1,10 @@
 /* This example requires Tailwind CSS v2.0+ */
 import { Dialog, Transition, Listbox } from "@headlessui/react";
-import { XMarkIcon, ChevronUpDownIcon, CheckIcon } from "@heroicons/react/24/solid"; 
+import {
+  XMarkIcon,
+  ChevronUpDownIcon,
+  CheckIcon,
+} from "@heroicons/react/24/solid";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
 import { BsPlus } from "react-icons/bs";
@@ -9,11 +13,11 @@ import { createNoCodeForm } from "../../lib/noCodeForm";
 import StandardButton from "../StandardButton";
 
 const places = [
-  {name: 'Kinshasa'},
-  {name: 'Goma'},
-  {name: 'Lubumbashi'},
-  {name: 'Other'}
-]
+  { name: "Kinshasa" },
+  { name: "Goma" },
+  { name: "Lubumbashi" },
+  { name: "Other" },
+];
 
 type FormOnboardingModalProps = {
   open: boolean;
@@ -28,25 +32,25 @@ export default function NewFormModal({
   const [name, setName] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [description, setDescription] = useState("");
-  const [selectedPlace, setSelectedPlace] = useState(places[0])
+  const [selectedPlace, setSelectedPlace] = useState(places[0]);
 
   const createFormAction = async (e) => {
     e.preventDefault();
     const form = await createForm({
       name,
-      dueDate:new Date(dueDate),
+      dueDate: new Date(dueDate),
       description,
-      place:selectedPlace.name
+      place: selectedPlace.name,
     });
-    
+
     if (form.formType === "NOCODE") {
       await createNoCodeForm(form.id);
     }
     console.log("*****", form);
-    
+
     router.push(`/forms/${form.id}/form`);
   };
-  
+
   return (
     <Transition.Root show={open} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={setOpen}>
@@ -86,7 +90,7 @@ export default function NewFormModal({
                 </div>
                 <div className="flex flex-row justify-between">
                   <h2 className="flex-none p-2 text-xl font-bold text-ui-gray-dark">
-                    Create new sourcing
+                    Créer un sourcing
                   </h2>
                 </div>
                 <form
@@ -112,7 +116,6 @@ export default function NewFormModal({
                         required
                       />
                     </div>
-                    
                   </div>
                   <div>
                     <label
@@ -134,8 +137,7 @@ export default function NewFormModal({
                         autoFocus
                       />
                     </div>
-                    
-                  </div> 
+                  </div>
                   <div>
                     <label
                       htmlFor="place"
@@ -144,9 +146,14 @@ export default function NewFormModal({
                       Set the place for your sourcing
                     </label>
                     <div className="mt-2">
-                      <Listbox value={selectedPlace} onChange={setSelectedPlace}>
+                      <Listbox
+                        value={selectedPlace}
+                        onChange={setSelectedPlace}
+                      >
                         <Listbox.Button className="relative w-full cursor-default rounded bg-ui-gray-light py-2 pl-3 pr-10 text-left focus:ring-2 focus:ring-red sm:text-sm">
-                          <span className="block truncate">{selectedPlace.name}</span>
+                          <span className="block truncate">
+                            {selectedPlace.name}
+                          </span>
                           <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                             <ChevronUpDownIcon
                               className="h-5 w-5 text-gray-400"
@@ -161,18 +168,26 @@ export default function NewFormModal({
                           leaveTo="opacity-0"
                         >
                           <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                            { places.map((place, placeIdx)=>{
-                                return (
-                                  <Listbox.Option key={placeIdx} value={place} className={({ active }) =>
-                                  `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                                    active ? 'bg-red-500 text-white' : 'text-gray-900'
-                                  }`
-                                }>
-                                  {({selected})=>(
+                            {places.map((place, placeIdx) => {
+                              return (
+                                <Listbox.Option
+                                  key={placeIdx}
+                                  value={place}
+                                  className={({ active }) =>
+                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                                      active
+                                        ? "bg-red-500 text-white"
+                                        : "text-gray-900"
+                                    }`
+                                  }
+                                >
+                                  {({ selected }) => (
                                     <>
                                       <span
                                         className={`block truncate ${
-                                          selected ? 'font-medium' : 'font-normal'
+                                          selected
+                                            ? "font-medium"
+                                            : "font-normal"
                                         }`}
                                       >
                                         {place.name}
@@ -180,18 +195,17 @@ export default function NewFormModal({
 
                                       {selected ? (
                                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-white-600">
-                                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                                          <CheckIcon
+                                            className="h-5 w-5"
+                                            aria-hidden="true"
+                                          />
                                         </span>
-                                        ) 
-                                        : null
-                                      }
+                                      ) : null}
                                     </>
                                   )}
-                                  </Listbox.Option>
-                                )
-                              })
-
-                            }
+                                </Listbox.Option>
+                              );
+                            })}
                           </Listbox.Options>
                         </Transition>
                       </Listbox>
@@ -205,13 +219,22 @@ export default function NewFormModal({
                       Describe your sourcing
                     </label>
                     <div className="mt-2">
-                      <textarea name="description" id="description" value={description} autoFocus onChange={(e) => setDescription(e.target.value)} cols={30} rows={5} className="resize-none block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"/>
+                      <textarea
+                        name="description"
+                        id="description"
+                        value={description}
+                        autoFocus
+                        onChange={(e) => setDescription(e.target.value)}
+                        cols={30}
+                        rows={5}
+                        className="resize-none block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
+                      />
                     </div>
                   </div>
                   <div className="mt-5 sm:mt-6">
                     <StandardButton fullwidth type="submit">
-                      New sourcing
-                      <BsPlus className="w-6 h-6 ml-1"/>
+                      Nouveau Sourcing
+                      <BsPlus className="w-6 h-6 ml-1" />
                     </StandardButton>
                   </div>
                 </form>
