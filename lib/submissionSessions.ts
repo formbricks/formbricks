@@ -16,7 +16,6 @@ export const useSubmissionSessions = (formId: string) => {
   };
 };
 
-
 // fill the schema with the values provided by the user
 export const getSubmission = (submissionSession, schema) => {
   if (!schema) return {};
@@ -26,7 +25,7 @@ export const getSubmission = (submissionSession, schema) => {
     createdAt: submissionSession.createdAt,
     pages: [],
   };
-  if (submissionSession.events.length > 0) {
+  if (submissionSession.events.length > 0 && schema.pages) {
     // iterate through schema pages to fill submission
     for (const page of schema.pages) {
       // new submission page
@@ -53,7 +52,7 @@ export const getSubmission = (submissionSession, schema) => {
           }
         }
       }
-      
+
       submission.pages.push(submissionPage);
     }
   }
@@ -95,8 +94,7 @@ export const getSubmissionSummary = (
   // iterate through SubmissionSessions and add values to summary
   for (const submissionSession of submissionSessions) {
     for (const submissionEvent of submissionSession.events) {
-      if (submissionEvent.type === "pageSubmission") {
-        
+      if (submissionEvent.type === "pageSubmission" && summary.pages) {
         const summaryPage = summary.pages.find(
           (p) => p.name === submissionEvent.data.pageName
         );

@@ -79,7 +79,7 @@ export default function Builder({ formId }) {
       );
     }, 500);
   };
-  
+
   const noCodeSecondNavigation = [
     {
       id: "addPage",
@@ -88,14 +88,14 @@ export default function Builder({ formId }) {
       //Icon: PlusIcon
       label: "Page",
     },
-    {
-      id: "preview",
-      onClick: () => {
-        router.push(`/forms/${formId}/preview`);
-      },
-      Icon: EyeIcon,
-      label: "Preview",
-    },
+    // {
+    //   id: "preview",
+    //   onClick: () => {
+    //     router.push(`/forms/${formId}/preview`);
+    //   },
+    //   Icon: EyeIcon,
+    //   label: "Preview",
+    // },
     {
       id: "publish",
       onClick: () => publishChanges(),
