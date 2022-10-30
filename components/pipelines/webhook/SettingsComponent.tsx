@@ -1,8 +1,9 @@
 const eventTypes = [
   {
     id: "PAGE_SUBMISSION",
-    name: "Page Submission",
-    description: "every time a form page is submitted (partial submission)",
+    name: "Soumission des pages",
+    description:
+      "chaque fois qu'une page de formulaire est soumise (soumission partielle)",
   },
 ];
 
@@ -32,11 +33,11 @@ export function WebhookSettings({ pipeline, setPipeline }) {
     <div className="space-y-8 divide-y divide-gray-200">
       <div>
         <h2 className="mb-3 text-xl font-bold text-ui-gray-dark">
-          Configure Webhook
+          Configurer le Webhook
         </h2>
         <p className="mt-1 text-sm text-gray-500">
-          Configure your webhook. To learn more about how webhooks work, please
-          check out our docs.
+          Configurez votre webhook. Pour en savoir plus sur le fonctionnement
+          des webhooks, veuillez consultez notre documentation.
         </p>
 
         <div className="grid grid-cols-1 mt-6 gap-y-6 gap-x-4 sm:grid-cols-6">
@@ -45,7 +46,7 @@ export function WebhookSettings({ pipeline, setPipeline }) {
               htmlFor="name"
               className="block text-sm font-medium text-gray-700"
             >
-              Webhook Name
+              Nom du Webhook
             </label>
             <div className="mt-1">
               <input
@@ -88,7 +89,8 @@ export function WebhookSettings({ pipeline, setPipeline }) {
               />
             </div>
             <p className="mt-2 text-xs text-gray-500" id="email-description">
-              Your server URL to which the data should be sent (https required)
+              L&rsquo;URL de votre serveur vers lequel les données doivent être
+              envoyées (https obligatoire).
             </p>
           </div>
           <div className="sm:col-span-4">
@@ -109,8 +111,8 @@ export function WebhookSettings({ pipeline, setPipeline }) {
               />
             </div>
             <p className="mt-2 text-xs text-gray-500" id="email-description">
-              We sign all event notification payloads with a SHA256 signature
-              using this secret
+              Nous signons toutes les charges utiles de notification d'événement
+              avec une signature SHA256 en utilisant ce secret
             </p>
           </div>
         </div>
@@ -119,10 +121,10 @@ export function WebhookSettings({ pipeline, setPipeline }) {
       <div className="pt-8">
         <div>
           <h3 className="text-lg font-medium leading-6 text-gray-900">
-            Advanced Settings
+            Paramètres avancés
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            Set up this webhook to fit your needs.
+            Configurez ce webhook en fonction de vos besoins.
           </p>
         </div>
         <div className="mt-6">
@@ -132,7 +134,7 @@ export function WebhookSettings({ pipeline, setPipeline }) {
               className="text-base font-medium text-gray-900"
               aria-hidden="true"
             >
-              Events
+              Événements
             </div>
             <div className="mt-4 space-y-4">
               {eventTypes.map((eventType) => (
@@ -175,7 +177,7 @@ export function WebhookSettings({ pipeline, setPipeline }) {
             <div className="mt-4 space-y-4">
               <div className="px-2 py-5 border border-gray-100 rounded-sm bg-gray-50">
                 <p className="flex justify-center text-xs text-gray-600">
-                  conditional data piping coming soon
+                  Bientôt disponible
                 </p>
               </div>
             </div>

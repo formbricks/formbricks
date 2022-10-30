@@ -130,7 +130,7 @@ function PipelinesPage() {
         id: "add",
         onClick: () => setOpenAddModal(true),
         Icon: PlusIcon,
-        label: "Add Pipeline",
+        label: "Ajouter un Pipeline ",
       },
     ],
     []
@@ -158,14 +158,14 @@ function PipelinesPage() {
         <header>
           <div className="mx-auto mt-8 max-w-7xl">
             <h1 className="text-3xl font-bold leading-tight text-ui-gray-dark">
-              Data Pipelines
+              Pipelines
             </h1>
           </div>
         </header>
         <div className="my-4">
           <p className="text-ui-gray-dark">
-            Pipe your data exactly where you need it. Add conditions for
-            variable data piping.
+            Conduisez vos données exactement là où vous en avez besoin. Ajoutez
+            des conditions pour l&lsquo;acheminement de données variables.
           </p>
         </div>
         {pipelines.length > 0 ? (
@@ -297,8 +297,8 @@ function PipelinesPage() {
           </>
         ) : (
           <EmptyPageFiller
-            alertText={`No active pipelines for '${form.name}'`}
-            hintText="Add a pipeline to get started."
+            alertText={`Aucun pipeline actif pour '${form.name}'`}
+            hintText="Ajoutez un pipeline pour commencer."
           >
             <div className="grid grid-cols-3 gap-3 mx-10 mb-5">
               {libs.map((lib) => (
@@ -309,7 +309,9 @@ function PipelinesPage() {
                       <p className="">{lib.name}</p>
                       {lib.comingSoon && (
                         <div className="p-0.5 px-2 ml-3 bg-green-50 rounded-sm border border-green-100">
-                          <p className="text-xs text-green-600">coming soon</p>
+                          <p className="text-xs text-green-600">
+                            Bientôt disponible
+                          </p>
                         </div>
                       )}
                     </div>

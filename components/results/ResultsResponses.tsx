@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 
 import { RadioGroup } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/24/solid";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { getEventName } from "../../lib/events";
 import { useSubmissionSessions } from "../../lib/submissionSessions";
 import { SubmissionSession } from "../../lib/types";
-import { convertDateTimeString, convertTimeString } from "../../lib/utils";
 import SubmissionDisplay from "./SubmissionDisplay";
 import DownloadResponses from "./DownloadResponses";
 import Loading from "../Loading";
@@ -76,8 +77,12 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                   <div className="grid grid-cols-2 gap-8 divide-x">
                     <div className="flow-root">
                       <h1 className="mb-8 text-gray-700">
-                        {convertDateTimeString(
-                          activeSubmissionSession.createdAt
+                        {format(
+                          new Date(activeSubmissionSession.createdAt),
+                          "eeee 'le' dd MMMM yyyy HH:mm:ss",
+                          {
+                            locale: fr,
+                          }
                         )}
                       </h1>
                       <SubmissionDisplay
@@ -87,7 +92,9 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                       />
                     </div>
                     <div className="hidden pl-10 md:flow-root">
-                      <h1 className="mb-8 text-gray-700">Session Activity</h1>
+                      <h1 className="mb-8 text-gray-700">
+                        Activité de la session
+                      </h1>
                       <ul role="list" className="-mb-8">
                         {activeSubmissionSession.events.map(
                           (event, eventIdx) => (
@@ -125,7 +132,15 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                                     </div>
                                     <div className="text-sm text-right text-gray-500 whitespace-nowrap">
                                       <time dateTime={event.createdAt}>
-                                        {convertTimeString(event.createdAt)}
+                                        {format(
+                                          new Date(
+                                            activeSubmissionSession.createdAt
+                                          ),
+                                          "eeee 'le' dd MMMM yyyy HH:mm:ss",
+                                          {
+                                            locale: fr,
+                                          }
+                                        )}
                                       </time>
                                     </div>
                                   </div>
@@ -152,7 +167,7 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                     }}
                   >
                     <TrashIcon className="w-4 h-4" />
-                    Delete Submission
+                    Supprimer la soumission
                   </button>
                 </div>
               </>
@@ -199,10 +214,19 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                             aria-hidden="true"
                           />
                           <p className="text-sm font-medium text-gray-900">
-                            {convertDateTimeString(submissionSession.createdAt)}
+                            {format(
+                              new Date(activeSubmissionSession.createdAt),
+                              "eeee 'le' dd MMMM yyyy HH:mm:ss",
+                              {
+                                locale: fr,
+                              }
+                            )}
                           </p>
                           <p className="text-sm text-gray-500 truncate">
-                            {submissionSession.events.length} events
+                            {submissionSession.events.length}
+                            {submissionSession.events.length > 1
+                              ? " événement"
+                              : " événement"}
                           </p>
                         </button>
                       </div>

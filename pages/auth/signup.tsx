@@ -16,7 +16,7 @@ export default function SignUpPage() {
 
   const { emailVerificationDisabled, privacyUrl, termsUrl } =
     publicRuntimeConfig;
-    
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -26,7 +26,7 @@ export default function SignUpPage() {
         e.target.elements.gender.value,
         handlePhoneNumberValidity(e.target.elements.phone.value),
         e.target.elements.email.value,
-        e.target.elements.password.value,
+        e.target.elements.password.value
       );
 
       const url = emailVerificationDisabled
@@ -83,7 +83,7 @@ export default function SignUpPage() {
                       htmlFor="firstname"
                       className="block text-sm font-medium text-ui-gray-dark"
                     >
-                      First name
+                      Prénom
                     </label>
                     <div className="mt-1">
                       <input
@@ -101,7 +101,7 @@ export default function SignUpPage() {
                       htmlFor="lastname"
                       className="block text-sm font-medium text-ui-gray-dark"
                     >
-                      Last name
+                      Nom de famille
                     </label>
                     <div className="mt-1">
                       <input
@@ -119,7 +119,7 @@ export default function SignUpPage() {
                       htmlFor="gender"
                       className="block text-sm font-medium text-ui-gray-dark"
                     >
-                      Gender
+                      Genre
                     </label>
                     <div className="mt-1 flex">
                       <div className="flex items-center mr-5">
@@ -135,7 +135,7 @@ export default function SignUpPage() {
                           className="form-check-label inline-block text-gray-800"
                           htmlFor="male"
                         >
-                          Male
+                          Homme
                         </label>
                       </div>
                       <div className="flex items-center">
@@ -151,7 +151,7 @@ export default function SignUpPage() {
                           className="form-check-label inline-block text-gray-800"
                           htmlFor="female"
                         >
-                          Female
+                          Femme
                         </label>
                       </div>
                     </div>
@@ -162,7 +162,7 @@ export default function SignUpPage() {
                       htmlFor="phone"
                       className="block text-sm font-medium text-ui-gray-dark"
                     >
-                      Phone Number
+                      Numéro de téléphone
                     </label>
                     <div className="mt-1">
                       <input
@@ -182,7 +182,7 @@ export default function SignUpPage() {
                       htmlFor="email"
                       className="block text-sm font-medium text-ui-gray-dark"
                     >
-                      Email address
+                      Adresse E-mail
                     </label>
                     <div className="mt-1">
                       <input
@@ -200,7 +200,7 @@ export default function SignUpPage() {
                       htmlFor="email"
                       className="block text-sm font-medium text-ui-gray-dark"
                     >
-                      Password
+                      Mot de passe
                     </label>
                     <div className="mt-1">
                       <input
@@ -218,13 +218,15 @@ export default function SignUpPage() {
                       type="submit"
                       className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
-                      Sign up
+                      S&apos;inscrire
                     </button>
 
                     <div className="mt-3 text-xs text-center text-gray-600">
-                      Already have an account?{" "}
+                      As-tu déjà un compte ?{" "}
                       <Link href="/auth/signin">
-                        <a className="text-red hover:text-red-600">Log in.</a>
+                        <a className="text-red hover:text-red-600">
+                          Connecte-toi.
+                        </a>
                       </Link>
                     </div>
                     {(termsUrl || privacyUrl) && (

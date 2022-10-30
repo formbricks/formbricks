@@ -15,12 +15,11 @@ export default function SignInPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-     await signIn("credentials", {
+    await signIn("credentials", {
       callbackUrl: router.query.callbackUrl?.toString() || "/forms", //UserRole.PUBLIC?'/forms': '/f/sourcings',
       email: e.target.elements.email.value,
       password: e.target.elements.password.value,
-    })
-    
+    });
   };
   return (
     <BaseLayoutUnauthorized title="Sign in">
@@ -70,7 +69,7 @@ export default function SignInPage() {
                       htmlFor="email"
                       className="block text-sm font-medium text-ui-gray-dark"
                     >
-                      Email address
+                      Adresse E-mail
                     </label>
                     <div className="mt-1">
                       <input
@@ -88,7 +87,7 @@ export default function SignInPage() {
                       htmlFor="email"
                       className="block text-sm font-medium text-ui-gray-dark"
                     >
-                      Password
+                      Mot de passe
                     </label>
                     <div className="mt-1">
                       <input
@@ -107,7 +106,7 @@ export default function SignInPage() {
                       type="submit"
                       className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
-                      Sign in
+                      Se connecter
                     </button>
                     <div className="mt-3 text-center">
                       {!passwordResetDisabled && (
@@ -126,7 +125,7 @@ export default function SignInPage() {
                           href=""
                           className="text-xs text-red hover:text-red-600"
                         >
-                          Create an account
+                          Créer un compte
                         </a>
                       </Link>
                     </div>

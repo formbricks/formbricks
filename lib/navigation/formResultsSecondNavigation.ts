@@ -14,7 +14,7 @@ export const useFormResultsSecondNavigation = (formId) => {
         router.push(`/forms/${formId}/results/summary`);
       },
       Icon: ChartBarIcon,
-      label: "Summary",
+      label: "Résumé",
     },
     {
       id: "responses",
@@ -30,7 +30,7 @@ export const useFormResultsSecondNavigation = (formId) => {
         router.push(`/forms/${formId}/results/insights`);
       },
       Icon: ArrowTrendingUpIcon,
-      label: "Insights",
+      label: "Aperçus",
     },
   ];
 };

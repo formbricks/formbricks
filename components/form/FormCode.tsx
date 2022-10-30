@@ -166,7 +166,9 @@ export default function FormCode({ formId }) {
                       <p className="font-light">{lib.name}</p>
                       {lib.comingSoon && (
                         <div className="p-1 px-3 ml-3 bg-green-100 rounded">
-                          <p className="text-xs text-black">coming soon</p>
+                          <p className="text-xs text-black">
+                            Bientôt disponible
+                          </p>
                         </div>
                       )}
                     </div>

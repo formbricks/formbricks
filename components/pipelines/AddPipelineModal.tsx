@@ -46,7 +46,7 @@ export default function AddPipelineModal({ open, setOpen }) {
         {typeId === null ? (
           <>
             <h2 className="mb-6 text-xl font-bold text-ui-gray-dark">
-              Please choose a pipeline you want to add
+              Veuillez choisir le pipeline que vous souhaitez ajouter
             </h2>
             {availablePipelines.map((pipeline) => (
               <div
@@ -69,7 +69,7 @@ export default function AddPipelineModal({ open, setOpen }) {
                         }}
                         className="inline-flex items-center px-4 py-2 font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm"
                       >
-                        Select
+                        Sélectionnez
                       </button>
                     </div>
                   </div>
@@ -92,13 +92,13 @@ export default function AddPipelineModal({ open, setOpen }) {
                   onClick={() => setOpen(false)}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
-                  Cancel
+                  Annuler
                 </button>
                 <button
                   type="submit"
                   className="inline-flex justify-center px-4 py-2 ml-3 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
-                  Create
+                  Créer
                 </button>
               </div>
             </div>

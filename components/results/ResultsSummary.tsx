@@ -35,14 +35,14 @@ export default function ResultsSummary({ formId }) {
       return [
         {
           id: "totalSubmissions",
-          name: "Total Submissions",
+          name: "Nombre total de soumissions",
           stat: insights.totalSubmissions || "--",
           trend: undefined,
           toolTipText: undefined,
         },
         {
           id: "lastSubmission",
-          name: "Last Submission",
+          name: "Dernière soumission",
           stat: insights.lastSubmissionAt
             ? timeSince(insights.lastSubmissionAt)
             : "--",

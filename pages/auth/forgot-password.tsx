@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
                       htmlFor="email"
                       className="block text-sm font-medium text-ui-gray-dark"
                     >
-                      Email address
+                      Adresse E-mail
                     </label>
                     <div className="mt-1">
                       <input

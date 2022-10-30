@@ -21,15 +21,14 @@ export default function DownloadResponses({ formId }) {
     const submissions: Submission[] = submissionSessions.map((s) =>
       getSubmission(s, form.schema)
     );
-    
+
     // build data fields for csv/excel file
     const data = [];
     for (const submission of submissions) {
-      
       const dataEntry = { createdAt: submission.createdAt };
       for (const page of submission.pages) {
         console.log("ppppp", page);
-        
+
         if (page.elements) {
           for (const element of page.elements) {
             if (element.type !== "submit") {
@@ -100,7 +99,7 @@ export default function DownloadResponses({ formId }) {
     <Menu as="div" className="relative z-10 inline-block w-full text-left">
       <div>
         <Menu.Button className="inline-flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75">
-          Download
+          Télécharger
           <ChevronDownIcon
             className="w-5 h-5 ml-2 -mr-1 text-white hover:text-gray-100"
             aria-hidden="true"

@@ -23,14 +23,14 @@ export default function ResultsAnalytics({ formId }) {
       return [
         {
           id: "totalSubmissions",
-          name: "Total Submissions",
+          name: "Nombre total de soumissions",
           stat: analytics.totalSubmissions || "--",
           trend: undefined,
           toolTipText: undefined,
         },
         {
           id: "lastSubmission",
-          name: "Last Submission",
+          name: "Dernière soumission",
           stat: analytics.lastSubmissionAt
             ? timeSince(analytics.lastSubmissionAt)
             : "--",
@@ -67,7 +67,7 @@ export default function ResultsAnalytics({ formId }) {
           Optimize Form
         </h2>
         <div className="px-3 py-2 ml-2 text-xs text-green-800 rounded-sm bg-green-50">
-          <p>coming soon</p>
+          <p>Bientôt disponible</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-10 mt-8">
