@@ -21,6 +21,7 @@ export const validateEvents = (
         "createSubmissionSession",
         "pageSubmission",
         "submissionCompleted",
+        "formOpened",
         "updateSchema",
       ].includes(event.type)
     ) {
@@ -84,18 +85,54 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
   } else if (event.type === "submissionCompleted") {
     // TODO
   } else if (event.type === "updateSchema") {
-    
     //const data = { schema: event.data, updatedAt: new Date() };
-    
-    const form = await prisma.form.findUnique({where:{id:formId}})
+
+    const form = await prisma.form.findUnique({ where: { id: formId } });
     const schema = form.schema as Schema;
 
-    const data = {schema:[...event.data.pages, ...schema.pages], updatedAt: new Date()}
-    
+    const data = {
+      schema: [...event.data.pages, ...schema.pages],
+      updatedAt: new Date(),
+    };
+
     await prisma.form.update({
       where: { id: formId },
-      data
+      data,
     });
+  } else if (event.type === "formOpened") {
+    // check if usr  opened form
+
+    const userOpenFormSession = await prisma.sessionEvent.findFirst({
+      where: {
+        type: "formOpened",
+        data: {
+          array_contains: {
+            formId,
+            candidateId: candidateId,
+          },
+        },
+      },
+    });
+    console.log(userOpenFormSession);
+
+    if (userOpenFormSession === null) {
+      console.log(userOpenFormSession);
+
+      const { id } = await prisma.submissionSession.create({
+        data: { form: { connect: { id: formId } } },
+      });
+
+      await prisma.sessionEvent.create({
+        data: {
+          type: "formOpened",
+          data: {
+            formId,
+            candidateId,
+          },
+          submissionSession: { connect: { id } },
+        },
+      });
+    }
   } else {
     throw Error(
       `apiEvents: unsupported event type in event ${JSON.stringify(event)}`

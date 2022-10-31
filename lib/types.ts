@@ -140,6 +140,16 @@ export type submissionCompletedEvent = {
   type: "submissionCompleted";
   data: { [key: string]: string };
 };
+export type openFormEvent = {
+  id?: string;
+  type: "formOpened";
+  createdAt?: Date;
+  updatedAt?: Date;
+  data: {
+    formId: string;
+    userId: number;
+  };
+};
 
 export type updateSchemaEvent = {
   id: string;
@@ -152,7 +162,8 @@ export type updateSchemaEvent = {
 export type ApiEvent =
   | pageSubmissionEvent
   | submissionCompletedEvent
-  | updateSchemaEvent;
+  | updateSchemaEvent
+  | openFormEvent;
 
 export type WebhookEvent = Event & { formId: string; timestamp: string };
 

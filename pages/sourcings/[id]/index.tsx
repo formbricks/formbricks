@@ -11,7 +11,7 @@ import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
 import { useNoCodeFormPublic } from "../../../lib/noCodeForm";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import getConfig from "next/config";
 import usePages from "../../../hooks/usePages";
@@ -39,6 +39,17 @@ function NoCodeFormPublic() {
     month = "long",
     day = "numeric",
   }
+  const openForm = async () => {
+    try {
+      await fetch(`/api/forms/${formId}/open`, {
+        method: "POST",
+      });
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    openForm();
+  }, []);
 
   if (isLoadingNoCodeForm) {
     return <Loading />;
