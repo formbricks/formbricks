@@ -122,7 +122,7 @@ export default function NewFormModal({
                       htmlFor="dueDate"
                       className="text-sm font-light text-ui-gray-dark"
                     >
-                      Due date for your sourcing
+                      Date limite de votre sourcing
                     </label>
                     <div className="mt-2">
                       <input
@@ -143,7 +143,7 @@ export default function NewFormModal({
                       htmlFor="place"
                       className="text-sm font-light text-ui-gray-dark"
                     >
-                      Set the place for your sourcing
+                      Définissez le lieu de votre sourcing
                     </label>
                     <div className="mt-2">
                       <Listbox

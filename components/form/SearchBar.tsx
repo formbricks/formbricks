@@ -83,7 +83,7 @@ function SearchBar({
                     } group flex w-full items-center rounded px-2 py-2 text-sm`}
                   >
                     <MdToday className="mr-2 h-5 w-5" aria-hidden="true" />
-                    Sort by due date
+                    Trier par date d&apos;échéance
                   </button>
                 )}
               </Menu.Item>

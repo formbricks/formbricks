@@ -5,7 +5,7 @@ import {
   CalendarDaysIcon,
   InboxArrowDownIcon,
 } from "@heroicons/react/24/solid";
-import {HiOutlineLocationMarker} from "react-icons/hi";
+import { HiOutlineLocationMarker } from "react-icons/hi";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -34,11 +34,11 @@ function NoCodeFormPublic() {
   const [openDisclaimer, setOpenDisclaimer] = useState(false);
   const [pageIdOnModal, setPageIdOnModal] = useState("");
 
-  enum options  {
+  enum options {
     year = "numeric",
     month = "long",
     day = "numeric",
-  };
+  }
 
   if (isLoadingNoCodeForm) {
     return <Loading />;
@@ -52,8 +52,10 @@ function NoCodeFormPublic() {
     );
   }
 
-  const pageIsCompleted = (pageId: string) => {    
-    return candidateSubmissions.map(submission => submission.data.pageName).includes(pageId);
+  const pageIsCompleted = (pageId: string) => {
+    return candidateSubmissions
+      .map((submission) => submission.data.pageName)
+      .includes(pageId);
   };
 
   const getPageTimer = (pageBlocks: any) => {
@@ -98,8 +100,8 @@ function NoCodeFormPublic() {
                     <Image
                       src="/img/kda_logo.png"
                       alt="kinshasa digital academy logo"
-                      width={300}
-                      height={79}
+                      width={180}
+                      height={60}
                     />
                   </div>
                   <div className="mt-8">
@@ -123,18 +125,21 @@ function NoCodeFormPublic() {
               </p>
               <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
                 <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
-                <span className="font-bold mr-1">Due date :</span>{" "}
+                <span className="font-bold mr-1">Date limite :</span>{" "}
                 {new Date(noCodeForm.form.dueDate).toLocaleDateString(
                   "en-US",
                   options
                 )}
               </p>
-              {noCodeForm.form.place === ""? <></> :
-              <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
-                <HiOutlineLocationMarker className="w-6 h-6 stroke-thin mr-2" />
-                <span className="font-bold mr-1">Place :</span>{" "}
-                {noCodeForm.form.place}
-              </p>}
+              {noCodeForm.form.place === "" ? (
+                <></>
+              ) : (
+                <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
+                  <HiOutlineLocationMarker className="w-6 h-6 stroke-thin mr-2" />
+                  <span className="font-bold mr-1">Place :</span>{" "}
+                  {noCodeForm.form.place}
+                </p>
+              )}
               {pages.map((page, index) => {
                 if (pages.length - 1 !== index)
                   return (
@@ -146,7 +151,7 @@ function NoCodeFormPublic() {
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
                       <div className="flex items-center justify-between w-2/5 pr-8">
-                        <div className="flex items-center w-3/8" >
+                        <div className="flex items-center w-3/8">
                           {isTimedPage(page) ? (
                             <>
                               <span className="flex items-center mr-7 text-gray-800">

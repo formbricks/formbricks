@@ -38,12 +38,12 @@ const App: FC<IProps> = ({
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
-            <div>
+            <div className="w-fit m-auto">
               <Image
                 src="/img/kda_logo.png"
-                alt="kda logo"
-                width={300}
-                height={79}
+                alt="kinshasa digital academy logo"
+                width={180}
+                height={60}
               />
             </div>
             <div className="mt-8">

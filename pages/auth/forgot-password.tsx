@@ -47,15 +47,14 @@ export default function ForgotPasswordPage() {
           )}
 
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
-            <div>
+            <div className="w-fit m-auto">
               <Image
                 src="/img/kda_logo.png"
                 alt="kinshasa digital academy logo"
-                width={300}
-                height={79}
+                width={180}
+                height={60}
               />
             </div>
-
             <div className="mt-8">
               <div className="mt-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
