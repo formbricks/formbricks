@@ -48,45 +48,46 @@ export default function ResetPasswordPage() {
 
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
             <div>
-            <div className="w-fit m-auto">
-              <Image
-                src="/img/kda_logo.png"
-                alt="kinshasa digital academy logo"
-                width={180}
-                height={60}
-              />
-            </div>
+              <div className="w-fit m-auto">
+                <Image
+                  src="/img/kda_logo.png"
+                  alt="kinshasa digital academy logo"
+                  width={180}
+                  height={60}
+                />
+              </div>
 
-            <div className="mt-8">
-              <div className="mt-6">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-ui-gray-dark"
-                    >
-                      New password
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        id="password"
-                        name="password"
-                        type="password"
-                        required
-                        className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
-                      />
+              <div className="mt-8">
+                <div className="mt-6">
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-ui-gray-dark"
+                      >
+                        New password
+                      </label>
+                      <div className="mt-1">
+                        <input
+                          id="password"
+                          name="password"
+                          type="password"
+                          required
+                          className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <button
-                      type="submit"
-                      className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                    >
-                      Reset password
-                    </button>
-                  </div>
-                </form>
+                    <div>
+                      <button
+                        type="submit"
+                        className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        Reset password
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
