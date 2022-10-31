@@ -100,7 +100,7 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
     sendTelemetry("formCompleted received");
   } else if (event.type === "updateSchema") {
     const data = { schema: event.data, updatedAt: new Date() };
-    await prisma.form.update({
+    prisma.form.update({
       where: { id: formId },
       data,
     });

@@ -79,8 +79,8 @@ export const sendPasswordResetNotifyEmail = async (user) => {
 export const sendPageSubmissionEmail = async (email: string, formName: string, formId: string) => {
   await sendEmail({
     to: email,
-    subject: `${formName} new page  submission`,
-    html: `someone just filled out a page of ${formName}.<br/>
+    subject: `${formName} new page submission`,
+    html: `Hey, someone just filled out a page of ${formName} in Formbricks.<br/>
     
     Click <a href="${process.env.NEXTAUTH_URL}/forms/${formId}/results/responses">here</a> to see new submission`,
   });
@@ -90,7 +90,7 @@ export const sendFormSubmissionEmail = async (email: string, formName: string, f
   await sendEmail({
     to: email,
     subject: `${formName} new submission`,
-    html: `Hey, someone just filled out ${formName}.<br/>
+    html: `Hey, someone just filled out ${formName} in Formbricks.<br/>
     <br/>
     
     Click <a href="${process.env.NEXTAUTH_URL}/forms/${formId}/results/responses">here</a> to see new submission`,
