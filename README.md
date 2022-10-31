@@ -19,6 +19,8 @@
 
 <br/>
 
+> :warning: snoopForms now becomes Formbricks. As part of the renaming, we are also sharpening the product and optimizing the core functionality for future features. Be excited when we present the new Formbricks in a few weeks. Until the core rebuild is complete, we are also pausing contributions to avoid major merge conflicts.
+
 ## About snoopForms
 
 <img width="937" alt="snoopForms-architecture" src="https://user-images.githubusercontent.com/675065/182550268-09794c9e-1187-470e-b795-697ceb2a93b8.svg">
