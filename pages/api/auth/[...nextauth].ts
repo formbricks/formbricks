@@ -62,7 +62,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           if (!isValid) {
             throw new Error("Incorrect password");
           }
-//test here
+          //test here
           return {
             id: user.id,
             email: user.email,
@@ -90,7 +90,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
         async authorize(credentials, _req) {
           let user;
           try {
-            const { id } = await verifyToken(credentials?.token)
+            const { id } = await verifyToken(credentials?.token);
             user = await prisma.user.findUnique({
               where: {
                 id: id,
@@ -121,31 +121,35 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             email: user.email,
             firstname: user.firstname,
             lastname: user.firstname,
-            role:user.role,
+            role: user.role,
             emailVerified: user.emailVerified,
           };
         },
       }),
     ],
     callbacks: {
-      async session({session, token}){
+      async session({ session, token }) {
         if (token) {
-          const user= await prisma.user.findUnique({where:{email:session.user.email}})
+          const user = await prisma.user.findUnique({
+            where: { email: session.user.email },
+          });
           session.user = {
-              id : user.id,
-              firstname: user.firstname,
-              lastname: user.lastname,
-              email: user.email,
-              phone: user.phone,
-              role: user.role,
-              gender: user.gender,
-        
-          }
+            id: user.id,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            gender: user.gender,
+          };
         }
-        return session
+        return session;
       },
       async signIn({ user }) {
-        if (user.emailVerified || publicRuntimeConfig.emailVerificationDisabled) {
+        const { emailVerified } = await prisma.user.findUnique({
+          where: { email: user.email },
+        });
+        if (emailVerified || publicRuntimeConfig.emailVerificationDisabled) {
           return true;
         } else {
           // Return false to display a default error message or you can return a URL to redirect to
