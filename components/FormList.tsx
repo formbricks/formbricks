@@ -5,6 +5,7 @@ import {
   FolderOpenIcon,
   DocumentPlusIcon,
   UserCircleIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
@@ -185,8 +186,9 @@ export default function FormList() {
                           <></>
                         ) : (
                           <div className="flex justify-between px-4 py-2 text-right sm:px-6">
-                            <p className="text-xs text-ui-gray-medium ">
-                              {form._count?.submissionSessions} réponses
+                            <p className="flex gap-1 items-center text-xs text-ui-gray-medium ">
+                              <EyeIcon className="w-3 h-3" />
+                              <p>{form._count?.submissionSessions}</p>
                             </p>
                             <Menu
                               as="div"

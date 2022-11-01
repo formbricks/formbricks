@@ -15,12 +15,12 @@ export default async function handle(
     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
   });
   const formId = req.query.id.toString();
+  const session = await getSession({ req: req });
 
   // GET /api/forms
   // Gets all forms of a user
   if (req.method === "GET") {
     // check if session exist
-    const session = await getSession({ req: req });
     if (!session) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -55,10 +55,37 @@ export default async function handle(
   // Required fields in body: -
   // Optional fields in body: -
   if (req.method === "POST") {
-    const prismaRes = await prisma.submissionSession.create({
-      data: { form: { connect: { id: formId } } },
+    const sessionEvent = await prisma.sessionEvent.findFirst({
+      where: {
+        data: {
+          array_contains: {
+            formId,
+            candidateId: session.user.id,
+          },
+        },
+      },
     });
-    return res.json(prismaRes);
+
+    console.log("sessionEvent", sessionEvent);
+
+    if (sessionEvent === null) {
+      const prismaRes = await prisma.submissionSession.create({
+        data: { form: { connect: { id: formId } } },
+      });
+      console.log("prismaRes", prismaRes);
+
+      return res.json(prismaRes);
+    } else {
+      const submissionSession = await prisma.submissionSession.findFirst({
+        where: {
+          id: sessionEvent.submissionSessionId,
+        },
+      });
+
+      console.log("submissionSession", submissionSession);
+
+      return res.json(submissionSession);
+    }
   }
   // Unknown HTTP Method
   else {

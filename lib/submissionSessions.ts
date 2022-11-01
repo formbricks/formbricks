@@ -73,7 +73,8 @@ export const getSubmissionAnalytics = (
       if (!lastSubmissionAt) {
         lastSubmissionAt = lastSubmission.createdAt;
       } else if (
-        Date.parse(lastSubmission.createdAt) > Date.parse(lastSubmissionAt)
+        Date.parse(lastSubmission.createdAt as string) >
+        Date.parse(lastSubmissionAt)
       ) {
         lastSubmissionAt = lastSubmission.createdAt;
       }
