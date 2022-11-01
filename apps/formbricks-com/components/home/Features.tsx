@@ -57,13 +57,13 @@ export default function Features() {
       </div>
       <div className="relative mx-auto max-w-7xl">
         <div className="text-center">
-          <p className="text-md mx-auto mb-3 max-w-2xl font-semibold uppercase text-teal-500 sm:mt-4">
+          <p className="max-w-2xl mx-auto mb-3 font-semibold text-teal-500 uppercase text-md sm:mt-4">
             the Swiss army knife for forms & surveys
           </p>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
             Home-cooked taste, delivered in minutes
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-xl text-slate-500 dark:text-slate-300 sm:mt-4">
+          <p className="max-w-2xl mx-auto mt-3 text-xl text-slate-500 dark:text-slate-300 sm:mt-4">
             Build a 'home-cooked' solution at the fraction of the time. We do the heavy lifting, you customize
             to your needs.
           </p>
@@ -76,29 +76,29 @@ export default function Features() {
                 feature.comingSoon
                   ? "bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900"
                   : "bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800",
-                "relative col-span-1 mt-16 flex flex-col rounded-xl  text-center shadow-md"
+                "relative col-span-1 mt-16 flex flex-col rounded-xl text-center shadow-md"
               )}>
-              <div className="absolute -mt-12 w-full">
+              <div className="absolute w-full -mt-12">
                 <div
                   className={clsx(
                     feature.comingSoon
                       ? "bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 "
-                      : "bg-gradient-to-br from-slate-700 to-slate-800",
+                      : "bg-gradient-to-br from-slate-700 to-slate-800 ",
                     "mx-auto flex h-20 w-20 items-center justify-center rounded-full shadow"
                   )}>
-                  <feature.icon className="mx-auto h-10 w-10 flex-shrink-0 text-teal-500" />
+                  <feature.icon className="flex-shrink-0 w-10 h-10 mx-auto text-teal-500" />
                 </div>
               </div>
-              <div className="flex flex-1 flex-col p-8">
-                <h3 className="mt-6 text-sm font-medium text-slate-900 dark:text-slate-100">
+              <div className="flex flex-col flex-1 p-10">
+                <h3 className="my-4 text-lg font-medium text-slate-900 dark:text-slate-100">
                   {feature.name}
                 </h3>
-                <dl className="mt-1 flex flex-grow flex-col justify-between">
+                <dl className="flex flex-col justify-between flex-grow mt-1">
                   <dt className="sr-only">Description</dt>
-                  <dd className="text-sm text-slate-500 dark:text-slate-300">{feature.description}</dd>
+                  <dd className="text-sm text-slate-500 dark:text-slate-400">{feature.description}</dd>
                   {feature.comingSoon && (
                     <dd className="mt-4">
-                      <span className="rounded-full bg-slate-700 px-2 py-1 text-xs font-medium text-slate-50">
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-slate-700 text-slate-50">
                         coming soon
                       </span>
                     </dd>

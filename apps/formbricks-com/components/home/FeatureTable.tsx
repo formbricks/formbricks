@@ -42,34 +42,36 @@ const features = [
   },
   {
     name: "Extendable",
-    description: "Even though we try, we cannot build every single integration. With Formbricks, you can :)",
+    description: "Even though we try, we cannot build every single integration. With Formbricks, you can.",
     icon: SquaresPlusIcon,
   },
 ];
 
 export default function FeatureTable({}) {
   return (
-    <div className="mt-20 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:pt-8 sm:pb-12 lg:max-w-7xl lg:px-8 lg:pt-12">
-        <p className="max-w-3xl text-lg text-teal-500">Why Formbricks?</p>
+    <div className="mt-56 mb-16 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800">
+      <div className="max-w-4xl px-4 py-8 mx-auto sm:px-6 sm:pt-8 sm:pb-12 lg:max-w-7xl lg:px-8 lg:pt-12">
+        <p className="max-w-2xl mb-3 font-semibold text-teal-500 uppercase text-md sm:mt-4">
+          Why Formbricks?
+        </p>
         <h2 className="mt-4 text-3xl font-bold tracking-tight text-white">
           The only complete open-source option.
         </h2>
-        <p className="mt-4 max-w-3xl text-lg text-slate-200">
+        <p className="max-w-3xl mt-4 text-lg text-slate-300">
           We needed this, so we built it. We experienced first hand how form needs develop as companies grow.
-          Make the right choice today, congratulate yourself tomorrow.
+          Make the right choice today, congratulate yourself tomorrow :)
         </p>
-        <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
+        <div className="grid grid-cols-1 mt-12 gap-x-6 gap-y-12 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
           {features.map((feature) => (
             <div key={feature.name}>
               <div>
-                <span className="flex h-12 w-12 items-center justify-center rounded-md bg-teal-50 bg-opacity-10">
-                  <feature.icon className="h-6 w-6 text-teal-500" aria-hidden="true" />
+                <span className="flex items-center justify-center w-12 h-12 rounded-md bg-teal-50 bg-opacity-10">
+                  <feature.icon className="w-6 h-6 text-teal-500" aria-hidden="true" />
                 </span>
               </div>
               <div className="mt-6">
-                <h3 className="text-lg font-medium text-white">{feature.name}</h3>
-                <p className="mt-2 text-base text-slate-200">{feature.description}</p>
+                <h3 className="text-lg font-semibold text-white">{feature.name}</h3>
+                <p className="mt-2 text-base leading-6 text-slate-400">{feature.description}</p>
               </div>
             </div>
           ))}

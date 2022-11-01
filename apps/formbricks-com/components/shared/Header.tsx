@@ -1,14 +1,17 @@
 import { Fragment } from "react";
 import { Popover, Transition } from "@headlessui/react";
 import {
-  ArrowPathIcon,
   Bars3Icon,
-  ChartBarIcon,
-  CursorArrowRaysIcon,
   DocumentChartBarIcon,
-  ShieldCheckIcon,
-  Squares2X2Icon,
   XMarkIcon,
+  CodeBracketSquareIcon,
+  CpuChipIcon,
+  EnvelopeIcon,
+  SquaresPlusIcon,
+  PresentationChartLineIcon,
+  CursorArrowRaysIcon,
+  BoltIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { Logo, Logomark } from "./Logo";
@@ -18,42 +21,77 @@ import Link from "next/link";
 import clsx from "clsx";
 import { ThemeSelector } from "./ThemeSelector";
 
-const solutions = [
+const creation = [
   {
-    name: "Analytics",
-    description: "Get a better understanding of where your traffic is coming from.",
+    name: "React Library",
+    description: "Build forms with React.js",
     href: "#",
-    icon: ChartBarIcon,
+    icon: CodeBracketSquareIcon,
+    status: true,
   },
   {
-    name: "Engagement",
-    description: "Speak directly to your customers in a more meaningful way.",
+    name: "No Code Builder",
+    description: "Notion-like visual builder",
     href: "#",
     icon: CursorArrowRaysIcon,
+    status: false,
   },
   {
-    name: "Security",
-    description: "Your customers' data will be safe and secure.",
+    name: "Templates",
+    description: "CSAT, PMF survey, etc.",
     href: "#",
-    icon: ShieldCheckIcon,
+    icon: ClipboardDocumentListIcon,
+    status: false,
+  },
+];
+
+const pipes = [
+  {
+    name: "Core API",
+    description: "The OS form engine",
+    href: "#",
+    icon: CpuChipIcon,
+    status: true,
+  },
+  {
+    name: "Webhooks",
+    description: "Send JSON anywhere",
+    href: "#",
+    icon: BoltIcon,
+    status: true,
+  },
+  {
+    name: "Email",
+    description: "Send data and notifications",
+    href: "#",
+    icon: EnvelopeIcon,
+    status: true,
   },
   {
     name: "Integrations",
-    description: "Connect with third-party tools that you're already using.",
+    description: "Connect with 100+ apps",
     href: "#",
-    icon: Squares2X2Icon,
+    icon: SquaresPlusIcon,
+    status: true,
   },
+];
+
+const insights = [
   {
-    name: "Automations",
-    description: "Build strategic funnels that will drive your customers to convert",
+    name: "Dashboard",
+    description: "Manage submissions easily",
     href: "#",
-    icon: ArrowPathIcon,
+    icon: PresentationChartLineIcon,
+    cat: "insights",
+    status: true,
   },
   {
     name: "Reports",
-    description: "Get detailed reports that will help you make more informed decisions ",
+    description: "Based on Templates",
     href: "#",
     icon: DocumentChartBarIcon,
+    cat: "insights",
+    status: false,
   },
 ];
 
@@ -65,13 +103,13 @@ export default function Header() {
         <div className="flex justify-start lg:w-0 lg:flex-1">
           <Link href="#">
             <span className="sr-only">Formbricks</span>
-            <Logo className="h-8 w-auto sm:h-10" />
+            <Logo className="w-auto h-8 sm:h-10" />
           </Link>
         </div>
         <div className="-my-2 -mr-2 md:hidden">
-          <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
+          <Popover.Button className="inline-flex items-center justify-center p-2 text-gray-400 bg-white rounded-md hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
             <span className="sr-only">Open menu</span>
-            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+            <Bars3Icon className="w-6 h-6" aria-hidden="true" />
           </Popover.Button>
         </div>
         <Popover.Group as="nav" className="hidden space-x-10 md:flex">
@@ -80,10 +118,10 @@ export default function Header() {
               <>
                 <Popover.Button
                   className={clsx(
-                    open ? "text-gray-900" : "text-gray-500",
-                    "group inline-flex items-center rounded-md text-base font-medium hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-gray-50"
+                    open ? "text-gray-500" : "text-gray-500",
+                    "group inline-flex items-center rounded-md text-base font-medium hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-gray-50"
                   )}>
-                  <span>Solutions</span>
+                  <span>Bricks</span>
                   <ChevronDownIcon
                     className={clsx(
                       open ? "text-gray-600" : "text-gray-400",
@@ -101,36 +139,87 @@ export default function Header() {
                   leave="transition ease-in duration-150"
                   leaveFrom="opacity-100 translate-y-0"
                   leaveTo="opacity-0 translate-y-1">
-                  <Popover.Panel className="absolute z-10 -ml-4 mt-3 w-screen max-w-md transform lg:left-1/2 lg:ml-0 lg:max-w-2xl lg:-translate-x-1/2">
+                  <Popover.Panel className="absolute z-10 w-screen max-w-lg mt-3 -ml-4 transform lg:left-1/2 lg:ml-0 lg:max-w-4xl lg:-translate-x-1/2">
                     <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                      <div className="relative grid gap-6 bg-white px-5 py-6 sm:gap-8 sm:p-8 lg:grid-cols-2">
-                        {solutions.map((solution) => (
-                          <Link
-                            key={solution.name}
-                            href={solution.href}
-                            className="-m-3 flex items-start rounded-lg p-3 hover:bg-gray-50">
-                            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-teal-500 text-white sm:h-12 sm:w-12">
-                              <solution.icon className="h-6 w-6" aria-hidden="true" />
-                            </div>
-                            <div className="ml-4">
-                              <p className="text-base font-medium text-gray-900">{solution.name}</p>
-                              <p className="mt-1 text-sm text-gray-500">{solution.description}</p>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                      <div className="bg-gray-50 p-5 sm:p-8">
-                        <Link href="#" className="-m-3 flow-root rounded-md p-3 hover:bg-gray-100">
-                          <div className="flex items-center">
-                            <div className="text-base font-medium text-gray-900">Enterprise</div>
-                            <span className="ml-3 inline-flex items-center rounded-full bg-teal-100 px-3 py-0.5 text-xs font-medium leading-5 text-teal-800">
-                              New
-                            </span>
-                          </div>
-                          <p className="mt-1 text-sm text-gray-500">
-                            Empower your entire team with even more advanced tools.
-                          </p>
-                        </Link>
+                      <div className="relative grid gap-6 px-5 py-6 bg-white sm:gap-6 sm:p-8 lg:grid-cols-3">
+                        <div>
+                          <h4 className="mb-6 ml-16 text-sm text-gray-500">Form Creation</h4>
+                          {creation.map((brick) => (
+                            <Link
+                              key={brick.name}
+                              href={brick.href}
+                              className={clsx(
+                                brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                                "-m-3 flex items-start rounded-lg p-3 py-4"
+                              )}>
+                              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
+                                <brick.icon className="w-6 h-6" aria-hidden="true" />
+                              </div>
+                              <div className="ml-4">
+                                <p
+                                  className={clsx(
+                                    brick.status ? "text-gray-900" : "text-gray-400",
+                                    "text-lg font-semibold"
+                                  )}>
+                                  {brick.name}
+                                </p>
+                                <p className="text-sm text-gray-400">{brick.description}</p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                        <div>
+                          <h4 className="mb-6 ml-16 text-sm text-gray-500">Data Pipes</h4>
+                          {pipes.map((brick) => (
+                            <Link
+                              key={brick.name}
+                              href={brick.href}
+                              className={clsx(
+                                brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                                "-m-3 flex items-start rounded-lg p-3 py-4"
+                              )}>
+                              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 sm:h-12 sm:w-12">
+                                <brick.icon className="w-6 h-6" aria-hidden="true" />
+                              </div>
+                              <div className="ml-4">
+                                <p
+                                  className={clsx(
+                                    brick.status ? "text-gray-900" : "text-gray-400",
+                                    "text-lg font-semibold"
+                                  )}>
+                                  {brick.name}
+                                </p>
+                                <p className="text-sm text-gray-400">{brick.description}</p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                        <div>
+                          <h4 className="mb-6 ml-16 text-sm text-gray-500">Data Insights</h4>
+                          {insights.map((brick) => (
+                            <Link
+                              key={brick.name}
+                              href={brick.href}
+                              className={clsx(
+                                brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                                "-m-3 flex items-start rounded-lg p-3 py-4"
+                              )}>
+                              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
+                                <brick.icon className="w-6 h-6" aria-hidden="true" />
+                              </div>
+                              <div className="ml-4">
+                                <p
+                                  className={clsx(
+                                    brick.status ? "text-gray-900" : "text-gray-400",
+                                    "text-lg font-semibold"
+                                  )}>
+                                  {brick.name}
+                                </p>
+                                <p className="text-sm text-gray-400">{brick.description}</p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </Popover.Panel>
@@ -155,7 +244,7 @@ export default function Header() {
             Documentation
           </Link>
         </Popover.Group>
-        <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0">
+        <div className="items-center justify-end hidden md:flex md:flex-1 lg:w-0">
           <ThemeSelector className="relative z-10 mr-5" />
           <Button
             variant="secondary"
@@ -183,29 +272,29 @@ export default function Header() {
         leaveTo="opacity-0 scale-95">
         <Popover.Panel
           focus
-          className="absolute inset-x-0 top-0 z-20 origin-top-right transform p-2 transition md:hidden">
-          <div className="divide-y-2 divide-gray-50 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+          className="absolute inset-x-0 top-0 z-20 p-2 transition origin-top-right transform md:hidden">
+          <div className="bg-white divide-y-2 rounded-lg shadow-lg divide-gray-50 ring-1 ring-black ring-opacity-5">
             <div className="px-5 pt-5 pb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Logo className="h-8 w-auto" />
+                  <Logo className="w-auto h-8" />
                 </div>
                 <div className="-mr-2">
-                  <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
+                  <Popover.Button className="inline-flex items-center justify-center p-2 text-gray-400 bg-white rounded-md hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
                     <span className="sr-only">Close menu</span>
-                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                    <XMarkIcon className="w-6 h-6" aria-hidden="true" />
                   </Popover.Button>
                 </div>
               </div>
               <div className="mt-6">
                 <nav className="grid grid-cols-1 gap-7">
-                  {solutions.map((solution) => (
+                  {creation.map((solution) => (
                     <Link
                       key={solution.name}
                       href={solution.href}
-                      className="-m-3 flex items-center rounded-lg p-3 hover:bg-gray-50">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-teal-500 text-white">
-                        <solution.icon className="h-6 w-6" aria-hidden="true" />
+                      className="flex items-center p-3 -m-3 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-white bg-teal-500 rounded-md">
+                        <solution.icon className="w-6 h-6" aria-hidden="true" />
                       </div>
                       <div className="ml-4 text-base font-medium text-gray-900">{solution.name}</div>
                     </Link>
@@ -213,7 +302,7 @@ export default function Header() {
                 </nav>
               </div>
             </div>
-            <div className="py-6 px-5">
+            <div className="px-5 py-6">
               <div className="grid grid-cols-2 gap-4">
                 <Link href="/community" className="text-base font-medium text-gray-900 hover:text-gray-700">
                   Community
@@ -232,13 +321,13 @@ export default function Header() {
                   variant="secondary"
                   EndIcon={GitHubIcon}
                   onClick={() => router.push("https://github.com/formbricks/formbricks")}
-                  className="flex w-full justify-center">
+                  className="flex justify-center w-full">
                   View on Github
                 </Button>
                 <Button
                   variant="primary"
                   onClick={() => router.push("https://app.formbricks.com")}
-                  className="mt-3 ml-2 flex w-full justify-center">
+                  className="flex justify-center w-full mt-3 ml-2">
                   Get started
                 </Button>
               </div>
