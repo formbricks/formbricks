@@ -16,6 +16,7 @@ import Button from "./Button";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import clsx from "clsx";
+import { ThemeSelector } from "./ThemeSelector";
 
 const solutions = [
   {
@@ -55,25 +56,11 @@ const solutions = [
     icon: DocumentChartBarIcon,
   },
 ];
-const resources = [
-  {
-    name: "Help Center",
-    description: "Get all of your questions answered in our forums or contact support.",
-    href: "#",
-  },
-  { name: "Guides", description: "Learn how to maximize our platform to get the most out of it.", href: "#" },
-  {
-    name: "Events",
-    description: "See what meet-ups and other events we might be planning near you.",
-    href: "#",
-  },
-  { name: "Security", description: "Understand how we take your privacy seriously.", href: "#" },
-];
 
 export default function Header() {
   const router = useRouter();
   return (
-    <Popover className="relative bg-white">
+    <Popover className="relative">
       <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start md:space-x-10">
         <div className="flex justify-start lg:w-0 lg:flex-1">
           <Link href="#">
@@ -94,7 +81,7 @@ export default function Header() {
                 <Popover.Button
                   className={clsx(
                     open ? "text-gray-900" : "text-gray-500",
-                    "group inline-flex items-center rounded-md bg-white text-base font-medium hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                    "group inline-flex items-center rounded-md text-base font-medium hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-gray-50"
                   )}>
                   <span>Solutions</span>
                   <ChevronDownIcon
@@ -152,20 +139,28 @@ export default function Header() {
             )}
           </Popover>
 
-          <Link href="/community" className="text-base font-medium text-gray-500 hover:text-gray-900">
+          <Link
+            href="/community"
+            className="text-base font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-50">
             Community
           </Link>
-          <Link href="/blog" className="text-base font-medium text-gray-500 hover:text-gray-900">
+          <Link
+            href="/blog"
+            className="text-base font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-50">
             Blog
           </Link>
-          <Link href="/docs" className="text-base font-medium text-gray-500 hover:text-gray-900">
+          <Link
+            href="/docs"
+            className="text-base font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-50">
             Documentation
           </Link>
         </Popover.Group>
         <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0">
+          <ThemeSelector className="relative z-10 mr-5" />
           <Button
             variant="secondary"
             EndIcon={GitHubIcon}
+            endIconClassName="fill-slate-900 dark:fill-slate-50"
             onClick={() => router.push("https://github.com/formbricks/formbricks")}>
             View on Github
           </Button>
