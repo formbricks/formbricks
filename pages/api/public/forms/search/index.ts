@@ -39,7 +39,6 @@ export default async function handle(
         },
       },
     });
-    console.log("RESPONSE : ", formData);
 
     if (!formData.length) {
       return res.status(204).json(formData);

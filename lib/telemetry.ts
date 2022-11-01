@@ -28,7 +28,7 @@ export const sendTelemetry = async (eventName: string) => {
         }),
       });
     } catch (error) {
-      console.log("error sending telemetry:", error);
+      console.error("error sending telemetry:", error);
     }
   }
 };

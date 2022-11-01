@@ -90,9 +90,6 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
     const form = await prisma.form.findUnique({ where: { id: formId } });
     const schema = form.schema as Schema;
 
-    console.log("schema", schema);
-    console.log("pages", schema.pages);
-
     const data = {
       schema: [...event.data.pages, ...schema.pages],
       updatedAt: new Date(),
@@ -116,11 +113,8 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
         },
       },
     });
-    console.log(userOpenFormSession);
 
     if (userOpenFormSession === null) {
-      console.log(userOpenFormSession);
-
       const { id } = await prisma.submissionSession.create({
         data: { form: { connect: { id: formId } } },
       });

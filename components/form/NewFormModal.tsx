@@ -46,7 +46,6 @@ export default function NewFormModal({
     if (form.formType === "NOCODE") {
       await createNoCodeForm(form.id);
     }
-    console.log("*****", form);
 
     router.push(`/forms/${form.id}/form`);
   };

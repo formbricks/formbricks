@@ -23,8 +23,6 @@ export default function UserList() {
         role: newUserRole,
       };
       JSON.parse(JSON.stringify(user));
-      console.log("####", newUserRole);
-      console.log("****", data);
 
       await persistUserRole(data);
       mutateUsers();

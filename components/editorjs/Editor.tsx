@@ -52,7 +52,6 @@ const Editor = ({
       window.removeEventListener("keydown", keyPressListener);
     };
   }, [keyPressListener]);
-  console.log(editorRef);
 
   // This will run only once
   useEffect(() => {

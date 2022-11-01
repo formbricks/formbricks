@@ -66,13 +66,10 @@ export default async function handle(
       },
     });
 
-    console.log("sessionEvent", sessionEvent);
-
     if (sessionEvent === null) {
       const prismaRes = await prisma.submissionSession.create({
         data: { form: { connect: { id: formId } } },
       });
-      console.log("prismaRes", prismaRes);
 
       return res.json(prismaRes);
     } else {
@@ -81,8 +78,6 @@ export default async function handle(
           id: sessionEvent.submissionSessionId,
         },
       });
-
-      console.log("submissionSession", submissionSession);
 
       return res.json(submissionSession);
     }

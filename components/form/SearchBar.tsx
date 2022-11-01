@@ -22,7 +22,6 @@ function SearchBar({
 
     return formData;
   };
-  console.log("Queryed value", queryValue, "formData", formData);
 
   return (
     <div className={`${className}`}>

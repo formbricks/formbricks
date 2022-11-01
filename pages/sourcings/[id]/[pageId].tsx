@@ -61,8 +61,6 @@ function Form() {
       submission.data.pageName === pageId
   );
 
-  console.log("submission : ", currentSubmission);
-
   const startFom = async () => {
     if (!currentSubmission) {
       const submissionSessionRes = await fetch(
