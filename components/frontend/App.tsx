@@ -80,7 +80,12 @@ const App: FC<IProps> = ({
           {page.blocks.map((block: PageBlock) => (
             <div key={block.id}>
               {block.type === "paragraph" ? (
-                <p className="ce-paragraph">{block.data.text}</p>
+                <p
+                  className="ce-paragraph"
+                  dangerouslySetInnerHTML={{
+                    __html: block.data.text as string,
+                  }}
+                ></p>
               ) : block.type === "image" ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={block.data.file.url} alt={block.data.caption} />
@@ -102,7 +107,7 @@ const App: FC<IProps> = ({
                   defaultValue={submission?.data?.submission[block.id]}
                   classNames={{
                     label:
-                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
                 />
@@ -121,7 +126,7 @@ const App: FC<IProps> = ({
                   icon={<EnvelopeIcon className="w-5 h-5" />}
                   classNames={{
                     label:
-                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
                 />
@@ -140,7 +145,7 @@ const App: FC<IProps> = ({
                   options={block.data.options.map((o) => o.label)}
                   classNames={{
                     label:
-                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
                 />
@@ -159,7 +164,7 @@ const App: FC<IProps> = ({
                   options={block.data.options}
                   classNames={{
                     label:
-                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
                 />
@@ -177,7 +182,7 @@ const App: FC<IProps> = ({
                   placeholder={block.data.placeholder}
                   classNames={{
                     label:
-                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
                 />
@@ -196,7 +201,7 @@ const App: FC<IProps> = ({
                   icon={<PhoneIcon className="w-5 h-5" />}
                   classNames={{
                     label:
-                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
                 />
@@ -225,7 +230,7 @@ const App: FC<IProps> = ({
                   icon={<GlobeAltIcon className="w-5 h-5" />}
                   classNames={{
                     label:
-                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 sm:truncate",
+                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
                 />
