@@ -119,14 +119,26 @@ export default function SignInPage() {
                         </Link>
                       )}
 
-                      <Link href="/auth/signup">
+                      {/* <Link href="/auth/signup">
                         <a
                           href=""
                           className="text-xs text-red hover:text-red-600"
                         >
                           Créer un compte
                         </a>
+                      </Link> */}
+                      <button
+                      type="submit"
+                      className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                        <Link href="/auth/signup">
+                        <a
+                          href=""
+                        >
+                          Créer un compte
+                        </a>
                       </Link>
+                    </button>
                     </div>
                   </div>
                 </form>
