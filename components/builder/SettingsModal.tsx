@@ -1,14 +1,19 @@
 /* This example requires Tailwind CSS v2.0+ */
-import { Dialog, Switch, Transition } from "@headlessui/react";
+import { Dialog, Switch, Listbox, Transition } from "@headlessui/react";
 import { Fragment, useState } from "react";
 import { TailSpin } from "react-loader-spinner";
 import Loading from "../Loading";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  XMarkIcon,
+  CheckIcon,
+  ChevronUpDownIcon,
+} from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { classNames } from "../../lib/utils";
 import format from "date-fns/format";
 import { persistForm, useForm } from "../../lib/forms";
 import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
+import { FormOrder } from "@prisma/client";
 //HiRefresh
 
 export default function SettingsModal({ open, setOpen, formId }) {
@@ -19,6 +24,13 @@ export default function SettingsModal({ open, setOpen, formId }) {
   const [name, setName] = useState(form.name);
   const [dueDate, setDueDate] = useState(form.dueDate);
   const [description, setDescription] = useState(form.description);
+  const [answeringOrder, setAnsweringOrder] = useState(form.answeringOrder);
+
+  const answeringOptions = [
+    FormOrder.RANDOM,
+    FormOrder.SEQUENTIAL,
+    FormOrder.ABTEST,
+  ];
 
   const handleBlurInputs = async (inputName: any) => {
     const newForm = JSON.parse(JSON.stringify(form));
@@ -26,6 +38,8 @@ export default function SettingsModal({ open, setOpen, formId }) {
       ? (newForm.dueDate = new Date(dueDate))
       : inputName === "name"
       ? (newForm.name = name)
+      : inputName === "answeringOrder"
+      ? (newForm.answeringOrder = answeringOrder)
       : (newForm.description = description);
     await persistForm(newForm);
     mutateForm(newForm);
@@ -101,7 +115,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                   <form className="w-full mt-2 text-sm text-gray-900">
                     <div className="mt-1">
                       <label htmlFor="name" className="text-sm text-gray-500">
-                        Name your sourcing
+                        Nom du sourcing
                       </label>
                       <div className="mt-1">
                         <input
@@ -111,7 +125,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                           placeholder="e.g. Customer Research Survey"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          onBlur={(e) => handleBlurInputs(e.target.name)} //handleBlurSourcingName
+                          onBlur={(e) => handleBlurInputs(e.target.name)}
                           autoFocus
                           required
                         />
@@ -122,7 +136,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                         htmlFor="dueDate"
                         className="text-sm text-gray-500"
                       >
-                        Date limite pour votre sourcing
+                        Date limite de votre sourcing
                       </label>
                       <div className="mt-1">
                         <input
@@ -159,6 +173,82 @@ export default function SettingsModal({ open, setOpen, formId }) {
                         />
                       </div>
                     </div>
+                    <div className="mt-2">
+                    <label
+                      htmlFor="answeringOrder"
+                      className="text-sm font-light text-ui-gray-dark"
+                    >
+                      Définissez l&apos;ordre des étapes de votre sourcing
+                    </label>
+                      <Listbox
+                        value={answeringOrder}
+                        name="answeringOrder"
+                        onChange={(e) => setAnsweringOrder(e)}
+                      >
+                        <Listbox.Button className="relative w-full cursor-default rounded bg-ui-gray-light py-2 pl-3 pr-10 text-left focus:ring-2 focus:ring-red sm:text-sm">
+                          <span className="block truncate">
+                            {answeringOrder}
+                          </span>
+                          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                            <ChevronUpDownIcon
+                              className="h-5 w-5 text-gray-400"
+                              aria-hidden="true"
+                            />
+                          </span>
+                        </Listbox.Button>
+                        <Transition
+                          as={Fragment}
+                          leave="transition ease-in duration-100"
+                          leaveFrom="opacity-100"
+                          leaveTo="opacity-0"
+                        >
+                          <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                            {answeringOptions.map((option, optionIdx) => {
+                              return (
+                                <Listbox.Option
+                                  key={optionIdx}
+                                  value={option}
+                                  onChange={() => setAnsweringOrder(option)}
+                                  onBlur={() =>
+                                    handleBlurInputs("answeringOrder")
+                                  }
+                                  className={({ active }) =>
+                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                                      active
+                                        ? "bg-red-500 text-white"
+                                        : "text-gray-900"
+                                    }`
+                                  }
+                                >
+                                  {({ selected }) => (
+                                    <>
+                                      <span
+                                        className={`block truncate ${
+                                          selected
+                                            ? "font-medium"
+                                            : "font-normal"
+                                        }`}
+                                      >
+                                        {option}
+                                      </span>
+
+                                      {selected ? (
+                                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-white-600">
+                                          <CheckIcon
+                                            className="h-5 w-5"
+                                            aria-hidden="true"
+                                          />
+                                        </span>
+                                      ) : null}
+                                    </>
+                                  )}
+                                </Listbox.Option>
+                              );
+                            })}
+                          </Listbox.Options>
+                        </Transition>
+                      </Listbox>
+                    </div>
                   </form>
                   <h3 className="text-lg font-medium leading-6 text-gray-900">
                     Accès
@@ -174,7 +264,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                           className="text-sm font-medium text-gray-900"
                           passive={true}
                         >
-                          Fermez le sourcing ?
+                          Fermer le sourcing ?
                         </Switch.Label>
                         <Switch.Description
                           as="span"
