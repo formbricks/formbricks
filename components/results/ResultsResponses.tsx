@@ -131,7 +131,9 @@ export default function ResultsResponses({ formId }: ResultsResponseProps) {
                                       </p>
                                     </div>
                                     <div className="text-sm text-right text-gray-500 whitespace-nowrap">
-                                      <time dateTime={event.createdAt}>
+                                      <time
+                                        dateTime={event.createdAt as string}
+                                      >
                                         {format(
                                           new Date(
                                             activeSubmissionSession.createdAt

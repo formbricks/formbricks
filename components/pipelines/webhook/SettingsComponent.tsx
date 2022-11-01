@@ -111,8 +111,8 @@ export function WebhookSettings({ pipeline, setPipeline }) {
               />
             </div>
             <p className="mt-2 text-xs text-gray-500" id="email-description">
-              Nous signons toutes les charges utiles de notification d'événement
-              avec une signature SHA256 en utilisant ce secret
+              Nous signons toutes les charges utiles de notification
+              d&rsquo;événement avec une signature SHA256 en utilisant ce secret
             </p>
           </div>
         </div>
