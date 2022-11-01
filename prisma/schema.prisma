@@ -12,6 +12,12 @@ enum FormType {
   NOCODE
 }
 
+enum FormOrder {
+  RANDOM
+  SEQUENTIAL
+  ABTEST
+}
+
 enum PipelineType {
   WEBHOOK
 }
@@ -32,6 +38,7 @@ model Form {
   owner              User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId            Int
   formType           FormType            @default(NOCODE)
+  answeringOrder     FormOrder           @default(RANDOM)
   name               String              @default("")
   description        String              @default("")
   dueDate            DateTime?

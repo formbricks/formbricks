@@ -5,12 +5,19 @@ import {
   ChevronUpDownIcon,
   CheckIcon,
 } from "@heroicons/react/24/solid";
+import { FormOrder } from "@prisma/client";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
 import { BsPlus } from "react-icons/bs";
 import { createForm } from "../../lib/forms";
 import { createNoCodeForm } from "../../lib/noCodeForm";
 import StandardButton from "../StandardButton";
+
+const answeringOptions = [
+  FormOrder.RANDOM,
+  FormOrder.SEQUENTIAL,
+  FormOrder.ABTEST,
+];
 
 const places = [
   { name: "Kinshasa" },
@@ -33,6 +40,7 @@ export default function NewFormModal({
   const [dueDate, setDueDate] = useState("");
   const [description, setDescription] = useState("");
   const [selectedPlace, setSelectedPlace] = useState(places[0]);
+  const [answeringOrder, setAnsweringOrder] = useState(FormOrder.RANDOM);
 
   const createFormAction = async (e) => {
     e.preventDefault();
@@ -41,6 +49,7 @@ export default function NewFormModal({
       dueDate: new Date(dueDate),
       description,
       place: selectedPlace.name,
+      answeringOrder,
     });
 
     if (form.formType === "NOCODE") {
@@ -101,7 +110,7 @@ export default function NewFormModal({
                       htmlFor="name"
                       className="text-sm font-light text-ui-gray-dark"
                     >
-                      Name your sourcing
+                      Nom du sourcing
                     </label>
                     <div className="mt-2">
                       <input
@@ -114,6 +123,79 @@ export default function NewFormModal({
                         autoFocus
                         required
                       />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="answeringOrder"
+                      className="text-sm font-light text-ui-gray-dark"
+                    >
+                      Définissez l&apos;ordre des étapes de votre sourcing
+                    </label>
+                    <div className="mt-2">
+                      <Listbox
+                        value={answeringOrder}
+                        onChange={setAnsweringOrder}
+                      >
+                        <Listbox.Button className="relative w-full cursor-default rounded bg-ui-gray-light py-2 pl-3 pr-10 text-left focus:ring-2 focus:ring-red sm:text-sm">
+                          <span className="block truncate">
+                            {answeringOrder}
+                          </span>
+                          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                            <ChevronUpDownIcon
+                              className="h-5 w-5 text-gray-400"
+                              aria-hidden="true"
+                            />
+                          </span>
+                        </Listbox.Button>
+                        <Transition
+                          as={Fragment}
+                          leave="transition ease-in duration-100"
+                          leaveFrom="opacity-100"
+                          leaveTo="opacity-0"
+                        >
+                          <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                            {answeringOptions.map((option, optionIdx) => {
+                              return (
+                                <Listbox.Option
+                                  key={optionIdx}
+                                  value={option}
+                                  className={({ active }) =>
+                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                                      active
+                                        ? "bg-red-500 text-white"
+                                        : "text-gray-900"
+                                    }`
+                                  }
+                                >
+                                  {({ selected }) => (
+                                    <>
+                                      <span
+                                        className={`block truncate ${
+                                          selected
+                                            ? "font-medium"
+                                            : "font-normal"
+                                        }`}
+                                      >
+                                        {option}
+                                      </span>
+
+                                      {selected ? (
+                                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-white-600">
+                                          <CheckIcon
+                                            className="h-5 w-5"
+                                            aria-hidden="true"
+                                          />
+                                        </span>
+                                      ) : null}
+                                    </>
+                                  )}
+                                </Listbox.Option>
+                              );
+                            })}
+                          </Listbox.Options>
+                        </Transition>
+                      </Listbox>
                     </div>
                   </div>
                   <div>
@@ -215,7 +297,7 @@ export default function NewFormModal({
                       htmlFor="description"
                       className="text-sm font-light text-ui-gray-dark"
                     >
-                      Describe your sourcing
+                      Description du sourcing
                     </label>
                     <div className="mt-2">
                       <textarea
