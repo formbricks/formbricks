@@ -20,6 +20,7 @@ importers:
       '@headlessui/react': ^1.7.3
       '@mdx-js/loader': ^2.1.5
       '@mdx-js/react': ^2.1.5
+      '@next/font': ^13.0.0
       '@next/mdx': ^13.0.0
       '@tailwindcss/typography': ^0.5.7
       '@types/node': 18.11.6
@@ -29,6 +30,7 @@ importers:
       clsx: ^1.2.1
       eslint: 8.26.0
       eslint-config-next: ^13.0.0
+      lottie-web: ^5.9.6
       next: 13.0.0
       postcss: ^8.4.18
       prism-react-renderer: ^1.3.5
@@ -41,8 +43,10 @@ importers:
       '@headlessui/react': 1.7.3_biqbaboplfbrettd7655fr4n2y
       '@mdx-js/loader': 2.1.5_webpack@5.74.0
       '@mdx-js/react': 2.1.5_react@18.2.0
+      '@next/font': 13.0.1
       '@next/mdx': 13.0.1_wuv4qx5dshjptmdbtsqqkih5iu
       clsx: 1.2.1
+      lottie-web: 5.9.6
       next: 13.0.0_biqbaboplfbrettd7655fr4n2y
       prism-react-renderer: 1.3.5_react@18.2.0
       react: 18.2.0
@@ -1161,6 +1165,10 @@ packages:
     resolution: {integrity: sha512-z+gnX4Zizatqatc6f4CQrcC9oN8Us3Vrq/OLyc98h7K/eWctrnV91zFZodmJHUjx0cITY8uYM7LXD7IdYkg3kg==}
     dependencies:
       glob: 7.1.7
+
+  /@next/font/13.0.1:
+    resolution: {integrity: sha512-ktst4FFbEPtD8SJVQr2HuAqOoFpJx3xKkLOHzCV7D5PUk6KL/sFQa+t6UEucN70X037tqBV39BsFhMJ56hsPOw==}
+    dev: false
 
   /@next/mdx/13.0.1_wuv4qx5dshjptmdbtsqqkih5iu:
     resolution: {integrity: sha512-7h/EEs7JbLkDnVhvNE3D33k8vLJbQzKh+Zg0qvYulnpze96zjL4ZCd9qOeDCqNAATgZhpSbvQ9ujYLRFBJpHCQ==}
@@ -4282,6 +4290,10 @@ packages:
     hasBin: true
     dependencies:
       js-tokens: 4.0.0
+
+  /lottie-web/5.9.6:
+    resolution: {integrity: sha512-JFs7KsHwflugH5qIXBpB4905yC1Sub2MZWtl/elvO/QC6qj1ApqbUZJyjzJseJUtVpgiDaXQLjBlIJGS7UUUXA==}
+    dev: false
 
   /lru-cache/4.1.5:
     resolution: {integrity: sha512-sWZlbEP2OsHNkXrMl5GYk/jKk70MBng6UU4YI/qGDYbgf6YbP4EvmqISbXCoJiRKs+1bSpFHVgQxvJ17F2li5g==}

@@ -21,8 +21,36 @@ module.exports = {
       "9xl": ["8rem", { lineHeight: "1" }],
     },
     extend: {
+      colors: {
+        teal: {
+          DEFAULT: "#00E5CA",
+          50: "#9EFFF4",
+          100: "#89FFF1",
+          200: "#60FFEC",
+          300: "#38FFE7",
+          400: "#0FFFE3",
+          500: "#00E5CA",
+          600: "#00AD99",
+          700: "#007567",
+          800: "#003D36",
+          900: "#000504",
+        },
+      },
+      blue: {
+        DEFAULT: "#002941",
+        50: "#74CCFF",
+        100: "#60C4FF",
+        200: "#37B5FF",
+        300: "#0EA6FF",
+        400: "#0090E4",
+        500: "#0076BB",
+        600: "#005C93",
+        700: "#00436A",
+        800: "#002941",
+        900: "#000609",
+      },
       fontFamily: {
-        sans: ["Inter", ...defaultTheme.fontFamily.sans],
+        sans: ["Poppins", ...defaultTheme.fontFamily.sans],
         display: ["Lexend", ...defaultTheme.fontFamily.sans],
       },
       maxWidth: {
