@@ -2,7 +2,7 @@ import { signIn, useSession } from "next-auth/react";
 import Loading from "../Loading";
 
 const withAuthentication = (Component) =>
-  (function WithAuth(props) {
+  function WithAuth(props) {
     const { status } = useSession({
       required: true,
       onUnauthenticated() {
@@ -16,6 +16,6 @@ const withAuthentication = (Component) =>
     }
 
     return <Component {...props} />;
-  });
+  };
 
 export default withAuthentication;
