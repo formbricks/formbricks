@@ -15,7 +15,7 @@ export default function Highlights({}) {
               </h2>
               <p className="text-md mt-6 max-w-3xl leading-7 text-gray-500 dark:text-blue-300">
                 Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all
-                the good stuff you want, but don't want to build yourself.
+                the good stuff you want, but don&apos;t want to build yourself.
               </p>
               <p className="text-md mt-6 max-w-3xl leading-7 text-gray-500 dark:text-blue-300">
                 Build <span className="font-semibold">exactly</span> the form you want in a fraction of the

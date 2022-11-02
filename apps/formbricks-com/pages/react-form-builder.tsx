@@ -68,18 +68,18 @@ const ReactFormBuilderPage = () => (
   <Layout meta={{ title: "React Form Builder Library by Formbricks" }}>
     <HeroTitle HeadingPt1="React" HeadingTeal="Form Builder" HeadingPt2="Library" />
     <div className="mt-8">
-      <div className="max-w-md px-4 mx-auto sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
+      <div className="mx-auto max-w-md px-4 sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
         <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
           <Image src={ImageReactLib} alt="react library" className="rounded-lg" />
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-blue dark:text-blue-100 sm:text-3xl">
+            <h2 className="text-blue text-2xl font-bold tracking-tight dark:text-blue-100 sm:text-3xl">
               Building React forms has never been quicker. But there is more...
             </h2>
-            <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-blue-300">
+            <p className="text-md mt-6 max-w-3xl leading-7 text-gray-500 dark:text-blue-300">
               Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all
-              the good stuff you want, but don't want to build yourself.
+              the good stuff you want, but don&apos;t want to build yourself.
             </p>
-            <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-blue-300">
+            <p className="text-md mt-6 max-w-3xl leading-7 text-gray-500 dark:text-blue-300">
               Building forms fast is great, but where do you pipe your data? And what is it worth without a
               schema?
             </p>
@@ -88,16 +88,16 @@ const ReactFormBuilderPage = () => (
       </div>
     </div>
     <div className="mt-32">
-      <div className="max-w-md px-4 mx-auto sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
+      <div className="mx-auto max-w-md px-4 sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
         <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-blue dark:text-blue-100 sm:text-3xl">
+            <h2 className="text-blue text-2xl font-bold tracking-tight dark:text-blue-100 sm:text-3xl">
               Automatic schema generation for reliable insights
             </h2>
-            <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-blue-300">
+            <p className="text-md mt-6 max-w-3xl leading-7 text-gray-500 dark:text-blue-300">
               You can only reliably analyze your submissions when the form schema is sent along with the form.
             </p>
-            <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-slate-300">
+            <p className="text-md mt-6 max-w-3xl leading-7 text-gray-500 dark:text-slate-300">
               Use our React Forms Library with the Formbricks Data Pipes and get a full image of the data
               sent. Analyze it in our dashboard or forward it to your database.
             </p>
@@ -119,8 +119,8 @@ const ReactFormBuilderPage = () => (
         {hereFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="flex items-center">
-              <CheckIcon className="absolute w-6 h-6 ml-4 text-teal md:ml-0" aria-hidden="true" />
-              <p className="text-lg leading-loose text-gray-200 ml-14 md:ml-9">{feature.name}</p>
+              <CheckIcon className="text-teal absolute ml-4 h-6 w-6 md:ml-0" aria-hidden="true" />
+              <p className="ml-14 text-lg leading-loose text-gray-200 md:ml-9">{feature.name}</p>
             </dt>
           </div>
         ))}
@@ -128,7 +128,7 @@ const ReactFormBuilderPage = () => (
       <dl>
         {nextFeatures.map((feature) => (
           <div key={feature.name}>
-            <dt className="flex items-center max-w-sm mx-auto">
+            <dt className="mx-auto flex max-w-sm items-center">
               <div className="bg-teal ml-2 rounded-full px-1.5 text-xs font-semibold text-black">
                 <p>next</p>
               </div>
@@ -140,7 +140,7 @@ const ReactFormBuilderPage = () => (
       <dl>
         {soonFeatures.map((feature) => (
           <div key={feature.name}>
-            <dt className="flex items-center max-w-sm mx-auto">
+            <dt className="mx-auto flex max-w-sm items-center">
               <div className="text-teal ml-2 rounded-full bg-black px-1.5 text-xs">
                 <p>soon</p>
               </div>
@@ -149,8 +149,8 @@ const ReactFormBuilderPage = () => (
           </div>
         ))}
         <a href="mailto:johannes@formbricks.com">
-          <div className="flex items-center max-w-sm mx-auto transition duration-200 ease-in-out delay-100 hover:scale-105">
-            <PlusIcon className="w-6 h-6 ml-4 text-teal md:ml-5" aria-hidden="true" />
+          <div className="mx-auto flex max-w-sm items-center transition delay-100 duration-200 ease-in-out hover:scale-105">
+            <PlusIcon className="text-teal ml-4 h-6 w-6 md:ml-5" aria-hidden="true" />
             <p className="ml-5 text-lg leading-loose text-gray-300 underline underline-offset-4">
               Add feature to roadmap
             </p>
