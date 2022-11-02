@@ -676,9 +676,9 @@ available-typed-arrays@^1.0.5:
   integrity sha512-DMD0KiN46eipeziST1LPP/STfDU0sufISXmjSgvVsoU2tqxctQeASejWcfNtxYKqETM1UxQ8sp2OrSBWpHY6sw==
 
 aws-sdk@^2.1230.0:
-  version "2.1244.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.1244.0.tgz#1cb889c0fdcaa28b66b912eacddf87f59403727a"
-  integrity sha512-V7uXdz3Koti2FfU07Xj6SGnv4UVIGcw03aEGLiidieilQYYVrny828pn2Pl2X9AWJJczE/iLzge/ITTJ7ZPwZQ==
+  version "2.1245.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.1245.0.tgz#cee09dd6a83badbe7692cb512cbce5e9daa0c702"
+  integrity sha512-LXNmuT33+k4ymWijm6dhLRm0OX14ki9OOK1BYn8AUWWPuh+GMlFIuIFH+sWORVdhZqaQNsvF72cB6CeMBqaJWg==
   dependencies:
     buffer "4.9.2"
     events "1.1.1"
@@ -692,9 +692,9 @@ aws-sdk@^2.1230.0:
     xml2js "0.4.19"
 
 axe-core@^4.4.3:
-  version "4.5.0"
-  resolved "https://registry.yarnpkg.com/axe-core/-/axe-core-4.5.0.tgz#6efe2ecdba205fcc9d7ddb3d48c2cf630f70eb5e"
-  integrity sha512-4+rr8eQ7+XXS5nZrKcMO/AikHL0hVqy+lHWAnE3xdHl+aguag8SOQ6eEqLexwLNWgXIMfunGuD3ON1/6Kyet0A==
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/axe-core/-/axe-core-4.5.1.tgz#04d561c11b6d76d096d34e9d14ba2c294fb20cdc"
+  integrity sha512-1exVbW0X1O/HSr/WMwnaweyqcWOgZgLiVxdLG34pvSQk4NlYQr9OUy0JLwuhFfuVNQzzqgH57eYzkFBCb3bIsQ==
 
 axobject-query@^2.2.0:
   version "2.2.0"

@@ -2,7 +2,7 @@ import { handleWebhook } from "../components/pipelines/webhook";
 import { capturePosthogEvent } from "./posthog";
 import { prisma } from "./prisma";
 import { sendTelemetry } from "./telemetry";
-import { ApiEvent, Schema } from "./types";
+import { ApiEvent, Schema, SchemaPage } from "./types";
 
 type validationError = {
   status: number;
@@ -41,13 +41,11 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
 
     const sessionEvent = await prisma.sessionEvent.findFirst({
       where: {
-        data: {
-          array_contains: {
-            formId,
-            candidateId,
-            pageName: event.data.pageName,
-          },
-        },
+        AND: [
+          { data: { path: ["formId"], equals: formId } },
+          { data: { path: ["candidateId"], equals: candidateId } },
+          { data: { path: ["pageName"], equals: event.data.pageName } },
+        ],
       },
     });
 
@@ -88,10 +86,18 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
     //const data = { schema: event.data, updatedAt: new Date() };
 
     const form = await prisma.form.findUnique({ where: { id: formId } });
-    const schema = form.schema as Schema;
+    // TODO find way to fix this code
+    // const schema = form.schema as Schema;
+
+    // const data = {
+    //   schema: [...event.data.pages, ...schema.pages],
+    //   updatedAt: new Date(),
+    // };
+
+    const schema = form.schema as SchemaPage[];
 
     const data = {
-      schema: [...event.data.pages, ...schema.pages],
+      schema: [...event.data.pages, ...schema],
       updatedAt: new Date(),
     };
 
@@ -105,15 +111,22 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
     const userOpenFormSession = await prisma.sessionEvent.findFirst({
       where: {
         type: "formOpened",
-        data: {
-          array_contains: {
-            formId,
-            candidateId: candidateId,
+        AND: [
+          {
+            data: {
+              path: ["formId"],
+              equals: formId,
+            },
           },
-        },
+          {
+            data: {
+              path: ["candidateId"],
+              equals: candidateId,
+            },
+          },
+        ],
       },
     });
-
     if (userOpenFormSession === null) {
       const { id } = await prisma.submissionSession.create({
         data: { form: { connect: { id: formId } } },

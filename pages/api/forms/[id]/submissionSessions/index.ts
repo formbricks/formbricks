@@ -57,12 +57,20 @@ export default async function handle(
   if (req.method === "POST") {
     const sessionEvent = await prisma.sessionEvent.findFirst({
       where: {
-        data: {
-          array_contains: {
-            formId,
-            candidateId: session.user.id,
+        AND: [
+          {
+            data: {
+              path: ["formId"],
+              equals: formId,
+            },
           },
-        },
+          {
+            data: {
+              path: ["candidatId"],
+              equals: session.user.id,
+            },
+          },
+        ],
       },
     });
 

@@ -34,12 +34,21 @@ export default async function handle(
 
     const sessionEvents = await prisma.sessionEvent.findMany({
       where: {
-        data: {
-          array_contains: {
-            formId,
-            candidateId: session.user.id,
+        type: "pageSubmission",
+        AND: [
+          {
+            data: {
+              path: ["formId"],
+              equals: formId,
+            },
           },
-        },
+          {
+            data: {
+              path: ["candidateId"],
+              equals: session.user.id,
+            },
+          },
+        ],
       },
     });
 
