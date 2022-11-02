@@ -141,7 +141,7 @@ const ReactFormBuilderPage = () => (
         {soonFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="flex items-center max-w-sm mx-auto">
-              <div className="text-teal ml-2 rounded-full bg-black px-1.5 text-xs">
+              <div className="text-teal ml-2 rounded-full bg-blue-900 px-1.5 text-xs">
                 <p>soon</p>
               </div>
               <p className="ml-3 text-lg leading-loose text-gray-200">{feature.name}</p>
