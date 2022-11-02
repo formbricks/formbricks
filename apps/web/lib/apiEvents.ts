@@ -48,10 +48,6 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
   if (event.type === "pageSubmission") {
     const schema = form.schema as Schema;
     const { pageName } = event.data;
-    const pages = schema.pages.filter((page) => page.type === "form");
-
-    const indexOfPage = pages.findIndex((page) => page.name === pageName);
-    // const owner = form.owner;
 
     await prisma.sessionEvent.create({
       data: {
@@ -71,17 +67,23 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
 
     sendTelemetry("pageSubmission received");
 
-    if (indexOfPage === pages.length - 1) {
-      processApiEvent(
-        {
-          ...event,
-          type: "formCompleted",
-          data: {
-            submissionSessionId: event.data.submissionSessionId,
+    if ("pages" in schema) {
+      const pages = schema.pages.filter((page) => page.type === "form");
+
+      const indexOfPage = pages.findIndex((page) => page.name === pageName);
+
+      if (indexOfPage === pages.length - 1) {
+        processApiEvent(
+          {
+            ...event,
+            type: "formCompleted",
+            data: {
+              submissionSessionId: event.data.submissionSessionId,
+            },
           },
-        },
-        formId
-      );
+          formId
+        );
+      }
     }
   } else if (event.type === "formCompleted") {
     await prisma.sessionEvent.create({
@@ -100,7 +102,7 @@ export const processApiEvent = async (event: ApiEvent, formId) => {
     sendTelemetry("formCompleted received");
   } else if (event.type === "updateSchema") {
     const data = { schema: event.data, updatedAt: new Date() };
-    prisma.form.update({
+    await prisma.form.update({
       where: { id: formId },
       data,
     });
