@@ -42,7 +42,7 @@ const features = [
 
 export default function FeatureTable({}) {
   return (
-    <div className="mt-56 mb-16 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800">
+    <div className="mt-56 rounded-xl bg-gradient-to-br from-blue-900 via-blue-900 to-black">
       <div className="max-w-4xl px-4 py-8 mx-auto sm:px-6 sm:pt-8 sm:pb-12 lg:max-w-7xl lg:px-8 lg:pt-12">
         <p className="max-w-2xl mb-3 font-semibold text-teal-500 uppercase text-md sm:mt-4">
           Why Formbricks?
@@ -50,7 +50,7 @@ export default function FeatureTable({}) {
         <h2 className="mt-4 text-3xl font-bold tracking-tight text-white">
           The only complete open-source option.
         </h2>
-        <p className="max-w-3xl mt-4 text-lg text-slate-300">
+        <p className="max-w-3xl mt-4 text-lg text-blue-300">
           We needed this, so we are building it. We experienced first hand how form needs develop as companies
           grow. Make the right choice today, congratulate yourself tomorrow :)
         </p>
@@ -64,7 +64,7 @@ export default function FeatureTable({}) {
               </div>
               <div className="mt-6">
                 <h3 className="text-lg font-semibold text-white">{feature.name}</h3>
-                <p className="mt-2 text-base leading-6 text-slate-400">{feature.description}</p>
+                <p className="mt-2 text-base leading-6 text-blue-400">{feature.description}</p>
               </div>
             </div>
           ))}

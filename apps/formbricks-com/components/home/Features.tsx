@@ -7,6 +7,7 @@ import {
   RectangleGroupIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import HeadingCentered from "../shared/HeadingCenetered";
 
 const features = [
   {
@@ -56,49 +57,40 @@ export default function Features() {
         <div className="h-1/3 sm:h-2/3" />
       </div>
       <div className="relative mx-auto max-w-7xl">
-        <div className="text-center">
-          <p className="max-w-2xl mx-auto mb-3 font-semibold text-teal-500 uppercase text-md sm:mt-4">
-            the Swiss army knife for forms & surveys
-          </p>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
-            Home-cooked taste, delivered in minutes
-          </h2>
-          <p className="max-w-2xl mx-auto mt-3 text-xl text-slate-500 dark:text-slate-300 sm:mt-4">
-            Build a 'home-cooked' solution at the fraction of the time. We do the heavy lifting, you customize
-            to your needs.
-          </p>
-        </div>
+        <HeadingCentered
+          closer
+          Teaser="the Swiss army knife for forms & surveys"
+          Heading="Home-cooked taste, delivered in minutes"
+          Subheading="Build a 'home-cooked' solution at the fraction of the time. We do the heavy lifting, you customize
+            to your needs."
+        />
         <ul role="list" className="grid grid-cols-1 gap-6 pt-8 sm:grid-cols-2 md:grid-cols-3">
           {features.map((feature) => (
             <li
               key={feature.id}
               className={clsx(
-                feature.comingSoon
-                  ? "bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900"
-                  : "bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800",
-                "relative col-span-1 mt-16 flex flex-col rounded-xl text-center shadow-md"
+                feature.comingSoon ? "dark:to-blue dark:from-blue-900" : "dark:from-black dark:to-blue-900",
+                "relative col-span-1 mt-16 flex flex-col rounded-xl bg-gradient-to-b from-blue-200 to-gray-100 text-center drop-shadow-sm dark:from-black dark:to-blue-900"
               )}>
               <div className="absolute w-full -mt-12">
                 <div
                   className={clsx(
                     feature.comingSoon
-                      ? "bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 "
-                      : "bg-gradient-to-br from-slate-700 to-slate-800 ",
+                      ? "dark:to-blue bg-gradient-to-br from-blue-200 to-gray-100 dark:from-blue-900 dark:via-blue-900"
+                      : "via-blue to-blue dark bg-gradient-to-br from-black ",
                     "mx-auto flex h-20 w-20 items-center justify-center rounded-full shadow"
                   )}>
                   <feature.icon className="flex-shrink-0 w-10 h-10 mx-auto text-teal-500" />
                 </div>
               </div>
               <div className="flex flex-col flex-1 p-10">
-                <h3 className="my-4 text-lg font-medium text-slate-900 dark:text-slate-100">
-                  {feature.name}
-                </h3>
+                <h3 className="my-4 text-lg font-medium text-blue dark:text-blue-100">{feature.name}</h3>
                 <dl className="flex flex-col justify-between flex-grow mt-1">
                   <dt className="sr-only">Description</dt>
-                  <dd className="text-sm text-slate-500 dark:text-slate-400">{feature.description}</dd>
+                  <dd className="text-sm text-blue-500 dark:text-blue-400">{feature.description}</dd>
                   {feature.comingSoon && (
                     <dd className="mt-4">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-slate-700 text-slate-50">
+                      <span className="px-2 py-1 text-xs font-medium bg-blue-600 rounded-full text-blue-50">
                         coming soon
                       </span>
                     </dd>

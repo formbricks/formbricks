@@ -51,7 +51,7 @@ const navigation = {
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-800" aria-labelledby="footer-heading">
+    <footer className="from-blue bg-gradient-to-b to-black" aria-labelledby="footer-heading">
       <h2 id="footer-heading" className="sr-only">
         Footer
       </h2>
@@ -59,10 +59,10 @@ export default function Footer() {
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8 xl:col-span-1">
             <Image src={logoDark} alt="Formbricks Logo" width={200} />
-            <p className="text-base text-slate-400">The Open Source Forms & Survey Toolbox</p>
+            <p className="text-base text-blue-400">The Open Source Forms & Survey Toolbox</p>
             <div className="flex space-x-6">
               {navigation.social.map((item) => (
-                <Link key={item.name} href={item.href} className="text-gray-400 hover:text-slate-400">
+                <Link key={item.name} href={item.href} className="text-gray-400 hover:text-blue-400">
                   <span className="sr-only">{item.name}</span>
                   <item.icon className="w-6 h-6" aria-hidden="true" />
                 </Link>
@@ -72,7 +72,7 @@ export default function Footer() {
           <div className="grid grid-cols-2 gap-8 mt-12 xl:col-span-2 xl:mt-0">
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-base font-medium text-slate-50">Form Creation</h3>
+                <h3 className="text-base font-medium text-blue-50">Form Creation</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.creation.map((item) => (
                     <li key={item.name}>
@@ -81,8 +81,8 @@ export default function Footer() {
                         scroll={item.status}
                         className={clsx(
                           item.status
-                            ? "cursor-pointer text-slate-400 hover:text-slate-50"
-                            : "cursor-default text-slate-600",
+                            ? "cursor-pointer text-blue-400 hover:text-blue-50"
+                            : "cursor-default text-blue-600",
                           "text-base"
                         )}>
                         {item.name}
@@ -92,11 +92,11 @@ export default function Footer() {
                 </ul>
               </div>
               <div className="mt-12 md:mt-0">
-                <h3 className="text-base font-medium text-slate-50">Data Pipelines</h3>
+                <h3 className="text-base font-medium text-blue-50">Data Pipelines</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.pipelines.map((item) => (
                     <li key={item.name}>
-                      <Link href={item.href} className="text-base text-slate-400 hover:text-slate-50">
+                      <Link href={item.href} className="text-base text-blue-400 hover:text-blue-50">
                         {item.name}
                       </Link>
                     </li>
@@ -106,7 +106,7 @@ export default function Footer() {
             </div>
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-base font-medium text-slate-50">Data Insights</h3>
+                <h3 className="text-base font-medium text-blue-50">Data Insights</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.insights.map((item) => (
                     <li key={item.name}>
@@ -115,8 +115,8 @@ export default function Footer() {
                         scroll={item.status}
                         className={clsx(
                           item.status
-                            ? "cursor-pointer text-slate-400 hover:text-slate-50"
-                            : "cursor-default text-slate-600",
+                            ? "cursor-pointer text-blue-400 hover:text-blue-50"
+                            : "cursor-default text-blue-600",
                           "text-base"
                         )}>
                         {item.name}
@@ -126,11 +126,11 @@ export default function Footer() {
                 </ul>
               </div>
               <div className="mt-12 md:mt-0">
-                <h3 className="text-base font-medium text-slate-50">Legal</h3>
+                <h3 className="text-base font-medium text-blue-50">Legal</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.legal.map((item) => (
                     <li key={item.name}>
-                      <Link href={item.href} className="text-base text-slate-400 hover:text-slate-50">
+                      <Link href={item.href} className="text-base text-blue-400 hover:text-blue-50">
                         {item.name}
                       </Link>
                     </li>
@@ -141,7 +141,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="pt-8 mt-12 border-gray-500">
-          <p className="text-base text-gray-600 xl:text-center">
+          <p className="text-base text-gray-300 xl:text-center">
             &copy; 2022 Form Bricks, Inc. All rights reserved.
           </p>
         </div>

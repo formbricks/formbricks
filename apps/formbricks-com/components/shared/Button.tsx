@@ -68,16 +68,16 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
         variant === "highlight" &&
           (disabled
             ? "border border-transparent bg-gray-400 text-white"
-            : "border border-transparent dark:text-slate-800 text-slate-800 bg-teal-500 dark:bg-teal-500 hover:bg-opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-teal-900"),
+            : "border border-transparent dark:text-blue-800 text-black bg-teal-500 dark:bg-teal-500 hover:bg-opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-teal-900"),
         variant === "primary" &&
           (disabled
             ? "border border-transparent bg-gray-400 text-white"
-            : "border border-transparent dark:text-slate-800 text-slate-100 bg-slate-800 dark:bg-slate-100 hover:bg-opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-teal-900"),
+            : "border border-transparent dark:text-black text-blue-100 bg-blue-800 dark:bg-gradient-to-b dark:from-blue-200 dark:to-gray-100 hover:bg-opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-teal-900"),
 
         variant === "secondary" &&
           (disabled
             ? "border border-gray-200 text-gray-400 bg-white"
-            : "border-2 border-slate-800 text-slate-800 bg-white hover:bg-gray-50 hover:text-slate-800 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-neutral-900 dark:bg-transparent dark:text-white dark:border-gray-800 dark:hover:bg-gray-800"),
+            : "border-2 border-blue-800 text-blue-800 bg-blue-50 hover:bg-white hover:text-blue-800 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-neutral-900 dark:bg-blue-900 dark:text-gray-100 dark:hover:bg-black"),
         variant === "alert" &&
           (disabled
             ? "border border-transparent bg-gray-400 text-white"
@@ -114,7 +114,7 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
       )}
       {props.children}
       {loading && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform">
+        <div className="absolute transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
           <svg
             className={clsx(
               "mx-4 h-5 w-5 animate-spin",

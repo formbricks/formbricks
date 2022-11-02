@@ -118,7 +118,7 @@ export default function Header() {
               <>
                 <Popover.Button
                   className={clsx(
-                    open ? "text-gray-500" : "text-gray-500",
+                    open ? "text-gray-400" : "text-gray-400",
                     "group inline-flex items-center rounded-md text-base font-medium hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-gray-50"
                   )}>
                   <span>Bricks</span>
@@ -230,17 +230,17 @@ export default function Header() {
 
           <Link
             href="/community"
-            className="text-base font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-50">
+            className="text-base font-medium text-gray-400 hover:text-gray-900 dark:hover:text-gray-50">
             Community
           </Link>
           <Link
             href="/blog"
-            className="text-base font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-50">
+            className="text-base font-medium text-gray-400 hover:text-gray-900 dark:hover:text-gray-50">
             Blog
           </Link>
           <Link
             href="/docs"
-            className="text-base font-medium text-gray-500 hover:text-gray-900 dark:hover:text-gray-50">
+            className="text-base font-medium text-gray-400 hover:text-gray-900 dark:hover:text-gray-50">
             Documentation
           </Link>
         </Popover.Group>
@@ -249,7 +249,7 @@ export default function Header() {
           <Button
             variant="secondary"
             EndIcon={GitHubIcon}
-            endIconClassName="fill-slate-900 dark:fill-slate-50"
+            endIconClassName="fill-blue-900 dark:fill-blue-50"
             onClick={() => router.push("https://github.com/formbricks/formbricks")}>
             View on Github
           </Button>

@@ -72,14 +72,14 @@ const ReactFormBuilderPage = () => (
         <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
           <Image src={ImageReactLib} alt="react library" className="rounded-lg" />
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-blue dark:text-blue-100 sm:text-3xl">
               Building React forms has never been quicker. But there is more...
             </h2>
-            <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-slate-300">
+            <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-blue-300">
               Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all
               the good stuff you want, but don't want to build yourself.
             </p>
-            <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-slate-300">
+            <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-blue-300">
               Building forms fast is great, but where do you pipe your data? And what is it worth without a
               schema?
             </p>
@@ -91,10 +91,10 @@ const ReactFormBuilderPage = () => (
       <div className="max-w-md px-4 mx-auto sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
         <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-blue dark:text-blue-100 sm:text-3xl">
               Automatic schema generation for reliable insights
             </h2>
-            <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-slate-300">
+            <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-blue-300">
               You can only reliably analyze your submissions when the form schema is sent along with the form.
             </p>
             <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-slate-300">
@@ -129,7 +129,7 @@ const ReactFormBuilderPage = () => (
         {nextFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="flex items-center max-w-sm mx-auto">
-              <div className="bg-teal ml-2 rounded-full px-1.5 text-xs text-black">
+              <div className="bg-teal ml-2 rounded-full px-1.5 text-xs font-semibold text-black">
                 <p>next</p>
               </div>
               <p className="ml-3 text-lg leading-loose text-gray-200">{feature.name}</p>
@@ -141,7 +141,7 @@ const ReactFormBuilderPage = () => (
         {soonFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="flex items-center max-w-sm mx-auto">
-              <div className="text-teal ml-2 rounded-full bg-gray-800 px-1.5 text-xs">
+              <div className="text-teal ml-2 rounded-full bg-black px-1.5 text-xs">
                 <p>soon</p>
               </div>
               <p className="ml-3 text-lg leading-loose text-gray-200">{feature.name}</p>
