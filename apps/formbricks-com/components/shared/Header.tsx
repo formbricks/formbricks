@@ -169,7 +169,7 @@ export default function Header() {
                           ))}
                         </div>
                         <div>
-                          <h4 className="mb-6 ml-16 text-sm text-gray-500">Data Pipes</h4>
+                          <h4 className="mb-6 ml-16 text-sm text-gray-500">Data Pipelines</h4>
                           {pipes.map((brick) => (
                             <Link
                               key={brick.name}
@@ -286,35 +286,95 @@ export default function Header() {
                   </Popover.Button>
                 </div>
               </div>
-              <div className="mt-6">
-                <nav className="grid grid-cols-1 gap-7">
-                  {creation.map((solution) => (
+
+              <nav className="relative px-5 py-6 bg-white">
+                <div>
+                  <h4 className="mb-3 text-sm text-gray-500">Form Creation</h4>
+                  {creation.map((brick) => (
                     <Link
-                      key={solution.name}
-                      href={solution.href}
-                      className="flex items-center p-3 -m-3 rounded-lg hover:bg-gray-50">
-                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-white bg-teal-500 rounded-md">
-                        <solution.icon className="w-6 h-6" aria-hidden="true" />
+                      key={brick.name}
+                      href={brick.href}
+                      className={clsx(
+                        brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                        "-m-3 flex items-start rounded-lg p-3 py-3"
+                      )}>
+                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
+                        <brick.icon className="w-6 h-6" aria-hidden="true" />
                       </div>
-                      <div className="ml-4 text-base font-medium text-gray-900">{solution.name}</div>
+                      <div className="ml-4">
+                        <p
+                          className={clsx(
+                            brick.status ? "text-gray-900" : "text-gray-400",
+                            "text-lg font-semibold"
+                          )}>
+                          {brick.name}
+                        </p>
+                        <p className="text-sm text-gray-400">{brick.description}</p>
+                      </div>
                     </Link>
                   ))}
-                </nav>
-              </div>
+                </div>
+                <div>
+                  <h4 className="mt-8 mb-3 text-sm text-gray-500">Data Pipelines</h4>
+                  {pipes.map((brick) => (
+                    <Link
+                      key={brick.name}
+                      href={brick.href}
+                      className={clsx(
+                        brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                        "-m-3 flex items-start rounded-lg p-3 py-3"
+                      )}>
+                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 sm:h-12 sm:w-12">
+                        <brick.icon className="w-6 h-6" aria-hidden="true" />
+                      </div>
+                      <div className="ml-4">
+                        <p
+                          className={clsx(
+                            brick.status ? "text-gray-900" : "text-gray-400",
+                            "text-lg font-semibold"
+                          )}>
+                          {brick.name}
+                        </p>
+                        <p className="text-sm text-gray-400">{brick.description}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                <div>
+                  <h4 className="mt-8 mb-3 text-sm text-gray-500">Data Insights</h4>
+                  {insights.map((brick) => (
+                    <Link
+                      key={brick.name}
+                      href={brick.href}
+                      className={clsx(
+                        brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                        "-m-3 flex items-start rounded-lg p-3 py-3"
+                      )}>
+                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
+                        <brick.icon className="w-6 h-6" aria-hidden="true" />
+                      </div>
+                      <div className="ml-4">
+                        <p
+                          className={clsx(
+                            brick.status ? "text-gray-900" : "text-gray-400",
+                            "text-lg font-semibold"
+                          )}>
+                          {brick.name}
+                        </p>
+                        <p className="text-sm text-gray-400">{brick.description}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </nav>
             </div>
             <div className="px-5 py-6">
-              <div className="grid grid-cols-2 gap-4">
-                <Link href="/community" className="text-base font-medium text-gray-900 hover:text-gray-700">
-                  Community
-                </Link>
+              <div className="grid grid-cols-3 text-sm font-medium text-center text-gray-900 hover:text-gray-700 sm:text-base">
+                <Link href="/community">Community</Link>
 
-                <Link href="/blog" className="text-base font-medium text-gray-900 hover:text-gray-700">
-                  Blog
-                </Link>
+                <Link href="/blog">Blog</Link>
 
-                <Link href="/docs" className="text-base font-medium text-gray-900 hover:text-gray-700">
-                  Documentation
-                </Link>
+                <Link href="/docs">Documentation</Link>
               </div>
               <div className="mt-6">
                 <Button
@@ -327,7 +387,7 @@ export default function Header() {
                 <Button
                   variant="primary"
                   onClick={() => router.push("https://app.formbricks.com")}
-                  className="flex justify-center w-full mt-3 ml-2">
+                  className="flex justify-center w-full mt-3">
                   Get started
                 </Button>
               </div>

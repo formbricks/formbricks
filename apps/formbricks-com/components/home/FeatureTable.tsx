@@ -58,8 +58,8 @@ export default function FeatureTable({}) {
           The only complete open-source option.
         </h2>
         <p className="max-w-3xl mt-4 text-lg text-slate-300">
-          We needed this, so we built it. We experienced first hand how form needs develop as companies grow.
-          Make the right choice today, congratulate yourself tomorrow :)
+          We needed this, so we are building it. We experienced first hand how form needs develop as companies
+          grow. Make the right choice today, congratulate yourself tomorrow :)
         </p>
         <div className="grid grid-cols-1 mt-12 gap-x-6 gap-y-12 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
           {features.map((feature) => (
