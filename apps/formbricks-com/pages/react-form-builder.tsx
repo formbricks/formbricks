@@ -77,7 +77,7 @@ const ReactFormBuilderPage = () => (
             </h2>
             <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-blue-300">
               Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all
-              the good stuff you want, but don't want to build yourself.
+              the good stuff you want, but don&apos;t want to build yourself.
             </p>
             <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-blue-300">
               Building forms fast is great, but where do you pipe your data? And what is it worth without a
@@ -141,7 +141,7 @@ const ReactFormBuilderPage = () => (
         {soonFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="flex items-center max-w-sm mx-auto">
-              <div className="text-teal ml-2 rounded-full bg-blue-900 px-1.5 text-xs">
+              <div className="text-teal ml-2 rounded-full bg-black px-1.5 text-xs">
                 <p>soon</p>
               </div>
               <p className="ml-3 text-lg leading-loose text-gray-200">{feature.name}</p>

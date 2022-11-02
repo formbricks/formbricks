@@ -16,18 +16,24 @@ const styles = {
 };
 
 const icons = {
-  note: (props) => <Icon icon="lightbulb" {...props} />,
-  warning: (props) => <Icon icon="warning" color="amber" {...props} />,
+  note: (props: any) => <Icon icon="lightbulb" {...props} />,
+  warning: (props: any) => <Icon icon="warning" color="amber" {...props} />,
 };
 
-export function Callout({ type = "note", title, children }) {
+interface CalloutProps {
+  type: "note" | "warning";
+  title: string;
+  children: React.ReactNode;
+}
+
+export function Callout({ type = "note", title, children }: CalloutProps) {
   let IconComponent = icons[type];
 
   return (
     <div className={clsx("my-8 flex rounded-3xl p-6", styles[type].container)}>
       <IconComponent className="h-8 w-8 flex-none" />
       <div className="ml-4 flex-auto">
-        <p className={clsx("m-0 font-display text-xl", styles[type].title)}>{title}</p>
+        <p className={clsx("font-display m-0 text-xl", styles[type].title)}>{title}</p>
         <div className={clsx("prose mt-2.5", styles[type].body)}>{children}</div>
       </div>
     </div>

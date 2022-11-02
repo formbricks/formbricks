@@ -2,7 +2,18 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import clsx from "clsx";
 
-export function Navigation({ navigation, className }) {
+interface NavigationProps {
+  navigation: {
+    title: string;
+    links: {
+      title: string;
+      href: string;
+    }[];
+  }[];
+  className: string;
+}
+
+export function Navigation({ navigation, className }: NavigationProps) {
   let router = useRouter();
 
   return (
@@ -10,7 +21,7 @@ export function Navigation({ navigation, className }) {
       <ul role="list" className="space-y-9">
         {navigation.map((section) => (
           <li key={section.title}>
-            <h2 className="font-display font-medium text-blue dark:text-white">{section.title}</h2>
+            <h2 className="font-display text-blue font-medium dark:text-white">{section.title}</h2>
             <ul
               role="list"
               className="mt-2 space-y-2 border-l-2 border-blue-100 dark:border-blue-800 lg:mt-4 lg:space-y-4 lg:border-blue-200">

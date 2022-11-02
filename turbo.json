@@ -24,7 +24,10 @@
         "SMTP_PASSWORD",
         "SMTP_SECURE_ENABLED",
         "TELEMETRY_DISABLED",
-        "VERCEL_URL"
+        "VERCEL_URL",
+        "NEXT_PUBLIC_DOCSEARCH_APP_ID",
+        "NEXT_PUBLIC_DOCSEARCH_API_KEY",
+        "NEXT_PUBLIC_DOCSEARCH_INDEX_NAME"
       ]
     },
     "db:migrate:deploy": {

@@ -9,10 +9,8 @@ export default function MenuBreadcrumbs({ breadcrumbs }) {
           <li>
             <div>
               <Link href="/forms/" className="text-ui-gray-dark hover:text-ui-gray-dark">
-
                 <HomeIcon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                 <span className="sr-only">Home</span>
-
               </Link>
             </div>
           </li>
