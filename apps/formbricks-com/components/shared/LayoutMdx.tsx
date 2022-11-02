@@ -17,7 +17,7 @@ export default function LayoutMdx({ meta, children }: Props) {
             )}
           </header>
         )}
-        <Prose>{children}</Prose>
+        <Prose className="">{children}</Prose>
       </article>
     </Layout>
   );

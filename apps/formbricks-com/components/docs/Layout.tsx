@@ -30,7 +30,7 @@ function Header({ navigation }: any) {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      window.removeEventListener("scroll", onScroll, { passive: true });
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
@@ -107,7 +107,7 @@ export function Layout({ children, meta }: LayoutProps) {
                 )}
               </header>
             )}
-            <Prose>{children}</Prose>
+            <Prose className="">{children}</Prose>
           </article>
           <dl className="mt-12 flex border-t border-blue-200 pt-6 dark:border-blue-800">
             {previousPage && (
