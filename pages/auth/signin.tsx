@@ -100,27 +100,15 @@ export default function SignInPage() {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="text-center">
                     <button
                       type="submit"
                       className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
                       Se connecter
                     </button>
-                    <div className="mt-3 text-center">
-                      {!passwordResetDisabled && (
-                        <Link href="/auth/forgot-password">
-                          <a
-                            href=""
-                            className="block text-xs text-red hover:text-red-600"
-                          >
-                            Forgot your password?
-                          </a>
-                        </Link>
-                      )}
                       <span className="text-center"> - OU - </span>
                       <button
-                      type="submit"
                       className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red-300 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
                         <Link href="/auth/signup">
@@ -131,8 +119,17 @@ export default function SignInPage() {
                         </a>
                       </Link>
                     </button>
+                    {passwordResetDisabled && (
+                        <Link href="/auth/forgot-password">
+                          <a
+                            href=""
+                            className="mt-3 block text-xs text-red hover:text-red-600"
+                          >
+                            Forgot your password?
+                          </a>
+                        </Link>
+                      )}
                     </div>
-                  </div>
                 </form>
               </div>
             </div>
