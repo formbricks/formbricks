@@ -6,7 +6,7 @@ import FeatureTable from "@/components/home/FeatureTable";
 import CTA from "@/components/home/CTA";
 
 const IndexPage = () => (
-  <Layout meta={{ title: "Home | Next.js + TypeScript Example" }}>
+  <Layout meta={{ title: "The Open-source Forms & Survey Toolbox" }}>
     <Hero />
     <Features />
     <Highlights />

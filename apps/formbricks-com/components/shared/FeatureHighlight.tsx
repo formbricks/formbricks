@@ -9,9 +9,9 @@ export default function Highlights({}) {
         <div className="max-w-md px-4 mx-auto sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
                 Build forms in minutes with our <span className="font-light text-teal-500">lightweight</span>{" "}
-                React Form Builder.
+                React Builder.
               </h2>
               <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-slate-300">
                 Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all
@@ -36,7 +36,7 @@ export default function Highlights({}) {
           <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
             <Image src={ImageDataPipelines} alt="react library" className="rounded-lg" />
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
                 <span className="text-teal-500 ">API</span> all the way
               </h2>
               <p className="max-w-3xl mt-6 leading-7 text-gray-500 text-md dark:text-slate-300">

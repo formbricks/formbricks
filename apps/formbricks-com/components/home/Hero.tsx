@@ -1,29 +1,24 @@
 import Button from "../shared/Button";
 import HeroAnimation from "./HeroAnimation";
+import HeroTitle from "../shared/HeroTitle";
 
 interface Props {}
 
 export default function Hero({}: Props) {
   return (
-    <div className="relative px-4 pt-16 pb-20 text-center sm:px-6 lg:px-8 lg:pt-24 lg:pb-28">
-      <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl md:text-5xl">
-        <span className="block xl:inline">The </span>{" "}
-        <span className="block text-transparent bg-gradient-to-b from-teal-400 to-teal-500 bg-clip-text xl:inline">
-          Open Source
-        </span>{" "}
-        <span className="block xl:inline">Forms & Survey Toolbox</span>
-      </h1>
-      <p className="max-w-md mx-auto mt-3 text-base text-slate-500 dark:text-slate-300 sm:text-lg md:mt-5 md:max-w-2xl md:text-xl">
-        We're building all essential form functionality so you don't have to. Modular, customizable,
-        extendable. And open-source.
-      </p>
-      <div className="max-w-md mx-auto mt-5 sm:flex sm:justify-center md:mt-8">
+    <div className="relative">
+      <HeroTitle
+        HeadingPt1="The"
+        HeadingTeal="Open Source"
+        HeadingPt2="Forms & Survey Toolbox"
+        Subheading="We're building all essential form functionality so you don't have to. Modular, customizable,
+        extendable. And open-source.">
         <Button variant="secondary">See examples</Button>
         <Button variant="primary" className="ml-3">
           Get started
         </Button>
-      </div>
-      <HeroAnimation className="mt-20" />
+      </HeroTitle>
+      <HeroAnimation />
     </div>
   );
 }
