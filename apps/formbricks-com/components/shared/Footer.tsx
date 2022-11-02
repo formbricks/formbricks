@@ -2,26 +2,30 @@ import Image from "next/image";
 import logoDark from "@/images/logo_dark.svg";
 import Link from "next/link";
 import clsx from "clsx";
+import { Logo } from "./Logo";
 
 const navigation = {
   creation: [
-    { name: "React Form Builder", href: "#", status: true },
+    { name: "React Form Builder", href: "/react-form-builder", status: true },
     { name: "Visual Builder", href: "#", status: false },
     { name: "Templates", href: "#", status: false },
   ],
   pipelines: [
-    { name: "Core API", href: "#" },
-    { name: "Webhooks", href: "#" },
-    { name: "Email", href: "#" },
-    { name: "Integrations", href: "#" },
+    { name: "Core API", href: "/core-api" },
+    { name: "Webhooks", href: "/webhooks" },
+    { name: "Integrations", href: "/integrations" },
+    { name: "Email", href: "/email" },
   ],
   insights: [
-    { name: "Dashboard", href: "#", status: true },
+    { name: "Form HQ", href: "/form-hq", status: true },
     { name: "Reports", href: "#", status: false },
   ],
   legal: [
-    { name: "Privacy", href: "#" },
-    { name: "Terms", href: "#" },
+    { name: "Community", href: "/community" },
+    { name: "Docs", href: "/docs" },
+    { name: "Blog", href: "/blog" },
+    { name: "Terms", href: "/terms" },
+    { name: "Privacy", href: "/privacy" },
   ],
   social: [
     {
@@ -51,18 +55,22 @@ const navigation = {
 
 export default function Footer() {
   return (
-    <footer className="from-blue bg-gradient-to-b to-black" aria-labelledby="footer-heading">
+    <footer
+      className="dark:from-blue bg-gradient-to-b from-blue-100 to-blue-300 dark:to-black"
+      aria-labelledby="footer-heading">
       <h2 id="footer-heading" className="sr-only">
         Footer
       </h2>
       <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:py-16 lg:px-8">
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8 xl:col-span-1">
-            <Image src={logoDark} alt="Formbricks Logo" width={200} />
-            <p className="text-base text-blue-400">The Open Source Forms & Survey Toolbox</p>
+            <Logo className="w-auto h-8 sm:h-10" />
+            <p className="text-base text-blue-600 dark:text-blue-400">
+              The Open Source Forms & Survey Toolbox
+            </p>
             <div className="flex space-x-6">
               {navigation.social.map((item) => (
-                <Link key={item.name} href={item.href} className="text-gray-400 hover:text-blue-400">
+                <Link key={item.name} href={item.href} className="text-blue-400 hover:text-gray-400">
                   <span className="sr-only">{item.name}</span>
                   <item.icon className="w-6 h-6" aria-hidden="true" />
                 </Link>
@@ -72,7 +80,7 @@ export default function Footer() {
           <div className="grid grid-cols-2 gap-8 mt-12 xl:col-span-2 xl:mt-0">
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-base font-medium text-blue-50">Form Creation</h3>
+                <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Form Creation</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.creation.map((item) => (
                     <li key={item.name}>
@@ -81,8 +89,8 @@ export default function Footer() {
                         scroll={item.status}
                         className={clsx(
                           item.status
-                            ? "cursor-pointer text-blue-400 hover:text-blue-50"
-                            : "cursor-default text-blue-600",
+                            ? "cursor-pointer text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300"
+                            : "cursor-default text-blue-300 dark:text-blue-600",
                           "text-base"
                         )}>
                         {item.name}
@@ -92,11 +100,13 @@ export default function Footer() {
                 </ul>
               </div>
               <div className="mt-12 md:mt-0">
-                <h3 className="text-base font-medium text-blue-50">Data Pipelines</h3>
+                <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Data Pipelines</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.pipelines.map((item) => (
                     <li key={item.name}>
-                      <Link href={item.href} className="text-base text-blue-400 hover:text-blue-50">
+                      <Link
+                        href={item.href}
+                        className="text-base text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300">
                         {item.name}
                       </Link>
                     </li>
@@ -106,7 +116,7 @@ export default function Footer() {
             </div>
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-base font-medium text-blue-50">Data Insights</h3>
+                <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Data Insights</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.insights.map((item) => (
                     <li key={item.name}>
@@ -115,8 +125,8 @@ export default function Footer() {
                         scroll={item.status}
                         className={clsx(
                           item.status
-                            ? "cursor-pointer text-blue-400 hover:text-blue-50"
-                            : "cursor-default text-blue-600",
+                            ? "cursor-pointer text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300"
+                            : "cursor-default text-blue-300 dark:text-blue-600",
                           "text-base"
                         )}>
                         {item.name}
@@ -126,11 +136,13 @@ export default function Footer() {
                 </ul>
               </div>
               <div className="mt-12 md:mt-0">
-                <h3 className="text-base font-medium text-blue-50">Legal</h3>
+                <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Other</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.legal.map((item) => (
                     <li key={item.name}>
-                      <Link href={item.href} className="text-base text-blue-400 hover:text-blue-50">
+                      <Link
+                        href={item.href}
+                        className="text-base text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300">
                         {item.name}
                       </Link>
                     </li>
@@ -141,7 +153,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="pt-8 mt-12 border-gray-500">
-          <p className="text-base text-gray-300 xl:text-center">
+          <p className="text-sm text-blue-600 dark:text-gray-300 xl:text-center">
             &copy; 2022 Form Bricks, Inc. All rights reserved.
           </p>
         </div>

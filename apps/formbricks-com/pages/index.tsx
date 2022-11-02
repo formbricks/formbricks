@@ -2,7 +2,7 @@ import Layout from "@/components/shared/Layout";
 import Hero from "@/components/home/Hero";
 import Features from "@/components/home/Features";
 import Highlights from "@/components/home/Highlights";
-import FeatureTable from "@/components/home/FeatureTable";
+import WhyFormbricks from "../components/shared/WhyFormbricks";
 import CTA from "@/components/home/CTA";
 
 const IndexPage = () => (
@@ -10,7 +10,7 @@ const IndexPage = () => (
     <Hero />
     <Features />
     <Highlights />
-    <FeatureTable />
+    <WhyFormbricks />
     <CTA />
   </Layout>
 );

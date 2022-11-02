@@ -1,7 +1,9 @@
 import Button from "../shared/Button";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/router";
 
 export default function HeadingCentered() {
+  const router = useRouter();
   return (
     <div className="grid content-center max-w-md grid-cols-2 gap-10 px-4 pt-24 mx-auto pb-36 sm:max-w-3xl sm:px-6 lg:max-w-6xl lg:px-8">
       <div className="">
@@ -15,9 +17,11 @@ export default function HeadingCentered() {
         <p className="mb-3 text-xl text-blue-500 dark:text-blue-300 sm:mb-4">
           Questions? Join our Discord, we’re happy to help!
         </p>
-        <Button variant="secondary">See examples</Button>
-        <Button variant="primary" className="ml-3">
-          Quick start
+        <Button variant="secondary" onClick={() => router.push("/docs")}>
+          Read docs
+        </Button>
+        <Button variant="primary" className="ml-3" onClick={() => router.push("/get-started")}>
+          Get started
         </Button>
       </div>
       <div className="flex items-center">

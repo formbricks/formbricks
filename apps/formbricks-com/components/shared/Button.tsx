@@ -85,7 +85,7 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
         variant === "minimal" &&
           (disabled
             ? "text-gray-400 bg-transparent"
-            : "text-gray-700 bg-transparent hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:bg-gray-100 focus:ring-neutral-500"),
+            : "text-gray-50 bg-blue dark:bg-blue-700 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:bg-blue-900 focus:bg-blue-700 focus:ring-neutral-500"),
         variant === "warn" &&
           (disabled
             ? "text-gray-400 bg-transparent"
@@ -114,7 +114,7 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
       )}
       {props.children}
       {loading && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform">
+        <div className="absolute transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
           <svg
             className={clsx(
               "mx-4 h-5 w-5 animate-spin",
