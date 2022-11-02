@@ -91,11 +91,26 @@ const App: FC<IProps> = ({
                 <img src={block.data.file.url} alt={block.data.caption} />
               ) : block.type === "header" ? (
                 block.data.level === 1 ? (
-                  <h1 className="ce-header">{block.data.text}</h1>
+                  <h1
+                    dangerouslySetInnerHTML={{
+                      __html: block.data.text as string,
+                    }}
+                    className="ce-header"
+                  />
                 ) : block.level === 2 ? (
-                  <h2 className="ce-header">{block.data.text}</h2>
+                  <h2
+                    className="ce-header"
+                    dangerouslySetInnerHTML={{
+                      __html: block.data.text as string,
+                    }}
+                  />
                 ) : block.data.level === 3 ? (
-                  <h3 className="ce-header">{block.data.text}</h3>
+                  <h3
+                    className="ce-header"
+                    dangerouslySetInnerHTML={{
+                      __html: block.data.text as string,
+                    }}
+                  />
                 ) : null
               ) : block.type === "textQuestion" ? (
                 <SnoopElement
