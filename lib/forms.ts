@@ -36,7 +36,6 @@ export const persistForm = async (form) => {
 };
 
 export const createForm = async (form = {}) => {
-  
   try {
     const res = await fetch(`/api/forms`, {
       method: "POST",
@@ -104,8 +103,7 @@ export const getFormPage = (form, pageId) => {
   return page;
 };
 
-export const getFormPages = async (formId)=>{
-
+export const getFormPages = async (formId) => {
   try {
     const res = await fetch(`/api/forms`, {
       method: "POST",
@@ -117,4 +115,4 @@ export const getFormPages = async (formId)=>{
     console.error(error);
     throw Error(`createForm: unable to create form: ${error.message}`);
   }
-}
+};
