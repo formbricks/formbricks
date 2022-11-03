@@ -10,7 +10,6 @@ import {
   CursorArrowRippleIcon,
   DocumentChartBarIcon,
   EnvelopeIcon,
-  PresentationChartLineIcon,
   SquaresPlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -104,13 +103,13 @@ export default function Header() {
         <div className="flex justify-start lg:w-0 lg:flex-1">
           <Link href="/">
             <span className="sr-only">Formbricks</span>
-            <Logo className="w-auto h-8 sm:h-10" />
+            <Logo className="h-8 w-auto sm:h-10" />
           </Link>
         </div>
         <div className="-my-2 -mr-2 md:hidden">
-          <Popover.Button className="inline-flex items-center justify-center p-2 text-gray-400 bg-white rounded-md hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
+          <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
             <span className="sr-only">Open menu</span>
-            <Bars3Icon className="w-6 h-6" aria-hidden="true" />
+            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </Popover.Button>
         </div>
         <Popover.Group as="nav" className="hidden space-x-10 md:flex">
@@ -119,7 +118,9 @@ export default function Header() {
               <>
                 <Popover.Button
                   className={clsx(
-                    open ? "text-gray-400" : "text-gray-400",
+                    open
+                      ? "text-gray-300 "
+                      : "text-gray-500  hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-50",
                     "group inline-flex items-center rounded-md text-base font-medium hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-gray-50"
                   )}>
                   <span>Bricks</span>
@@ -140,11 +141,11 @@ export default function Header() {
                   leave="transition ease-in duration-150"
                   leaveFrom="opacity-100 translate-y-0"
                   leaveTo="opacity-0 translate-y-1">
-                  <Popover.Panel className="absolute z-10 w-screen max-w-lg mt-3 -ml-4 transform lg:left-1/2 lg:ml-0 lg:max-w-4xl lg:-translate-x-1/2">
+                  <Popover.Panel className="absolute z-10 mt-3 -ml-4 w-screen max-w-lg transform lg:left-1/2 lg:ml-0 lg:max-w-4xl lg:-translate-x-1/2">
                     <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                      <div className="relative grid gap-6 px-5 py-6 bg-white sm:gap-6 sm:p-8 lg:grid-cols-3">
+                      <div className="relative grid gap-6 bg-white px-5 py-6 sm:gap-6 sm:p-8 lg:grid-cols-3">
                         <div>
-                          <h4 className="mb-6 ml-16 text-sm text-gray-500">Form Creation</h4>
+                          <h4 className="mb-6 ml-16 text-sm text-blue-400">Form Creation</h4>
                           {creation.map((brick) => (
                             <Link
                               key={brick.name}
@@ -153,8 +154,8 @@ export default function Header() {
                                 brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
                                 "-m-3 flex items-start rounded-lg p-3 py-4"
                               )}>
-                              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
-                                <brick.icon className="w-6 h-6" aria-hidden="true" />
+                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
+                                <brick.icon className="h-6 w-6" aria-hidden="true" />
                               </div>
                               <div className="ml-4">
                                 <p
@@ -170,7 +171,7 @@ export default function Header() {
                           ))}
                         </div>
                         <div>
-                          <h4 className="mb-6 ml-16 text-sm text-gray-500">Data Pipelines</h4>
+                          <h4 className="mb-6 ml-16 text-sm text-blue-400">Data Pipelines</h4>
                           {pipes.map((brick) => (
                             <Link
                               key={brick.name}
@@ -179,8 +180,8 @@ export default function Header() {
                                 brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
                                 "-m-3 flex items-start rounded-lg p-3 py-4"
                               )}>
-                              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 sm:h-12 sm:w-12">
-                                <brick.icon className="w-6 h-6" aria-hidden="true" />
+                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center text-teal-500 sm:h-12 sm:w-12">
+                                <brick.icon className="h-6 w-6" aria-hidden="true" />
                               </div>
                               <div className="ml-4">
                                 <p
@@ -196,7 +197,7 @@ export default function Header() {
                           ))}
                         </div>
                         <div>
-                          <h4 className="mb-6 ml-16 text-sm text-gray-500">Data Insights</h4>
+                          <h4 className="mb-6 ml-16 text-sm text-blue-400">Data Insights</h4>
                           {insights.map((brick) => (
                             <Link
                               key={brick.name}
@@ -205,8 +206,8 @@ export default function Header() {
                                 brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
                                 "-m-3 flex items-start rounded-lg p-3 py-4"
                               )}>
-                              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
-                                <brick.icon className="w-6 h-6" aria-hidden="true" />
+                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
+                                <brick.icon className="h-6 w-6" aria-hidden="true" />
                               </div>
                               <div className="ml-4">
                                 <p
@@ -231,21 +232,21 @@ export default function Header() {
 
           <Link
             href="/community"
-            className="text-base font-medium text-gray-400 hover:text-gray-900 dark:hover:text-gray-50">
+            className="text-base font-medium text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-50">
             Community
           </Link>
           <Link
             href="/blog"
-            className="text-base font-medium text-gray-400 hover:text-gray-900 dark:hover:text-gray-50">
+            className="text-base font-medium text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-50">
             Blog
           </Link>
           <Link
             href="/docs"
-            className="text-base font-medium text-gray-400 hover:text-gray-900 dark:hover:text-gray-50">
-            Documentation
+            className="text-base font-medium text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-50">
+            Docs
           </Link>
         </Popover.Group>
-        <div className="items-center justify-end hidden md:flex md:flex-1 lg:w-0">
+        <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0">
           <ThemeSelector className="relative z-10 mr-5" />
           <Button
             variant="secondary"
@@ -270,22 +271,22 @@ export default function Header() {
         leaveTo="opacity-0 scale-95">
         <Popover.Panel
           focus
-          className="absolute inset-x-0 top-0 z-20 p-2 transition origin-top-right transform md:hidden">
-          <div className="bg-white divide-y-2 rounded-lg shadow-lg divide-gray-50 ring-1 ring-black ring-opacity-5">
+          className="absolute inset-x-0 top-0 z-20 origin-top-right transform p-2 transition md:hidden">
+          <div className="divide-y-2 divide-gray-50 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5">
             <div className="px-5 pt-5 pb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Logo className="w-auto h-8" />
+                  <Logo className="h-8 w-auto" />
                 </div>
                 <div className="-mr-2">
-                  <Popover.Button className="inline-flex items-center justify-center p-2 text-gray-400 bg-white rounded-md hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
+                  <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
                     <span className="sr-only">Close menu</span>
-                    <XMarkIcon className="w-6 h-6" aria-hidden="true" />
+                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </Popover.Button>
                 </div>
               </div>
 
-              <nav className="relative px-5 py-6 bg-white">
+              <nav className="relative bg-white px-5 py-6">
                 <div>
                   <h4 className="mb-3 text-sm text-gray-500">Form Creation</h4>
                   {creation.map((brick) => (
@@ -296,8 +297,8 @@ export default function Header() {
                         brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
-                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
-                        <brick.icon className="w-6 h-6" aria-hidden="true" />
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
+                        <brick.icon className="h-6 w-6" aria-hidden="true" />
                       </div>
                       <div className="ml-4">
                         <p
@@ -322,8 +323,8 @@ export default function Header() {
                         brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
-                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 sm:h-12 sm:w-12">
-                        <brick.icon className="w-6 h-6" aria-hidden="true" />
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center text-teal-500 sm:h-12 sm:w-12">
+                        <brick.icon className="h-6 w-6" aria-hidden="true" />
                       </div>
                       <div className="ml-4">
                         <p
@@ -348,8 +349,8 @@ export default function Header() {
                         brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
-                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
-                        <brick.icon className="w-6 h-6" aria-hidden="true" />
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
+                        <brick.icon className="h-6 w-6" aria-hidden="true" />
                       </div>
                       <div className="ml-4">
                         <p
@@ -367,7 +368,7 @@ export default function Header() {
               </nav>
             </div>
             <div className="px-5 py-6">
-              <div className="grid grid-cols-3 text-sm font-medium text-center text-gray-900 hover:text-gray-700 sm:text-base">
+              <div className="grid grid-cols-3 text-center text-sm font-medium text-gray-900 hover:text-gray-700 sm:text-base">
                 <Link href="/community">Community</Link>
 
                 <Link href="/blog">Blog</Link>
@@ -379,13 +380,13 @@ export default function Header() {
                   variant="secondary"
                   EndIcon={GitHubIcon}
                   onClick={() => router.push("https://github.com/formbricks/formbricks")}
-                  className="flex justify-center w-full">
+                  className="flex w-full justify-center">
                   View on Github
                 </Button>
                 <Button
                   variant="primary"
                   onClick={() => router.push("https://app.formbricks.com")}
-                  className="flex justify-center w-full mt-3">
+                  className="mt-3 flex w-full justify-center">
                   Get started
                 </Button>
               </div>

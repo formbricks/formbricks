@@ -9,11 +9,11 @@ interface Props {
 export default function LayoutMdx({ meta, children }: Props) {
   return (
     <Layout meta={meta}>
-      <article className="my-16">
+      <article className="max-w-3xl mx-auto my-16">
         {meta.title && (
-          <header className="mb-9 space-y-1">
+          <header className="space-y-1 mb-9">
             {meta.title && (
-              <h1 className="font-display text-blue text-3xl tracking-tight dark:text-white">{meta.title}</h1>
+              <h1 className="text-3xl tracking-tight font-display text-blue dark:text-white">{meta.title}</h1>
             )}
           </header>
         )}

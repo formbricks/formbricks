@@ -1,5 +1,3 @@
-import Image from "next/image";
-import logoDark from "@/images/logo_dark.svg";
 import Link from "next/link";
 import clsx from "clsx";
 import { Logo } from "./Logo";
@@ -24,8 +22,6 @@ const navigation = {
     { name: "Community", href: "/community" },
     { name: "Docs", href: "/docs" },
     { name: "Blog", href: "/blog" },
-    { name: "Terms", href: "/terms" },
-    { name: "Privacy", href: "/privacy" },
   ],
   social: [
     {

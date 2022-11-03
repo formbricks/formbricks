@@ -64,13 +64,14 @@ export default function Features() {
           subheading="Build a 'home-cooked' solution at the fraction of the time. We do the heavy lifting, you customize
             to your needs."
         />
+
         <ul role="list" className="grid grid-cols-1 gap-6 pt-8 sm:grid-cols-2 md:grid-cols-3">
           {features.map((feature) => (
             <li
               key={feature.id}
               className={clsx(
                 feature.comingSoon ? "dark:to-blue dark:from-blue-900" : "dark:from-black dark:to-blue-900",
-                "relative col-span-1 mt-16 flex flex-col rounded-xl bg-gradient-to-b from-blue-200 to-gray-100 text-center drop-shadow-sm dark:from-black dark:to-blue-900"
+                "relative col-span-1 mt-16 flex flex-col rounded-xl bg-gradient-to-b from-blue-200 to-gray-100 text-center drop-shadow-sm"
               )}>
               <div className="absolute w-full -mt-12">
                 <div
