@@ -1,10 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
-import {
-  ClockIcon,
-  CalendarDaysIcon,
-  InboxArrowDownIcon,
-} from "@heroicons/react/24/solid";
+import { ClockIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
 import { HiOutlineLocationMarker } from "react-icons/hi";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
@@ -18,6 +14,8 @@ import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
 import { isTimedPage } from "../../../lib/utils";
+import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import { BsPencilFill } from "react-icons/bs";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
@@ -73,6 +71,10 @@ function NoCodeFormPublic() {
     const timer = pageBlocks.filter((p) => p.type === "timerToolboxOption")[0];
     return timer.data.timerDuration;
   };
+  // TODO: implement method
+  const pageIsDisabled = (page: any) => {
+    return !!(page % 3);
+  };
 
   const handleClickAction = (page, fromModal: Boolean = false) => {
     if (!fromModal) {
@@ -117,10 +119,10 @@ function NoCodeFormPublic() {
                   </div>
                   <div className="mt-8">
                     <h1 className="mb-4 font-bold text-center leading-2">
-                      Form closed!
+                      Formulaire fermé!
                     </h1>
                     <p className="text-center">
-                      This form is closed for any further submissions.
+                      Ce formulaire n&apos;accepte plus de soumission.
                     </p>
                   </div>
                 </div>
@@ -131,14 +133,11 @@ function NoCodeFormPublic() {
               <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold">
                 {noCodeForm.form.name}
               </h1>
-              <p className="text-lg mb-3 ml-12  mr-11">
-                {noCodeForm.form.description}
-              </p>
               <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
                 <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
-                <span className="font-bold mr-1">Date limite :</span>{" "}
+                <span className="font-bold mr-1">Date limite : </span>
                 {new Date(noCodeForm.form.dueDate).toLocaleDateString(
-                  "en-US",
+                  "fr-FR",
                   options
                 )}
               </p>
@@ -147,10 +146,13 @@ function NoCodeFormPublic() {
               ) : (
                 <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
                   <HiOutlineLocationMarker className="w-6 h-6 stroke-thin mr-2" />
-                  <span className="font-bold mr-1">Place :</span>{" "}
+                  <span className="font-bold mr-1">Lieu : </span>
                   {noCodeForm.form.place}
                 </p>
               )}
+              <p className="text-lg mb-3 ml-12  mr-11">
+                {noCodeForm.form.description}
+              </p>
               {pages.map((page, index) => {
                 if (pages.length - 1 !== index)
                   return (
@@ -159,6 +161,11 @@ function NoCodeFormPublic() {
                       key={index}
                     >
                       <div className="pl-12 flex items-center">
+                        {pageIsCompleted(page.id) ? (
+                          <CheckCircleIcon className="text-green-800 w-7 mr-2" />
+                        ) : (
+                          <XCircleIcon className="text-red-800 w-7 mr-2" />
+                        )}
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
                       <div className="flex items-center justify-between w-2/5 pr-8">
@@ -167,11 +174,10 @@ function NoCodeFormPublic() {
                             <>
                               <span className="flex items-center mr-7 text-gray-800">
                                 <ClockIcon className="w-7 mr-2" />
-                                {getPageTimer(page.blocks)} minutes
+                                {getPageTimer(page.blocks)} min.
                               </span>
                               <span className="flex items-center text-gray-800">
-                                <InboxArrowDownIcon className="w-5 mr-2" />1
-                                attempt
+                                <BsPencilFill className="w-5 mr-2" />1 chance
                               </span>
                             </>
                           ) : (
@@ -184,14 +190,15 @@ function NoCodeFormPublic() {
                             disabled={isTimedPage(page)}
                             className="w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold"
                           >
-                            {isTimedPage(page) ? "Completed" : "Update answer"}
+                            {isTimedPage(page) ? "Fini" : "Modifier"}
                           </button>
                         ) : (
                           <button
+                            disabled={pageIsDisabled(index)}
                             onClick={() => handleClickAction(page)}
-                            className="w-107 rounded-full bg-gray-800 p-2.5 text-white font-bold"
+                            className="w-107 rounded-full bg-gray-800 p-2.5 text-white font-bold disabled:opacity-10"
                           >
-                            Start
+                            Commencer
                           </button>
                         )}
                       </div>
@@ -220,7 +227,7 @@ function NoCodeFormPublic() {
               )}
               {publicPrivacyUrl && (
                 <a href={publicPrivacyUrl} target="_blank" rel="noreferrer">
-                  Privacy Policy
+                  Politique de confidentialité
                 </a>
               )}
             </footer>
