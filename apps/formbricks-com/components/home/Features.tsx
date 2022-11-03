@@ -59,9 +59,9 @@ export default function Features() {
       <div className="relative mx-auto max-w-7xl">
         <HeadingCentered
           closer
-          Teaser="the Swiss army knife for forms & surveys"
-          Heading="Home-cooked taste, delivered in minutes"
-          Subheading="Build a 'home-cooked' solution at the fraction of the time. We do the heavy lifting, you customize
+          teaser="the Swiss army knife for forms & surveys"
+          heading="Home-cooked taste, delivered in minutes"
+          subheading="Build a 'home-cooked' solution at the fraction of the time. We do the heavy lifting, you customize
             to your needs."
         />
         <ul role="list" className="grid grid-cols-1 gap-6 pt-8 sm:grid-cols-2 md:grid-cols-3">

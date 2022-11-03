@@ -3,7 +3,7 @@ import Hero from "@/components/home/Hero";
 import Features from "@/components/home/Features";
 import Highlights from "@/components/home/Highlights";
 import WhyFormbricks from "../components/shared/WhyFormbricks";
-import CTA from "@/components/home/CTA";
+import CTA from "@/components/shared/CTA";
 
 const IndexPage = () => (
   <Layout meta={{ title: "The Open-source Forms & Survey Toolbox" }}>

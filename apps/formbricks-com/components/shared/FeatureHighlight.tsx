@@ -1,84 +1,41 @@
-import Image from "next/image";
-import ImageReactLib from "@/images/react-lib.png";
-import ImageSchemaGeneration from "@/images/schema-generation-svg.svg";
 import Button from "./Button";
 import { useRouter } from "next/router";
+import clsx from "clsx";
 
 interface Props {
-  Heading1: string;
-  Text1Pt1: string;
-  Text1Pt2?: string;
-  CTA1Text?: string;
-  CTA1Href?: string;
-  Image1: React.ReactNode;
-  Heading2: string;
-  Text2Pt1: string;
-  Text2Pt2?: string;
-  CTA2Text?: string;
-  CTA2Href?: string;
-  Image2: React.ReactNode;
-  children?: React.ReactNode;
+  featureTitle: string;
+  text: string;
+  img: React.ReactNode;
+  isImgLeft?: boolean;
+  cta?: string;
+  href?: string;
 }
 
-export default function FeatureHighlights({
-  Heading1,
-  Text1Pt1,
-  Text1Pt2,
-  CTA1Text,
-  CTA1Href,
-  Image1,
-  Heading2,
-  Text2Pt1,
-  Text2Pt2,
-  CTA2Text,
-  CTA2Href,
-  Image2,
-  children,
-}: Props) {
+export default function FeatureHighlights({ featureTitle, text, img, isImgLeft, cta, href }: Props) {
   const router = useRouter();
 
   return (
-    <>
-      <div className="mt-32">
-        <div className="mx-auto max-w-md px-4 sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
-          <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
-            <div>
-              <h2 className="text-blue text-2xl font-bold tracking-tight dark:text-blue-100 sm:text-3xl">
-                {Heading1}
-              </h2>
-              <p className="text-md mt-6 leading-7 text-blue-500 dark:text-blue-300">{Text1Pt1}</p>
-              <p className="text-md mt-6 leading-7 text-blue-500 dark:text-blue-300">{Text1Pt2}</p>
-              <div className="mt-6">
-                {CTA1Href && CTA1Text && (
-                  <Button variant="minimal" size="sm" onClick={() => router.push(CTA1Href)}>
-                    {CTA1Text}
-                  </Button>
-                )}
-              </div>
-            </div>
-            <Image src={ImageReactLib} alt="react library" className="rounded-lg" />
-          </div>
-        </div>
-      </div>
-      <div className="mt-32">
-        <div className="mx-auto max-w-md px-4 sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
-          <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
-            <Image src={ImageSchemaGeneration} alt="react library" className="rounded-lg" />
-            <div>
-              <h2 className="text-blue text-2xl font-bold tracking-tight dark:text-blue-100 sm:text-3xl">
-                {Heading2}
-              </h2>
-              <p className="text-md mt-6 leading-7 text-blue-500 dark:text-blue-300">{Text2Pt1}</p>
-              <p className="text-md mt-6 leading-7 text-blue-500 dark:text-blue-300">{Text2Pt2}</p>
-              <div className="mt-6">
-                <Button variant="minimal" size="sm" onClick={() => router.push("/core-api")}>
-                  {CTA2Text}
+    <div className="my-12">
+      <div className="max-w-md px-4 mx-auto sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
+        <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
+          <div className={clsx(isImgLeft ? "order-last" : "")}>
+            <h2 className="text-2xl font-bold tracking-tight text-blue dark:text-blue-100 sm:text-3xl">
+              {featureTitle}
+            </h2>
+            <p className="mt-6 leading-7 text-blue-500 whitespace-pre-line text-md dark:text-blue-300">
+              {text}
+            </p>
+            <div className="mt-6">
+              {cta && href && (
+                <Button variant="minimal" size="sm" onClick={() => router.push(href)}>
+                  {cta}
                 </Button>
-              </div>
+              )}
             </div>
           </div>
+          {img}
         </div>
       </div>
-    </>
+    </div>
   );
 }

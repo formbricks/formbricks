@@ -1,5 +1,5 @@
 import Button from "../shared/Button";
-import HeroAnimation from "./HeroAnimation";
+import HeroAnimation from "../shared/HeroAnimation";
 import HeroTitle from "../shared/HeroTitle";
 import { useRouter } from "next/router";
 
@@ -10,10 +10,10 @@ export default function Hero({}: Props) {
   return (
     <div className="relative">
       <HeroTitle
-        HeadingPt1="The"
-        HeadingTeal="Open Source"
-        HeadingPt2="Forms & Survey Toolbox"
-        Subheading="We're building all essential form functionality so you don't have to. Modular, customizable,
+        headingPt1="The"
+        headingTeal="Open Source"
+        headingPt2="Forms & Survey Toolbox"
+        subheading="We're building all essential form functionality so you don't have to. Modular, customizable,
         extendable. And open-source.">
         <Button variant="secondary" onClick={() => router.push("/docs")}>
           Read docs
