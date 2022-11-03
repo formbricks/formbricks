@@ -1,5 +1,4 @@
 import useSWR from "swr";
-import { format } from "util";
 import { fetcher } from "./utils";
 
 export const useForms = () => {
@@ -37,9 +36,8 @@ export const persistForm = async (form) => {
 };
 
 export const createForm = async (form = {}) => {
-  
   try {
-    console.log('form',form)
+    console.log("form", form);
     const res = await fetch(`/api/forms`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -106,8 +104,7 @@ export const getFormPage = (form, pageId) => {
   return page;
 };
 
-export const getFormPages = async (formId)=>{
-
+export const getFormPages = async (formId) => {
   try {
     const res = await fetch(`/api/forms`, {
       method: "POST",
@@ -119,4 +116,4 @@ export const getFormPages = async (formId)=>{
     console.error(error);
     throw Error(`createForm: unable to create form: ${error.message}`);
   }
-}
+};

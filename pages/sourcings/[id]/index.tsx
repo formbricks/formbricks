@@ -14,11 +14,8 @@ import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
 import { isTimedPage } from "../../../lib/utils";
-import {
-  CheckCircleIcon,
-  InboxArrowDownIcon,
-  XCircleIcon,
-} from "@heroicons/react/24/outline";
+import { InboxArrowDownIcon } from "@heroicons/react/24/outline";
+import { FormOrder } from "@prisma/client";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
