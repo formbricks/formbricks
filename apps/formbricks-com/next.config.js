@@ -1,8 +1,30 @@
 /** @type {import('next').NextConfig} */
+
+const { withPlausibleProxy } = require("next-plausible");
+
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
+  async redirects() {
+    return [
+      {
+        source: "/discord",
+        destination: "https://discord.gg/3YFcABF2Ts",
+        permanent: false,
+      },
+      {
+        source: "/roadmap",
+        destination: "https://github.com/orgs/formbricks/projects/1",
+        permanent: false,
+      },
+      {
+        source: "/github",
+        destination: "https://github.com/formbricks/formbricks",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 const withMDX = require("@next/mdx")({
@@ -18,4 +40,6 @@ const withMDX = require("@next/mdx")({
   },
 });
 
-module.exports = withMDX(nextConfig);
+module.exports = withPlausibleProxy({ customDomain: "https://plausible.formbricks.com" })(
+  withMDX(nextConfig)
+);
