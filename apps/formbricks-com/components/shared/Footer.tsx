@@ -11,10 +11,10 @@ const navigation = {
     { name: "Templates", href: "#", status: false },
   ],
   pipelines: [
-    { name: "Core API", href: "/core-api" },
-    { name: "Webhooks", href: "/webhooks" },
-    { name: "Integrations", href: "/integrations" },
-    { name: "Email", href: "/email" },
+    { name: "Core API", href: "/core-api", status: true },
+    { name: "Webhooks", href: "/webhooks", status: true },
+    { name: "Email", href: "/email", status: true },
+    { name: "Integrations", href: "#", status: false },
   ],
   insights: [
     { name: "Form HQ", href: "/form-hq", status: true },
@@ -105,8 +105,14 @@ export default function Footer() {
                   {navigation.pipelines.map((item) => (
                     <li key={item.name}>
                       <Link
+                        scroll={item.status}
                         href={item.href}
-                        className="text-base text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300">
+                        className={clsx(
+                          item.status
+                            ? "cursor-pointer text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300"
+                            : "cursor-default text-blue-300 dark:text-blue-600",
+                          "text-base"
+                        )}>
                         {item.name}
                       </Link>
                     </li>

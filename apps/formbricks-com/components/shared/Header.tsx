@@ -73,7 +73,7 @@ const pipes = [
     description: "Connect with 100+ apps",
     href: "/integrations",
     icon: SquaresPlusIcon,
-    status: true,
+    status: false,
   },
 ];
 
