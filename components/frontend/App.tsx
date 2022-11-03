@@ -6,7 +6,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { SnoopElement, SnoopForm, SnoopPage } from "@snoopforms/react";
+import { SnoopElement, SnoopForm, SnoopPage } from "../../components/snoopforms/src";
 import { Page, PageBlock, pageSubmissionEvent } from "../../lib/types";
 import { findTimer, isTimedPage } from "../../lib/utils";
 

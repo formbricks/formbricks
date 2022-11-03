@@ -24,12 +24,27 @@ export default async function handle(
   // Required fields in body: schema
   // Optional fields in body: -
   if (req.method === "POST") {
+    const formLastSessionEvent = await prisma.sessionEvent.findFirst({
+      where: {
+        AND: [
+          { data: { path: ["formId"], equals: formId } },
+          { type: "formOpened" },
+        ],
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
     const events: openFormEvent[] = [
       {
         type: "formOpened",
         data: {
           formId,
           userId: session.user.id,
+          roll: parseInt(
+            formLastSessionEvent ? formLastSessionEvent.data["roll"] + 1 : 0
+          ),
         },
       },
     ];

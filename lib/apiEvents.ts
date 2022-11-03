@@ -2,7 +2,7 @@ import { handleWebhook } from "../components/pipelines/webhook";
 import { capturePosthogEvent } from "./posthog";
 import { prisma } from "./prisma";
 import { sendTelemetry } from "./telemetry";
-import { ApiEvent, Schema, SchemaPage } from "./types";
+import { ApiEvent, SchemaPage } from "./types";
 
 type validationError = {
   status: number;
@@ -138,6 +138,7 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
           data: {
             formId,
             candidateId,
+            roll: event.data.roll,
           },
           submissionSession: { connect: { id } },
         },
