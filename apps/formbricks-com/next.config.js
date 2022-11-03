@@ -40,4 +40,6 @@ const withMDX = require("@next/mdx")({
   },
 });
 
-module.exports = withPlausibleProxy()(withMDX(nextConfig));
+module.exports = withPlausibleProxy({ customDomain: "https://plausible.formbricks.com" })(
+  withMDX(nextConfig)
+);
