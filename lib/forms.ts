@@ -1,4 +1,5 @@
 import useSWR from "swr";
+import { format } from "util";
 import { fetcher } from "./utils";
 
 export const useForms = () => {
@@ -38,6 +39,7 @@ export const persistForm = async (form) => {
 export const createForm = async (form = {}) => {
   
   try {
+    console.log('form',form)
     const res = await fetch(`/api/forms`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
