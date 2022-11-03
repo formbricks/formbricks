@@ -24,6 +24,7 @@ export default async function handle(
             description: true,
             dueDate: true,
             place: true,
+            answeringOrder: true,
           },
         },
         published: true,
@@ -34,7 +35,6 @@ export default async function handle(
 
     const sessionEvents = await prisma.sessionEvent.findMany({
       where: {
-        type: "pageSubmission",
         AND: [
           {
             data: {

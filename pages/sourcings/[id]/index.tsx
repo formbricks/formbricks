@@ -16,6 +16,7 @@ import DisclaimerModal from "../../../components/form/DisclaimerModal";
 import { isTimedPage } from "../../../lib/utils";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { BsPencilFill } from "react-icons/bs";
+import { FormOrder } from "@prisma/client";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
@@ -25,12 +26,15 @@ function NoCodeFormPublic() {
   const formId = router.query.id?.toString();
   const {
     noCodeForm,
+    candidateRoll,
     candidateSubmissions,
     isLoadingNoCodeForm,
     isErrorNoCodeForm,
   } = useNoCodeFormPublic(formId);
+
   const [openDisclaimer, setOpenDisclaimer] = useState(false);
   const [pageIdOnModal, setPageIdOnModal] = useState("");
+  const [roll, setRoll] = useState();
 
   enum options {
     year = "numeric",
@@ -48,6 +52,10 @@ function NoCodeFormPublic() {
   useEffect(() => {
     openForm();
   }, []);
+
+  useEffect(() => {
+    setRoll(candidateRoll);
+  }, [candidateRoll]);
 
   if (isLoadingNoCodeForm) {
     return <Loading />;
@@ -71,9 +79,20 @@ function NoCodeFormPublic() {
     const timer = pageBlocks.filter((p) => p.type === "timerToolboxOption")[0];
     return timer.data.timerDuration;
   };
-  // TODO: implement method
-  const pageIsDisabled = (page: any) => {
-    return !!(page % 3);
+
+  const pageIsEnabled = (pageId: string) => {
+    const pageIds = pages.map((p) => p.id);
+    // random for even roll, sequential for odd role
+    const luckyDraw =
+      noCodeForm.form.answeringOrder === FormOrder.ABTEST &&
+      (!!roll ? roll : 0) % 2;
+    if (luckyDraw || noCodeForm.form.answeringOrder === FormOrder.SEQUENTIAL) {
+      const nextChallengePageId = pageIds.find((p) => !pageIsCompleted(p));
+      const nextChallengePage = pageIds.indexOf(nextChallengePageId);
+      const next = nextChallengePage === -1 ? 0 : nextChallengePage;
+      return next >= pageIds.indexOf(pageId);
+    }
+    return true;
   };
 
   const handleClickAction = (page, fromModal: Boolean = false) => {
@@ -194,7 +213,7 @@ function NoCodeFormPublic() {
                           </button>
                         ) : (
                           <button
-                            disabled={pageIsDisabled(index)}
+                            disabled={!pageIsEnabled(page.id)}
                             onClick={() => handleClickAction(page)}
                             className="w-107 rounded-full bg-gray-800 p-2.5 text-white font-bold disabled:opacity-10"
                           >
