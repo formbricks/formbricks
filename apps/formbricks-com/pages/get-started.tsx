@@ -13,7 +13,9 @@ import {
 } from "@heroicons/react/24/outline";
 
 const GetStartedPage = () => (
-  <Layout meta={{ title: "Get started with Formbricks Open-source Form Infrastructure" }}>
+  <Layout
+    title="Get started"
+    description="Choose between managed form hosting in the cloud or self-hosting our open source software">
     <HeroTitle headingPt1="How do you want to" headingTeal="run" headingPt2="Formbricks?" />
     <div className="mb-32 grid grid-cols-2 gap-8 px-16">
       <div className="rounded-lg bg-gradient-to-b from-blue-200 to-gray-50 px-10 py-6 dark:from-blue-300 dark:to-gray-100">
