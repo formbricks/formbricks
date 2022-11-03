@@ -51,24 +51,24 @@ function ReactPage() {
           <header>
             <div className="mx-auto mt-8 max-w-7xl">
               <h1 className="text-3xl font-bold leading-tight text-ui-gray-dark">
-                Build your form with React
+                Créez votre formulaire avec React
               </h1>
             </div>
           </header>
           <div className="my-4">
             <p className="text-ui-gray-dark">
-              Use our pre-built components to build your form. Manage data in
-              this dashboard.
+              Utilisez nos composants préétablis pour construire votre
+              formulaire. Gérez les données dans ce tableau de bord.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-10 mt-16">
             <div>
               <h2 className="text-xl font-bold text-ui-gray-dark">
-                1. Get started
+                1. Commencez
               </h2>
               <p className="text-ui-gray-dark">
-                Install the snoopReact Library with Node Package Manager via
-                snoopforms/react.
+                Installez la bibliothèque snoopReact avec le gestionnaire de
+                paquets Node via snoopforms/react.
               </p>
             </div>
             <div className="p-8 font-light text-gray-200 bg-[#1a1b26] rounded-md">
@@ -82,11 +82,12 @@ function ReactPage() {
           <div className="grid grid-cols-2 gap-10 mt-16">
             <div>
               <h2 className="text-xl font-bold text-ui-gray-dark">
-                2. Build the form
+                2. Construire le formulaire
               </h2>
               <p className="text-ui-gray-dark">
-                Use the pre-built components snoopForm, snoopPage and
-                snoopElement to build exactly the form you want.
+                Utilisez les composants préconstruits snoopForm, snoopPage et
+                snoopElement pour construire exactement le formulaire que vous
+                souhaitez.
               </p>
             </div>
             <div className="p-8 font-light text-gray-200 bg-[#1a1b26] rounded-md">
@@ -137,17 +138,18 @@ import "@snoopforms/react/dist/styles.css";
                 Questions?
               </h2>
               <p className="pb-4 text-ui-gray-dark">
-                Find a more detailed explanation on how to go about build the
-                form and piping your data{" "}
+                Vous trouverez une explication plus détaillée sur la façon de
+                construire le formulaire et de transférer les données.
+                formulaire et le transfert de vos données{" "}
                 <a
                   href="https://docs.snoopforms.com"
                   target="_blank"
                   rel="noreferrer"
                   className="underline text-red hover:no-underline"
                 >
-                  in the docs.
+                  dans la documentation.
                 </a>{" "}
-                Or join our Discord and ask us :)
+                Ou rejoignez notre Discord et demandez-nous :)
               </p>
             </div>
             <div className="flex items-center justify-center p-8 rounded-md bg-purple">
@@ -157,7 +159,7 @@ import "@snoopforms/react/dist/styles.css";
                 target="_blank"
                 rel="noreferrer"
               >
-                Join Discord <FaDiscord className="w-8 h-8 ml-2" />
+                Rejoignez Discord <FaDiscord className="w-8 h-8 ml-2" />
               </a>
             </div>
           </div>

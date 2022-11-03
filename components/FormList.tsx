@@ -80,8 +80,8 @@ export default function FormList() {
             <div className="mt-5 text-center">
               {session.user.role !== UserRole.ADMIN ? (
                 <EmptyPageFiller
-                  alertText="You don't have any sourcings yet."
-                  hintText="Wait for sourcing to be created"
+                  alertText="Vous n'avez pas encore de sourcing."
+                  hintText="Attendez que le sourcing soit créé"
                   borderStyles="border-4 border-dotted border-red"
                 >
                   <FolderOpenIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
@@ -89,8 +89,8 @@ export default function FormList() {
               ) : (
                 <EmptyPageFiller
                   onClick={() => newForm()}
-                  alertText="You don't have any sourcings yet."
-                  hintText="Start by creating a sourcing."
+                  alertText="Vous n'avez pas encore de sourcing"
+                  hintText="Commencez par créer un sourcing"
                   buttonText="Nouveau Sourcing"
                   borderStyles="border-4 border-dotted border-red"
                   hasButton={true}
@@ -199,7 +199,7 @@ export default function FormList() {
                                   <div>
                                     <Menu.Button className="flex items-center p-2 -m-2 rounded-full text-red">
                                       <span className="sr-only">
-                                        Open options
+                                        Ouvrir les options
                                       </span>
                                       <EllipsisHorizontalIcon
                                         className="w-5 h-5"
