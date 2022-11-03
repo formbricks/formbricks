@@ -90,7 +90,7 @@ function NoCodeFormPublic() {
       title={"Forms - KDA Sourcing"}
       breadcrumbs={[
         {
-          name: `Sourcings`,
+          name: `Admissions`,
           href: "/sourcings",
           current: true,
         },
@@ -117,10 +117,10 @@ function NoCodeFormPublic() {
                   </div>
                   <div className="mt-8">
                     <h1 className="mb-4 font-bold text-center leading-2">
-                      Form closed!
+                      Formulaire fermé !
                     </h1>
                     <p className="text-center">
-                      This form is closed for any further submissions.
+                      Ce formulaire est fermé pour toute autre soumission.
                     </p>
                   </div>
                 </div>
@@ -171,7 +171,7 @@ function NoCodeFormPublic() {
                               </span>
                               <span className="flex items-center text-gray-800">
                                 <InboxArrowDownIcon className="w-5 mr-2" />1
-                                attempt
+                                tentative
                               </span>
                             </>
                           ) : (
@@ -184,21 +184,21 @@ function NoCodeFormPublic() {
                             disabled={isTimedPage(page)}
                             className="w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold"
                           >
-                            {isTimedPage(page) ? "Completed" : "Update answer"}
+                            {isTimedPage(page) ? "Terminé" : "Modifier"}
                           </button>
                         ) : (
                           <button
                             onClick={() => handleClickAction(page)}
                             className="w-107 rounded-full bg-gray-800 p-2.5 text-white font-bold"
                           >
-                            Start
+                            Commencer
                           </button>
                         )}
                       </div>
                       <DisclaimerModal
                         open={openDisclaimer}
                         setOpen={setOpenDisclaimer}
-                        message={`You are about to start a timed form and You have ${page.blocks[1].data.timerDuration} minutes to complete this form. Once started, you cannot leave the form, under penalty of seeing your answers considered to be submitted.`}
+                        message={`Vous êtes sur le point de commencer un formulaire chronométré et vous disposez de ${page.blocks[1].data.timerDuration} minutes pour remplir ce formulaire. Une fois commencé, vous ne pouvez plus quitter le formulaire, sous peine de voir vos réponses considérées comme soumises.`}
                         onClick={() => handleClickAction(page, true)}
                       />
                     </div>
@@ -211,7 +211,7 @@ function NoCodeFormPublic() {
               {publicImprintUrl && (
                 <>
                   <a href={publicImprintUrl} target="_blank" rel="noreferrer">
-                    Imprint
+                    Impression
                   </a>
                 </>
               )}
@@ -220,7 +220,7 @@ function NoCodeFormPublic() {
               )}
               {publicPrivacyUrl && (
                 <a href={publicPrivacyUrl} target="_blank" rel="noreferrer">
-                  Privacy Policy
+                  Politique de confidentialité
                 </a>
               )}
             </footer>
