@@ -36,7 +36,7 @@ export default function SignInPage() {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">
-                    An error occurred when logging you in
+                    Une erreur s&apos;est produite lors de votre connexion
                   </h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p className="space-y-1 whitespace-pre-wrap">{error}</p>

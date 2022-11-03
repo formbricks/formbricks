@@ -14,13 +14,13 @@ export default function LayoutShare({ formId, resetApp, children }) {
 
   if (!session) {
     signIn();
-    return <div>You need to be authenticated to view this page.</div>;
+    return <div>Vous devez être connecté pour voir cette page.</div>;
   }
 
   return (
     <>
       <Head>
-        <title>Form Preview</title>
+        <title>Aperçu du formulaire</title>
       </Head>
       <div className="flex min-h-screen overflow-hidden bg-gray-50">
         <div className="flex flex-col flex-1 overflow-hidden">
@@ -35,7 +35,7 @@ export default function LayoutShare({ formId, resetApp, children }) {
                   </Link>
                 </div>
                 <p className="flex items-center justify-center flex-1 text-gray-600">
-                  Preview
+                  Aperçu
                 </p>
                 <div className="flex items-center justify-end flex-1 space-x-2 text-right sm:ml-6 sm:space-x-4">
                   <button
@@ -43,7 +43,7 @@ export default function LayoutShare({ formId, resetApp, children }) {
                     onClick={() => resetApp()}
                     className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
-                    Restart
+                    Redémarrer
                     <ArrowPathIcon
                       className="w-5 h-5 ml-2 -mr-1"
                       aria-hidden="true"
