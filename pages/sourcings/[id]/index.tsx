@@ -19,7 +19,6 @@ import {
   InboxArrowDownIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import { BsPencilFill } from "react-icons/bs";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
