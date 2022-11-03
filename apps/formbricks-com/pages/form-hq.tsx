@@ -29,7 +29,7 @@ const features = [
   {
     id: "fullOwnership",
     name: "Full Data Ownership",
-    description: "We run open-source. Self-host your instance and your data never leaves your servers.",
+    description: "We run open source. Self-host your instance and your data never leaves your servers.",
     icon: CodeBracketIcon,
   },
   {
