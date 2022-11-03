@@ -128,13 +128,13 @@ function NoCodeFormPublic() {
             </div>
           ) : (
             <div className="flex-col">
-              <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold">
+              <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold  max-sm:ml-6 max-md:ml-6 max-sm:mt-8 max-md:mb-8">
                 {noCodeForm.form.name}
               </h1>
-              <p className="text-lg mb-3 ml-12  mr-11">
+              <p className="text-lg mb-3 ml-12  mr-11 max-sm:ml-6 max-md:ml-6">
                 {noCodeForm.form.description}
               </p>
-              <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
+              <p className="flex  items-center text-sm mb-10 ml-12 mx-auto max-sm:ml-6 max-md:ml-6">
                 <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
                 <span className="font-bold mr-1">Date limite :</span>{" "}
                 {new Date(noCodeForm.form.dueDate).toLocaleDateString(
@@ -145,7 +145,7 @@ function NoCodeFormPublic() {
               {noCodeForm.form.place === "" ? (
                 <></>
               ) : (
-                <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
+                <p className="flex  items-center text-sm mb-10 ml-12 mx-auto max-sm:ml-6 max-md:ml-6">
                   <HiOutlineLocationMarker className="w-6 h-6 stroke-thin mr-2" />
                   <span className="font-bold mr-1">Place :</span>{" "}
                   {noCodeForm.form.place}
@@ -155,14 +155,14 @@ function NoCodeFormPublic() {
                 if (pages.length - 1 !== index)
                   return (
                     <div
-                      className="w-full py-4 border-y-2 border-slate-100 flex justify-between"
+                      className="w-full py-4 border-y-2 border-slate-100 flex justify-between  max-sm:flex-col max-md:flex-col"
                       key={index}
                     >
-                      <div className="pl-12 flex items-center">
+                      <div className="pl-12 flex items-center max-sm:pl-6 max-sm:pr-6 max-sm:pb-5 max-md:pb-5 max-sm:font-semibold max-md:font-semibold max-md:pl-6 max-md:pr-6">
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
-                      <div className="flex items-center justify-between w-2/5 pr-8">
-                        <div className="flex items-center w-3/8">
+                      <div className="flex items-center justify-between w-2/5 pr-8 max-sm:w-full max-md:w-full max-sm:pl-6 max-sm:pr-6 max-sm:flex-col max-sm:items-start max-md:pl-6 max-md:pr-6">
+                        <div className="flex items-center w-3/8 max-sm:pb-5 max-md:pb-5  ">
                           {isTimedPage(page) ? (
                             <>
                               <span className="flex items-center mr-7 text-gray-800">
