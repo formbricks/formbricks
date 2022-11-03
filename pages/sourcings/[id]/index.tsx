@@ -14,9 +14,11 @@ import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
 import { isTimedPage } from "../../../lib/utils";
-import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import { BsPencilFill } from "react-icons/bs";
-import { FormOrder } from "@prisma/client";
+import {
+  CheckCircleIcon,
+  InboxArrowDownIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
 
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
@@ -111,7 +113,7 @@ function NoCodeFormPublic() {
       title={"Forms - KDA Sourcing"}
       breadcrumbs={[
         {
-          name: `Sourcings`,
+          name: `Admissions`,
           href: "/sourcings",
           current: true,
         },
@@ -138,10 +140,10 @@ function NoCodeFormPublic() {
                   </div>
                   <div className="mt-8">
                     <h1 className="mb-4 font-bold text-center leading-2">
-                      Formulaire fermé!
+                      Formulaire fermé !
                     </h1>
                     <p className="text-center">
-                      Ce formulaire n&apos;accepte plus de soumission.
+                      Ce formulaire est fermé pour toute autre soumission.
                     </p>
                   </div>
                 </div>
@@ -149,10 +151,13 @@ function NoCodeFormPublic() {
             </div>
           ) : (
             <div className="flex-col">
-              <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold">
+              <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold  max-sm:ml-6 max-md:ml-6 max-sm:mt-8 max-md:mb-8">
                 {noCodeForm.form.name}
               </h1>
-              <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
+              <p className="text-lg mb-3 ml-12  mr-11 max-sm:ml-6 max-md:ml-6">
+                {noCodeForm.form.description}
+              </p>
+              <p className="flex  items-center text-sm mb-10 ml-12 mx-auto max-sm:ml-6 max-md:ml-6">
                 <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
                 <span className="font-bold mr-1">Date limite : </span>
                 {new Date(noCodeForm.form.dueDate).toLocaleDateString(
@@ -163,7 +168,7 @@ function NoCodeFormPublic() {
               {noCodeForm.form.place === "" ? (
                 <></>
               ) : (
-                <p className="flex  items-center text-sm mb-10 ml-12 mx-auto">
+                <p className="flex  items-center text-sm mb-10 ml-12 mx-auto max-sm:ml-6 max-md:ml-6">
                   <HiOutlineLocationMarker className="w-6 h-6 stroke-thin mr-2" />
                   <span className="font-bold mr-1">Lieu : </span>
                   {noCodeForm.form.place}
@@ -176,19 +181,14 @@ function NoCodeFormPublic() {
                 if (pages.length - 1 !== index)
                   return (
                     <div
-                      className="w-full py-4 border-y-2 border-slate-100 flex justify-between"
+                      className="w-full py-4 border-y-2 border-slate-100 flex justify-between  max-sm:flex-col max-md:flex-col"
                       key={index}
                     >
-                      <div className="pl-12 flex items-center">
-                        {pageIsCompleted(page.id) ? (
-                          <CheckCircleIcon className="text-green-800 w-7 mr-2" />
-                        ) : (
-                          <XCircleIcon className="text-red-800 w-7 mr-2" />
-                        )}
+                      <div className="pl-12 flex items-center max-sm:pl-6 max-sm:pr-6 max-sm:pb-5 max-md:pb-5 max-sm:font-semibold max-md:font-semibold max-md:pl-6 max-md:pr-6">
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
-                      <div className="flex items-center justify-between w-2/5 pr-8">
-                        <div className="flex items-center w-3/8">
+                      <div className="flex items-center justify-between w-2/5 pr-8 max-sm:w-full max-md:w-full max-sm:pl-6 max-sm:pr-6 max-sm:flex-col max-sm:items-start max-md:pl-6 max-md:pr-6">
+                        <div className="flex items-center w-3/8 max-sm:pb-5 max-md:pb-5  ">
                           {isTimedPage(page) ? (
                             <>
                               <span className="flex items-center mr-7 text-gray-800">
@@ -196,7 +196,8 @@ function NoCodeFormPublic() {
                                 {getPageTimer(page.blocks)} min.
                               </span>
                               <span className="flex items-center text-gray-800">
-                                <BsPencilFill className="w-5 mr-2" />1 chance
+                                <InboxArrowDownIcon className="w-5 mr-2" />1
+                                tentative
                               </span>
                             </>
                           ) : (
@@ -209,7 +210,7 @@ function NoCodeFormPublic() {
                             disabled={isTimedPage(page)}
                             className="w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold"
                           >
-                            {isTimedPage(page) ? "Fini" : "Modifier"}
+                            {isTimedPage(page) ? "Terminé" : "Modifier"}
                           </button>
                         ) : (
                           <button
@@ -224,7 +225,7 @@ function NoCodeFormPublic() {
                       <DisclaimerModal
                         open={openDisclaimer}
                         setOpen={setOpenDisclaimer}
-                        message={`You are about to start a timed form and You have ${page.blocks[1].data.timerDuration} minutes to complete this form. Once started, you cannot leave the form, under penalty of seeing your answers considered to be submitted.`}
+                        message={`Vous êtes sur le point de commencer un formulaire chronométré et vous disposez de ${page.blocks[1].data.timerDuration} minutes pour remplir ce formulaire. Une fois commencé, vous ne pouvez plus quitter le formulaire, sous peine de voir vos réponses considérées comme soumises.`}
                         onClick={() => handleClickAction(page, true)}
                       />
                     </div>
@@ -237,7 +238,7 @@ function NoCodeFormPublic() {
               {publicImprintUrl && (
                 <>
                   <a href={publicImprintUrl} target="_blank" rel="noreferrer">
-                    Imprint
+                    Impression
                   </a>
                 </>
               )}
