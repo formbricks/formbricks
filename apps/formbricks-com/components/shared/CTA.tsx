@@ -20,7 +20,7 @@ export default function CTA() {
           <div className="py-24 text-center text-white rounded-xl bg-gradient-to-br from-blue-700 to-blue-800">
             <h3 className="text-3xl font-bold">Cloud</h3>
             <p className="mt-2 mb-4">Use our free managed service.</p>
-            <Button variant="primary" onClick={() => router.push("/docs")} className="mt-3">
+            <Button variant="primary" onClick={() => router.push("/get-started")} className="mt-3">
               Get started
             </Button>
           </div>

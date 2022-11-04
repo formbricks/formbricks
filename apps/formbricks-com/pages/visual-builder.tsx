@@ -1,6 +1,6 @@
 import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
-import TryItCTA from "../components/shared/TryItCTA";
+import CTA from "../components/shared/CTA";
 import Image from "next/image";
 import ImageEmail from "../images/email.svg";
 import HeadingCentered from "@/components/shared/HeadingCenetered";
@@ -142,7 +142,7 @@ const FormHQPage = () => (
         </a>
       </dl>
     </div>
-    <TryItCTA />
+    <CTA />
   </Layout>
 );
 
