@@ -2,25 +2,27 @@ const navigation = [
   {
     title: "Introduction",
     links: [
-      { title: "What is Formbricks", href: "/docs/introduction/what-is-formbricks" },
-      { title: "Installation", href: "/docs/installation" },
+      { title: "Why Formbricks?", href: "/docs/introduction/why-formbricks" },
+      { title: "How to achieve this?", href: "/docs/introduction/how-to-achieve-this" },
+      { title: "What is Formbricks?", href: "/docs/introduction/what-is-formbricks" },
+      { title: "Quick start", href: "/docs/introduction/quick-start" },
     ],
   },
   {
-    title: "Core concepts",
+    title: "Form Creation",
+    links: [{ title: "React Form Builder", href: "/docs/understanding-caching" }],
+  },
+  {
+    title: "Data Pipelines",
     links: [
-      { title: "Understanding caching", href: "/docs/understanding-caching" },
-      {
-        title: "Predicting user behavior",
-        href: "/docs/predicting-user-behavior",
-      },
-      { title: "Basics of time-travel", href: "/docs/basics-of-time-travel" },
-      {
-        title: "Introduction to string theory",
-        href: "/docs/introduction-to-string-theory",
-      },
-      { title: "The butterfly effect", href: "/docs/the-butterfly-effect" },
+      { title: "Core API", href: "/docs/core-api" },
+      { title: "Email Notifications", href: "/docs/email-notifications" },
+      { title: "Webhooks", href: "/docs/webhooks" },
     ],
+  },
+  {
+    title: "Data Insights",
+    links: [{ title: "Form HQ", href: "/docs/form-hq" }],
   },
 ];
 
