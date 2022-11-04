@@ -1,0 +1,22 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "How will we achieve this?",
+};
+
+The goal is clear: Build the last form tool humanity needs. What does such a solution have to look like?
+
+### Modular
+
+Form needs differ widely but a one-size-fits all monolyth would fit no one. It would be slow and bloated. Only when it's possible to compose exactly the solution you need with the performance you expect we can compete with current solutions.
+
+### Customizable
+
+In many product decisions you cannot have it both ways. We have to build opionated to make progress. We always choose what we deem the best option based on over 10 years of experience building forms and form-based products. If you prefer it the other way, just change it up. Our code is freely accessible and licensed accordingly.
+
+### Extendable
+
+Similarily, we cannot offer a solution for every niche and edge case. And we don't have to. Running open source allows you to go 95% of the way with our tech and build a thin integration layer to make it fit your need perfectly.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

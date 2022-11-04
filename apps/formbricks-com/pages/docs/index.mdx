@@ -1,0 +1,13 @@
+import { Layout } from "@/components/docs/Layout";
+import HeroAnimation from "./hero-animation-still.svg";
+import Image from "next/image";
+
+export const meta = {
+  title: "Formbricks – Open-source forms & survey toolbox",
+};
+
+Modular, customizable, extendable. We're building all essential form functionality on an open platform.
+
+<Image src={HeroAnimation} alt="HeroAnimation" />
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

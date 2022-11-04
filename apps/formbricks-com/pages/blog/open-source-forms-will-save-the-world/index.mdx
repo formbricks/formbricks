@@ -1,0 +1,116 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import RobinHoodMeme from "./robin-hood-meme.png";
+import WhyWeDoIt from "./why-we-do-it.png";
+import EverythinEverywhereAllAtOnce from "./everything_everywhere_all_at_once.png";
+
+export const meta = {
+  title: "Open source forms will save the world.",
+  description: "What motivates us to build open source tech in such a crowded space?",
+  date: "2022-08-26",
+};
+
+<Image src={RobinHoodMeme} alt="Robin Hood Meme" className="max-w-lg mx-auto rounded-lg" />
+
+_What motivates us to build open source tech in such a crowded space? What do we see what others might not? And how do we understand the relationship between free open source tech and a commercial complement?_
+
+As we build and understand open source as a mentality and opportunity better, the answers to the questions above change. We want to walk you through the current state of answers and invite you to share your thoughts.
+
+Before we talk about why the open source mentality is growing on Matti and I, let's kick it off easy: Why are we building a form tool?
+
+## Why are we building the 100th form tool?
+
+Forms are an essential part of web infrastructure, every application has one or more. Whenever someone wants to get data from a brain into a computer, forms come into play:
+
+<Image src={WhyWeDoIt} alt="Why we do it" className="max-w-lg mx-auto rounded-lg" />
+
+Secondly, forms are the starting point of many deeper interactions. Lead generation forms, application forms, immigration forms collect lots of meaningful data. It gets processed and enriched, often in the process of building a lasting customer relationship. This implies more interaction, more data input and management, more opportunities to grow. Owning the starting point of this relationship is inherently valuable.
+
+Lastly, forms are sticky and viral. Once people set up their forms and surveys, they are hesitant to change, unless there is a very good reason to do so (i.e. full data ownership or outrageous pricing). As users share around their forms and surveys, our brand naturally starts popping up all over the internet ✅
+
+## Why do we build open source?
+
+There are two answers to this question. A business one and a purpose one. Even though they go hand in hand, they are distinct.
+
+Let's start with business, because without a working business, it's very difficult to build towards your purpose sustainably.
+
+Why are large corporations like Google, Facebook, IBM, etc. investing $$$ in OSS? Did their executives stop believing in capitalism?
+
+<iframe
+  width="560"
+  height="315"
+  className="mx-auto"
+  src="https://www.youtube.com/embed/j4ovbmsp6p0?start=9"
+  title="YouTube video player"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen></iframe>
+
+_"I doubt it."_
+
+I also doubt it. The reason is rooted in microeconomics: Demand for a product increases when the price of its complements decreases.
+
+What does that mean? If you're selling cars, you want gas to be as cheap as possible, so more people buy your cars. If you sell software, you want hardware to be as cheap as possible, so more people buy your software. If you're selling a specific solution for a problem large organisations have with form infrastructure, you want as many companies as possible to work with your technology. So:
+
+> Smart companies try to commoditize their products' complements.
+>
+> - Joel Spolsky
+
+_There is a great article by Joel explaining this idea much better than I could, I highly recommend [reading it.](https://www.joelonsoftware.com/2002/06/12/strategy-letter-v/)_
+
+So in order to create a growing market for our paid product, we have a strong incentive to freely share and widely distribute our open source technology.
+
+To break this down, let's look at the challenges commercial OSS companies face. Many of the characteristic have both advantages and disadvantages, so we discuss them together:
+
+- Weak lock-in: While the commercial component can still have a lock-in, a customer (or competitor) could build their own solution based on the open source core technology. Hence, the lock-in is of your product is weaker. This certainly is a controversial aspect of COSS offering as lock-ins have been celebrated as THE profit driver in B2B software for the past decade.
+
+  We want to challenge that notion: A disrupted business always starts with the misalignment of what the customer wants to buy and what the company wants to offer. A lock-in falls into this category of misalignments between buyer and seller: No one likes to be locked in. Especially large organizations are averse to hard lock-ins as they can get really, really expensive really, really fast. While offering a really expensive service is great to drive astronomical profits, it drives customers to competing offers sooner or later. In other words, *your lock-in is our opportunity.*
+
+- Low customer acquisition cost: You run a profitable business when you make more from a customer than it costs you to acquire and service them. With a weaker lock-in, it's harder to drive astronomical profits, hence the cost of acquiring a customer has to be lower. The more people use, work with, and build on top of your OS technology, the bigger the market for your commercial complement. A COSS company without an active community which drives the adoption of your tech presents an unfavorable combination: Weak lock-in with high acquisition cost.
+- Self-hosting: To process sensitive data in compliance with data privacy regulations, many companies want the option to self-host their tooling. OSS uniquely enables them to do so. Every single of our Early Bird Customers referred to privacy as their main reason to buy the deal.
+- Security: Forms often manage sensitive data, having more eyeballs on the code generally leads to fewer weaknesses to be exploited.
+
+## Open source as a mentality
+
+Matti and I are not just motivated by the chance to gain economic security for our families over the course of the next decade. We also believe in and want to contribute to the positive sum thinking of the open source community. Building a commercial open source software company presents a model Robin Hood would be proud of:
+
+<Image src={RobinHoodMeme} alt="Robin Hood Meme" className="max-w-lg mx-auto rounded-lg" />
+
+A COSS company builds cool tech and shares it freely. It uses its own tech to offer a product to mostly enterprise customers and thereby finances the further development of the technology everyone can use - to a large extent - for free.
+
+What this model often allows is enabling other people to leverage the technology and offer products built on top of it. It's positive sum thinking in practice.
+
+For founders and employees, this is a great way to spend days, months, and years. You are creating significantly more value than you capture, and still capture enough to maintain and extend the technology. Everyone wins - except for competing proprietary tools sitting in walled gardens.
+
+But there is more.
+
+## The world goes down, open source forms will save us!
+
+Growing up in the longest period without war in Europe as well as the longest "up only"-market in recent history, 2022 feels utterly unsettling. War, inflation, recession, heat records, wildfires, outrageous inequality, hate, weak democracies -- everything goes to sh\*t everywhere, all at once.
+
+<Image
+  src={EverythinEverywhereAllAtOnce}
+  alt="Everything everywhere all at once"
+  className="max-w-lg mx-auto rounded-lg"
+/>
+
+If you haven't seen "Everything, everywhere, all at once" I highly recommend it.
+
+I'm not here to tell you, that open source forms will save us. In fact, the challenges seem so big and complex that few believe we can prevent crisis. Things first must get unambiguously ugly before humanity will act -- a moment when it'll be too late, at least to save the climate we all depend on. Yay!
+
+## So why am I ruining your mood?
+
+I am, because OSS leverages the internet for a greater good than selling ads. A person with a laptop can write a piece of code which empowers hundreds of thousands of people to be significantly more productive in achieving their objectives. This is insane! Code distribution has 0 marginal cost, it should be used as widely as possible. Every open source app and infrastructure tech creates exponentially more value than it's proprietary counterpart.
+
+## The *last*  form tool humanity needs
+
+Our infinite mission is to free as much time, focus and energy from rewriting existing code as possible. We aim to achieve that by building essential web infrastructure in a modular way: Take what you like, build on top what you need - and contribute it back, so everyone can use it. The last part is essential, and building inclusive OSS is the only way to that.
+
+## You're invited!
+
+All of this is very exciting! As of now, we are still super early. Matti recognized the need for versatile open source form infrastructure, Johannes joined him to build a first prototype of a commercial component. Early traction picked up much quicker than expected, which is a source of pure joy for both of us. As of now, we are wrapping up our freelance gigs to work on this full-time [(feel free to intro us to your favorite OS angels).](mailto:johannes@snoopforms.com)
+
+We invite you to join us and build the last form tool humanity needs <br/>
+Say Hi in our [Discord!](https://snoopforms.com/discord)
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

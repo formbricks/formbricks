@@ -5,7 +5,7 @@
   <h3 align="center">snoopForms</h3>
 
   <p align="center">
-    Finally, good open-source forms!
+    Finally, good open source forms!
     <br />
     <a href="https://snoopforms.com/">Website & Hosted version</a>  |  <a href="https://snoopforms.com/discord">Join Discord community</a>
   </p>
