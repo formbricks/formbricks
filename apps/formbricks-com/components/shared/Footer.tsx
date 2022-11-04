@@ -12,7 +12,7 @@ const navigation = {
     { name: "Core API", href: "/core-api", status: true },
     { name: "Webhooks", href: "/webhooks", status: true },
     { name: "Email", href: "/email", status: true },
-    { name: "Integrations", href: "#", status: false },
+    { name: "Integrations", href: "#", status: true },
   ],
   insights: [
     { name: "Form HQ", href: "/form-hq", status: true },
