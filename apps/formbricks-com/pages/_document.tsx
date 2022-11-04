@@ -43,8 +43,36 @@ export default function Document() {
     <Html className="antialiased [font-feature-settings:'ss01']" lang="en" dir="ltr">
       <Head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="\apps\formbricks-com\images\faveicon/apple-touch-icon.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="\apps\formbricks-com\images\faveicon/favicon-32x32.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="\apps\formbricks-com\images\faveicon/favicon-16x16.png"
+        />
+        <link rel="manifest" href="\apps\formbricks-com\images\faveicon/site.webmanifest" />
+        <link
+          rel="mask-icon"
+          href="\apps\formbricks-com\images\faveicon/safari-pinned-tab.svg"
+          color="#002941"
+        />
+        <link rel="shortcut icon" href="\apps\formbricks-com\images\faveicon/favicon.ico" />
+        <meta name="msapplication-TileColor" content="#002941" />
+        <meta name="msapplication-config" content="\apps\formbricks-com\images\faveicon/browserconfig.xml" />
+        <meta name="theme-color" content="#ffffff" />
       </Head>
-      <body className="dark:bg-blue bg-blue-100">
+      <body className="bg-blue-100 dark:bg-blue">
         <Main />
         <NextScript />
       </body>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<browserconfig>
+    <msapplication>
+        <tile>
+            <square150x150logo src="\apps\formbricks-com\images\faveicon/mstile-150x150.png"/>
+            <TileColor>#002941</TileColor>
+        </tile>
+    </msapplication>
+</browserconfig>
