@@ -10,7 +10,8 @@ import { Navigation } from "@/components/shared/Navigation";
 import { Prose } from "@/components/shared/Prose";
 import { Search } from "@/components/shared/Search";
 import { ThemeSelector } from "@/components/shared/ThemeSelector";
-import navigation from "@/lib/navigation";
+import navigation from "@/lib/docsNavigation";
+import Button from "../shared/Button";
 
 function GitHubIcon(props: any) {
   return (
@@ -21,6 +22,7 @@ function GitHubIcon(props: any) {
 }
 
 function Header({ navigation }: any) {
+  const router = useRouter();
   let [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -50,6 +52,15 @@ function Header({ navigation }: any) {
           <Logomark className="h-9 w-9 lg:hidden" />
           <Logo className="hidden h-9 w-auto fill-blue-700 dark:fill-sky-100 lg:block" />
         </Link>
+        <div>
+          <Button
+            variant="secondary"
+            onClick={() => router.push("/")}
+            size="sm"
+            className="ml-10 flex justify-center opacity-60">
+            &larr; Back to Mainpage
+          </Button>
+        </div>
       </div>
       <div className="-my-5 mr-6 sm:mr-8 md:mr-0">
         <Search />

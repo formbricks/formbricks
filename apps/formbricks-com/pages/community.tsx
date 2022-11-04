@@ -62,7 +62,7 @@ const GetStartedPage = () => (
               </svg>
             </div>
           </a>
-          <a href="mailto:johannes@formbricks.com" className="w-1/2 ">
+          <a href="mailto:hola@formbricks.com" className="w-1/2 ">
             <div className="ml-3 flex justify-center rounded-lg bg-gradient-to-b from-blue-200 to-gray-50 py-6 dark:from-blue-300 dark:to-gray-100">
               <EnvelopeIcon className="text-gray ml-1 h-20 w-20 hover:text-gray-400" />
             </div>

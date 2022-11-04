@@ -10,19 +10,19 @@ const navigation = [
   },
   {
     title: "Form Creation",
-    links: [{ title: "React Form Builder", href: "/docs/understanding-caching" }],
+    links: [{ title: "React Form Builder", href: "/docs/form-creation/react-form-builder" }],
   },
   {
     title: "Data Pipelines",
     links: [
-      { title: "Core API", href: "/docs/core-api" },
-      { title: "Email Notifications", href: "/docs/email-notifications" },
-      { title: "Webhooks", href: "/docs/webhooks" },
+      { title: "Core API", href: "/docs/data-pipelines/core-api" },
+      { title: "Email Notifications", href: "/docs/data-pipelines/email-notifications" },
+      { title: "Webhooks", href: "/docs/data-pipelines/webhooks" },
     ],
   },
   {
     title: "Data Insights",
-    links: [{ title: "Form HQ", href: "/docs/form-hq" }],
+    links: [{ title: "Form HQ", href: "/docs/data-insights/form-hq" }],
   },
 ];
 
