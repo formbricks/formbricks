@@ -14,7 +14,7 @@ export default function Hero({}: Props) {
         headingTeal="Open Source"
         headingPt2="Forms & Survey Toolbox"
         subheading="We're building all essential form functionality so you don't have to. Modular, customizable,
-        extendable. And open-source.">
+        extendable. And open source.">
         <Button variant="secondary" onClick={() => router.push("/docs")}>
           Read docs
         </Button>

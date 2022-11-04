@@ -6,7 +6,9 @@ import WhyFormbricks from "../components/shared/WhyFormbricks";
 import CTA from "@/components/shared/CTA";
 
 const IndexPage = () => (
-  <Layout meta={{ title: "The Open-source Forms & Survey Toolbox" }}>
+  <Layout
+    title="The Open source Forms & Survey Toolbox"
+    description="We're building all essential form functionality so you don't have to. Modular, customizable, extendable. And open source.">
     <Hero />
     <Features />
     <Highlights />

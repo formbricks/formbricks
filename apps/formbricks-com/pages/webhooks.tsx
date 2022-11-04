@@ -6,12 +6,14 @@ import CTA from "../components/shared/CTA";
 import FeatureHighlight from "@/components/shared/FeatureHighlight";
 
 const WebhooksPage = () => (
-  <Layout meta={{ title: "Webhooks by Formbricks – Open-source Form Infrastructure" }}>
+  <Layout
+    title="Webhooks"
+    description="Don't be limited by our choice of integrations, pipe your data exactly where you need it">
     <HeroTitle headingPt1="Webhooks" />
     <FeatureHighlight
       featureTitle="Versatile data handling"
-      text="Don’t be limited by our choice of integrations, pipe your data exactly where you need it. Set up webhooks in our Form HQ with just a few clicks.
-      Don’t miss any piece of information by sending partial submissions alongside complete ones."
+      text="Don't be limited by our choice of integrations, pipe your data exactly where you need it. Set up webhooks in our Form HQ with just a few clicks.
+      Don't miss any piece of information by sending partial submissions alongside complete ones."
       img={<Image src={ImageWebhooks} alt="react library" className="rounded-lg" />}
       isImgLeft
       cta="Read docs"

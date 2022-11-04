@@ -28,11 +28,13 @@ const features = [
 ];
 
 const EmailPage = () => (
-  <Layout meta={{ title: "Form to Email by Formbricks – Open-source Form Infrastructure" }}>
+  <Layout
+    title="Form to Email"
+    description="In some cases, the good old email is the way to go. In the Form HQ you can setup forwarding submission data to one or more emails.">
     <HeroTitle headingPt1="Email" />
     <FeatureHighlight
       featureTitle="Get responses to your inbox"
-      text="In some cases, the good old email is the way to go. In the Form HQ you can setup forwarding submission data to one or more emails. "
+      text="In some cases, the good old email is the way to go. In the Form HQ you can setup forwarding submission data to one or more emails."
       img={<Image src={ImageEmail} alt="react library" className="rounded-lg" />}
       isImgLeft
       cta="Get started"
@@ -42,15 +44,15 @@ const EmailPage = () => (
       {features.map((feature) => (
         <li
           key={feature.id}
-          className="relative flex flex-col col-span-1 mt-16 text-center rounded-xl bg-gradient-to-b from-blue-200 to-gray-100 drop-shadow-sm dark:from-black dark:to-blue-900">
-          <div className="absolute w-full -mt-12">
-            <div className="flex items-center justify-center w-20 h-20 mx-auto rounded-full shadow via-blue to-blue bg-gradient-to-br from-black">
-              <feature.icon className="flex-shrink-0 w-10 h-10 mx-auto text-teal-500" />
+          className="relative col-span-1 mt-16 flex flex-col rounded-xl bg-gradient-to-b from-blue-200 to-gray-100 text-center drop-shadow-sm dark:from-black dark:to-blue-900">
+          <div className="absolute -mt-12 w-full">
+            <div className="via-blue to-blue mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-black shadow">
+              <feature.icon className="mx-auto h-10 w-10 flex-shrink-0 text-teal-500" />
             </div>
           </div>
-          <div className="flex flex-col flex-1 p-10">
-            <h3 className="my-4 text-lg font-medium text-blue dark:text-blue-100">{feature.name}</h3>
-            <dl className="flex flex-col justify-between flex-grow mt-1">
+          <div className="flex flex-1 flex-col p-10">
+            <h3 className="text-blue my-4 text-lg font-medium dark:text-blue-100">{feature.name}</h3>
+            <dl className="mt-1 flex flex-grow flex-col justify-between">
               <dt className="sr-only">Description</dt>
               <dd className="text-sm text-gray-600 dark:text-blue-400">{feature.description}</dd>
             </dl>
