@@ -10,13 +10,13 @@ interface LayoutProps {
 
 export default function Layout({ title, description, children }: LayoutProps) {
   return (
-    <>
+    <div className="flex h-screen flex-col justify-between">
       <MetaInformation title={title} description={description} />
       <Header />
-      <main className="max-w-8xl relative mx-auto flex flex-col justify-center sm:px-2 lg:px-8 xl:px-12">
+      <main className="max-w-8xl relative mx-auto mb-auto flex flex-col justify-center sm:px-2 lg:px-8 xl:px-12">
         {children}
       </main>
       <Footer />
-    </>
+    </div>
   );
 }
