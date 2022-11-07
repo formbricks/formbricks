@@ -1,9 +1,10 @@
 import Image from "next/image";
 import LayoutMdx from "@/components/shared/LayoutMdx";
 import HeaderImage from "./formbricks-logo-header-open-source-form-infrastructure.svg";
+import HeroAnimation from "../../../components/shared/HeroAnimation.tsx";
 
 export const meta = {
-  title: "snoopForms → Formbricks",
+  title: "snoopForms → Formbricks 🎉",
   description: "A new name, a new look, key learnings and what's next.",
   date: "2022-11-07",
 };
@@ -12,7 +13,7 @@ export const meta = {
 
 _It has been quiet in the past weeks, but we didn't spend our days sitting around. Find out what we were up to and where we are taking Formbricks from here._
 
-### <s>snoopForms</s> Formbricks
+### <s>snoopForms</s> → Formbricks
 
 Most obviously, we changed the name. Even though we and many of you liked “snoopForms” for its sticky- and edgyness, it is a difficult name to sell to companies and governments with. Especially in the US-american world “snooping around” is quite negatively connotated (when we came up with the name we asked around some British lads who didn’t bother too much).
 
@@ -21,8 +22,8 @@ Now we are Formbricks 🤸  “Formbricks” is cool because it describes the pr
 ### Mission: Stop rewriting existing code
 
 We want to solve forms once and for all. If, in 10 years, a web developer rewrites core form functionality instead of building on top of our stack, we didn’t do our job. We want you to build your next big thing faster. Our big thing is the last form tool humanity needs. Hold us accountable!
-
-## Problems with snoopForms (and other form solutions)
+##
+# Problems form solutions
 
 Over the first iteration, we learned A LOT about what’s important to you. Over 1.426 users created 1.752 forms with snoopForms. 196 of you joined our Discord channel, many of which we had 1-on-1 conversations with. A dozen people bought an Early Bird license for 179$ and offered valuable insights into why they did that and what they expect in return. Here are our key learnings:
 
@@ -41,8 +42,8 @@ It doesn't matter if you open Qualtrics, Typeform or Refiner: on a high level, t
 ### 4. Doing one thing well isn’t good enough (long-term)
 
 Many solutions pride themselves with doing one thing well. When it comes to collecting and _leveraging_ qualitative data, this isn’t enough. You have to ask the right questions at the right time, draw correct conclusions and design actions based on your conclusions. In practice, many things go wrong or get lost in the friction in-between tools. Slow, manual processes waste a lot of potential. Potential at the most critical point in any business: Customer and employee relationships. 
-
-## How Formbricks aims to solve them
+##
+# How Formbricks will solve them
 
 We took these insights back to the drawing board to come up with a better solution than snoopForms. Here is what we will focus on:
 
@@ -62,11 +63,35 @@ Imagine your form tool understands the pain point from the NPS survey emailed to
 
 A collection of form functionality bricks build the foundation of the open form platform. On top, we'll build end-to-end solutions in close collaboration with our target customers to help them make the most out of their customer and employee relationships.
 
-## Starting from scratch
+<HeroAnimation />
+##
+# Starting from scratch
 
 It wasn’t easy to go all the way to the start, but these are the reasons why we decided to start building from scratch. Even though the visual builder was so popular, we have to push it back until the foundation stands. It will be back, better than before 😊
 
 Similarly, we are currently not ready to receive community contributions. We want to provide you with a well-documented platform and a set of UI components before we unleash the power of community onto our platform. We can’t wait for this to happen 😍
+
+## What's next?
+
+This is how we're tackling the opportunity ahead of us:
+
+### React Form Builder Library
+The first step is building the React Form Builder into a full-fledged product. We take the best from existing solutions and add our years of experience of building forms in React to it. You will:
+
+- Use our component-based approach to build forms rapidly (FormElement type="radio/checkbox/toggle/select/rating" etc.)
+- Style the whole form easily (incl. Tailwind support)
+- Don't worry about costly rerenders
+- Get comprehensive validation out of the box
+- Get accessibility out of the box
+- Get multi-pages incl. state management out of the box
+
+### Core API
+Alongside the React Form Builder we'll redesign our Core API. You'll be able to:
+
+- Send any form to our API endpoint to view and manage submissions on [formbricks.com](/form-hq)
+- Forward your data however you like: [Email](/email), [webhooks](/webhooks), 3rd party integrations
+
+Please [join our Discord](https://discord.com/invite/3YFcABF2Ts) to provide feedback on what's important to you!
 
 ## Becoming a company
 
