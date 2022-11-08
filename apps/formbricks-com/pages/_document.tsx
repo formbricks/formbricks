@@ -40,7 +40,7 @@ const themeScript = `
 
 export default function Document() {
   return (
-    <Html className="antialiased [font-feature-settings:'ss01']" lang="en" dir="ltr">
+    <Html className="scroll-smooth antialiased [font-feature-settings:'ss01']" lang="en" dir="ltr">
       <Head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
 
@@ -54,7 +54,7 @@ export default function Document() {
         <meta name="msapplication-config" content="/faveicon/browserconfig.xml" />
         <meta name="theme-color" content="#ffffff" />
       </Head>
-      <body className="bg-blue-100 dark:bg-blue">
+      <body className="dark:bg-blue bg-blue-100">
         <Main />
         <NextScript />
       </body>
