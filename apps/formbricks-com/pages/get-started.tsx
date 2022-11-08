@@ -15,7 +15,7 @@ import {
 const GetStartedPage = () => (
   <Layout
     title="Get started"
-    description="Choose between managed form hosting in the cloud or self-hosting our open source software">
+    description="We offer our open source form & survey software for self-hosters and in our managed cloud. Get started within minutes!">
     <HeroTitle headingPt1="How do you want to" headingTeal="run" headingPt2="Formbricks?" />
     <div className="grid px-6 mb-32 md:grid-cols-2 md:gap-8 md:px-16">
       <div className="px-10 py-6 mb-6 rounded-lg bg-gradient-to-b from-blue-200 to-gray-50 dark:from-blue-300 dark:to-gray-100 md:mb-0">

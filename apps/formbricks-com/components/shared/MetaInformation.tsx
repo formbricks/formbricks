@@ -6,7 +6,7 @@ interface Props {
 }
 
 export default function MetaInformation({ title, description }: Props) {
-  const pageTitle = `${title} - Formbricks - Open Source Form Infrastructure`;
+  const pageTitle = `${title} | Open Source Forms & Surveys by Formbricks`;
   return (
     <Head>
       <title>{pageTitle}</title>
@@ -14,7 +14,7 @@ export default function MetaInformation({ title, description }: Props) {
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={`https://${process.env.VERCEL_URL}/social-image.png`} />
-      <meta property="og:image:alt" content="Formbricks - Open Source Form Infrastructure" />
+      <meta property="og:image:alt" content="Formbricks - Open Source Form & Survey Infrastructure" />
     </Head>
   );
 }
