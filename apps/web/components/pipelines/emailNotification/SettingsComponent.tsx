@@ -38,7 +38,7 @@ export function EmailNotificationSettings({ pipeline, setPipeline }) {
       <div>
         <h2 className="text-ui-gray-dark mb-3 text-xl font-bold">Configure Email notifications</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Configure Email notifications. To learn more about how webhooks work, please check out our docs.
+          Configure Email notifications. To learn more about how email notifications work, please check out our docs.
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
