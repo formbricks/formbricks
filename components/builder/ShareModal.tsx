@@ -75,7 +75,7 @@ export default function ShareModal({ open, setOpen, formId }) {
                     </div>
                   </div>
                 ) : (
-                  <div className="px-4 py-5 sm:p-6">
+                  <div className="px-4 py-5 sm:p-6 ">
                     <h3 className="text-lg font-medium leading-6 text-gray-900">
                       Share your form
                     </h3>
