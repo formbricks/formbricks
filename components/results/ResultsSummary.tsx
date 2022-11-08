@@ -59,7 +59,7 @@ export default function ResultsSummary({ formId }) {
 
   return (
     <>
-      <h2 className="mt-8 text-xl font-bold text-ui-gray-dark">
+      <h2 className="mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4">
         Aperçu des réponses
       </h2>
       <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2">

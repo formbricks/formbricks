@@ -85,7 +85,7 @@ const SingleChoiceQuestion = (props) => {
 
   return (
     <div className="pb-5">
-      <div className="relative font-bold leading-7 text-gray-800 text-md sm:truncate">
+      <div className="relative font-bold leading-7 text-gray-800 text-md sm:truncate border-black">
         <input
           type="text"
           id="label"
@@ -105,23 +105,23 @@ const SingleChoiceQuestion = (props) => {
           option &&
           <div
             key={optionIdx}
-            className={classNames("w-3/4 flex items-center")}
+            className={classNames("w-3/4 flex items-center max-sm:w-full max-md:w-full max-sm:flex-col max-md:flex-col")}
           >    
-            <span className="w-full flex items-center text-sm">
+            <span className="w-full flex items-center text-sm max-sm:items-start">
               <span
                 className={classNames(
-                  choiceData.multipleChoice ? "rounded-sm" : "rounded-full",
-                  "flex items-center justify-center w-4 h-4 bg-white border border-gray-300"
+                  choiceData.multipleChoice ? "rounded-full" : "rounded-full",
+                  "flex items-center justify-center w-4 h-4 bg-white border border-gray-300 max-sm:h-3 max-sm:w-3  max-sm:mt-1"
                 )}
                 aria-hidden="true"
               >
-                <span className="rounded-full bg-white w-1.5 h-1.5" />
+                <span className="rounded-full bg-white w-1.5 h-1.5 max-sm:w-2.5" />
               </span>
               <input
                 type="text"
                 defaultValue={option?.label}
                 onBlur={onOptionChange(optionIdx, "label")}
-                className="p-0 ml-3 font-medium text-gray-900 border-0 border-transparent outline-none focus:ring-0 focus:outline-none placeholder:text-gray-300"
+                className="p-0 ml-3 font-medium text-gray-900 border-0 border-transparent outline-none focus:ring-0 focus:outline-none placeholder:text-gray-300  max-sm:pb-3"
                 placeholder={`Option ${optionIdx + 1}`}
               />
             </span>

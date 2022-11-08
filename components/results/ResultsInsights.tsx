@@ -40,14 +40,13 @@ export default function ResultsAnalytics({ formId }) {
       ];
     }
   }, [analytics]);
-
   if (!stats || !analytics) {
     return <Loading />;
   }
 
   return (
     <div className="my-8">
-      <h2 className="text-xl font-bold text-ui-gray-dark">Analytics</h2>
+      <h2 className="text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-sm:pr-4 max-md:pl-4 ">Analytics</h2>
       <div>
         <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2">
           {stats.map((item) => (
@@ -62,7 +61,7 @@ export default function ResultsAnalytics({ formId }) {
           ))}
         </dl>
       </div>
-      <div className="flex items-end">
+      <div className="flex items-end max-sm:pl-4 max-md:pl-4">
         <h2 className="mt-16 text-xl font-bold text-ui-gray-dark">
           Optimize Form
         </h2>
@@ -70,7 +69,7 @@ export default function ResultsAnalytics({ formId }) {
           <p>Bientôt disponible</p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-10 mt-8">
+      <div className="grid grid-cols-2 gap-10 mt-8 max-sm:pl-4 max-md:pl-4 max-sm:pr-4 max-md:pr-4">
         <div className="p-5 bg-white rounded-md shadow-md">
           <Image
             src="/../../img/drop-offs-v1.svg"

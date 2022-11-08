@@ -45,7 +45,7 @@ export default function BaseLayoutManagement({
           )}
         >
           <header className="w-full">
-            <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-ui-gray-light">
+            <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-ui-gray-light max-sm:pr-2 max-sm:pl-2 max-md:pr-2 max-md:pl-2">
               <div className="grid w-full grid-cols-2 sm:grid-cols-3">
                 <div className="flex-1 hidden space-x-8 sm:flex">
                   <NewFormNavButton />
