@@ -9,7 +9,7 @@ export const meta = {
   date: "2022-11-07",
 };
 
-<Image src={HeaderImage} alt="Robin Hood Meme" className="max-w-lg mx-auto rounded-lg" />
+<Image src={HeaderImage} alt="Formbricks - Open Source Forms and Surveys" className="" />
 
 _It has been quiet in the past weeks, but we didn't spend our days sitting around. Find out what we were up to and where we are taking Formbricks from here._
 
@@ -17,32 +17,36 @@ _It has been quiet in the past weeks, but we didn't spend our days sitting aroun
 
 Most obviously, we changed the name. Even though we and many of you liked “snoopForms” for its sticky- and edgyness, it is a difficult name to sell to companies and governments with. Especially in the US-american world “snooping around” is quite negatively connotated (when we came up with the name we asked around some British lads who didn’t bother too much).
 
-Now we are Formbricks 🤸  “Formbricks” is cool because it describes the product perfectly: A modular approach to enable you guys compose exactly the form solution you need to achieve the (business) objective you want.
+Now we are Formbricks 🤸 “Formbricks” is cool because it describes the product perfectly: A modular approach to enable you guys compose exactly the form solution you need to achieve the (business) objective you want.
 
 ### Mission: Stop rewriting existing code
 
 We want to solve forms once and for all. If, in 10 years, a web developer rewrites core form functionality instead of building on top of our stack, we didn’t do our job. We want you to build your next big thing faster. Our big thing is the last form tool humanity needs. Hold us accountable!
+
 ##
+
 # Problems form solutions
 
 Over the first iteration, we learned A LOT about what’s important to you. Over 1.426 users created 1.752 forms with snoopForms. 196 of you joined our Discord channel, many of which we had 1-on-1 conversations with. A dozen people bought an Early Bird license for 179$ and offered valuable insights into why they did that and what they expect in return. Here are our key learnings:
 
-### 1.  Data ownership is key
+### 1. Data ownership is key
 
 Some need it for compliance with privacy regulation, others because they don’t want their sensitive data stored on a cloud operated by a third party. 100% data ownership is essential for a subset of the market.
 
-### 2. Every form *need* is different
+### 2. Every form _need_ is different
 
 When it comes to collecting qualitative data on a larger scale, there are few scenarios which are identical. Standalone forms or natively integrated? Some need both. No Code builder to create forms yourself or enable users to update existing forms? Both should be possible. Submissions partially emailed, partially hooked into a database and two fields piped to a 3rd party tool? Absolutely! One-size-fits-all fits no one well.
 
-### 3. Under the hood, form solutions *work* the same
+### 3. Under the hood, form solutions _work_ the same
 
 It doesn't matter if you open Qualtrics, Typeform or Refiner: on a high level, they do the same. You can create forms which are put in front of people who generate qualitative data which is piped back into a dashboard or third party tool. Based on these insights an action is facilitated. In terms of core functionality, that's it. Obvisously, they are carefully contextualized to solve a specific business problem but the underlying tech does not fundamentally change.
 
 ### 4. Doing one thing well isn’t good enough (long-term)
 
-Many solutions pride themselves with doing one thing well. When it comes to collecting and _leveraging_ qualitative data, this isn’t enough. You have to ask the right questions at the right time, draw correct conclusions and design actions based on your conclusions. In practice, many things go wrong or get lost in the friction in-between tools. Slow, manual processes waste a lot of potential. Potential at the most critical point in any business: Customer and employee relationships. 
+Many solutions pride themselves with doing one thing well. When it comes to collecting and _leveraging_ qualitative data, this isn’t enough. You have to ask the right questions at the right time, draw correct conclusions and design actions based on your conclusions. In practice, many things go wrong or get lost in the friction in-between tools. Slow, manual processes waste a lot of potential. Potential at the most critical point in any business: Customer and employee relationships.
+
 ##
+
 # How Formbricks will solve them
 
 We took these insights back to the drawing board to come up with a better solution than snoopForms. Here is what we will focus on:
@@ -57,15 +61,14 @@ Our solutions bricks have to work as standalone solutions. The React Library nee
 
 ### 3. Core functionality first, end-to-end solutions second (long-term)
 
-As touched upon above, bringing form creation, data handling, analysis and actions onto one *open* platform is the next big step forward for leveraging qualitative data for business success. 
+As touched upon above, bringing form creation, data handling, analysis and actions onto one _open_ platform is the next big step forward for leveraging qualitative data for business success.
 
 Imagine your form tool understands the pain point from the NPS survey emailed to a customer after the previous purchase. It also understands the sentiment of the automatically triggered micro-survey this customer just filled out on your webshop. It can automatically design and send out a voucher addressing the pain point of this customer and increase conversion or basket size. Data silos and slow, manual processes are taken out of the equation replaced by a much more efficient (and potentially self-learning) system gathering and acting on qualitative data.
 
 A collection of form functionality bricks build the foundation of the open form platform. On top, we'll build end-to-end solutions in close collaboration with our target customers to help them make the most out of their customer and employee relationships.
 
 <HeroAnimation />
-##
-# Starting from scratch
+## # Starting from scratch
 
 It wasn’t easy to go all the way to the start, but these are the reasons why we decided to start building from scratch. Even though the visual builder was so popular, we have to push it back until the foundation stands. It will be back, better than before 😊
 
@@ -76,6 +79,7 @@ Similarly, we are currently not ready to receive community contributions. We wan
 This is how we're tackling the opportunity ahead of us:
 
 ### React Form Builder Library
+
 The first step is building the React Form Builder into a full-fledged product. We take the best from existing solutions and add our years of experience of building forms in React to it. You will:
 
 - Use our component-based approach to build forms rapidly (FormElement type="radio/checkbox/toggle/select/rating" etc.)
@@ -86,6 +90,7 @@ The first step is building the React Form Builder into a full-fledged product. W
 - Get multi-pages incl. state management out of the box
 
 ### Core API
+
 Alongside the React Form Builder we'll redesign our Core API. You'll be able to:
 
 - Send any form to our API endpoint to view and manage submissions on [formbricks.com](/form-hq)

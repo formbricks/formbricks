@@ -3,6 +3,7 @@ import LayoutMdx from "@/components/shared/LayoutMdx";
 import RobinHoodMeme from "./robin-hood-meme.png";
 import WhyWeDoIt from "./why-we-do-it.png";
 import EverythinEverywhereAllAtOnce from "./everything_everywhere_all_at_once.png";
+import ResponsiveEmbed from "react-responsive-embed";
 
 export const meta = {
   title: "Open source forms will save the world.",
@@ -10,7 +11,7 @@ export const meta = {
   date: "2022-08-26",
 };
 
-<Image src={RobinHoodMeme} alt="Robin Hood Meme" className="max-w-lg mx-auto rounded-lg" />
+<Image src={RobinHoodMeme} alt="Robin Hood Meme" className="rounded-lg" />
 
 _What motivates us to build open source tech in such a crowded space? What do we see what others might not? And how do we understand the relationship between free open source tech and a commercial complement?_
 
@@ -22,7 +23,7 @@ Before we talk about why the open source mentality is growing on Matti and I, le
 
 Forms are an essential part of web infrastructure, every application has one or more. Whenever someone wants to get data from a brain into a computer, forms come into play:
 
-<Image src={WhyWeDoIt} alt="Why we do it" className="max-w-lg mx-auto rounded-lg" />
+<Image src={WhyWeDoIt} alt="Why we do it" className="rounded-lg" />
 
 Secondly, forms are the starting point of many deeper interactions. Lead generation forms, application forms, immigration forms collect lots of meaningful data. It gets processed and enriched, often in the process of building a lasting customer relationship. This implies more interaction, more data input and management, more opportunities to grow. Owning the starting point of this relationship is inherently valuable.
 
@@ -36,15 +37,11 @@ Let's start with business, because without a working business, it's very difficu
 
 Why are large corporations like Google, Facebook, IBM, etc. investing $$$ in OSS? Did their executives stop believing in capitalism?
 
-<iframe
-  width="560"
-  height="315"
-  className="mx-auto"
+<ResponsiveEmbed
   src="https://www.youtube.com/embed/j4ovbmsp6p0?start=9"
-  title="YouTube video player"
-  frameborder="0"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-  allowfullscreen></iframe>
+  allowfullscreen
+  className="rounded-lg"
+/>
 
 _"I doubt it."_
 
@@ -74,7 +71,7 @@ To break this down, let's look at the challenges commercial OSS companies face. 
 
 Matti and I are not just motivated by the chance to gain economic security for our families over the course of the next decade. We also believe in and want to contribute to the positive sum thinking of the open source community. Building a commercial open source software company presents a model Robin Hood would be proud of:
 
-<Image src={RobinHoodMeme} alt="Robin Hood Meme" className="max-w-lg mx-auto rounded-lg" />
+<Image src={RobinHoodMeme} alt="Robin Hood Meme" className="rounded-lg" />
 
 A COSS company builds cool tech and shares it freely. It uses its own tech to offer a product to mostly enterprise customers and thereby finances the further development of the technology everyone can use - to a large extent - for free.
 
@@ -88,11 +85,7 @@ But there is more.
 
 Growing up in the longest period without war in Europe as well as the longest "up only"-market in recent history, 2022 feels utterly unsettling. War, inflation, recession, heat records, wildfires, outrageous inequality, hate, weak democracies -- everything goes to sh\*t everywhere, all at once.
 
-<Image
-  src={EverythinEverywhereAllAtOnce}
-  alt="Everything everywhere all at once"
-  className="max-w-lg mx-auto rounded-lg"
-/>
+<Image src={EverythinEverywhereAllAtOnce} alt="Everything everywhere all at once" className="rounded-lg" />
 
 If you haven't seen "Everything, everywhere, all at once" I highly recommend it.
 

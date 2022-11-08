@@ -1,6 +1,6 @@
-/** @type {import('next').NextConfig} */
-
-const { withPlausibleProxy } = require("next-plausible");
+import nextMDX from "@next/mdx";
+import { withPlausibleProxy } from "next-plausible";
+import remarkGfm from "remark-gfm";
 
 const nextConfig = {
   reactStrictMode: true,
@@ -27,19 +27,17 @@ const nextConfig = {
   },
 };
 
-const withMDX = require("@next/mdx")({
+const withMDX = nextMDX({
   extension: /\.mdx?$/,
   options: {
     // If you use remark-gfm, you'll need to use next.config.mjs
     // as the package is ESM only
     // https://github.com/remarkjs/remark-gfm#install
-    remarkPlugins: [],
+    remarkPlugins: [remarkGfm],
     rehypePlugins: [],
     // If you use `MDXProvider`, uncomment the following line.
     // providerImportSource: "@mdx-js/react",
   },
 });
 
-module.exports = withPlausibleProxy({ customDomain: "https://plausible.formbricks.com" })(
-  withMDX(nextConfig)
-);
+export default withPlausibleProxy({ customDomain: "https://plausible.formbricks.com" })(withMDX(nextConfig));
