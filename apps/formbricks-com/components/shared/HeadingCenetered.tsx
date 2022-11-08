@@ -9,7 +9,7 @@ interface Props {
 
 export default function HeadingCentered({ teaser, heading, subheading, closer }: Props) {
   return (
-    <div className={clsx(closer ? "pt-24" : "pt-40", "pb-12 text-center")}>
+    <div className={clsx(closer ? "pt-16 lg:pt-24" : "pt-24 lg:pt-40", "px-2 pb-4 text-center md:pb-12")}>
       <p className="max-w-2xl mx-auto mb-3 font-semibold text-transparent uppercase text-md from-teal bg-gradient-to-b to-teal-600 bg-clip-text sm:mt-4">
         {teaser}
       </p>

@@ -9,10 +9,10 @@ export default function Highlights({}) {
   const router = useRouter();
   return (
     <>
-      <div className="mt-32">
+      <div className="mt-8 md:mt-32">
         <div className="max-w-md px-4 mx-auto sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
-          <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
-            <div>
+          <div className="grid lg:grid-cols-2 lg:items-center lg:gap-24">
+            <div className="order-last lg:order-first">
               <h2 className="text-2xl font-bold tracking-tight text-blue dark:text-blue-100 sm:text-3xl">
                 Build forms in minutes with our <span className="font-light text-teal-500">lightweight</span>{" "}
                 React Form Builder.
@@ -25,20 +25,20 @@ export default function Highlights({}) {
                 Build <span className="font-semibold">exactly</span> the form you want in a fraction of the
                 time.
               </p>
-              <div className="mt-6">
+              <div className="my-6">
                 <Button variant="minimal" size="sm" onClick={() => router.push("/react-form-builder")}>
                   Read more
                 </Button>
               </div>
             </div>
-            <Image src={ImageReactLib} alt="react library" className="rounded-lg" />
+            <Image src={ImageReactLib} alt="react library" className="mb-8 rounded-lg lg:mb-0" />
           </div>
         </div>
       </div>
-      <div className="mt-32">
+      <div className="mt-16 md:mt-32">
         <div className="max-w-md px-4 mx-auto sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
-            <Image src={ImageDataPipelines} alt="react library" className="rounded-lg" />
+            <Image src={ImageDataPipelines} alt="react library" className="mb-8 rounded-lg lg:mb-0" />
             <div>
               <h2 className="text-2xl font-bold tracking-tight text-blue dark:text-blue-100 sm:text-3xl">
                 <span className="text-teal-500 ">API</span> all the way

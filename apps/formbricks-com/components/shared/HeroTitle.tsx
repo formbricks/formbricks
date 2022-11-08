@@ -8,13 +8,13 @@ interface Props {
 
 export default function HeroTitle({ headingPt1, headingTeal, headingPt2, subheading, children }: Props) {
   return (
-    <div className="px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
-      <h1 className="text-3xl font-bold tracking-tight text-blue dark:text-blue-100 sm:text-4xl md:text-5xl">
-        <span className="block xl:inline">{headingPt1}</span>{" "}
-        <span className="block text-transparent from-teal bg-gradient-to-b to-teal-600 bg-clip-text xl:inline">
+    <div className="px-4 py-16 text-center sm:px-6 md:px-8 md:py-28">
+      <h1 className="text-4xl font-bold tracking-tight text-blue dark:text-blue-100 sm:text-4xl md:text-5xl">
+        <span className="inline ">{headingPt1}</span>{" "}
+        <span className="inline text-transparent from-teal bg-gradient-to-b to-teal-600 bg-clip-text xl:inline">
           {headingTeal}
         </span>{" "}
-        <span className="block xl:inline">{headingPt2}</span>
+        <span className="inline ">{headingPt2}</span>
       </h1>
       <p className="max-w-md mx-auto mt-3 text-base text-blue-500 dark:text-blue-300 sm:text-lg md:mt-5 md:max-w-2xl md:text-xl">
         {subheading}
