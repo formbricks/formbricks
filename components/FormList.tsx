@@ -7,8 +7,8 @@ import {
   UserCircleIcon,
   EyeIcon,
 } from "@heroicons/react/24/outline";
-import { HiOutlineLocationMarker } from "react-icons/hi";
-import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { HiOutlineLocationMarker,HiDocumentDuplicate } from "react-icons/hi";
+import { EllipsisHorizontalIcon, TrashIcon} from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { useForms } from "../lib/forms";
@@ -227,6 +227,7 @@ export default function FormList() {
                                       <div className="py-1">
                                         <Menu.Item>
                                           {({ active }) => (
+                                           <>
                                             <button
                                               onClick={() =>
                                                 deleteForm(form, formIdx)
@@ -245,6 +246,14 @@ export default function FormList() {
                                               <span>Supprimer</span>
                                               
                                             </button>
+                                            <button className="flex px-4 py-2 text-sm w-full">
+                                            <HiDocumentDuplicate
+                                                className="w-5 h-5 mr-3 text-ui-gray-dark"
+                                                aria-hidden="true"
+                                              />
+                                            <span className="text-ui-gray-dark">Dupliquer</span>
+                                            </button>
+                                           </>
                                             
                                           )}
                                         </Menu.Item>
