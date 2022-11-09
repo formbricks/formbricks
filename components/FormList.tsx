@@ -119,7 +119,7 @@ export default function FormList() {
                 .sort((a, b) => b.updatedAt - a.updatedAt)
                 .map((form, formIdx) => (
                   <li key={form.id} className="relative h-56 col-span-1">
-                    <div className="flex flex-col justify-between h-full bg-white rounded-md shadow">
+                    <div className="flex flex-col justify-between h-full border border-gray-300 bg-white rounded-md hover:border hover:border-black">
                       <div className="p-6">
                         <p className="text-lg line-clamp-3">{form.name}</p>
                       </div>
