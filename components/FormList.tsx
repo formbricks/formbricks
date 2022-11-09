@@ -100,7 +100,7 @@ export default function FormList() {
               )}
             </div>
           ) : (
-            <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 place-content-stretch ">
+            <ul className="grid  max-sm:grid-cols-1  gap-6  max-md:grid-cols-2 lg:grid-cols-5 place-content-stretch">
               {session.user.role !== UserRole.ADMIN ? (
                 <></>
               ) : (
