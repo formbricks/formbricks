@@ -43,10 +43,10 @@ function Form() {
             </div>
             <div className="mt-8">
               <h1 className="mb-4 font-bold text-center leading-2">
-                something went wrong
+                Quelque chose s&apos;est mal passé
               </h1>
               <p className="text-center">
-                Got To <Link href="/sourcings">Dashboard</Link>
+                Aller au <Link href="/sourcings">tableau de bord</Link>
               </p>
             </div>
           </div>

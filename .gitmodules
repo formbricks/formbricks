@@ -1,0 +1,3 @@
+[submodule "kda-snoopforms-react"]
+	path = kda-snoopforms-react
+	url = https://github.com/KinshasaDigitalAcademy/kda-snoopforms-react.git

@@ -67,9 +67,9 @@ export default function ShareModal({ open, setOpen, formId }) {
                       </div>
                       <div className="flex-1 ml-3 md:flex md:justify-between">
                         <p className="text-sm text-gray-700">
-                          You haven&apos;t published this form yet. Please
-                          publish this form to share it with others and get the
-                          first submissions.
+                          Vous n&apos;avez pas encore publié ce formulaire.
+                          Veuillez publier ce formulaire pour le partager avec
+                          d&apos;autres et obtenir les premières soumissions.
                         </p>
                       </div>
                     </div>
@@ -77,18 +77,18 @@ export default function ShareModal({ open, setOpen, formId }) {
                 ) : (
                   <div className="px-4 py-5 sm:p-6 ">
                     <h3 className="text-lg font-medium leading-6 text-gray-900">
-                      Share your form
+                      Partagez votre formulaire
                     </h3>
                     <div className="max-w-xl mt-2 text-sm text-gray-500">
                       <p>
-                        Let your participants fill out your form by accessing it
-                        via the public link.
+                        Laissez vos participants remplir votre formulaire en y
+                        accédant via le lien public.
                       </p>
                     </div>
                     <div className="mt-5 sm:flex sm:items-center">
                       <div className="w-full sm:max-w-xs">
                         <label htmlFor="surveyLink" className="sr-only">
-                          Public link
+                          Lien public
                         </label>
                         <input
                           id="surveyLink"
@@ -106,7 +106,7 @@ export default function ShareModal({ open, setOpen, formId }) {
                         }}
                         className="inline-flex items-center justify-center w-full px-4 py-2 mt-3 font-medium text-white bg-gray-800 border border-transparent rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                       >
-                        Copy
+                        Copier
                       </button>
                     </div>
                   </div>

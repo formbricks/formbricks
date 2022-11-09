@@ -15,7 +15,9 @@ function UsersPage({}) {
   return (
     <BaseLayoutManagement
       title={"Sourcings - KDA"}
-      breadcrumbs={[{ name: "User Management", href: "#", current: true }]}
+      breadcrumbs={[
+        { name: "Gestion des utilisateurs", href: "#", current: true },
+      ]}
     >
       <LimitedWidth>
         <UserList />
