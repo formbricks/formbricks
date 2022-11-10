@@ -82,6 +82,18 @@ export default function FormList() {
 
   return (
     <>
+      <div>
+        {session.user.role === UserRole.ADMIN ? (
+          <></>
+        ) : (
+            <div className="flex flex-row my-10">
+              <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5">TOUTES</button>
+              <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5">MARKETING DIGITAL</button>
+              <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5">DEVELOPPEUR WEB ET WEB MOBILE</button>
+            </div>
+        )
+        }
+      </div>
       {forms && forms.length > 100 ? (
         <SearchBar
           className="mt-5 flex gap-4"
