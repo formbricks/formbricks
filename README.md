@@ -1,43 +1,72 @@
 <p align="center">
-<a href="https://github.com/formbricks/snoopforms">
-    <img src="https://user-images.githubusercontent.com/72809645/172191504-808da997-025b-4b1f-90c0-b8ef658af2dd.svg" alt="Logo" width="500">
+<a href="https://github.com/formbricks/formbricks">
+    <img src="https://user-images.githubusercontent.com/675065/201035557-a94a6bde-dff0-4bd3-9693-ec9257a9b1b3.svg" alt="Logo" width="500">
   </a>
-  <h3 align="center">snoopForms</h3>
+  <h3 align="center">Formbricks</h3>
 
   <p align="center">
-    Finally, good open source forms!
+    The Open Source Forms & Survey Toolbox
     <br />
-    <a href="https://snoopforms.com/">Website & Hosted version</a>  |  <a href="https://snoopforms.com/discord">Join Discord community</a>
+    <a href="https://formbricks.com/">Website & Hosted version</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
   </p>
 </p>
 
 <p align="center">
-<a href="https://github.com/formbricks/snoopforms/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a> <a href="https://discord.gg/3YFcABF2Ts"><img src="https://img.shields.io/discord/979077669410979880?label=Discord&logo=discord&logoColor=%23fff" alt="Join snoopForms Discord"></a> <a href="https://github.com/formbricks/snoopforms/stargazers"><img src="https://img.shields.io/github/stars/snoopForms/snoopforms?logo=github" alt="Github Stars"></a>
+<a href="https://github.com/formbricks/formbricks/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-purple" alt="License"></a> <a href="https://formbricks.com/discord"><img src="https://img.shields.io/discord/979077669410979880?label=Discord&logo=discord&logoColor=%23fff" alt="Join Formbricks Discord"></a> <a href="https://github.com/formbricks/formbricks/stargazers"><img src="https://img.shields.io/github/stars/formbricks/formbricks?logo=github" alt="Github Stars"></a>
    <a href="https://news.ycombinator.com/item?id=32303986"><img src="https://img.shields.io/badge/Hacker%20News-122-%23FF6600" alt="Hacker News"></a>
    <a href="https://www.producthunt.com/products/snoopforms"><img src="https://img.shields.io/badge/Product%20Hunt-%232%20Product%20of%20the%20Day-orange?logo=producthunt&logoColor=%23fff" alt="Product Hunt"></a>
 </p>
 
 <br/>
 
-> :warning: snoopForms now becomes Formbricks. As part of the renaming, we are also sharpening the product and optimizing the core functionality for future features. Be excited when we present the new Formbricks in a few weeks. Until the core rebuild is complete, we are also pausing contributions to avoid major merge conflicts.
+> :octocat: Are you looking for snoopForms - the Open Source Typeform Alternative? We're building the next stage of the snoopForms evolution here with Formbricks - more modular, more open, and for all your form needs. If you still are looking for the code of snoopForms you can find it in the [snoopforms branch](https://github.com/formbricks/formbricks/tree/snoopforms).
 
-## About snoopForms
+> :warning: Repository still in progress `#buildinpublic`
 
-<img width="937" alt="snoopForms-architecture" src="https://user-images.githubusercontent.com/675065/182550268-09794c9e-1187-470e-b795-697ceb2a93b8.svg">
+## About Formbricks
 
-Spin up forms in minutes. Pipe your data exactly where you need it. Maximize your results with juicy analytics.
+We're building all essential form functionality so you don't have to. Modular, customizable, extendable. And open source.
 
-## What is snoopForms?
+### Mission: Stop rewriting existing code
 
-With snoopForms you can build complex multi-page forms in minutes using either our built-in No Code Builder or our [React library](https://github.com/formbricks/snoopforms/tree/main/packages/snoopforms-react). All form submissions are automatically sent to the snoopForms platform for processing and analysis. You can view the submission within the platform or you can easily configure pipelines to send your data to other systems, services or databases.
+We want to solve forms once and for all. If, in 10 years, a web developer rewrites core form functionality instead of building on top of our stack, we didn’t do our job. We want you to build your next big thing faster. Our big thing is the last form tool humanity needs. Hold us accountable!
+
+[Read more in our blog](https://formbricks-com.vercel.app/blog/snoopforms-becomes-formbricks)
+
+## Our Toolbox
+
+Build a 'home-cooked' solution at the fraction of the time. We do the heavy lifting, you customize to your needs.
+
+### React Forms Library
+
+Building React forms has never been quicker. But there is more...
+
+Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all the good stuff you want, but don't want to build yourself.
+Building forms fast is great, but where do you pipe your data? And what is it worth without a schema?"
+
+### Core API - The OS form engine
+
+Your form looks perfect? Time to build integrations...
+
+Our core API handles all of the submission handling of your forms and surveys. Our main objective is versatility, so that you can use it with any currently existing form. Soon we will integrate it with our React Form Builder. This allows for handling schemas so that you get a full image of your submission data.
 
 ### Features
 
-- React Lib & No Code Builder to build & integrate forms rapidly.
-- 100% compliant with all privacy regulations (self-hosted).
-- (next) Put your data to work with integrations.
-- (next) Juicy analytics out of the box.
-- (always) smooth Developer Experience comes first.
+- **Fast Form Creation**: Build complex forms with our React Lib. Our data pipes also work with any other form.
+- **Data Pipelines**: Save your data where you need it. Use webhooks or pre-built integrations.
+- **Powerful Data Insights**: View and manage your results quicker. Handle submissions in our dahsboard.
+- **No-Code Builder**: Let your operators create and change forms. Stick with React to style and embed forms. `(coming soon)`
+- **Built-in Analytics**: Opening rate, drop-offs, conversions. Use privacy-first analytics out of the box. `(coming soon)`
+- **Survey Templates**: NPS, CSAT, Employee Surveys. Name your business objective, we have the questions. `(coming soon)`
+
+### Why Formbricks
+
+- **Futureproof**: Form needs change. With Formbricks you’ll avoid island solutions right from the start.
+- **Privacy by design**: Self-host the entire product and fly through privacy compliance reviews.
+- **Community driven**: We're building for you. If you need something specific, we’re happy to build it!
+- **Great DX**: We love a solid developer experience. We felt your pain and do our best to avoid it.
+- **Customizable**: We have to build opinionated. If it doesn't suit your need, just change it up.
+- **Extendable**: Even though we try, we cannot build every single integration. With Formbricks, you can.
 
 ### Built With
 
@@ -47,115 +76,6 @@ With snoopForms you can build complex multi-page forms in minutes using either o
 - [TailwindCSS](https://tailwindcss.com/)
 - [Prisma](https://prisma.io/)
 
-## Cloud vs. self-hosted
+## Installation and usage
 
-We offer you a ready hosted and maintained version of snoopForms on [snoopforms.com](https://snoopforms.com). It is always up to date and offers a generous free plan. If you want to try snoopForms, or save yourself the hassle and stress of self-hosting, this is the place to start.
-
-The version of snoopForms you'll find in this repository is the same version that runs in the cloud, and you can easily host it yourself on your servers. See the readme below for the deployment instructions.
-
-(In the future we may develop additional features that aren't in the free Open-Source version)
-
-## Get started with development
-
-This repository is a monorepository using [Turborepo](https://turborepo.org/) and [pnpm](https://pnpm.io/). It contains the snoopForms [server application](https://github.com/formbricks/snoopforms/tree/main/apps/web), the [react library](https://github.com/formbricks/snoopforms/tree/main/packages/react) and other helper packages like database or UI library.
-
-### How to run locally
-
-To get the project running locally on your machine you need to have the following development tools installed:
-
-- Node.JS (we recommend v16)
-- [pnpm](https://pnpm.io/)
-- [Docker](https://www.docker.com/) (to run PostgreSQL / MailHog)
-
-1. Clone the project:
-
-```bash
-git clone https://github.com/formbricks/snoopforms.git
-```
-
-and move into the directory
-
-```bash
-cd snoopforms
-```
-
-2. Install Node.JS packages via pnpm. Don't have pnpm? Get it [here](https://pnpm.io/installation)
-
-```bash
-pnpm install
-```
-
-3. To make the process of installing a dev dependencies easier, we offer a [`docker-compose.yml`](https://docs.docker.com/compose/) with the following containers:
-
-- a `postgres` container and environment variables preset to reach it,
-- a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
-
-```bash
-docker-compose -f docker-compose.dev.yml up -d
-```
-
-4. Create a `.env` file based on `.env.example` and change it according to your setup. If you are using a cloud based database or another mail server, you will need to update the `DATABASE_URL` and SMTP settings in your `.env` accordingly.
-
-```bash
-cp .env.example .env
-```
-
-5. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
-
-```bash
-pnpm dlx prisma migrate dev
-```
-
-6. Start the development server:
-
-```bash
-pnpm dev
-```
-
-**You can now access the app on [https://localhost:3000](https://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of snoopForms, create a new account.
-
-For viewing the confirmation email and other emails the system sends you, you can access mailhog at [https://localhost:8025](https://localhost:8025)
-
-## Deployment for Production Setup
-
-The easiest way to deploy snoopForms on your own machine is using Docker. This requires Docker and the docker compose plugin on your system to work.
-
-Clone the repository:
-
-```bash
-git clone https://github.com/formbricks/snoopforms.git && cd snoopforms
-```
-
-Create a `.env` file based on `.env.docker` and change all fields according to your setup. This file comes with a basic setup and snoopForms works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings in the `.env` file. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_PASSWORD_RESET_DISABLED=1`)
-
-Copy the `.env.docker` file to `.env` and edit it with an editor of your choice if needed.
-
-```bash
-cp .env.docker .env
-```
-
-Note: The environment variables are used at build time. When you change environment variables later, you need to rebuild the image with `docker compose build` for the changes to take effect.
-
-Finally start the docker compose process to build and spin up the snoopForms container as well as the PostgreSQL database.
-
-```bash
-docker compose up -d
-# (use docker-compose if you are on an older docker version)
-```
-
-You can now access the app on [https://localhost:3000](https://localhost:3000). You will be automatically redirected to the login. To use your local installation of snoopForms, create a new account.
-
-## Contributing
-
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Make your changes
-4. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-5. Push to the branch (`git push origin feature/AmazingFeature`)
-6. Open a pull request
-
-## License
-
-Distributed under the AGPLv3 License. See `LICENSE` for more information.
+Coming soon - we will update this Readme in the weeks ahead and show you how to leverage all the advantages of Formbricks
