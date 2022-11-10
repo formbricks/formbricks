@@ -1,0 +1,71 @@
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import Image from "next/image";
+import { Callout } from "@/components/shared/Callout";
+import HeroAnimation from "@/components/shared/HeroAnimation.tsx";
+import MdxTryItCTA from "@/components/shared/MdxTryItCTA.tsx";
+import HeaderImage from "/images/Formbricks React Form Library vs React Hook Form comparison post to build forms fast in reactjs smaller.png";
+
+export const meta = {
+  title: "Formbricks React vs React Hook Form",
+  description:
+    "React Hook Form and Formbricks React are built for two different objectives. In fact, Formbricks form library is built on top of React Hook Form.",
+};
+
+_React Hook Form and Formbricks React are built for two different objectives. In fact, Formbricks' form library is built on top of React Hook Form. We added a layer of simplicty to it to hugely speed up writing forms and surveys in React. Let's talk about how it works!_
+
+<Image
+  src={HeaderImage}
+  alt="Comparison image of Formbricks React Forms Library vs React Hook Form"
+  className="rounded-lg"
+/>
+
+### What is **React Hook Form** good for?
+
+If you want to build highly customized forms optimized to the last milisecond, there is no better solution than React Hook Form. Same is true for sign up forms or other very simple forms.
+
+### What is **Formbricks React** good for?
+
+If you need more than what a basic HTML form has to offer, Formbricks React is very likely the right choice for you. You won’t find yourself rewriting common form functionality over again. It’s native integration into the (also self-hostable) [formbricks.com](https://formbricks.com/get-started) cloud speeds up working with qualitative data overall.
+
+<Callout title="Always uptodate" type="note">
+  At this early stage, the React Library develops rapidly. We keep this page updated as we keep shipping.
+</Callout>
+
+## Why are we building a new React Form Library?
+
+Having worked with [React Hook Form](https://react-hook-form.com) and [Formik](https://formik.org) extensively, we grew to appreciate what they do well. A lot of the specifics of React.js are abstracted away, making it much easier coding performant forms. However, we kept finding ourselves rewriting common form functionality over and over again. There had to be a better way to do this! So we built it :)
+
+### Functionality comparison
+
+Formbricks React can do quite a few things **out of the box**, which React Hook Form cannot. You can certainly custom code all of it into your React Hook Form, if you like redundant work:
+
+|                          | Formbricks React | React Hook Form |
+| ------------------------ | ---------------- | --------------- |
+| Multi Page Forms         | ✅               | ❌              |
+| Logic Jumps              | ✅               | ❌              |
+| Internationalisation     | ✅               | ❌              |
+| Accessibility            | ✅               | ❌              |
+| Tailwind Support         | ✅               | ✅              |
+| Date Picker              | ✅               | ❌              |
+| Toggle                   | ✅               | ❌              |
+| Credit Card              | ✅               | ❌              |
+| Star Rating              | ✅               | ❌              |
+| NPS Questions            | ✅               | ❌              |
+| Randomize Select Options | ✅               | ❌              |
+
+### How fast is Formbricks React in comparison?
+
+_We are still in alpha testing. As soon as we had time to optimize for performance, we'll add this information here._
+
+## More than a form library
+
+The Formbricks React Library is only the first brick in an ecosystem of form solutions built on the same open platform. We decided to start at the root with code-based forms and slowly but steadily build the most needed data pipelines and analytics around it.
+
+Our objective is to make collecting and leveraging qualitative data for business purposes as smooth as possible. Our approach is to build an ecosystem of modular, customizable and extendable solution bricks so that you can focus on what is unique to your app.
+(Hint: managing form and survey data is not).
+
+<HeroAnimation />
+
+<MdxTryItCTA />
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

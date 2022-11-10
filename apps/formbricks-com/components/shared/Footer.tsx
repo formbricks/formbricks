@@ -18,10 +18,11 @@ const navigation = {
     { name: "Form HQ", href: "/form-hq", status: true },
     { name: "Reports", href: "#", status: false },
   ],
-  legal: [
-    { name: "Community", href: "/community" },
-    { name: "Docs", href: "/docs" },
-    { name: "Blog", href: "/blog" },
+  other: [
+    { name: "Community", href: "/community", status: true },
+    { name: "Docs", href: "/docs", status: true },
+    { name: "Blog", href: "/blog", status: true },
+    { name: "vs. React Hook Form", href: "/vs-react-hook-form", status: false },
   ],
   social: [
     {
@@ -57,10 +58,10 @@ export default function Footer() {
       <h2 id="footer-heading" className="sr-only">
         Footer
       </h2>
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16 lg:px-8">
+      <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:py-16 lg:px-8">
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8 xl:col-span-1">
-            <Logo className="h-8 w-auto sm:h-10" />
+            <Logo className="w-auto h-8 sm:h-10" />
             <p className="text-base text-blue-600 dark:text-blue-400">
               The Open Source Forms & Survey Toolbox
             </p>
@@ -68,12 +69,12 @@ export default function Footer() {
               {navigation.social.map((item) => (
                 <Link key={item.name} href={item.href} className="text-blue-400 hover:text-gray-400">
                   <span className="sr-only">{item.name}</span>
-                  <item.icon className="h-6 w-6" aria-hidden="true" />
+                  <item.icon className="w-6 h-6" aria-hidden="true" />
                 </Link>
               ))}
             </div>
           </div>
-          <div className="mt-12 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
+          <div className="grid grid-cols-2 gap-8 mt-12 xl:col-span-2 xl:mt-0">
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
                 <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Form Creation</h3>
@@ -140,11 +141,16 @@ export default function Footer() {
               <div className="mt-12 md:mt-0">
                 <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Other</h3>
                 <ul role="list" className="mt-4 space-y-4">
-                  {navigation.legal.map((item) => (
+                  {navigation.other.map((item) => (
                     <li key={item.name}>
                       <Link
                         href={item.href}
-                        className="text-base text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300">
+                        className={clsx(
+                          item.status
+                            ? "cursor-pointer text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300"
+                            : "cursor-default text-blue-300 dark:text-blue-600",
+                          "text-base"
+                        )}>
                         {item.name}
                       </Link>
                     </li>
@@ -154,7 +160,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="mt-12 border-gray-500 pt-8">
+        <div className="pt-8 mt-12 border-gray-500">
           <p className="text-sm text-blue-600 dark:text-gray-300 xl:text-center">
             &copy; 2022. All rights reserved.
             <br />

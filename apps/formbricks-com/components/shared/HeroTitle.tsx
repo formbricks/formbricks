@@ -10,8 +10,8 @@ export default function HeroTitle({ headingPt1, headingTeal, headingPt2, subhead
   return (
     <div className="px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
       <h1 className="text-3xl font-bold tracking-tight text-blue dark:text-blue-100 sm:text-4xl md:text-5xl">
-        <span className="block xl:inline">{headingPt1}</span>{" "}
-        <span className="block text-transparent from-teal bg-gradient-to-b to-teal-600 bg-clip-text xl:inline">
+        <span className="xl:inline">{headingPt1}</span>{" "}
+        <span className="text-transparent from-teal bg-gradient-to-b to-teal-600 bg-clip-text xl:inline">
           {headingTeal}
         </span>{" "}
         <span className="block xl:inline">{headingPt2}</span>
