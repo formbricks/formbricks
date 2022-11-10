@@ -60,21 +60,30 @@ export default function FormList() {
       console.error(error);
     }
   };
-
   return (
     <>
+        {forms &&
+          (forms.length === 0 ? (
+            <></>
+      ) : (
       <div>
-        {session.user.role === UserRole.ADMIN ? (
-          <></>
-        ) : (
-            <div className="flex flex-row my-10">
-              <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5">TOUTES</button>
-              <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5">MARKETING DIGITAL</button>
-              <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5">DEVELOPPEUR WEB ET WEB MOBILE</button>
-            </div>
-        )
+        {
+          session.user.role === UserRole.ADMIN ? (
+            <></>
+              ) : (
+                  <ul className="flex flex-row mt-10">
+                  <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5">TOUTES</button>
+              {forms
+                .map((form, formIdx) => (
+                  <li key={form.id} className="relative">
+                      <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5">{form.place}</button>
+                  </li>
+                ))}
+            </ul>
+          )
         }
-      </div>
+      </div>      
+      ))}
       {forms && forms.length > 100 ? (
         <SearchBar
           className="mt-5 flex gap-4"
