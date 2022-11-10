@@ -98,7 +98,7 @@ const insights = [
 export default function Header() {
   const router = useRouter();
   return (
-    <Popover className="relative">
+    <Popover className="relative" as="header">
       <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start md:space-x-10">
         <div className="flex justify-start lg:w-0 lg:flex-1">
           <Link href="/">

@@ -15,7 +15,7 @@ function Article({ article }: any) {
         <Card.Description>{article.description}</Card.Description>
         <Card.Cta>Read article</Card.Cta>
       </Card>
-      <Card.Eyebrow as="time" dateTime={article.date} className="hidden mt-1 md:block">
+      <Card.Eyebrow as="time" dateTime={article.date} className="mt-1 hidden md:block">
         {formatDate(article.date)}
       </Card.Eyebrow>
     </article>
@@ -28,8 +28,8 @@ export default function ArticlesIndex({ articles }: any) {
       <Layout
         title="Blog"
         description="Articles around Formbricks, feature updates, the open source ecosystem and the future of form and survey software.">
-        <div className="max-w-3xl px-4 mx-auto my-20 md:border-l md:border-blue-100 md:pl-6 md:dark:border-blue-700/40">
-          <div className="flex flex-col space-y-16">
+        <div className="mx-auto my-20 max-w-3xl px-4 md:border-l md:border-blue-100 md:pl-6 md:dark:border-blue-700/40">
+          <div className="flex flex-col space-y-16 px-4">
             {articles.map((article: any) => (
               <Article key={article.slug} article={article} />
             ))}

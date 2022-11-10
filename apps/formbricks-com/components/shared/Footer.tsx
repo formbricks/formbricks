@@ -156,7 +156,9 @@ export default function Footer() {
         </div>
         <div className="mt-12 border-gray-500 pt-8">
           <p className="text-sm text-blue-600 dark:text-gray-300 xl:text-center">
-            &copy; 2022 Form Bricks, Inc. All rights reserved.
+            &copy; 2022. All rights reserved.
+            <br />
+            <Link href="/imprint">Imprint</Link> | <Link href="/privacy">Privacy Policy</Link>
           </p>
         </div>
       </div>

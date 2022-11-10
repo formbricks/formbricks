@@ -1,4 +1,7 @@
+import Footer from "./Footer";
+import Header from "./Header";
 import Layout from "./Layout";
+import MetaInformation from "./MetaInformation";
 import { Prose } from "./Prose";
 
 interface Props {
@@ -11,19 +14,24 @@ interface Props {
 
 export default function LayoutMdx({ meta, children }: Props) {
   return (
-    <Layout title={meta.title} description={meta.description}>
-      <article className="max-w-3xl px-2 mx-auto my-16">
-        {meta.title && (
-          <header className="space-y-1 mb-9">
-            {meta.title && (
-              <h1 className="text-3xl tracking-tight font-display text-blue dark:text-gray-100">
-                {meta.title}
-              </h1>
-            )}
-          </header>
-        )}
-        <Prose className="">{children}</Prose>
-      </article>
-    </Layout>
+    <div className="flex h-screen flex-col justify-between">
+      <MetaInformation title={meta.title} description={meta.description} />
+      <Header />
+      <main className="min-w-0 max-w-2xl flex-auto px-4 lg:max-w-none lg:pr-0 lg:pl-8 xl:px-16">
+        <article className="mx-auto my-16 max-w-3xl">
+          {meta.title && (
+            <header className="mb-9 space-y-1">
+              {meta.title && (
+                <h1 className="font-display text-blue text-3xl tracking-tight dark:text-gray-100">
+                  {meta.title}
+                </h1>
+              )}
+            </header>
+          )}
+          <Prose className="">{children}</Prose>
+        </article>
+      </main>
+      <Footer />
+    </div>
   );
 }

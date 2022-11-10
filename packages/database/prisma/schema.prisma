@@ -7,11 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum FormType {
-  CODE
-  NOCODE
-}
-
 enum PipelineType {
   WEBHOOK
   EMAIL_NOTIFICATION
@@ -28,24 +23,10 @@ model Form {
   updatedAt          DateTime            @updatedAt
   owner              User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId            Int
-  formType           FormType            @default(NOCODE)
   name               String              @default("")
   schema             Json                @default("{}")
-  submissionSessions SubmissionSession[]
+  submissions        Submission[]
   pipelines          Pipeline[]
-  noCodeForm         NoCodeForm?
-}
-
-model NoCodeForm {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId      String   @unique
-  blocks      Json     @default("[]")
-  blocksDraft Json     @default("[]")
-  published   Boolean  @default(false)
-  closed      Boolean  @default(false)
 }
 
 model Pipeline {
@@ -59,24 +40,14 @@ model Pipeline {
   enabled   Boolean         @default(false)
   events    PipelineEvent[]
   data      Json            @default("{}")
-}
+} 
 
-model SubmissionSession {
-  id        String         @id @default(uuid())
-  createdAt DateTime       @default(now()) @map(name: "created_at")
-  updatedAt DateTime       @updatedAt @map(name: "updated_at")
-  form      Form           @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId    String
-  events    SessionEvent[]
-}
-
-model SessionEvent {
+model Submission {
   id                  String            @id @default(uuid())
   createdAt           DateTime          @default(now()) @map(name: "created_at")
   updatedAt           DateTime          @updatedAt @map(name: "updated_at")
-  submissionSession   SubmissionSession @relation(fields: [submissionSessionId], references: [id], onDelete: Cascade)
-  submissionSessionId String
-  type                String
+  form                Form              @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId              String
   data                Json
 }
 
