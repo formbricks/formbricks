@@ -18,7 +18,7 @@ export default function LayoutMdx({ meta, children }: Props) {
       <MetaInformation title={meta.title} description={meta.description} />
       <Header />
       <main className="min-w-0 max-w-2xl flex-auto px-4 lg:max-w-none lg:pr-0 lg:pl-8 xl:px-16">
-        <article className="mx-auto my-16 max-w-3xl">
+        <article className="mx-auto my-16 max-w-3xl px-2">
           {meta.title && (
             <header className="mb-9 space-y-1">
               {meta.title && (
