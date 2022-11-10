@@ -18,6 +18,7 @@ importers:
     specifiers:
       '@docsearch/react': ^3.3.0
       '@headlessui/react': ^1.7.3
+      '@heroicons/react': ^2.0.13
       '@mdx-js/loader': ^2.1.5
       '@mdx-js/react': ^2.1.5
       '@next/mdx': ^13.0.0
@@ -43,6 +44,7 @@ importers:
     dependencies:
       '@docsearch/react': 3.3.0_4mdvn5gl4vbbvabne2xxb7fpaa
       '@headlessui/react': 1.7.3_biqbaboplfbrettd7655fr4n2y
+      '@heroicons/react': 2.0.13_react@18.2.0
       '@mdx-js/loader': 2.1.5_webpack@5.74.0
       '@mdx-js/react': 2.1.5_react@18.2.0
       '@next/mdx': 13.0.1_wuv4qx5dshjptmdbtsqqkih5iu
@@ -622,6 +624,14 @@ packages:
     dependencies:
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
+    dev: false
+
+  /@heroicons/react/2.0.13_react@18.2.0:
+    resolution: {integrity: sha512-iSN5XwmagrnirWlYEWNPdCDj9aRYVD/lnK3JlsC9/+fqGF80k8C7rl+1HCvBX0dBoagKqOFBs6fMhJJ1hOg1EQ==}
+    peerDependencies:
+      react: '>= 16'
+    dependencies:
+      react: 18.2.0
     dev: false
 
   /@humanwhocodes/config-array/0.10.7:
