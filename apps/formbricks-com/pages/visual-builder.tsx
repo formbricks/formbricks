@@ -63,8 +63,8 @@ const soonFeatures = [
 
 const FormHQPage = () => (
   <Layout
-    title="Visual Builder by Formbricks - Open source Typeform Alternative"
-    description="Free open source alternative to Typeform, Jotform and SurveyMonkey. Build beautiful forms in minutes for free.">
+    title="Visual Builder"
+    description="Free open source Typeform alternative. Build beautiful forms in minutes for free.">
     <HeroTitle headingPt1="Visual Form" headingTeal="Builder" />
     <FeatureHighlight
       featureTitle="Make beautiful surveys with our free & open source form builder"
@@ -101,8 +101,8 @@ const FormHQPage = () => (
         {hereFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="flex items-center">
-              <CheckIcon className="text-teal absolute ml-4 h-6 w-6 md:ml-0" aria-hidden="true" />
-              <p className="ml-14 text-lg leading-loose text-gray-500 dark:text-gray-200 md:ml-9">
+              <CheckIcon className="absolute w-6 h-6 ml-4 text-teal md:ml-0" aria-hidden="true" />
+              <p className="text-lg leading-loose text-gray-500 ml-14 dark:text-gray-200 md:ml-9">
                 {feature.name}
               </p>
             </dt>
@@ -112,7 +112,7 @@ const FormHQPage = () => (
       <dl>
         {nextFeatures.map((feature) => (
           <div key={feature.name}>
-            <dt className="mx-auto flex max-w-sm items-center">
+            <dt className="flex items-center max-w-sm mx-auto">
               <div className="bg-teal ml-2 rounded-full px-1.5 text-xs font-semibold text-black">
                 <p>next</p>
               </div>
@@ -124,7 +124,7 @@ const FormHQPage = () => (
       <dl>
         {soonFeatures.map((feature) => (
           <div key={feature.name}>
-            <dt className="mx-auto flex max-w-sm items-center">
+            <dt className="flex items-center max-w-sm mx-auto">
               <div className="text-teal ml-2 rounded-full bg-gray-100 px-1.5 text-xs font-bold dark:bg-black dark:font-normal">
                 <p>soon</p>
               </div>
@@ -133,8 +133,8 @@ const FormHQPage = () => (
           </div>
         ))}
         <a href="mailto:johannes@formbricks.com">
-          <div className="mx-auto flex max-w-sm items-center transition delay-100 duration-200 ease-in-out hover:scale-105">
-            <PlusIcon className="text-teal ml-4 h-6 w-6 md:ml-5" aria-hidden="true" />
+          <div className="flex items-center max-w-sm mx-auto transition duration-200 ease-in-out delay-100 hover:scale-105">
+            <PlusIcon className="w-6 h-6 ml-4 text-teal md:ml-5" aria-hidden="true" />
             <p className="ml-5 text-lg leading-loose text-gray-500 underline underline-offset-4 dark:text-gray-200">
               Add feature to roadmap
             </p>

@@ -67,7 +67,7 @@ const soonFeatures = [
 
 const ReactFormBuilderPage = () => (
   <Layout
-    title="React Form Builder Library by Formbricks – Open source Form Infrastructure"
+    title="React Form Library"
     description="Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all the good stuff you want, but don't want to build yourself.">
     <HeroTitle headingPt1="React" headingTeal="Form Builder" headingPt2="Library" />
     <FeatureHighlight

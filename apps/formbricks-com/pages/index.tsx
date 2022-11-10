@@ -7,8 +7,8 @@ import CTA from "@/components/shared/CTA";
 
 const IndexPage = () => (
   <Layout
-    title="The Open Source Forms & Survey Toolbox"
-    description="We're building all essential form functionality so you don't have to. Modular, customizable, extendable. And open source.">
+    title="Formbricks | Open Source Forms & Survey Toolbox"
+    description="Modular, customizable and extendable form infrastructure. Build exactly the form or survey solution you need in a fraction of the time. 100% data ownership.">
     <Hero />
     <Features />
     <Highlights />

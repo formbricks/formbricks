@@ -103,13 +103,13 @@ export default function Header() {
         <div className="flex justify-start lg:w-0 lg:flex-1">
           <Link href="/">
             <span className="sr-only">Formbricks</span>
-            <Logo className="h-8 w-auto sm:h-10" />
+            <Logo className="w-auto h-8 sm:h-10" />
           </Link>
         </div>
         <div className="-my-2 -mr-2 md:hidden">
-          <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
+          <Popover.Button className="inline-flex items-center justify-center p-2 text-gray-400 bg-gray-100 rounded-md hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-blue-700 dark:text-blue-200">
             <span className="sr-only">Open menu</span>
-            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+            <Bars3Icon className="w-6 h-6" aria-hidden="true" />
           </Popover.Button>
         </div>
         <Popover.Group as="nav" className="hidden space-x-10 md:flex">
@@ -141,9 +141,9 @@ export default function Header() {
                   leave="transition ease-in duration-150"
                   leaveFrom="opacity-100 translate-y-0"
                   leaveTo="opacity-0 translate-y-1">
-                  <Popover.Panel className="absolute z-10 mt-3 -ml-4 w-screen max-w-lg transform lg:left-1/2 lg:ml-0 lg:max-w-4xl lg:-translate-x-1/2">
+                  <Popover.Panel className="absolute z-10 w-screen max-w-lg mt-3 -ml-4 transform lg:left-1/2 lg:ml-0 lg:max-w-4xl lg:-translate-x-1/2">
                     <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                      <div className="relative grid gap-6 bg-white px-5 py-6 sm:gap-6 sm:p-8 lg:grid-cols-3">
+                      <div className="relative grid gap-6 px-5 py-6 bg-white sm:gap-6 sm:p-8 lg:grid-cols-3">
                         <div>
                           <h4 className="mb-6 ml-16 text-sm text-blue-400">Form Creation</h4>
                           {creation.map((brick) => (
@@ -154,8 +154,8 @@ export default function Header() {
                                 brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
                                 "-m-3 flex items-start rounded-lg p-3 py-4"
                               )}>
-                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
-                                <brick.icon className="h-6 w-6" aria-hidden="true" />
+                              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
+                                <brick.icon className="w-6 h-6" aria-hidden="true" />
                               </div>
                               <div className="ml-4">
                                 <p
@@ -180,8 +180,8 @@ export default function Header() {
                                 brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
                                 "-m-3 flex items-start rounded-lg p-3 py-4"
                               )}>
-                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center text-teal-500 sm:h-12 sm:w-12">
-                                <brick.icon className="h-6 w-6" aria-hidden="true" />
+                              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 sm:h-12 sm:w-12">
+                                <brick.icon className="w-6 h-6" aria-hidden="true" />
                               </div>
                               <div className="ml-4">
                                 <p
@@ -206,8 +206,8 @@ export default function Header() {
                                 brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
                                 "-m-3 flex items-start rounded-lg p-3 py-4"
                               )}>
-                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
-                                <brick.icon className="h-6 w-6" aria-hidden="true" />
+                              <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
+                                <brick.icon className="w-6 h-6" aria-hidden="true" />
                               </div>
                               <div className="ml-4">
                                 <p
@@ -246,7 +246,7 @@ export default function Header() {
             Docs
           </Link>
         </Popover.Group>
-        <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0">
+        <div className="items-center justify-end hidden md:flex md:flex-1 lg:w-0">
           <ThemeSelector className="relative z-10 mr-5" />
           <Button
             variant="secondary"
@@ -271,96 +271,126 @@ export default function Header() {
         leaveTo="opacity-0 scale-95">
         <Popover.Panel
           focus
-          className="absolute inset-x-0 top-0 z-20 origin-top-right transform p-2 transition md:hidden">
-          <div className="divide-y-2 divide-gray-50 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+          className="absolute inset-x-0 top-0 z-20 p-2 transition origin-top-right transform md:hidden">
+          <div className="bg-gray-100 divide-y-2 rounded-lg shadow-lg dark:divide-blue divide-gray-50 ring-1 ring-black ring-opacity-5 dark:bg-blue-900">
             <div className="px-5 pt-5 pb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Logo className="h-8 w-auto" />
+                  <Logo className="w-auto h-8" />
                 </div>
                 <div className="-mr-2">
-                  <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
+                  <Popover.Button className="inline-flex items-center justify-center p-2 text-gray-400 bg-white rounded-md hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-blue-700 dark:text-blue-200">
                     <span className="sr-only">Close menu</span>
-                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                    <XMarkIcon className="w-6 h-6" aria-hidden="true" />
                   </Popover.Button>
                 </div>
               </div>
 
-              <nav className="relative bg-white px-5 py-6">
+              <nav className="relative px-5 py-6 bg-gray-100 dark:bg-blue-900">
                 <div>
-                  <h4 className="mb-3 text-sm text-gray-500">Form Creation</h4>
+                  <h4 className="mb-3 text-sm text-gray-900 dark:text-gray-300">Form Creation</h4>
                   {creation.map((brick) => (
                     <Link
                       key={brick.name}
                       href={brick.href}
                       className={clsx(
-                        brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                        brick.status ? "cursor-pointer" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
-                        <brick.icon className="h-6 w-6" aria-hidden="true" />
+                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
+                        <brick.icon className="w-6 h-6" aria-hidden="true" />
                       </div>
                       <div className="ml-4">
                         <p
                           className={clsx(
-                            brick.status ? "text-gray-900" : "text-gray-400",
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-200"
+                              : "text-gray-400 dark:text-gray-500",
                             "text-lg font-semibold"
                           )}>
                           {brick.name}
                         </p>
-                        <p className="text-sm text-gray-400">{brick.description}</p>
+                        <p
+                          className={clsx(
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-300"
+                              : "text-gray-400 dark:text-gray-600",
+                            "text-sm"
+                          )}>
+                          {brick.description}
+                        </p>
                       </div>
                     </Link>
                   ))}
                 </div>
                 <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-500">Data Pipelines</h4>
+                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Pipelines</h4>
                   {pipes.map((brick) => (
                     <Link
                       key={brick.name}
                       href={brick.href}
                       className={clsx(
-                        brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                        brick.status ? "cursor-pointer" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center text-teal-500 sm:h-12 sm:w-12">
-                        <brick.icon className="h-6 w-6" aria-hidden="true" />
+                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 sm:h-12 sm:w-12">
+                        <brick.icon className="w-6 h-6" aria-hidden="true" />
                       </div>
                       <div className="ml-4">
                         <p
                           className={clsx(
-                            brick.status ? "text-gray-900" : "text-gray-400",
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-200"
+                              : "text-gray-400 dark:text-gray-500",
                             "text-lg font-semibold"
                           )}>
                           {brick.name}
                         </p>
-                        <p className="text-sm text-gray-400">{brick.description}</p>
+                        <p
+                          className={clsx(
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-300"
+                              : "text-gray-400 dark:text-gray-600",
+                            "text-sm"
+                          )}>
+                          {brick.description}
+                        </p>
                       </div>
                     </Link>
                   ))}
                 </div>
                 <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-500">Data Insights</h4>
+                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Insights</h4>
                   {insights.map((brick) => (
                     <Link
                       key={brick.name}
                       href={brick.href}
                       className={clsx(
-                        brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                        brick.status ? "cursor-pointer" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
-                        <brick.icon className="h-6 w-6" aria-hidden="true" />
+                      <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 text-teal-500 rounded-md sm:h-12 sm:w-12">
+                        <brick.icon className="w-6 h-6" aria-hidden="true" />
                       </div>
                       <div className="ml-4">
                         <p
                           className={clsx(
-                            brick.status ? "text-gray-900" : "text-gray-400",
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-200"
+                              : "text-gray-400 dark:text-gray-500",
                             "text-lg font-semibold"
                           )}>
                           {brick.name}
                         </p>
-                        <p className="text-sm text-gray-400">{brick.description}</p>
+                        <p
+                          className={clsx(
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-300"
+                              : "text-gray-400 dark:text-gray-600",
+                            "text-sm"
+                          )}>
+                          {brick.description}
+                        </p>
                       </div>
                     </Link>
                   ))}
@@ -368,7 +398,7 @@ export default function Header() {
               </nav>
             </div>
             <div className="px-5 py-6">
-              <div className="grid grid-cols-3 text-center text-sm font-medium text-gray-900 hover:text-gray-700 sm:text-base">
+              <div className="grid grid-cols-3 text-sm font-medium text-center text-gray-900 hover:text-gray-700 dark:text-blue-200 sm:text-base">
                 <Link href="/community">Community</Link>
 
                 <Link href="/blog">Blog</Link>
@@ -380,13 +410,13 @@ export default function Header() {
                   variant="secondary"
                   EndIcon={GitHubIcon}
                   onClick={() => router.push("https://github.com/formbricks/formbricks")}
-                  className="flex w-full justify-center">
+                  className="flex justify-center w-full">
                   View on Github
                 </Button>
                 <Button
                   variant="primary"
                   onClick={() => router.push("https://app.formbricks.com")}
-                  className="mt-3 flex w-full justify-center">
+                  className="flex justify-center w-full mt-3">
                   Get started
                 </Button>
               </div>

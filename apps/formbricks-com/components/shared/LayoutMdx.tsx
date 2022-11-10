@@ -14,15 +14,15 @@ interface Props {
 
 export default function LayoutMdx({ meta, children }: Props) {
   return (
-    <div className="flex flex-col justify-between h-screen">
+    <div className="flex h-screen flex-col justify-between">
       <MetaInformation title={meta.title} description={meta.description} />
       <Header />
-      <main className="flex-auto max-w-2xl min-w-0 px-4 lg:max-w-none lg:pr-0 lg:pl-8 xl:px-16">
-        <article className="max-w-3xl mx-auto my-16">
+      <main className="min-w-0 max-w-2xl flex-auto px-4 lg:max-w-none lg:pr-0 lg:pl-8 xl:px-16">
+        <article className="mx-auto my-16 max-w-3xl">
           {meta.title && (
-            <header className="space-y-1 mb-9">
+            <header className="mb-9 space-y-1">
               {meta.title && (
-                <h1 className="text-3xl tracking-tight font-display text-blue dark:text-gray-100">
+                <h1 className="font-display text-blue text-3xl tracking-tight dark:text-gray-100">
                   {meta.title}
                 </h1>
               )}
