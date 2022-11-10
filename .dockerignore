@@ -1,6 +1,0 @@
-Dockerfile
-.dockerignore
-.turbo
-node_modules
-README.md
-.next

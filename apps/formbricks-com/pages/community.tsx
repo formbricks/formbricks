@@ -28,7 +28,9 @@ const topContributors = [
 ];
 
 const GetStartedPage = () => (
-  <Layout title="Community" description="Get support for anything your building - or just say hi 👋">
+  <Layout
+    title="Community | Formbricks Open Source Forms & Surveys"
+    description="You're building open source forms and surveys? So are we! Get support for anything your building - or just say hi!">
     <HeroTitle headingPt1="Join the" headingTeal="Formbricks" headingPt2="Community" />
     <div className="grid grid-cols-1 px-4 mb-32 md:grid-cols-2 md:gap-8 md:px-16">
       <div className="px-10 py-6 mb-6 rounded-lg bg-gradient-to-b from-blue-200 to-gray-50 dark:from-blue-300 dark:to-gray-100 md:mb-0">

@@ -1,11 +1,12 @@
-import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
-import CTA from "../components/shared/CTA";
+import HeroTitle from "@/components/shared/HeroTitle";
 import Image from "next/image";
-import ImageEmail from "../images/email.svg";
+import ImageReactLib from "@/images/react-lib.png";
+import ImageSchemaGeneration from "@/images/schema-generation-svg.svg";
 import HeadingCentered from "@/components/shared/HeadingCenetered";
-import FeatureHighlight from "@/components/shared/FeatureHighlight";
 import { CheckIcon, PlusIcon } from "@heroicons/react/24/outline";
+import CTA from "../components/shared/CTA";
+import FeatureHighlight from "@/components/shared/FeatureHighlight";
 
 const hereFeatures = [
   {
@@ -48,7 +49,7 @@ const nextFeatures = [
 
 const soonFeatures = [
   {
-    name: "Survey Templates",
+    name: "AI supported analysis",
   },
   {
     name: "Form logic",
@@ -59,43 +60,34 @@ const soonFeatures = [
   {
     name: "A/B Test of wording",
   },
+  {
+    name: "Vue.js Library",
+  },
 ];
 
-const FormHQPage = () => (
+const ReactFormBuilderPage = () => (
   <Layout
-    title="Visual Builder"
-    description="Free open source Typeform alternative. Build beautiful forms in minutes for free.">
-    <HeroTitle headingPt1="Visual Form" headingTeal="Builder" />
+    title="React Form Library"
+    description="Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all the good stuff you want, but don't want to build yourself.">
+    <HeroTitle headingPt1="React" headingTeal="Form Builder" headingPt2="Library" />
     <FeatureHighlight
-      featureTitle="Make beautiful surveys with our free & open source form builder"
-      text={`Typeform, Jotform, Google Forms alternative but open-source and free to use? We got you! \n Use our visual web form builder to create beautiful forms and surveys in minutes. All the question types you need, multi-page forms, conditional logic - you name it!`}
-      img={
-        <video
-          autoPlay
-          loop
-          muted
-          src="/videos/visual-builder-vid.mp4"
-          className="rounded-xl"
-          poster="/videos/thumbnail-visual-form-builder.png">
-          <source src="movie.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      }
+      featureTitle="Building React forms has never been quicker. But there is more..."
+      text={`Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all the good stuff you want, but don't want to build yourself.\nBuilding forms fast is great, but where do you pipe your data? And what is it worth without a schema?"`}
+      img={<Image src={ImageReactLib} alt="react library" className="rounded-lg" />}
       isImgLeft
-      cta="coming soon"
-      href="#"
     />
     <FeatureHighlight
-      featureTitle="Get responses via email or analyze them online."
-      text={`All survey responses get collected in your Form HQ. View and manage responses in your personal dashboard. \n Set up an email notification or send the complete submission data to your email.`}
-      img={<Image src={ImageEmail} alt="react library" className="rounded-lg" />}
+      featureTitle="Automatic schema generation for reliable insights"
+      text="You can only reliably analyze your submissions when the form schema is sent along with the form. 
+
+      Use our React Forms Library with the Formbricks Data Pipes and get a full image of the data sent. Analyze it in our dashboard or forward it to your database."
+      img={<Image src={ImageSchemaGeneration} alt="react library" className="rounded-lg" />}
     />
     <HeadingCentered
-      teaser="free & open-source"
-      heading="Build exactly the form you want"
-      subheading="Like a proper Typeform or Google Forms alternative, you can build forms and surveys and manage the responses easily."
+      teaser="all you need in one package"
+      heading="Tons of powerful features (in the pipeline)"
+      subheading="20+ question types, easy multi-page forms and validation are on the roadmap. Check what’s already here:"
     />
-
     <div className="mx-auto mt-8 mb-28 md:inline-flex md:gap-x-5 lg:gap-x-20">
       <dl>
         {hereFeatures.map((feature) => (
@@ -146,4 +138,4 @@ const FormHQPage = () => (
   </Layout>
 );
 
-export default FormHQPage;
+export default ReactFormBuilderPage;
