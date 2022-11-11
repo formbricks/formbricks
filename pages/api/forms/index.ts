@@ -87,7 +87,7 @@ export default async function handle(
   }
 }
 
-const checkIdAvailability = async (id) => {
+export const checkIdAvailability = async (id) => {
   const form = await prisma.form.findUnique({
     where: { id },
   });
