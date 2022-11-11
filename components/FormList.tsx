@@ -27,6 +27,7 @@ export default function FormList() {
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
   const [queryValue, setQueryValue] = useState("");
   const [formData, setFormData] = useState({});
+  const [menuItem, setMenuItem] = useState(forms);
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -60,10 +61,21 @@ export default function FormList() {
       console.error(error);
     }
   };
+
+  const filterItem = (button) => {
+    if(button === 'TOUTES'){
+      setMenuItem(forms);
+      return;
+    }
+
+    const filteredData = forms.filter(item => item.place === button);
+    setMenuItem(filteredData)
+  };
+  
   return (
     <>
-        {forms &&
-          (forms.length === 0 ? (
+        {menuItem &&
+          (menuItem.length === 0 ? (
             <></>
       ) : (
       <div>
@@ -72,11 +84,11 @@ export default function FormList() {
             <></>
               ) : (
                   <ul className="flex flex-row mt-10">
-                  <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5">TOUTES</button>
+                  <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5" onClick={() => filterItem("TOUTES")}>TOUTES</button>
               {forms
-                .map((form, formIdx) => (
-                  <li key={form.id} className="relative">
-                      <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5">{form.place}</button>
+                .map((index, itemIndex) => (
+                  <li key={index.id} className="relative">
+                      <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5" onClick={() => filterItem(index.place)}>{index.place}</button>
                   </li>
                 ))}
             </ul>
@@ -96,8 +108,8 @@ export default function FormList() {
         <></>
       )}
       <div className="h-full px-6 py-8">
-        {forms &&
-          (forms.length === 0 ? (
+        {menuItem &&
+          (menuItem.length === 0 ? (
             <div className="mt-5 text-center">
               {session.user.role !== UserRole.ADMIN ? (
                 <EmptyPageFiller
@@ -136,68 +148,68 @@ export default function FormList() {
                   </li>
                 </button>
               )}
-              {forms
+              {menuItem
                 .sort((a, b) => b.updatedAt - a.updatedAt)
-                .map((form, formIdx) => (
-                  <li key={form.id} className="relative h-56 col-span-1">
+                .map((index, itemIndex) => (
+                  <li key={index.id} className="relative h-56 col-span-1">
                     <div className="flex flex-col justify-between h-full border border-gray-300 bg-white rounded-md hover:border hover:border-black">
                       <div className="p-6">
-                        <p className="text-lg line-clamp-3">{form.name}</p>
+                        <p className="text-lg line-clamp-3">{index.name}</p>
                       </div>
                       <div className="border-t">
-                        {form.place === "" ? (
+                        {index.place === "" ? (
                           <></>
                         ) : (
                           <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
                             <HiOutlineLocationMarker className="w-5 h-5 text-black mr-2" />
-                            {form.place}
+                            {index.place}
                           </span>
                         )}
                         <span className="flex  items-center  px-3 py-1">
                           <CalendarDaysIcon
                             className={
-                              format(new Date(form.dueDate), "yyyy-MM-dd") ===
+                              format(new Date(index.dueDate), "yyyy-MM-dd") ===
                               format(new Date(), "yyyy-MM-dd")
                                 ? "w-5 h-5 text-red-800 mr-2"
-                                : dateDayDiff(form.dueDate) > 7
+                                : dateDayDiff(index.dueDate) > 7
                                 ? "w-5 h-5 text-black mr-2"
                                 : "w-5 h-5 text-rose-500 mr-2"
                             }
                           />
-                          {format(new Date(form.dueDate), "yyyy-MM-dd") ===
+                          {format(new Date(index.dueDate), "yyyy-MM-dd") ===
                           format(new Date(), "yyyy-MM-dd") ? (
                             <span className="text-xs font-bold text-red-800 line-clamp-3">
                               ferme aujourd&apos;hui
                             </span>
-                          ) : dateDayDiff(form.dueDate) > 7 ? (
+                          ) : dateDayDiff(index.dueDate) > 7 ? (
                             <span className="text-xs font-bold text-neutral-500 line-clamp-3">
-                              {format(new Date(form.dueDate), "MMMM dd, yyyy")}
+                              {format(new Date(index.dueDate), "MMMM dd, yyyy")}
                             </span>
                           ) : (
                             <span className="text-xs font-bold text-rose-500 line-clamp-3">
-                              {format(new Date(form.dueDate), "yyyy-MM-dd") <
+                              {format(new Date(index.dueDate), "yyyy-MM-dd") <
                               format(new Date(), "yyyy-MM-dd")
                                 ? "fermé"
                                 : "ferme"}{" "}
-                              {timeSince(form.dueDate)}
+                              {timeSince(index.dueDate)}
                             </span>
                           )}
                         </span>
                         {session.user.role === UserRole.ADMIN ? (
                           <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
                             <UserCircleIcon className="w-5 h-5 text-black mr-2" />
-                            {form.owner.firstname + " " + form.owner.lastname}
+                            {index.owner.firstname + " " + index.owner.lastname}
                           </span>
                         ) : (
-                          <CandidateProgress form={form} />
+                          <CandidateProgress form={index} />
                         )}
                       </div>
 
                       <Link
                         href={
                           session.user.role === UserRole.PUBLIC
-                            ? `/sourcings/${form.id}`
-                            : `/forms/${form.id}/form`
+                            ? `/sourcings/${index.id}`
+                            : `/forms/${index.id}/index`
                         }
                       >
                         <a className="absolute w-full h-full" />
@@ -209,7 +221,7 @@ export default function FormList() {
                           <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                             <p className="flex gap-1 items-center text-xs text-ui-gray-medium ">
                               <EyeIcon className="w-3 h-3" />
-                              <p>{form._count?.submissionSessions}</p>
+                              <p>{index._count?.submissionSessions}</p>
                             </p>
                             <Menu
                               as="div"
@@ -248,7 +260,7 @@ export default function FormList() {
                                           {({ active }) => (
                                             <button
                                               onClick={() =>
-                                                deleteForm(form, formIdx)
+                                                deleteForm(index, itemIndex)
                                               }
                                               className={classNames(
                                                 active
