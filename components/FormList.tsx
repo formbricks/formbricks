@@ -12,7 +12,7 @@ import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { useForms } from "../lib/forms";
-import { UserRole } from "@prisma/client";
+import { UserRole, Location as Cities } from "@prisma/client";
 import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
@@ -111,10 +111,10 @@ export default function FormList() {
               ) : (
                   <ul className="flex flex-row mt-10">
                   <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5" onClick={() => filterItem("TOUTES")}>TOUTES</button>
-              {forms
-                .map((index, itemIndex) => (
-                  <li key={index.id} className="relative">
-                      <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5" onClick={() => filterItem(index.place)}>{index.place}</button>
+              {[Cities.Lubumbashi, Cities.Kinshasa, Cities.Goma, Cities.Autre]
+                .map((city, cityIndex) => (
+                  <li key={cityIndex} className="relative">
+                      <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5" onClick={() => filterItem(city)}>{city}</button>
                   </li>
                 ))}
             </ul>
