@@ -45,12 +45,12 @@ export const useNoCodePagePublic = (formId) => {
   };
 };
 
-export const createNoCodeForm = async (formId) => {
+export const createNoCodeForm = async (formId, body={}) => {
   try {
     const res = await fetch(`/api/forms/${formId}/nocodeform`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
+      body: JSON.stringify(body),
     });
     return await res.json();
   } catch (error) {

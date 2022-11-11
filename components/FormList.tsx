@@ -36,15 +36,15 @@ export default function FormList() {
       return signIn();
     },
   });
-
+  
   const dateDayDiff = (date) => {
     const today = new Date();
     const dueDate = new Date(date);
     var total_seconds = Math.abs(+dueDate - +today) / 1000;
     var days_difference = Math.floor(total_seconds / (60 * 60 * 24));
-    return days_difference;
+    return days_difference;  
   };
-
+  
   const newForm = async () => {
     setOpenNewFormModal(true);
   };
@@ -62,6 +62,23 @@ export default function FormList() {
       console.error(error);
     }
   };
+
+  const duplicateForm = async (form) => {
+    try {
+      fetch(`/api/forms/${form.id}/duplicate`, {
+        method: "POST",
+        body: JSON.stringify({
+          form
+        }),
+      }).then((data)=>{
+        const updatedForms = [...forms, data];
+        mutateForms(updatedForms);
+
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };  
 
   return (
     <>
@@ -142,7 +159,7 @@ export default function FormList() {
                                 ? "w-5 h-5 text-red-800 mr-2"
                                 : dateDayDiff(form.dueDate) > 7
                                 ? "w-5 h-5 text-black mr-2"
-                                : "w-5 h-5 text-rose-500 mr-2"
+                                : "w-5 h-5 text-rose-500 mr-2"   
                             }
                           />
                           {format(new Date(form.dueDate), "yyyy-MM-dd") ===
@@ -246,12 +263,23 @@ export default function FormList() {
                                               <span>Supprimer</span>
                                               
                                             </button>
-                                            <button className="flex px-4 py-2 text-sm w-full">
-                                            <HiDocumentDuplicate
+                                            <button
+                                              onClick={() =>
+                                                duplicateForm(form)
+                                              }
+                                              className={classNames(
+                                                active
+                                                  ? "bg-ui-gray-light rounded-sm text-ui-black"
+                                                  : "text-ui-gray-dark",
+                                                "flex px-4 py-2 text-sm w-full"
+                                              )}
+                                            >
+                                              <HiDocumentDuplicate
                                                 className="w-5 h-5 mr-3 text-ui-gray-dark"
                                                 aria-hidden="true"
                                               />
-                                            <span className="text-ui-gray-dark">Dupliquer</span>
+                                              <span>Duplicate</span>
+                                              
                                             </button>
                                            </>
                                             
