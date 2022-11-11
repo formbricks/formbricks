@@ -40,7 +40,7 @@ export default async function handle(
     // create form in database
     const result = await prisma.form.create({
       data: {
-        name,
+        name: `Copie de "${name}"`,
         description,
         dueDate,
         place,
@@ -64,7 +64,7 @@ export default async function handle(
     capturePosthogEvent(session.user.email, "form created", {
       formType: form.formType,
     });
-    return res.json(result);
+    res.json({ ...result, owner: form.owner });
   }
   // Unknown HTTP Method
   else {
