@@ -66,39 +66,51 @@ export default function FormList() {
     }
   };
 
-  const filterItem = (button) => {
-    if(button === 'TOUTES'){
+  const filterSourcings = (button) => {
+    if (button === "TOUTES") {
       setFilteredData(forms);
       return;
     }
 
-    const filteredData = forms.filter(item => item.place === button);
-    setFilteredData(filteredData)
+    const filteredData = forms.filter((item) => item.place === button);
+    setFilteredData(filteredData);
   };
   return (
     <>
-        {filteredData &&
-          (filteredData.length === 0 ? (
-            <></>
-      ) : (
-      <div>
-        {
-          session.user.role === UserRole.ADMIN ? (
-            <></>
-              ) : (
-                  <ul className="flex flex-row mt-10">
-                  <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5" onClick={() => filterItem("TOUTES")}>TOUTES</button>
-              {[Cities.Lubumbashi, Cities.Kinshasa, Cities.Goma, Cities.Autre]
-                .map((city, cityIndex) => (
+      {filteredData &&
+        (filteredData.length === 0 ? (
+          <></>
+        ) : (
+          <div>
+            {session.user.role === UserRole.ADMIN ? (
+              <></>
+            ) : (
+              <ul className="flex flex-row mt-10">
+                <button
+                  className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5"
+                  onClick={() => filterSourcings("TOUTES")}
+                >
+                  TOUTES
+                </button>
+                {[
+                  Cities.Lubumbashi,
+                  Cities.Kinshasa,
+                  Cities.Goma,
+                  Cities.Autre,
+                ].map((city, cityIndex) => (
                   <li key={cityIndex} className="relative">
-                      <button className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5" onClick={() => filterItem(city)}>{city}</button>
+                    <button
+                      className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5"
+                      onClick={() => filterSourcings(city)}
+                    >
+                      {city}
+                    </button>
                   </li>
                 ))}
-            </ul>
-          )
-        }
-      </div>      
-      ))}
+              </ul>
+            )}
+          </div>
+        ))}
       {forms && forms.length > 100 ? (
         <SearchBar
           className="mt-5 flex gap-4"
@@ -269,7 +281,7 @@ export default function FormList() {
                                                 active
                                                   ? "bg-ui-gray-light rounded-sm text-ui-black"
                                                   : "text-ui-gray-dark",
-                                                "flex px-4 py-2 text-sm w-full"
+                                                "flex px-4 py-2 text-sm w-full",
                                               )}
                                             >
                                               <TrashIcon

@@ -11,10 +11,11 @@ interface props {
 export default function SignIn({}: props) {
   const router = useRouter();
   const email = router.query.email;
+  const callbackUrl = router.query.callbackUrl;
 
   const requestVerificationEmail = async () => {
     try {
-      await resendVerificationEmail(email);
+      await resendVerificationEmail(email, callbackUrl);
       toast("Verification email successfully sent. Please check your inbox.");
     } catch (e) {
       toast.error(`Error: ${e.message}`);
