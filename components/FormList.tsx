@@ -10,7 +10,7 @@ import {
 import { HiOutlineLocationMarker, HiDocumentDuplicate } from "react-icons/hi";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { Fragment, useState } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { useForms } from "../lib/forms";
 import { UserRole, Location as Cities } from "@prisma/client";
 import { useSession, signIn } from "next-auth/react";
@@ -29,7 +29,7 @@ export default function FormList() {
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
   const [queryValue, setQueryValue] = useState("");
   const [formData, setFormData] = useState({});
-  const [menuItem, setMenuItem] = useState(forms);
+  const [filteredData, setFilteredData] = useState(forms);
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -38,6 +38,10 @@ export default function FormList() {
     },
   });
 
+  useEffect(() => {
+    setFilteredData(forms)
+  }, [forms])
+  
   const dateDayDiff = (date) => {
     const today = new Date();
     const dueDate = new Date(date);
@@ -89,19 +93,22 @@ export default function FormList() {
 
   const filterItem = (button) => {
     if(button === 'TOUTES'){
-      setMenuItem(forms);
+      setFilteredData(forms);
       return;
     }
 
     const filteredData = forms.filter(item => item.place === button);
-    setMenuItem(filteredData)
+    setFilteredData(filteredData)
   };
+<<<<<<< HEAD
   
 >>>>>>> 801fe7d (feat:add filter function with button)
+=======
+>>>>>>> 5660ee4 (added location and formation fields to modals)
   return (
     <>
-        {menuItem &&
-          (menuItem.length === 0 ? (
+        {filteredData &&
+          (filteredData.length === 0 ? (
             <></>
       ) : (
       <div>
@@ -134,8 +141,8 @@ export default function FormList() {
         <></>
       )}
       <div className="h-full px-6 py-8">
-        {menuItem &&
-          (menuItem.length === 0 ? (
+        {filteredData &&
+          (filteredData.length === 0 ? (
             <div className="mt-5 text-center">
               {session.user.role !== UserRole.ADMIN ? (
                 <EmptyPageFiller
@@ -174,7 +181,7 @@ export default function FormList() {
                   </li>
                 </button>
               )}
-              {menuItem
+              {filteredData
                 .sort((a, b) => b.updatedAt - a.updatedAt)
                 .map((index, itemIndex) => (
                   <li key={index.id} className="relative h-56 col-span-1">
