@@ -111,7 +111,15 @@ export default function SignInPage() {
                       OU
                     </span>
 
-                    <Link href={"/auth/signup"}>
+                    <Link
+                      href={{
+                        pathname: "/auth/signup",
+                        query: {
+                          callbackUrl:
+                            router.query.callbackUrl?.toString() || "/forms",
+                        },
+                      }}
+                    >
                       <a href="">
                         <button className="flex justify-center w-full px-4 py-2 text-sm font-medium text-slate-900 border-2 border-red-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 mt-3 hover:bg-red-600 hover:text-white hover:border-red-600">
                           Créer un compte
