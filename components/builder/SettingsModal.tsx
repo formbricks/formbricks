@@ -13,7 +13,11 @@ import { classNames } from "../../lib/utils";
 import format from "date-fns/format";
 import { persistForm, useForm } from "../../lib/forms";
 import { persistNoCodeForm, useNoCodeForm } from "../../lib/noCodeForm";
-import { FormOrder } from "@prisma/client";
+import {
+  SourcingAnsweringOrderOptions,
+  SourcingLocations,
+  SourcingFormations,
+} from "../../lib/enums";
 //HiRefresh
 
 export default function SettingsModal({ open, setOpen, formId }) {
@@ -25,22 +29,33 @@ export default function SettingsModal({ open, setOpen, formId }) {
   const [dueDate, setDueDate] = useState(form.dueDate);
   const [description, setDescription] = useState(form.description);
   const [answeringOrder, setAnsweringOrder] = useState(form.answeringOrder);
-
-  const answeringOptions = [
-    FormOrder.RANDOM,
-    FormOrder.SEQUENTIAL,
-    FormOrder.ABTEST,
-  ];
+  const [location, setLocation] = useState(form.place);
+  const [formation, setFormation] = useState(form.formation);
 
   const handleBlurInputs = async (inputName: any) => {
     const newForm = JSON.parse(JSON.stringify(form));
-    inputName === "dueDate"
-      ? (newForm.dueDate = new Date(dueDate))
-      : inputName === "name"
-      ? (newForm.name = name)
-      : inputName === "answeringOrder"
-      ? (newForm.answeringOrder = answeringOrder)
-      : (newForm.description = description);
+    switch (inputName) {
+      case "dueDate":
+        newForm.dueDate = new Date(dueDate);
+        break;
+      case "name":
+        newForm.name = name;
+        break;
+      case "answeringOrder":
+        newForm.answeringOrder = answeringOrder;
+        break;
+      case "description":
+        newForm.description = description;
+        break;
+      case "place":
+        newForm.place = location;
+        break;
+      case "formation":
+        newForm.formation = formation;
+        break;
+      default:
+        break;
+    }
     await persistForm(newForm);
     mutateForm(newForm);
     toast(`Your sourcing has been updated successfully 🎉`);
@@ -57,7 +72,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
       toast(
         newNoCodeForm.closed
           ? "Your sourcing is now closed for submissions "
-          : "Your sourcing is now open for submissions 🎉"
+          : "Your sourcing is now open for submissions 🎉",
       );
     }, 500);
   };
@@ -174,12 +189,12 @@ export default function SettingsModal({ open, setOpen, formId }) {
                       </div>
                     </div>
                     <div className="mt-2">
-                    <label
-                      htmlFor="answeringOrder"
-                      className="text-sm font-light text-ui-gray-dark"
-                    >
-                      Définissez l&apos;ordre des étapes de votre sourcing
-                    </label>
+                      <label
+                        htmlFor="answeringOrder"
+                        className="text-sm font-light text-ui-gray-dark"
+                      >
+                        Définissez l&apos;ordre des étapes de votre sourcing
+                      </label>
                       <Listbox
                         value={answeringOrder}
                         name="answeringOrder"
@@ -203,15 +218,90 @@ export default function SettingsModal({ open, setOpen, formId }) {
                           leaveTo="opacity-0"
                         >
                           <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                            {answeringOptions.map((option, optionIdx) => {
+                            {SourcingAnsweringOrderOptions.map(
+                              (option, optionIdx) => {
+                                return (
+                                  <Listbox.Option
+                                    key={optionIdx}
+                                    value={option}
+                                    onChange={() => setAnsweringOrder(option)}
+                                    onBlur={() =>
+                                      handleBlurInputs("answeringOrder")
+                                    }
+                                    className={({ active }) =>
+                                      `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                                        active
+                                          ? "bg-red-500 text-white"
+                                          : "text-gray-900"
+                                      }`
+                                    }
+                                  >
+                                    {({ selected }) => (
+                                      <>
+                                        <span
+                                          className={`block truncate ${
+                                            selected
+                                              ? "font-medium"
+                                              : "font-normal"
+                                          }`}
+                                        >
+                                          {option}
+                                        </span>
+
+                                        {selected ? (
+                                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-white-600">
+                                            <CheckIcon
+                                              className="h-5 w-5"
+                                              aria-hidden="true"
+                                            />
+                                          </span>
+                                        ) : null}
+                                      </>
+                                    )}
+                                  </Listbox.Option>
+                                );
+                              },
+                            )}
+                          </Listbox.Options>
+                        </Transition>
+                      </Listbox>
+                    </div>
+
+                    <div className="mt-2">
+                      <label
+                        htmlFor="location"
+                        className="text-sm font-light text-ui-gray-dark"
+                      >
+                        Choisissez le lieu de votre sourcing
+                      </label>
+                      <Listbox
+                        value={location}
+                        name="location"
+                        onChange={(e) => setLocation(e)}
+                      >
+                        <Listbox.Button className="relative w-full cursor-default rounded bg-ui-gray-light py-2 pl-3 pr-10 text-left focus:ring-2 focus:ring-red sm:text-sm">
+                          <span className="block truncate">{location}</span>
+                          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                            <ChevronUpDownIcon
+                              className="h-5 w-5 text-gray-400"
+                              aria-hidden="true"
+                            />
+                          </span>
+                        </Listbox.Button>
+                        <Transition
+                          as={Fragment}
+                          leave="transition ease-in duration-100"
+                          leaveFrom="opacity-100"
+                          leaveTo="opacity-0"
+                        >
+                          <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                            {SourcingLocations.map((city, cityIdx) => {
                               return (
                                 <Listbox.Option
-                                  key={optionIdx}
-                                  value={option}
-                                  onChange={() => setAnsweringOrder(option)}
-                                  onBlur={() =>
-                                    handleBlurInputs("answeringOrder")
-                                  }
+                                  key={cityIdx}
+                                  value={city}
+                                  onChange={() => setLocation(city)}
+                                  onBlur={() => handleBlurInputs("place")}
                                   className={({ active }) =>
                                     `relative cursor-default select-none py-2 pl-10 pr-4 ${
                                       active
@@ -229,7 +319,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                                             : "font-normal"
                                         }`}
                                       >
-                                        {option}
+                                        {city}
                                       </span>
 
                                       {selected ? (
@@ -245,6 +335,81 @@ export default function SettingsModal({ open, setOpen, formId }) {
                                 </Listbox.Option>
                               );
                             })}
+                          </Listbox.Options>
+                        </Transition>
+                      </Listbox>
+                    </div>
+
+                    <div className="mt-2">
+                      <label
+                        htmlFor="formation"
+                        className="text-sm font-light text-ui-gray-dark"
+                      >
+                        Choisissez la formation
+                      </label>
+                      <Listbox
+                        value={formation}
+                        name="formation"
+                        onChange={(e) => setFormation(e)}
+                      >
+                        <Listbox.Button className="relative w-full cursor-default rounded bg-ui-gray-light py-2 pl-3 pr-10 text-left focus:ring-2 focus:ring-red sm:text-sm">
+                          <span className="block truncate">{formation}</span>
+                          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                            <ChevronUpDownIcon
+                              className="h-5 w-5 text-gray-400"
+                              aria-hidden="true"
+                            />
+                          </span>
+                        </Listbox.Button>
+                        <Transition
+                          as={Fragment}
+                          leave="transition ease-in duration-100"
+                          leaveFrom="opacity-100"
+                          leaveTo="opacity-0"
+                        >
+                          <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                            {SourcingFormations.map(
+                              (formation, formationIdx) => {
+                                return (
+                                  <Listbox.Option
+                                    key={formationIdx}
+                                    value={formation}
+                                    onChange={() => setFormation(formation)}
+                                    onBlur={() => handleBlurInputs("formation")}
+                                    className={({ active }) =>
+                                      `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                                        active
+                                          ? "bg-red-500 text-white"
+                                          : "text-gray-900"
+                                      }`
+                                    }
+                                  >
+                                    {({ selected }) => (
+                                      <>
+                                        <span
+                                          className={`block truncate ${
+                                            selected
+                                              ? "font-medium"
+                                              : "font-normal"
+                                          }`}
+                                        >
+                                          {formation}
+                                        </span>
+
+                                        {selected ? (
+                                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-white-600">
+                                            <CheckIcon
+                                              className="h-5 w-5"
+                                              aria-hidden="true"
+                                            />
+                                          </span>
+                                        ) : null}
+                                      </>
+                                    )}
+                                  </Listbox.Option>
+                                );
+                              },
+                            )}
                           </Listbox.Options>
                         </Transition>
                       </Listbox>
@@ -285,7 +450,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                           onChange={() => toggleClose()}
                           className={classNames(
                             noCodeForm.closed ? "bg-red-600" : "bg-gray-200",
-                            "relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                            "relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500",
                           )}
                         >
                           <span
@@ -294,7 +459,7 @@ export default function SettingsModal({ open, setOpen, formId }) {
                               noCodeForm.closed
                                 ? "translate-x-5"
                                 : "translate-x-0",
-                              "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"
+                              "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200",
                             )}
                           />
                         </Switch>
