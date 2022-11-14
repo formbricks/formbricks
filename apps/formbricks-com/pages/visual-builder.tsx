@@ -63,8 +63,8 @@ const soonFeatures = [
 
 const FormHQPage = () => (
   <Layout
-    title="Visual Builder by Formbricks - Open source Typeform Alternative"
-    description="Free open source alternative to Typeform, Jotform and SurveyMonkey. Build beautiful forms in minutes for free.">
+    title="Visual Builder"
+    description="Free open source Typeform alternative. Build beautiful forms in minutes for free.">
     <HeroTitle headingPt1="Visual Form" headingTeal="Builder" />
     <FeatureHighlight
       featureTitle="Make beautiful surveys with our free & open source form builder"

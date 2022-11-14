@@ -7,7 +7,7 @@
   <p align="center">
     The Open Source Forms & Survey Toolbox
     <br />
-    <a href="https://formbricks.com/">Website & Hosted version</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
+    <a href="https://formbricks.com/">Website</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
   </p>
 </p>
 
@@ -24,6 +24,8 @@
 > :warning: Repository still in progress `#buildinpublic`
 
 ## About Formbricks
+
+![formbricks-twitter-header-open source forms and survey tools_smaller](https://user-images.githubusercontent.com/72809645/201055057-0883bbcf-86f2-4ea1-83f0-3a190a12f6cd.png)
 
 We're building all essential form functionality so you don't have to. Modular, customizable, extendable. And open source.
 

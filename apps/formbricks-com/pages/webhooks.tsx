@@ -8,7 +8,7 @@ import FeatureHighlight from "@/components/shared/FeatureHighlight";
 const WebhooksPage = () => (
   <Layout
     title="Webhooks"
-    description="Don't be limited by our choice of integrations, pipe your data exactly where you need it">
+    description="Don't be limited by our choice of integrations, pipe your data exactly where you need it.">
     <HeroTitle headingPt1="Webhooks" />
     <FeatureHighlight
       featureTitle="Versatile data handling"

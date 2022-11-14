@@ -70,7 +70,7 @@ const FormHQPage = () => (
       heading="Everything you always wanted (from a form tool)"
       subheading="The days of scattered response data are counted. Manage all form data in one place. Analyze right here or pipe your data where you need it."
     />
-    <ul role="list" className="grid grid-cols-1 gap-6 pt-4 pb-16 sm:grid-cols-2 md:grid-cols-3">
+    <ul role="list" className="grid grid-cols-1 gap-6 px-2 pt-4 pb-16 sm:grid-cols-2 md:grid-cols-3">
       {features.map((feature) => (
         <li
           key={feature.id}

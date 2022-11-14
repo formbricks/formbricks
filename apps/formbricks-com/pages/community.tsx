@@ -28,11 +28,13 @@ const topContributors = [
 ];
 
 const GetStartedPage = () => (
-  <Layout title="Community" description="Get support for anything your building - or just say hi 👋">
+  <Layout
+    title="Community | Formbricks Open Source Forms & Surveys"
+    description="You're building open source forms and surveys? So are we! Get support for anything your building - or just say hi!">
     <HeroTitle headingPt1="Join the" headingTeal="Formbricks" headingPt2="Community" />
-    <div className="mb-32 grid grid-cols-2 gap-8 px-16">
-      <div className="rounded-lg bg-gradient-to-b from-blue-200 to-gray-50 px-10 py-6 dark:from-blue-300 dark:to-gray-100">
-        <h2 className="text-blue mt-7 text-4xl font-bold">Top Contributors</h2>
+    <div className="mb-32 grid grid-cols-1 px-4 md:grid-cols-2 md:gap-8 md:px-16">
+      <div className="mb-6 rounded-lg bg-gradient-to-b from-blue-200 to-gray-50 px-10 py-6 dark:from-blue-300 dark:to-gray-100 md:mb-0">
+        <h2 className="text-blue mt-7 text-3xl font-bold xl:text-4xl">Top Contributors</h2>
         <p className="text-sm text-gray-500">The leader board of the Formbricks community contributors 🙌</p>
         <ol className="mt-10 ml-4 list-decimal">
           {topContributors.map((MVP) => (
@@ -40,7 +42,7 @@ const GetStartedPage = () => (
               <a href={MVP.href} className="" target="_blank" rel="noreferrer">
                 {MVP.name}
 
-                <ArrowTopRightOnSquareIcon className="text-teal mb-1 ml-1 inline h-5 w-5" />
+                <ArrowTopRightOnSquareIcon className="mb-1 ml-1 inline h-5 w-5 text-teal-600" />
               </a>
             </li>
           ))}
@@ -48,9 +50,9 @@ const GetStartedPage = () => (
       </div>
       <div>
         <div className="from-blue rounded-lg bg-gradient-to-b to-black px-10 pt-6 pb-12 dark:from-blue-300 dark:to-gray-100">
-          <h3 className="mt-7 text-4xl font-bold text-gray-100 ">Community Discord</h3>
-          <p className="text-gray-200">Get support for anything your building - or just say hi 👋</p>
-          <Button className="mt-7 w-full text-center font-bold" variant="highlight">
+          <h3 className="text-blue mt-7 text-3xl font-bold xl:text-4xl">Community Discord</h3>
+          <p className="text-sm text-gray-500">Get support for anything your building - or just say hi 👋</p>
+          <Button className="mt-7 w-full justify-center font-bold" variant="highlight">
             Join Discord <ChatBubbleOvalLeftEllipsisIcon className="ml-1 inline h-5 w-5" />
           </Button>
         </div>

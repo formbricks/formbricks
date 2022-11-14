@@ -29,7 +29,7 @@ const features = [
 
 const EmailPage = () => (
   <Layout
-    title="Form to Email"
+    title="Email Notifications"
     description="In some cases, the good old email is the way to go. In the Form HQ you can setup forwarding submission data to one or more emails.">
     <HeroTitle headingPt1="Email" />
     <FeatureHighlight

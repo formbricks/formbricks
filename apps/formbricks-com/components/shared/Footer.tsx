@@ -58,10 +58,10 @@ export default function Footer() {
       <h2 id="footer-heading" className="sr-only">
         Footer
       </h2>
-      <div className="px-4 py-12 mx-auto max-w-7xl sm:px-6 lg:py-16 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16 lg:px-8">
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8 xl:col-span-1">
-            <Logo className="w-auto h-8 sm:h-10" />
+            <Logo className="h-8 w-auto sm:h-10" />
             <p className="text-base text-blue-600 dark:text-blue-400">
               The Open Source Forms & Survey Toolbox
             </p>
@@ -69,12 +69,12 @@ export default function Footer() {
               {navigation.social.map((item) => (
                 <Link key={item.name} href={item.href} className="text-blue-400 hover:text-gray-400">
                   <span className="sr-only">{item.name}</span>
-                  <item.icon className="w-6 h-6" aria-hidden="true" />
+                  <item.icon className="h-6 w-6" aria-hidden="true" />
                 </Link>
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-8 mt-12 xl:col-span-2 xl:mt-0">
+          <div className="mt-12 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
                 <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Form Creation</h3>
@@ -160,7 +160,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="pt-8 mt-12 border-gray-500">
+        <div className="mt-12 border-gray-500 pt-8">
           <p className="text-sm text-blue-600 dark:text-gray-300 xl:text-center">
             &copy; 2022. All rights reserved.
             <br />

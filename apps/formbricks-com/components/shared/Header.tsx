@@ -107,7 +107,7 @@ export default function Header() {
           </Link>
         </div>
         <div className="-my-2 -mr-2 md:hidden">
-          <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
+          <Popover.Button className="inline-flex items-center justify-center rounded-md bg-gray-100 p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-blue-700 dark:text-blue-200">
             <span className="sr-only">Open menu</span>
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </Popover.Button>
@@ -272,29 +272,29 @@ export default function Header() {
         <Popover.Panel
           focus
           className="absolute inset-x-0 top-0 z-20 origin-top-right transform p-2 transition md:hidden">
-          <div className="divide-y-2 divide-gray-50 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+          <div className="dark:divide-blue divide-y-2 divide-gray-50 rounded-lg bg-gray-100 shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-blue-900">
             <div className="px-5 pt-5 pb-6">
               <div className="flex items-center justify-between">
                 <div>
                   <Logo className="h-8 w-auto" />
                 </div>
                 <div className="-mr-2">
-                  <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500">
+                  <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-blue-700 dark:text-blue-200">
                     <span className="sr-only">Close menu</span>
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </Popover.Button>
                 </div>
               </div>
 
-              <nav className="relative bg-white px-5 py-6">
+              <nav className="relative bg-gray-100 px-5 py-6 dark:bg-blue-900">
                 <div>
-                  <h4 className="mb-3 text-sm text-gray-500">Form Creation</h4>
+                  <h4 className="mb-3 text-sm text-gray-900 dark:text-gray-300">Form Creation</h4>
                   {creation.map((brick) => (
                     <Link
                       key={brick.name}
                       href={brick.href}
                       className={clsx(
-                        brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                        brick.status ? "cursor-pointer" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
                       <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
@@ -303,24 +303,34 @@ export default function Header() {
                       <div className="ml-4">
                         <p
                           className={clsx(
-                            brick.status ? "text-gray-900" : "text-gray-400",
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-200"
+                              : "text-gray-400 dark:text-gray-500",
                             "text-lg font-semibold"
                           )}>
                           {brick.name}
                         </p>
-                        <p className="text-sm text-gray-400">{brick.description}</p>
+                        <p
+                          className={clsx(
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-300"
+                              : "text-gray-400 dark:text-gray-600",
+                            "text-sm"
+                          )}>
+                          {brick.description}
+                        </p>
                       </div>
                     </Link>
                   ))}
                 </div>
                 <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-500">Data Pipelines</h4>
+                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Pipelines</h4>
                   {pipes.map((brick) => (
                     <Link
                       key={brick.name}
                       href={brick.href}
                       className={clsx(
-                        brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                        brick.status ? "cursor-pointer" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
                       <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center text-teal-500 sm:h-12 sm:w-12">
@@ -329,24 +339,34 @@ export default function Header() {
                       <div className="ml-4">
                         <p
                           className={clsx(
-                            brick.status ? "text-gray-900" : "text-gray-400",
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-200"
+                              : "text-gray-400 dark:text-gray-500",
                             "text-lg font-semibold"
                           )}>
                           {brick.name}
                         </p>
-                        <p className="text-sm text-gray-400">{brick.description}</p>
+                        <p
+                          className={clsx(
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-300"
+                              : "text-gray-400 dark:text-gray-600",
+                            "text-sm"
+                          )}>
+                          {brick.description}
+                        </p>
                       </div>
                     </Link>
                   ))}
                 </div>
                 <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-500">Data Insights</h4>
+                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Insights</h4>
                   {insights.map((brick) => (
                     <Link
                       key={brick.name}
                       href={brick.href}
                       className={clsx(
-                        brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                        brick.status ? "cursor-pointer" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
                       <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
@@ -355,12 +375,22 @@ export default function Header() {
                       <div className="ml-4">
                         <p
                           className={clsx(
-                            brick.status ? "text-gray-900" : "text-gray-400",
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-200"
+                              : "text-gray-400 dark:text-gray-500",
                             "text-lg font-semibold"
                           )}>
                           {brick.name}
                         </p>
-                        <p className="text-sm text-gray-400">{brick.description}</p>
+                        <p
+                          className={clsx(
+                            brick.status
+                              ? "text-gray-900 dark:text-gray-300"
+                              : "text-gray-400 dark:text-gray-600",
+                            "text-sm"
+                          )}>
+                          {brick.description}
+                        </p>
                       </div>
                     </Link>
                   ))}
@@ -368,7 +398,7 @@ export default function Header() {
               </nav>
             </div>
             <div className="px-5 py-6">
-              <div className="grid grid-cols-3 text-center text-sm font-medium text-gray-900 hover:text-gray-700 sm:text-base">
+              <div className="grid grid-cols-3 text-center text-sm font-medium text-gray-900 hover:text-gray-700 dark:text-blue-200 sm:text-base">
                 <Link href="/community">Community</Link>
 
                 <Link href="/blog">Blog</Link>
