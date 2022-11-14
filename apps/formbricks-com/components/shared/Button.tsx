@@ -114,7 +114,7 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
       )}
       {props.children}
       {loading && (
-        <div className="absolute transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform">
           <svg
             className={clsx(
               "mx-4 h-5 w-5 animate-spin",

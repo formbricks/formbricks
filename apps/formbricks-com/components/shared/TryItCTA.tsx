@@ -5,16 +5,16 @@ import { useRouter } from "next/router";
 export default function HeadingCentered() {
   const router = useRouter();
   return (
-    <div className="grid content-center max-w-md grid-cols-2 gap-10 px-4 pt-24 mx-auto pb-36 sm:max-w-3xl sm:px-6 lg:max-w-6xl lg:px-8">
+    <div className="mx-auto grid max-w-md grid-cols-1 content-center gap-10 px-4 py-12 sm:max-w-3xl sm:px-6 md:grid-cols-2 md:pt-24 md:pb-36 lg:max-w-6xl lg:px-8">
       <div className="">
-        <p className="mb-3 font-semibold text-teal-500 uppercase text-md">What are you waiting for?</p>
-        <h2 className="text-3xl font-bold tracking-tight text-blue dark:text-blue-100 sm:text-4xl">
+        <p className="text-md mb-3 font-semibold uppercase text-teal-500">What are you waiting for?</p>
+        <h2 className="text-blue text-3xl font-bold tracking-tight dark:text-blue-100 sm:text-4xl">
           Try it right now!
         </h2>
-        <p className="mt-3 text-xl text-blue-500 dark:text-blue-300 sm:mt-4">
+        <p className="mt-3 text-blue-500 dark:text-blue-300 sm:mt-4 md:text-lg">
           Dive right in or browse docs for examples.
         </p>
-        <p className="mb-3 text-xl text-blue-500 dark:text-blue-300 sm:mb-4">
+        <p className="mb-3 text-blue-500 dark:text-blue-300 sm:mb-4 md:text-lg">
           Questions? Join our Discord, we’re happy to help!
         </p>
         <Button variant="secondary" onClick={() => router.push("/docs")}>
@@ -25,10 +25,10 @@ export default function HeadingCentered() {
         </Button>
       </div>
       <div className="flex items-center">
-        <div className="flex items-center justify-between w-full h-20 px-8 text-gray-100 bg-blue-900 rounded-lg ">
+        <div className="flex h-20 w-full items-center justify-between rounded-lg bg-blue-900 px-8 text-gray-100 ">
           <p>npm install @formbricks/react</p>
           <button onClick={() => navigator.clipboard.writeText("npm install @formbricks/react")}>
-            <DocumentDuplicateIcon className="w-8 h-8" />
+            <DocumentDuplicateIcon className="h-8 w-8" />
           </button>
         </div>
       </div>

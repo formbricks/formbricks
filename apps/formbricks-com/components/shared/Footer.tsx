@@ -18,10 +18,12 @@ const navigation = {
     { name: "Form HQ", href: "/form-hq", status: true },
     { name: "Reports", href: "#", status: false },
   ],
-  legal: [
-    { name: "Community", href: "/community" },
-    { name: "Docs", href: "/docs" },
-    { name: "Blog", href: "/blog" },
+  other: [
+    { name: "Community", href: "/community", status: true },
+    { name: "Docs", href: "/docs", status: true },
+    { name: "Blog", href: "/blog", status: true },
+    { name: "vs. React Hook Form", href: "/vs-react-hook-form", status: false },
+    { name: "vs. Formspree", href: "/vs-formspree", status: false },
   ],
   social: [
     {
@@ -140,11 +142,16 @@ export default function Footer() {
               <div className="mt-12 md:mt-0">
                 <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Other</h3>
                 <ul role="list" className="mt-4 space-y-4">
-                  {navigation.legal.map((item) => (
+                  {navigation.other.map((item) => (
                     <li key={item.name}>
                       <Link
                         href={item.href}
-                        className="text-base text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300">
+                        className={clsx(
+                          item.status
+                            ? "cursor-pointer text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300"
+                            : "cursor-default text-blue-300 dark:text-blue-600",
+                          "text-base"
+                        )}>
                         {item.name}
                       </Link>
                     </li>

@@ -43,23 +43,23 @@ const features = [
 export default function FeatureTable({}) {
   return (
     <div className="mt-32 rounded-xl bg-gradient-to-br from-blue-900 via-blue-900 to-black lg:mt-56">
-      <div className="max-w-4xl px-4 py-8 mx-auto sm:px-6 sm:pt-8 sm:pb-12 lg:max-w-7xl lg:px-8 lg:pt-12">
-        <p className="max-w-2xl mb-3 font-semibold text-teal-500 uppercase text-md sm:mt-4">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:pt-8 sm:pb-12 lg:max-w-7xl lg:px-8 lg:pt-12">
+        <p className="text-md mb-3 max-w-2xl font-semibold uppercase text-teal-500 sm:mt-4">
           Why Formbricks?
         </p>
         <h2 className="mt-4 text-3xl font-bold tracking-tight text-white">
           The only complete open source option.
         </h2>
-        <p className="max-w-3xl mt-4 text-lg text-blue-300">
+        <p className="mt-4 max-w-3xl text-lg text-blue-300">
           We needed this, so we are building it. We experienced first hand how form needs develop as companies
           grow. Make the right choice today, congratulate yourself tomorrow :)
         </p>
-        <div className="grid grid-cols-1 mt-12 gap-x-6 gap-y-12 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
+        <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
           {features.map((feature) => (
             <div key={feature.name}>
               <div>
-                <span className="flex items-center justify-center w-12 h-12 rounded-md bg-teal-50 bg-opacity-10">
-                  <feature.icon className="w-6 h-6 text-teal-500" aria-hidden="true" />
+                <span className="flex h-12 w-12 items-center justify-center rounded-md bg-teal-50 bg-opacity-10">
+                  <feature.icon className="h-6 w-6 text-teal-500" aria-hidden="true" />
                 </span>
               </div>
               <div className="mt-6">
