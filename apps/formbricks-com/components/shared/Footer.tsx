@@ -23,6 +23,7 @@ const navigation = {
     { name: "Docs", href: "/docs", status: true },
     { name: "Blog", href: "/blog", status: true },
     { name: "vs. React Hook Form", href: "/vs-react-hook-form", status: false },
+    { name: "vs. Formspree", href: "/vs-formspree", status: false },
   ],
   social: [
     {
