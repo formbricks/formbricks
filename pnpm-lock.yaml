@@ -26,6 +26,7 @@ importers:
       '@types/node': 18.11.6
       '@types/react': 18.0.23
       '@types/react-dom': 18.0.7
+      add: ^2.0.6
       autoprefixer: ^10.4.12
       clsx: ^1.2.1
       eslint: 8.26.0
@@ -33,6 +34,7 @@ importers:
       lottie-web: ^5.9.6
       next: 13.0.0
       next-plausible: ^3.6.4
+      next-sitemap: ^3.1.31
       postcss: ^8.4.18
       prism-react-renderer: ^1.3.5
       react: 18.2.0
@@ -48,10 +50,12 @@ importers:
       '@mdx-js/loader': 2.1.5_webpack@5.74.0
       '@mdx-js/react': 2.1.5_react@18.2.0
       '@next/mdx': 13.0.1_wuv4qx5dshjptmdbtsqqkih5iu
+      add: 2.0.6
       clsx: 1.2.1
       lottie-web: 5.9.6
       next: 13.0.0_biqbaboplfbrettd7655fr4n2y
       next-plausible: 3.6.4_r5sq4deac3rmm2d5onhwvomqve
+      next-sitemap: 3.1.31_qcnuwogvzn5dnsttittida2hji
       prism-react-renderer: 1.3.5_react@18.2.0
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -492,6 +496,10 @@ packages:
       human-id: 1.0.2
       prettier: 2.7.1
     dev: true
+
+  /@corex/deepmerge/4.0.29:
+    resolution: {integrity: sha512-q/yVUnqckA8Do+EvAfpy7RLdumnBy9ZsducMUtZTvpdbJC7azEf1hGtnYYxm0QfphYxjwggv6XtH64prvS1W+A==}
+    dev: false
 
   /@docsearch/css/3.3.0:
     resolution: {integrity: sha512-rODCdDtGyudLj+Va8b6w6Y85KE85bXRsps/R4Yjwt5vueXKXZQKYw0aA9knxLBT6a/bI/GMrAcmCR75KYOM6hg==}
@@ -1340,6 +1348,10 @@ packages:
     resolution: {integrity: sha512-QOxyigPVrpZ2GXT+PFyZTl6TtOFc5egxHIP9IlQ+RbupQuX4RkT/Bee4/kQuC02Xkzg84JcT7oLYtDIQxp+v7w==}
     engines: {node: '>=0.4.0'}
     hasBin: true
+
+  /add/2.0.6:
+    resolution: {integrity: sha512-j5QzrmsokwWWp6kUcJQySpbG+xfOBqqKnup3OIk1pz+kB/80SLorZ9V8zHFLO92Lcd+hbvq8bT+zOGoPkmBV0Q==}
+    dev: false
 
   /ajv-keywords/3.5.2_ajv@6.12.6:
     resolution: {integrity: sha512-5p6WTN0DdTGVQk6VjcEju19IgaHudalcfabD7yhDGeA6bcQnmL+CpveLJq/3hvfwd1aof6L386Ougkx6RfyMIQ==}
@@ -4112,6 +4124,20 @@ packages:
       next: 13.0.0_biqbaboplfbrettd7655fr4n2y
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
+    dev: false
+
+  /next-sitemap/3.1.31_qcnuwogvzn5dnsttittida2hji:
+    resolution: {integrity: sha512-GGp+EKSNYy3nlfuZtyI2DAsUrTSA6u35glVQVxpiPRnPHINDozsxSbFzHgFNqZ95hBBdkw5anDJYVnRYGIWvNw==}
+    engines: {node: '>=14.18'}
+    hasBin: true
+    peerDependencies:
+      '@next/env': '*'
+      next: '*'
+    dependencies:
+      '@corex/deepmerge': 4.0.29
+      '@next/env': 13.0.0
+      minimist: 1.2.6
+      next: 13.0.0_biqbaboplfbrettd7655fr4n2y
     dev: false
 
   /next/13.0.0_biqbaboplfbrettd7655fr4n2y:
