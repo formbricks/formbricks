@@ -68,7 +68,7 @@ const FormHQPage = () => (
     <HeroTitle headingPt1="Visual Form" headingTeal="Builder" />
     <FeatureHighlight
       featureTitle="Make beautiful surveys with our free & open source form builder"
-      text={`Typeform, Jotform, Google Forms alternative but open-source and free to use? We got you! \n Use our visual web form builder to create beautiful forms and surveys in minutes. All the question types you need, multi-page forms, conditional logic - you name it!`}
+      text={`Typeform, Jotform, Google Forms alternative but open-source and free to use? We got you! \n\n  Use our visual web form builder to create beautiful forms and surveys in minutes. All the question types you need, multi-page forms, conditional logic - you name it!`}
       img={
         <video
           autoPlay
@@ -84,10 +84,11 @@ const FormHQPage = () => (
       isImgLeft
       cta="coming soon"
       href="#"
+      disabled
     />
     <FeatureHighlight
       featureTitle="Get responses via email or analyze them online."
-      text={`All survey responses get collected in your Form HQ. View and manage responses in your personal dashboard. \n Set up an email notification or send the complete submission data to your email.`}
+      text={`All survey responses get collected in your Form HQ. View and manage responses in your personal dashboard. \n\n  Set up an email notification or send the complete submission data to your email.`}
       img={<Image src={ImageEmail} alt="react library" className="rounded-lg" />}
     />
     <HeadingCentered
@@ -116,7 +117,7 @@ const FormHQPage = () => (
         {nextFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="mx-auto flex max-w-sm items-center">
-              <div className="bg-brand-dark dark:bg-brand-light ml-2 rounded-full px-1.5 text-xs font-semibold text-black">
+              <div className="bg-brand-dark dark:bg-brand-light ml-2 rounded-full px-1.5 text-xs font-semibold text-slate-900">
                 <p>next</p>
               </div>
               <p className="ml-3 text-lg leading-loose text-gray-500 dark:text-gray-200">{feature.name}</p>

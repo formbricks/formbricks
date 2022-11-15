@@ -27,7 +27,7 @@ export default function Highlights({}) {
                 time.
               </p>
               <div className="my-6">
-                <Button variant="minimal" size="sm" onClick={() => router.push("/react-form-builder")}>
+                <Button variant="minimal" size="sm" onClick={() => router.push("/react-form-library")}>
                   Read more
                 </Button>
               </div>
@@ -41,7 +41,7 @@ export default function Highlights({}) {
           <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
             <Image src={ImageDataPipelines} alt="react library" className="mb-8 rounded-lg lg:mb-0" />
             <div>
-              <h2 className="text-blue text-2xl font-bold tracking-tight dark:text-blue-100 sm:text-3xl">
+              <h2 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
                 <span className="text-brand-dark dark:text-brand-light ">API</span> all the way
               </h2>
               <p className="text-md mt-6 max-w-3xl leading-7 text-slate-500 dark:text-slate-400">

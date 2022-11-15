@@ -85,7 +85,7 @@ export function ThemeSelector(props) {
             className={({ active, selected }) =>
               clsx("flex cursor-pointer select-none items-center rounded-[0.625rem] p-1", {
                 "text-brand-dark dark:text-brand-light": selected,
-                "text-blue dark:text-white": active && !selected,
+                "text-slate-800 dark:text-slate-100": active && !selected,
                 "text-slate-700 dark:text-slate-400": !active && !selected,
                 "bg-slate-100 dark:bg-slate-900/40": active,
               })

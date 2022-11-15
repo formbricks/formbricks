@@ -1,6 +1,6 @@
 import Link from "next/link";
 import clsx from "clsx";
-import { Logo } from "./Logo";
+import { FooterLogo } from "./Logo";
 
 const navigation = {
   creation: [
@@ -60,7 +60,7 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16 lg:px-8">
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8 xl:col-span-1">
-            <Logo className="h-8 w-auto sm:h-10" />
+            <FooterLogo className="h-8 w-auto sm:h-10" />
             <p className="text-base text-slate-500 dark:text-slate-400">
               The Open Source Forms & Survey Toolbox
             </p>

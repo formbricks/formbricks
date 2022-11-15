@@ -16,7 +16,7 @@ export default function HeroTitle({ headingPt1, headingTeal, headingPt2, subhead
         </span>{" "}
         <span className="inline ">{headingPt2}</span>
       </h1>
-      <p className="mx-auto mt-3 max-w-md text-base text-slate-500 dark:text-slate-400 sm:text-lg md:mt-5 md:max-w-2xl md:text-xl">
+      <p className="mx-auto mt-3 max-w-md text-base text-slate-500 dark:text-slate-300 sm:text-lg md:mt-5 md:max-w-2xl md:text-xl">
         {subheading}
       </p>
       <div className="mx-auto mt-5 max-w-md sm:flex sm:justify-center md:mt-8">{children}</div>

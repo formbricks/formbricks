@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import clsx from "clsx";
 
 import { Hero } from "@/components/shared/Hero";
-import { Logo, Logomark } from "@/components/shared/Logo";
+import { FooterLogo, Logomark } from "@/components/shared/Logo";
 import { MobileNavigation } from "@/components/shared/MobileNavigation";
 import { Navigation } from "@/components/shared/Navigation";
 import { Prose } from "@/components/shared/Prose";
@@ -12,6 +12,7 @@ import { Search } from "@/components/shared/Search";
 import { ThemeSelector } from "@/components/shared/ThemeSelector";
 import navigation from "@/lib/docsNavigation";
 import Button from "../shared/Button";
+import MetaInformation from "../shared/MetaInformation";
 
 function GitHubIcon(props: any) {
   return (
@@ -39,9 +40,9 @@ function Header({ navigation }: any) {
   return (
     <header
       className={clsx(
-        "sticky top-0 z-50 flex flex-wrap items-center justify-between bg-white px-4 py-5 shadow-md shadow-blue-900/5 transition duration-500 dark:shadow-none sm:px-6 lg:px-8",
+        "sticky top-0 z-50 flex flex-wrap items-center justify-between bg-white px-4 py-5 shadow-md shadow-slate-900/5 transition duration-500 dark:shadow-none sm:px-6 lg:px-8",
         isScrolled
-          ? "dark:bg-blue-900/95 dark:backdrop-blur dark:[@supports(backdrop-filter:blur(0))]:bg-blue-900/75"
+          ? "dark:bg-slate-900/95 dark:backdrop-blur dark:[@supports(backdrop-filter:blur(0))]:bg-slate-900/75"
           : "dark:bg-transparent"
       )}>
       <div className="mr-6 flex lg:hidden">
@@ -50,7 +51,7 @@ function Header({ navigation }: any) {
       <div className="relative flex flex-grow basis-0 items-center">
         <Link href="/" aria-label="Home page">
           <Logomark className="h-9 w-9 lg:hidden" />
-          <Logo className="hidden h-9 w-auto fill-blue-700 dark:fill-sky-100 lg:block" />
+          <FooterLogo className="hidden h-9 w-auto fill-slate-700 dark:fill-slate-100 lg:block" />
         </Link>
         <div>
           <Button
@@ -68,7 +69,7 @@ function Header({ navigation }: any) {
       <div className="relative flex basis-0 justify-end gap-6 sm:gap-8 md:flex-grow">
         <ThemeSelector className="relative z-10" />
         <Link href="https://github.com" className="group" aria-label="GitHub">
-          <GitHubIcon className="h-6 w-6 fill-blue-400 group-hover:fill-blue-500 dark:group-hover:fill-blue-300" />
+          <GitHubIcon className="h-6 w-6 fill-slate-400 group-hover:fill-slate-500 dark:group-hover:fill-slate-300" />
         </Link>
       </div>
     </header>
@@ -93,15 +94,19 @@ export function Layout({ children, meta }: LayoutProps) {
 
   return (
     <>
+      <MetaInformation
+        title="Formbricks Documentation"
+        description="Modular, customizable, extendable. Take what you like, build on top what you need. Build your next big thing faster."
+      />
       <Header navigation={navigation} />
 
       {isHomePage && <Hero />}
 
       <div className="max-w-8xl relative mx-auto flex justify-center sm:px-2 lg:px-8 xl:px-12">
         <div className="hidden lg:relative lg:block lg:flex-none">
-          <div className="absolute inset-y-0 right-0 w-[50vw] bg-blue-50 dark:hidden" />
-          <div className="absolute top-16 bottom-0 right-0 hidden h-12 w-px bg-gradient-to-t from-blue-800 dark:block" />
-          <div className="absolute top-28 bottom-0 right-0 hidden w-px bg-blue-800 dark:block" />
+          <div className="absolute inset-y-0 right-0 w-[50vw] bg-slate-50 dark:hidden" />
+          <div className="absolute top-16 bottom-0 right-0 hidden h-12 w-px bg-gradient-to-t from-slate-800 dark:block" />
+          <div className="absolute top-28 bottom-0 right-0 hidden w-px bg-slate-800 dark:block" />
           <div className="sticky top-[4.5rem] -ml-0.5 h-[calc(100vh-4.5rem)] overflow-y-auto overflow-x-hidden py-16 pl-0.5">
             <Navigation navigation={navigation} className="w-64 pr-8 xl:w-72 xl:pr-16" />
           </div>
@@ -110,9 +115,13 @@ export function Layout({ children, meta }: LayoutProps) {
           <article>
             {(meta.title || section) && (
               <header className="mb-9 space-y-1">
-                {section && <p className="font-display text-sm font-medium text-sky-500">{section.title}</p>}
+                {section && (
+                  <p className="font-display text-brand-light dark:text-brand-dark text-sm font-medium">
+                    {section.title}
+                  </p>
+                )}
                 {meta.title && (
-                  <h1 className="font-display text-blue text-3xl tracking-tight dark:text-white">
+                  <h1 className="font-display text-3xl tracking-tight text-slate-800 dark:text-slate-100">
                     {meta.title}
                   </h1>
                 )}
@@ -120,14 +129,16 @@ export function Layout({ children, meta }: LayoutProps) {
             )}
             <Prose className="">{children}</Prose>
           </article>
-          <dl className="mt-12 flex border-t border-blue-200 pt-6 dark:border-blue-800">
+          <dl className="mt-12 flex border-t border-slate-200 pt-6 dark:border-slate-800">
             {previousPage && (
               <div>
-                <dt className="font-display text-blue text-sm font-medium dark:text-white">Previous</dt>
+                <dt className="font-display text-brand-dark dark:text-brand-light text-sm font-medium">
+                  Previous
+                </dt>
                 <dd className="mt-1">
                   <Link
                     href={previousPage.href}
-                    className="text-base font-semibold text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300">
+                    className="text-base font-semibold text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
                     <span aria-hidden="true">&larr;</span> {previousPage.title}
                   </Link>
                 </dd>
@@ -135,11 +146,13 @@ export function Layout({ children, meta }: LayoutProps) {
             )}
             {nextPage && (
               <div className="ml-auto text-right">
-                <dt className="font-display text-blue text-sm font-medium dark:text-white">Next</dt>
+                <dt className="font-display text-brand-dark dark:text-brand-light text-sm font-medium">
+                  Next
+                </dt>
                 <dd className="mt-1">
                   <Link
                     href={nextPage.href}
-                    className="text-base font-semibold text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300">
+                    className="text-base font-semibold text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
                     {nextPage.title} <span aria-hidden="true">&rarr;</span>
                   </Link>
                 </dd>

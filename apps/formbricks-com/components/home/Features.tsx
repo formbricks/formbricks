@@ -87,7 +87,9 @@ export default function Features() {
                 </div>
               </div>
               <div className="flex flex-1 flex-col p-10">
-                <h3 className="text-blue my-4 text-lg font-medium dark:text-slate-200">{feature.name}</h3>
+                <h3 className="my-4 text-lg font-medium text-slate-800 dark:text-slate-200">
+                  {feature.name}
+                </h3>
                 <dl className="mt-1 flex flex-grow flex-col justify-between">
                   <dt className="sr-only">Description</dt>
                   <dd className="text-sm text-gray-600 dark:text-slate-400">{feature.description}</dd>

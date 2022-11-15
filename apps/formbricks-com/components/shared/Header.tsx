@@ -18,7 +18,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment } from "react";
 import Button from "./Button";
-import { Logo } from "./Logo";
+import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
 
 const creation = [
@@ -103,11 +103,11 @@ export default function Header() {
         <div className="flex justify-start lg:w-0 lg:flex-1">
           <Link href="/">
             <span className="sr-only">Formbricks</span>
-            <Logo className="h-8 w-auto sm:h-10" />
+            <FooterLogo className="h-8 w-auto sm:h-10" />
           </Link>
         </div>
         <div className="-my-2 -mr-2 md:hidden">
-          <Popover.Button className="inline-flex items-center justify-center rounded-md bg-gray-100 p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-blue-700 dark:text-blue-200">
+          <Popover.Button className="inline-flex items-center justify-center rounded-md bg-gray-100 p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-slate-700 dark:text-slate-200">
             <span className="sr-only">Open menu</span>
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </Popover.Button>
@@ -294,21 +294,21 @@ export default function Header() {
         <Popover.Panel
           focus
           className="absolute inset-x-0 top-0 z-20 origin-top-right transform p-2 transition md:hidden">
-          <div className="dark:divide-blue divide-y-2 divide-gray-50 rounded-lg bg-gray-100 shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-blue-900">
+          <div className="dark:divide-slate divide-y-2 divide-gray-50 rounded-lg bg-gray-100 shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-slate-900">
             <div className="px-5 pt-5 pb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Logo className="h-8 w-auto" />
+                  <FooterLogo className="h-8 w-auto" />
                 </div>
                 <div className="-mr-2">
-                  <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-blue-700 dark:text-blue-200">
+                  <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-slate-700 dark:text-slate-200">
                     <span className="sr-only">Close menu</span>
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </Popover.Button>
                 </div>
               </div>
 
-              <nav className="relative bg-gray-100 px-5 py-6 dark:bg-blue-900">
+              <nav className="relative bg-gray-100 px-5 py-6 dark:bg-slate-900">
                 <div>
                   <h4 className="mb-3 text-sm text-gray-900 dark:text-gray-300">Form Creation</h4>
                   {creation.map((brick) => (
@@ -420,7 +420,7 @@ export default function Header() {
               </nav>
             </div>
             <div className="px-5 py-6">
-              <div className="grid grid-cols-3 text-center text-sm font-medium text-gray-900 hover:text-gray-700 dark:text-blue-200 sm:text-base">
+              <div className="grid grid-cols-3 text-center text-sm font-medium text-gray-900 hover:text-gray-700 dark:text-slate-200 sm:text-base">
                 <Link href="/community">Community</Link>
 
                 <Link href="/blog">Blog</Link>

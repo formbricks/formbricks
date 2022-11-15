@@ -22,7 +22,7 @@ export default function LayoutMdx({ meta, children }: Props) {
           {meta.title && (
             <header className="mb-9 space-y-1">
               {meta.title && (
-                <h1 className="font-display text-blue text-3xl tracking-tight dark:text-gray-100">
+                <h1 className="font-display text-3xl tracking-tight text-slate-800 dark:text-gray-100">
                   {meta.title}
                 </h1>
               )}
