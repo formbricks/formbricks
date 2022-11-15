@@ -14,8 +14,7 @@ import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
 import { isTimedPage } from "../../../lib/utils";
-import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import { BsPencilFill } from "react-icons/bs";
+import { CheckCircleIcon, InboxArrowDownIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { FormOrder } from "@prisma/client";
 
 const { publicRuntimeConfig } = getConfig();
@@ -202,7 +201,8 @@ function NoCodeFormPublic() {
                                 {getPageTimer(page.blocks)} min.
                               </span>
                               <span className="flex items-center text-gray-800">
-                                <BsPencilFill className="w-5 mr-2" />1 chance
+                                <InboxArrowDownIcon className="w-5 mr-2" />1
+                                tentative
                               </span>
                             </>
                           ) : (
@@ -215,7 +215,7 @@ function NoCodeFormPublic() {
                             disabled={isTimedPage(page)}
                             className="w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold"
                           >
-                            {isTimedPage(page) ? "Fini" : "Modifier"}
+                            {isTimedPage(page) ? "Terminé" : "Modifier"}
                           </button>
                         ) : (
                           <button

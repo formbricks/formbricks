@@ -37,6 +37,7 @@ export const persistForm = async (form) => {
 
 export const createForm = async (form = {}) => {
   try {
+    console.log("form", form);
     const res = await fetch(`/api/forms`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
