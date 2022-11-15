@@ -1,0 +1,5 @@
+---
+"@formbricks/react": patch
+---
+
+republish
