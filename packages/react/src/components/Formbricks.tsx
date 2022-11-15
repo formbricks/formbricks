@@ -1,17 +1,13 @@
 import React, { useContext, useEffect, useMemo } from "react";
 import { generateId } from "../lib/utils";
+import { getValidationRules } from "../lib/validation";
 import { SchemaContext } from "./Form";
-import { Text } from "./inputs/Text";
+import { Text, TextInputUniqueProps } from "./inputs/Text";
 import { Textarea } from "./inputs/Textarea";
 import { Help } from "./shared/Help";
 
-interface BasicTypeProps {
-  id?: string;
-  name: string;
-  label?: string;
-  placeholder?: string;
+interface FormbricksInputProps {
   type: "text" | "textarea";
-  help?: string;
 }
 
 interface SubmitTypeProps {
@@ -21,20 +17,51 @@ interface SubmitTypeProps {
   placeholder?: string;
   type: "submit";
   help?: string;
+  validation?: string;
 }
 
-type FormbricksProps = BasicTypeProps | SubmitTypeProps;
+export interface UniversalInputProps {
+  id?: string;
+  help?: string;
+  name: string;
+  label?: string;
+  elemId: string;
+  validation: string[];
+}
 
-export function Formbricks({ id, name, label, placeholder, help, type }: FormbricksProps) {
+type FormbricksProps = FormbricksInputProps & UniversalInputProps & SubmitTypeProps & TextInputUniqueProps;
+
+export function Formbricks({
+  id,
+  name,
+  label,
+  placeholder,
+  help,
+  type,
+  validation,
+  minLength,
+  maxLength,
+}: FormbricksProps) {
   const elemId = useMemo(() => (typeof id !== "undefined" ? id : `${name}=${generateId(3)}`), [id]);
-  const { schema, setSchema } = useContext(SchemaContext);
+  const { setSchema } = useContext(SchemaContext);
+  const validationRules = getValidationRules(validation);
 
   useEffect(() => {
     setSchema((schema: any) => {
       const newSchema = JSON.parse(JSON.stringify(schema));
       let elementIdx = newSchema.findIndex((e: any) => e.name === name);
       if (elementIdx === -1) {
-        newSchema.push({ name, type, label, help });
+        newSchema.push({
+          id,
+          name,
+          label,
+          placeholder,
+          help,
+          type,
+          validation,
+          minLength,
+          maxLength,
+        });
         elementIdx = newSchema.length - 1;
       }
       /* if (["checkbox", "radio"].includes(type)) {
@@ -48,9 +75,25 @@ export function Formbricks({ id, name, label, placeholder, help, type }: Formbri
     <div className="formbricks-outer" data-type={type} data-family={type}>
       <div className="formbricks-wrapper">
         {type === "text" ? (
-          <Text name={name} label={label} elemId={elemId} placeholder={placeholder} />
+          <Text
+            name={name}
+            label={label}
+            elemId={elemId}
+            placeholder={placeholder}
+            validation={validationRules}
+            minLength={minLength}
+            maxLength={maxLength}
+          />
         ) : type === "textarea" ? (
-          <Textarea name={name} label={label} elemId={elemId} placeholder={placeholder} />
+          <Textarea
+            name={name}
+            label={label}
+            elemId={elemId}
+            placeholder={placeholder}
+            validation={validationRules}
+            minLength={minLength}
+            maxLength={maxLength}
+          />
         ) : type === "submit" ? (
           <button className="formbricks-input" type="submit" id={elemId}>
             {label}

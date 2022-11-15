@@ -1,15 +1,25 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
+import { UniversalInputProps } from "../Formbricks";
 import { Label } from "../shared/Label";
 
-interface TextProps {
-  name: string;
-  label?: string;
-  elemId: string;
-  placeholder?: string;
+export interface TextInputUniqueProps {
+  maxLength: number;
+  minLength: number;
+  placeholder: string;
 }
 
-export function Text({ name, label, elemId, placeholder }: TextProps) {
+type TextProps = UniversalInputProps & TextInputUniqueProps;
+
+export function Text({
+  name,
+  label,
+  elemId,
+  placeholder,
+  validation,
+  minLength = 0,
+  maxLength = 524288,
+}: TextProps) {
   const { register } = useFormContext();
   return (
     <>
@@ -20,7 +30,7 @@ export function Text({ name, label, elemId, placeholder }: TextProps) {
           type="text"
           id={elemId}
           placeholder={placeholder || ""}
-          {...register(name)}
+          {...(register(name), { required: validation?.includes("required"), minLength, maxLength })}
         />
       </div>
     </>

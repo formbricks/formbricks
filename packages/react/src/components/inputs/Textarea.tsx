@@ -1,15 +1,25 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
+import { UniversalInputProps } from "../Formbricks";
 import { Label } from "../shared/Label";
 
-interface TextareaProps {
-  name: string;
-  label?: string;
-  elemId: string;
-  placeholder?: string;
+export interface TextInputUniqueProps {
+  maxLength: number;
+  minLength: number;
+  placeholder: string;
 }
 
-export function Textarea({ name, label, elemId, placeholder }: TextareaProps) {
+type TextareaProps = UniversalInputProps & TextInputUniqueProps;
+
+export function Textarea({
+  name,
+  label,
+  elemId,
+  placeholder,
+  validation,
+  minLength = 0,
+  maxLength = 524288,
+}: TextareaProps) {
   const { register } = useFormContext();
   return (
     <>
@@ -19,7 +29,7 @@ export function Textarea({ name, label, elemId, placeholder }: TextareaProps) {
           className="formbricks-input"
           id={elemId}
           placeholder={placeholder || ""}
-          {...register(name)}
+          {...(register(name), { required: validation?.includes("required"), minLength, maxLength })}
         />
       </div>
     </>
