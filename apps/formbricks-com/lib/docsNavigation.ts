@@ -9,8 +9,17 @@ const navigation = [
     ],
   },
   {
-    title: "Form Creation",
-    links: [{ title: "React Form Builder", href: "/docs/form-creation/react-form-library" }],
+    title: "React Form Library",
+    links: [
+      {
+        title: "Introduction",
+        href: "/docs/react-form-library/introduction",
+      },
+      {
+        title: "Getting started",
+        href: "/docs/react-form-library/getting-started",
+      },
+    ],
   },
   {
     title: "Data Pipelines",

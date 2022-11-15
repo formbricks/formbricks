@@ -1,0 +1,37 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "React Form Library",
+};
+
+## Building React forms has never been quicker.
+
+Forms are something that every developer uses frequently. But building Forms is harder than you might think. React doesn't provide good form functionality out-of-the-box and you have to take care of state management, validation and form components yourself. And always keep performance, accessibility and best practices in mind. And that makes Forms not only complex to build, but also to maintain and learn how to set up.
+We make Forms easier than ever in the React world.
+
+Here's what a simple Form looks like in Formbrick's React Library:
+
+```jsx
+import React from "react";
+import { Form, Formbricks } from "@formbricks/react";
+
+export default function Web() {
+  return (
+    <Form
+      onSubmit={({ data }) => {
+        console.log(data);
+      }}>
+      <Formbricks type="text" name="firstname" label="What's your first name?" />
+      <Formbricks type="text" name="lastname" label="What's your last name?" />
+      <Formbricks type="textarea" name="about" label="About you" help="Please keep it short" />
+      <Formbricks type="submit" label="Submit" />
+    </Form>
+  );
+}
+```
+
+You don't need to remember a lot of components, or nested HTML- and React Form Structure - only the `<Formbricks />` component.
+No matter what kind of form input you need, simple text input, checkboxes or even complex elements like sliders which you could previously only include with external plugins - Formbricks takes care of everything.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

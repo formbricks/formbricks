@@ -39,3 +39,4 @@ yarn-error.log*
 
 # nixos stuff
 .direnv
+apps/examples
