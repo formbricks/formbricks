@@ -3,7 +3,7 @@ import Layout from "@/components/shared/Layout";
 import CTA from "../components/shared/CTA";
 import Image from "next/image";
 import ImageEmail from "../images/email.svg";
-import HeadingCentered from "@/components/shared/HeadingCenetered";
+import HeadingCentered from "@/components/shared/HeadingCentered";
 import FeatureHighlight from "@/components/shared/FeatureHighlight";
 import { CheckIcon, PlusIcon } from "@heroicons/react/24/outline";
 
@@ -68,7 +68,7 @@ const FormHQPage = () => (
     <HeroTitle headingPt1="Visual Form" headingTeal="Builder" />
     <FeatureHighlight
       featureTitle="Make beautiful surveys with our free & open source form builder"
-      text={`Typeform, Jotform, Google Forms alternative but open-source and free to use? We got you! \n Use our visual web form builder to create beautiful forms and surveys in minutes. All the question types you need, multi-page forms, conditional logic - you name it!`}
+      text={`Typeform, Jotform, Google Forms alternative but open-source and free to use? We got you! \n\n  Use our visual web form builder to create beautiful forms and surveys in minutes. All the question types you need, multi-page forms, conditional logic - you name it!`}
       img={
         <video
           autoPlay
@@ -84,10 +84,11 @@ const FormHQPage = () => (
       isImgLeft
       cta="coming soon"
       href="#"
+      disabled
     />
     <FeatureHighlight
       featureTitle="Get responses via email or analyze them online."
-      text={`All survey responses get collected in your Form HQ. View and manage responses in your personal dashboard. \n Set up an email notification or send the complete submission data to your email.`}
+      text={`All survey responses get collected in your Form HQ. View and manage responses in your personal dashboard. \n\n  Set up an email notification or send the complete submission data to your email.`}
       img={<Image src={ImageEmail} alt="react library" className="rounded-lg" />}
     />
     <HeadingCentered
@@ -101,7 +102,10 @@ const FormHQPage = () => (
         {hereFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="flex items-center">
-              <CheckIcon className="text-teal absolute ml-4 h-6 w-6 md:ml-0" aria-hidden="true" />
+              <CheckIcon
+                className="text-brand-dark dark:text-brand-lightabsolute ml-4 h-6 w-6 md:ml-0"
+                aria-hidden="true"
+              />
               <p className="ml-14 text-lg leading-loose text-gray-500 dark:text-gray-200 md:ml-9">
                 {feature.name}
               </p>
@@ -113,7 +117,7 @@ const FormHQPage = () => (
         {nextFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="mx-auto flex max-w-sm items-center">
-              <div className="bg-teal ml-2 rounded-full px-1.5 text-xs font-semibold text-black">
+              <div className="bg-brand-dark dark:bg-brand-light ml-2 rounded-full px-1.5 text-xs font-semibold text-slate-900">
                 <p>next</p>
               </div>
               <p className="ml-3 text-lg leading-loose text-gray-500 dark:text-gray-200">{feature.name}</p>
@@ -125,7 +129,7 @@ const FormHQPage = () => (
         {soonFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="mx-auto flex max-w-sm items-center">
-              <div className="text-teal ml-2 rounded-full bg-gray-100 px-1.5 text-xs font-bold dark:bg-black dark:font-normal">
+              <div className="text-brand-dark dark:text-brand-lightml-2 rounded-full bg-gray-100 px-1.5 text-xs font-bold dark:bg-black dark:font-normal">
                 <p>soon</p>
               </div>
               <p className="ml-3 text-lg leading-loose text-gray-500 dark:text-gray-200">{feature.name}</p>
@@ -134,7 +138,10 @@ const FormHQPage = () => (
         ))}
         <a href="mailto:johannes@formbricks.com">
           <div className="mx-auto flex max-w-sm items-center transition delay-100 duration-200 ease-in-out hover:scale-105">
-            <PlusIcon className="text-teal ml-4 h-6 w-6 md:ml-5" aria-hidden="true" />
+            <PlusIcon
+              className="text-brand-dark dark:text-brand-lightml-4 h-6 w-6 md:ml-5"
+              aria-hidden="true"
+            />
             <p className="ml-5 text-lg leading-loose text-gray-500 underline underline-offset-4 dark:text-gray-200">
               Add feature to roadmap
             </p>

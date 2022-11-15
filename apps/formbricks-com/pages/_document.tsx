@@ -54,7 +54,7 @@ export default function Document() {
         <meta name="msapplication-config" content="/faveicon/browserconfig.xml" />
         <meta name="theme-color" content="#ffffff" />
       </Head>
-      <body className="dark:bg-blue bg-blue-100">
+      <body className="bg-slate-100 dark:bg-slate-900">
         <Main />
         <NextScript />
       </body>

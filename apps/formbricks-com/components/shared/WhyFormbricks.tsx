@@ -42,29 +42,34 @@ const features = [
 
 export default function FeatureTable({}) {
   return (
-    <div className="mt-32 rounded-xl bg-gradient-to-br from-blue-900 via-blue-900 to-black lg:mt-56">
+    <div className="mt-32 rounded-xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 dark:from-slate-200  dark:to-slate-300 lg:mt-56">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:pt-8 sm:pb-12 lg:max-w-7xl lg:px-8 lg:pt-12">
-        <p className="text-md mb-3 max-w-2xl font-semibold uppercase text-teal-500 sm:mt-4">
+        <p className="text-md dark:text-brand-dark text-brand-light mb-3 max-w-2xl font-semibold uppercase sm:mt-4">
           Why Formbricks?
         </p>
-        <h2 className="mt-4 text-3xl font-bold tracking-tight text-white">
+        <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-200 dark:text-slate-800">
           The only complete open source option.
         </h2>
-        <p className="mt-4 max-w-3xl text-lg text-blue-300">
-          We needed this, so we are building it. We experienced first hand how form needs develop as companies
-          grow. Make the right choice today, congratulate yourself tomorrow :)
+        <p className="mt-4 max-w-3xl text-lg text-slate-300 dark:text-slate-500">
+          We experienced how form needs develop as companies grow. We could&#39nt find a solution which ticked
+          all of the boxes. Now we&apos;re building it.
         </p>
         <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
           {features.map((feature) => (
             <div key={feature.name}>
               <div>
-                <span className="flex h-12 w-12 items-center justify-center rounded-md bg-teal-50 bg-opacity-10">
-                  <feature.icon className="h-6 w-6 text-teal-500" aria-hidden="true" />
+                <span className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 dark:bg-slate-300">
+                  <feature.icon
+                    className="dark:text-brand-dark text-brand-light h-6 w-6"
+                    aria-hidden="true"
+                  />
                 </span>
               </div>
               <div className="mt-6">
-                <h3 className="text-lg font-semibold text-white">{feature.name}</h3>
-                <p className="mt-2 text-base leading-6 text-blue-400">{feature.description}</p>
+                <h3 className="text-lg font-semibold text-slate-200 dark:text-slate-700">{feature.name}</h3>
+                <p className="mt-2 text-base leading-6 text-slate-400 dark:text-slate-500">
+                  {feature.description}
+                </p>
               </div>
             </div>
           ))}

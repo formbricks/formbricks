@@ -1,11 +1,11 @@
 import Link from "next/link";
 import clsx from "clsx";
-import { Logo } from "./Logo";
+import { FooterLogo } from "./Logo";
 
 const navigation = {
   creation: [
     { name: "React Form Builder", href: "/react-form-library", status: true },
-    { name: "Visual Builder", href: "/visual-builder", status: true },
+    { name: "No Code Builder", href: "/visual-builder", status: true },
     { name: "Templates", href: "#", status: false },
   ],
   pipelines: [
@@ -22,8 +22,6 @@ const navigation = {
     { name: "Community", href: "/community", status: true },
     { name: "Docs", href: "/docs", status: true },
     { name: "Blog", href: "/blog", status: true },
-    { name: "vs. React Hook Form", href: "/vs-react-hook-form", status: false },
-    { name: "vs. Formspree", href: "/vs-formspree", status: false },
   ],
   social: [
     {
@@ -54,7 +52,7 @@ const navigation = {
 export default function Footer() {
   return (
     <footer
-      className="dark:from-blue bg-gradient-to-b from-blue-100 to-blue-300 dark:to-black"
+      className="bg-gradient-to-b from-slate-100 to-slate-300 dark:from-slate-900 dark:to-slate-800"
       aria-labelledby="footer-heading">
       <h2 id="footer-heading" className="sr-only">
         Footer
@@ -62,13 +60,13 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16 lg:px-8">
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8 xl:col-span-1">
-            <Logo className="h-8 w-auto sm:h-10" />
-            <p className="text-base text-blue-600 dark:text-blue-400">
+            <FooterLogo className="h-8 w-auto sm:h-10" />
+            <p className="text-base text-slate-500 dark:text-slate-400">
               The Open Source Forms & Survey Toolbox
             </p>
             <div className="flex space-x-6">
               {navigation.social.map((item) => (
-                <Link key={item.name} href={item.href} className="text-blue-400 hover:text-gray-400">
+                <Link key={item.name} href={item.href} className="text-slate-400 hover:text-gray-500">
                   <span className="sr-only">{item.name}</span>
                   <item.icon className="h-6 w-6" aria-hidden="true" />
                 </Link>
@@ -78,7 +76,7 @@ export default function Footer() {
           <div className="mt-12 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Form Creation</h3>
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Form Creation</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.creation.map((item) => (
                     <li key={item.name}>
@@ -87,8 +85,8 @@ export default function Footer() {
                         scroll={item.status}
                         className={clsx(
                           item.status
-                            ? "cursor-pointer text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300"
-                            : "cursor-default text-blue-300 dark:text-blue-600",
+                            ? "cursor-pointer text-slate-600 hover:text-slate-500 dark:text-slate-400 dark:hover:text-slate-300"
+                            : "cursor-default text-slate-400 dark:text-slate-600",
                           "text-base"
                         )}>
                         {item.name}
@@ -98,17 +96,17 @@ export default function Footer() {
                 </ul>
               </div>
               <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Data Pipelines</h3>
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Data Pipelines</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.pipelines.map((item) => (
                     <li key={item.name}>
                       <Link
-                        scroll={item.status}
                         href={item.href}
+                        scroll={item.status}
                         className={clsx(
                           item.status
-                            ? "cursor-pointer text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300"
-                            : "cursor-default text-blue-300 dark:text-blue-600",
+                            ? "cursor-pointer text-slate-600 hover:text-slate-500 dark:text-slate-400 dark:hover:text-slate-300"
+                            : "cursor-default text-slate-400 dark:text-slate-600",
                           "text-base"
                         )}>
                         {item.name}
@@ -120,7 +118,7 @@ export default function Footer() {
             </div>
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Data Insights</h3>
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Data Insights</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.insights.map((item) => (
                     <li key={item.name}>
@@ -129,8 +127,8 @@ export default function Footer() {
                         scroll={item.status}
                         className={clsx(
                           item.status
-                            ? "cursor-pointer text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300"
-                            : "cursor-default text-blue-300 dark:text-blue-600",
+                            ? "cursor-pointer text-slate-600 hover:text-slate-500 dark:text-slate-400 dark:hover:text-slate-300"
+                            : "cursor-default text-slate-400 dark:text-slate-600",
                           "text-base"
                         )}>
                         {item.name}
@@ -140,16 +138,17 @@ export default function Footer() {
                 </ul>
               </div>
               <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-bold text-blue-800 dark:text-blue-50">Other</h3>
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Other</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.other.map((item) => (
                     <li key={item.name}>
                       <Link
                         href={item.href}
+                        scroll={item.status}
                         className={clsx(
                           item.status
-                            ? "cursor-pointer text-blue-700 hover:text-blue-400 dark:text-blue-400 dark:hover:text-blue-300"
-                            : "cursor-default text-blue-300 dark:text-blue-600",
+                            ? "cursor-pointer text-slate-600 hover:text-slate-500 dark:text-slate-400 dark:hover:text-slate-300"
+                            : "cursor-default text-slate-400 dark:text-slate-600",
                           "text-base"
                         )}>
                         {item.name}
@@ -162,7 +161,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 border-gray-500 pt-8">
-          <p className="text-sm text-blue-600 dark:text-gray-300 xl:text-center">
+          <p className="text-sm text-slate-400 dark:text-gray-500 xl:text-center">
             &copy; 2022. All rights reserved.
             <br />
             <Link href="/imprint">Imprint</Link> | <Link href="/privacy">Privacy Policy</Link>
