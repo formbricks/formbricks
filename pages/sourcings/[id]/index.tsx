@@ -17,7 +17,7 @@ import { isTimedPage } from "../../../lib/utils";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { BsPencilFill } from "react-icons/bs";
 import { FormOrder } from "@prisma/client";
-
+//nobiggie
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
 
@@ -94,6 +94,7 @@ function NoCodeFormPublic() {
     }
     return true;
   };
+  // nothing important
 
   const handleClickAction = (page, fromModal: Boolean = false) => {
     if (!fromModal) {
