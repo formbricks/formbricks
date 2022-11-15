@@ -26,7 +26,7 @@ export default function Highlights({}) {
                 time.
               </p>
               <div className="my-6">
-                <Button variant="minimal" size="sm" onClick={() => router.push("/react-form-builder")}>
+                <Button variant="minimal" size="sm" onClick={() => router.push("/react-form-library")}>
                   Read more
                 </Button>
               </div>

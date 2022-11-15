@@ -4,7 +4,7 @@ import { Logo } from "./Logo";
 
 const navigation = {
   creation: [
-    { name: "React Form Builder", href: "/react-form-builder", status: true },
+    { name: "React Form Builder", href: "/react-form-library", status: true },
     { name: "Visual Builder", href: "/visual-builder", status: true },
     { name: "Templates", href: "#", status: false },
   ],
