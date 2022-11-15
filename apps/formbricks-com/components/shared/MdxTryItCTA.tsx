@@ -10,7 +10,7 @@ export default function HeadingCentered() {
         <p className="text-md text-brand-dark dark:text-brand-light font-semibold uppercase">
           What are you waiting for?
         </p>
-        <p className="my-0 text-4xl font-semibold tracking-tight text-slate-800 dark:text-slate-200">
+        <p className="my-0 text-4xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
           Try it right now!
         </p>
         <p className="text-slate-500 dark:text-slate-300 ">
@@ -24,7 +24,7 @@ export default function HeadingCentered() {
         </Button>
       </div>
       <div className="flex items-center pt-10">
-        <div className="flex h-20 w-full items-center justify-between rounded-lg bg-slate-800 px-8 text-gray-300 ">
+        <div className="flex h-20 w-full items-center justify-between rounded-lg bg-slate-900 px-8 text-gray-100 ">
           <p>npm install @formbricks/react</p>
           <button onClick={() => navigator.clipboard.writeText("npm install @formbricks/react")}>
             <DocumentDuplicateIcon className="h-8 w-8" />

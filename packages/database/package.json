@@ -24,6 +24,7 @@
     "studio": "prisma studio"
   },
   "dependencies": {
+    "@formbricks/react": "workspace:*",
     "@prisma/client": "^4.4.0"
   },
   "devDependencies": {
