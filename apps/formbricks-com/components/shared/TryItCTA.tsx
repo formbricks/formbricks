@@ -7,7 +7,9 @@ export default function HeadingCentered() {
   return (
     <div className="mx-auto grid max-w-md grid-cols-1 content-center gap-10 px-4 py-12 sm:max-w-3xl sm:px-6 md:grid-cols-2 md:pt-24 md:pb-36 lg:max-w-6xl lg:px-8">
       <div className="">
-        <p className="text-md mb-3 font-semibold uppercase text-teal-500">What are you waiting for?</p>
+        <p className="text-md text-brand-dark dark:text-brand-light mb-3 font-semibold uppercase">
+          What are you waiting for?
+        </p>
         <h2 className="text-blue text-3xl font-bold tracking-tight dark:text-blue-100 sm:text-4xl">
           Try it right now!
         </h2>

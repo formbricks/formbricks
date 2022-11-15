@@ -53,7 +53,7 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
       ref: forwardedRef,
       className: clsx(
         // base styles independent what type of button it is
-        "inline-flex items-center appearance-none",
+        "inline-flex items-center appearance-none transition ease-in-out delay-50 hover:scale-105",
         // different styles depending on size
         size === "sm" && "px-3 py-2 text-sm leading-4 font-medium rounded-lg",
         size === "base" && "px-6 py-2 text-sm font-medium rounded-xl",
@@ -68,16 +68,16 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
         variant === "highlight" &&
           (disabled
             ? "border border-transparent bg-gray-400 text-white"
-            : "border border-transparent dark:text-blue-800 text-black bg-teal-500 dark:bg-teal-500 hover:bg-opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-teal-900"),
+            : "text-black bg-gradient-to-b from-brand-light to-brand-dark hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900"),
         variant === "primary" &&
           (disabled
             ? "border border-transparent bg-gray-400 text-white"
-            : "border border-transparent dark:text-black text-blue-100 bg-blue-800 dark:bg-gradient-to-b dark:from-blue-200 dark:to-gray-100 hover:bg-opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-teal-900"),
+            : "text-black bg-gradient-to-b from-brand-light to-brand-dark  hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900"),
 
         variant === "secondary" &&
           (disabled
             ? "border border-gray-200 text-gray-400 bg-white"
-            : "border-2 border-blue-800 text-blue-800 bg-blue-50 hover:bg-white hover:text-blue-800 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-neutral-900 dark:bg-blue-900 dark:text-gray-100 dark:hover:bg-black"),
+            : "hover:text-slate-600 hover:bg-slate-300 bg-slate-200 text-slate-700 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-neutral-900 dark:text-slate-400 dark:hover:text-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700"),
         variant === "alert" &&
           (disabled
             ? "border border-transparent bg-gray-400 text-white"
@@ -85,7 +85,7 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
         variant === "minimal" &&
           (disabled
             ? "text-gray-400 bg-transparent"
-            : "text-gray-50 bg-blue dark:bg-blue-700 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:bg-blue-900 focus:bg-blue-700 focus:ring-neutral-500"),
+            : "text-slate-600 hover:text-slate-500 bg-slate-200 hover:bg-slate-100 bg-blue dark:bg-slate-800 dark:text-slate-300 dark:hover:text-slate-400 dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:bg-blue-900 focus:bg-blue-700 focus:ring-neutral-500"),
         variant === "warn" &&
           (disabled
             ? "text-gray-400 bg-transparent"

@@ -49,7 +49,7 @@ const CoreAPIPage = () => (
           className="relative col-span-1 mt-16 flex flex-col rounded-xl bg-gradient-to-b from-blue-200 to-gray-100 text-center drop-shadow-sm dark:from-black dark:to-blue-900">
           <div className="absolute -mt-12 w-full">
             <div className="via-blue to-blue mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-black shadow">
-              <feature.icon className="mx-auto h-10 w-10 flex-shrink-0 text-teal-500" />
+              <feature.icon className="text-brand-dark dark:text-brand-light mx-auto h-10 w-10 flex-shrink-0" />
             </div>
           </div>
           <div className="flex flex-1 flex-col p-10">

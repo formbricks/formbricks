@@ -41,7 +41,9 @@ Card.Description = function CardDescription({ children }) {
 
 Card.Cta = function CardCta({ children }) {
   return (
-    <div aria-hidden="true" className="relative mt-4 flex items-center text-sm font-medium text-teal-500">
+    <div
+      aria-hidden="true"
+      className="relative mt-4 flex items-center text-sm font-medium text-brand-dark dark:text-brand-light">
       {children}
       <ChevronRightIcon className="ml-1 h-4 w-4 stroke-current" />
     </div>

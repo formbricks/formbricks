@@ -22,7 +22,7 @@ export default function FeatureHighlights({ features }: Props) {
                   : "via-blue to-blue dark bg-gradient-to-br from-black ",
                 "mx-auto flex h-20 w-20 items-center justify-center rounded-full shadow"
               )}>
-              <feature.icon className="mx-auto h-10 w-10 flex-shrink-0 text-teal-500" />
+              <feature.icon className="text-brand-dark dark:text-brand-light mx-auto h-10 w-10 flex-shrink-0" />
             </div>
           </div>
           <div className="flex flex-1 flex-col p-10">

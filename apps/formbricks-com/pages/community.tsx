@@ -42,7 +42,7 @@ const GetStartedPage = () => (
               <a href={MVP.href} className="" target="_blank" rel="noreferrer">
                 {MVP.name}
 
-                <ArrowTopRightOnSquareIcon className="mb-1 ml-1 inline h-5 w-5 text-teal-600" />
+                <ArrowTopRightOnSquareIcon className="text-brand-dark dark:text-brand-light mb-1 ml-1 inline h-5 w-5" />
               </a>
             </li>
           ))}

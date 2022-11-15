@@ -3,7 +3,7 @@ import Layout from "@/components/shared/Layout";
 import CTA from "../components/shared/CTA";
 import ImageFormHQ from "../images/form-hq.png";
 import Image from "next/image";
-import HeadingCentered from "@/components/shared/HeadingCenetered";
+import HeadingCentered from "@/components/shared/HeadingCentered";
 import {
   CodeBracketIcon,
   SquaresPlusIcon,
@@ -86,7 +86,7 @@ const FormHQPage = () => (
                   : "via-blue to-blue bg-gradient-to-br from-black ",
                 "mx-auto flex h-20 w-20 items-center justify-center rounded-full shadow"
               )}>
-              <feature.icon className="mx-auto h-10 w-10 flex-shrink-0 text-teal-500" />
+              <feature.icon className="text-brand-dark dark:text-brand-light mx-auto h-10 w-10 flex-shrink-0" />
             </div>
           </div>
           <div className="flex flex-1 flex-col p-10">
