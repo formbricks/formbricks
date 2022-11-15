@@ -17,7 +17,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
-    "release": "turbo run build && changeset publish"
+    "release": "turbo run build --filter=formbricks-com^... && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.22.0",

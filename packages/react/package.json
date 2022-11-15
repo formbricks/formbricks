@@ -1,7 +1,9 @@
 {
   "name": "@formbricks/react",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.0.0",
+  "author": "Formbricks <hola@formbricks.com>",
+  "description": "Building React forms has never been quicker.",
+  "homepage": "https://formbricks.com",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -30,5 +32,8 @@
   "dependencies": {
     "clsx": "^1.2.1",
     "react-hook-form": "^7.39.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
