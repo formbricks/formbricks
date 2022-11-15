@@ -16,7 +16,7 @@ import DisclaimerModal from "../../../components/form/DisclaimerModal";
 import { isTimedPage } from "../../../lib/utils";
 import { InboxArrowDownIcon } from "@heroicons/react/24/outline";
 import { FormOrder } from "@prisma/client";
-
+//nobiggie
 const { publicRuntimeConfig } = getConfig();
 const { publicPrivacyUrl, publicImprintUrl } = publicRuntimeConfig;
 
@@ -93,6 +93,7 @@ function NoCodeFormPublic() {
     }
     return true;
   };
+  // nothing important
 
   const handleClickAction = (page, fromModal: Boolean = false) => {
     if (!fromModal) {
