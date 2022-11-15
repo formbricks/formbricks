@@ -46,17 +46,17 @@ const CoreAPIPage = () => (
       {features.map((feature) => (
         <li
           key={feature.id}
-          className="relative col-span-1 mt-16 flex flex-col rounded-xl bg-gradient-to-b from-blue-200 to-gray-100 text-center drop-shadow-sm dark:from-black dark:to-blue-900">
+          className="relative col-span-1 mt-16 flex flex-col rounded-xl bg-slate-200 text-center drop-shadow-sm dark:bg-slate-800">
           <div className="absolute -mt-12 w-full">
-            <div className="via-blue to-blue mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-black shadow">
-              <feature.icon className="mx-auto h-10 w-10 flex-shrink-0 text-teal-500" />
+            <div className="mx-auto flex  h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 via-slate-100 to-slate-100 shadow dark:from-slate-900 dark:to-slate-700">
+              <feature.icon className="text-brand-dark dark:text-brand-light mx-auto h-10 w-10 flex-shrink-0" />
             </div>
           </div>
           <div className="flex flex-1 flex-col p-10">
-            <h3 className="text-blue my-4 text-lg font-medium dark:text-blue-100">{feature.name}</h3>
+            <h3 className="my-4 text-lg font-medium text-slate-800 dark:text-slate-200">{feature.name}</h3>
             <dl className="mt-1 flex flex-grow flex-col justify-between">
               <dt className="sr-only">Description</dt>
-              <dd className="text-sm text-gray-600 dark:text-blue-400">{feature.description}</dd>
+              <dd className="text-sm text-gray-600 dark:text-slate-400">{feature.description}</dd>
             </dl>
           </div>
         </li>

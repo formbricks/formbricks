@@ -3,7 +3,7 @@ import Layout from "@/components/shared/Layout";
 import CTA from "../components/shared/CTA";
 import ImageFormHQ from "../images/form-hq.png";
 import Image from "next/image";
-import HeadingCentered from "@/components/shared/HeadingCenetered";
+import HeadingCentered from "@/components/shared/HeadingCentered";
 import {
   CodeBracketIcon,
   SquaresPlusIcon,
@@ -75,28 +75,30 @@ const FormHQPage = () => (
         <li
           key={feature.id}
           className={clsx(
-            feature.comingSoon ? "dark:to-blue dark:from-blue-900" : "dark:from-black dark:to-blue-900",
-            "relative col-span-1 mt-16 flex flex-col rounded-xl bg-gradient-to-b from-blue-200 to-gray-100 text-center drop-shadow-sm"
+            feature.comingSoon
+              ? "bg-gradient-to-b from-slate-200  to-slate-100 dark:from-slate-800 dark:to-slate-900"
+              : "bg-slate-200 drop-shadow-sm dark:bg-slate-800 ",
+            "relative col-span-1 mt-16 flex flex-col rounded-xl text-center"
           )}>
           <div className="absolute -mt-12 w-full">
             <div
               className={clsx(
                 feature.comingSoon
-                  ? "dark:to-blue bg-gradient-to-br from-blue-200 to-gray-100 dark:from-blue-900 dark:via-blue-900"
-                  : "via-blue to-blue bg-gradient-to-br from-black ",
-                "mx-auto flex h-20 w-20 items-center justify-center rounded-full shadow"
+                  ? "from-slate-100 via-slate-200  to-slate-200 dark:from-slate-800  dark:to-slate-900"
+                  : "from-slate-200 via-slate-100  to-slate-100 dark:from-slate-900 dark:to-slate-700 ",
+                "mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br shadow"
               )}>
-              <feature.icon className="mx-auto h-10 w-10 flex-shrink-0 text-teal-500" />
+              <feature.icon className="text-brand-dark dark:text-brand-light mx-auto h-10 w-10 flex-shrink-0" />
             </div>
           </div>
           <div className="flex flex-1 flex-col p-10">
-            <h3 className="text-blue my-4 text-lg font-medium dark:text-blue-100">{feature.name}</h3>
+            <h3 className="my-4 text-lg font-medium text-slate-800 dark:text-slate-200">{feature.name}</h3>
             <dl className="mt-1 flex flex-grow flex-col justify-between">
               <dt className="sr-only">Description</dt>
-              <dd className="text-sm text-gray-600 dark:text-blue-400">{feature.description}</dd>
+              <dd className="text-sm text-gray-600 dark:text-slate-400">{feature.description}</dd>
               {feature.comingSoon && (
                 <dd className="mt-4">
-                  <span className="rounded-full bg-gray-400 px-3 py-1 text-xs font-medium text-blue-50">
+                  <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-300">
                     coming soon
                   </span>
                 </dd>

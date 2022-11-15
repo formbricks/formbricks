@@ -7,11 +7,13 @@ export default function HeadingCentered() {
   return (
     <div className="mx-auto grid grid-cols-1 content-center gap-10 pt-24 pb-12 md:grid-cols-2">
       <div className="">
-        <p className="text-md font-semibold uppercase text-teal-500">What are you waiting for?</p>
-        <p className="text-blue my-0 text-4xl font-semibold tracking-tight dark:text-blue-100">
+        <p className="text-md text-brand-dark dark:text-brand-light font-semibold uppercase">
+          What are you waiting for?
+        </p>
+        <p className="my-0 text-4xl font-semibold tracking-tight text-slate-800 dark:text-slate-100">
           Try it right now!
         </p>
-        <p className="text-blue-500 dark:text-blue-300 ">
+        <p className="text-slate-500 dark:text-slate-300 ">
           Dive right in or browse docs for examples. Questions? Join our Discord, we’re happy to help
         </p>
         <Button variant="secondary" onClick={() => router.push("/discord")}>
@@ -22,7 +24,7 @@ export default function HeadingCentered() {
         </Button>
       </div>
       <div className="flex items-center pt-10">
-        <div className="flex h-20 w-full items-center justify-between rounded-lg bg-blue-900 px-8 text-gray-100 ">
+        <div className="flex h-20 w-full items-center justify-between rounded-lg bg-slate-900 px-8 text-gray-100 ">
           <p>npm install @formbricks/react</p>
           <button onClick={() => navigator.clipboard.writeText("npm install @formbricks/react")}>
             <DocumentDuplicateIcon className="h-8 w-8" />

@@ -3,7 +3,7 @@ import HeroTitle from "@/components/shared/HeroTitle";
 import Image from "next/image";
 import ImageReactLib from "@/images/react-lib.png";
 import ImageSchemaGeneration from "@/images/schema-generation-svg.svg";
-import HeadingCentered from "@/components/shared/HeadingCenetered";
+import HeadingCentered from "@/components/shared/HeadingCentered";
 import { CheckIcon, PlusIcon } from "@heroicons/react/24/outline";
 import CTA from "../components/shared/CTA";
 import FeatureHighlight from "@/components/shared/FeatureHighlight";
@@ -72,7 +72,7 @@ const ReactFormBuilderPage = () => (
     <HeroTitle headingPt1="React" headingTeal="Form Builder" headingPt2="Library" />
     <FeatureHighlight
       featureTitle="Building React forms has never been quicker. But there is more..."
-      text={`Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all the good stuff you want, but don't want to build yourself.\nBuilding forms fast is great, but where do you pipe your data? And what is it worth without a schema?"`}
+      text={`Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all the good stuff you want, but don't want to build yourself.\n\nBuilding forms fast is great, but where do you pipe your data? And what is it worth without a schema?"`}
       img={<Image src={ImageReactLib} alt="react library" className="rounded-lg" />}
       isImgLeft
     />
@@ -93,8 +93,11 @@ const ReactFormBuilderPage = () => (
         {hereFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="flex items-center">
-              <CheckIcon className="text-teal absolute ml-4 h-6 w-6 md:ml-0" aria-hidden="true" />
-              <p className="ml-14 text-lg leading-loose text-gray-500 dark:text-gray-200 md:ml-9">
+              <CheckIcon
+                className="text-brand-light dark:text-brand-light absolute ml-4 h-6 w-6 md:ml-0"
+                aria-hidden="true"
+              />
+              <p className="ml-14 text-lg leading-loose text-slate-500 dark:text-slate-200 md:ml-9">
                 {feature.name}
               </p>
             </dt>
@@ -105,10 +108,10 @@ const ReactFormBuilderPage = () => (
         {nextFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="mx-auto flex max-w-sm items-center">
-              <div className="bg-teal ml-2 rounded-full px-1.5 text-xs font-semibold text-black">
+              <div className="bg-brand-dark dark:bg-brand-light ml-2 rounded-full px-1.5 text-xs font-semibold text-slate-900">
                 <p>next</p>
               </div>
-              <p className="ml-3 text-lg leading-loose text-gray-500 dark:text-gray-200">{feature.name}</p>
+              <p className="ml-3 text-lg leading-loose text-slate-500 dark:text-slate-200">{feature.name}</p>
             </dt>
           </div>
         ))}
@@ -117,17 +120,20 @@ const ReactFormBuilderPage = () => (
         {soonFeatures.map((feature) => (
           <div key={feature.name}>
             <dt className="mx-auto flex max-w-sm items-center">
-              <div className="text-teal ml-2 rounded-full bg-gray-100 px-1.5 text-xs font-bold dark:bg-black dark:font-normal">
+              <div className="text-brand-dark dark:text-brand-light ml-2 rounded-full bg-gray-200 px-1.5 text-xs font-bold dark:bg-gray-800 dark:font-normal">
                 <p>soon</p>
               </div>
-              <p className="ml-3 text-lg leading-loose text-gray-500 dark:text-gray-200">{feature.name}</p>
+              <p className="ml-3 text-lg leading-loose text-slate-500 dark:text-slate-200">{feature.name}</p>
             </dt>
           </div>
         ))}
         <a href="mailto:johannes@formbricks.com">
           <div className="mx-auto flex max-w-sm items-center transition delay-100 duration-200 ease-in-out hover:scale-105">
-            <PlusIcon className="text-teal ml-4 h-6 w-6 md:ml-5" aria-hidden="true" />
-            <p className="ml-5 text-lg leading-loose text-gray-500 underline underline-offset-4 dark:text-gray-200">
+            <PlusIcon
+              className="text-brand-dark dark:text-brand-lightml-4 h-6 w-6 md:ml-5"
+              aria-hidden="true"
+            />
+            <p className="ml-5 text-lg leading-loose text-slate-500 underline underline-offset-4 dark:text-slate-200">
               Add feature to roadmap
             </p>
           </div>
