@@ -7,7 +7,7 @@ import {
   UserCircleIcon,
   EyeIcon,
 } from "@heroicons/react/24/outline";
-import { HiOutlineLocationMarker } from "react-icons/hi";
+import { HiOutlineLocationMarker, HiDocumentDuplicate } from "react-icons/hi";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState } from "react";
@@ -21,6 +21,8 @@ import { format } from "date-fns";
 import CandidateProgress from "./form/CandidateProgress";
 import { timeSince } from "../lib/utils";
 import SearchBar from "./form/SearchBar";
+
+import { fr } from "date-fns/locale";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
@@ -55,6 +57,23 @@ export default function FormList() {
       // remove locally
       const updatedForms = [...forms];
       updatedForms.splice(formIdx, 1);
+      mutateForms(updatedForms);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const duplicateForm = async (form) => {
+    try {
+      const data = await fetch(`/api/forms/${form.id}/duplicate`, {
+        method: "POST",
+        body: JSON.stringify({
+          form,
+        }),
+      });
+      const newForm = await data.json();
+
+      const updatedForms = [...forms, newForm];
       mutateForms(updatedForms);
     } catch (error) {
       console.error(error);
@@ -100,13 +119,13 @@ export default function FormList() {
               )}
             </div>
           ) : (
-            <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 place-content-stretch ">
+            <ul className="grid  max-sm:grid-cols-1  gap-6  max-md:grid-cols-2 max-lg:grid-cols-3 xl:grid-cols-3 place-content-stretch">
               {session.user.role !== UserRole.ADMIN ? (
                 <></>
               ) : (
                 <button onClick={() => newForm()}>
                   <li className="h-56 col-span-1">
-                    <div className="flex items-center justify-center h-full overflow-hidden font-light text-white rounded-md shadow bg-snoopfade">
+                    <div className="flex items-center justify-center h-full overflow-hidden font-light text-white rounded shadow bg-snoopfade">
                       <div className="px-4 py-8 sm:p-14">
                         <PlusIcon className="mx-auto w-14 h-14 stroke-thin" />
                         Nouveau Sourcing
@@ -118,8 +137,8 @@ export default function FormList() {
               {forms
                 .sort((a, b) => b.updatedAt - a.updatedAt)
                 .map((form, formIdx) => (
-                  <li key={form.id} className="relative h-56 col-span-1">
-                    <div className="flex flex-col justify-between h-full bg-white rounded-md shadow">
+                  <li key={form.id} className="relative h-56 col-span-1 ">
+                    <div className="flex flex-col justify-between h-full bg-white rounded shadow">
                       <div className="p-6">
                         <p className="text-lg line-clamp-3">{form.name}</p>
                       </div>
@@ -144,18 +163,22 @@ export default function FormList() {
                             }
                           />
                           {format(new Date(form.dueDate), "yyyy-MM-dd") ===
-                          format(new Date(), "yyyy-MM-dd") ? (
+                          format(new Date(), "yyyy-MM-dd", { locale: fr }) ? (
                             <span className="text-xs font-bold text-red-800 line-clamp-3">
                               ferme aujourd&apos;hui
                             </span>
                           ) : dateDayDiff(form.dueDate) > 7 ? (
                             <span className="text-xs font-bold text-neutral-500 line-clamp-3">
-                              {format(new Date(form.dueDate), "MMMM dd, yyyy")}
+                              {format(new Date(form.dueDate), "dd MMMM yyyy", {
+                                locale: fr,
+                              })}
                             </span>
                           ) : (
                             <span className="text-xs font-bold text-rose-500 line-clamp-3">
-                              {format(new Date(form.dueDate), "yyyy-MM-dd") <
-                              format(new Date(), "yyyy-MM-dd")
+                              {format(new Date(form.dueDate), "dd MMMM yyyy", {
+                                locale: fr,
+                              }) <
+                              format(new Date(), "dd MMMM yyyy", { locale: fr })
                                 ? "fermé"
                                 : "ferme"}{" "}
                               {timeSince(form.dueDate)}
@@ -225,23 +248,42 @@ export default function FormList() {
                                       <div className="py-1">
                                         <Menu.Item>
                                           {({ active }) => (
-                                            <button
-                                              onClick={() =>
-                                                deleteForm(form, formIdx)
-                                              }
-                                              className={classNames(
-                                                active
-                                                  ? "bg-ui-gray-light rounded-sm text-ui-black"
-                                                  : "text-ui-gray-dark",
-                                                "flex px-4 py-2 text-sm w-full"
-                                              )}
-                                            >
-                                              <TrashIcon
-                                                className="w-5 h-5 mr-3 text-ui-gray-dark"
-                                                aria-hidden="true"
-                                              />
-                                              <span>Supprimer</span>
-                                            </button>
+                                            <>
+                                              <button
+                                                onClick={() =>
+                                                  deleteForm(form, formIdx)
+                                                }
+                                                className={classNames(
+                                                  active
+                                                    ? "bg-ui-gray-light rounded-sm text-ui-black"
+                                                    : "text-ui-gray-dark",
+                                                  "flex px-4 py-2 text-sm w-full"
+                                                )}
+                                              >
+                                                <TrashIcon
+                                                  className="w-5 h-5 mr-3 text-ui-gray-dark"
+                                                  aria-hidden="true"
+                                                />
+                                                <span>Supprimer</span>
+                                              </button>
+                                              <button
+                                                onClick={() =>
+                                                  duplicateForm(form)
+                                                }
+                                                className={classNames(
+                                                  active
+                                                    ? "bg-ui-gray-light rounded-sm text-ui-black"
+                                                    : "text-ui-gray-dark",
+                                                  "flex px-4 py-2 text-sm w-full"
+                                                )}
+                                              >
+                                                <HiDocumentDuplicate
+                                                  className="w-5 h-5 mr-3 text-ui-gray-dark"
+                                                  aria-hidden="true"
+                                                />
+                                                <span>Duplicate</span>
+                                              </button>
+                                            </>
                                           )}
                                         </Menu.Item>
                                       </div>

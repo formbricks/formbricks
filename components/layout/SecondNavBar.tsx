@@ -17,8 +17,8 @@ interface Props {
 // button component, consuming props
 const SecondNavBar: React.FC<Props> = ({ navItems, currentItemId }) => {
   return (
-    <div className="flex items-center justify-center flex-shrink-0 border-b border-ui-gray-light bg-ui-gray-lighter">
-      <nav className="flex space-x-10" aria-label="resultModes">
+    <div className="flex items-center justify-center flex-shrink-0 border-b border-ui-gray-light bg-ui-gray-lighter max-sm:pr-2 max-sm:pl-2 max-md:pr-2 max-md:pl-2">
+      <nav className="flex space-x-10 max-sm:pr-2 max-sm:pl-2 max-md:pr-2 max-md:pl-2" aria-label="resultModes">
         {navItems.map((navItem) => (
           <button
             key={navItem.id}

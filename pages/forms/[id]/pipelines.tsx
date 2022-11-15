@@ -156,13 +156,13 @@ function PipelinesPage() {
       <SecondNavBar navItems={secondNavigation} currentItemId="formId" />
       <LimitedWidth>
         <header>
-          <div className="mx-auto mt-8 max-w-7xl">
+          <div className="mx-auto mt-8 max-w-7xl max-sm:pl-8 max-md:pl-8 max-md:pr-8">
             <h1 className="text-3xl font-bold leading-tight text-ui-gray-dark">
               Pipelines
             </h1>
           </div>
         </header>
-        <div className="my-4">
+        <div className="my-4 max-sm:pl-8 max-sm:pr-8 max-md:pl-8 max-md:pr-8">
           <p className="text-ui-gray-dark">
             Conduisez vos données exactement là où vous en avez besoin. Ajoutez
             des conditions pour l&lsquo;acheminement de données variables.
