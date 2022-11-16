@@ -1,4 +1,4 @@
-export const getValidationRules = (validation: string) => {
+export const getValidationRules = (validation: string | undefined) => {
   const validationRules: string[] = [];
   if (!validation) {
     return validationRules;

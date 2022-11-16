@@ -3,11 +3,11 @@ import { generateId } from "../lib/utils";
 import { getValidationRules } from "../lib/validation";
 import { SchemaContext } from "./Form";
 import { Text, TextInputUniqueProps } from "./inputs/Text";
-import { Textarea } from "./inputs/Textarea";
+import { Textarea, TextareaInputUniqueProps } from "./inputs/Textarea";
 import { Help } from "./shared/Help";
 
-interface FormbricksInputProps {
-  type: "text" | "textarea";
+interface TypeProps {
+  type: "text" | "textarea" | "submit";
 }
 
 interface SubmitTypeProps {
@@ -15,7 +15,6 @@ interface SubmitTypeProps {
   name?: string;
   label?: string;
   placeholder?: string;
-  type: "submit";
   help?: string;
   validation?: string;
 }
@@ -23,13 +22,13 @@ interface SubmitTypeProps {
 export interface UniversalInputProps {
   id?: string;
   help?: string;
-  name: string;
+  name?: string;
   label?: string;
   elemId: string;
-  validation: string[];
+  validation?: string;
 }
 
-type FormbricksProps = FormbricksInputProps & UniversalInputProps & SubmitTypeProps & TextInputUniqueProps;
+type FormbricksProps = TextInputUniqueProps & TextareaInputUniqueProps & SubmitTypeProps & TypeProps;
 
 export function Formbricks({
   id,
@@ -44,7 +43,6 @@ export function Formbricks({
 }: FormbricksProps) {
   const elemId = useMemo(() => (typeof id !== "undefined" ? id : `${name}=${generateId(3)}`), [id]);
   const { setSchema } = useContext(SchemaContext);
-  const validationRules = getValidationRules(validation);
 
   useEffect(() => {
     setSchema((schema: any) => {
@@ -80,7 +78,7 @@ export function Formbricks({
             label={label}
             elemId={elemId}
             placeholder={placeholder}
-            validation={validationRules}
+            validation={validation}
             minLength={minLength}
             maxLength={maxLength}
           />
@@ -90,7 +88,7 @@ export function Formbricks({
             label={label}
             elemId={elemId}
             placeholder={placeholder}
-            validation={validationRules}
+            validation={validation}
             minLength={minLength}
             maxLength={maxLength}
           />
