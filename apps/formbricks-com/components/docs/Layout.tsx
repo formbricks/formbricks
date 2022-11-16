@@ -58,7 +58,7 @@ function Header({ navigation }: any) {
             variant="secondary"
             onClick={() => router.push("/")}
             size="sm"
-            className="ml-10 flex justify-center opacity-60">
+            className="ml-10 hidden justify-center opacity-60 sm:flex">
             &larr; Back to Mainpage
           </Button>
         </div>

@@ -122,7 +122,7 @@ export default function Header() {
                     "group inline-flex items-center rounded-md text-base font-medium hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-slate-300"
                   )}>
                   <span>Bricks</span>
-                  <ChevronDownIcon className="ml-2 h-5 w-5 " aria-hidden="true" />
+                  <ChevronDownIcon className="ml-2 h-5 w-5" aria-hidden="true" />
                 </Popover.Button>
 
                 <Transition
@@ -294,7 +294,7 @@ export default function Header() {
         <Popover.Panel
           focus
           className="absolute inset-x-0 top-0 z-20 origin-top-right transform p-2 transition md:hidden">
-          <div className="dark:divide-slate divide-y-2 divide-gray-50 rounded-lg bg-gray-100 shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-slate-900">
+          <div className="dark:divide-slate divide-y-2 divide-gray-100 rounded-lg bg-gray-200 shadow-lg ring-1 ring-black ring-opacity-5 dark:divide-gray-700 dark:bg-slate-800">
             <div className="px-5 pt-5 pb-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -308,7 +308,7 @@ export default function Header() {
                 </div>
               </div>
 
-              <nav className="relative bg-gray-100 px-5 py-6 dark:bg-slate-900">
+              <nav className="relative bg-gray-200 px-5 py-6 dark:bg-slate-800">
                 <div>
                   <h4 className="mb-3 text-sm text-gray-900 dark:text-gray-300">Form Creation</h4>
                   {creation.map((brick) => (
@@ -319,7 +319,11 @@ export default function Header() {
                         brick.status ? "cursor-pointer" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
-                      <div className="text-brand-dark dark:text-brand-light flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12">
+                      <div
+                        className={clsx(
+                          brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
+                          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
+                        )}>
                         <brick.icon className="h-6 w-6" aria-hidden="true" />
                       </div>
                       <div className="ml-4">
@@ -335,7 +339,7 @@ export default function Header() {
                         <p
                           className={clsx(
                             brick.status
-                              ? "text-gray-900 dark:text-gray-300"
+                              ? "text-gray-900 dark:text-gray-400"
                               : "text-gray-400 dark:text-gray-600",
                             "text-sm"
                           )}>
@@ -355,7 +359,11 @@ export default function Header() {
                         brick.status ? "cursor-pointer" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
-                      <div className="text-brand-dark dark:text-brand-light flex h-10 w-10 flex-shrink-0 items-center justify-center sm:h-12 sm:w-12">
+                      <div
+                        className={clsx(
+                          brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
+                          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
+                        )}>
                         <brick.icon className="h-6 w-6" aria-hidden="true" />
                       </div>
                       <div className="ml-4">
@@ -371,7 +379,7 @@ export default function Header() {
                         <p
                           className={clsx(
                             brick.status
-                              ? "text-gray-900 dark:text-gray-300"
+                              ? "text-gray-900 dark:text-gray-400"
                               : "text-gray-400 dark:text-gray-600",
                             "text-sm"
                           )}>
@@ -391,7 +399,11 @@ export default function Header() {
                         brick.status ? "cursor-pointer" : "cursor-default",
                         "-m-3 flex items-start rounded-lg p-3 py-3"
                       )}>
-                      <div className="text-brand-dark dark:text-brand-light flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12">
+                      <div
+                        className={clsx(
+                          brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
+                          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
+                        )}>
                         <brick.icon className="h-6 w-6" aria-hidden="true" />
                       </div>
                       <div className="ml-4">
@@ -407,7 +419,7 @@ export default function Header() {
                         <p
                           className={clsx(
                             brick.status
-                              ? "text-gray-900 dark:text-gray-300"
+                              ? "text-gray-900 dark:text-gray-400"
                               : "text-gray-400 dark:text-gray-600",
                             "text-sm"
                           )}>
@@ -432,7 +444,7 @@ export default function Header() {
                   variant="secondary"
                   EndIcon={GitHubIcon}
                   onClick={() => router.push("https://github.com/formbricks/formbricks")}
-                  className="flex w-full justify-center">
+                  className="flex w-full justify-center fill-slate-800 dark:fill-slate-200">
                   View on Github
                 </Button>
                 <Button
