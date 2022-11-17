@@ -7,4 +7,4 @@ Under the hood we are using [React Hook Form](https://github.com/react-hook-form
 
 ## Get started
 
-To get started, please check out our [docs](https://formbricks-com.vercel.app/docs/form-creation/react-form-builder)
+To get started, please check out our [docs](https://formbricks.com/docs/react-form-library/introduction)

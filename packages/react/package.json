@@ -1,11 +1,13 @@
 {
   "name": "@formbricks/react",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "author": "Formbricks <hola@formbricks.com>",
   "description": "Building React forms has never been quicker.",
   "homepage": "https://formbricks.com",
   "main": "./dist/index.js",
+  "module": "dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": "./dist/index.js",
     "./styles.css": "./dist/styles.css"
@@ -33,7 +35,26 @@
     "clsx": "^1.2.1",
     "react-hook-form": "^7.39.1"
   },
+  "peerDependencies": {
+    "react": "^16.8.0 || ^17 || ^18"
+  },
   "publishConfig": {
     "access": "public"
+  },
+  "keywords": [
+    "react",
+    "form",
+    "forms",
+    "form-validation",
+    "validation",
+    "typescript",
+    "formbricks",
+    "survey",
+    "surveys",
+    "select"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formbricks/formbricks"
   }
 }
