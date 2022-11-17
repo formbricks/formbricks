@@ -68,23 +68,6 @@ export default function FormList() {
     }
   };
 
-  const duplicateForm = async (form) => {
-    try {
-      const data = await fetch(`/api/forms/${form.id}/duplicate`, {
-        method: "POST",
-        body: JSON.stringify({
-          form,
-        }),
-      });
-      const newForm = await data.json();
-
-      const updatedForms = [...forms, newForm];
-      mutateForms(updatedForms);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const filterSourcings = (button) => {
     if (button === "TOUTES") {
       setFilteredData(forms);
@@ -211,22 +194,18 @@ export default function FormList() {
                             }
                           />
                           {format(new Date(index.dueDate), "yyyy-MM-dd") ===
-                          format(new Date(), "yyyy-MM-dd", { locale: fr }) ? (
+                          format(new Date(), "yyyy-MM-dd") ? (
                             <span className="text-xs font-bold text-red-800 line-clamp-3">
                               ferme aujourd&apos;hui
                             </span>
                           ) : dateDayDiff(index.dueDate) > 7 ? (
                             <span className="text-xs font-bold text-neutral-500 line-clamp-3">
-                              {format(new Date(index.dueDate), "dd MMMM yyyy", {
-                                locale: fr,
-                              })}
+                              {format(new Date(index.dueDate), "MMMM dd, yyyy")}
                             </span>
                           ) : (
                             <span className="text-xs font-bold text-rose-500 line-clamp-3">
-                              {format(new Date(index.dueDate), "dd MMMM yyyy", {
-                                locale: fr,
-                              }) <
-                              format(new Date(), "dd MMMM yyyy", { locale: fr })
+                              {format(new Date(index.dueDate), "yyyy-MM-dd") <
+                              format(new Date(), "yyyy-MM-dd")
                                 ? "fermé"
                                 : "ferme"}{" "}
                               {timeSince(index.dueDate)}
@@ -296,42 +275,23 @@ export default function FormList() {
                                       <div className="py-1">
                                         <Menu.Item>
                                           {({ active }) => (
-                                            <>
-                                              <button
-                                                onClick={() =>
-                                                  deleteForm(index, itemIndex)
-                                                }
-                                                className={classNames(
-                                                  active
-                                                    ? "bg-ui-gray-light rounded-sm text-ui-black"
-                                                    : "text-ui-gray-dark",
-                                                  "flex px-4 py-2 text-sm w-full",
-                                                )}
-                                              >
-                                                <TrashIcon
-                                                  className="w-5 h-5 mr-3 text-ui-gray-dark"
-                                                  aria-hidden="true"
-                                                />
-                                                <span>Supprimer</span>
-                                              </button>
-                                              <button
-                                                onClick={() =>
-                                                  duplicateForm(index)
-                                                }
-                                                className={classNames(
-                                                  active
-                                                    ? "bg-ui-gray-light rounded-sm text-ui-black"
-                                                    : "text-ui-gray-dark",
-                                                  "flex px-4 py-2 text-sm w-full",
-                                                )}
-                                              >
-                                                <HiDocumentDuplicate
-                                                  className="w-5 h-5 mr-3 text-ui-gray-dark"
-                                                  aria-hidden="true"
-                                                />
-                                                <span>Duplicate</span>
-                                              </button>
-                                            </>
+                                            <button
+                                              onClick={() =>
+                                                deleteForm(index, itemIndex)
+                                              }
+                                              className={classNames(
+                                                active
+                                                  ? "bg-ui-gray-light rounded-sm text-ui-black"
+                                                  : "text-ui-gray-dark",
+                                                "flex px-4 py-2 text-sm w-full",
+                                              )}
+                                            >
+                                              <TrashIcon
+                                                className="w-5 h-5 mr-3 text-ui-gray-dark"
+                                                aria-hidden="true"
+                                              />
+                                              <span>Supprimer</span>
+                                            </button>
                                           )}
                                         </Menu.Item>
                                       </div>
