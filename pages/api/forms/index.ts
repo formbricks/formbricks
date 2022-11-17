@@ -35,7 +35,7 @@ export default async function handle(
           select: { firstname: true, lastname: true },
         },
         noCodeForm: {
-          select: { published: true, blocks: true },
+          select: { published: true, blocks: true, blocksDraft: true },
         },
         _count: {
           select: { submissionSessions: true },

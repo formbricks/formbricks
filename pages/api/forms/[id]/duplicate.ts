@@ -51,8 +51,10 @@ export default async function handle(
     });
     if (result) {
       noCodeForm.formId = id;
+      let newNoCodeForm = noCodeForm;
+      newNoCodeForm.published = false;
       const prismaRes = await prisma.noCodeForm.create({
-        data: noCodeForm,
+        data: newNoCodeForm,
       });
       if (!prismaRes) {
         await prisma.form.delete({
