@@ -47,22 +47,15 @@ export default async function handle(
         answeringOrder,
         id,
         owner: { connect: { email: session?.user?.email } },
+        noCodeForm: {
+          connect: noCodeForm.id,
+          create: noCodeForm,
+        },
+      },
+      include: {
+        noCodeForm: true, // Include all posts in the returned object
       },
     });
-    if (result) {
-      noCodeForm.formId = id;
-      let newNoCodeForm = noCodeForm;
-      newNoCodeForm.published = false;
-      const prismaRes = await prisma.noCodeForm.create({
-        data: newNoCodeForm,
-      });
-      if (!prismaRes) {
-        await prisma.form.delete({
-          where: { id: form.id },
-        });
-        return res.status(424).send(null);
-      }
-    }
     capturePosthogEvent(session.user.email, "form created", {
       formType: form.formType,
     });
