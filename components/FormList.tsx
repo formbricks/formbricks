@@ -39,9 +39,9 @@ export default function FormList() {
   });
 
   useEffect(() => {
-    setFilteredData(forms)
-  }, [forms])
-  
+    setFilteredData(forms);
+  }, [forms]);
+
   const dateDayDiff = (date) => {
     const today = new Date();
     const dueDate = new Date(date);
@@ -67,8 +67,6 @@ export default function FormList() {
       console.error(error);
     }
   };
-<<<<<<< HEAD
-<<<<<<< HEAD
 
   const duplicateForm = async (form) => {
     try {
@@ -87,10 +85,6 @@ export default function FormList() {
     }
   };
 
-=======
->>>>>>> b9a335c (fix: fix dynamic button filter)
-=======
-
   const filterSourcings = (button) => {
     if (button === "TOUTES") {
       setFilteredData(forms);
@@ -100,11 +94,6 @@ export default function FormList() {
     const filteredData = forms.filter((item) => item.place === button);
     setFilteredData(filteredData);
   };
-<<<<<<< HEAD
-  
->>>>>>> 801fe7d (feat:add filter function with button)
-=======
->>>>>>> 5660ee4 (added location and formation fields to modals)
   return (
     <>
       {filteredData &&
@@ -221,37 +210,23 @@ export default function FormList() {
                                 : "w-5 h-5 text-rose-500 mr-2"
                             }
                           />
-<<<<<<< HEAD
-                          {format(new Date(form.dueDate), "yyyy-MM-dd") ===
-                          format(new Date(), "yyyy-MM-dd", { locale: fr }) ? (
-=======
                           {format(new Date(index.dueDate), "yyyy-MM-dd") ===
-                          format(new Date(), "yyyy-MM-dd") ? (
->>>>>>> 801fe7d (feat:add filter function with button)
+                          format(new Date(), "yyyy-MM-dd", { locale: fr }) ? (
                             <span className="text-xs font-bold text-red-800 line-clamp-3">
                               ferme aujourd&apos;hui
                             </span>
                           ) : dateDayDiff(index.dueDate) > 7 ? (
                             <span className="text-xs font-bold text-neutral-500 line-clamp-3">
-<<<<<<< HEAD
-                              {format(new Date(form.dueDate), "dd MMMM yyyy", {
+                              {format(new Date(index.dueDate), "dd MMMM yyyy", {
                                 locale: fr,
                               })}
                             </span>
                           ) : (
                             <span className="text-xs font-bold text-rose-500 line-clamp-3">
-                              {format(new Date(form.dueDate), "dd MMMM yyyy", {
+                              {format(new Date(index.dueDate), "dd MMMM yyyy", {
                                 locale: fr,
                               }) <
                               format(new Date(), "dd MMMM yyyy", { locale: fr })
-=======
-                              {format(new Date(index.dueDate), "MMMM dd, yyyy")}
-                            </span>
-                          ) : (
-                            <span className="text-xs font-bold text-rose-500 line-clamp-3">
-                              {format(new Date(index.dueDate), "yyyy-MM-dd") <
-                              format(new Date(), "yyyy-MM-dd")
->>>>>>> 801fe7d (feat:add filter function with button)
                                 ? "fermé"
                                 : "ferme"}{" "}
                               {timeSince(index.dueDate)}
@@ -321,11 +296,10 @@ export default function FormList() {
                                       <div className="py-1">
                                         <Menu.Item>
                                           {({ active }) => (
-<<<<<<< HEAD
                                             <>
                                               <button
                                                 onClick={() =>
-                                                  deleteForm(form, formIdx)
+                                                  deleteForm(index, itemIndex)
                                                 }
                                                 className={classNames(
                                                   active
@@ -342,7 +316,7 @@ export default function FormList() {
                                               </button>
                                               <button
                                                 onClick={() =>
-                                                  duplicateForm(form)
+                                                  duplicateForm(index)
                                                 }
                                                 className={classNames(
                                                   active
@@ -358,25 +332,6 @@ export default function FormList() {
                                                 <span>Duplicate</span>
                                               </button>
                                             </>
-=======
-                                            <button
-                                              onClick={() =>
-                                                deleteForm(index, itemIndex)
-                                              }
-                                              className={classNames(
-                                                active
-                                                  ? "bg-ui-gray-light rounded-sm text-ui-black"
-                                                  : "text-ui-gray-dark",
-                                                "flex px-4 py-2 text-sm w-full",
-                                              )}
-                                            >
-                                              <TrashIcon
-                                                className="w-5 h-5 mr-3 text-ui-gray-dark"
-                                                aria-hidden="true"
-                                              />
-                                              <span>Supprimer</span>
-                                            </button>
->>>>>>> 801fe7d (feat:add filter function with button)
                                           )}
                                         </Menu.Item>
                                       </div>

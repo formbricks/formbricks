@@ -154,7 +154,6 @@ export default function NewFormModal({
                           leaveFrom="opacity-100"
                           leaveTo="opacity-0"
                         >
-<<<<<<< HEAD
                           <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                             {answeringOptions.map((option, optionIdx) => {
                               return (
@@ -180,34 +179,6 @@ export default function NewFormModal({
                                       >
                                         {option}
                                       </span>
-=======
-                          <Listbox.Options className="absolute mt-1 max-h-60 w-11/12 z-20 overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                            {SourcingAnsweringOrderOptions.map(
-                              (option, optionIdx) => {
-                                return (
-                                  <Listbox.Option
-                                    key={optionIdx}
-                                    value={option}
-                                    className={({ active }) =>
-                                      `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                                        active
-                                          ? "bg-red-500 text-white"
-                                          : "text-gray-900"
-                                      }`
-                                    }
-                                  >
-                                    {({ selected }) => (
-                                      <>
-                                        <span
-                                          className={`block truncate ${
-                                            selected
-                                              ? "font-medium"
-                                              : "font-normal"
-                                          }`}
-                                        >
-                                          {option}
-                                        </span>
->>>>>>> 6675a3f (fix:ui of select option behaviour)
 
                                       {selected ? (
                                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-white-600">
@@ -277,13 +248,8 @@ export default function NewFormModal({
                           leaveFrom="opacity-100"
                           leaveTo="opacity-0"
                         >
-<<<<<<< HEAD
                           <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                             {places.map((place, placeIdx) => {
-=======
-                          <Listbox.Options className="absolute mt-1 max-h-60 w-11/12 z-20 overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                            {SourcingLocations.map((place, placeIdx) => {
->>>>>>> 6675a3f (fix:ui of select option behaviour)
                               return (
                                 <Listbox.Option
                                   key={placeIdx}
@@ -328,79 +294,6 @@ export default function NewFormModal({
                   </div>
                   <div>
                     <label
-<<<<<<< HEAD
-=======
-                      htmlFor="place"
-                      className="text-sm font-light text-ui-gray-dark"
-                    >
-                      Choisissez la formation
-                    </label>
-                    <div className="mt-2">
-                      <Listbox value={formation} onChange={setFormation}>
-                        <Listbox.Button className="relative w-full cursor-default rounded bg-ui-gray-light py-2 pl-3 pr-10 text-left focus:ring-2 focus:ring-red sm:text-sm">
-                          <span className="block truncate">{formation}</span>
-                          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                            <ChevronUpDownIcon
-                              className="h-5 w-5 text-gray-400"
-                              aria-hidden="true"
-                            />
-                          </span>
-                        </Listbox.Button>
-                        <Transition
-                          as={Fragment}
-                          leave="transition ease-in duration-100"
-                          leaveFrom="opacity-100"
-                          leaveTo="opacity-0"
-                        >
-                          <Listbox.Options className="absolute mt-1 max-h-60 w-11/12 z-20 overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                            {SourcingFormations.map(
-                              (formation, formationIdx) => {
-                                return (
-                                  <Listbox.Option
-                                    key={formationIdx}
-                                    value={formation}
-                                    className={({ active }) =>
-                                      `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                                        active
-                                          ? "bg-red-500 text-white"
-                                          : "text-gray-900"
-                                      }`
-                                    }
-                                  >
-                                    {({ selected }) => (
-                                      <>
-                                        <span
-                                          className={`block truncate ${
-                                            selected
-                                              ? "font-medium"
-                                              : "font-normal"
-                                          }`}
-                                        >
-                                          {formation}
-                                        </span>
-
-                                        {selected ? (
-                                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-white-600">
-                                            <CheckIcon
-                                              className="h-5 w-5"
-                                              aria-hidden="true"
-                                            />
-                                          </span>
-                                        ) : null}
-                                      </>
-                                    )}
-                                  </Listbox.Option>
-                                );
-                              },
-                            )}
-                          </Listbox.Options>
-                        </Transition>
-                      </Listbox>
-                    </div>
-                  </div>
-                  <div>
-                    <label
->>>>>>> 6675a3f (fix:ui of select option behaviour)
                       htmlFor="description"
                       className="text-sm font-light text-ui-gray-dark"
                     >
