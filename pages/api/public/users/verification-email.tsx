@@ -10,7 +10,7 @@ export default async function handle(
   // Sends a new verification email to a user with a specific email address
   // Required fields in body: email
   if (req.method === "POST") {
-    const { email } = req.body;
+    const { email, callbackUrl } = req.body;
     // create user in database
     try {
       const user = await prisma.user.findUnique({
@@ -26,7 +26,7 @@ export default async function handle(
           error: "Email address has already been verified",
         });
       }
-      await sendVerificationEmail(user);
+      await sendVerificationEmail(user, callbackUrl);
       res.json(user);
     } catch (e) {
       return res.status(500).json({

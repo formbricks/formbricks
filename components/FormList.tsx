@@ -10,9 +10,9 @@ import {
 import { HiOutlineLocationMarker, HiDocumentDuplicate } from "react-icons/hi";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { Fragment, useState } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { useForms } from "../lib/forms";
-import { UserRole } from "@prisma/client";
+import { UserRole, Location as Cities } from "@prisma/client";
 import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
@@ -29,6 +29,7 @@ export default function FormList() {
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
   const [queryValue, setQueryValue] = useState("");
   const [formData, setFormData] = useState({});
+  const [filteredData, setFilteredData] = useState(forms);
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -36,6 +37,10 @@ export default function FormList() {
       return signIn();
     },
   });
+
+  useEffect(() => {
+    setFilteredData(forms);
+  }, [forms]);
 
   const dateDayDiff = (date) => {
     const today = new Date();
@@ -63,25 +68,51 @@ export default function FormList() {
     }
   };
 
-  const duplicateForm = async (form) => {
-    try {
-      const data = await fetch(`/api/forms/${form.id}/duplicate`, {
-        method: "POST",
-        body: JSON.stringify({
-          form,
-        }),
-      });
-      const newForm = await data.json();
-
-      const updatedForms = [...forms, newForm];
-      mutateForms(updatedForms);
-    } catch (error) {
-      console.error(error);
+  const filterSourcings = (button) => {
+    if (button === "TOUTES") {
+      setFilteredData(forms);
+      return;
     }
-  };
 
+    const filteredData = forms.filter((item) => item.place === button);
+    setFilteredData(filteredData);
+  };
   return (
     <>
+      {filteredData &&
+        (filteredData.length === 0 ? (
+          <></>
+        ) : (
+          <div>
+            {session.user.role === UserRole.ADMIN ? (
+              <></>
+            ) : (
+              <ul className="flex flex-row mt-10">
+                <button
+                  className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5"
+                  onClick={() => filterSourcings("TOUTES")}
+                >
+                  TOUTES
+                </button>
+                {[
+                  Cities.Lubumbashi,
+                  Cities.Kinshasa,
+                  Cities.Goma,
+                  Cities.Autre,
+                ].map((city, cityIndex) => (
+                  <li key={cityIndex} className="relative">
+                    <button
+                      className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5"
+                      onClick={() => filterSourcings(city)}
+                    >
+                      {city}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
       {forms && forms.length > 100 ? (
         <SearchBar
           className="mt-5 flex gap-4"
@@ -94,8 +125,8 @@ export default function FormList() {
         <></>
       )}
       <div className="h-full px-6 py-8">
-        {forms &&
-          (forms.length === 0 ? (
+        {filteredData &&
+          (filteredData.length === 0 ? (
             <div className="mt-5 text-center">
               {session.user.role !== UserRole.ADMIN ? (
                 <EmptyPageFiller
@@ -134,72 +165,68 @@ export default function FormList() {
                   </li>
                 </button>
               )}
-              {forms
+              {filteredData
                 .sort((a, b) => b.updatedAt - a.updatedAt)
-                .map((form, formIdx) => (
-                  <li key={form.id} className="relative h-56 col-span-1 ">
-                    <div className="flex flex-col justify-between h-full bg-white rounded shadow">
+                .map((index, itemIndex) => (
+                  <li key={index.id} className="relative h-56 col-span-1">
+                    <div className="flex flex-col justify-between h-full border border-gray-300 bg-white rounded-md hover:border hover:border-black">
                       <div className="p-6">
-                        <p className="text-lg line-clamp-3">{form.name}</p>
+                        <p className="text-lg line-clamp-3">{index.name}</p>
                       </div>
                       <div className="border-t">
-                        {form.place === "" ? (
+                        {index.place === "" ? (
                           <></>
                         ) : (
                           <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
                             <HiOutlineLocationMarker className="w-5 h-5 text-black mr-2" />
-                            {form.place}
+                            {index.place}
                           </span>
                         )}
                         <span className="flex  items-center  px-3 py-1">
                           <CalendarDaysIcon
                             className={
-                              format(new Date(form.dueDate), "yyyy-MM-dd") ===
+                              format(new Date(index.dueDate), "yyyy-MM-dd") ===
                               format(new Date(), "yyyy-MM-dd")
                                 ? "w-5 h-5 text-red-800 mr-2"
-                                : dateDayDiff(form.dueDate) > 7
+                                : dateDayDiff(index.dueDate) > 7
                                 ? "w-5 h-5 text-black mr-2"
                                 : "w-5 h-5 text-rose-500 mr-2"
                             }
                           />
-                          {format(new Date(form.dueDate), "yyyy-MM-dd") ===
-                          format(new Date(), "yyyy-MM-dd", { locale: fr }) ? (
+                          {format(new Date(index.dueDate), "yyyy-MM-dd") ===
+                          format(new Date(), "yyyy-MM-dd") ? (
                             <span className="text-xs font-bold text-red-800 line-clamp-3">
                               ferme aujourd&apos;hui
                             </span>
-                          ) : dateDayDiff(form.dueDate) > 7 ? (
+                          ) : dateDayDiff(index.dueDate) > 7 ? (
                             <span className="text-xs font-bold text-neutral-500 line-clamp-3">
-                              {format(new Date(form.dueDate), "dd MMMM yyyy", {
-                                locale: fr,
-                              })}
+                              {format(new Date(index.dueDate), "MMMM dd, yyyy")}
                             </span>
                           ) : (
                             <span className="text-xs font-bold text-rose-500 line-clamp-3">
-                              {format(new Date(form.dueDate), "dd MMMM yyyy", {
-                                locale: fr,
-                              }) <
-                              format(new Date(), "dd MMMM yyyy", { locale: fr })
+                              {format(new Date(index.dueDate), "yyyy-MM-dd") <
+                              format(new Date(), "yyyy-MM-dd")
                                 ? "fermé"
                                 : "ferme"}{" "}
-                              {timeSince(form.dueDate)}
+                              {timeSince(index.dueDate)}
                             </span>
                           )}
                         </span>
                         {session.user.role === UserRole.ADMIN ? (
                           <span className="flex  items-center px-3 py-1 text-xs font-bold text-neutral-500">
                             <UserCircleIcon className="w-5 h-5 text-black mr-2" />
-                            {form.owner.firstname + " " + form.owner.lastname}
+                            {index.owner.firstname + " " + index.owner.lastname}
                           </span>
                         ) : (
-                          <CandidateProgress form={form} />
+                          <CandidateProgress form={index} />
                         )}
                       </div>
 
                       <Link
                         href={
                           session.user.role === UserRole.PUBLIC
-                            ? `/sourcings/${form.id}`
-                            : `/forms/${form.id}/form`
+                            ? `/sourcings/${index.id}`
+                            : `/forms/${index.id}/index`
                         }
                       >
                         <a className="absolute w-full h-full" />
@@ -211,7 +238,7 @@ export default function FormList() {
                           <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                             <p className="flex gap-1 items-center text-xs text-ui-gray-medium ">
                               <EyeIcon className="w-3 h-3" />
-                              <p>{form._count?.submissionSessions}</p>
+                              <p>{index._count?.submissionSessions}</p>
                             </p>
                             <Menu
                               as="div"
@@ -248,42 +275,23 @@ export default function FormList() {
                                       <div className="py-1">
                                         <Menu.Item>
                                           {({ active }) => (
-                                            <>
-                                              <button
-                                                onClick={() =>
-                                                  deleteForm(form, formIdx)
-                                                }
-                                                className={classNames(
-                                                  active
-                                                    ? "bg-ui-gray-light rounded-sm text-ui-black"
-                                                    : "text-ui-gray-dark",
-                                                  "flex px-4 py-2 text-sm w-full"
-                                                )}
-                                              >
-                                                <TrashIcon
-                                                  className="w-5 h-5 mr-3 text-ui-gray-dark"
-                                                  aria-hidden="true"
-                                                />
-                                                <span>Supprimer</span>
-                                              </button>
-                                              <button
-                                                onClick={() =>
-                                                  duplicateForm(form)
-                                                }
-                                                className={classNames(
-                                                  active
-                                                    ? "bg-ui-gray-light rounded-sm text-ui-black"
-                                                    : "text-ui-gray-dark",
-                                                  "flex px-4 py-2 text-sm w-full"
-                                                )}
-                                              >
-                                                <HiDocumentDuplicate
-                                                  className="w-5 h-5 mr-3 text-ui-gray-dark"
-                                                  aria-hidden="true"
-                                                />
-                                                <span>Duplicate</span>
-                                              </button>
-                                            </>
+                                            <button
+                                              onClick={() =>
+                                                deleteForm(index, itemIndex)
+                                              }
+                                              className={classNames(
+                                                active
+                                                  ? "bg-ui-gray-light rounded-sm text-ui-black"
+                                                  : "text-ui-gray-dark",
+                                                "flex px-4 py-2 text-sm w-full",
+                                              )}
+                                            >
+                                              <TrashIcon
+                                                className="w-5 h-5 mr-3 text-ui-gray-dark"
+                                                aria-hidden="true"
+                                              />
+                                              <span>Supprimer</span>
+                                            </button>
                                           )}
                                         </Menu.Item>
                                       </div>

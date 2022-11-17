@@ -17,6 +17,17 @@ enum FormOrder {
   SEQUENTIAL
   ABTEST
 }
+enum Location {
+  Goma
+  Lubumbashi
+  Kinshasa
+  Autre
+}
+enum Formation {
+  DEV
+  SMD
+  AUTRE
+}
 
 enum PipelineType {
   WEBHOOK
@@ -42,7 +53,8 @@ model Form {
   name               String              @default("")
   description        String              @default("")
   dueDate            DateTime?
-  place              String?             @default("")
+  place              Location            @default(Autre)
+  formation          Formation           @default(AUTRE)
   schema             Json                @default("{}")
   submissionSessions SubmissionSession[]
   pipelines          Pipeline[]

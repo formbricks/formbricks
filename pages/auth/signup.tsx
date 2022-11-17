@@ -26,13 +26,15 @@ export default function SignUpPage() {
         e.target.elements.gender.value,
         handlePhoneNumberValidity(e.target.elements.phone.value),
         e.target.elements.email.value,
-        e.target.elements.password.value
+        e.target.elements.password.value,
       );
 
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success`
         : `/auth/verification-requested?email=${encodeURIComponent(
-            e.target.elements.email.value
+            e.target.elements.email.value,
+          )}&callbackUrl=${encodeURIComponent(
+            router.query.callbackUrl?.toString() || "/forms",
           )}`;
 
       router.push(url);
