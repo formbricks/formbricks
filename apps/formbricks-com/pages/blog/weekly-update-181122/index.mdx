@@ -1,5 +1,6 @@
 import Image from "next/image";
 import LayoutMdx from "@/components/shared/LayoutMdx";
+import Button from "@/components/shared/Button";
 import Mockup from "./demo mockup for formbricks hq open source form and survey tool.png";
 import NewLogo from "./formbricks new logo mockup community feedback.png";
 import Community from "./community feedback logo and name.png";
@@ -89,5 +90,43 @@ We started being more active on Twitter again. [Say Hi 👋](https://twitter.com
 Let’s hope Elon doesn’t break it too soon.
 
 ## Have a great weekend!
+
+---
+
+<div className="mx-auto max-w-7xl px-5 py-5 bg-white shadow-lg rounded-lg text-md text-gray-700">
+
+You would like to have Formbricks "Build in Public Updates" like this in your mailbox? Subscribe to our
+newsletter 💪
+
+<form method="post" action="https://listmonk.formbricks.com/subscription/form" className="listmonk-form">
+    <div>
+        <input type="hidden" name="nonce" />
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+             Email
+          </label>
+          <div className="mt-1">
+              <input type="email" name="email" required placeholder="you@example.com" className="block w-full rounded-md border-gray-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm" />
+          </div>
+        </div>
+       <div>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+             Name (optional)
+          </label>
+          <div className="mt-1">
+              <input type="text" name="name" required className="block w-full rounded-md border-gray-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm" />
+          </div>
+        </div>
+       
+        <div className='hidden'>
+          <input id="e0084" type="checkbox" name="l" checked value="e0084486-8751-43e4-8cfb-58b7c3f5f318" readOnly />
+          <label htmlFor="e0084">Build in public</label>
+        </div>
+
+        <Button type="submit" className="mt-4 w-full justify-center">Subscribe</Button>
+    </div>
+
+</form>
+</div>
 
 export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
