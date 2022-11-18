@@ -1,49 +1,49 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
+import { getElementId } from "../../lib/element";
+import { useEffectUpdateSchema } from "../../lib/schema";
 import { getValidationRules } from "../../lib/validation";
-import { UniversalInputProps } from "../Formbricks";
+import { UniversalInputProps } from "../../types";
+import { Help } from "../shared/Help";
 import { Label } from "../shared/Label";
 
-export interface TextareaInputUniqueProps {
+interface TextareaInputUniqueProps {
+  cols?: number;
   maxLength?: number;
   minLength?: number;
   placeholder?: string;
+  rows?: string;
 }
 
-type TextareaProps = UniversalInputProps & TextareaInputUniqueProps;
+type TextareaProps = TextareaInputUniqueProps & UniversalInputProps;
 
-export function Textarea({
-  name,
-  label,
-  elemId,
-  placeholder,
-  validation,
-  minLength = 0,
-  maxLength = 524288,
-}: TextareaProps) {
+const inputType = "textarea";
+
+export function Textarea(props: TextareaProps) {
+  const elemId = useMemo(() => getElementId(props.id, props.name), [props.id, props.name]);
+  useEffectUpdateSchema(props, inputType);
+
   const { register } = useFormContext();
-  const validationRules = getValidationRules(validation);
-
-  if (!name) {
-    console.error("🧱 Fomrbricks Error: Textarea has no name attribute");
-    return <div></div>;
-  }
+  const validationRules = getValidationRules(props.validation);
 
   return (
-    <>
-      <Label label={label} elemId={elemId} />
-      <div className="formbricks-inner">
-        <textarea
-          className="formbricks-input"
-          id={elemId}
-          placeholder={placeholder || ""}
-          {...register(name, {
-            required: validationRules?.includes("required"),
-            minLength,
-            maxLength,
-          })}
-        />
+    <div className="formbricks-outer" data-type={inputType}>
+      <div className="formbricks-wrapper">
+        <Label label={props.label} elemId={elemId} />
+        <div className="formbricks-inner">
+          <textarea
+            className="formbricks-input"
+            id={elemId}
+            placeholder={props.placeholder || ""}
+            {...register(props.name, {
+              required: validationRules?.includes("required"),
+              minLength: props.minLength,
+              maxLength: props.maxLength,
+            })}
+          />
+        </div>
       </div>
-    </>
+      {props.help && <Help help={props.help} elemId={elemId} />}
+    </div>
   );
 }

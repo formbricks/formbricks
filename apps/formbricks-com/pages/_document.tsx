@@ -44,14 +44,14 @@ export default function Document() {
       <Head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
 
-        <link rel="apple-touch-icon" sizes="180x180" href="/faveicon/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/faveicon/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/faveicon/favicon-16x16.png" />
-        <link rel="manifest" href="/faveicon/site.webmanifest" />
-        <link rel="mask-icon" href="/faveicon/safari-pinned-tab.svg" color="#002941" />
-        <link rel="shortcut icon" href="/faveicon/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
+        <link rel="manifest" href="/favicon/site.webmanifest" />
+        <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg" color="#002941" />
+        <link rel="shortcut icon" href="/favicon/favicon.ico" />
         <meta name="msapplication-TileColor" content="#002941" />
-        <meta name="msapplication-config" content="/faveicon/browserconfig.xml" />
+        <meta name="msapplication-config" content="/favicon/browserconfig.xml" />
         <meta name="theme-color" content="#ffffff" />
       </Head>
       <body className="bg-slate-100 dark:bg-slate-900">

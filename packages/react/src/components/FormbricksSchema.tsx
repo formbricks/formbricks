@@ -1,6 +1,6 @@
 import React from "react";
 import { Form } from "./Form";
-import { Formbricks } from "./Formbricks";
+import { Text, Textarea } from "./Inputs";
 
 interface OnSubmitProps {
   data: any;
@@ -17,9 +17,13 @@ export function FormbricksSchema({ schema, onSubmit }: FormbricksSchemaProps) {
   // TODO validate schema
   return (
     <Form onSubmit={onSubmit}>
-      {schema.map((element: any) => (
-        <Formbricks {...element} />
-      ))}
+      {schema.map((element: any) =>
+        element.type === "text" ? (
+          <Text {...element} />
+        ) : element.type === "textarea" ? (
+          <Textarea {...element} />
+        ) : null
+      )}
     </Form>
   );
 }

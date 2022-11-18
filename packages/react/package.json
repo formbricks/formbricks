@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/react",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "author": "Formbricks <hola@formbricks.com>",
   "description": "Building React forms has never been quicker.",
   "homepage": "https://formbricks.com",
@@ -9,12 +9,17 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "exports": {
-    ".": "./dist/index.js",
-    "./styles.css": "./dist/styles.css"
+    "./package.json": "./package.json",
+    "./styles.css": "./dist/styles.css",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts --external react && tailwindcss -i ./src/styles.css -o ./dist/styles.css",
+    "build": "tsup --dts && tailwindcss -i ./src/styles.css -o ./dist/styles.css",
     "dev": "concurrently \"tsup src/index.tsx --format esm,cjs --dts --external react --watch\" \"tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch\"",
     "clean": "rm -rf dist"
   },
