@@ -32,7 +32,7 @@ export const sendEmail = async (emailData: sendEmailData) => {
   await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
 
-export const sendVerificationEmail = async (user, url) => {
+export const sendVerificationEmail = async (user, url="/sourcings") => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
