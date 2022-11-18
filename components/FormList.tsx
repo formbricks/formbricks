@@ -226,7 +226,7 @@ export default function FormList() {
                         href={
                           session.user.role === UserRole.PUBLIC
                             ? `/sourcings/${index.id}`
-                            : `/forms/${index.id}/index`
+                            : `/forms/${index.id}/form`
                         }
                       >
                         <a className="absolute w-full h-full" />
