@@ -10,8 +10,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brandblue: colors.blue[500],
-        brandred: colors.red[500],
+        brand: {
+          DEFAULT: "#00E6CA",
+          light: "#00E6CA",
+          dark: "#00C4B8",
+        },
+        black: {
+          DEFAULT: "#0F172A",
+        },
+      },
+      maxWidth: {
+        "8xl": "88rem",
       },
     },
   },
