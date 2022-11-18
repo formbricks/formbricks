@@ -24,7 +24,7 @@ export default function HeadingCentered() {
         </Button>
       </div>
       <div className="flex items-center pt-10">
-        <div className="flex h-20 w-full items-center justify-between rounded-lg bg-slate-800 px-8 text-gray-100 ">
+        <div className="flex h-20 w-full items-center justify-between rounded-lg bg-slate-300 px-8 text-slate-700 dark:bg-slate-800 dark:text-slate-200 ">
           <p>npm install @formbricks/react</p>
           <button onClick={() => navigator.clipboard.writeText("npm install @formbricks/react")}>
             <DocumentDuplicateIcon className="h-8 w-8" />
