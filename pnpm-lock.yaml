@@ -57,6 +57,7 @@ importers:
       '@mdx-js/loader': ^2.1.5
       '@mdx-js/react': ^2.1.5
       '@next/mdx': ^13.0.0
+      '@tailwindcss/forms': ^0.5.3
       '@tailwindcss/typography': ^0.5.7
       '@types/node': 18.11.6
       '@types/react': 18.0.23
@@ -97,6 +98,7 @@ importers:
       react-responsive-embed: 2.1.0_sh5qlbywuemxd2y3xkrw2y2kr4
       remark-gfm: 3.0.1
     devDependencies:
+      '@tailwindcss/forms': 0.5.3_tailwindcss@3.2.1
       '@tailwindcss/typography': 0.5.7_tailwindcss@3.2.1
       '@types/node': 18.11.6
       '@types/react': 18.0.23
@@ -4107,6 +4109,15 @@ packages:
     dependencies:
       mini-svg-data-uri: 1.4.4
       tailwindcss: 3.1.8_postcss@8.4.18
+    dev: true
+
+  /@tailwindcss/forms/0.5.3_tailwindcss@3.2.1:
+    resolution: {integrity: sha512-y5mb86JUoiUgBjY/o6FJSFZSEttfb3Q5gllE4xoKjAAD+vBrnIhE4dViwUuow3va8mpH4s9jyUbUbrRGoRdc2Q==}
+    peerDependencies:
+      tailwindcss: '>=3.0.0 || >= 3.0.0-alpha.1'
+    dependencies:
+      mini-svg-data-uri: 1.4.4
+      tailwindcss: 3.2.1_postcss@8.4.18
     dev: true
 
   /@tailwindcss/typography/0.5.7_tailwindcss@3.2.1:
