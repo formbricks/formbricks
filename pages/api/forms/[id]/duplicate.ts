@@ -5,6 +5,7 @@ import NextCors from "nextjs-cors";
 import { checkIdAvailability } from "..";
 import { capturePosthogEvent } from "../../../../lib/posthog";
 import { generateId } from "../../../../lib/utils";
+import { prisma } from "../../../../lib/prisma";
 
 ///api/submissionSession
 export default async function handle(
