@@ -16,13 +16,15 @@ export default function SignIn({}: props) {
   const requestVerificationEmail = async () => {
     try {
       await resendVerificationEmail(email, callbackUrl);
-      toast("Verification email successfully sent. Please check your inbox.");
+      toast(
+        "E-mail de vérification envoyé avec succès. Veuillez vérifier votre boîte de réception."
+      );
     } catch (e) {
       toast.error(`Error: ${e.message}`);
     }
   };
   return (
-    <BaseLayoutUnauthorized title="Verify your email">
+    <BaseLayoutUnauthorized title="Vérifiez votre e-mail">
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
@@ -39,29 +41,32 @@ export default function SignIn({}: props) {
               {email ? (
                 <>
                   <h1 className="mb-4 font-bold text-center leading-2">
-                    Please verify your email address
+                    Veuillez vérifier votre boîte de réception
                   </h1>
                   <p className="text-center">
-                    We have sent you an email to the address{" "}
-                    <span className="italic">{router.query.email}</span>. Please
-                    click the link in the email to activate your account.
+                    Un e-mail a été envoyé à l&apos;adresse{" "}
+                    <span className="italic">{router.query.email}</span>.
+                    Cliquez sur le lien dans l&apos;e-mail reçu pour activer
+                    votre compte.
                   </p>
                   <hr className="my-4" />
                   <p className="text-xs text-center">
-                    You didn&apos;t receive an email or your link expired?
+                    Vous n&apos;avez pas reçu d&apos;e-mail ou votre lien a
+                    expiré ?
                     <br />
-                    Click the button below to request a new email.
+                    Cliquez sur le bouton ci-dessous pour en demander un
+                    nouveau.
                   </p>
                   <button
                     type="button"
                     onClick={() => requestVerificationEmail()}
                     className="flex justify-center w-full px-4 py-2 mt-5 text-sm font-medium text-gray-600 bg-white border border-gray-400 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
-                    Request a new verification mail
+                    Demander un nouveau lien de vérification{" "}
                   </button>{" "}
                 </>
               ) : (
-                <p className="text-center">No E-Mail Address provided</p>
+                <p className="text-center">Aucune adresse e-mail fournie</p>
               )}
             </div>
           </div>

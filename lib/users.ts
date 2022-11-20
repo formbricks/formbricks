@@ -8,12 +8,8 @@ export enum UserRoles {
 }
 
 export const createUser = async (
-  firstname,
-  lastname,
-  gender,
-  phone,
-  email,
-  password
+  { firstname, lastname, gender, phone, email, password },
+  callbackUrl = ""
 ) => {
   const hashedPassword = await hashPassword(password);
   try {
@@ -21,12 +17,15 @@ export const createUser = async (
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        firstname,
-        lastname,
-        gender,
-        phone,
-        email,
-        password: hashedPassword,
+        callbackUrl,
+        user: {
+          firstname,
+          lastname,
+          gender,
+          phone,
+          email,
+          password: hashedPassword,
+        },
       }),
     });
     if (res.status !== 200) {

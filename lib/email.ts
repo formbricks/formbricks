@@ -32,33 +32,34 @@ export const sendEmail = async (emailData: sendEmailData) => {
   await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
 
-export const sendVerificationEmail = async (user, url="/sourcings") => {
+export const sendVerificationEmail = async (user, url = "/sourcings") => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
   const verifyLink = `${
     serverRuntimeConfig.nextauthUrl
-  }/auth/verify?token=${encodeURIComponent(token)}`;
+  }/auth/verify?token=${encodeURIComponent(
+    token
+  )}&callbackUrl=${encodeURIComponent(url)}`;
+
   const verificationRequestLink = `${
     serverRuntimeConfig.nextauthUrl
   }/auth/verification-requested?email=${encodeURIComponent(
-    user.email,
+    user.email
   )}&callbackUrl=${encodeURIComponent(url)}`;
   await sendEmail({
     to: user.email,
     subject: "Bienvenue sur le site de KDA Sourcing",
-    html: `Bienvenue sur le site de KDA Sourcing!<br/><br/>Pour vérifier votre adresse e-mail et commencer à utiliser KDA Sourcing, veuillez cliquer sur ce <a href="${verifyLink}">lien</a>!
-    <br/>
-    Le lien est valide pour une journée. S'il a expiré, <a href="${verificationRequestLink}">veuillez en demander un nouveau</a>!<br/>
-    <br/>
-    L'équipe KDA`,
+    html: `<p>Bienvenue sur le site de KDA Sourcing!<br/><br/>Pour vérifier votre adresse e-mail et commencer à utiliser KDA Sourcing, veuillez cliquer sur ce <a href="${verifyLink}">lien</a>!</p>
+    <p>Le lien est valide pour une journée. S'il a expiré, <a href="${verificationRequestLink}">veuillez en demander un nouveau</a>!</p>
+    <p>L'équipe KDA</p>`,
   });
 };
 
 export const sendForgotPasswordEmail = async (user) => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
-  })
+  });
   const verifyLink = `${
     serverRuntimeConfig.nextauthUrl
   }/auth/reset-password?token=${encodeURIComponent(token)}`;

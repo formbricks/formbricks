@@ -17,7 +17,7 @@ export default async function handle(
   // Required fields in body: email, password (hashed)
   // Optional fields in body: firstname, lastname
   if (req.method === "POST") {
-    let user = req.body;
+    let { user, callbackUrl} = req.body;
     user = { ...user, ...{ email: user.email.toLowerCase() } };
 
     const { emailVerificationDisabled } = publicRuntimeConfig;
@@ -29,13 +29,13 @@ export default async function handle(
           ...user,
         },
       });
-      if (!emailVerificationDisabled) await sendVerificationEmail(userData);
+      if (!emailVerificationDisabled) await sendVerificationEmail(userData, callbackUrl);
       capturePosthogEvent(user.email, "user created");
       res.json(userData);
     } catch (e) {
       if (e.code === "P2002") {
         return res.status(409).json({
-          error: "user with this email address already exists",
+          error: "un utilisateur avec cette adresse e-mail existe déjà",
           errorCode: e.code,
         });
       } else {

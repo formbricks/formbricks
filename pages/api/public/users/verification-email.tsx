@@ -18,12 +18,12 @@ export default async function handle(
       });
       if (!user) {
         return res.status(404).json({
-          error: "No user with this email address found",
+          error: "Aucun utilisateur avec cette adresse e-mail n'a été trouvé",
         });
       }
       if (user.emailVerified) {
         return res.status(400).json({
-          error: "Email address has already been verified",
+          error: "L'adresse e-mail a déjà été vérifiée",
         });
       }
       await sendVerificationEmail(user, callbackUrl);

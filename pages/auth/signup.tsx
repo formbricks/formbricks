@@ -14,28 +14,33 @@ export default function SignUpPage() {
   const router = useRouter();
   const [error, setError] = useState<string>("");
 
-  const { emailVerificationDisabled, privacyUrl, termsUrl } =
-    publicRuntimeConfig;
+  const {
+    emailVerificationDisabled,
+    privacyUrl,
+    termsUrl,
+  } = publicRuntimeConfig;
 
   const handleSubmit = async (e) => {
+    const callbackUrl = router.query.callbackUrl?.toString() || "/soucings";
     e.preventDefault();
     try {
       await createUser(
-        e.target.elements.firstname.value,
-        e.target.elements.lastname.value,
-        e.target.elements.gender.value,
-        handlePhoneNumberValidity(e.target.elements.phone.value),
-        e.target.elements.email.value,
-        e.target.elements.password.value,
+        {
+          firstname: e.target.elements.firstname.value,
+          lastname: e.target.elements.lastname.value,
+          gender: e.target.elements.gender.value,
+          phone: handlePhoneNumberValidity(e.target.elements.phone.value),
+          email: e.target.elements.email.value,
+          password: e.target.elements.password.value,
+        },
+        callbackUrl
       );
 
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success`
         : `/auth/verification-requested?email=${encodeURIComponent(
-            e.target.elements.email.value,
-          )}&callbackUrl=${encodeURIComponent(
-            router.query.callbackUrl?.toString() || "/forms",
-          )}`;
+            e.target.elements.email.value
+          )}&callbackUrl=${encodeURIComponent(callbackUrl)}`;
 
       router.push(url);
     } catch (e) {
@@ -57,7 +62,7 @@ export default function SignUpPage() {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">
-                    An error occurred when logging you in
+                    Une erreur s&apos;est produite lors de votre connexion
                   </h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p className="space-y-1 whitespace-pre-wrap">{error}</p>
@@ -233,8 +238,8 @@ export default function SignUpPage() {
                     </div>
                     {(termsUrl || privacyUrl) && (
                       <div className="mt-3 text-xs text-center text-gray-400">
-                        By clicking &quot;Sign Up&quot;, you agree to our
-                        <br />
+                        En cliquant sur &quot;S&apos;inscrire&quot;, vous
+                        acceptez nos <br />
                         {termsUrl && (
                           <a
                             className="text-red hover:text-red-600"
@@ -242,10 +247,10 @@ export default function SignUpPage() {
                             rel="noreferrer"
                             target="_blank"
                           >
-                            terms of service
+                            conditions d&apos;utilisation
                           </a>
                         )}
-                        {termsUrl && privacyUrl && <span> and </span>}
+                        {termsUrl && privacyUrl && <span> et </span>}
                         {privacyUrl && (
                           <a
                             className="text-red hover:text-red-600"
@@ -253,7 +258,7 @@ export default function SignUpPage() {
                             rel="noreferrer"
                             target="_blank"
                           >
-                            privacy policy
+                            politique de confidentialité
                           </a>
                         )}
                         .<br />
