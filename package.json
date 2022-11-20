@@ -5,7 +5,7 @@
   "workspaces": ["kda-snoopforms-react"],
   "scripts": {
     "dev": "next dev",
-    "prebuild": "git submodule update --init",
+    "prebuild": "git submodule deinit --force --all && git submodule update --init",
     "build": "next build",
     "start": "next start",
     "migrate-and-start": "prisma migrate deploy && next start",
