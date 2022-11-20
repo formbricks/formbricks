@@ -2,8 +2,10 @@
   "name": "snoopforms",
   "version": "0.0.0",
   "private": true,
+  "workspaces": ["kda-snoopforms-react"],
   "scripts": {
     "dev": "next dev",
+    "prebuild": "git submodule update --init",
     "build": "next build",
     "start": "next start",
     "migrate-and-start": "prisma migrate deploy && next start",
