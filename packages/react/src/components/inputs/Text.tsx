@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { getElementId } from "../../lib/element";
 import { useEffectUpdateSchema } from "../../lib/schema";
-import { getValidationRules } from "../../lib/validation";
+import { getValidationRules, validate } from "../../lib/validation";
 import { NameRequired, UniversalInputProps } from "../../types";
 import { Help } from "../shared/Help";
 import { Label } from "../shared/Label";
@@ -41,7 +41,7 @@ export function Text(props: FormbricksProps) {
             placeholder={props.placeholder || ""}
             aria-invalid={errors[props.name] ? "true" : "false"}
             {...register(props.name, {
-              required: { value: validationRules?.includes("required"), message: "This field is required" },
+              required: { value: "required" in validationRules, message: "This field is required" },
               minLength: {
                 value: props.minLength || 0,
                 message: `Your answer must be at least ${props.minLength} characters long`,
@@ -50,10 +50,7 @@ export function Text(props: FormbricksProps) {
                 value: props.maxLength || 524288,
                 message: `Your answer musn't be longer than ${props.maxLength} characters`,
               },
-              pattern: {
-                value: /\d+/,
-                message: "This input is number only.",
-              },
+              validate: validate(validationRules),
             })}
           />
         </div>

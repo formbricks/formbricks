@@ -36,7 +36,8 @@ export function Messages({ errors, messagesClassName, messageClassName, name }: 
               <li
                 className={clsx("formbricks-message", messageClassName)}
                 id={`${name}-${type}`}
-                data-message-type={type}>
+                data-message-type={type}
+                role="alert">
                 {message}
               </li>
             </ul>
