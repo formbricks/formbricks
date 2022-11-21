@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/react",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "author": "Formbricks <hola@formbricks.com>",
   "description": "Building React forms has never been quicker.",
   "homepage": "https://formbricks.com",
@@ -19,12 +19,11 @@
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsup --dts && tailwindcss -i ./src/styles.css -o ./dist/styles.css",
-    "dev": "concurrently \"tsup src/index.tsx --format esm,cjs --dts --external react --watch\" \"tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch\"",
+    "build": "tsup --dts && tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
+    "dev": "concurrently \"tsup --dts --external react --watch && generate-tailwind\" \"tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch\"",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
-    "@formbricks/tailwind-config": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "@types/react": "^18.0.25",
     "@types/react-dom": "^18.0.8",
@@ -37,6 +36,7 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
+    "@hookform/error-message": "^2.0.1",
     "clsx": "^1.2.1",
     "react-hook-form": "^7.39.1"
   },

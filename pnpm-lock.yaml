@@ -20,6 +20,7 @@ importers:
       '@formbricks/tailwind-config': workspace:*
       '@formbricks/tsconfig': workspace:*
       '@formbricks/ui': workspace:*
+      '@heroicons/react': ^2.0.13
       '@types/node': ^18.11.9
       '@types/react': ^18.0.25
       '@types/react-dom': ^18.0.8
@@ -34,6 +35,7 @@ importers:
     dependencies:
       '@formbricks/react': link:../../packages/react
       '@formbricks/ui': link:../../packages/ui
+      '@heroicons/react': 2.0.13_react@18.2.0
       next: 13.0.4_biqbaboplfbrettd7655fr4n2y
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -211,6 +213,7 @@ importers:
     specifiers:
       '@formbricks/tailwind-config': workspace:*
       '@formbricks/tsconfig': workspace:*
+      '@hookform/error-message': ^2.0.1
       '@types/react': ^18.0.25
       '@types/react-dom': ^18.0.8
       clsx: ^1.2.1
@@ -223,6 +226,7 @@ importers:
       tsup: ^6.4.0
       typescript: ^4.8.4
     dependencies:
+      '@hookform/error-message': 2.0.1_xeasdhygclnvhqc4vip3thr4da
       clsx: 1.2.1
       react-hook-form: 7.39.4_react@18.2.0
     devDependencies:
@@ -2167,6 +2171,18 @@ packages:
       react: '>= 16'
     dependencies:
       react: 18.2.0
+    dev: false
+
+  /@hookform/error-message/2.0.1_xeasdhygclnvhqc4vip3thr4da:
+    resolution: {integrity: sha512-U410sAr92xgxT1idlu9WWOVjndxLdgPUHEB8Schr27C9eh7/xUnITWpCMF93s+lGiG++D4JnbSnrb5A21AdSNg==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      react-hook-form: ^7.0.0
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      react-hook-form: 7.39.4_react@18.2.0
     dev: false
 
   /@humanwhocodes/config-array/0.10.7:
