@@ -1,0 +1,141 @@
+import { Layout } from "@/components/docs/Layout";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+import StyleClasses from "../style-css/HTML classes of Formbricks React Form Library to custom style surveys and forms.png";
+import Styled from "./simple styling for best react from builder library to make open source surveys and forms.png";
+
+export const meta = {
+  title: "Styling with CSS - Formbricks React Form Library",
+};
+
+Giving your form the right look and feel is very likely why you chose to use code. Formbricks React supports styling with a custom style sheet as well as Tailwind CSS.
+
+### Creating custom style sheet
+
+1. Create a new style.css file in your project folder.
+2. Import it into your form component (e.g. “Form.js”)
+
+```jsx
+import style from "./style.css";
+```
+
+3. Add styles to it. You can copy this template as a quick start
+
+```css.formbricks-form {
+  background-color: #e2e8f0;
+  padding: 1em;
+  margin: 2em;
+  border-radius: 0.3em;
+  display: inline-block;
+}
+
+.formbricks-form .formbricks-outer:not(:first-child) {
+  margin-top: 1em;
+}
+
+.formbricks-help {
+  font-size: 0.8em;
+}
+
+.formbricks-wrapper {
+  padding-top: 2px;
+}
+
+.formbricks-label {
+  font-size: 0.9em;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.formbricks-inner {
+  margin-top: 6px;
+}
+
+.formbricks-input {
+  border-radius: 6px;
+  color: black;
+  border: 0px;
+  padding: 8px;
+  font-size: 1em;
+  font-family: Arial, Helvetica, sans-serif;
+  width: 100%;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+```
+
+When you copied the style above to your styles.css you form should look like this now:
+
+<Image
+  src={Styled}
+  alt="Data log of a form created with the fastest react form builder"
+  className="rounded-lg"
+/>
+
+## How does it work?
+
+Each form element component follows the same naming convention. This means that you can style e.g. all input fields at the same time. These are the classes each form has:
+
+<Image
+  src={StyleClasses}
+  alt="Data log of a form created with the fastest react form builder"
+  className="rounded-lg"
+/>
+
+| CSS Class           | Description                                                                                     |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| formbricks-form     | The outermost wrapping element.                                                                 |
+| formbricks-outer    | A wrapper around the label input, help text and error messages.                                 |
+| formbricks-help     | The help text itself.                                                                           |
+| formbricks-wrapper  | A wrapper around the label and the input field (no help text).                                  |
+| formbricks-label    | The label itself.                                                                               |
+| formbricks-inner    | A wrapper around the input element.                                                             |
+| formbricks-input    | The input element itself.                                                                       |
+| formbricks-message  | The element (or many elements) containing a message — most often validation and error messages. |
+| formbricks-messages | A wrapper around all the messages.                                                              |
+
+### In React app, a simple form with one field looks like this:
+
+```jsx
+<Form
+   onSubmit={({ data, schema }) => {}>
+      <Text name="firstname" label="What's your first name?" validation="required" />
+      <Submit name="submit" label="Submit" />
+</Form>
+```
+
+In your browser, it is interpreted as follows:
+
+```html
+<form class="formbricks-form">
+
+<!-- Text input component -->
+  <div class="formbricks-outer" data-type="text">
+    <div class="formbricks-wrapper">
+      <label class="formbricks-label" for="firstname-JCc">What's your first name?</label>
+      <div class="formbricks-inner">
+        <input
+					class="formbricks-input"
+          type="text"
+          id="firstname=JCc"
+          placeholder=""
+          name="firstname" />
+      </div>
+    </div>
+  </div>
+
+<!--   Submit Button Component -->
+  </div>
+  <div class="formbricks-outer" data-type="submit">
+    <div class="formbricks-wrapper">
+      <button class="formbricks-input" type="submit" id="submit-tDy">
+        Submit
+      </button>
+    </div>
+  </div>
+</form>
+```
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

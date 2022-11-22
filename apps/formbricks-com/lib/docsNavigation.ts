@@ -19,6 +19,42 @@ const navigation = [
         title: "Getting started",
         href: "/docs/react-form-library/getting-started",
       },
+      {
+        title: "Link with Formbricks HQ",
+        href: "/docs/react-form-library/link-formbricks-hq",
+      },
+      {
+        title: "Work with Components",
+        href: "/docs/react-form-library/work-with-components",
+      },
+      {
+        title: "Validation & Errors",
+        href: "/docs/react-form-library/validation-errors",
+      },
+      {
+        title: "Form Wrapper",
+        href: "/docs/react-form-library/el-form-wrapper",
+      },
+      {
+        title: "Input: Text",
+        href: "/docs/react-form-library/el-text",
+      },
+      {
+        title: "Input: Textarea",
+        href: "/docs/react-form-library/el-textarea",
+      },
+      {
+        title: "Input: Submit",
+        href: "/docs/react-form-library/el-submit",
+      },
+      {
+        title: "Style with CSS",
+        href: "/docs/react-form-library/style-css",
+      },
+      {
+        title: "Style with Tailwind",
+        href: "/docs/react-form-library/style-tailwind",
+      },
     ],
   },
   {

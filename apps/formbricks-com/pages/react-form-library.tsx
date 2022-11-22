@@ -5,7 +5,7 @@ import ImageReactLib from "@/images/react-lib.png";
 import ImageSchemaGeneration from "@/images/schema-generation-svg.svg";
 import HeadingCentered from "@/components/shared/HeadingCentered";
 import { CheckIcon, PlusIcon } from "@heroicons/react/24/outline";
-import CTA from "../components/shared/CTA";
+import TryItCTA from "../components/shared/TryItCTA";
 import FeatureHighlight from "@/components/shared/FeatureHighlight";
 
 const hereFeatures = [
@@ -140,7 +140,7 @@ const ReactFormBuilderPage = () => (
         </a>
       </dl>
     </div>
-    <CTA />
+    <TryItCTA />
   </Layout>
 );
 

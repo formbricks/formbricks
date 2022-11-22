@@ -7,31 +7,43 @@ export const meta = {
 
 ## Building React forms has never been quicker.
 
-Forms are something that every developer uses frequently. But building Forms is harder than you might think. React doesn't provide good form functionality out-of-the-box and you have to take care of state management, validation and form components yourself. And always keep performance, accessibility and best practices in mind. And that makes Forms not only complex to build, but also to maintain and learn how to set up.
-We make Forms easier than ever in the React world.
+Every developer works with forms, few like their experience. Building Forms, especially in React, can be pretty annoying. State management, validation, form components, accessibility, internationalization and performance are all things you have to deal with, but don't really want to.
 
-Here's what a simple Form looks like in Formbrick's React Library:
+We make building - and maintaining - forms easier than ever in the React world.
+
+### Formbricks React Example:
 
 ```jsx
-import React from "react";
-import { Form, Formbricks } from "@formbricks/react";
+import { Form , Text, Textarea, Submit } from "@formbricks/react";
+import “@formbricks/react/styles.css”
 
-export default function Web() {
+export default function WaitlistForm() {
   return (
-    <Form
-      onSubmit={({ data }) => {
-        console.log(data);
-      }}>
-      <Formbricks type="text" name="firstname" label="What's your first name?" />
-      <Formbricks type="text" name="lastname" label="What's your last name?" />
-      <Formbricks type="textarea" name="about" label="About you" help="Please keep it short" />
-      <Formbricks type="submit" label="Submit" />
-    </Form>
+      <Form
+        onSubmit={({ data, schema }) =>
+          console.log("data:", data, “schema:”, schema)}>
+        <Text name="firstname" label="What's your first name?" validation="required" />
+        <Text name="lastname" label="What's your last name?" />
+        <Textarea name="about" label="About you" help="Please keep it short" />
+        <Submit label="Submit" />
+      </Form>
   );
 }
 ```
 
-You don't need to remember a lot of components, or nested HTML- and React Form Structure - only the `<Formbricks />` component.
-No matter what kind of form input you need, simple text input, checkboxes or even complex elements like sliders which you could previously only include with external plugins - Formbricks takes care of everything.
+### Why is this easier already?
+
+- HTML & non-HTML input types available out of the box
+- Easily maintainable with component-based approach
+- All characteristics adjustable via props
+- Automatic schema generation
+
+### What is to come?
+
+- Conditional logic
+- Multi-page forms
+- Accessibility
+- Internationalization
+- Form Templates
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

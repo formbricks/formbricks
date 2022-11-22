@@ -1,0 +1,44 @@
+import { Layout } from "@/components/docs/Layout";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+
+export const meta = {
+  title: "Form Wrapper - Formbricks React Form Library",
+};
+
+The form wrapper is the envelope of you form: you put all important information inside and write on the back what happens with the envelope and its content.
+
+In code terms, this means that it is up to you to decide what happens when the respondent clicks on the Submit button of your form. Formbricks React allows to pass a function to onSubmit which will be executed when the form is submitted.
+
+### Logging to browser console
+
+In this example, we’re handing over the form _data_ and the form _schema_ to the onSubmit function. In the function itself we use the _data_ and the _schema_ and log it in the browser console:
+
+```jsx
+onSubmit={({ data, schema }) => console.log("data:", data, “schema:”, schema)}
+```
+
+### Sending to API endpoint
+
+Here we’re sending the data to an API endpoint to receive and display out submission:
+
+```jsx
+<Form
+  onSubmit={({ data }) => {
+    fetch("API ENDPOINT URL", {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        Accept: "application/json",
+      },
+    });
+  }}>
+  {/* YOUR FORM */}
+</Form>
+```
+
+### What else would you like to do with your data?
+
+[Join our Discord to suggest features 🤸](https://formbricks.com/discord)
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
