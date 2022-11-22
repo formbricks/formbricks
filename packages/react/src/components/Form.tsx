@@ -20,7 +20,7 @@ interface FormProps {
 
 export function Form({ onSubmit, children }: FormProps) {
   const [schema, setSchema] = useState<any>([]);
-  const methods = useForm();
+  const methods = useForm({ criteriaMode: "all", mode: "onChange" });
   const onFormSubmit = (data: any, event: React.BaseSyntheticEvent<object, any, any> | undefined) =>
     onSubmit({ data, schema, event });
   return (

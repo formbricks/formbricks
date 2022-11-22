@@ -6,23 +6,24 @@ import { SVGComponent, UniversalInputProps } from "../../types";
 import ButtonComponent from "../shared/ButtonComponent";
 import { Help } from "../shared/Help";
 
-interface SubmitInputUniqueProps {
+interface ButtonInputUniqueProps {
   PrefixIcon?: SVGComponent;
   SuffixIcon?: SVGComponent;
+  onClick?: React.MouseEventHandler<HTMLButtonElement> | undefined;
 }
 
-type FormbricksProps = SubmitInputUniqueProps & UniversalInputProps;
+type FormbricksProps = ButtonInputUniqueProps & UniversalInputProps;
 
-const inputType = "submit";
+const inputType = "button";
 
-export function Submit(props: FormbricksProps) {
+export function Button(props: FormbricksProps) {
   const elemId = useMemo(() => getElementId(props.id, props.name), [props.id, props.name]);
   useEffectUpdateSchema(props, inputType);
 
   return (
     <div className={clsx("formbricks-outer", props.outerClassName)} data-type={inputType}>
       <div className={clsx("formbricks-wrapper", props.wrapperClassName)}>
-        <ButtonComponent type="submit" elemId={elemId} {...props} />
+        <ButtonComponent elemId={elemId} {...props} />
       </div>
       {props.help && <Help help={props.help} elemId={elemId} />}
     </div>

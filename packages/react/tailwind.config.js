@@ -1,3 +1,15 @@
-const config = require("@formbricks/tailwind-config/tailwind.config.js");
-
-module.exports = config;
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  corePlugins: {
+    preflight: false,
+  },
+  content: [],
+  theme: {
+    extend: {},
+  },
+  plugins: [
+    require("@tailwindcss/forms")({
+      strategy: "class", // only generate classes
+    }),
+  ],
+};

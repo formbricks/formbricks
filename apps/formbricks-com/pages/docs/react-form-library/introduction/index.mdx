@@ -14,25 +14,24 @@ We make building - and maintaining - forms easier than ever in the React world.
 ### Formbricks React Example:
 
 ```jsx
-import { Form , Text, Textarea, Submit } from "@formbricks/react";
-import “@formbricks/react/styles.css”
+import { Form, Text, Textarea, Submit } from "@formbricks/react";
+import "@formbricks/react/styles.css";
 
 export default function WaitlistForm() {
   return (
-      <Form
-        onSubmit={({ data, schema }) =>
-          console.log("data:", data, “schema:”, schema)}>
-        <Text name="firstname" label="What's your first name?" validation="required" />
-        <Text name="lastname" label="What's your last name?" />
-        <Textarea name="about" label="About you" help="Please keep it short" />
-        <Submit label="Submit" />
-      </Form>
+    <Form onSubmit={({ data, schema }) => console.log("data:", data, "schema:", schema)}>
+      <Text name="firstname" label="What's your first name?" validation="required" />
+      <Text name="lastname" label="What's your last name?" />
+      <Textarea name="about" label="About you" help="Please keep it short" />
+      <Submit label="Submit" />
+    </Form>
   );
 }
 ```
 
 ### Why is this easier already?
 
+- One easy to use syntax for input types including labels, validation and help texts
 - HTML & non-HTML input types available out of the box
 - Easily maintainable with component-based approach
 - All characteristics adjustable via props
@@ -45,5 +44,7 @@ export default function WaitlistForm() {
 - Accessibility
 - Internationalization
 - Form Templates
+
+The Formbricks React Library uses [React Hook Form](https://react-hook-form.com/) to benefit from their easy to use data handling and performance optimizations. The easy to use approach was inspired by the [FormKit for Vue.js](https://formkit.com/) Library.
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

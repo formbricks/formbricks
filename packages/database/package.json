@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/database",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "license": "MIT",
   "main": "./dist/index.js",
@@ -24,7 +24,6 @@
     "studio": "prisma studio"
   },
   "dependencies": {
-    "@formbricks/react": "workspace:*",
     "@prisma/client": "^4.4.0"
   },
   "devDependencies": {
