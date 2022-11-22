@@ -161,7 +161,6 @@ importers:
 
   packages/database:
     specifiers:
-      '@formbricks/react': workspace:*
       '@formbricks/tsconfig': workspace:*
       '@prisma/client': ^4.4.0
       '@types/node': 18.8.3
@@ -173,7 +172,6 @@ importers:
       tsx: ^3.10.1
       typescript: ^4.8.4
     dependencies:
-      '@formbricks/react': link:../react
       '@prisma/client': 4.4.0_prisma@4.4.0
     devDependencies:
       '@formbricks/tsconfig': link:../tsconfig
