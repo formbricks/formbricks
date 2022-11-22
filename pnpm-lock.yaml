@@ -211,7 +211,6 @@ importers:
 
   packages/react:
     specifiers:
-      '@formbricks/tailwind-config': workspace:*
       '@formbricks/tsconfig': workspace:*
       '@hookform/error-message': ^2.0.1
       '@types/react': ^18.0.25
@@ -230,7 +229,6 @@ importers:
       clsx: 1.2.1
       react-hook-form: 7.39.4_react@18.2.0
     devDependencies:
-      '@formbricks/tailwind-config': link:../tailwind-config
       '@formbricks/tsconfig': link:../tsconfig
       '@types/react': 18.0.25
       '@types/react-dom': 18.0.9
