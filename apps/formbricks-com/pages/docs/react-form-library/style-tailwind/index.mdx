@@ -1,0 +1,31 @@
+import { Layout } from "@/components/docs/Layout";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+
+export const meta = {
+  title: "Tailwind CSS - Formbricks React Form Library",
+};
+
+We love Tailwind! This is why Formbricks React natively supports Tailwind. All you have to do is target the classes using props. For example, to extend “formbricks-outer” class:
+
+```jsx
+<Text name="firstname" label="What's your first name?" outerClassName=”bg-gray-800 my-5” />
+```
+
+### Overview of props to target CSS classes
+
+Here are all the props you can use to extend the styling of the different form elements:
+
+| CSS class           | Prop              | Content                                             |
+| ------------------- | ----------------- | --------------------------------------------------- |
+| formbricks-form     | formClassName     | The wrapper around the complete form                |
+| formbricks-outer    | outerClassName    | The wrapper around label, input field and help text |
+| formbricks-help     | helpClassName     | The help text                                       |
+| formbricks-wrapper  | wrapperClassName  | The wrapper around the label and the input field    |
+| formbricks-label    | labelClassName    | The label                                           |
+| formbricks-inner    | innerClassName    | The input field                                     |
+| formbricks-input    | inputClassName    | The input                                           |
+| formbricks-message  | messageClassName  | The validation / error message itself               |
+| formbricks-messages | messagesClassName | Wrapper around all error messages                   |
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

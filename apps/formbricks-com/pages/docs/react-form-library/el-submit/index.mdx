@@ -1,0 +1,17 @@
+import { Layout } from "@/components/docs/Layout";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+
+export const meta = {
+  title: "Submit Button - Formbricks React Form Library",
+};
+
+The submit button component is very straight forward:
+
+```jsx
+<Submit name="submit" label="Submit" />
+```
+
+To keep it working make sure that there is **only one Submit button** per form.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

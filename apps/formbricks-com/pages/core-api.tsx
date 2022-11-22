@@ -2,7 +2,7 @@ import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
 import ImageCoreApi from "@/images/core-api.svg";
 import Image from "next/image";
-import TryItCTA from "../components/shared/TryItCTA";
+import CTA from "../components/shared/CTA";
 import WhyFormbricks from "../components/shared/WhyFormbricks";
 import FeatureHighlight from "@/components/shared/FeatureHighlight";
 import { CodeBracketSquareIcon, TableCellsIcon, ServerStackIcon } from "@heroicons/react/24/outline";
@@ -64,7 +64,7 @@ const CoreAPIPage = () => (
     </ul>
     <WhyFormbricks />
     <div className="h-12"></div>
-    <TryItCTA />
+    <CTA />
   </Layout>
 );
 

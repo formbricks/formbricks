@@ -1,0 +1,69 @@
+import { Layout } from "@/components/docs/Layout";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+import ErrorMsgImg from "./validation errors form react library  open source best way to build forms react.png";
+import Styling from "./styling of validation errors form react library open source best and fastest way to build forms react.png";
+
+export const meta = {
+  title: "Validation & Error Message - Formbricks React Form Library",
+};
+
+Validation prevents users from submitting missing of false data.
+
+To add a validation to your inputs, add the `validation` prop and write the rules in string syntax. Rules are divided by a pipe (`|`), e.g.:
+
+```bash
+<Text name="age" label="What's your age?" validation="required|number|min:0|max:100" />
+```
+
+The code above checks four characteristics:
+
+- The field is required, so is there a value?
+- Is the value a `number`?
+- Is the value positive?
+- Is the value less or equal to 100?
+
+Only if all four requirements are met, the form can be submitted. If not an error message is shown.
+
+### Available rules
+
+| Rule     | Explanation                                                                | Example    |
+| -------- | -------------------------------------------------------------------------- | ---------- |
+| required | Only accepts non-empty fields                                              | “required” |
+| number   | Only accepts fields with a number or float value                           | “number”   |
+| min      | Only accepts number values that are greater or equal to the value provided | “min:10”   |
+| max      | Only accepts number values that are greater or equal to the value provided | “max:50”   |
+
+### Message position
+
+If one validation rule fails it will throw an error message. The error messages are displayed below the input field as soon as the input changes to an invalid value.
+
+<Image
+  src={ErrorMsgImg}
+  alt="Illustration of error message and validation handling in best form react lib"
+  className="rounded-lg"
+/>
+
+### Message styling with CSS
+
+You can style it as you like with CSS and Tailwind. For a custom style sheet, use the classes
+
+`formbricks-message` and `formbricks-messages`
+
+to style the message wrapper and the message itself:
+
+<Image
+  src={Styling}
+  alt="Illustration of error message and validation handling in best form react lib"
+  className="rounded-lg"
+/>
+
+### Message styling with Tailwind
+
+```jsx
+REPLACE;
+```
+
+Here are the in-depth guides for [CSS](/docs/react-form-library/style-css) or [Tailwind](/docs/react-form-library/style-tailwind).
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
