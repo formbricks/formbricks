@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://github.com/formbricks/formbricks">
-    <img src="https://user-images.githubusercontent.com/675065/201035557-a94a6bde-dff0-4bd3-9693-ec9257a9b1b3.svg" alt="Logo" width="500">
+    <img src="https://user-images.githubusercontent.com/675065/203262290-3c2bc5b8-839c-468a-b675-e26a369c7fe2.png" alt="Logo" width="500">
   </a>
   <h3 align="center">Formbricks</h3>
 
@@ -33,7 +33,7 @@ We're building all essential form functionality so you don't have to. Modular, c
 
 We want to solve forms once and for all. If, in 10 years, a web developer rewrites core form functionality instead of building on top of our stack, we didn’t do our job. We want you to build your next big thing faster. Our big thing is the last form tool humanity needs. Hold us accountable!
 
-[Read more in our blog](https://formbricks-com.vercel.app/blog/snoopforms-becomes-formbricks)
+[Read more in our blog](https://formbricks.com/blog/snoopforms-becomes-formbricks)
 
 ## Our Toolbox
 
@@ -45,6 +45,24 @@ Building React forms has never been quicker. But there is more...
 
 Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all the good stuff you want, but don't want to build yourself.
 Building forms fast is great, but where do you pipe your data? And what is it worth without a schema?"
+
+```jsx
+import { Form, Text, Textarea, Submit } from "@formbricks/react";
+import "@formbricks/react/styles.css";
+
+export default function WaitlistForm() {
+  return (
+    <Form onSubmit={({ data, schema }) => console.log("data:", data, "schema:", schema)}>
+      <Text name="firstname" label="What's your first name?" validation="required" />
+      <Text name="lastname" label="What's your last name?" />
+      <Textarea name="about" label="About you" help="Please keep it short" />
+      <Submit label="Submit" />
+    </Form>
+  );
+}
+```
+
+[Get started with the React Library](https://formbricks.com/docs/react-form-library/introduction)
 
 ### Core API - The OS form engine
 

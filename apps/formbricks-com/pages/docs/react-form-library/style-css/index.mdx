@@ -12,8 +12,8 @@ Giving your form the right look and feel is very likely why you chose to use cod
 
 ### Creating custom style sheet
 
-1. Create a new style.css file in your project folder.
-2. Import it into your form component (e.g. “Form.js”)
+1. Create a new `style.css` file in your project folder.
+2. Import it into your form component (e.g. `Form.jsx`)
 
 ```jsx
 import style from "./style.css";
@@ -21,7 +21,8 @@ import style from "./style.css";
 
 3. Add styles to it. You can copy this template as a quick start
 
-```css.formbricks-form {
+```css
+.formbricks-form {
   background-color: #e2e8f0;
   padding: 1em;
   margin: 2em;
@@ -63,7 +64,6 @@ import style from "./style.css";
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
-
 ```
 
 When you copied the style above to your styles.css you form should look like this now:
@@ -99,10 +99,9 @@ Each form element component follows the same naming convention. This means that 
 ### In React app, a simple form with one field looks like this:
 
 ```jsx
-<Form
-   onSubmit={({ data, schema }) => {}>
-      <Text name="firstname" label="What's your first name?" validation="required" />
-      <Submit name="submit" label="Submit" />
+<Form onSubmit={() => {}>
+    <Text name="firstname" label="What's your first name?" validation="required" />
+    <Submit name="submit" label="Submit" />
 </Form>
 ```
 
@@ -116,8 +115,7 @@ In your browser, it is interpreted as follows:
     <div class="formbricks-wrapper">
       <label class="formbricks-label" for="firstname-JCc">What's your first name?</label>
       <div class="formbricks-inner">
-        <input
-					class="formbricks-input"
+        <input class="formbricks-input"
           type="text"
           id="firstname=JCc"
           placeholder=""

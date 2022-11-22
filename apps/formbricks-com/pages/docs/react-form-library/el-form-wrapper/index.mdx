@@ -15,7 +15,7 @@ In code terms, this means that it is up to you to decide what happens when the r
 In this example, we’re handing over the form _data_ and the form _schema_ to the onSubmit function. In the function itself we use the _data_ and the _schema_ and log it in the browser console:
 
 ```jsx
-onSubmit={({ data, schema }) => console.log("data:", data, “schema:”, schema)}
+onSubmit={({ data, schema }) => console.log("data:", data, "schema:", schema)}
 ```
 
 ### Sending to API endpoint
@@ -40,5 +40,11 @@ Here we’re sending the data to an API endpoint to receive and display out subm
 ### What else would you like to do with your data?
 
 [Join our Discord to suggest features 🤸](https://formbricks.com/discord)
+
+### Props & Attributes
+
+| Prop     | Type     | Default    | Description                                                                                                     |
+| -------- | -------- | ---------- | --------------------------------------------------------------------------------------------------------------- |
+| onSubmit | Function | `() => {}` | Gets passed on object with `{data, schema, event}` and is triggered when the form gets submitted without errors |
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

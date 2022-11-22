@@ -11,11 +11,11 @@ We adopt the component-based approach many front-end libraries popularized over 
 For performance reasons, we do not automatically import all available form components. This is why you have to import components before you can use them, like so:
 
 ```jsx
-import Text from "@formbricks/react";
+import { Text } from "@formbricks/react";
 
-# or several at once
+// or several at once
 
-import { Form , Text, Textarea, Submit } from "@formbricks/react";
+import { Form, Text, Textarea, Submit } from "@formbricks/react";
 ```
 
 <Callout title="Only import inputs you use" type="warning">
@@ -25,11 +25,27 @@ All imported components will be included in the production build - even when you
 
 ### Components available
 
-| Component    | Details             | Use                                         |
-| ------------ | ------------------- | ------------------------------------------- |
-| `<Form>`     | Form Wrapper        | Handles the onSubmit action, wraps the form |
-| `<Text>`     | HTML Text Input     | Single line of text input                   |
-| `<Textarea>` | HTML Textarea Input | Multiple lines of text                      |
-| `<Submit>`   | Submit Button       | Submits the form                            |
+| Component      | Details             | Use                                         |
+| -------------- | ------------------- | ------------------------------------------- |
+| `<Form />`     | Form Wrapper        | Handles the onSubmit action, wraps the form |
+| `<Text />`     | HTML Text Input     | Single line of text input                   |
+| `<Textarea />` | HTML Textarea Input | Multiple lines of text                      |
+| `<Submit />`   | Submit Button       | Submits the form                            |
+
+---
+
+### Coming soon 🚧
+
+| Component          | Details                       | Use                     |
+| ------------------ | ----------------------------- | ----------------------- |
+| `<Radio />`        | Radio Buttons                 | Single choice           |
+| `<Checkbox />`     | Checkboxes                    | Multiple choice         |
+| `<Rating />`       | Star-Rating                   | Simple rating in steps  |
+| `<Nps />`          | Nps Score                     | Evaluate experience     |
+| `<Color />`        | Color-Picker                  | Let user choose a color |
+| `<Slider />`       | Slider                        | Stepless rating         |
+| `<Autocomplete />` | Autocomplete possible options | e.g. Tags               |
+
+and many more...
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

@@ -14,25 +14,24 @@ We make building - and maintaining - forms easier than ever in the React world.
 ### Formbricks React Example:
 
 ```jsx
-import { Form , Text, Textarea, Submit } from "@formbricks/react";
-import “@formbricks/react/styles.css”
+import { Form, Text, Textarea, Submit } from "@formbricks/react";
+import "@formbricks/react/styles.css";
 
 export default function WaitlistForm() {
   return (
-      <Form
-        onSubmit={({ data, schema }) =>
-          console.log("data:", data, “schema:”, schema)}>
-        <Text name="firstname" label="What's your first name?" validation="required" />
-        <Text name="lastname" label="What's your last name?" />
-        <Textarea name="about" label="About you" help="Please keep it short" />
-        <Submit label="Submit" />
-      </Form>
+    <Form onSubmit={({ data, schema }) => console.log("data:", data, "schema:", schema)}>
+      <Text name="firstname" label="What's your first name?" validation="required" />
+      <Text name="lastname" label="What's your last name?" />
+      <Textarea name="about" label="About you" help="Please keep it short" />
+      <Submit label="Submit" />
+    </Form>
   );
 }
 ```
 
 ### Why is this easier already?
 
+- One easy to use syntax for input types including labels, validation and help texts
 - HTML & non-HTML input types available out of the box
 - Easily maintainable with component-based approach
 - All characteristics adjustable via props

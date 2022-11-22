@@ -1,6 +1,7 @@
 import nextMDX from "@next/mdx";
 import { withPlausibleProxy } from "next-plausible";
 import remarkGfm from "remark-gfm";
+import rehypePrism from "@mapbox/rehype-prism";
 
 const nextConfig = {
   reactStrictMode: true,
@@ -34,7 +35,7 @@ const withMDX = nextMDX({
     // as the package is ESM only
     // https://github.com/remarkjs/remark-gfm#install
     remarkPlugins: [remarkGfm],
-    rehypePlugins: [],
+    rehypePlugins: [rehypePrism],
     // If you use `MDXProvider`, uncomment the following line.
     // providerImportSource: "@mdx-js/react",
   },
