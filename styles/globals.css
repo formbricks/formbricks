@@ -109,3 +109,8 @@
 .has-tooltip:hover .tooltip {
   @apply z-50 visible;
 }
+
+.block a {
+  text-decoration: underline;
+  color: blue;
+}
