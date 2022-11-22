@@ -1,10 +1,11 @@
-import clsx from "clsx";
 import React, { useMemo } from "react";
 import { getElementId } from "../../lib/element";
 import { useEffectUpdateSchema } from "../../lib/schema";
 import { SVGComponent, UniversalInputProps } from "../../types";
 import ButtonComponent from "../shared/ButtonComponent";
 import { Help } from "../shared/Help";
+import { Outer } from "../shared/Outer";
+import { Wrapper } from "../shared/Wrapper";
 
 interface SubmitInputUniqueProps {
   PrefixIcon?: SVGComponent;
@@ -20,11 +21,11 @@ export function Submit(props: FormbricksProps) {
   useEffectUpdateSchema(props, inputType);
 
   return (
-    <div className={clsx("formbricks-outer", props.outerClassName)} data-type={inputType}>
-      <div className={clsx("formbricks-wrapper", props.wrapperClassName)}>
+    <Outer inputType={inputType} outerClassName={props.outerClassName}>
+      <Wrapper wrapperClassName={props.wrapperClassName}>
         <ButtonComponent type="submit" elemId={elemId} {...props} />
-      </div>
-      {props.help && <Help help={props.help} elemId={elemId} />}
-    </div>
+      </Wrapper>
+      <Help help={props.help} elemId={elemId} />
+    </Outer>
   );
 }

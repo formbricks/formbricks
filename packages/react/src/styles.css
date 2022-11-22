@@ -7,15 +7,19 @@
 }
 
 .formbricks-label {
-  @apply block text-base font-medium text-gray-700 font-sans sm:text-sm;
+  @apply text-base font-medium text-gray-700 font-sans sm:text-sm;
 }
 
 button.formbricks-input {
   @apply my-2 inline-flex items-center rounded-md border border-transparent bg-slate-600 px-3 py-2 text-base font-medium leading-4 text-white shadow-sm hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 sm:text-sm;
 }
 
-input.formbricks-input {
+input[type="text"].formbricks-input {
   @apply form-input text-base block rounded-md border-gray-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm;
+}
+
+input[type="radio"].formbricks-input {
+  @apply h-4 w-4 border-gray-300 text-slate-600 focus:ring-slate-500 mr-2;
 }
 
 textarea.formbricks-input {
@@ -36,4 +40,12 @@ textarea.formbricks-input {
 
 .formbricks-message {
   @apply font-sans text-base sm:text-sm text-red-500;
+}
+
+.formbricks-legend {
+  @apply text-base font-medium text-gray-700 font-sans sm:text-sm;
+}
+
+.formbricks-fieldset {
+  @apply border-gray-50 rounded-lg  max-w-md;
 }

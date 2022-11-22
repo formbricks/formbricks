@@ -5,8 +5,11 @@ import { useEffectUpdateSchema } from "../../lib/schema";
 import { getValidationRules, validate } from "../../lib/validation";
 import { NameRequired, UniversalInputProps } from "../../types";
 import { Help } from "../shared/Help";
+import { Inner } from "../shared/Inner";
 import { Label } from "../shared/Label";
 import { Messages } from "../shared/Messages";
+import { Outer } from "../shared/Outer";
+import { Wrapper } from "../shared/Wrapper";
 
 interface TextareaInputUniqueProps {
   cols?: number;
@@ -31,10 +34,10 @@ export function Textarea(props: TextareaProps) {
   const validationRules = getValidationRules(props.validation);
 
   return (
-    <div className="formbricks-outer" data-type={inputType}>
-      <div className="formbricks-wrapper">
-        <Label label={props.label} elemId={elemId} />
-        <div className="formbricks-inner">
+    <Outer inputType={inputType} outerClassName={props.outerClassName}>
+      <Wrapper wrapperClassName={props.wrapperClassName}>
+        <Label label={props.label} elemId={elemId} labelClassName={props.labelClassName} />
+        <Inner innerClassName={props.innerClassName}>
           <textarea
             className="formbricks-input"
             id={elemId}
@@ -55,10 +58,10 @@ export function Textarea(props: TextareaProps) {
               validate: validate(validationRules),
             })}
           />
-        </div>
-      </div>
-      {props.help && <Help help={props.help} elemId={elemId} />}
-      <Messages errors={errors} {...props} />
-    </div>
+        </Inner>
+      </Wrapper>
+      <Help help={props.help} elemId={elemId} helpClassName={props.helpClassName} />
+      <Messages {...props} />
+    </Outer>
   );
 }
