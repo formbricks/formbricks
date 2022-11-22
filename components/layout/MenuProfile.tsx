@@ -1,11 +1,12 @@
 import { Menu, Transition } from "@headlessui/react";
-import { ArrowLeftOnRectangleIcon } from "@heroicons/react/24/solid";
-import { signOut } from "next-auth/react";
+import { ArrowLeftOnRectangleIcon, UserIcon } from "@heroicons/react/24/solid";
+import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import { Fragment } from "react";
 import { classNames } from "../../lib/utils";
 
 export default function MenuProfile({}) {
+  const session = useSession();
   return (
     <Menu as="div" className="relative z-50 flex-shrink-0">
       {({ open }) => (
@@ -36,25 +37,38 @@ export default function MenuProfile({}) {
           >
             <Menu.Items
               static
-              className="absolute right-0 w-48 p-1 mt-2 origin-top-right bg-white rounded-sm shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+              className="absolute right-0 w-48 p-1 mt-2 origin-top-right bg-white rounded-sm shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none break-words"
             >
               <Menu.Item>
                 {({ active }) => (
-                  <button
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                    className={classNames(
-                      active
-                        ? "bg-ui-gray-light rounded-sm text-ui-black"
-                        : "text-ui-gray-dark",
-                      "flex px-4 py-2 text-sm w-full"
-                    )}
-                  >
-                    <ArrowLeftOnRectangleIcon
-                      className="w-5 h-5 mr-3 text-ui-gray-dark"
-                      aria-hidden="true"
-                    />
-                    Se déconnecter
-                  </button>
+                  <>
+                    <label
+                      className={classNames(
+                        "flex px-4 py-2 text-sm w-full text-ui-gray-dark"
+                      )}
+                    >
+                      <UserIcon
+                        className="w-5 h-5 mr-3 text-ui-gray-dark"
+                        aria-hidden="true"
+                      />
+                      {session.data.user.firstname} {session.data.user.lastname}
+                    </label>
+                    <button
+                      onClick={() => signOut({ callbackUrl: "/" })}
+                      className={classNames(
+                        active
+                          ? "bg-ui-gray-light rounded-sm text-ui-black"
+                          : "text-ui-gray-dark",
+                        "flex px-4 py-2 text-sm w-full"
+                      )}
+                    >
+                      <ArrowLeftOnRectangleIcon
+                        className="w-5 h-5 mr-3 text-ui-gray-dark"
+                        aria-hidden="true"
+                      />
+                      Se déconnecter
+                    </button>
+                  </>
                 )}
               </Menu.Item>
             </Menu.Items>
