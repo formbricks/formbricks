@@ -111,6 +111,7 @@ model User {
   lastname      String?
   gender        String
   phone         String    @unique
+  whatsapp      String?
   email         String    @unique
   emailVerified DateTime? @map(name: "email_verified")
   password      String

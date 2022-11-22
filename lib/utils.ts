@@ -76,7 +76,7 @@ export const slugify = (...args: (string | number)[]): string => {
 
 export const handlePhoneNumberValidity = (phone) => {
   const validity = /^(\+243|0)[0-9]{9}$/.test(phone);
-  if (validity === false) throw new Error("the phone number is incorrect");
+  if (validity === false) throw new Error("Le numéro de téléphone entré est incorrect");
   return phone;
 };
 

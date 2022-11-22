@@ -8,7 +8,7 @@ export enum UserRoles {
 }
 
 export const createUser = async (
-  { firstname, lastname, gender, phone, email, password },
+  { firstname, lastname, gender, phone, whatsapp, email, password },
   callbackUrl = ""
 ) => {
   const hashedPassword = await hashPassword(password);
@@ -23,6 +23,7 @@ export const createUser = async (
           lastname,
           gender,
           phone,
+          whatsapp,
           email,
           password: hashedPassword,
         },
@@ -35,6 +36,7 @@ export const createUser = async (
     }
     return await res.json();
   } catch (error) {
+    console.log('%%%%%%%%%%%%% error: ', error)
     throw Error(`${error.message}`);
   }
 };

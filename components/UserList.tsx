@@ -67,6 +67,7 @@ export default function UserList() {
                       <div className="w-1/6 ">{user.gender}</div>
                       <div className="w-1/2">{user.email}</div>
                       <div className=" w-1/2 text-left ml-4">{user.phone}</div>
+                      <div className=" w-1/2 text-left ml-4">{user.whatsapp}</div>
                     </div>
                   </div>
                   <div className="flex items-center justify-between w-1/6">

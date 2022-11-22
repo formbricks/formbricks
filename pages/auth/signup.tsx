@@ -1,18 +1,16 @@
-import { XCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import getConfig from "next/config";
-import { useState } from "react";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { createUser } from "../../lib/users";
 import { handlePhoneNumberValidity } from "../../lib/utils";
+import { toast } from "react-toastify";
 
 const { publicRuntimeConfig } = getConfig();
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [error, setError] = useState<string>("");
 
   const {
     emailVerificationDisabled,
@@ -30,6 +28,7 @@ export default function SignUpPage() {
           lastname: e.target.elements.lastname.value,
           gender: e.target.elements.gender.value,
           phone: handlePhoneNumberValidity(e.target.elements.phone.value),
+          whatsapp: e.target.elements.whatsapp.value,
           email: e.target.elements.email.value,
           password: e.target.elements.password.value,
         },
@@ -44,34 +43,13 @@ export default function SignUpPage() {
 
       router.push(url);
     } catch (e) {
-      setError(e.message);
+      toast(e.message);
     }
   };
   return (
     <BaseLayoutUnauthorized title="Sign up">
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
-          {error && (
-            <div className="absolute p-4 rounded-md top-10 bg-red-50 z-50">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <XCircleIcon
-                    className="w-5 h-5 text-red-400"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    Une erreur s&apos;est produite lors de votre connexion
-                  </h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    <p className="space-y-1 whitespace-pre-wrap">{error}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
             <div className="w-fit m-auto">
               <Image
@@ -169,17 +147,34 @@ export default function SignUpPage() {
                       htmlFor="phone"
                       className="block text-sm font-medium text-ui-gray-dark"
                     >
-                      Numéro de téléphone
+                      Numéro de téléphone (pour appels et SMS)
                     </label>
                     <div className="mt-1">
                       <input
                         id="phone"
                         name="phone"
                         type="tel"
-                        placeholder="+243891341236 or 0891341236"
-                        //pattern="^\+243|0[0-9]{9}$" //^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$ //^\+243|0[0-9]{9}$
+                        placeholder="+243891341236 ou 0891341236"
                         required
-                        //onChange={handleChangePhoneNumber}
+                        className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="whatsapp"
+                      className="block text-sm font-medium text-ui-gray-dark"
+                    >
+                      Numéro Whatsapp
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        id="whatsapp"
+                        name="whatsapp"
+                        type="tel"
+                        pattern="^\+[1-9]{1}[0-9]{6,14}$" //^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$ //^\+243|0[0-9]{9}$
+                        placeholder="+15289134"
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>
