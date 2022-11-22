@@ -22,7 +22,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <BaseLayoutUnauthorized title="Forgot password">
+    <BaseLayoutUnauthorized title="Mot de passe oublié">
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           {error && (
@@ -36,7 +36,8 @@ export default function ForgotPasswordPage() {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">
-                    An error occurred when resetting your password
+                    Une erreur s&apos;est produite lors de la réinitialisation
+                    de votre mot de passe{" "}
                   </h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p className="space-y-1 whitespace-pre-wrap">{error}</p>
@@ -82,7 +83,7 @@ export default function ForgotPasswordPage() {
                       type="submit"
                       className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
-                      Send password reset email
+                      Envoyer un e-mail de réinitialisation du mot de passe
                     </button>
                     <div className="mt-3 text-center">
                       <Link href="/auth/signin">
@@ -90,7 +91,7 @@ export default function ForgotPasswordPage() {
                           href=""
                           className="text-xs text-red hover:text-red-600 block"
                         >
-                          Back to login
+                          Retourner à la connexion{" "}
                         </a>
                       </Link>
                     </div>

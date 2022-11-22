@@ -47,7 +47,7 @@ export default function SignUpPage() {
     }
   };
   return (
-    <BaseLayoutUnauthorized title="Sign up">
+    <BaseLayoutUnauthorized title="Créer votre compte">
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
