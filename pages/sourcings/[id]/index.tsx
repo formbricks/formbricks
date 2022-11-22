@@ -14,7 +14,11 @@ import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
 import { isTimedPage } from "../../../lib/utils";
-import { CheckCircleIcon, InboxArrowDownIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import {
+  CheckCircleIcon,
+  InboxArrowDownIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
 import { FormOrder } from "@prisma/client";
 
 const { publicRuntimeConfig } = getConfig();
@@ -93,7 +97,6 @@ function NoCodeFormPublic() {
     }
     return true;
   };
-  // nothing important
 
   const handleClickAction = (page, fromModal: Boolean = false) => {
     if (!fromModal) {
@@ -152,9 +155,6 @@ function NoCodeFormPublic() {
               <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold  max-sm:ml-6 max-md:ml-6 max-sm:mt-8 max-md:mb-8">
                 {noCodeForm.form.name}
               </h1>
-              <p className="text-lg mb-3 ml-12  mr-11 max-sm:ml-6 max-md:ml-6">
-                {noCodeForm.form.description}
-              </p>
               <p className="flex items-center text-sm mb-10 ml-12 mx-auto max-sm:ml-6 max-md:ml-6">
                 <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
                 <span className="font-bold mr-1">Date limite : </span>
