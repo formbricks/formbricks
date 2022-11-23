@@ -88,7 +88,7 @@ const FormHQPage = () => (
     />
     <FeatureHighlight
       featureTitle="Get responses via email or analyze them online."
-      text={`All survey responses get collected in your Form HQ. View and manage responses in your personal dashboard. \n\n  Set up an email notification or send the complete submission data to your email.`}
+      text={`All survey responses get collected in your Formbricks HQ. View and manage responses in your personal dashboard. \n\n  Set up an email notification or send the complete submission data to your email.`}
       img={<Image src={ImageEmail} alt="react library" className="rounded-lg" />}
     />
     <HeadingCentered

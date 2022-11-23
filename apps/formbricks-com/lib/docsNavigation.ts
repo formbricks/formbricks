@@ -75,7 +75,7 @@ const navigation = [
   },
   {
     title: "Data Insights",
-    links: [{ title: "Form HQ", href: "/docs/data-insights/form-hq" }],
+    links: [{ title: "Formbricks HQ", href: "/docs/data-insights/formbricks-hq" }],
   },
 ];
 

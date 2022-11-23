@@ -78,9 +78,9 @@ const pipes = [
 
 const insights = [
   {
-    name: "Form HQ",
+    name: "Formbricks HQ",
     description: "Manage submissions easily",
-    href: "/form-hq",
+    href: "/formbricks-hq",
     icon: CursorArrowRippleIcon,
     cat: "insights",
     status: true,
