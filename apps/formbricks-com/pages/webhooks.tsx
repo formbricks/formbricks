@@ -12,7 +12,7 @@ const WebhooksPage = () => (
     <HeroTitle headingPt1="Webhooks" />
     <FeatureHighlight
       featureTitle="Versatile data handling"
-      text="Don't be limited by our choice of integrations, pipe your data exactly where you need it. Set up webhooks in our Form HQ with just a few clicks.
+      text="Don't be limited by our choice of integrations, pipe your data exactly where you need it. Set up webhooks in our Formbricks HQ with just a few clicks.
       Don't miss any piece of information by sending partial submissions alongside complete ones."
       img={<Image src={ImageWebhooks} alt="react library" className="rounded-lg" />}
       isImgLeft

@@ -15,7 +15,7 @@ const navigation = {
     { name: "Integrations", href: "#", status: false },
   ],
   insights: [
-    { name: "Form HQ", href: "/form-hq", status: true },
+    { name: "Formbricks HQ", href: "/formbricks-hq", status: true },
     { name: "Reports", href: "#", status: false },
   ],
   other: [

@@ -28,6 +28,11 @@ const nextConfig = {
         source: "/privacy",
         destination: "/privacy-policy",
         permanent: false,
+      }, 
+      {
+        source: "/form-hq",
+        destination: "/formbricks-hq",
+        permanent: false,
       },
     ];
   },
