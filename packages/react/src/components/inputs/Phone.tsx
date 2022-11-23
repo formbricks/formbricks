@@ -5,7 +5,6 @@ import { Input, InputProps } from "../shared/Input";
 interface PhoneUniqueProps {
   minLength?: number;
   maxLength?: number;
-  placeholder?: string;
 }
 
 type Props = PhoneUniqueProps & InputProps & UniversalInputProps & NameRequired;
@@ -29,7 +28,6 @@ export function Phone(props: Props) {
           message: `Your answer musn't be longer than ${props.maxLength} characters`,
         },
       }}
-      additionalProps={{ placeholder: props.placeholder }}
       {...props}
     />
   );

@@ -5,7 +5,6 @@ import { Input, InputProps } from "../shared/Input";
 interface UrlUniqueProps {
   minLength?: number;
   maxLength?: number;
-  placeholder?: string;
 }
 
 type Props = UrlUniqueProps & InputProps & UniversalInputProps & NameRequired;
@@ -28,7 +27,6 @@ export function Url(props: Props) {
           message: `Your answer musn't be longer than ${props.maxLength} characters`,
         },
       }}
-      additionalProps={{ placeholder: props.placeholder }}
       {...props}
     />
   );
