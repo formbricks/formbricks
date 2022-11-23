@@ -1,6 +1,6 @@
 import Layout from "@/components/shared/Layout";
 import HeroTitle from "@/components/shared/HeroTitle";
-import Button from "../components/shared/Button";
+import Button from "@/components/shared/Button";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { ChatBubbleOvalLeftEllipsisIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
 
@@ -27,7 +27,7 @@ const topContributors = [
   },
 ];
 
-const GetStartedPage = () => (
+const CommunityPage = () => (
   <Layout
     title="Community | Formbricks Open Source Forms & Surveys"
     description="You're building open source forms and surveys? So are we! Get support for anything your building - or just say hi!">
@@ -91,4 +91,4 @@ const GetStartedPage = () => (
   </Layout>
 );
 
-export default GetStartedPage;
+export default CommunityPage;

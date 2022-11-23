@@ -22,7 +22,7 @@ const features = [
   {
     id: "selfHost",
     name: "Self-host or Cloud",
-    description: "Set your emails up in our Form HQ or self-host the entire solution yourself.",
+    description: "Set your emails up in our Formbricks HQ or self-host the entire solution yourself.",
     icon: ServerStackIcon,
   },
 ];
@@ -30,11 +30,11 @@ const features = [
 const EmailPage = () => (
   <Layout
     title="Email Notifications"
-    description="In some cases, the good old email is the way to go. In the Form HQ you can setup forwarding submission data to one or more emails.">
+    description="In some cases, the good old email is the way to go. In the Formbricks HQ you can setup forwarding submission data to one or more emails.">
     <HeroTitle headingPt1="Email" />
     <FeatureHighlight
       featureTitle="Get responses to your inbox"
-      text="In some cases, the good old email is the way to go. In the Form HQ you can setup forwarding submission data to one or more emails."
+      text="In some cases, the good old email is the way to go. In the Formbricks HQ you can setup forwarding submission data to one or more emails."
       img={<Image src={ImageEmail} alt="react library" className="rounded-lg" />}
       isImgLeft
       cta="Get started"
