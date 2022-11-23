@@ -24,6 +24,11 @@ const nextConfig = {
         destination: "https://github.com/formbricks/formbricks",
         permanent: false,
       },
+      {
+        source: "/form-hq",
+        destination: "/formbricks-hq",
+        permanent: false,
+      },
     ];
   },
 };

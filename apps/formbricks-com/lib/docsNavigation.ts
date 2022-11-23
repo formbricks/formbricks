@@ -33,19 +33,27 @@ const navigation = [
       },
       {
         title: "Form Wrapper",
-        href: "/docs/react-form-library/el-form-wrapper",
+        href: "/docs/react-form-library/form-wrapper",
       },
       {
         title: "Input: Text",
-        href: "/docs/react-form-library/el-text",
+        href: "/docs/react-form-library/input-text",
       },
       {
         title: "Input: Textarea",
-        href: "/docs/react-form-library/el-textarea",
+        href: "/docs/react-form-library/input-textarea",
       },
       {
+        title: "Input: Radio Button",
+        href: "/docs/react-form-library/input-radio",
+      },
+      /*       {
+        title: "Input: Checkbox",
+        href: "/docs/react-form-library/input-checkbox",
+      }, */
+      {
         title: "Input: Submit",
-        href: "/docs/react-form-library/el-submit",
+        href: "/docs/react-form-library/input-submit",
       },
       {
         title: "Style with CSS",
@@ -67,7 +75,7 @@ const navigation = [
   },
   {
     title: "Data Insights",
-    links: [{ title: "Form HQ", href: "/docs/data-insights/form-hq" }],
+    links: [{ title: "Formbricks HQ", href: "/docs/data-insights/formbricks-hq" }],
   },
 ];
 

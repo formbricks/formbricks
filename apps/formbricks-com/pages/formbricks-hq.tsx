@@ -63,7 +63,7 @@ const FormHQPage = () => (
     <HeroTitle headingPt1="Form" headingTeal="HQ" />
     <Image
       src={ImageFormHQ}
-      alt="Form HQ by Formbricks user interface to create forms, manage submissions open source."
+      alt="Formbricks HQ user interface to create forms, manage submissions open source."
     />
     <HeadingCentered
       teaser="You have arrived"
