@@ -1,6 +1,6 @@
 import React from "react";
+import { Text, Textarea } from "..";
 import { Form } from "./Form";
-import { Text, Textarea } from "./Inputs";
 
 interface OnSubmitProps {
   data: any;

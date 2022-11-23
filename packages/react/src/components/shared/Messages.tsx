@@ -1,6 +1,5 @@
 import { ErrorMessage } from "@hookform/error-message";
 import clsx from "clsx";
-import React from "react";
 import { useFormContext } from "react-hook-form";
 
 interface HelpProps {

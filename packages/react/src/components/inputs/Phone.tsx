@@ -2,22 +2,23 @@ import { useEffectUpdateSchema } from "../../lib/schema";
 import { NameRequired, UniversalInputProps } from "../../types";
 import { Input, InputProps } from "../shared/Input";
 
-interface TextUniqueProps {
+interface PhoneUniqueProps {
   minLength?: number;
   maxLength?: number;
   placeholder?: string;
 }
 
-type Props = TextUniqueProps & InputProps & UniversalInputProps & NameRequired;
+type Props = PhoneUniqueProps & InputProps & UniversalInputProps & NameRequired;
 
-const inputType = "text";
+const inputType = "phone";
+const htmlType = "tel";
 
-export function Text(props: Props) {
+export function Phone(props: Props) {
   useEffectUpdateSchema(props, inputType);
 
   return (
     <Input
-      type={{ html: inputType, formbricks: inputType }}
+      type={{ html: htmlType, formbricks: inputType }}
       additionalValidation={{
         minLength: {
           value: props.minLength || 0,

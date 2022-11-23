@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { getElementId } from "../../lib/element";
 import { normalizeOptions } from "../../lib/options";
@@ -66,7 +66,7 @@ export function Radio(props: FormbricksProps) {
         <Help help={props.help} elemId={elemId} />
         <Options optionsClassName={props.optionsClassName}>
           {options.map((option) => (
-            <Option optionClassName={props.optionClassName}>
+            <Option key={`${props.name}-${option.value}`} optionClassName={props.optionClassName}>
               <Wrapper wrapperClassName={props.wrapperClassName}>
                 <Inner innerClassName={props.innerClassName}>
                   <input

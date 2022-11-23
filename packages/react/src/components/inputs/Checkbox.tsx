@@ -1,10 +1,10 @@
 import clsx from "clsx";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { getElementId } from "../../lib/element";
 import { normalizeOptions } from "../../lib/options";
 import { useEffectUpdateSchema } from "../../lib/schema";
-import { getValidationRules } from "../../lib/validation";
+import { getValidationRules, validate } from "../../lib/validation";
 import { NameRequired, OptionsArray, OptionsObjectArray, UniversalInputProps } from "../../types";
 import { Fieldset } from "../shared/Fieldset";
 import { Help } from "../shared/Help";
@@ -48,6 +48,7 @@ export function Checkbox(props: FormbricksProps) {
               id={elemId}
               {...register(props.name, {
                 required: { value: "required" in validationRules, message: "This field is required" },
+                validate: validate(validationRules),
               })}
             />
             <Label label={props.label} elemId={elemId} />
@@ -66,7 +67,7 @@ export function Checkbox(props: FormbricksProps) {
         <Help help={props.help} elemId={elemId} />
         <Options optionsClassName={props.optionsClassName}>
           {options.map((option) => (
-            <Option optionClassName={props.optionClassName}>
+            <Option key={`${props.name}-${option.value}`} optionClassName={props.optionClassName}>
               <Wrapper wrapperClassName={props.wrapperClassName}>
                 <Inner innerClassName={props.innerClassName}>
                   <input

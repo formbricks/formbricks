@@ -2,17 +2,17 @@ import { useEffectUpdateSchema } from "../../lib/schema";
 import { NameRequired, UniversalInputProps } from "../../types";
 import { Input, InputProps } from "../shared/Input";
 
-interface TextUniqueProps {
+interface SearchUniqueProps {
   minLength?: number;
   maxLength?: number;
   placeholder?: string;
 }
 
-type Props = TextUniqueProps & InputProps & UniversalInputProps & NameRequired;
+type Props = SearchUniqueProps & InputProps & UniversalInputProps & NameRequired;
 
-const inputType = "text";
+const inputType = "search";
 
-export function Text(props: Props) {
+export function Search(props: Props) {
   useEffectUpdateSchema(props, inputType);
 
   return (

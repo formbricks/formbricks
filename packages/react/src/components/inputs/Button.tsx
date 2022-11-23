@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { getElementId } from "../../lib/element";
 import { useEffectUpdateSchema } from "../../lib/schema";
 import { SVGComponent, UniversalInputProps } from "../../types";
