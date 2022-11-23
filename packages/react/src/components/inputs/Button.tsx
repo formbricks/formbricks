@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import React, { useMemo } from "react";
 import { getElementId } from "../../lib/element";
 import { useEffectUpdateSchema } from "../../lib/schema";

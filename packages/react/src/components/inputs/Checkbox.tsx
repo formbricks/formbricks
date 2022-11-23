@@ -17,7 +17,7 @@ import { Options } from "../shared/Options";
 import { Outer } from "../shared/Outer";
 import { Wrapper } from "../shared/Wrapper";
 
-interface RadioInputUniqueProps {
+interface CheckboxInputUniqueProps {
   options?: OptionsArray | OptionsObjectArray;
   fieldsetClassName?: string;
   legendClassName?: string;
@@ -25,11 +25,11 @@ interface RadioInputUniqueProps {
   optionClassName?: string;
 }
 
-type FormbricksProps = RadioInputUniqueProps & UniversalInputProps & NameRequired;
+type FormbricksProps = CheckboxInputUniqueProps & UniversalInputProps & NameRequired;
 
-const inputType = "radio";
+const inputType = "checkbox";
 
-export function Radio(props: FormbricksProps) {
+export function Checkbox(props: FormbricksProps) {
   const elemId = useMemo(() => getElementId(props.id, props.name), [props.id, props.name]);
   const options = useMemo(() => normalizeOptions(props.options), [props.options]);
   useEffectUpdateSchema(props, inputType);
@@ -44,7 +44,7 @@ export function Radio(props: FormbricksProps) {
           <Inner innerClassName={props.innerClassName}>
             <input
               className={clsx("formbricks-input", props.inputClassName)}
-              type="radio"
+              type="checkbox"
               id={elemId}
               {...register(props.name, {
                 required: { value: "required" in validationRules, message: "This field is required" },
@@ -71,7 +71,7 @@ export function Radio(props: FormbricksProps) {
                 <Inner innerClassName={props.innerClassName}>
                   <input
                     className={clsx("formbricks-input", props.inputClassName)}
-                    type="radio"
+                    type="checkbox"
                     id={`${props.name}-${option.value}`}
                     value={option.value}
                     disabled={option?.config?.disabled}
