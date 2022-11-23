@@ -22,6 +22,8 @@ const navigation = {
     { name: "Community", href: "/community", status: true },
     { name: "Docs", href: "/docs", status: true },
     { name: "Blog", href: "/blog", status: true },
+    { name: "GDPR FAQ", href: "/gdpr", status: true },
+    { name: "GDPR Guide", href: "/gdpr-guide", status: true },
   ],
   social: [
     {
@@ -164,7 +166,8 @@ export default function Footer() {
           <p className="text-sm text-slate-400 dark:text-gray-500 xl:text-center">
             &copy; 2022. All rights reserved.
             <br />
-            <Link href="/imprint">Imprint</Link> | <Link href="/privacy">Privacy Policy</Link>
+            <Link href="/imprint">Imprint</Link> | <Link href="/privacy">Privacy Policy</Link> |{" "}
+            <Link href="/terms">Terms</Link>
           </p>
         </div>
       </div>
