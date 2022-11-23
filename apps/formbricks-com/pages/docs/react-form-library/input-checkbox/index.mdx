@@ -17,7 +17,7 @@ Like all other inputs it needs a `name` prop as an unique identifier:
 
 ## Single Checkbox
 
-By default the checkbox input will render a single checkbox with a `boolean` value:
+By default the checkbox input will render a single checkbox returning a `boolean` value:
 
 ```jsx
 <Checkbox
@@ -26,10 +26,6 @@ By default the checkbox input will render a single checkbox with a `boolean` val
   help="Would you like to receive our newsletter?"
   validation="accepted"
 />
-
-# data output
-
-true or false
 ```
 
 ## Multiple checkboxes
@@ -47,18 +43,11 @@ The options attribute can handle an array of values which are interpreted both a
   help="Take what you like"
   options={["Pineapple", "Ananas", "Piña"]}
 />
-
-# data output
-
-label: Pineapple, value: Pineapple,
-label: Ananas, value: Ananas,
-label: Piña, value: Piña
-
 ```
 
 ### Options: Array of objects
 
-The options attribute can also handle an array of objects containing label:value pairs. This allows for differences between the label and the data stored. You can also disable options:
+The options attribute can also handle an array of objects containing label/value pairs. This allows for differences between the label and the data stored. You can also add an optional config object:
 
 ```jsx
 <Checkbox
@@ -83,24 +72,17 @@ The options attribute can also handle an array of objects containing label:value
     },
   ]}
 />
-
-# data output
-
-label: Dogs, value: dogs,
-label: These nuts, value: nuts,
-label: Bullshit, value: bs
-
 ```
 
 ## Props & Attributes
 
-| Prop             | Type                 | Default | Description                              |
-| ---------------- | -------------------- | ------- | ---------------------------------------- | ---------------------------------------------------- |
-| options          | Array                | -       | Contains the options in your radio input |
-| label            | String               | -       | The label of the radio input.            |
-| legendClassName  | append styling class | no      | -                                        | [read more](/docs/react-form-library/style-tailwind) |
-| optionsClassName | append styling class | no      | -                                        | [read more](/docs/react-form-library/style-tailwind) |
-| optionClassName  | append styling class | no      | -                                        | [read more](/docs/react-form-library/style-tailwind) |
+| Prop             | Type                 | Default | Description                                 |                                                      |
+| ---------------- | -------------------- | ------- | ------------------------------------------- | ---------------------------------------------------- |
+| options          | Array                | -       | Contains the options in your checkbox input |                                                      |
+| label            | String               | -       | The label of the checkbox input.            |                                                      |
+| legendClassName  | append styling class | no      | -                                           | [read more](/docs/react-form-library/style-tailwind) |
+| optionsClassName | append styling class | no      | -                                           | [read more](/docs/react-form-library/style-tailwind) |
+| optionClassName  | append styling class | no      | -                                           | [read more](/docs/react-form-library/style-tailwind) |
 
 ### Universal props all inputs have
 
@@ -140,7 +122,7 @@ You can style your field with adding CSS to the pre-assigned classes. This is ho
 | formbricks-wrapper  | A wrapper around the label and the input field (no help text).                             |
 | formbricks-label    | The label itself.                                                                          |
 | formbricks-inner    | A wrapper around the input element.                                                        |
-| formbricks-input    | The input element itself, here the radio button.                                           |
+| formbricks-input    | The input element itself, here the checkbox button.                                        |
 | formbricks-message  | The element (or many elements) containing a message — often validation and error messages. |
 | formbricks-messages | A wrapper around all the messages.                                                         |
 

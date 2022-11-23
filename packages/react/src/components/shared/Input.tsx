@@ -12,11 +12,12 @@ import { Outer } from "./Outer";
 import { Wrapper } from "./Wrapper";
 
 export interface InputProps {
-  additionalValidation?: any;
-  additionalProps?: any;
+  placeholder?: string;
 }
 
 interface UniqueProps {
+  additionalValidation?: any;
+  additionalProps?: any;
   type: {
     formbricks: string;
     html: string;
@@ -44,6 +45,7 @@ export function Input(props: FormbricksProps) {
             type={props.type.html}
             id={elemId}
             aria-invalid={errors[props.name] ? "true" : "false"}
+            placeholder={props.placeholder}
             {...props.additionalProps}
             {...register(props.name, {
               required: { value: "required" in validationRules, message: "This field is required" },

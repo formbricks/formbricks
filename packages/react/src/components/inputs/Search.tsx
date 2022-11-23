@@ -5,7 +5,6 @@ import { Input, InputProps } from "../shared/Input";
 interface SearchUniqueProps {
   minLength?: number;
   maxLength?: number;
-  placeholder?: string;
 }
 
 type Props = SearchUniqueProps & InputProps & UniversalInputProps & NameRequired;
@@ -28,7 +27,6 @@ export function Search(props: Props) {
           message: `Your answer musn't be longer than ${props.maxLength} characters`,
         },
       }}
-      additionalProps={{ placeholder: props.placeholder }}
       {...props}
     />
   );
