@@ -1,40 +1,33 @@
 import { Layout } from "@/components/docs/Layout";
 import { Callout } from "@/components/shared/Callout";
 import Image from "next/image";
-import StyleClasses from "../style-css/html-classes-of-formbricks-react-form-library-to-custom-style-surveys-and-forms.png";
+import StyleClasses from "./Number-input-best-easy-react-form-library-2023-forms-survey.png";
 
 export const meta = {
-  title: "Text Input - Formbricks React Form Library",
+  title: "Number Input - Formbricks React Form Library",
 };
 
-The `textarea` input uses HTML's [native textarea input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea) . It allows a user to enter multiple lines of text and is resizable in most browsers.
+The `Number` input uses HTML's [native number input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/number). It allows a user to enter a single integer or decimal value.
 
-Like all other inputs it needs a name prop as an unique identifier:
+Like all other inputs it needs a `name` prop as an unique identifier:
 
 ```jsx
-<Textarea name="description" />
+<Number name="age" />
 ```
 
 In most cases, it looks something like this:
 
 ```jsx
-<Textarea
-  name="firstname"
-  label="Tell us about you:"
-  placeholder="When I was young..."
-  validation="required"
-/>
+<Number name="age" label="How old are you?" placeholder="42" min="1" max="130" step="1" />
 ```
 
 ### Props & Attributes
 
-| Prop        | Type   | Default | Description                                     |
-| ----------- | ------ | ------- | ----------------------------------------------- |
-| minLength   | Number | 0       | Limits min length accepted in the field         |
-| maxLength   | Number | 524288  | Limits max length accepted in the field         |
-| placeholder | String | -       | Placeholder before respondent clicks into field |
-| cols        | Number | -       | Number of cols (width) of the textarea          |
-| rows        | Number | -       | Number of rows (height) of the textarea         |
+| Prop | Type   | Default | Description                                                                          |
+| ---- | ------ | ------- | ------------------------------------------------------------------------------------ |
+| min  | Number | -       | The input has to be at least X                                                       |
+| max  | Number | -       | The input cannot be higher than Y                                                    |
+| step | Number | auto    | Specifies the granularity that the value must adhere to when increasing / decreasing |
 
 ### Universal props all inputs have
 
@@ -55,7 +48,7 @@ In most cases, it looks something like this:
 
 ### Styling with CSS
 
-You can style your field with adding CSS to the pre-assigned classes. This is how the classes are assigned:
+You can style your number field with adding CSS to the section classes. This is how the classes are named:
 
 <Image
   src={StyleClasses}
@@ -80,7 +73,15 @@ You can style your field with adding CSS to the pre-assigned classes. This is ho
 You can also use Tailwind to extend the classes, like so:
 
 ```jsx
-<Text name="firstname" label="What's your first name?" outerClassName="bg-gray-800 my-5" />
+<Number
+  name="age"
+  label="How old are you?"
+  placeholder="42"
+  min="1"
+  max="130"
+  step="1"
+  inputClassName="font-bold"
+/>
 ```
 
 Here are the in-depth guides for [CSS](/docs/react-form-library/style-css) or [Tailwind](/docs/react-form-library/style-tailwind).
