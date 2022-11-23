@@ -1,40 +1,106 @@
 import { Layout } from "@/components/docs/Layout";
 import { Callout } from "@/components/shared/Callout";
 import Image from "next/image";
-import StyleClasses from "../style-css/html-classes-of-formbricks-react-form-library-to-custom-style-surveys-and-forms.png";
+import StyleClasses from "./Checkbox-input-form-survey-react-lib-easy-build-forms-fast-validation-multi-step.png";
 
 export const meta = {
-  title: "Text Input - Formbricks React Form Library",
+  title: "Checkbox - Formbricks React Form Library",
 };
 
-The `textarea` input uses HTML's [native textarea input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea) . It allows a user to enter multiple lines of text and is resizable in most browsers.
+The checkbox input uses [HTML's checkbox input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox) and can display one or many options to a user. It's a great way to allow users to select multiple items from a list. Formbricks supports single and multiple checkboxes.
 
-Like all other inputs it needs a name prop as an unique identifier:
+Like all other inputs it needs a `name` prop as an unique identifier:
 
 ```jsx
-<Textarea name="description" />
+<Checkbox name="terms" />
 ```
 
-In most cases, it looks something like this:
+## Single Checkbox
+
+By default the checkbox input will render a single checkbox with a `boolean` value:
 
 ```jsx
-<Textarea
-  name="firstname"
-  label="Tell us about you:"
-  placeholder="When I was young..."
-  validation="required"
+<Checkbox
+  name="newsletter"
+  label="Monthly Newsletter"
+  help="Would you like to receive our newsletter?"
+  validation="accepted"
 />
+
+# data output
+
+true or false
 ```
 
-### Props & Attributes
+## Multiple checkboxes
 
-| Prop        | Type   | Default | Description                                     |
-| ----------- | ------ | ------- | ----------------------------------------------- |
-| minLength   | Number | 0       | Limits min length accepted in the field         |
-| maxLength   | Number | 524288  | Limits max length accepted in the field         |
-| placeholder | String | -       | Placeholder before respondent clicks into field |
-| cols        | Number | -       | Number of cols (width) of the textarea          |
-| rows        | Number | -       | Number of rows (height) of the textarea         |
+There are two ways to add several options to your checkbox input, both using the `options` attribute.
+
+### Options: Array of values
+
+The options attribute can handle an array of values which are interpreted both as label and value.
+
+```jsx
+<Checkbox
+  name="toppings"
+  label="What do you like on your Pizza?"
+  help="Take what you like"
+  options={["Pineapple", "Ananas", "Piña"]}
+/>
+
+# data output
+
+label: Pineapple, value: Pineapple,
+label: Ananas, value: Ananas,
+label: Piña, value: Piña
+
+```
+
+### Options: Array of objects
+
+The options attribute can also handle an array of objects containing label:value pairs. This allows for differences between the label and the data stored. You can also disable options:
+
+```jsx
+<Checkbox
+  name="allergies"
+  label="What are you allergic to?"
+  help="Tick all the boxes."
+  options={[
+    {
+      label: "Dogs",
+      value: "dogs",
+      config: {
+        disabled: true,
+      },
+    },
+    {
+      label: "These nuts",
+      value: "nuts",
+    },
+    {
+      label: "Bullshit",
+      value: "bs",
+    },
+  ]}
+/>
+
+# data output
+
+label: Dogs, value: dogs,
+label: These nuts, value: nuts,
+label: Bullshit, value: bs
+
+```
+
+## Props & Attributes
+
+| Prop             | Type                 | Default | Description                              |
+| ---------------- | -------------------- | ------- | ---------------------------------------- | ---------------------------------------------------- |
+| options          | Array                | -       | Contains the options in your radio input |
+| label            | String               | -       | The label of the radio input.            |
+| legendClassName  | append styling class | no      | -                                        | [read more](/docs/react-form-library/style-tailwind) |
+| optionsClassName | append styling class | no      | -                                        | [read more](/docs/react-form-library/style-tailwind) |
+| optionClassName  | append styling class | no      | -                                        | [read more](/docs/react-form-library/style-tailwind) |
 
 ### Universal props all inputs have
 
@@ -67,11 +133,14 @@ You can style your field with adding CSS to the pre-assigned classes. This is ho
 | ------------------- | ------------------------------------------------------------------------------------------ |
 | formbricks-form     | The outermost wrapping element.                                                            |
 | formbricks-outer    | A wrapper around the label input, help text and error messages.                            |
+| formbricks-legend   | The legend (often a question)                                                              |
 | formbricks-help     | The help text itself.                                                                      |
+| formbricks-options  | A wrapper around all options.                                                              |
+| formbricks-option   | A wrapper around each option.                                                              |
 | formbricks-wrapper  | A wrapper around the label and the input field (no help text).                             |
 | formbricks-label    | The label itself.                                                                          |
 | formbricks-inner    | A wrapper around the input element.                                                        |
-| formbricks-input    | The input element itself.                                                                  |
+| formbricks-input    | The input element itself, here the radio button.                                           |
 | formbricks-message  | The element (or many elements) containing a message — often validation and error messages. |
 | formbricks-messages | A wrapper around all the messages.                                                         |
 
@@ -80,8 +149,23 @@ You can style your field with adding CSS to the pre-assigned classes. This is ho
 You can also use Tailwind to extend the classes, like so:
 
 ```jsx
-<Text name="firstname" label="What's your first name?" outerClassName="bg-gray-800 my-5" />
+<Checkbox
+  name="toppings"
+  label="What do you like on your Pizza?"
+  help="Take what you like"
+  options={["Pineapple", "Ananas", "Piña"]}
+  legendClassName="font-bold"
+  optionClassName="bg-gray rounded-sm"
+/>
 ```
+
+### Options-specific props to style it
+
+| Prop             | What is it?          | Required? | Shown to respondent? | Comment                                              |
+| ---------------- | -------------------- | --------- | -------------------- | ---------------------------------------------------- |
+| legendClassName  | append styling class | no        | -                    | [read more](/docs/react-form-library/style-tailwind) |
+| optionsClassName | append styling class | no        | -                    | [read more](/docs/react-form-library/style-tailwind) |
+| optionClassName  | append styling class | no        | -                    | [read more](/docs/react-form-library/style-tailwind) |
 
 Here are the in-depth guides for [CSS](/docs/react-form-library/style-css) or [Tailwind](/docs/react-form-library/style-tailwind).
 

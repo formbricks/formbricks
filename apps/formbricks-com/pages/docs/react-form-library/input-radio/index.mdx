@@ -100,10 +100,13 @@ label: "Do you agree?", value: "Do you agree?"
 
 ## Props & Attributes
 
-| Prop    | Type   | Default | Description                                                                                             |
-| ------- | ------ | ------- | ------------------------------------------------------------------------------------------------------- |
-| options | Array  | -       | Contains the options in your radio input                                                                |
-| label   | String | -       | The label (often a question) of the radio input. With no `option` attribute it's also the stored value. |
+| Prop             | Type                 | Default | Description                                                                          |
+| ---------------- | -------------------- | ------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| options          | Array                | -       | Contains the options in your radio input                                             |
+| label            | String               | -       | The label of the radio input. With no `option` attribute it's also the stored value. |
+| legendClassName  | append styling class | no      | -                                                                                    | [read more](/docs/react-form-library/style-tailwind) |
+| optionsClassName | append styling class | no      | -                                                                                    | [read more](/docs/react-form-library/style-tailwind) |
+| optionClassName  | append styling class | no      | -                                                                                    | [read more](/docs/react-form-library/style-tailwind) |
 
 ### Universal props all inputs have
 
@@ -124,7 +127,7 @@ label: "Do you agree?", value: "Do you agree?"
 
 ### Styling with CSS
 
-You can style your form with adding CSS to the pre-assigned classes. This is how the classes are assigned:
+You can style your field with adding CSS to the pre-assigned classes. This is how the classes are assigned:
 
 <Image
   src={Styling}
@@ -162,7 +165,7 @@ You can also use Tailwind to extend the classes, like so:
 />
 ```
 
-### Options-specific props
+### Options-specific props to style it
 
 | Prop             | What is it?          | Required? | Shown to respondent? | Comment                                              |
 | ---------------- | -------------------- | --------- | -------------------- | ---------------------------------------------------- |

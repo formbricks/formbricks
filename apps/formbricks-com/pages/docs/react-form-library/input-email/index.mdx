@@ -4,37 +4,28 @@ import Image from "next/image";
 import StyleClasses from "../style-css/html-classes-of-formbricks-react-form-library-to-custom-style-surveys-and-forms.png";
 
 export const meta = {
-  title: "Text Input - Formbricks React Form Library",
+  title: "Email Input - Formbricks React Form Library",
 };
 
-The `textarea` input uses HTML's [native textarea input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea) . It allows a user to enter multiple lines of text and is resizable in most browsers.
+The `Email` input uses HTML's [native email input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email). It allows a user to enter an email.
 
-Like all other inputs it needs a name prop as an unique identifier:
+Like all other inputs it needs a `name` prop as an unique identifier:
 
 ```jsx
-<Textarea name="description" />
+<Email name="email" />
 ```
 
 In most cases, it looks something like this:
 
 ```jsx
-<Textarea
-  name="firstname"
-  label="Tell us about you:"
-  placeholder="When I was young..."
-  validation="required"
-/>
+<Email name="email" label="What's your email?" placeholder="Email" validation="email" />
 ```
 
 ### Props & Attributes
 
-| Prop        | Type   | Default | Description                                     |
-| ----------- | ------ | ------- | ----------------------------------------------- |
-| minLength   | Number | 0       | Limits min length accepted in the field         |
-| maxLength   | Number | 524288  | Limits max length accepted in the field         |
-| placeholder | String | -       | Placeholder before respondent clicks into field |
-| cols        | Number | -       | Number of cols (width) of the textarea          |
-| rows        | Number | -       | Number of rows (height) of the textarea         |
+| Prop        | Type   | Default | Description                                      |
+| ----------- | ------ | ------- | ------------------------------------------------ |
+| placeholder | String | -       | Placeholder before respondent clicks into field. |
 
 ### Universal props all inputs have
 
@@ -55,7 +46,7 @@ In most cases, it looks something like this:
 
 ### Styling with CSS
 
-You can style your field with adding CSS to the pre-assigned classes. This is how the classes are assigned:
+You can style your email field with adding CSS to the section classes. This is how the classes are named:
 
 <Image
   src={StyleClasses}
@@ -80,7 +71,7 @@ You can style your field with adding CSS to the pre-assigned classes. This is ho
 You can also use Tailwind to extend the classes, like so:
 
 ```jsx
-<Text name="firstname" label="What's your first name?" outerClassName="bg-gray-800 my-5" />
+<Email name="email" label="What's your email?" inputClassName="bg-gray-800 my-5" />
 ```
 
 Here are the in-depth guides for [CSS](/docs/react-form-library/style-css) or [Tailwind](/docs/react-form-library/style-tailwind).

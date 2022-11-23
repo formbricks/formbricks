@@ -36,6 +36,26 @@ const navigation = [
         href: "/docs/react-form-library/form-wrapper",
       },
       {
+        title: "Input: Checkbox",
+        href: "/docs/react-form-library/input-checkbox",
+      },
+      {
+        title: "Input: Email",
+        href: "/docs/react-form-library/input-email",
+      },
+      {
+        title: "Input: Number",
+        href: "/docs/react-form-library/input-number",
+      },
+      {
+        title: "Input: Password",
+        href: "/docs/react-form-library/input-password",
+      },
+      {
+        title: "Input: Phone",
+        href: "/docs/react-form-library/input-phone",
+      },
+      {
         title: "Input: Text",
         href: "/docs/react-form-library/input-text",
       },
@@ -47,10 +67,14 @@ const navigation = [
         title: "Input: Radio Button",
         href: "/docs/react-form-library/input-radio",
       },
-      /*       {
-        title: "Input: Checkbox",
-        href: "/docs/react-form-library/input-checkbox",
-      }, */
+      {
+        title: "Input: URL",
+        href: "/docs/react-form-library/input-url",
+      },
+      {
+        title: "Input: Search",
+        href: "/docs/react-form-library/input-search",
+      },
       {
         title: "Input: Submit",
         href: "/docs/react-form-library/input-submit",
