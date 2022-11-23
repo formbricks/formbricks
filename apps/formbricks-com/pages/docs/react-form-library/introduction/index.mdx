@@ -2,28 +2,31 @@ import { Layout } from "@/components/docs/Layout";
 import { Fence } from "@/components/shared/Fence";
 
 export const meta = {
-  title: "React Form Library",
+  title: "Building React forms just got easy",
 };
-
-## Building React forms has never been quicker.
 
 Every developer works with forms, few like their experience. Building Forms, especially in React, can be pretty annoying. State management, validation, form components, accessibility, internationalization and performance are all things you have to deal with, but don't really want to.
 
-We make building - and maintaining - forms easier than ever in the React world.
+We make building - and maintaining - forms easier than ever in the world of React.
 
-### Formbricks React Example:
+### Example
 
 ```jsx
-import { Form, Text, Textarea, Submit } from "@formbricks/react";
+import { Form, Text, Email, Checkbox, Submit } from "@formbricks/react";
 import "@formbricks/react/styles.css";
 
 export default function WaitlistForm() {
   return (
     <Form onSubmit={({ data, schema }) => console.log("data:", data, "schema:", schema)}>
-      <Text name="firstname" label="What's your first name?" validation="required" />
-      <Text name="lastname" label="What's your last name?" />
-      <Textarea name="about" label="About you" help="Please keep it short" />
-      <Submit label="Submit" />
+      <Text name="name" label="What's your name?" validation="required" />
+      <Email name="email" label="How can we reach you?" validation="email" />
+      <Checkbox
+        name="terms"
+        label="Terms & Conditions"
+        help="To use our service, please accept."
+        validation="accepted"
+      />
+      <Submit label="Let's go!" />
     </Form>
   );
 }
@@ -31,7 +34,7 @@ export default function WaitlistForm() {
 
 ### Why is this easier already?
 
-- One easy to use syntax for input types including labels, validation and help texts
+- One easy to use syntax for all input types
 - HTML & non-HTML input types available out of the box
 - Easily maintainable with component-based approach
 - All characteristics adjustable via props
@@ -43,8 +46,12 @@ export default function WaitlistForm() {
 - Multi-page forms
 - Accessibility
 - Internationalization
-- Form Templates
+- Form Templates (content & styles)
 
-The Formbricks React Library uses [React Hook Form](https://react-hook-form.com/) to benefit from their easy to use data handling and performance optimizations. The easy to use approach was inspired by the [FormKit for Vue.js](https://formkit.com/) Library.
+### Shoutout
+
+The Formbricks React Library is built on top of [React Hook Form](https://react-hook-form.com/) to make from their data handling and performance optimizations.
+
+The developer experience is inspired by the great [FormKit for Vue.js](https://formkit.com/) Library.
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

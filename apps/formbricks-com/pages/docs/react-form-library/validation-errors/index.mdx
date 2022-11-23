@@ -12,7 +12,7 @@ Validation prevents users from submitting missing of false data.
 
 To add a validation to your inputs, add the `validation` prop and write the rules in string syntax. Rules are divided by a pipe (`|`), e.g.:
 
-```bash
+```jsx
 <Text name="age" label="What's your age?" validation="required|number|min:0|max:100" />
 ```
 
@@ -33,6 +33,9 @@ Only if all four requirements are met, the form can be submitted. If not an erro
 | number   | Only accepts fields with a number or float value                           | “number”   |
 | min      | Only accepts number values that are greater or equal to the value provided | “min:10”   |
 | max      | Only accepts number values that are greater or equal to the value provided | “max:50”   |
+| accepted | Only accepts a truish value (true or 1)                                    | "accepted" |
+| url      | Only accepts URLs e.g. "https://formbricks.com"                            | "url"      |
+| email    | Only accepts email addresses                                               | "email"    |
 
 ### Message position
 
