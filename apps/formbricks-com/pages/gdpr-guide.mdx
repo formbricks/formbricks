@@ -1,0 +1,45 @@
+import Layout from "@/components/shared/LayoutMdx";
+import { Callout } from "@/components/shared/Callout";
+
+export const meta = {
+  title: "How to create a GDPR compliant form",
+};
+
+<Callout title="No legal advice" type="note">
+  The content of this page does not serve as legal advice. Please seek professional legal advice to determine
+  the implications of how GDPR applies to your business.
+</Callout>
+
+## Creating a GDPR compliant form with Formbricks
+
+In our [Privacy Policy](/privacy-policy) we inform you about your rights and responsibilities using Formbricks. A quick recap: You are the data controller of the data you collect from your respondents using Formbricks forms and surveys. We are the data processor.
+
+It is **your responsibility to create a GDPR compliant form when you collect personal information**. What does that entail?
+
+### 1. Collect consent
+
+You have to collect consent from your respondents to comply with the GDPR framework. The consent must be freely given, specific, informed, and unambiguous. It has to be very clear why you collect personal data, how you intend to use it and if it will be shared with any third parties. The respondent has to be aware that they are giving you permission to use their personal data.
+
+### 2. Inform respondents about their rights
+
+In the same way we inform you about your rights in our [Privacy Policy](/privacy-policy), you have to inform your respondents about their rights in your privacy policy. They have the right to request all personal data you have stored about them as well as a deletion of it. If they request it, you can delete their submission in your dashboard to respect their right of deletion. The data will be removed from our backups within 90 days.
+
+## Put into practice
+
+You should add a checkbox field to your form to collect opt-in consent from your respondent. The checkbox can not be pre-checked. Make sure to add multiple checkboxes (with explanation), if you're planning to use the personal data for multiple actions. For example:
+
+[ ] I understand that my information is stored according to the Privacy Policy (add link to _your_ privacy policy)
+
+[ ] I would like to receive the monthly newsletter
+
+The seperation allows respondents to fill out your form without having to agree to receive marketing material.
+
+### Example Code for React Library
+
+If you're using [Formbricks React](/react-form-library) to code your form, you can use this code snippet as a starting point:
+
+```jsx
+add when checkbox ready
+```
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

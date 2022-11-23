@@ -1,0 +1,58 @@
+import Layout from "@/components/shared/LayoutMdx";
+import { Callout } from "@/components/shared/Callout";
+
+export const meta = {
+  title: "GDPR FAQs",
+};
+
+<Callout title="No legal advice" type="note">
+  The content of this page does not serve as legal advice. Please seek professional legal advice to determine
+  the implications of how GDPR applies to your business.
+</Callout>
+
+### What is GDPR?
+
+The General Data Protection Regulation (GDPR) is a European Union (EU) privacy law that allows EU citizens and residents to have access and control over their personal data.
+
+If your business is based in the European Union (EU), or you process the personal data of individuals in the EU, the General Data Protection Regulation (GDPR) affects you.
+
+---
+
+### Is Formbricks GDPR Compliant?
+
+Formbricks is based in Germany (EU) and is GDPR compliant. This is how we comply:
+
+- **Transparency**: Our [privacy policy](/privacy) gives you all information about what data we collect, data retention and transfers, and outlines your data protection rights.
+- **Encryption**: All Formbricks form data is encrypted and stored in Germany (EU)
+- **Data accessibility:** you have full control of the information you collect, store and manage with Formbricks.
+- **Data Processing Agreement (DPA):** If you’d like to sign a DPA please email us at privacy@formbricks.com
+
+---
+
+### Who is responsible of form data?
+
+Formbricks is the provider of a form service, and not the owner of the collected form responses. The creator of the form (i.e. you) is responsible for the data they collect and is thereby the data controller of the respondent data.
+
+This means that if you collect personal data from EU citizens it is your responsibility to assure their rights defined under the GDPR framework.
+
+Formbricks is the data processor and stores information on behalf of the form creator. As long as your account is active you have full control over the data you collect, and the time period for which you store the data.
+
+You are able to delete or export form responses from your account if it would be required to do so. All form data which has been deleted by you is permanently deleted from our back-ups within 90 days.
+
+---
+
+### How can I make my Formbricks form GDPR compliant?
+
+You (the form creator) are the data controller of the personal data you collect from your respondents. Your Formbricks form is not automatically GDPR compliant. When you collect personal data (name, email address, etc.) you should make sure that you comply with GDPR.
+
+In short, you have to inform the respondents what data you store for how long, get their consent, and show them a way to request and delete their data you have stored. Here is a little guide (no legal advice)
+
+---
+
+### How does Formbricks use personal data?
+
+Formbricks acts as a data controller in the relationship between Formbricks and our users (everyone using the service under [hq.formbricks.com](http://hq.formbricks.com) with an account). You give us personal data like registration information in order to use our service. Formbricks does not sell personal data to third parties or use it for marketing purposes or for serving advertisements.
+
+We only share the minimum of your information neccessary with our service providers who help us operate our business, in which case those third parties are also complying with the GDPR law. You find a list of sub processors in our [privacy policy.](https://www.notion.so/062f54b94b8245beb3c4af4dbdd154a8)
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
