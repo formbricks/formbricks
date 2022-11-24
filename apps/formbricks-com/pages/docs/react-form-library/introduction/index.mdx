@@ -1,5 +1,7 @@
 import { Layout } from "@/components/docs/Layout";
 import { Fence } from "@/components/shared/Fence";
+import Image from "next/image";
+import StyleClasses from "./sampleform.png";
 
 export const meta = {
   title: "React Form Library",
@@ -20,14 +22,33 @@ import "@formbricks/react/styles.css";
 export default function WaitlistForm() {
   return (
     <Form onSubmit={({ data, schema }) => console.log("data:", data, "schema:", schema)}>
-      <Text name="firstname" label="What's your first name?" validation="required" />
-      <Text name="lastname" label="What's your last name?" />
-      <Textarea name="about" label="About you" help="Please keep it short" />
-      <Submit label="Submit" />
+      <Text name="name" label="What's your name?" validation="required" />
+      <Email
+        name="email"
+        label="What's your email address?"
+        placeholder="you@example.com"
+        validation="required|email"
+      />
+      <Checkbox
+        name="terms"
+        label="Terms & Conditions"
+        help="To use our service, please accept."
+        validation="accepted"
+      />
+      <Submit label="Let's go!" />
     </Form>
   );
 }
 ```
+
+<div className="grid grid-cols-1 sm:grid-cols-2">
+<Image
+  src={StyleClasses}
+  alt="Data log of a form created with the fastest react form builder"
+  className="rounded-lg"
+/>
+
+</div>
 
 ### Why is this easier already?
 
