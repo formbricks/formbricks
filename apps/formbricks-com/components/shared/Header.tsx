@@ -449,7 +449,7 @@ export default function Header() {
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={() => router.push("https://app.formbricks.com")}
+                  onClick={() => router.push("/get-started")}
                   className="mt-3 flex w-full justify-center">
                   Get started
                 </Button>
