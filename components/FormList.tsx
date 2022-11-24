@@ -12,7 +12,7 @@ import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState, useEffect } from "react";
 import { useForms } from "../lib/forms";
-import { UserRole, Location as Cities } from "@prisma/client";
+import { UserRole, Location as Cities, Formation } from "@prisma/client";
 import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
@@ -30,6 +30,8 @@ export default function FormList() {
   const [queryValue, setQueryValue] = useState("");
   const [formData, setFormData] = useState({});
   const [filteredData, setFilteredData] = useState(forms);
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedFormation, setSelectedFormation] = useState("");
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -39,8 +41,10 @@ export default function FormList() {
   });
 
   useEffect(() => {
-    setFilteredData(forms);
-  }, [forms]);
+    let filtering = filterBySelectLocation(forms);
+    filtering = filterBySelectFormation(filtering);
+    setFilteredData(filtering);
+  }, [selectedFormation, selectedLocation, forms]);
 
   const dateDayDiff = (date) => {
     const today = new Date();
@@ -48,6 +52,36 @@ export default function FormList() {
     var total_seconds = Math.abs(+dueDate - +today) / 1000;
     var days_difference = Math.floor(total_seconds / (60 * 60 * 24));
     return days_difference;
+  };
+
+  const filterBySelectLocation = (filteredList) => {
+    // Avoid filter for empty string
+    if (!selectedLocation) {
+      return filteredList;
+    }
+
+    const filteredDatas = filteredList.filter(
+      (card) => card.place.split(" ").indexOf(selectedLocation) !== -1,
+    );
+    return filteredDatas;
+  };
+  const filterBySelectFormation = (filteredList) => {
+    // Avoid filter for empty string
+    if (!selectedFormation) {
+      return filteredList;
+    }
+
+    const filteredDatas = filteredList.filter(
+      (card) => card.formation.split(" ").indexOf(selectedFormation) !== -1,
+    );
+    return filteredDatas;
+  };
+
+  const handleChangeLocation = (event) => {
+    setSelectedLocation(event.target.value);
+  };
+  const handleChangeFormation = (event) => {
+    setSelectedFormation(event.target.value);
   };
 
   const newForm = async () => {
@@ -86,50 +120,13 @@ export default function FormList() {
   };
 
   const filterSourcings = (button) => {
-    if (button === "TOUTES") {
+    if (button === "RESET") {
       setFilteredData(forms);
       return;
     }
-
-    const filteredData = forms.filter((item) => item.place === button);
-    setFilteredData(filteredData);
   };
   return (
     <>
-      {filteredData &&
-        (filteredData.length === 0 ? (
-          <></>
-        ) : (
-          <div>
-            {session.user.role === UserRole.ADMIN ? (
-              <></>
-            ) : (
-              <ul className="flex flex-row mt-10">
-                <button
-                  className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5"
-                  onClick={() => filterSourcings("TOUTES")}
-                >
-                  TOUTES
-                </button>
-                {[
-                  Cities.Lubumbashi,
-                  Cities.Kinshasa,
-                  Cities.Goma,
-                  Cities.Autre,
-                ].map((city, cityIndex) => (
-                  <li key={cityIndex} className="relative">
-                    <button
-                      className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5"
-                      onClick={() => filterSourcings(city)}
-                    >
-                      {city}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
       {forms && forms.length > 100 ? (
         <SearchBar
           className="mt-5 flex gap-4"
@@ -142,6 +139,51 @@ export default function FormList() {
         <></>
       )}
       <div className="h-full px-6 py-8">
+        <div className="mb-10">
+          {session.user.role !== UserRole.ADMIN ? (
+            <div className="flex flex-row">
+              <select
+                className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5"
+                value={selectedLocation}
+                onChange={handleChangeLocation}
+              >
+                <option value=""> &#8212; LIEU &#8212; </option>
+                {[
+                  Cities.Autre,
+                  Cities.Lubumbashi,
+                  Cities.Kinshasa,
+                  Cities.Goma,
+                ].map((city, cityIndex) => (
+                  <option key={cityIndex} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5"
+                value={selectedFormation}
+                onChange={handleChangeFormation}
+              >
+                <option value=""> &#8212; FORMATION &#8212; </option>
+                {[Formation.AUTRE, Formation.DEV, Formation.SMD].map(
+                  (formation, formationIndex) => (
+                    <option key={formationIndex} value={formation}>
+                      {formation}
+                    </option>
+                  ),
+                )}
+              </select>
+              <button
+                className="flex justify-center text-sm font-medium py-2 px-10 rounded-md shadow-sm focus:outline-none focus:ring-2 bg-snoopfade text-white focus:ring-offset-2 focus:ring-red-500 ml-5"
+                onClick={() => filterSourcings("RESET")}
+              >
+                RESET
+              </button>
+            </div>
+          ) : (
+            <></>
+          )}
+        </div>
         {filteredData &&
           (filteredData.length === 0 ? (
             <div className="mt-5 text-center">
@@ -303,7 +345,7 @@ export default function FormList() {
                                                   active
                                                     ? "bg-ui-gray-light rounded-sm text-ui-black"
                                                     : "text-ui-gray-dark",
-                                                  "flex px-4 py-2 text-sm w-full"
+                                                  "flex px-4 py-2 text-sm w-full",
                                                 )}
                                               >
                                                 <TrashIcon
@@ -320,7 +362,7 @@ export default function FormList() {
                                                   active
                                                     ? "bg-ui-gray-light rounded-sm text-ui-black"
                                                     : "text-ui-gray-dark",
-                                                  "flex px-4 py-2 text-sm w-full"
+                                                  "flex px-4 py-2 text-sm w-full",
                                                 )}
                                               >
                                                 <HiDocumentDuplicate
