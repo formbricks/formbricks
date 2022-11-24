@@ -1,5 +1,0 @@
--- AlterEnum
-ALTER TYPE "PipelineEvent" ADD VALUE 'FORM_COMPLETED';
-
--- AlterEnum
-ALTER TYPE "PipelineType" ADD VALUE 'EMAIL_NOTIFICATION';

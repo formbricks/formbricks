@@ -14,7 +14,7 @@ export default function WaitlistForm() {
   return (
     <Form onSubmit={({ data, schema }) => console.log("data:", data, "schema:", schema)}>
       <Text name="name" label="What's your name?" validation="required" />
-      <Email name="email" label="How can we reach you?" validation="email" />
+      <Email name="email" label="How can we reach you?" validation="required|email" />
       <Checkbox
         name="terms"
         label="Terms & Conditions"
@@ -75,25 +75,6 @@ We love Tailwind! This is why Formbricks React natively supports Tailwind. All y
 ```jsx
 <Text name="firstname" label="What's your first name?" outerClassName="bg-gray-800 my-5" />
 ```
-
-### Overview of props to target CSS classes
-
-Here are all the props you can use to extend the styling of the different form elements:
-
-| CSS class           | Prop              | Content                                                      |
-| ------------------- | ----------------- | ------------------------------------------------------------ |
-| formbricks-form     | formClassName     | The wrapper around the complete form                         |
-| formbricks-outer    | outerClassName    | The wrapper around label, input field and help text          |
-| formbricks-legend   | legendClassName   | The label of the options group (only radio & checkbox input) |
-| formbricks-help     | helpClassName     | The help text                                                |
-| formbricks-options  | optionsClassName  | A wrapper around all options (only radio & checkbox input)   |
-| formbricks-option   | optionClassName   | A wrapper around each option (only radio & checkbox input)   |
-| formbricks-wrapper  | wrapperClassName  | The wrapper around the label and the input field             |
-| formbricks-label    | labelClassName    | The label                                                    |
-| formbricks-inner    | innerClassName    | The input field                                              |
-| formbricks-input    | inputClassName    | The input                                                    |
-| formbricks-message  | messageClassName  | The validation / error message itself                        |
-| formbricks-messages | messagesClassName | Wrapper around all error messages                            |
 
 ## Validation & Error Messages
 
