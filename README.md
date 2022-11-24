@@ -56,7 +56,7 @@ export default function WaitlistForm() {
       <Text name="firstname" label="What's your first name?" validation="required" />
       <Text name="lastname" label="What's your last name?" />
       <Textarea name="about" label="About you" help="Please keep it short" />
-      <Submit label="Submit" />
+      <Submit name="submit" label="Submit" />
     </Form>
   );
 }
