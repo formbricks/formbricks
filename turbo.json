@@ -23,7 +23,8 @@
         "NEXT_PUBLIC_DOCSEARCH_APP_ID",
         "NEXT_PUBLIC_DOCSEARCH_API_KEY",
         "NEXT_PUBLIC_DOCSEARCH_INDEX_NAME",
-        "NODE_ENV"
+        "NODE_ENV",
+        "VERCEL_URL"
       ]
     },
     "db:migrate:deploy": {
