@@ -1,0 +1,38 @@
+{
+  "private": true,
+  "name": "@formbricks/hq",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@formbricks/ui": "workspace:*",
+    "@headlessui/react": "^1.7.4",
+    "@heroicons/react": "^2.0.13",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^8.5.1",
+    "next": "^13.0.5",
+    "next-auth": "^4.17.0",
+    "nodemailer": "^6.8.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^4.6.0",
+    "react-toastify": "^9.1.1"
+  },
+  "devDependencies": {
+    "@formbricks/database": "workspace:*",
+    "@formbricks/tailwind-config": "workspace:*",
+    "@formbricks/tsconfig": "workspace:*",
+    "@types/node": "^18.11.9",
+    "@types/react": "^18.0.25",
+    "@types/react-dom": "^18.0.9",
+    "autoprefixer": "^10.4.13",
+    "eslint": "^8.28.0",
+    "eslint-config-formbricks": "workspace:*",
+    "postcss": "^8.4.19",
+    "typescript": "^4.9.3"
+  }
+}

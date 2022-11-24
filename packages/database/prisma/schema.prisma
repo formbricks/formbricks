@@ -1,66 +1,82 @@
-generator client {
-  provider = "prisma-client-js"
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider             = "postgresql"
+  url                  = env("DATABASE_URL")
+  referentialIntegrity = "prisma"
 }
 
-enum PipelineType {
-  WEBHOOK
-  EMAIL_NOTIFICATION
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity"]
 }
 
-enum PipelineEvent {
-  PAGE_SUBMISSION
-  FORM_COMPLETED
+model Project {
+  id           Int  @id @default(autoincrement())
+  organization Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId       Int
 }
 
-model Form {
-  id                 String              @id
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  owner              User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  ownerId            Int
-  name               String              @default("")
-  schema             Json                @default("{}")
-  submissions        Submission[]
-  pipelines          Pipeline[]
+model Team {
+  id       Int          @id @default(autoincrement())
+  name     String
+  members  Membership[]
+  projects Project[]
 }
 
-model Pipeline {
-  id        String          @id @default(uuid())
-  createdAt DateTime        @default(now()) @map(name: "created_at")
-  updatedAt DateTime        @updatedAt @map(name: "updated_at")
-  name      String
-  type      PipelineType
-  form      Form            @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId    String
-  enabled   Boolean         @default(false)
-  events    PipelineEvent[]
-  data      Json            @default("{}")
-} 
+enum MembershipRole {
+  MEMBER
+  ADMIN
+  OWNER
+}
 
-model Submission {
-  id                  String            @id @default(uuid())
-  createdAt           DateTime          @default(now()) @map(name: "created_at")
-  updatedAt           DateTime          @updatedAt @map(name: "updated_at")
-  form                Form              @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId              String
-  data                Json
+model Membership {
+  team     Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId   Int
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int
+  accepted Boolean        @default(false)
+  role     MembershipRole
+
+  @@id([userId, teamId])
+}
+
+enum IdentityProvider {
+  EMAIL
+  GITHUB
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  user              User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String
+  access_token      String? @db.Text
+  refresh_token     String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  firstname     String?
-  lastname      String?
-  email         String    @unique
-  emailVerified DateTime? @map(name: "email_verified")
-  password      String
-  createdAt     DateTime  @default(now()) @map(name: "created_at")
-  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
-  forms         Form[]
+  id                        Int              @id @default(autoincrement())
+  name                      String?
+  email                     String           @unique
+  emailVerified             DateTime?        @map(name: "email_verified")
+  password                  String?
+  createdAt                 DateTime         @default(now()) @map(name: "created_at")
+  updatedAt                 DateTime         @updatedAt @map(name: "updated_at")
+  identityProvider          IdentityProvider @default(EMAIL)
+  identityProviderAccountId String?
+  teams                     Membership[]
+  accounts                  Account[]
 
   @@map(name: "users")
 }
