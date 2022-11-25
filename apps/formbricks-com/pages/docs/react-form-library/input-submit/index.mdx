@@ -9,10 +9,18 @@ export const meta = {
 The submit button component is very straight forward:
 
 ```jsx
-<Submit label="Submit" />
+<Submit name="submit" label="Submit" />
 ```
 
 To keep it working make sure that there is **only one Submit button** per form.
+
+### Adding an icon
+
+You can add icons **before and after** the button text:
+
+```jsx
+<Submit label="Submit" PrefixIcon={BeakerIcon} SuffixIcon={BeakerIcon} />
+```
 
 ### Props & Attributes
 
