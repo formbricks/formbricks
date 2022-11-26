@@ -12,17 +12,66 @@ generator client {
   previewFeatures = ["referentialIntegrity"]
 }
 
-model Project {
-  id           Int  @id @default(autoincrement())
-  organization Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId       Int
+enum PipelineType {
+  WEBHOOK
+  EMAIL_NOTIFICATION
+}
+
+model Pipeline {
+  id        Int          @id @default(autoincrement())
+  createdAt DateTime     @default(now()) @map(name: "created_at")
+  updatedAt DateTime     @updatedAt @map(name: "updated_at")
+  name      String
+  type      PipelineType
+  form      Form         @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId    Int
+  enabled   Boolean      @default(false)
+  config    Json         @default("{}")
+}
+
+model Customer {
+  id          Int          @id @default(autoincrement())
+  createdAt   DateTime     @default(now()) @map(name: "created_at")
+  updatedAt   DateTime     @updatedAt @map(name: "updated_at")
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId      Int
+  Submissions Submission[]
+  data        Json         @default("{}")
+}
+
+model Form {
+  id         Int          @id @default(autoincrement())
+  createdAt  DateTime     @default(now()) @map(name: "created_at")
+  updatedAt  DateTime     @updatedAt @map(name: "updated_at")
+  team       Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId     Int
+  schema     Json         @default("{}")
+  submission Submission[]
+  Pipeline   Pipeline[]
+}
+
+model Submission {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now()) @map(name: "created_at")
+  updatedAt  DateTime @updatedAt @map(name: "updated_at")
+  Team       Team?    @relation(fields: [teamId], references: [id])
+  teamId     Int?
+  form       Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId     Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId Int
+  data       Json     @default("{}")
 }
 
 model Team {
-  id       Int          @id @default(autoincrement())
-  name     String
-  members  Membership[]
-  projects Project[]
+  id         Int          @id @default(autoincrement())
+  createdAt  DateTime     @default(now()) @map(name: "created_at")
+  updatedAt  DateTime     @updatedAt @map(name: "updated_at")
+  name       String
+  members    Membership[]
+  forms      Form[]
+  Customer   Customer[]
+  Submission Submission[]
 }
 
 enum MembershipRole {
@@ -42,24 +91,36 @@ model Membership {
   @@id([userId, teamId])
 }
 
+model ApiKey {
+  id         Int       @id @unique @default(autoincrement())
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  label      String?
+  hashedKey  String    @unique()
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int
+}
+
 enum IdentityProvider {
   EMAIL
   GITHUB
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  user              User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                Int      @id @default(autoincrement())
+  createdAt         DateTime @default(now()) @map(name: "created_at")
+  updatedAt         DateTime @updatedAt @map(name: "updated_at")
+  user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId            Int
   type              String
   provider          String
   providerAccountId String
-  access_token      String? @db.Text
-  refresh_token     String? @db.Text
+  access_token      String?  @db.Text
+  refresh_token     String?  @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?  @db.Text
   session_state     String?
 
   @@unique([provider, providerAccountId])
@@ -67,16 +128,17 @@ model Account {
 
 model User {
   id                        Int              @id @default(autoincrement())
+  createdAt                 DateTime         @default(now()) @map(name: "created_at")
+  updatedAt                 DateTime         @updatedAt @map(name: "updated_at")
   name                      String?
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
   password                  String?
-  createdAt                 DateTime         @default(now()) @map(name: "created_at")
-  updatedAt                 DateTime         @updatedAt @map(name: "updated_at")
   identityProvider          IdentityProvider @default(EMAIL)
   identityProviderAccountId String?
   teams                     Membership[]
   accounts                  Account[]
+  ApiKey                    ApiKey[]
 
   @@map(name: "users")
 }

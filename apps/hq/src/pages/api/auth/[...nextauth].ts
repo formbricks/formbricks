@@ -126,13 +126,31 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile, email, credentials }: any) {
-      console.log("user", JSON.stringify(account, null, 2));
-      console.log("account", JSON.stringify(account, null, 2));
-      console.log("profile", JSON.stringify(profile, null, 2));
-      console.log(JSON.stringify(user));
+    async jwt({ token, user, account }) {
+      const existingUser = await prisma.user.findFirst({
+        where: { email: token.email! },
+        select: {
+          id: true,
+        },
+      });
 
-      if (account.provider === "credentials") {
+      if (!existingUser) {
+        return token;
+      }
+
+      return {
+        ...existingUser,
+        ...token,
+      };
+    },
+    async session({ session, token, user }) {
+      // @ts-ignore
+      session.user.id = token.id;
+
+      return session;
+    },
+    async signIn({ user, account }: any) {
+      if (account.provider === "credentials" || account.provider === "token") {
         if (!user.emailVerified && process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
           return `/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
         }
@@ -205,6 +223,19 @@ export const authOptions: NextAuthOptions = {
             identityProviderAccountId: user.id as string,
             accounts: {
               create: [{ ...account }],
+            },
+            teams: {
+              create: [
+                {
+                  accepted: true,
+                  role: "OWNER",
+                  team: {
+                    create: {
+                      name: `${user.name}'s Team`,
+                    },
+                  },
+                },
+              ],
             },
           },
         });

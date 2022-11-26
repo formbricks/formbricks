@@ -33,11 +33,7 @@ export const SigninForm = ({ callbackUrl, error }) => {
           </div>
         </div>
       )}
-      <form
-        onSubmit={handleSubmit}
-        method="post"
-        action="/api/auth/callback/credentials"
-        className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="email" className="text-ui-gray-dark block text-sm font-medium">
             Email address
@@ -83,15 +79,19 @@ export const SigninForm = ({ callbackUrl, error }) => {
             </Link>
           </div>
         )}
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center" aria-hidden="true">
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-white px-2 text-sm text-gray-500">Sign in with</span>
-          </div>
-        </div>
-        <GithubButton text="Sign in with GitHub" />
+        {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
+          <>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-2 text-sm text-gray-500">Sign in with</span>
+              </div>
+            </div>
+            <GithubButton text="Sign in with GitHub" />{" "}
+          </>
+        )}
       </form>
     </>
   );

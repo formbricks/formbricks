@@ -8,7 +8,7 @@ export const SignIn = ({ token }) => {
     if (token) {
       signIn("token", {
         token: token,
-        callbackUrl: `/projects`,
+        callbackUrl: `/app`,
       });
     }
   }, [token]);

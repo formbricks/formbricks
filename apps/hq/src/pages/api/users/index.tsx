@@ -20,6 +20,19 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const userData = await prisma.user.create({
         data: {
           ...user,
+          teams: {
+            create: [
+              {
+                accepted: true,
+                role: "OWNER",
+                team: {
+                  create: {
+                    name: `${user.name}'s Team`,
+                  },
+                },
+              },
+            ],
+          },
         },
       });
       if (process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") await sendVerificationEmail(userData);

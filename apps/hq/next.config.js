@@ -12,6 +12,14 @@ module.exports = {
     appDir: true,
     serverComponentsExternalPackages: ["@prisma/client"],
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+      },
+    ],
+  },
   webpack: (config) => {
     config.externals = [...(config.externals || []), "@prisma/client"];
     // Important: return the modified config
@@ -21,7 +29,7 @@ module.exports = {
     return [
       {
         source: "/",
-        destination: "/forms/",
+        destination: "/app/",
         permanent: false,
       },
     ];

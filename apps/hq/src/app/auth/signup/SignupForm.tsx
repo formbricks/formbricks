@@ -133,15 +133,19 @@ export const SignupForm = () => {
             </div>
           )}
         </div>
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center" aria-hidden="true">
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-white px-2 text-sm text-gray-500">Sign up with</span>
-          </div>
-        </div>
-        <GithubButton text="Sign up with GitHub" />
+        {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
+          <>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-2 text-sm text-gray-500">Sign up with</span>
+              </div>
+            </div>
+            <GithubButton text="Sign up with GitHub" />
+          </>
+        )}
       </form>
     </>
   );

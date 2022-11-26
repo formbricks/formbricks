@@ -3,25 +3,19 @@
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Fragment } from "react";
+import { Logo } from "../Logo";
+import AvatarPlaceholder from "@/images/avatar-placeholder.png";
+import Link from "next/link";
+import LoadingSpinner from "../LoadingSpinner";
 
-const user = {
-  name: "Tom Cook",
-  email: "tom@example.com",
-  imageUrl:
-    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-};
 const navigation = [
-  { name: "Dashboard", href: "#", current: true },
+  /*  { name: "Forms", href: "#", current: true },
   { name: "Team", href: "#", current: false },
   { name: "Projects", href: "#", current: false },
-  { name: "Calendar", href: "#", current: false },
-];
-const userNavigation = [
-  { name: "Your Profile", onClick: () => {} },
-  { name: "Settings", onClick: () => {} },
-  { name: "Sign out", onClick: () => signOut() },
+  { name: "Calendar", href: "#", current: false }, */
 ];
 
 function classNames(...classes) {
@@ -29,11 +23,24 @@ function classNames(...classes) {
 }
 
 export default function ProjectsLayout({ children }) {
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const userNavigation = [
+    {
+      name: "Settings",
+      onClick: () => {
+        router.push("/app/me/settings");
+      },
+    },
+    { name: "Sign out", onClick: () => signOut() },
+  ];
+  const { data: session, status } = useSession();
 
   if (status === "loading") {
-    return <div>Loading</div>;
+    return (
+      <div className="flex h-full w-full items-center justify-center p-8">
+        <LoadingSpinner />
+      </div>
+    );
   }
   if (!session) {
     router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`);
@@ -49,16 +56,9 @@ export default function ProjectsLayout({ children }) {
                 <div className="flex h-16 justify-between">
                   <div className="flex">
                     <div className="flex flex-shrink-0 items-center">
-                      <img
-                        className="block h-8 w-auto lg:hidden"
-                        src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-                        alt="Your Company"
-                      />
-                      <img
-                        className="hidden h-8 w-auto lg:block"
-                        src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-                        alt="Your Company"
-                      />
+                      <Link href="/app/">
+                        <Logo className="block h-8 w-auto" />
+                      </Link>
                     </div>
                     <div className="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
                       {navigation.map((item) => (
@@ -78,19 +78,25 @@ export default function ProjectsLayout({ children }) {
                     </div>
                   </div>
                   <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                    <button
+                    {/* <button
                       type="button"
                       className="rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                       <span className="sr-only">View notifications</span>
                       <BellIcon className="h-6 w-6" aria-hidden="true" />
-                    </button>
+                    </button> */}
 
                     {/* Profile dropdown */}
                     <Menu as="div" className="relative ml-3">
                       <div>
-                        <Menu.Button className="flex max-w-xs items-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                        <Menu.Button className="focus:ring-brand flex max-w-xs items-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
                           <span className="sr-only">Open user menu</span>
-                          <img className="h-8 w-8 rounded-full" src={user.imageUrl} alt="" />
+                          <Image
+                            src={session.user.image || AvatarPlaceholder}
+                            width="100"
+                            height="100"
+                            className="h-8 w-8 rounded-full"
+                            alt="Avatar placeholder"
+                          />
                         </Menu.Button>
                       </div>
                       <Transition
@@ -109,7 +115,7 @@ export default function ProjectsLayout({ children }) {
                                   onClick={item.onClick}
                                   className={classNames(
                                     active ? "bg-gray-100" : "",
-                                    "block px-4 py-2 text-sm text-gray-700"
+                                    "flex w-full justify-start px-4 py-2 text-sm text-gray-700"
                                   )}>
                                   {item.name}
                                 </button>
@@ -155,18 +161,22 @@ export default function ProjectsLayout({ children }) {
                 <div className="border-t border-gray-200 pt-4 pb-3">
                   <div className="flex items-center px-4">
                     <div className="flex-shrink-0">
-                      <img className="h-10 w-10 rounded-full" src={user.imageUrl} alt="" />
+                      <Image
+                        className="h-10 w-10 rounded-full"
+                        src={session.user.image || AvatarPlaceholder}
+                        alt="profile picture"
+                      />
                     </div>
                     <div className="ml-3">
-                      <div className="text-base font-medium text-gray-800">{user.name}</div>
-                      <div className="text-sm font-medium text-gray-500">{user.email}</div>
+                      <div className="text-base font-medium text-gray-800">{session.user.name}</div>
+                      <div className="text-sm font-medium text-gray-500">{session.user.email}</div>
                     </div>
-                    <button
+                    {/*  <button
                       type="button"
                       className="ml-auto flex-shrink-0 rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                       <span className="sr-only">View notifications</span>
                       <BellIcon className="h-6 w-6" aria-hidden="true" />
-                    </button>
+                    </button> */}
                   </div>
                   <div className="mt-3 space-y-1">
                     {userNavigation.map((item) => (
@@ -186,17 +196,8 @@ export default function ProjectsLayout({ children }) {
         </Disclosure>
 
         <div className="py-10">
-          <header>
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">Dashboard</h1>
-            </div>
-          </header>
           <main>
-            <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-              {/* Replace with your content */}
-              <div className="px-4 py-8 sm:px-0">{children}</div>
-              {/* /End replace */}
-            </div>
+            <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">{children}</div>
           </main>
         </div>
       </div>

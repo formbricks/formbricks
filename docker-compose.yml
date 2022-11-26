@@ -10,7 +10,7 @@ services:
   hostr:
     build:
       context: .
-      dockerfile: ./apps/web/Dockerfile
+      dockerfile: ./apps/hq/Dockerfile
     depends_on:
       - postgres
     ports:
