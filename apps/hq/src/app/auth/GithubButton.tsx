@@ -14,6 +14,7 @@ export const GithubButton = ({ text = "Login with Github" }) => {
 
   return (
     <Button
+      type="button"
       StartIcon={FaGithub}
       startIconClassName="mr-2"
       onClick={handleLogin}
