@@ -87,6 +87,10 @@ const navigation = [
         title: "Style with Tailwind",
         href: "/docs/react-form-library/style-tailwind",
       },
+      {
+        title: "Icons",
+        href: "/docs/react-form-library/icons",
+      },
     ],
   },
   {

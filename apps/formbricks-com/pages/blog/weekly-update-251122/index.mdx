@@ -1,0 +1,111 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import NewsletterSignup from "@/components/shared/NewsletterSignup";
+import HeroAnimation from "@/components/shared/HeroAnimation";
+import HeaderImage from "./weeklyupdate.png";
+import POC from "./proof-of-concept.png";
+
+export const meta = {
+  title: "Weekly Summary - 25th Nov 2022",
+  description:
+    "Every week, we’ll share an update about all things Formbricks. This week we shipped, wrote docs, talked about a feedback app built on top of snoopForms and prepped for the YC interview! 👉",
+  date: "2022-11-25",
+};
+
+_This week we shipped Formbricks React v0.1 and v0.2, wrote lots of docs, talked about a feedback app built on top of snoopForms and prepped for the upcoming YC interview! 🤸_
+
+<Image src={HeaderImage} alt="Weekly Update" className="rounded-lg" />
+
+# Highlights
+
+- shipped Formbricks React 🚢
+- met devs who built a feedback solution with snoopForms 🦝
+- got invited to YC interview 🍊
+
+Let's dive in!
+
+##
+
+# Product
+
+### Launched Formbricks React Library 🥳
+
+We launched v0.1 and v0.2 of the Formbricks React Library.
+
+- **Why?** Make it as easy as possible to build forms in React
+- **How?** Offering all essential form functionality out of the box
+- **What?** Lots of input components, validation, easy styling, easy multi-step forms, i18n, a11y and everything else you need when building forms in React.
+
+Have a look at this example:
+
+```jsx
+import { Form, Text, Email, Checkbox, Submit } from "@formbricks/react";
+import "@formbricks/react/styles.css";
+
+export default function WaitlistForm() {
+  return (
+    <Form onSubmit={({ data, schema }) => console.log("data:", data, "schema:", schema)}>
+      <Text name="name" label="What's your name?" validation="required" />
+      <Email
+        name="email"
+        label="What's your email address?"
+        placeholder="you@example.com"
+        validation="required|email"
+      />
+      <Checkbox
+        name="terms"
+        label="Terms & Conditions"
+        help="To use our service, please accept."
+        validation="accepted"
+      />
+      <Submit label="Let's go!" />
+    </Form>
+  );
+}
+```
+
+A lot more information in the [Docs, check them out!](/docs/react-form-library/introduction)
+
+### What's next for Formbricks React?
+
+In the upcoming week we're not planning to add more features to it. We'll first ship a version of the Formbricks HQ to offer an end-to-end solution from form creation to submission handling to analysis 👇
+
+## Formbricks HQ Demo
+
+With the YC interview coming up next week, we decided to build an end-to-end demo. We're not focussing on production readiness for now. Expect to get your fingers on it the week after!
+
+<HeroAnimation />
+
+## Feedback tool for the State of Geneva, Switzerland
+
+We were delighted to find out that a digital agency built a POC for a feedback functionality in an e-learning offer from the state of Geneva, Switzerland.
+
+In the call we learned a lot about why they chose snoopForms (privacy-first), how their developer experience has been (pretty good) and what they need in the future.
+
+They are working on a more comprehensive offer for forms & surveys for the Swiss market built on top of Formbricks!
+
+So exciting for us to see that our product and positioning resonates so well 😊
+
+<Image src={POC} alt="SCreenshot from feedback tool built with snoopforms" className="rounded-lg" />
+
+##
+
+# Community
+
+Shoutout to octalpixel and [Akshu](https://twitter.com/Akshu_on_github) from the EddieHub community for sharing feedback on the React Library. Highly appreciated 🙏
+
+## Listmonk
+
+We chose [Listmonk](https://listmonk.app/) as our Newsletter tool as it is a promising open-source option. So far the setup has been pretty good!
+
+You can sign up to our "Build in Public" list at the bottom of this article to not miss a single one of them 😉
+
+## YC Interview
+
+We got invited! This is obviously very exciting so we spent some time getting our answers crisp. We're talking some alumns to learn from their experience 🤞
+
+## Have a great weekend!
+
+<NewsletterSignup />
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

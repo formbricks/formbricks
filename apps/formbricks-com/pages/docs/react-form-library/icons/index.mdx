@@ -1,0 +1,74 @@
+import { Layout } from "@/components/docs/Layout";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+import FindIcon from "./icon-name-react-library-form-builder.png";
+
+export const meta = {
+  title: "Icons - Formbricks React Form Library",
+};
+
+Icons give forms and surveys not only a professional look & feel, they increase the usability. Formbricks React supports icons in several locations throughout the form.
+
+### Choosing an icon library
+
+In the first step you have to decide which library you like. We like:
+
+- [HeroIcons](https://heroicons.com/),
+- [FeatherIcons](https://feathericons.com/) (beautiful but limited),
+- [React Icons](https://react-icons.github.io/react-icons/). (huge collection)
+
+### Installing library package
+
+Once you picked yours you have to add it to your repository, e.g. HeroIcons:
+
+```jsx
+npm install @heroicons/react
+```
+
+### Importing icons
+
+Next you have to import the icons you want to use them in your form:
+
+```jsx
+import { PlusIcon } from "@heroicons/react/24/outline";
+
+# or several at once
+
+import { ChatBubbleOvalLeftEllipsisIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
+
+```
+
+If you paid close attention you noticed that we imported `PlusIcon` from the `outline` folder and the latter two from the `solid` folder. You can find the name of the icon you'd like to import on the respective website:
+
+<Image
+  src={FindIcon}
+  alt="Illustration of error message and validation handling in best form react lib"
+  className="rounded-lg"
+/>
+
+Now you're ready to use them!
+
+### Using icons
+
+At this early stage, we only support icons in the submit button. You add it **before** and **after** the button text.
+
+Before the button text:
+
+```jsx
+<Submit label="Submit" PrefixIcon={EnvelopeIcon} />
+```
+
+After the button text:
+
+```jsx
+<Submit label="Submit" SuffixIcon={PlusIcon} />
+```
+
+### Props & Attributes
+
+| Prop       | Type | Default | Description                 |
+| ---------- | ---- | ------- | --------------------------- |
+| PrefixIcon | SVG  | -       | Icon displayed before label |
+| SuffixIcon | SVG  | -       | Icon displayed after label  |
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
