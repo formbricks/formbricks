@@ -5,24 +5,14 @@ import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
 import { Logo } from "../Logo";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import Link from "next/link";
 import LoadingSpinner from "../LoadingSpinner";
+import clsx from "clsx";
 
-const navigation = [
-  /*  { name: "Forms", href: "#", current: true },
-  { name: "Team", href: "#", current: false },
-  { name: "Projects", href: "#", current: false },
-  { name: "Calendar", href: "#", current: false }, */
-];
-
-function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
-
-export default function ProjectsLayout({ children }) {
+export default function ProjectsLayout({ params, children }) {
   const router = useRouter();
   const userNavigation = [
     {
@@ -46,35 +36,20 @@ export default function ProjectsLayout({ children }) {
     router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`);
     return <div></div>;
   }
+
   return (
     <>
-      <div className="min-h-full">
+      <div className="h-screen">
         <Disclosure as="nav" className="border-b border-gray-200 bg-white">
           {({ open }) => (
             <>
-              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
                 <div className="flex h-16 justify-between">
                   <div className="flex">
                     <div className="flex flex-shrink-0 items-center">
                       <Link href="/app/">
                         <Logo className="block h-8 w-auto" />
                       </Link>
-                    </div>
-                    <div className="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
-                      {navigation.map((item) => (
-                        <a
-                          key={item.name}
-                          href={item.href}
-                          className={classNames(
-                            item.current
-                              ? "border-indigo-500 text-gray-900"
-                              : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                            "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium"
-                          )}
-                          aria-current={item.current ? "page" : undefined}>
-                          {item.name}
-                        </a>
-                      ))}
                     </div>
                   </div>
                   <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -113,7 +88,7 @@ export default function ProjectsLayout({ children }) {
                               {({ active }) => (
                                 <button
                                   onClick={item.onClick}
-                                  className={classNames(
+                                  className={clsx(
                                     active ? "bg-gray-100" : "",
                                     "flex w-full justify-start px-4 py-2 text-sm text-gray-700"
                                   )}>
@@ -141,23 +116,6 @@ export default function ProjectsLayout({ children }) {
               </div>
 
               <Disclosure.Panel className="sm:hidden">
-                <div className="space-y-1 pt-2 pb-3">
-                  {navigation.map((item) => (
-                    <Disclosure.Button
-                      key={item.name}
-                      as="a"
-                      href={item.href}
-                      className={classNames(
-                        item.current
-                          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                          : "border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800",
-                        "block border-l-4 py-2 pl-3 pr-4 text-base font-medium"
-                      )}
-                      aria-current={item.current ? "page" : undefined}>
-                      {item.name}
-                    </Disclosure.Button>
-                  ))}
-                </div>
                 <div className="border-t border-gray-200 pt-4 pb-3">
                   <div className="flex items-center px-4">
                     <div className="flex-shrink-0">
@@ -195,11 +153,7 @@ export default function ProjectsLayout({ children }) {
           )}
         </Disclosure>
 
-        <div className="py-10">
-          <main>
-            <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">{children}</div>
-          </main>
-        </div>
+        <main className="h-full">{children}</main>
       </div>
     </>
   );

@@ -4,7 +4,6 @@ import { prisma } from "@formbricks/database";
 import { randomBytes } from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { unstable_getServerSession } from "next-auth";
-import { getSession } from "next-auth/react";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication
@@ -16,7 +15,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // GET /api/users/[userId]/api-keys/
   // Gets all ApiKeys of a user
   if (req.method === "GET") {
-    const session = await getSession({ req });
     const apiKeys = await prisma.apiKey.findMany({
       where: {
         user: { email: session.user.email },
@@ -32,8 +30,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const apiKey = req.body;
 
     const key = randomBytes(16).toString("hex");
-
-    const session = await getSession({ req });
     // create form in database
     const result = await prisma.apiKey.create({
       data: {

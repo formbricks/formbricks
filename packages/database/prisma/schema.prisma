@@ -30,48 +30,49 @@ model Pipeline {
 }
 
 model Customer {
-  id          Int          @id @default(autoincrement())
+  id          String
   createdAt   DateTime     @default(now()) @map(name: "created_at")
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
   team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId      Int
-  Submissions Submission[]
+  submissions Submission[]
   data        Json         @default("{}")
+
+  @@id([id, teamId])
 }
 
 model Form {
-  id         Int          @id @default(autoincrement())
-  createdAt  DateTime     @default(now()) @map(name: "created_at")
-  updatedAt  DateTime     @updatedAt @map(name: "updated_at")
-  team       Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId     Int
-  schema     Json         @default("{}")
-  submission Submission[]
-  Pipeline   Pipeline[]
+  id          Int          @id @default(autoincrement())
+  createdAt   DateTime     @default(now()) @map(name: "created_at")
+  updatedAt   DateTime     @updatedAt @map(name: "updated_at")
+  label       String
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId      Int
+  schema      Json         @default("{}")
+  submissions Submission[]
+  pipelines   Pipeline[]
 }
 
 model Submission {
-  id         Int      @id @default(autoincrement())
-  createdAt  DateTime @default(now()) @map(name: "created_at")
-  updatedAt  DateTime @updatedAt @map(name: "updated_at")
-  Team       Team?    @relation(fields: [teamId], references: [id])
-  teamId     Int?
-  form       Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  id         Int       @id @default(autoincrement())
+  createdAt  DateTime  @default(now()) @map(name: "created_at")
+  updatedAt  DateTime  @updatedAt @map(name: "updated_at")
+  form       Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId     Int
-  customer   Customer @relation(fields: [customerId], references: [id])
-  customerId Int
-  data       Json     @default("{}")
+  customer   Customer? @relation(fields: [customerId, teamId], references: [id, teamId])
+  customerId String?
+  teamId     Int?
+  data       Json      @default("{}")
 }
 
 model Team {
-  id         Int          @id @default(autoincrement())
-  createdAt  DateTime     @default(now()) @map(name: "created_at")
-  updatedAt  DateTime     @updatedAt @map(name: "updated_at")
-  name       String
-  members    Membership[]
-  forms      Form[]
-  Customer   Customer[]
-  Submission Submission[]
+  id        Int          @id @default(autoincrement())
+  createdAt DateTime     @default(now()) @map(name: "created_at")
+  updatedAt DateTime     @updatedAt @map(name: "updated_at")
+  name      String
+  members   Membership[]
+  forms     Form[]
+  customers Customer[]
 }
 
 enum MembershipRole {
@@ -138,7 +139,5 @@ model User {
   identityProviderAccountId String?
   teams                     Membership[]
   accounts                  Account[]
-  ApiKey                    ApiKey[]
-
-  @@map(name: "users")
+  apiKeys                   ApiKey[]
 }

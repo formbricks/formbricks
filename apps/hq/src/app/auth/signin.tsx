@@ -18,7 +18,7 @@ export default function SignInPage() {
   };
   return (
     <>
-      <div className="bg-ui-gray-light flex min-h-screen">
+      <div className="flex min-h-screen bg-slate-100">
         <div className="mx-auto flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           {error && (
             <div className="absolute top-10 rounded-md bg-red-50 p-4">
@@ -49,7 +49,7 @@ export default function SignInPage() {
                   action="/api/auth/callback/credentials"
                   className="space-y-6">
                   <div>
-                    <label htmlFor="email" className="text-ui-gray-dark block text-sm font-medium">
+                    <label htmlFor="email" className="block text-sm font-medium text-slate-800">
                       Email address
                     </label>
                     <div className="mt-1">
@@ -59,12 +59,12 @@ export default function SignInPage() {
                         type="email"
                         autoComplete="email"
                         required
-                        className="placeholder-ui-gray-medium border-ui-gray-medium ph-no-capture block w-full appearance-none rounded-md border px-3 py-2 shadow-sm focus:border-red-500 focus:outline-none focus:ring-red-500 sm:text-sm"
+                        className="ph-no-capture block w-full appearance-none rounded-md border border-slate-300 px-3 py-2 placeholder-slate-300 shadow-sm focus:border-red-500 focus:outline-none focus:ring-red-500 sm:text-sm"
                       />
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="email" className="text-ui-gray-dark block text-sm font-medium">
+                    <label htmlFor="email" className="block text-sm font-medium text-slate-800">
                       Password
                     </label>
                     <div className="mt-1">
@@ -74,7 +74,7 @@ export default function SignInPage() {
                         type="password"
                         autoComplete="current-password"
                         required
-                        className="placeholder-ui-gray-medium border-ui-gray-medium ph-no-capture block w-full appearance-none rounded-md border px-3 py-2 shadow-sm focus:border-red-500 focus:outline-none focus:ring-red-500 sm:text-sm"
+                        className="ph-no-capture block w-full appearance-none rounded-md border border-slate-300 px-3 py-2 placeholder-slate-300 shadow-sm focus:border-red-500 focus:outline-none focus:ring-red-500 sm:text-sm"
                       />
                     </div>
                   </div>

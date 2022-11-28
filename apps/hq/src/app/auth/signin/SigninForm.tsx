@@ -10,7 +10,7 @@ export const SigninForm = ({ callbackUrl, error }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await signIn("credentials", {
-      callbackUrl: callbackUrl || "/projects",
+      callbackUrl: callbackUrl || "/app",
       email: e.target.elements.email.value,
       password: e.target.elements.password.value,
     });
@@ -35,7 +35,7 @@ export const SigninForm = ({ callbackUrl, error }) => {
       )}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="email" className="text-ui-gray-dark block text-sm font-medium">
+          <label htmlFor="email" className="block text-sm font-medium text-slate-800">
             Email address
           </label>
           <div className="mt-1">
@@ -50,7 +50,7 @@ export const SigninForm = ({ callbackUrl, error }) => {
           </div>
         </div>
         <div>
-          <label htmlFor="email" className="text-ui-gray-dark block text-sm font-medium">
+          <label htmlFor="email" className="block text-sm font-medium text-slate-800">
             Password
           </label>
           <div className="mt-1">

@@ -128,6 +128,7 @@ importers:
       '@types/react-dom': ^18.0.9
       autoprefixer: ^10.4.13
       bcryptjs: ^2.4.3
+      clsx: ^1.2.1
       date-fns: ^2.29.3
       eslint: ^8.28.0
       eslint-config-formbricks: workspace:*
@@ -149,6 +150,7 @@ importers:
       '@headlessui/react': 1.7.4_biqbaboplfbrettd7655fr4n2y
       '@heroicons/react': 2.0.13_react@18.2.0
       bcryptjs: 2.4.3
+      clsx: 1.2.1
       date-fns: 2.29.3
       jsonwebtoken: 8.5.1
       next: 13.0.5_biqbaboplfbrettd7655fr4n2y

@@ -23,13 +23,13 @@ CREATE TABLE "Pipeline" (
 
 -- CreateTable
 CREATE TABLE "Customer" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "teamId" INTEGER NOT NULL,
     "data" JSONB NOT NULL DEFAULT '{}',
 
-    CONSTRAINT "Customer_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Customer_pkey" PRIMARY KEY ("id","teamId")
 );
 
 -- CreateTable
@@ -37,6 +37,7 @@ CREATE TABLE "Form" (
     "id" SERIAL NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "label" TEXT NOT NULL,
     "teamId" INTEGER NOT NULL,
     "schema" JSONB NOT NULL DEFAULT '{}',
 
@@ -48,9 +49,9 @@ CREATE TABLE "Submission" (
     "id" SERIAL NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "teamId" INTEGER,
     "formId" INTEGER NOT NULL,
-    "customerId" INTEGER NOT NULL,
+    "customerId" TEXT,
+    "teamId" INTEGER,
     "data" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Submission_pkey" PRIMARY KEY ("id")
@@ -109,7 +110,7 @@ CREATE TABLE "Account" (
 );
 
 -- CreateTable
-CREATE TABLE "users" (
+CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -120,7 +121,7 @@ CREATE TABLE "users" (
     "identityProvider" "IdentityProvider" NOT NULL DEFAULT 'EMAIL',
     "identityProviderAccountId" TEXT,
 
-    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -133,4 +134,4 @@ CREATE UNIQUE INDEX "ApiKey_hashedKey_key" ON "ApiKey"("hashedKey");
 CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provider", "providerAccountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");

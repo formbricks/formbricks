@@ -40,7 +40,7 @@ export const ResetPasswordForm = ({ token }) => {
       )}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="email" className="text-ui-gray-dark block text-sm font-medium">
+          <label htmlFor="email" className="block text-sm font-medium text-slate-800">
             New password
           </label>
           <div className="mt-1">

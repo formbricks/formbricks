@@ -50,7 +50,7 @@ export const SignupForm = () => {
       )}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="name" className="text-ui-gray-dark block text-sm font-medium">
+          <label htmlFor="name" className="block text-sm font-medium text-slate-800">
             Full Name
           </label>
           <div className="mt-1">
@@ -65,7 +65,7 @@ export const SignupForm = () => {
           </div>
         </div>
         <div>
-          <label htmlFor="email" className="text-ui-gray-dark block text-sm font-medium">
+          <label htmlFor="email" className="block text-sm font-medium text-slate-800">
             Email address
           </label>
           <div className="mt-1">
@@ -80,7 +80,7 @@ export const SignupForm = () => {
           </div>
         </div>
         <div>
-          <label htmlFor="email" className="text-ui-gray-dark block text-sm font-medium">
+          <label htmlFor="email" className="block text-sm font-medium text-slate-800">
             Password
           </label>
           <div className="mt-1">

@@ -14,6 +14,7 @@
     "@headlessui/react": "^1.7.4",
     "@heroicons/react": "^2.0.13",
     "bcryptjs": "^2.4.3",
+    "clsx": "^1.2.1",
     "date-fns": "^2.29.3",
     "jsonwebtoken": "^8.5.1",
     "next": "^13.0.5",

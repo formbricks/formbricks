@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
 
   if (session) {
-    router.push("/projects");
+    router.push("/app");
   }
   return (
     <div className="isolate bg-white">
