@@ -13,7 +13,7 @@
     "clean": "rimraf .turbo node_modules dist",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
-    "db:push": "prisma db push",
+    "db:push": "prisma db push --accept-data-loss",
     "dev": "tsup --watch",
     "format": "prisma format",
     "generate": "prisma generate",
