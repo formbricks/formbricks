@@ -10,7 +10,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
 
   const teamId = req.query.teamId.toString();
-
   const formId = req.query.formId.toString();
 
   // check team permission
@@ -26,26 +25,37 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "You don't have access to this team or this team doesn't exist" });
   }
 
-  // GET /api/teams[teamId]/forms/[formId]
-  // Get a specific team
+  // GET /api/teams[teamId]/forms/[formId]/pipelines
+  // Get pipelines
   if (req.method === "GET") {
-    const forms = await prisma.form.findFirst({
+    // get submission
+    const pipelines = await prisma.pipeline.findMany({
       where: {
-        id: formId,
-        teamId,
+        form: {
+          id: formId,
+          teamId,
+        },
       },
     });
 
-    return res.json(forms);
+    return res.json(pipelines);
   }
 
-  // Delete /api/teams[teamId]/forms/[formId]
-  // Deletes a single form
-  else if (req.method === "DELETE") {
-    const prismaRes = await prisma.form.delete({
-      where: { id: formId, teamId },
+  // POST /api/teams[teamId]/forms/[formId]/pipelines
+  // Create a new pipeline
+  // Required fields in body: name, type
+  // Optional fields in body: enabled, config
+  else if (req.method === "POST") {
+    const pipeline = req.body;
+
+    // create form in db
+    const result = await prisma.pipeline.create({
+      data: {
+        ...pipeline,
+        form: { connect: { id: formId } },
+      },
     });
-    return res.json(prismaRes);
+    res.json(result);
   }
 
   // Unknown HTTP Method

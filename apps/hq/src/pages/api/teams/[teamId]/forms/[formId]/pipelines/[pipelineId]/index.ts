@@ -10,8 +10,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
 
   const teamId = req.query.teamId.toString();
-
   const formId = req.query.formId.toString();
+  const pipelineId = req.query.pipelineId.toString();
 
   // check team permission
   const membership = await prisma.membership.findUnique({
@@ -26,24 +26,35 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "You don't have access to this team or this team doesn't exist" });
   }
 
-  // GET /api/teams[teamId]/forms/[formId]
-  // Get a specific team
+  // GET /api/teams[teamId]/forms/[formId]/pipelines/[pipelineId]
+  // Get a specific pipeline
   if (req.method === "GET") {
-    const forms = await prisma.form.findFirst({
+    const forms = await prisma.pipeline.findUnique({
       where: {
-        id: formId,
-        teamId,
+        id: pipelineId,
+        formId: formId,
       },
     });
 
     return res.json(forms);
   }
 
-  // Delete /api/teams[teamId]/forms/[formId]
+  // POST /api/teams[teamId]/forms/[formId]/pipelines/[pipelineId]
+  // Replace a specific pipeline
+  else if (req.method === "POST") {
+    const data = { ...req.body, updatedAt: new Date() };
+    const prismaRes = await prisma.pipeline.update({
+      where: { id: pipelineId },
+      data,
+    });
+    return res.json(prismaRes);
+  }
+
+  // Delete /api/teams[teamId]/forms/[formId]/pipelines/[pipelineId]
   // Deletes a single form
   else if (req.method === "DELETE") {
-    const prismaRes = await prisma.form.delete({
-      where: { id: formId, teamId },
+    const prismaRes = await prisma.pipeline.delete({
+      where: { id: pipelineId, formId },
     });
     return res.json(prismaRes);
   }

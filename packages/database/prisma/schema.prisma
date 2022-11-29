@@ -18,16 +18,21 @@ enum PipelineType {
   EMAIL_NOTIFICATION
 }
 
+enum PipelineEvent {
+  SUBMISSION_CREATED
+}
+
 model Pipeline {
-  id        String       @id @default(cuid())
-  createdAt DateTime     @default(now()) @map(name: "created_at")
-  updatedAt DateTime     @updatedAt @map(name: "updated_at")
-  name      String
+  id        String          @id @default(cuid())
+  createdAt DateTime        @default(now()) @map(name: "created_at")
+  updatedAt DateTime        @updatedAt @map(name: "updated_at")
+  label     String
   type      PipelineType
-  form      Form         @relation(fields: [formId], references: [id], onDelete: Cascade)
+  events    PipelineEvent[]
+  form      Form            @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId    String
-  enabled   Boolean      @default(false)
-  config    Json         @default("{}")
+  enabled   Boolean         @default(false)
+  config    Json            @default("{}")
 }
 
 model Customer {
