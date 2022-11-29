@@ -13,7 +13,7 @@ export default function MeSettingsPage() {
   const [openNewApiKeyModal, setOpenNewApiKeyModal] = useState(false);
 
   return (
-    <div>
+    <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8">
       <header className="mb-8">
         <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">Account Settings</h1>
       </header>

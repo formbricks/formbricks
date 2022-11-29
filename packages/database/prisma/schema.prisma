@@ -18,13 +18,13 @@ enum PipelineType {
 }
 
 model Pipeline {
-  id        Int          @id @default(autoincrement())
+  id        String       @id @default(cuid())
   createdAt DateTime     @default(now()) @map(name: "created_at")
   updatedAt DateTime     @updatedAt @map(name: "updated_at")
   name      String
   type      PipelineType
   form      Form         @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId    Int
+  formId    String
   enabled   Boolean      @default(false)
   config    Json         @default("{}")
 }
@@ -34,7 +34,7 @@ model Customer {
   createdAt   DateTime     @default(now()) @map(name: "created_at")
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
   team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId      Int
+  teamId      String
   submissions Submission[]
   data        Json         @default("{}")
 
@@ -42,31 +42,31 @@ model Customer {
 }
 
 model Form {
-  id          Int          @id @default(autoincrement())
+  id          String       @id @default(cuid())
   createdAt   DateTime     @default(now()) @map(name: "created_at")
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
   label       String
   team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId      Int
+  teamId      String
   schema      Json         @default("{}")
   submissions Submission[]
   pipelines   Pipeline[]
 }
 
 model Submission {
-  id         Int       @id @default(autoincrement())
+  id         String    @id @default(cuid())
   createdAt  DateTime  @default(now()) @map(name: "created_at")
   updatedAt  DateTime  @updatedAt @map(name: "updated_at")
   form       Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId     Int
+  formId     String
   customer   Customer? @relation(fields: [customerId, teamId], references: [id, teamId])
   customerId String?
-  teamId     Int?
+  teamId     String?
   data       Json      @default("{}")
 }
 
 model Team {
-  id        Int          @id @default(autoincrement())
+  id        String       @id @default(cuid())
   createdAt DateTime     @default(now()) @map(name: "created_at")
   updatedAt DateTime     @updatedAt @map(name: "updated_at")
   name      String
@@ -83,9 +83,9 @@ enum MembershipRole {
 
 model Membership {
   team     Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId   Int
+  teamId   String
   user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   Int
+  userId   String
   accepted Boolean        @default(false)
   role     MembershipRole
 
@@ -93,13 +93,13 @@ model Membership {
 }
 
 model ApiKey {
-  id         Int       @id @unique @default(autoincrement())
+  id         String    @id @unique @default(cuid())
   createdAt  DateTime  @default(now())
   lastUsedAt DateTime?
   label      String?
   hashedKey  String    @unique()
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     Int
+  userId     String
 }
 
 enum IdentityProvider {
@@ -108,11 +108,11 @@ enum IdentityProvider {
 }
 
 model Account {
-  id                Int      @id @default(autoincrement())
+  id                String   @id @default(cuid())
   createdAt         DateTime @default(now()) @map(name: "created_at")
   updatedAt         DateTime @updatedAt @map(name: "updated_at")
   user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId            Int
+  userId            String
   type              String
   provider          String
   providerAccountId String
@@ -128,7 +128,7 @@ model Account {
 }
 
 model User {
-  id                        Int              @id @default(autoincrement())
+  id                        String           @id @default(cuid())
   createdAt                 DateTime         @default(now()) @map(name: "created_at")
   updatedAt                 DateTime         @updatedAt @map(name: "updated_at")
   name                      String?

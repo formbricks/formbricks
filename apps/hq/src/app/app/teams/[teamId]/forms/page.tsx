@@ -6,7 +6,7 @@ import { useTeam } from "@/lib/teams";
 import FormsList from "./FormsList";
 
 export default function FormsPage({ params }) {
-  const { forms, isLoadingForms, isErrorForms } = useForms(params.teamId);
+  const { isLoadingForms, isErrorForms } = useForms(params.teamId);
   const { team, isLoadingTeam, isErrorTeam } = useTeam(params.teamId);
 
   if (isLoadingForms || isLoadingTeam) {

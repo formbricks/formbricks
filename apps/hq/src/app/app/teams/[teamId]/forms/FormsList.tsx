@@ -3,7 +3,7 @@
 import EmptyPageFiller from "@/components/EmptyPageFiller";
 import { deleteForm, useForms } from "@/lib/forms";
 import { Menu, Transition } from "@headlessui/react";
-import { CommandLineIcon, DocumentPlusIcon, PlusIcon, SquaresPlusIcon } from "@heroicons/react/24/outline";
+import { DocumentPlusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import { Fragment, useState } from "react";
 import NewFormModal from "./NewFormModal";
 
 export default function FormsList({ teamId }) {
-  const { forms, mutateForms } = useForms(teamId);
+  const { forms, mutateForms, isLoadingForms } = useForms(teamId);
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
 
   const newForm = async () => {
