@@ -3,13 +3,36 @@
 import { Disclosure } from "@headlessui/react";
 import { BellIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 
 export default function FormLayout({ params, children }) {
-  const navigation = [
-    { name: "Form", href: `/teams/${params.teamId}/forms/${params.formId}/`, current: true },
-    { name: "Pipelines", href: `/teams/${params.teamId}/forms/${params.formId}/pipelines/`, current: false },
-    { name: "Results", href: `/teams/${params.teamId}/forms/${params.formId}/results/`, current: false },
-  ];
+  const pathname = usePathname();
+  const navigation = useMemo(
+    () => [
+      {
+        name: "Form",
+        href: `/app/teams/${params.teamId}/forms/${params.formId}/`,
+        current: pathname.endsWith(params.formId),
+      },
+      {
+        name: "Pipelines",
+        href: `/app/teams/${params.teamId}/forms/${params.formId}/pipelines/`,
+        current: pathname.includes("pipelines"),
+      },
+      {
+        name: "Summary",
+        href: `/app/teams/${params.teamId}/forms/${params.formId}/summary/`,
+        current: pathname.includes("summary"),
+      },
+      {
+        name: "Submissions",
+        href: `/app/teams/${params.teamId}/forms/${params.formId}/submissions/`,
+        current: pathname.includes("results"),
+      },
+    ],
+    [params]
+  );
   return (
     <>
       <Disclosure as="header" className="bg-white shadow">

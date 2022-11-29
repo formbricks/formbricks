@@ -4,13 +4,13 @@ import LoadingSpinner from "@/app/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { useTeam } from "@/lib/teams";
 import { Button } from "@formbricks/ui";
-import { DocumentMagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
+import Prism from "prismjs";
 import { useEffect, useMemo } from "react";
 import { FaReact, FaVuejs } from "react-icons/fa";
+import { AiFillHtml5 } from "react-icons/ai";
 import { toast } from "react-toastify";
-import Prism from "prismjs";
 
 require("prismjs/components/prism-javascript");
 
@@ -22,6 +22,14 @@ const getLibs = (formId: string) => [
     bgColor: "bg-brand-dark",
     target: "_blank",
     icon: FaReact,
+  },
+  {
+    id: "html",
+    name: "HTML",
+    href: `https://formbricks.com/docs/react-form-library/link-formbricks-hq`,
+    bgColor: "bg-brand-dark",
+    target: "_blank",
+    icon: AiFillHtml5,
   },
   {
     id: "reactNative",
@@ -51,8 +59,10 @@ export default function FormsPage({ params }) {
   }, [form]);
 
   useEffect(() => {
-    Prism.highlightAll();
-  }, []);
+    if (!isLoadingForm) {
+      Prism.highlightAll();
+    }
+  }, [isLoadingForm]);
 
   if (isLoadingForm || isLoadingTeam) {
     return (
@@ -77,36 +87,74 @@ export default function FormsPage({ params }) {
       </header>
       <div>
         <div className="mx-auto mt-8">
-          <h1 className="text-ui-gray-dark text-3xl font-bold leading-tight">Connect your form</h1>
+          <h1 className="text-xl font-bold leading-tight text-slate-900">Connect your form</h1>
         </div>
-        <div className="mt-4 mb-12">
-          <p className="text-ui-gray-dark">
-            To send all form submissions to this dashboard, update the form ID in the{" "}
-            <code className="javascript">{"<snoopForm>"}</code> component.
-          </p>
-        </div>
+
         <div className="grid grid-cols-2 gap-10">
           <div>
-            <label htmlFor="formId" className="text-ui-gray-dark block text-base">
-              Your form ID
-            </label>
-            <div className="mt-3">
-              <input
-                id="formId"
-                type="text"
-                className="text-md mb-3 w-full rounded-sm border-gray-300 shadow-sm disabled:bg-gray-100"
-                value={form.id}
-                disabled
-              />
+            <div className="mt-4 mb-12">
+              <p className="text-slate-700">
+                To get started post your submission to the Formbricks HQ capture endpoint. To enable the
+                summary feature also set the schema of this form.
+                <br />
+                If you are using the Formbricks React Library it&apos;s even easier to get started. All you
+                need is you formId and we take care of the rest (including the schema).
+              </p>
+            </div>
 
-              <Button
-                className="w-full justify-center"
-                onClick={() => {
-                  navigator.clipboard.writeText(form.id);
-                  toast("Copied form ID to clipboard");
-                }}>
-                copy
-              </Button>
+            <div>
+              <label htmlFor="formId" className="block text-base text-slate-800">
+                Your form ID
+              </label>
+              <div className="mt-3 w-96">
+                <input
+                  id="formId"
+                  type="text"
+                  className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100 sm:text-sm"
+                  value={form.id}
+                  disabled
+                />
+
+                <Button
+                  variant="secondary"
+                  className="mt-2 w-full justify-center"
+                  onClick={() => {
+                    navigator.clipboard.writeText(form.id);
+                    toast("Copied form ID to clipboard");
+                  }}>
+                  copy
+                </Button>
+              </div>
+            </div>
+            <hr className="my-6" />
+            <div className="max-w-2xl">
+              <label htmlFor="formId" className="block text-base text-slate-800">
+                Capture POST Url:
+              </label>
+              <div className="mt-3">
+                <div className="mt-1 flex rounded-md shadow-sm">
+                  <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-200 px-3 text-gray-500  sm:text-sm">
+                    POST
+                  </span>
+                  <input
+                    id="captureUrl"
+                    type="text"
+                    className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm"
+                    value={`${window.location.protocol}//${window.location.host}/capture/forms/${form.id}/submissions`}
+                    disabled
+                  />
+                </div>
+
+                <Button
+                  variant="secondary"
+                  className="mt-2 w-full justify-center"
+                  onClick={() => {
+                    navigator.clipboard.writeText(form.id);
+                    toast("Copied form Url to clipboard");
+                  }}>
+                  copy
+                </Button>
+              </div>
             </div>
           </div>
           <div className="rounded-md bg-black p-8 font-light text-gray-200">
@@ -140,9 +188,9 @@ export default function WaitlistForm() {
           </div>
         </div>
         <div className="mt-16">
-          <h2 className="text-ui-gray-dark text-xl font-bold">Code your form</h2>
+          <h2 className="text-xl font-bold text-slate-800">Code your form</h2>
           <div className="mt-4 mb-12">
-            <p className="text-ui-gray-dark">
+            <p className="text-slate-800">
               Build your form with the code library of your choice. Manage your data in this dashboard.
             </p>
           </div>

@@ -9,6 +9,7 @@ datasource db {
 
 generator client {
   provider        = "prisma-client-js"
+  //provider        = "prisma-dbml-generator"
   previewFeatures = ["referentialIntegrity"]
 }
 

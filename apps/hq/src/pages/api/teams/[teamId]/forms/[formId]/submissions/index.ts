@@ -9,15 +9,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(401).json({ message: "Not authenticated" });
   }
 
-  const teamId = parseInt(req.query.teamId.toString());
-  if (isNaN(teamId)) {
-    return res.status(400).json({ message: "Invalid teamId" });
-  }
+  const teamId = req.query.teamId.toString();
 
-  const formId = parseInt(req.query.formId.toString());
-  if (isNaN(formId)) {
-    return res.status(400).json({ message: "Invalid formId" });
-  }
+  const formId = req.query.formId.toString();
 
   // check team permission
   const membership = await prisma.membership.findUnique({

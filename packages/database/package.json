@@ -1,5 +1,6 @@
 {
   "name": "@formbricks/database",
+  "private": true,
   "version": "1.0.0",
   "license": "MIT",
   "main": "./dist/index.js",
@@ -26,11 +27,12 @@
     "@prisma/client": "^4.6.1"
   },
   "devDependencies": {
-    "eslint-config-formbricks": "workspace:*",
-    "eslint": "^8.27.0",
-    "prisma": "^4.6.1",
-    "rimraf": "^3.0.2",
     "@formbricks/tsconfig": "workspace:*",
+    "eslint": "^8.27.0",
+    "eslint-config-formbricks": "workspace:*",
+    "prisma": "^4.6.1",
+    "prisma-dbml-generator": "^0.10.0",
+    "rimraf": "^3.0.2",
     "tsup": "^6.4.0",
     "tsx": "^3.12.0",
     "typescript": "^4.8.4"
