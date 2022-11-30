@@ -9,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment } from "react";
+import { ToastContainer } from "react-toastify";
 import LoadingSpinner from "../LoadingSpinner";
 import { Logo } from "../Logo";
 
@@ -154,6 +155,7 @@ export default function ProjectsLayout({ params, children }) {
         </Disclosure>
 
         <main className="h-full">{children}</main>
+        <ToastContainer />
       </div>
     </>
   );
