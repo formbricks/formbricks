@@ -11,7 +11,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   const teamId = req.query.teamId.toString();
   const formId = req.query.formId.toString();
-  const pipelineId = req.query.pipelineId.toString();
+  const submissionId = req.query.submissionId.toString();
 
   // check team permission
   const membership = await prisma.membership.findUnique({
@@ -26,36 +26,36 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "You don't have access to this team or this team doesn't exist" });
   }
 
-  // GET /api/teams[teamId]/forms/[formId]/pipelines/[pipelineId]
-  // Get a specific pipeline
+  // GET /api/teams[teamId]/forms/[formId]/submissions/[submissionId]
+  // Get a specific submission
   if (req.method === "GET") {
     console.log("call2");
-    const pipeline = await prisma.pipeline.findFirst({
+    const submission = await prisma.submission.findFirst({
       where: {
-        id: pipelineId,
+        id: submissionId,
         formId: formId,
       },
     });
 
-    return res.json(pipeline);
+    return res.json(submission);
   }
 
-  // POST /api/teams[teamId]/forms/[formId]/pipelines/[pipelineId]
-  // Replace a specific pipeline
+  // POST /api/teams[teamId]/forms/[formId]/submissions/[submissionId]
+  // Replace a specific submission
   else if (req.method === "POST") {
     const data = { ...req.body, updatedAt: new Date() };
-    const prismaRes = await prisma.pipeline.update({
-      where: { id: pipelineId },
+    const prismaRes = await prisma.submission.update({
+      where: { id: submissionId },
       data,
     });
     return res.json(prismaRes);
   }
 
-  // Delete /api/teams[teamId]/forms/[formId]/pipelines/[pipelineId]
+  // Delete /api/teams[teamId]/forms/[formId]/submissions/[submissionId]
   // Deletes a single form
   else if (req.method === "DELETE") {
-    const prismaRes = await prisma.pipeline.delete({
-      where: { id: pipelineId },
+    const prismaRes = await prisma.submission.delete({
+      where: { id: submissionId },
     });
     return res.json(prismaRes);
   }

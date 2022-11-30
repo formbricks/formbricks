@@ -10,7 +10,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
 
   const teamId = req.query.teamId.toString();
-
   const formId = req.query.formId.toString();
 
   // check team permission

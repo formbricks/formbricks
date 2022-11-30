@@ -5,7 +5,25 @@ import { useForm } from "@/lib/forms";
 import clsx from "clsx";
 
 export default function SubmissionDisplay({ params, submission }) {
-  const { form, isLoadingForm } = useForm(params.formId, params.formId);
+  const { form, isLoadingForm } = useForm(params.formId, params.teamId);
+
+  const MergeWithSchema = (submissionData, schema) => {
+    if (!schema) {
+      return submissionData;
+    }
+    const mergedData = {};
+    for (const elem of schema.children) {
+      if (["submit"].includes(elem.type)) {
+        continue;
+      }
+      if (elem.name in submissionData) {
+        mergedData[elem.label] = submissionData[elem.name];
+      } else {
+        mergedData[elem.label] = "not provided";
+      }
+    }
+    return mergedData;
+  };
 
   if (isLoadingForm) {
     return <LoadingSpinner />;
@@ -14,7 +32,7 @@ export default function SubmissionDisplay({ params, submission }) {
   return (
     <div className="flow-root">
       <ul role="list" className="divide-ui-gray-light divide-y">
-        {Object.entries(submission.data).map(([key, value]) => (
+        {Object.entries(MergeWithSchema(submission.data, form.schema)).map(([key, value]) => (
           <li key={key} className="py-5">
             <p className="text-sm font-semibold text-gray-800">{key}</p>
 

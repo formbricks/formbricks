@@ -39,6 +39,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.json(forms);
   }
 
+  // POST /api/teams[teamId]/forms/[formId]
+  // Replace a specific form
+  else if (req.method === "POST") {
+    const data = { ...req.body, updatedAt: new Date() };
+    const prismaRes = await prisma.form.update({
+      where: { id: formId },
+      data,
+    });
+    return res.json(prismaRes);
+  }
+
   // Delete /api/teams[teamId]/forms/[formId]
   // Deletes a single form
   else if (req.method === "DELETE") {
