@@ -8,7 +8,8 @@ export default function SubmissionDisplay({ params, submission }) {
   const { form, isLoadingForm } = useForm(params.formId, params.teamId);
 
   const MergeWithSchema = (submissionData, schema) => {
-    if (!schema) {
+    if (Object.keys(schema).length === 0) {
+      // no schema provided
       return submissionData;
     }
     const mergedData = {};

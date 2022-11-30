@@ -3,10 +3,18 @@
 import LoadingSpinner from "@/app/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { useTeam } from "@/lib/teams";
+import { InformationCircleIcon } from "@heroicons/react/20/solid";
+import Link from "next/link";
+import { Bar } from "@formbricks/charts";
+import { useSubmissions } from "@/lib/submissions";
 
 export default function PipelinesPage({ params }) {
   const { form, isLoadingForm, isErrorForm } = useForm(params.formId, params.teamId);
   const { team, isLoadingTeam, isErrorTeam } = useTeam(params.teamId);
+  const { submissions, isLoadingSubmissions, mutateSubmissions } = useSubmissions(
+    params.teamId,
+    params.formId
+  );
 
   if (isLoadingForm || isLoadingTeam) {
     return (
@@ -29,6 +37,75 @@ export default function PipelinesPage({ params }) {
           </span>
         </h1>
       </header>
+      {Object.keys(form.schema).length === 0 ? (
+        <div className="rounded-md bg-yellow-50 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">This form doesn&apos;t have a schema </h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p>
+                  Formbricks HQ needs a schema of your form to display a summary. Learn more about the schema
+                  and how you can add one in our docs.
+                </p>
+              </div>
+              <div className="mt-4">
+                <div className="-mx-2 -my-1.5 flex">
+                  <Link
+                    target="_blank"
+                    href="https://formbricks.com/docs"
+                    className="rounded-md bg-yellow-50 px-2 py-1.5 text-sm font-medium text-yellow-800 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-600 focus:ring-offset-2 focus:ring-offset-yellow-50">
+                    View docs
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div>
+          {form.schema.children.map((elem) => (
+            <>
+              {["email", "number", "phone", "radio", "search", "text", "textarea", "url"].includes(
+                elem.type
+              ) ? (
+                <div className="mb-6">
+                  <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                    {elem.label}
+                    <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
+                      Checkbox
+                    </span>
+                  </h2>
+                  <div className="rounded-md bg-teal-50 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <InformationCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
+                      </div>
+                      <div className="ml-3">
+                        <div className="mt-2 text-sm text-teal-700">
+                          <p>We will support the input type {elem.type} soon in the summary.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : ["checkbox", "radio"].includes(elem.type) ? (
+                <div className="mb-6">
+                  <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                    {elem.label}
+                    <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
+                      Checkbox
+                    </span>
+                  </h2>
+                  <Bar submissions={submissions} schema={form.schema} show={elem.name} />
+                </div>
+              ) : null}
+            </>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

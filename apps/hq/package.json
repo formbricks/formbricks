@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@formbricks/charts": "workspace:*",
     "@formbricks/react": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@headlessui/react": "^1.7.4",
