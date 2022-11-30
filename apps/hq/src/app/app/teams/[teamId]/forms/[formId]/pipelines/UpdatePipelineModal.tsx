@@ -5,8 +5,8 @@ import PipelineSettings from "./PipelineSettings";
 
 export default function UpdatePipelineModal({ open, setOpen, params, pipelineId }) {
   const { pipeline, isLoadingPipeline, mutatePipeline } = usePipeline(
-    params.formId,
     params.teamId,
+    params.formId,
     pipelineId
   );
   const { pipelines, mutatePipelines } = usePipelines(params.formId, params.teamId);

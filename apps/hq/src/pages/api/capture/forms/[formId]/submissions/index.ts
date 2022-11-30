@@ -1,4 +1,4 @@
-import { getSessionOrUser } from "@/lib/apiHelper";
+import { runPipelines } from "@/lib/pipelinesHandler";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -12,6 +12,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   if (req.method === "POST") {
     const submission = req.body;
 
+    // get team
+    const form = await prisma.form.findUnique({
+      where: { id: formId },
+    });
+
     const event: any = {
       data: {
         data: submission.data,
@@ -20,13 +25,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     };
 
     if (submission.customerId) {
-      // get team
-      const form = await prisma.form.findUnique({
-        where: { id: formId },
-        select: {
-          teamId: true,
-        },
-      });
       // create or link customer
       event.data.customer = {
         connectOrCreate: {
@@ -45,8 +43,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // create form in db
-    const result = await prisma.submission.create(event);
-    res.json(result);
+    const submissionResult = await prisma.submission.create(event);
+    await runPipelines(form, submission);
+    res.json(submissionResult);
   }
 
   // Unknown HTTP Method

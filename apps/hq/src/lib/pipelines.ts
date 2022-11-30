@@ -1,4 +1,5 @@
 import useSWR from "swr";
+
 import { fetcher } from "./utils";
 
 export const usePipelines = (formId: string, teamId: string) => {
@@ -12,8 +13,11 @@ export const usePipelines = (formId: string, teamId: string) => {
   };
 };
 
-export const usePipeline = (id: string, formId: string, teamId: string) => {
-  const { data, error, mutate } = useSWR(`/api/teams/${teamId}/forms/${formId}/pipelines/${id}`, fetcher);
+export const usePipeline = (teamId: string, formId: string, pipelineId: string) => {
+  const { data, error, mutate } = useSWR(
+    `/api/teams/${teamId}/forms/${formId}/pipelines/${pipelineId}`,
+    fetcher
+  );
 
   return {
     pipeline: data,

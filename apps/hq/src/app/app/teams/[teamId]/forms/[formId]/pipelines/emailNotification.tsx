@@ -1,19 +1,14 @@
 export const emailNotification = {
   typeId: "EMAIL_NOTIFICATION",
   title: "Email Notification",
-  description: "Get an email notification when your form is completed",
+  description: "Get an email notifications",
 };
 
 const eventTypes = [
   {
-    id: "PAGE_SUBMISSION",
-    name: "Page Submission",
-    description: "every time a form page is submitted (partial submission)",
-  },
-  {
-    id: "FORM_COMPLETED",
-    name: "Form completed",
-    description: "each time the form is fully completed (total submission)",
+    id: "SUBMISSION_CREATED",
+    name: "Submission Created",
+    description: "Every time a new submission is created",
   },
 ];
 
@@ -51,16 +46,16 @@ export function EmailNotificationSettings({ pipeline, setPipeline }) {
         <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
           <div className="sm:col-span-4">
             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Pipeline Name
+              Pipeline Label
             </label>
             <div className="mt-1">
               <input
                 type="text"
-                name="name"
-                id="name"
-                value={pipeline.name || ""}
-                onChange={(e) => updateField("name", e.target.value)}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                name="label"
+                id="label"
+                value={pipeline.label || ""}
+                onChange={(e) => updateField("label", e.target.value)}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
                 required
               />
             </div>
@@ -78,9 +73,9 @@ export function EmailNotificationSettings({ pipeline, setPipeline }) {
                 onInput={(e: any) => e.target.setCustomValidity("")}
                 name="email"
                 id="email"
-                value={pipeline.data.email || ""}
-                onChange={(e) => updateField("email", e.target.value, "data")}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
+                value={pipeline.config.email || ""}
+                onChange={(e) => updateField("email", e.target.value, "config")}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
                 required
               />
             </div>
@@ -113,7 +108,7 @@ export function EmailNotificationSettings({ pipeline, setPipeline }) {
                         type="checkbox"
                         checked={pipeline.events.includes(eventType.id)}
                         onChange={() => toggleEvent(eventType.id)}
-                        className="h-4 w-4 rounded-sm border-gray-300 text-red-600 focus:ring-red-500"
+                        className="h-4 w-4 rounded-sm border-gray-300 text-teal-600 focus:ring-teal-500"
                       />
                     </div>
                     <div className="ml-3 text-sm">
