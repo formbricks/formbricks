@@ -77,7 +77,11 @@ export function Radio(props: FormbricksProps) {
                     disabled={option?.config?.disabled}
                     {...register(props.name)}
                   />
-                  <Label label={option.label} elemId={`${props.name}-${option.value}`} />
+                  <Label
+                    label={option.label}
+                    elemId={`${props.name}-${option.value}`}
+                    labelClassName={props.labelClassName}
+                  />
                 </Inner>
               </Wrapper>
             </Option>

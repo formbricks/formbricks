@@ -68,9 +68,8 @@ export default function PipelinesPage({ params }) {
         <div>
           {form.schema.children.map((elem) => (
             <>
-              {["email", "number", "phone", "radio", "search", "text", "textarea", "url"].includes(
-                elem.type
-              ) ? (
+              {console.log(elem.type)}
+              {["email", "number", "phone", "search", "text", "textarea", "url"].includes(elem.type) ? (
                 <div className="mb-6">
                   <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
                     {elem.label}
@@ -85,7 +84,7 @@ export default function PipelinesPage({ params }) {
                   <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
                     {elem.label}
                     <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-                      Checkbox
+                      {elem.type}
                     </span>
                   </h2>
                   <Bar submissions={submissions} schema={form.schema} fieldName={elem.name} />

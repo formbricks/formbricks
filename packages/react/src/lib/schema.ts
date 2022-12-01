@@ -27,14 +27,14 @@ export const useEffectUpdateSchema = (props: any, type: string) => {
   useEffect(() => {
     setSchema((schema: any) => {
       const newSchema = JSON.parse(JSON.stringify(schema));
-      let elementIdx = newSchema.findIndex((e: any) => e.name === props.name);
+      let elementIdx = newSchema.children.findIndex((e: any) => e.name === props.name);
       if (elementIdx === -1) {
-        newSchema.push(props);
-        elementIdx = newSchema.length - 1;
+        newSchema.children.push({ ...props, type });
+        elementIdx = newSchema.children.length - 1; // set elementIdx to newly added elem
       }
-      /* if (["checkbox", "radio"].includes(type)) {
-        newSchema.elements[elementIdx].options = getOptionsSchema(options);
-      } */
+      if ("options" in props) {
+        newSchema.children[elementIdx].options = getOptionsSchema(props.options);
+      }
       return newSchema;
     });
   }, [props, setSchema]);

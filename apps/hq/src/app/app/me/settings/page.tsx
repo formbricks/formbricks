@@ -128,8 +128,8 @@ export default function MeSettingsPage() {
           </h2>
           <hr className="my-4 w-full text-gray-400" />
           <Form
-            onSubmit={async ({ data }) => {
-              const apiKey = await createApiKey({ label: data.label });
+            onSubmit={async ({ submission }) => {
+              const apiKey = await createApiKey(submission.data);
               mutateApiKeys([...JSON.parse(JSON.stringify(apiKeys)), apiKey], false);
               setOpenNewApiKeyModal(false);
             }}>
