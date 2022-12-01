@@ -1,0 +1,56 @@
+import { Layout } from "@/components/docs/Layout";
+import Image from "next/image";
+import Step1 from "./step-1-send-web-form-to-email-open-source.png";
+import Step2 from "./step-2-select-email-survey-response-to-email-send.png";
+import Step3 from "./step-3-add-email-to-send-form-data-to-open-source-alternative.png";
+import Step4 from "./step-4-set-active-to-send-survey-data-via-mail-to-myself-open-source.png";
+
+export const meta = {
+  title: "Email Notifications (UI) - Open-source Forms & Surveys",
+};
+
+You can send your form and survey data to your email address. To do so you can setup an Email Pipeline in your form settings.
+
+## Send form data to email
+
+### Setup
+
+You need to have a form created to add a data pipeline to it.
+
+### Step 1: Add Pipeline
+
+In the top bar, select “Pipelines”. Click on “Add Pipeline” in the top right corner:
+
+<Image src={Step1} className="rounded-lg" alt="Step 1 of sending form data to your email address" />
+
+### Step 2: Select type of Pipeline
+
+Select Email Notification. You can also set up a custom [Webhook](/docs/formbricks-hq/ui/webhooks).
+
+<Image src={Step2} className="rounded-lg" alt="Step 2 of best webform to email tool" />
+
+### Step 3: Configure settings
+
+To setup your Pipeline you need to fill out two fields:
+
+**Pipeline label:** Give it a name, this is just for you
+
+**Email address:** Type in your email address
+
+Then select “Create”.
+
+<Image src={Step3} className="rounded-lg" alt="Step 3 of how to send form to email" />
+
+### Step 4: Make sure it’s active
+
+Congrats, you have created your email pipeline! Make sure it is set to “**Active**”.
+
+<Image
+  src={Step4}
+  className="rounded-lg"
+  alt="Step 4 of sending survey data form open source survey to your email"
+/>
+
+From now on you will receive an email with the form content whenever someone submits your form. To deactive it, just turn it off. You can also delete it anytime.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

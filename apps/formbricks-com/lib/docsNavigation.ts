@@ -98,8 +98,8 @@ const navigation = [
     links: [
       { title: "Core API", href: "/docs/formbricks-hq/core-api" },
       { title: "Schema", href: "/docs/formbricks-hq/schema" },
-      { title: "Email Notifications", href: "/docs/formbricks-hq/email-notifications" },
-      { title: "Webhooks", href: "/docs/formbricks-hq/webhooks" },
+      { title: "Email Notifications (UI)", href: "/docs/formbricks-hq/ui/email-notifications" },
+      { title: "Webhooks (UI)", href: "/docs/formbricks-hq/ui/webhooks" },
     ],
   },
 ];
