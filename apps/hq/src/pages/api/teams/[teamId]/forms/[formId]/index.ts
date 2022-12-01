@@ -9,15 +9,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(401).json({ message: "Not authenticated" });
   }
 
-  const teamId = parseInt(req.query.teamId.toString());
-  if (isNaN(teamId)) {
-    return res.status(400).json({ message: "Invalid teamId" });
-  }
+  const teamId = req.query.teamId.toString();
 
-  const formId = parseInt(req.query.formId.toString());
-  if (isNaN(formId)) {
-    return res.status(400).json({ message: "Invalid formId" });
-  }
+  const formId = req.query.formId.toString();
 
   // check team permission
   const membership = await prisma.membership.findUnique({
@@ -35,13 +29,25 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // GET /api/teams[teamId]/forms/[formId]
   // Get a specific team
   if (req.method === "GET") {
-    const forms = await prisma.form.findUnique({
+    const forms = await prisma.form.findFirst({
       where: {
         id: formId,
+        teamId,
       },
     });
 
     return res.json(forms);
+  }
+
+  // POST /api/teams[teamId]/forms/[formId]
+  // Replace a specific form
+  else if (req.method === "POST") {
+    const data = { ...req.body, updatedAt: new Date() };
+    const prismaRes = await prisma.form.update({
+      where: { id: formId },
+      data,
+    });
+    return res.json(prismaRes);
   }
 
   // Delete /api/teams[teamId]/forms/[formId]

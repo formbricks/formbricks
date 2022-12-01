@@ -10,6 +10,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
 
   const teamId = req.query.teamId.toString();
+  const formId = req.query.formId.toString();
 
   // check team permission
   const membership = await prisma.membership.findUnique({
@@ -24,37 +25,34 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "You don't have access to this team or this team doesn't exist" });
   }
 
-  // GET /api/teams[teamId]/forms
-  // Get a specific team
+  // GET /api/teams[teamId]/forms/[formId]/pipelines
+  // Get pipelines
   if (req.method === "GET") {
-    const forms = await prisma.form.findMany({
+    // get submission
+    const pipelines = await prisma.pipeline.findMany({
       where: {
-        team: {
-          id: teamId,
-        },
-      },
-      include: {
-        _count: {
-          select: { submissions: true },
+        form: {
+          id: formId,
+          teamId,
         },
       },
     });
 
-    return res.json(forms);
+    return res.json(pipelines);
   }
 
-  // POST /api/teams[teamId]/forms
-  // Create a new form
-  // Required fields in body: -
-  // Optional fields in body: label, schema
+  // POST /api/teams[teamId]/forms/[formId]/pipelines
+  // Create a new pipeline
+  // Required fields in body: name, type
+  // Optional fields in body: enabled, config
   else if (req.method === "POST") {
-    const form = req.body;
+    const pipeline = req.body;
 
     // create form in db
-    const result = await prisma.form.create({
+    const result = await prisma.pipeline.create({
       data: {
-        ...form,
-        team: { connect: { id: teamId } },
+        ...pipeline,
+        form: { connect: { id: formId } },
       },
     });
     res.json(result);

@@ -1,19 +1,21 @@
-import { getSessionOrUser } from "@/lib/apiHelper";
+import { runPipelines } from "@/lib/pipelinesHandler";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-  const formId = parseInt(req.query.formId.toString());
-  if (isNaN(formId)) {
-    return res.status(400).json({ message: "Invalid formId" });
-  }
+  const formId = req.query.formId.toString();
 
   // POST/capture/forms/[formId]/submissions
   // Create a new form submission
   // Required fields in body: -
   // Optional fields in body: customerId, data
-  else if (req.method === "POST") {
+  if (req.method === "POST") {
     const submission = req.body;
+
+    // get team
+    const form = await prisma.form.findUnique({
+      where: { id: formId },
+    });
 
     const event: any = {
       data: {
@@ -23,13 +25,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     };
 
     if (submission.customerId) {
-      // get team
-      const form = await prisma.form.findUnique({
-        where: { id: formId },
-        select: {
-          teamId: true,
-        },
-      });
       // create or link customer
       event.data.customer = {
         connectOrCreate: {
@@ -48,8 +43,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // create form in db
-    const result = await prisma.submission.create(event);
-    res.json(result);
+    const submissionResult = await prisma.submission.create(event);
+    await runPipelines(form, submission);
+    res.json(submissionResult);
   }
 
   // Unknown HTTP Method

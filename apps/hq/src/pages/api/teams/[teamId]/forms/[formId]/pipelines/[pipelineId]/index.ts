@@ -10,6 +10,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
 
   const teamId = req.query.teamId.toString();
+  const formId = req.query.formId.toString();
+  const pipelineId = req.query.pipelineId.toString();
 
   // check team permission
   const membership = await prisma.membership.findUnique({
@@ -24,40 +26,38 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "You don't have access to this team or this team doesn't exist" });
   }
 
-  // GET /api/teams[teamId]/forms
-  // Get a specific team
+  // GET /api/teams[teamId]/forms/[formId]/pipelines/[pipelineId]
+  // Get a specific pipeline
   if (req.method === "GET") {
-    const forms = await prisma.form.findMany({
+    console.log("call2");
+    const pipeline = await prisma.pipeline.findFirst({
       where: {
-        team: {
-          id: teamId,
-        },
-      },
-      include: {
-        _count: {
-          select: { submissions: true },
-        },
+        id: pipelineId,
+        formId: formId,
       },
     });
 
-    return res.json(forms);
+    return res.json(pipeline);
   }
 
-  // POST /api/teams[teamId]/forms
-  // Create a new form
-  // Required fields in body: -
-  // Optional fields in body: label, schema
+  // POST /api/teams[teamId]/forms/[formId]/pipelines/[pipelineId]
+  // Replace a specific pipeline
   else if (req.method === "POST") {
-    const form = req.body;
-
-    // create form in db
-    const result = await prisma.form.create({
-      data: {
-        ...form,
-        team: { connect: { id: teamId } },
-      },
+    const data = { ...req.body, updatedAt: new Date() };
+    const prismaRes = await prisma.pipeline.update({
+      where: { id: pipelineId },
+      data,
     });
-    res.json(result);
+    return res.json(prismaRes);
+  }
+
+  // Delete /api/teams[teamId]/forms/[formId]/pipelines/[pipelineId]
+  // Deletes a single form
+  else if (req.method === "DELETE") {
+    const prismaRes = await prisma.pipeline.delete({
+      where: { id: pipelineId },
+    });
+    return res.json(prismaRes);
   }
 
   // Unknown HTTP Method

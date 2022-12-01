@@ -9,12 +9,12 @@ CREATE TYPE "IdentityProvider" AS ENUM ('EMAIL', 'GITHUB');
 
 -- CreateTable
 CREATE TABLE "Pipeline" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "type" "PipelineType" NOT NULL,
-    "formId" INTEGER NOT NULL,
+    "formId" TEXT NOT NULL,
     "enabled" BOOLEAN NOT NULL DEFAULT false,
     "config" JSONB NOT NULL DEFAULT '{}',
 
@@ -26,7 +26,7 @@ CREATE TABLE "Customer" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "teamId" INTEGER NOT NULL,
+    "teamId" TEXT NOT NULL,
     "data" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Customer_pkey" PRIMARY KEY ("id","teamId")
@@ -34,11 +34,11 @@ CREATE TABLE "Customer" (
 
 -- CreateTable
 CREATE TABLE "Form" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "label" TEXT NOT NULL,
-    "teamId" INTEGER NOT NULL,
+    "teamId" TEXT NOT NULL,
     "schema" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Form_pkey" PRIMARY KEY ("id")
@@ -46,12 +46,12 @@ CREATE TABLE "Form" (
 
 -- CreateTable
 CREATE TABLE "Submission" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "formId" INTEGER NOT NULL,
+    "formId" TEXT NOT NULL,
     "customerId" TEXT,
-    "teamId" INTEGER,
+    "teamId" TEXT,
     "data" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Submission_pkey" PRIMARY KEY ("id")
@@ -59,7 +59,7 @@ CREATE TABLE "Submission" (
 
 -- CreateTable
 CREATE TABLE "Team" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
@@ -69,8 +69,8 @@ CREATE TABLE "Team" (
 
 -- CreateTable
 CREATE TABLE "Membership" (
-    "teamId" INTEGER NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "teamId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "accepted" BOOLEAN NOT NULL DEFAULT false,
     "role" "MembershipRole" NOT NULL,
 
@@ -79,22 +79,22 @@ CREATE TABLE "Membership" (
 
 -- CreateTable
 CREATE TABLE "ApiKey" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "lastUsedAt" TIMESTAMP(3),
     "label" TEXT,
     "hashedKey" TEXT NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "userId" TEXT NOT NULL,
 
     CONSTRAINT "ApiKey_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Account" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "userId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "provider" TEXT NOT NULL,
     "providerAccountId" TEXT NOT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE "Account" (
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT,

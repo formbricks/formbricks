@@ -12,7 +12,7 @@ import { Button } from "@formbricks/ui";
 type FormOnboardingModalProps = {
   open: boolean;
   setOpen: (v: boolean) => void;
-  teamId: number;
+  teamId: string;
 };
 
 export default function NewFormModal({ open, setOpen, teamId }: FormOnboardingModalProps) {

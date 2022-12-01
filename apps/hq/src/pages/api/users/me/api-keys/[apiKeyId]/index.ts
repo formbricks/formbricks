@@ -12,11 +12,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(401).json({ message: "Not authenticated" });
   }
 
-  const apiKeyId = parseInt(req.query.apiKeyId.toString());
-
-  if (isNaN(apiKeyId)) {
-    return res.status(400).json({ message: "Invalid id" });
-  }
+  const apiKeyId = req.query.apiKeyId.toString();
 
   const ownership = await hasOwnership("apiKey", session, apiKeyId);
   if (!ownership) {

@@ -77,3 +77,19 @@ export const sendPasswordResetNotifyEmail = async (user) => {
     Your Formbricks Team`,
   });
 };
+
+export const sendSubmissionEmail = async (email: string, formLabel: string, formId: string, submission) => {
+  await sendEmail({
+    to: email,
+    subject: `${formLabel} new submission`,
+    html: `Hey, someone just filled out your form ${formLabel} in Formbricks.<br/>
+
+    ${Object.entries(submission.data)
+      .map(([key, value]) => `<p><strong>${key}</strong></p><p>${value}</p>`)
+      .join("")}
+    
+    Click <a href="${
+      process.env.NEXTAUTH_URL
+    }/forms/${formId}/results/responses">here</a> to see new submission`,
+  });
+};

@@ -1,16 +1,17 @@
 "use client";
 
+import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { Fragment, useMemo } from "react";
-import { Logo } from "../Logo";
-import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Fragment } from "react";
+import { ToastContainer } from "react-toastify";
 import LoadingSpinner from "../LoadingSpinner";
-import clsx from "clsx";
+import { Logo } from "../Logo";
 
 export default function ProjectsLayout({ params, children }) {
   const router = useRouter();
@@ -154,6 +155,7 @@ export default function ProjectsLayout({ params, children }) {
         </Disclosure>
 
         <main className="h-full">{children}</main>
+        <ToastContainer />
       </div>
     </>
   );

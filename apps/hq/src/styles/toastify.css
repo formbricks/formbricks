@@ -24,7 +24,7 @@
   --toastify-text-color-error: #fff;
   --toastify-spinner-color: #616161;
   --toastify-spinner-color-empty-area: #e0e0e0;
-  --toastify-color-progress-light: linear-gradient(to right, #7dd3fc, #0ea5e9);
+  --toastify-color-progress-light: linear-gradient(to right, #00c4b8, #00e6ca);
   --toastify-color-progress-dark: #bb86fc;
   --toastify-color-progress-info: var(--toastify-color-info);
   --toastify-color-progress-success: var(--toastify-color-success);

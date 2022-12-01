@@ -2,13 +2,10 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { Cog8ToothIcon, RectangleStackIcon, UsersIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useMemo, useState } from "react";
-
-function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
 
 export default function Example({ children, params }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,14 +36,6 @@ export default function Example({ children, params }) {
 
   return (
     <>
-      {/*
-        This example requires updating your template:
-
-        ```
-        <html class="h-full bg-gray-50">
-        <body class="h-full overflow-hidden">
-        ```
-      */}
       <div className="flex h-full">
         {/* Narrow sidebar */}
         <div className="bg-brand-dark hidden w-28 overflow-y-auto bg-gradient-to-r md:block">
@@ -56,7 +45,7 @@ export default function Example({ children, params }) {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={classNames(
+                  className={clsx(
                     item.current
                       ? "bg-brand-light text-white"
                       : "hover:bg-brand-light text-teal-100 hover:text-white",
@@ -64,7 +53,7 @@ export default function Example({ children, params }) {
                   )}
                   aria-current={item.current ? "page" : undefined}>
                   <item.icon
-                    className={classNames(
+                    className={clsx(
                       item.current ? "text-white" : "text-teal-300 group-hover:text-white",
                       "h-6 w-6"
                     )}
@@ -133,7 +122,7 @@ export default function Example({ children, params }) {
                           <a
                             key={item.name}
                             href={item.href}
-                            className={classNames(
+                            className={clsx(
                               item.current
                                 ? "bg-brand-dark text-white"
                                 : "hover:bg-brand-dark text-teal-100 hover:text-white",
@@ -141,7 +130,7 @@ export default function Example({ children, params }) {
                             )}
                             aria-current={item.current ? "page" : undefined}>
                             <item.icon
-                              className={classNames(
+                              className={clsx(
                                 item.current ? "text-white" : "text-teal-300 group-hover:text-white",
                                 "mr-3 h-6 w-6"
                               )}

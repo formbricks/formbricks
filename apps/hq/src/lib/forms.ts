@@ -1,7 +1,7 @@
 import useSWR from "swr";
 import { fetcher } from "./utils";
 
-export const useForms = (teamId) => {
+export const useForms = (teamId: string) => {
   const { data, error, mutate } = useSWR(`/api/teams/${teamId}/forms`, fetcher);
 
   return {
@@ -35,7 +35,7 @@ export const persistForm = async (form) => {
   }
 };
 
-export const createForm = async (teamId, form = {}) => {
+export const createForm = async (teamId: string, form = {}) => {
   try {
     const res = await fetch(`/api/teams/${teamId}/forms`, {
       method: "POST",
@@ -49,7 +49,7 @@ export const createForm = async (teamId, form = {}) => {
   }
 };
 
-export const deleteForm = async (teamId, formId) => {
+export const deleteForm = async (teamId: string, formId: string) => {
   try {
     await fetch(`/api/teams/${teamId}/forms/${formId}`, {
       method: "DELETE",

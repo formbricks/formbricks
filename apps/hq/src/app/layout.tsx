@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import "@/styles/toastify.css";
+import "@/styles/prism.css";
 // include styles from the ui package
 
 import SessionProvider from "./SessionProvider";

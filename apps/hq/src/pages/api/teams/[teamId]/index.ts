@@ -1,8 +1,6 @@
-import { getSessionOrUser, hashApiKey } from "@/lib/apiHelper";
+import { getSessionOrUser } from "@/lib/apiHelper";
 import { prisma } from "@formbricks/database";
-import { randomBytes } from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession } from "next-auth";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication
@@ -11,10 +9,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(401).json({ message: "Not authenticated" });
   }
 
-  const teamId = parseInt(req.query.teamId.toString());
-  if (isNaN(teamId)) {
-    return res.status(400).json({ message: "Invalid teamId" });
-  }
+  const teamId = req.query.teamId.toString();
 
   // GET /api/teams[teamId]
   // Get a specific team
