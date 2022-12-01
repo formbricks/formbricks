@@ -3,9 +3,9 @@
 import LoadingSpinner from "@/app/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { useTeam } from "@/lib/teams";
-import { InformationCircleIcon } from "@heroicons/react/20/solid";
+import { ExclamationTriangleIcon, InformationCircleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { Bar } from "@formbricks/charts";
+import { Bar, Table } from "@formbricks/charts";
 import { useSubmissions } from "@/lib/submissions";
 
 export default function PipelinesPage({ params }) {
@@ -78,18 +78,7 @@ export default function PipelinesPage({ params }) {
                       Checkbox
                     </span>
                   </h2>
-                  <div className="rounded-md bg-teal-50 p-4">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <InformationCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
-                      </div>
-                      <div className="ml-3">
-                        <div className="mt-2 text-sm text-teal-700">
-                          <p>We will support the input type {elem.type} soon in the summary.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <Table submissions={submissions} schema={form.schema} fieldName={elem.name} />
                 </div>
               ) : ["checkbox", "radio"].includes(elem.type) ? (
                 <div className="mb-6">
@@ -99,7 +88,7 @@ export default function PipelinesPage({ params }) {
                       Checkbox
                     </span>
                   </h2>
-                  <Bar submissions={submissions} schema={form.schema} show={elem.name} />
+                  <Bar submissions={submissions} schema={form.schema} fieldName={elem.name} />
                 </div>
               ) : null}
             </>

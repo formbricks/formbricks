@@ -150,7 +150,7 @@ export default function FormsPage({ params }) {
                   className="mt-2 w-full justify-center"
                   onClick={() => {
                     navigator.clipboard.writeText(form.id);
-                    toast("Copied form Url to clipboard");
+                    toast("Copied form url to clipboard");
                   }}>
                   copy
                 </Button>

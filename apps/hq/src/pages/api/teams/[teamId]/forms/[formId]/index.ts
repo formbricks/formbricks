@@ -54,7 +54,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Deletes a single form
   else if (req.method === "DELETE") {
     const prismaRes = await prisma.form.delete({
-      where: { id: formId, teamId },
+      where: { id: formId },
     });
     return res.json(prismaRes);
   }

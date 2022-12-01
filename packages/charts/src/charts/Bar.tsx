@@ -1,46 +1,37 @@
 import { useMemo } from "react";
-import { Bar, BarChart, CartesianGrid, Label, Legend, Tooltip, XAxis, YAxis } from "recharts";
-/* const data = [
-  {
-    name: "Page A",
-    value: 4000,
-  },
-  {
-    name: "Page B",
-    value: 3000,
-  },
-  {
-    name: "Page C",
-    value: 2000,
-  },
-  {
-    name: "Page D",
-    value: 2780,
-  },
-]; */
+import { Bar, BarChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from "recharts";
 
 interface Props {
   color?: string;
   submissions: any;
   schema: any;
-  show: string;
+  fieldName: string;
 }
 
-export function FbBar({ color, submissions, schema, show }: Props) {
+export function FbBar({ color, submissions, schema, fieldName }: Props) {
   const data = useMemo(() => {
+    if (!fieldName) {
+      throw Error("no field name provided");
+    }
+    if (!submissions || !schema || Object.keys(schema).length === 0) {
+      return [];
+    }
+    // build data object by finding schema definition of field and scanning submissions for this key
     const dataDict: any = {};
-    const schemaElem = schema.children.find((e: any) => e.name === show);
+    console.log(fieldName);
+    const schemaElem = schema.children.find((e: any) => e.name === fieldName);
     if (typeof schemaElem === "undefined") {
       throw Error("key not found in schema");
     }
+    console.log(JSON.stringify(schemaElem, null, 2));
     for (const option of schemaElem.options) {
       dataDict[option.value] = { name: option.label, value: 0 };
     }
     for (const submission of submissions) {
-      if (show in submission.data) {
+      if (fieldName in submission.data) {
         // if submission value is array (checkboxes)
-        if (Array.isArray(submission.data[show])) {
-          for (const value of submission.data[show]) {
+        if (Array.isArray(submission.data[fieldName])) {
+          for (const value of submission.data[fieldName]) {
             if (value in dataDict) {
               dataDict[value] = {
                 ...dataDict[value],
@@ -50,11 +41,11 @@ export function FbBar({ color, submissions, schema, show }: Props) {
           }
         }
         // if submission value is string (radio buttons)
-        else if (typeof submission.data[show] == "string") {
-          if (submission.data[show] in dataDict) {
-            dataDict[submission.data[show]] = {
-              ...dataDict[submission.data[show]],
-              value: dataDict[submission.data[show]].value + 1,
+        else if (typeof submission.data[fieldName] == "string") {
+          if (submission.data[fieldName] in dataDict) {
+            dataDict[submission.data[fieldName]] = {
+              ...dataDict[submission.data[fieldName]],
+              value: dataDict[submission.data[fieldName]].value + 1,
             };
           }
         }
@@ -62,11 +53,11 @@ export function FbBar({ color, submissions, schema, show }: Props) {
     }
     // transform dataDict to desired form
     const data = [];
-    for (const [key, value] of Object.entries(dataDict)) {
-      data.push(value);
+    for (const entry of Object.entries(dataDict)) {
+      data.push(entry[1]);
     }
     return data;
-  }, [submissions]);
+  }, [submissions, schema]);
 
   return (
     <>
