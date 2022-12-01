@@ -40,9 +40,9 @@ function Header({ navigation }: any) {
   return (
     <header
       className={clsx(
-        "sticky top-0 z-50 flex flex-wrap items-center justify-between bg-white px-4 py-5 shadow-md shadow-slate-900/5 transition duration-500 dark:shadow-none sm:px-6 lg:px-8",
+        "sticky top-0 z-50 flex flex-wrap items-center justify-between bg-slate-100 px-4 py-5 shadow-md shadow-slate-900/5 transition duration-500 dark:shadow-none sm:px-6 lg:px-8",
         isScrolled
-          ? "dark:bg-slate-900/95 dark:backdrop-blur dark:[@supports(backdrop-filter:blur(0))]:bg-slate-900/75"
+          ? "bg-slate-100/90 backdrop-blur dark:bg-slate-900/90 [@supports(backdrop-filter:blur(0))]:bg-slate-100/75 dark:[@supports(backdrop-filter:blur(0))]:bg-slate-900/75"
           : "dark:bg-transparent"
       )}>
       <div className="mr-6 flex lg:hidden">
@@ -50,27 +50,24 @@ function Header({ navigation }: any) {
       </div>
       <div className="relative flex flex-grow basis-0 items-center">
         <Link href="/" aria-label="Home page">
-          <Logomark className="h-9 w-9 lg:hidden" />
-          <FooterLogo className="hidden h-9 w-auto fill-slate-700 dark:fill-slate-100 lg:block" />
+          <FooterLogo className="h-8 w-auto sm:h-10" />
         </Link>
-        <div>
-          <Button
-            variant="secondary"
-            onClick={() => router.push("/")}
-            size="sm"
-            className="ml-10 hidden justify-center opacity-60 sm:flex">
-            &larr; Back to Mainpage
-          </Button>
-        </div>
       </div>
-      <div className="-my-5 mr-6 sm:mr-8 md:mr-0">
+      {/* <div className="-my-5 mr-6 sm:mr-8 md:mr-0">
         <Search />
-      </div>
-      <div className="relative flex basis-0 justify-end gap-6 sm:gap-8 md:flex-grow">
-        <ThemeSelector className="relative z-10" />
-        <Link href="https://github.com/formbricks/formbricks" className="group" aria-label="GitHub">
-          <GitHubIcon className="h-6 w-6 fill-slate-400 group-hover:fill-slate-500 dark:group-hover:fill-slate-300" />
-        </Link>
+      </div> */}
+      <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0">
+        <ThemeSelector className="relative z-10 mr-5" />
+        <Button
+          variant="secondary"
+          EndIcon={GitHubIcon}
+          endIconClassName="fill-slate-800 dark:fill-slate-200"
+          onClick={() => router.push("https://github.com/formbricks/formbricks")}>
+          View on Github
+        </Button>
+        <Button variant="highlight" className="ml-2" onClick={() => router.push("/get-started")}>
+          Get started
+        </Button>
       </div>
     </header>
   );
