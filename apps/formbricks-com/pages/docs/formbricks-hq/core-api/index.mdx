@@ -1,0 +1,189 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import Image from "next/image";
+import Architecture from "./api-endpoints.png";
+import { Callout } from "@/components/shared/Callout";
+import { APILayout } from "@/components/shared/APILayout.tsx";
+
+export const meta = {
+  title: "Core API - Formbricks Open Source Form & Survey Builder",
+};
+
+## Why a form API?
+
+We want to empower you to rapidly build exactly the form and survey functionality that you need. An open API is key to achieve that as it gives you access to every single data model within the application. This allows you to replicate the entire functionality of [Formbricks HQ](/formbricks-hq) in your own app using the API.
+
+## Architecture
+
+Especially large organisations with multiple teams suffer from scatterd qualitative data. This is why we baked in scaleability right from the start. The data models are structured as follows:
+
+<Image src={Architecture} alt="Data model of open source form tool" className="rounded-lg" />
+
+## Auth: Personal API key
+
+The API requests are authorized with a personal API key. This API key gives you the same rights as if you were logged in at formbricks.com - **don't share it around!**
+
+### How to generate an API key
+
+1. Go to your profile at [hq.formbricks.com](https://hq.formbricks.com/app/me/settings).
+2. Select “Add key”.
+3. Assign it any label (this is just for you).
+4. Copy the key. You won’t be able to see it again.
+
+<Callout title="Store API key safely" type="warning">
+  Anyone who has your API key has full control over your account. For security reasons, you cannot view the
+  API key again.
+</Callout>
+
+### Delete a personal API key
+
+1. Go to your profile at [hq.formbricks.com](https://hq.formbricks.com/app/me/settings).
+2. Find the key you wish to revoke and select “Delete”.
+3. Your API key will stop working immediately.
+
+## User
+
+### Find current user
+
+<APILayout
+  method="GET"
+  url="/users/me"
+  description="Get the current logged in user."
+  queries={[{ label: "apiKey", type: "string", description: "Your API key" }]}
+  bodies={[
+    { label: "tba", type: "tba", description: "tba" },
+    { label: "tba", type: "tba", description: "tba" },
+  ]}
+  responses={[
+    { color: "green", statusCode: "tba", description: "tba" },
+    { color: "brown", statusCode: "tba", description: "tba" },
+  ]}
+/>
+
+## Team
+
+### Find memberships
+
+<APILayout
+  method="GET"
+  url="/memberships"
+  description="Get all of my team memberships."
+  queries={[{ label: "apiKey", type: "string", description: "Your API key" }]}
+  bodies={[
+    { label: "tba", type: "tba", description: "tba" },
+    { label: "tba", type: "tba", description: "tba" },
+  ]}
+  responses={[
+    { color: "green", statusCode: "tba", description: "tba" },
+    { color: "brown", statusCode: "tba", description: "tba" },
+  ]}
+/>
+
+### Get specific team
+
+<APILayout
+  method="GET"
+  url="/teams/[teamId]"
+  description="Get a specific team by team ID."
+  queries={[{ label: "apiKey", type: "string", description: "Your API key" }]}
+  bodies={[
+    { label: "tba", type: "tba", description: "tba" },
+    { label: "tba", type: "tba", description: "tba" },
+  ]}
+  responses={[
+    { color: "green", statusCode: "tba", description: "tba" },
+    { color: "brown", statusCode: "tba", description: "tba" },
+  ]}
+/>
+
+## Forms
+
+### Get all forms of a team
+
+<APILayout
+  method="GET"
+  url="/teams/[teamId]/forms"
+  description="Get all forms of a team by team ID."
+  queries={[{ label: "apiKey", type: "string", description: "Your API key" }]}
+  bodies={[
+    { label: "tba", type: "tba", description: "tba" },
+    { label: "tba", type: "tba", description: "tba" },
+  ]}
+  responses={[
+    { color: "green", statusCode: "tba", description: "tba" },
+    { color: "brown", statusCode: "tba", description: "tba" },
+  ]}
+/>
+
+### Create new form
+
+<APILayout
+  method="POST"
+  url="/teams/[teamId]/forms"
+  description="Create a new form"
+  queries={[{ label: "apiKey", type: "string", description: "Your API key" }]}
+  bodies={[
+    { label: "label", type: "string", description: "The name you want to give your form.", required: true },
+    {
+      label: "schema",
+      type: "JSON",
+      description: "A valid Formbricks schema to provide provide context for the form data.",
+    },
+  ]}
+  responses={[
+    { color: "green", statusCode: "tba", description: "tba" },
+    { color: "brown", statusCode: "tba", description: "tba" },
+  ]}
+/>
+
+## Submissions
+
+### Get all submission of a form
+
+<APILayout
+  method="GET"
+  url="/teams/[teamId]/forms/[formId]/submissions"
+  description="Request all submissions of a form by ID."
+  queries={[{ label: "apiKey", type: "string", description: "Your API key" }]}
+  bodies={[
+    { label: "tba", type: "tba", description: "tba" },
+    { label: "tba", type: "tba", description: "tba" },
+  ]}
+  responses={[
+    { color: "green", statusCode: "tba", description: "tba" },
+    { color: "brown", statusCode: "tba", description: "tba" },
+  ]}
+/>
+
+### Create new submission
+
+<APILayout
+  method="POST"
+  url="/capture/forms/[formId]/submissions"
+  description="Add a new submission to a form by form ID."
+  queries={[{ label: "apiKey", type: "string", description: "Your API key" }]}
+  bodies={[
+    {
+      label: "customerId",
+      type: "string",
+      description: "The customer/user you want to link the submission to.",
+    },
+    {
+      label: "data",
+      type: "JSON",
+      description: "The content of the submission.",
+    },
+  ]}
+  example="hello"
+  responses={[
+    {
+      color: "green",
+      statusCode: "200",
+      description: "tba",
+      example: "{ // Response }",
+    },
+    { color: "brown", statusCode: "tba", description: "tba" },
+  ]}
+/>
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
