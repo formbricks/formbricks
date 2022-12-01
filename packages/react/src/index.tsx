@@ -13,3 +13,5 @@ export * from "./components/inputs/Submit";
 export * from "./components/inputs/Text";
 export * from "./components/inputs/Textarea";
 export * from "./components/inputs/Url";
+// Helpers
+export * from "./helpers/sendToHq";

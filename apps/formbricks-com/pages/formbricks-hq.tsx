@@ -58,9 +58,9 @@ const features = [
 
 const FormHQPage = () => (
   <Layout
-    title="FormHQ"
+    title="Formbricks HQ"
     description="Manage all form data in one place. Analyze right here or pipe your data where you need it.">
-    <HeroTitle headingPt1="Form" headingTeal="HQ" />
+    <HeroTitle headingPt1="Formbricks" headingTeal="HQ" />
     <Image
       src={ImageFormHQ}
       alt="Formbricks HQ user interface to create forms, manage submissions open source."

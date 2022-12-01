@@ -7,5 +7,5 @@ interface InnerProps {
 }
 
 export function Inner({ innerClassName, children }: InnerProps) {
-  return <div className={clsx("formbricks-inner", innerClassName)}>{children}</div>;
+  return <div className={innerClassName || "formbricks-inner"}>{children}</div>;
 }

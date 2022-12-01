@@ -7,22 +7,29 @@ export const SchemaContext = createContext({
 });
 
 interface OnSubmitProps {
-  data: any;
+  submission: any;
   schema: any;
   event?: React.BaseSyntheticEvent<object, any, any> | undefined;
 }
 
 interface FormProps {
   incompleteMessage?: string;
-  onSubmit: ({ data, schema, event }: OnSubmitProps) => void;
+  onSubmit: ({ submission, schema, event }: OnSubmitProps) => void;
+  formId?: string;
+  hqUrl?: string;
+  customerId?: string;
   children: React.ReactNode;
 }
 
-export function Form({ onSubmit, children }: FormProps) {
-  const [schema, setSchema] = useState<any>([]);
+export function Form({ onSubmit, children, formId, customerId, hqUrl }: FormProps) {
+  const [schema, setSchema] = useState<any>({
+    type: "form",
+    config: { formId, hqUrl },
+    children: [],
+  });
   const methods = useForm({ criteriaMode: "all", mode: "onChange" });
   const onFormSubmit = (data: any, event: React.BaseSyntheticEvent<object, any, any> | undefined) =>
-    onSubmit({ data, schema, event });
+    onSubmit({ submission: { customerId, data }, schema, event });
   return (
     <SchemaContext.Provider value={{ schema, setSchema }}>
       <FormProvider {...methods}>

@@ -3,14 +3,14 @@ import { Text, Textarea } from "..";
 import { Form } from "./Form";
 
 interface OnSubmitProps {
-  data: any;
+  submission: any;
   schema: any;
   event?: React.BaseSyntheticEvent<object, any, any> | undefined;
 }
 
 interface FormbricksSchemaProps {
   schema: any;
-  onSubmit: ({ data, schema, event }: OnSubmitProps) => void;
+  onSubmit: ({ submission, schema, event }: OnSubmitProps) => void;
 }
 
 export function FormbricksSchema({ schema, onSubmit }: FormbricksSchemaProps) {

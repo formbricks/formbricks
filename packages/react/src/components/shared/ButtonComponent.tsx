@@ -22,7 +22,7 @@ export default function ButtonComponent({
   elemId,
 }: ButtonProps) {
   return (
-    <button className={clsx("formbricks-input", inputClassName)} type={type} id={elemId} onClick={onClick}>
+    <button className={inputClassName || "formbricks-input"} type={type} id={elemId} onClick={onClick}>
       {PrefixIcon && <PrefixIcon className={clsx("formbricks-prefix-icon")} />}
       {label}
       {SuffixIcon && <SuffixIcon className={clsx("formbricks-suffix-icon")} />}
