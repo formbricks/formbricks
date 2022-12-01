@@ -14,6 +14,45 @@ importers:
       tsx: 3.9.0
       turbo: 1.6.3
 
+  apps/demo:
+    specifiers:
+      '@formbricks/charts': workspace:*
+      '@formbricks/react': workspace:*
+      '@formbricks/tailwind-config': workspace:*
+      '@formbricks/tsconfig': workspace:*
+      '@formbricks/ui': workspace:*
+      '@heroicons/react': ^2.0.13
+      '@types/node': ^18.11.9
+      '@types/react': ^18.0.25
+      '@types/react-dom': ^18.0.8
+      autoprefixer: ^10.4.12
+      eslint-config-formbricks: workspace:*
+      next: latest
+      postcss: ^8.4.18
+      react: ^18.2.0
+      react-dom: ^18.2.0
+      tailwindcss: ^3.2.2
+      typescript: ^4.8.4
+    dependencies:
+      '@formbricks/charts': link:../../packages/charts
+      '@formbricks/react': link:../../packages/react
+      '@formbricks/ui': link:../../packages/ui
+      '@heroicons/react': 2.0.13_react@18.2.0
+      next: 13.0.5_biqbaboplfbrettd7655fr4n2y
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+    devDependencies:
+      '@formbricks/tailwind-config': link:../../packages/tailwind-config
+      '@formbricks/tsconfig': link:../../packages/tsconfig
+      '@types/node': 18.11.9
+      '@types/react': 18.0.25
+      '@types/react-dom': 18.0.9
+      autoprefixer: 10.4.13_postcss@8.4.19
+      eslint-config-formbricks: link:../../packages/eslint-config-formbricks
+      postcss: 8.4.19
+      tailwindcss: 3.2.4_postcss@8.4.19
+      typescript: 4.9.3
+
   apps/formbricks-com:
     specifiers:
       '@docsearch/react': ^3.3.0
@@ -253,7 +292,7 @@ importers:
       eslint: 8.27.0
       eslint-config-next: 13.0.0_e3uo4sehh4zr4i6m57mkkxxv7y
       eslint-config-prettier: 8.5.0_eslint@8.27.0
-      eslint-config-turbo: 0.0.4_eslint@8.27.0
+      eslint-config-turbo: 0.0.6_eslint@8.27.0
       eslint-plugin-react: 7.31.10_eslint@8.27.0
     devDependencies:
       typescript: 4.9.3
@@ -8224,13 +8263,13 @@ packages:
       eslint: 8.27.0
     dev: false
 
-  /eslint-config-turbo/0.0.4_eslint@8.27.0:
-    resolution: {integrity: sha512-HErPS/wfWkSdV9Yd2dDkhZt3W2B78Ih/aWPFfaHmCMjzPalh+5KxRRGTf8MOBQLCebcWJX0lP1Zvc1rZIHlXGg==}
+  /eslint-config-turbo/0.0.6_eslint@8.27.0:
+    resolution: {integrity: sha512-Cx0yRJvAvPh0lJI1jVJMDRdJiF3w/Q7fA7Lgak568uBVYU0vetaak3yVHJtCLik2Z88emkSyOj2pAUPwqOEg9g==}
     peerDependencies:
-      eslint: ^7.23.0 || ^8.0.0
+      eslint: ^6.6.0 || ^8.0.0
     dependencies:
       eslint: 8.27.0
-      eslint-plugin-turbo: 0.0.4_eslint@8.27.0
+      eslint-plugin-turbo: 0.0.6_eslint@8.27.0
     dev: false
 
   /eslint-import-resolver-node/0.3.6:
@@ -8372,10 +8411,10 @@ packages:
       string.prototype.matchall: 4.0.7
     dev: false
 
-  /eslint-plugin-turbo/0.0.4_eslint@8.27.0:
-    resolution: {integrity: sha512-dfmYE/iPvoJInQq+5E/0mj140y/rYwKtzZkn3uVK8+nvwC5zmWKQ6ehMWrL4bYBkGzSgpOndZM+jOXhPQ2m8Cg==}
+  /eslint-plugin-turbo/0.0.6_eslint@8.27.0:
+    resolution: {integrity: sha512-GgisxIg4saIUlwUbiXPec00dkp2D8iar717g8TuIgCzStO4P24Ob2920CVFNftC5Rm4NFx19E9dLa4P1SwCniA==}
     peerDependencies:
-      eslint: ^7.23.0 || ^8.0.0
+      eslint: ^6.6.0 || ^8.0.0
     dependencies:
       eslint: 8.27.0
     dev: false
