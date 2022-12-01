@@ -94,16 +94,13 @@ const navigation = [
     ],
   },
   {
-    title: "Data Pipelines",
+    title: "Formbricks HQ",
     links: [
-      { title: "Core API", href: "/docs/data-pipelines/core-api" },
-      { title: "Email Notifications", href: "/docs/data-pipelines/email-notifications" },
-      { title: "Webhooks", href: "/docs/data-pipelines/webhooks" },
+      { title: "Core API", href: "/docs/formbricks-hq/core-api" },
+      { title: "Schema", href: "/docs/formbricks-hq/schema" },
+      { title: "Email Notifications", href: "/docs/formbricks-hq/email-notifications" },
+      { title: "Webhooks", href: "/docs/formbricks-hq/webhooks" },
     ],
-  },
-  {
-    title: "Data Insights",
-    links: [{ title: "Formbricks HQ", href: "/docs/data-insights/formbricks-hq" }],
   },
 ];
 
