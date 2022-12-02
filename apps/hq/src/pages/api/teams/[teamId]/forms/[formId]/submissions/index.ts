@@ -35,6 +35,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           id: formId,
         },
       },
+      orderBy: [
+        {
+          createdAt: "desc",
+        },
+      ],
     });
 
     return res.json(submissions);

@@ -12,10 +12,6 @@ import type { Submission } from "@prisma/client";
 import clsx from "clsx";
 import SubmissionDisplay from "./SubmissionDisplay";
 
-type ResultsResponseProps = {
-  formId: string;
-};
-
 export default function ResultsResponses({ params }) {
   const { submissions, isLoadingSubmissions, mutateSubmissions } = useSubmissions(
     params.teamId,

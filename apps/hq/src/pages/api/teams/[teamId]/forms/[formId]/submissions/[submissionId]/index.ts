@@ -29,7 +29,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // GET /api/teams[teamId]/forms/[formId]/submissions/[submissionId]
   // Get a specific submission
   if (req.method === "GET") {
-    console.log("call2");
     const submission = await prisma.submission.findFirst({
       where: {
         id: submissionId,
