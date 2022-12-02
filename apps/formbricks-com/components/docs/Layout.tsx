@@ -53,9 +53,9 @@ function Header({ navigation }: any) {
           <FooterLogo className="h-8 w-auto sm:h-10" />
         </Link>
       </div>
-      {/* <div className="-my-5 mr-6 sm:mr-8 md:mr-0">
+      <div className="-my-5 mr-6 sm:mr-8 md:mr-0">
         <Search />
-      </div> */}
+      </div>
       <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0">
         <ThemeSelector className="relative z-10 mr-5" />
         <Button
