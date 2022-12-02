@@ -1,15 +1,13 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
 import { ResetPasswordForm } from "./ResetPasswordForm";
 
-interface ResetPasswordPageProps {
-  searchParams?: {
-    token?: string;
-  };
-}
-
-export default function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
+export default function ResetPasswordPage() {
+  const searchParams = useSearchParams();
   return (
     <>
-      <ResetPasswordForm token={searchParams.token} />
+      <ResetPasswordForm token={searchParams.get("token")} />
     </>
   );
 }

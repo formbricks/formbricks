@@ -3,7 +3,6 @@
 import { forgotPassword } from "@/lib/users";
 import { Button } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/20/solid";
-import Link from "next/dist/client/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 

@@ -1,17 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { SigninForm } from "./SigninForm";
 
-interface SignInPageProps {
-  searchParams?: {
-    callbackUrl?: string;
-    error?: string;
-  };
-}
-
-export default function SignInPage({ searchParams }: SignInPageProps) {
+export default function SignInPage() {
+  const searchParams = useSearchParams();
   return (
     <>
-      <SigninForm callbackUrl={searchParams.callbackUrl} error={searchParams.error} />
+      <SigninForm callbackUrl={searchParams.get("callbackUrl")} error={searchParams.get("error")} />
       {process.env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
         <div>
           <Link
