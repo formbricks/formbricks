@@ -51,7 +51,10 @@ Here is a quick run-through to show how our modular setup plays out:
 Within a few minutes we spun up the right form. Look how easy radio buttons can be in React, styled with Tailwind CSS 😍
 
 ```tsx
-<Form formId="clb4yr1m90000XXXXXXXX" hqUrl="http://localhost:3000" onSubmit={handleSubmit}>
+import { Form, Radio, Submit, sendToHq, Textarea } from "@formbricks/react";
+
+...
+<Form formId="clb4yr1m90000XXXXXXXX" hqUrl="http://localhost:3000" onSubmit={sendToHq}>
   <Radio
     name="evaluate"
     label="Evaluate the online course you just completed"
@@ -81,14 +84,14 @@ Within a few minutes we spun up the right form. Look how easy radio buttons can 
 
 ### Step 2: Pipe it up with Formbricks HQ
 
-We hooked it up with the Formbricks HQ to store the data. The React Lib sends a data schema along with the submission to assure a complete picture of the data. Read more about schemas in our docs:
+We hooked it up with the Formbricks HQ to store the data. The React Lib sends a data schema along with the submission to assure a complete picture of the data. Read more about schemas in our [docs](http://localhost:3001/docs/formbricks-hq/schema):
 
 ```tsx
 <Form
-      formId="clb4yr1m90000yzaXXXXXXXX"
-      hqUrl="http://localhost:3000"
-      onSubmit={handleSubmit}
-    >
+  formId="clb4yr1m90000yzaXXXXXXXX"
+  hqUrl="http://localhost:3000"
+  onSubmit={handleSubmit}
+>
 ```
 
 <Image src={Results1} alt="Weekly Update Demo Custom Native Feedback Function" className="rounded-lg" />
@@ -98,20 +101,24 @@ We hooked it up with the Formbricks HQ to store the data. The React Lib sends a 
 They were looking for a polling functionality so showing the enduser the results right after they submitted their answer. We built Formbricks Charts to enable that with a single line of code:
 
 ```tsx
-<h2 className="mx-auto mb-3 text-lg font-bold text-gray-800">
-        Thanks a lot for your feedback
-      </h2>
-      <p className="mb-5 text-lg text-gray-500">
-        Here you can see what other people answered.
-      </p>
+import { Bar } from "@formbricks/charts";
 
-      /* Visualize Submission using Formbricks Charts Library */
-      <Bar
-        submissions={submissions}
-        schema={schema}
-        fieldName="evaluate"
-        color="#4f46e5"
-      />
+...
+
+<h2 className="mx-auto mb-3 text-lg font-bold text-gray-800">
+  Thanks a lot for your feedback
+</h2>
+<p className="mb-5 text-lg text-gray-500">
+  Here you can see what other people answered.
+</p>
+
+/* Visualize Submission using Formbricks Charts Library */
+<Bar
+  submissions="{submissions}"
+  schema="{schema}"
+  fieldName="evaluate"
+  color="#4f46e5"
+/>
 ```
 
 <Image src={Chart3} alt="Weekly Update Demo Custom Native Feedback Function" className="rounded-lg" />
@@ -123,7 +130,11 @@ Formbricks charts is a package to display form data collected with Formbricks Re
 With a single line of code you can display your form data wherever you need it:
 
 ```tsx
-<Bar submissions={submissions} schema={schema} fieldName="evaluate" color="#4f46e5" />
+<Bar submissions={submissions} schema={schema} fieldName="fieldToVisualize" />
+
+/* or */
+
+<Table submissions={submissions} schema={schema} fieldName="fieldToVisualize" />
 ```
 
 We also use the same package to display our charts in Formbricks HQ:
