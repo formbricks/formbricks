@@ -6,6 +6,7 @@ import { useCustomers } from "@/lib/customers";
 import { useTeam } from "@/lib/teams";
 import { convertDateTimeString } from "@/lib/utils";
 import { UsersIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 export default function FormsPage({ params }) {
   const { customers, isLoadingCustomers, isErrorCustomers } = useCustomers(params.teamId);
@@ -77,9 +78,11 @@ export default function FormsPage({ params }) {
                           {customer._count?.submissions}
                         </td>
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                          <a href="#" className="text-brand-dark hover:text-brand-light">
+                          <Link
+                            href={`/app/teams/${params.teamId}/customers/${customer.id}`}
+                            className="text-brand-dark hover:text-brand-light">
                             View<span className="sr-only">, {customer.name}</span>
-                          </a>
+                          </Link>
                         </td>
                       </tr>
                     ))}

@@ -1,4 +1,5 @@
 import { runPipelines } from "@/lib/pipelinesHandler";
+import { capturePosthogEvent } from "@/lib/posthog";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 import NextCors from "nextjs-cors";
@@ -53,6 +54,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     // create form in db
     const submissionResult = await prisma.submission.create(event);
     await runPipelines(form, submission);
+    // tracking
+    capturePosthogEvent(form.teamId, "submission received", {
+      formId,
+    });
+    captureTelemetry("submission received");
     res.json(submissionResult);
   }
 
@@ -60,4 +66,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   else {
     throw new Error(`The HTTP ${req.method} method is not supported by this route.`);
   }
+}
+function captureTelemetry(arg0: string) {
+  throw new Error("Function not implemented.");
 }

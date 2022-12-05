@@ -1,5 +1,6 @@
 "use client";
 
+import { Logo } from "@/app/Logo";
 import { Dialog, Transition } from "@headlessui/react";
 import { Cog8ToothIcon, RectangleStackIcon, UsersIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -26,7 +27,7 @@ export default function Example({ children, params }) {
       },
       {
         name: "Settings",
-        href: `/app/teams/${params.teamId}/settings`,
+        href: `/app/teams/${params.teamId}/<settings>`,
         icon: Cog8ToothIcon,
         current: pathname.includes("/settings"),
       },
@@ -109,11 +110,7 @@ export default function Example({ children, params }) {
                     </div>
                   </Transition.Child>
                   <div className="flex flex-shrink-0 items-center px-4">
-                    <img
-                      className="h-8 w-auto"
-                      src="https://tailwindui.com/img/logos/mark.svg?color=white"
-                      alt="Your Company"
-                    />
+                    <Logo className="h-8 w-auto" />
                   </div>
                   <div className="mt-5 h-0 flex-1 overflow-y-auto px-2">
                     <nav className="flex h-full flex-col">

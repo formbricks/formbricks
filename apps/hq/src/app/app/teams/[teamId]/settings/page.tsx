@@ -3,6 +3,7 @@
 import LoadingSpinner from "@/app/LoadingSpinner";
 import { useForms } from "@/lib/forms";
 import { useTeam } from "@/lib/teams";
+import { InformationCircleIcon } from "@heroicons/react/20/solid";
 
 export default function FormsPage({ params }) {
   const { forms, isLoadingForms, isErrorForms } = useForms(params.teamId);
@@ -29,6 +30,16 @@ export default function FormsPage({ params }) {
           </span>
         </h1>
       </header>
+      <div className="rounded-md bg-teal-50 p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <InformationCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
+          </div>
+          <div className="ml-3 flex-1 md:flex md:justify-between">
+            <p className="text-sm text-teal-700">Team Management Settings coming to Formbricks HQ soon.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

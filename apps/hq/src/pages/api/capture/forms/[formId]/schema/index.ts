@@ -12,8 +12,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   const formId = req.query.formId.toString();
 
-  // POST/capture/forms/[formId]/submissions
-  // Create a new form submission
+  // POST/capture/forms/[formId]/schema
+  // Update form schema
   // Required fields in body: -
   // Optional fields in body: customerId, data
   if (req.method === "POST") {

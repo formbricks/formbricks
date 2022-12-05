@@ -6,17 +6,19 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { convertDateTimeString } from "@/lib/utils";
-
 import LoadingSpinner from "@/app/LoadingSpinner";
 import type { Submission } from "@prisma/client";
 import clsx from "clsx";
 import SubmissionDisplay from "./SubmissionDisplay";
+import { format } from "path";
+import { useForm } from "@/lib/forms";
 
 export default function ResultsResponses({ params }) {
-  const { submissions, isLoadingSubmissions, mutateSubmissions } = useSubmissions(
+  const { submissions, isLoadingSubmissions, mutateSubmissions, isErrorSubmissions } = useSubmissions(
     params.teamId,
     params.formId
   );
+  const { form, isLoadingForm, isErrorForm } = useForm(params.formId, params.teamId);
   const [activeSubmission, setActiveSubmission] = useState<Submission | null>(null);
 
   const handleDelete = async (submission: Submission) => {
@@ -37,8 +39,12 @@ export default function ResultsResponses({ params }) {
     }
   }, [isLoadingSubmissions, submissions]);
 
-  if (isLoadingSubmissions) {
+  if (isLoadingSubmissions || isLoadingForm) {
     return <LoadingSpinner />;
+  }
+
+  if (isErrorForm || isErrorSubmissions) {
+    return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
 
   return (
@@ -62,7 +68,7 @@ export default function ResultsResponses({ params }) {
                       <h1 className="mb-8 text-gray-700">
                         {convertDateTimeString(activeSubmission.createdAt.toString())}
                       </h1>
-                      <SubmissionDisplay submission={activeSubmission} params={params} />
+                      <SubmissionDisplay submission={activeSubmission} schema={form.schema} />
                     </div>
                   </div>
                 </div>

@@ -12,8 +12,8 @@ export const useCustomers = (teamId: number) => {
   };
 };
 
-export const useCustomer = (id: string, teamId: number) => {
-  const { data, error, mutate } = useSWR(`/api/teams/${teamId}/customers/${id}`, fetcher);
+export const useCustomer = (teamId: number, customerId: string) => {
+  const { data, error, mutate } = useSWR(`/api/teams/${teamId}/customers/${customerId}`, fetcher);
 
   return {
     customer: data,

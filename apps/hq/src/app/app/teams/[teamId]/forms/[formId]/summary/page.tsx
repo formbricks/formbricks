@@ -7,7 +7,7 @@ import { ExclamationTriangleIcon, InformationCircleIcon } from "@heroicons/react
 import Link from "next/link";
 import { Bar, Table } from "@formbricks/charts";
 import { useSubmissions } from "@/lib/submissions";
-import AnalyticsCard from "./AnalyticsCard";
+import AnalyticsCard from "@/components/AnalyticsCard";
 
 export default function PipelinesPage({ params }) {
   const { form, isLoadingForm, isErrorForm } = useForm(params.formId, params.teamId);

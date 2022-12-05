@@ -4,9 +4,7 @@ import LoadingSpinner from "@/app/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import clsx from "clsx";
 
-export default function SubmissionDisplay({ params, submission }) {
-  const { form, isLoadingForm } = useForm(params.formId, params.teamId);
-
+export default function SubmissionDisplay({ schema, submission }) {
   const MergeWithSchema = (submissionData, schema) => {
     if (Object.keys(schema).length === 0) {
       // no schema provided
@@ -26,14 +24,10 @@ export default function SubmissionDisplay({ params, submission }) {
     return mergedData;
   };
 
-  if (isLoadingForm) {
-    return <LoadingSpinner />;
-  }
-
   return (
     <div className="flow-root">
       <ul role="list" className="divide-ui-gray-light divide-y">
-        {Object.entries(MergeWithSchema(submission.data, form.schema)).map(([key, value]) => (
+        {Object.entries(MergeWithSchema(submission.data, schema)).map(([key, value]) => (
           <li key={key} className="py-5">
             <p className="text-sm font-semibold text-gray-800">{key}</p>
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { Disclosure } from "@headlessui/react";
-import { BellIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
@@ -31,7 +30,7 @@ export default function FormLayout({ params, children }) {
         current: pathname.includes("results"),
       },
     ],
-    [params]
+    [params, pathname]
   );
   return (
     <>

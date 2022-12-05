@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import intlFormat from "date-fns/intlFormat";
 import { formatDistance } from "date-fns";
 
@@ -76,4 +77,12 @@ export const timeSince = (dateString: string) => {
   return formatDistance(date, new Date(), {
     addSuffix: true,
   });
+};
+
+export const hashString = (string: string) => {
+  return crypto.createHash("sha256").update(string).digest("hex");
+};
+
+export const onlyUnique = (value, index, self) => {
+  return self.indexOf(value) === index;
 };

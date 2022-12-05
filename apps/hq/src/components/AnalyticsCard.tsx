@@ -8,7 +8,7 @@ import React from "react";
 interface Props {
   value: string | number;
   label: string;
-  toolTipText: string;
+  toolTipText?: string;
   trend?: number;
   smallerText?: boolean;
 }

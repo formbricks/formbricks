@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@formbricks/database";
 import { sendVerificationEmail } from "@/lib/email";
+import { capturePosthogEvent } from "@/lib/posthog";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // POST /api/public/users
@@ -36,6 +37,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       });
       if (process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") await sendVerificationEmail(userData);
+      // tracking
+      capturePosthogEvent(user.id, "user created");
       res.json(userData);
     } catch (e) {
       if (e.code === "P2002") {

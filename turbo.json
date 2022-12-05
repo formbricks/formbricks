@@ -25,6 +25,9 @@
         "NEXT_PUBLIC_DOCSEARCH_API_KEY",
         "NEXT_PUBLIC_DOCSEARCH_INDEX_NAME",
         "NODE_ENV",
+        "POSTHOG_API_HOST",
+        "POSTHOG_API_KEY",
+        "TELEMETRY_DISABLED",
         "VERCEL_URL"
       ]
     },

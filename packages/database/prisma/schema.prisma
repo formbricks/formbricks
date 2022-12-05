@@ -2,15 +2,13 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-  provider             = "postgresql"
-  url                  = env("DATABASE_URL")
-  referentialIntegrity = "prisma"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
-  provider        = "prisma-client-js"
-  //provider        = "prisma-dbml-generator"
-  previewFeatures = ["referentialIntegrity"]
+  provider = "prisma-client-js"
+  //provider = "prisma-dbml-generator"
 }
 
 enum PipelineType {
