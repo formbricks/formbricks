@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   postgres:
-    image: postgres:13-alpine
+    image: postgres:15-alpine
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:
