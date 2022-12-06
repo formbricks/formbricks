@@ -12,13 +12,17 @@ The `Number` input uses HTML's [native number input](https://developer.mozilla.o
 Like all other inputs it needs a `name` prop as an unique identifier:
 
 ```jsx
-<Number name="age" />
+import { Number } from "@formbricks/react";
+
+<Number name="age" />;
 ```
 
 In most cases, it looks something like this:
 
 ```jsx
-<Number name="age" label="How old are you?" placeholder="42" min="1" max="130" step="1" />
+import { Number } from "@formbricks/react";
+
+<Number name="age" label="How old are you?" placeholder="42" min="1" max="130" step="1" />;
 ```
 
 ### Props & Attributes

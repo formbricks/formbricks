@@ -9,7 +9,9 @@ export const meta = {
 The submit button component is very straight forward:
 
 ```jsx
-<Submit name="submit" label="Submit" />
+import { Submit } from "@formbricks/react";
+
+<Submit name="submit" label="Submit" />;
 ```
 
 To keep it working make sure that there is **only one Submit button** per form.
@@ -19,7 +21,9 @@ To keep it working make sure that there is **only one Submit button** per form.
 You can add icons **before and after** the button text:
 
 ```jsx
-<Submit label="Submit" PrefixIcon={BeakerIcon} SuffixIcon={BeakerIcon} />
+import { Submit } from "@formbricks/react";
+
+<Submit label="Submit" PrefixIcon={BeakerIcon} SuffixIcon={BeakerIcon} />;
 ```
 
 ### Props & Attributes

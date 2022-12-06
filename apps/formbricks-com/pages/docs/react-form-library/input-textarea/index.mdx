@@ -4,7 +4,7 @@ import Image from "next/image";
 import StyleClasses from "../style-css/html-classes-of-formbricks-react-form-library-to-custom-style-surveys-and-forms.png";
 
 export const meta = {
-  title: "Text Input - Formbricks React Form Library",
+  title: "Textarea Input - Formbricks React Form Library",
 };
 
 The `textarea` input uses HTML's [native textarea input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea) . It allows a user to enter multiple lines of text and is resizable in most browsers.
@@ -12,18 +12,22 @@ The `textarea` input uses HTML's [native textarea input](https://developer.mozil
 Like all other inputs it needs a name prop as an unique identifier:
 
 ```jsx
-<Textarea name="description" />
+import { Textarea } from "@formbricks/react";
+
+<Textarea name="description" />;
 ```
 
 In most cases, it looks something like this:
 
 ```jsx
+import { Textarea } from "@formbricks/react";
+
 <Textarea
   name="firstname"
   label="Tell us about you:"
   placeholder="When I was young..."
   validation="required"
-/>
+/>;
 ```
 
 ### Props & Attributes

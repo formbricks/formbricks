@@ -12,19 +12,23 @@ The `Password` input uses HTML's [native password input](https://developer.mozil
 Like all other inputs it needs a `name` prop as an unique identifier:
 
 ```jsx
-<Password name="password" />
+import { Password } from "@formbricks/react";
+
+<Password name="password" />;
 ```
 
 In most cases, it looks something like this:
 
 ```jsx
+import { Password } from "@formbricks/react";
+
 <Password
   name="password"
   label="Password"
   help="Enter secure password"
   placeholder="ilikecoldcoffee"
   validation="required"
-/>
+/>;
 ```
 
 ### Props & Attributes
