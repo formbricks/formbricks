@@ -1,4 +1,5 @@
 import { getSessionOrUser } from "@/lib/apiHelper";
+import { capturePosthogEvent } from "@/lib/posthog";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -54,6 +55,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         ...pipeline,
         form: { connect: { id: formId } },
       },
+    });
+    capturePosthogEvent(teamId, "pipeline created", {
+      formId,
+      pipelineId: result.id,
     });
     res.json(result);
   }
