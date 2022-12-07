@@ -57,9 +57,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const prismaRes = await prisma.submission.delete({
       where: { id: submissionId },
     });
-    capturePosthogEvent(teamId, "form deleted", {
-      formId,
-    });
     return res.json(prismaRes);
   }
 
