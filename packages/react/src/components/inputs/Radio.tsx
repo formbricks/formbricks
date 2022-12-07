@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { getElementId } from "../../lib/element";
@@ -43,7 +42,7 @@ export function Radio(props: FormbricksProps) {
         <Wrapper wrapperClassName={props.wrapperClassName}>
           <Inner innerClassName={props.innerClassName}>
             <input
-              className={clsx("formbricks-input", props.inputClassName)}
+              className={props.inputClassName || "formbricks-input"}
               type="radio"
               id={elemId}
               {...register(props.name, {
@@ -70,7 +69,7 @@ export function Radio(props: FormbricksProps) {
               <Wrapper wrapperClassName={props.wrapperClassName}>
                 <Inner innerClassName={props.innerClassName}>
                   <input
-                    className={clsx("formbricks-input", props.inputClassName)}
+                    className={props.inputClassName || "formbricks-input"}
                     type="radio"
                     id={`${props.name}-${option.value}`}
                     value={option.value}

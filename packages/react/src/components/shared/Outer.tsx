@@ -1,5 +1,3 @@
-import clsx from "clsx";
-
 interface OuterProps {
   inputType: string;
   outerClassName?: string;
@@ -8,7 +6,7 @@ interface OuterProps {
 
 export function Outer({ inputType, outerClassName, children }: OuterProps) {
   return (
-    <div className={clsx("formbricks-outer", outerClassName)} data-type={inputType}>
+    <div className={outerClassName || "formbricks-outer"} data-type={inputType}>
       {children}
     </div>
   );

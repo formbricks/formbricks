@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import React from "react";
 import { SVGComponent } from "../../types";
 
@@ -10,6 +9,8 @@ interface ButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement> | undefined;
   PrefixIcon?: SVGComponent;
   SuffixIcon?: SVGComponent;
+  prefixIconClassName?: string;
+  suffixIconClassName?: string;
 }
 
 export default function ButtonComponent({
@@ -20,12 +21,14 @@ export default function ButtonComponent({
   SuffixIcon,
   type = "button",
   elemId,
+  prefixIconClassName,
+  suffixIconClassName,
 }: ButtonProps) {
   return (
     <button className={inputClassName || "formbricks-input"} type={type} id={elemId} onClick={onClick}>
-      {PrefixIcon && <PrefixIcon className={clsx("formbricks-prefix-icon")} />}
+      {PrefixIcon && <PrefixIcon className={prefixIconClassName || "formbricks-prefix-icon"} />}
       {label}
-      {SuffixIcon && <SuffixIcon className={clsx("formbricks-suffix-icon")} />}
+      {SuffixIcon && <SuffixIcon className={suffixIconClassName || "formbricks-suffix-icon"} />}
     </button>
   );
 }

@@ -90,6 +90,7 @@ importers:
       '@types/node': ^18.11.9
       '@types/react': ^18.0.25
       '@types/react-dom': ^18.0.9
+      '@vercel/analytics': ^0.1.5
       autoprefixer: ^10.4.13
       bcryptjs: ^2.4.3
       clsx: ^1.2.1
@@ -116,6 +117,7 @@ importers:
       '@formbricks/ui': link:../../packages/ui
       '@headlessui/react': 1.7.4_biqbaboplfbrettd7655fr4n2y
       '@heroicons/react': 2.0.13_react@18.2.0
+      '@vercel/analytics': 0.1.5_react@18.2.0
       bcryptjs: 2.4.3
       clsx: 1.2.1
       date-fns: 2.29.3
@@ -4831,6 +4833,14 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.45.0
       eslint-visitor-keys: 3.3.0
+    dev: false
+
+  /@vercel/analytics/0.1.5_react@18.2.0:
+    resolution: {integrity: sha512-/k9N8Ea3Yc5A52GlkjzUEbi2vE/izClrOf++ryBkxEfrZM/OZwtHkdNw/QExZ1h/B67RCZLK7bCOnKKrhG7gTg==}
+    peerDependencies:
+      react: ^16.8||^17||^18
+    dependencies:
+      react: 18.2.0
     dev: false
 
   /@vitejs/plugin-react/2.2.0_vite@3.2.4:

@@ -1,5 +1,4 @@
 import { ErrorMessage } from "@hookform/error-message";
-import clsx from "clsx";
 import { useFormContext } from "react-hook-form";
 
 interface HelpProps {
@@ -19,9 +18,9 @@ export function Messages({ messagesClassName, messageClassName, name }: HelpProp
       render={({ messages }) =>
         messages &&
         Object.entries(messages).map(([type, message]) => (
-          <ul className={clsx("formbricks-messages", messagesClassName)}>
+          <ul className={messagesClassName || "formbricks-messages"}>
             <li
-              className={clsx("formbricks-message", messageClassName)}
+              className={messageClassName || "formbricks-message"}
               id={`${name}-${type}`}
               data-message-type={type}
               role="alert">

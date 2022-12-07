@@ -9,7 +9,7 @@ interface FieldsetProps {
 
 export function Fieldset({ name, fieldsetClassName, children }: FieldsetProps) {
   return (
-    <fieldset className={clsx("formbricks-fieldset", fieldsetClassName)} name={name}>
+    <fieldset className={fieldsetClassName || "formbricks-fieldset"} name={name}>
       {children}
     </fieldset>
   );

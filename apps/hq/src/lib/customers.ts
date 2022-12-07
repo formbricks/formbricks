@@ -1,7 +1,7 @@
 import useSWR from "swr";
 import { fetcher } from "./utils";
 
-export const useCustomers = (teamId: number) => {
+export const useCustomers = (teamId: string) => {
   const { data, error, mutate } = useSWR(`/api/teams/${teamId}/customers`, fetcher);
 
   return {
@@ -12,7 +12,7 @@ export const useCustomers = (teamId: number) => {
   };
 };
 
-export const useCustomer = (teamId: number, customerId: string) => {
+export const useCustomer = (teamId: string, customerId: string) => {
   const { data, error, mutate } = useSWR(`/api/teams/${teamId}/customers/${customerId}`, fetcher);
 
   return {
@@ -23,7 +23,7 @@ export const useCustomer = (teamId: number, customerId: string) => {
   };
 };
 
-export const deleteCustomer = async (id: string, teamId: number) => {
+export const deleteCustomer = async (id: string, teamId: string) => {
   try {
     await fetch(`/api/teams/${teamId}/customers/${id}`, {
       method: "DELETE",

@@ -11,7 +11,7 @@ export function Help({ help, elemId, helpClassName }: HelpProps) {
     return null;
   }
   return (
-    <div className={clsx("formbricks-help", helpClassName)} id={`help-${elemId}`}>
+    <div className={helpClassName || "formbricks-help"} id={`help-${elemId}`}>
       {help}
     </div>
   );

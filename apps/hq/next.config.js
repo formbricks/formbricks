@@ -9,8 +9,7 @@ module.exports = {
   output: "standalone",
   experimental: {
     outputFileTracingRoot: path.join(__dirname, "../../"),
-    appDir: true,
-    serverComponentsExternalPackages: ["@prisma/client"],
+    /* serverComponentsExternalPackages: ["@prisma/client"], */
   },
   images: {
     remotePatterns: [

@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { getElementId } from "../../lib/element";
@@ -41,7 +40,7 @@ export function Input(props: FormbricksProps) {
         <Label label={props.label} elemId={elemId} labelClassName={props.labelClassName} />
         <Inner innerClassName={props.innerClassName}>
           <input
-            className={clsx("formbricks-input", props.inputClassName)}
+            className={props.inputClassName || "formbricks-input"}
             type={props.type.html}
             id={elemId}
             aria-invalid={errors[props.name] ? "true" : "false"}
