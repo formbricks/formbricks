@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@formbricks/hq",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
