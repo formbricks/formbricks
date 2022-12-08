@@ -43,7 +43,13 @@ With a few clicks you create a new form in Formbricks HQ:
 We built the NPS survey with Formbricks React. It is a simple form with two questions and a submit button. The form is built with the following code:
 
 ```jsx
-code;
+import { Form, Nps, sendToHq, Submit, Textarea } from "@formbricks/react";
+
+<Form formId="clbfbfqjh0000jz0803qh43y8" customerId="yourcustomer@company.com" onSubmit={sendToHq}>
+  <Nps name="nps" label="How likely are you to recommend Formbricks to a friend or colleague?" />
+  <Textarea name="feedback" label="Your feedback" cols={30} />
+  <Submit label="Submit" />
+</Form>;
 ```
 
 <Image src={NPS1} alt="NPS natively embedded into app" className="rounded-lg" />
@@ -52,7 +58,7 @@ From the HQ you can copy the endpoint to your form action. The endpoint is a POS
 
 ### Step 3: Displaying the results
 
-The results are displayed in the HQ dashboard. You can see the results in real-time. The dashboard is built with Formbricks Charts and uses the same schema as Formbricks React.
+The results are displayed in the HQ dashboard. You can see the results in real-time. The dashboard is built with [Formbricks Charts](https://www.npmjs.com/package/@formbricks/charts) and uses the same schema as [Formbricks React](https://www.npmjs.com/package/@formbricks/react).
 
 <Image src={NPS2} alt="Results summary" className="rounded-lg" />
 
