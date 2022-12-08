@@ -28,8 +28,8 @@ export default function FeedbackModal({ show, setShow }) {
                     <p className="text-sm font-medium text-gray-900">We would like to hear your feedback</p>
                     <div className="mt-3 flex space-x-7">
                       <Form
-                        formId="clbf814y50006yzvk3shskf17"
-                        hqUrl="http://localhost:3000"
+                        formId="clbf7ry6e0000i40811zrexia"
+                        hqUrl="https://hq.formbricks.com"
                         customerId="johannes@formbricks.com"
                         onSubmit={sendToHq}>
                         <Nps

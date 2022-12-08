@@ -1,5 +1,6 @@
-import { sendSubmissionEmail } from "./email";
+import { prisma } from "@formbricks/database";
 import crypto from "crypto";
+import { sendSubmissionEmail } from "./email";
 
 export const runPipelines = async (form, submission) => {
   // handle integrations
