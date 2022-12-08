@@ -100,6 +100,7 @@ const navigation = [
       { title: "Schema", href: "/docs/formbricks-hq/schema" },
       { title: "Email Notifications (UI)", href: "/docs/formbricks-hq/ui/email-notifications" },
       { title: "Webhooks (UI)", href: "/docs/formbricks-hq/ui/webhooks" },
+      { title: "Self-Hosting", href: "/docs/formbricks-hq/self-hosting" },
     ],
   },
 ];

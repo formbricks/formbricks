@@ -1,0 +1,36 @@
+import { Layout } from "@/components/docs/Layout";
+
+export const meta = {
+  title: "Self-Hosting Formbricks HQ - Formbricks Open Source Form & Survey Builder",
+};
+
+## Deploy with Docker-Compose
+
+The easiest way to deploy Formbricks HQ on your own machine is using Docker. This requires Docker and the docker compose plugin on your system to work.
+
+Clone the repository:
+
+```bash
+git clone https://github.com/formbricks/formbricks.git && cd formbricks
+```
+
+Create a `.env` file based on `.env.docker` and change all fields according to your setup. This file comes with a basic setup and Formbricks HQ works without making any changes to the file. To enable email sending functionality you need to configure the SMTP settings in the `.env` file. If you configured your email credentials, you can also comment the following lines to enable email verification (`# NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED=1`) and password reset (`# NEXT_PUBLIC_PASSWORD_RESET_DISABLED=1`)
+
+Copy the `.env.docker` file to `.env` and edit it with an editor of your choice if needed.
+
+```bash
+cp .env.docker .env
+```
+
+Note: The environment variables are used at build time. When you change environment variables later, you need to rebuild the image with `docker compose build` for the changes to take effect.
+
+Finally start the docker compose process to build and spin up the Formbricks HQ container as well as the PostgreSQL database.
+
+```bash
+docker compose up -d
+# (use docker-compose if you are on an older docker version)
+```
+
+You can now access the app on [https://localhost:3000](https://localhost:3000). You will be automatically redirected to the login. To use your local installation of Formbricks HQ, create a new account.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
