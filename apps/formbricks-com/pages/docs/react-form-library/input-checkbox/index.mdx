@@ -12,7 +12,9 @@ The checkbox input uses [HTML's checkbox input](https://developer.mozilla.org/en
 Like all other inputs it needs a `name` prop as an unique identifier:
 
 ```jsx
-<Checkbox name="terms" />
+import { Checkbox } from "@formbricks/react";
+
+<Checkbox name="terms" />;
 ```
 
 ## Single Checkbox
@@ -20,12 +22,14 @@ Like all other inputs it needs a `name` prop as an unique identifier:
 By default the checkbox input will render a single checkbox returning a `boolean` value:
 
 ```jsx
+import { Checkbox } from "@formbricks/react";
+
 <Checkbox
   name="newsletter"
   label="Monthly Newsletter"
   help="Would you like to receive our newsletter?"
   validation="accepted"
-/>
+/>;
 ```
 
 ## Multiple checkboxes
