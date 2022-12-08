@@ -58,6 +58,7 @@ importers:
   apps/formbricks-com:
     specifiers:
       '@docsearch/react': ^3.3.0
+      '@formbricks/react': workspace:*
       '@headlessui/react': ^1.7.3
       '@heroicons/react': ^2.0.13
       '@mapbox/rehype-prism': ^0.8.0
@@ -88,6 +89,7 @@ importers:
       typescript: 4.8.4
     dependencies:
       '@docsearch/react': 3.3.0_4mdvn5gl4vbbvabne2xxb7fpaa
+      '@formbricks/react': link:../../packages/react
       '@headlessui/react': 1.7.4_biqbaboplfbrettd7655fr4n2y
       '@heroicons/react': 2.0.13_react@18.2.0
       '@mapbox/rehype-prism': 0.8.0
