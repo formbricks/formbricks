@@ -8,7 +8,7 @@ interface Props {
   fieldName: string;
 }
 
-export function FbBar({ color, submissions, schema, fieldName }: Props) {
+export function Nps({ color, submissions, schema, fieldName }: Props) {
   const data = useMemo(() => {
     if (!fieldName) {
       throw Error("no field name provided");
@@ -22,30 +22,17 @@ export function FbBar({ color, submissions, schema, fieldName }: Props) {
     if (typeof schemaElem === "undefined") {
       throw Error("key not found in schema");
     }
-    for (const option of schemaElem.options) {
-      dataDict[option.value] = { name: option.label, value: 0 };
+    for (const option of [...Array(11).keys()]) {
+      dataDict[option] = { name: option, value: 0 };
     }
+    console.log(dataDict);
     for (const submission of submissions) {
       if (fieldName in submission.data) {
-        // if submission value is array (checkboxes)
-        if (Array.isArray(submission.data[fieldName])) {
-          for (const value of submission.data[fieldName]) {
-            if (value in dataDict) {
-              dataDict[value] = {
-                ...dataDict[value],
-                value: dataDict[value].value + 1,
-              };
-            }
-          }
-        }
-        // if submission value is string (radio buttons)
-        else if (typeof submission.data[fieldName] == "string") {
-          if (submission.data[fieldName] in dataDict) {
-            dataDict[submission.data[fieldName]] = {
-              ...dataDict[submission.data[fieldName]],
-              value: dataDict[submission.data[fieldName]].value + 1,
-            };
-          }
+        if (submission.data[fieldName] in dataDict) {
+          dataDict[submission.data[fieldName]] = {
+            ...dataDict[submission.data[fieldName]],
+            value: dataDict[submission.data[fieldName]].value + 1,
+          };
         }
       }
     }
@@ -70,5 +57,3 @@ export function FbBar({ color, submissions, schema, fieldName }: Props) {
     </>
   );
 }
-
-export { FbBar as Bar };

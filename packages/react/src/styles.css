@@ -55,3 +55,27 @@ textarea.formbricks-input {
 .formbricks-fieldset {
   @apply border-gray-50 rounded-lg  max-w-md;
 }
+
+.formbricks-input-nps {
+  @apply flex cursor-pointer items-center justify-center rounded-md border py-3 px-3 text-sm font-medium uppercase focus:outline-none sm:flex-1;
+}
+
+[data-type="nps"] .formbricks-options {
+  @apply grid grid-cols-11 gap-1 sm:grid-cols-11 mt-2;
+}
+
+[data-type="nps"] .formbricks-option[aria-checked="true"] {
+  @apply border-transparent bg-slate-600 text-white hover:bg-slate-700;
+}
+
+[data-type="nps"] .formbricks-option {
+  @apply flex cursor-pointer items-center justify-center rounded-md border py-3 px-3 text-sm font-medium uppercase focus:outline-none sm:flex-1;
+}
+
+[data-type="nps"] .formbricks-input-addition {
+  @apply flex items-center justify-between mt-1;
+}
+
+[data-type="nps"] .formbricks-input-addition-item {
+  @apply text-xs text-gray-500;
+}

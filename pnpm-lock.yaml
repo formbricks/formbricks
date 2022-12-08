@@ -10,7 +10,7 @@ importers:
       turbo: latest
     devDependencies:
       '@changesets/cli': 2.25.0
-      prettier: 2.8.0
+      prettier: 2.8.1
       tsx: 3.9.0
       turbo: 1.6.3
 
@@ -273,6 +273,7 @@ importers:
   packages/react:
     specifiers:
       '@formbricks/tsconfig': workspace:*
+      '@headlessui/react': ^1.7.4
       '@hookform/error-message': ^2.0.1
       '@types/react': ^18.0.25
       '@types/react-dom': ^18.0.8
@@ -286,6 +287,7 @@ importers:
       tsup: ^6.4.0
       typescript: ^4.8.4
     dependencies:
+      '@headlessui/react': 1.7.4_biqbaboplfbrettd7655fr4n2y
       '@hookform/error-message': 2.0.1_nrnvpvixg5xdweezd67llqjwze
       clsx: 1.2.1
       react-hook-form: 7.40.0_react@18.2.0
@@ -1938,7 +1940,7 @@ packages:
       fs-extra: 7.0.1
       lodash.startcase: 4.4.0
       outdent: 0.5.0
-      prettier: 2.8.0
+      prettier: 2.8.1
       resolve-from: 5.0.0
       semver: 5.7.1
     dev: true
@@ -2105,7 +2107,7 @@ packages:
       '@changesets/types': 5.2.0
       fs-extra: 7.0.1
       human-id: 1.0.2
-      prettier: 2.8.0
+      prettier: 2.8.1
     dev: true
 
   /@cnakazawa/watch/1.0.4:
@@ -13291,6 +13293,12 @@ packages:
 
   /prettier/2.8.0:
     resolution: {integrity: sha512-9Lmg8hTFZKG0Asr/kW9Bp8tJjRVluO8EJQVfY2T7FMw9T5jy4I/Uvx0Rca/XWf50QQ1/SS48+6IJWnrb+2yemA==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: true
+
+  /prettier/2.8.1:
+    resolution: {integrity: sha512-lqGoSJBQNJidqCHE80vqZJHWHRFoNYsSpP9AjFhlhi9ODCJA541svILes/+/1GM3VaL/abZi7cpFzOpdR9UPKg==}
     engines: {node: '>=10.13.0'}
     hasBin: true
     dev: true

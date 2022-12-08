@@ -1,13 +1,13 @@
 "use client";
 
+import AnalyticsCard from "@/components/AnalyticsCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
-import { useTeam } from "@/lib/teams";
-import { ExclamationTriangleIcon, InformationCircleIcon } from "@heroicons/react/20/solid";
-import Link from "next/link";
-import { Bar, Table } from "@formbricks/charts";
 import { useSubmissions } from "@/lib/submissions";
-import AnalyticsCard from "@/components/AnalyticsCard";
+import { useTeam } from "@/lib/teams";
+import { Bar, Nps, Table } from "@formbricks/charts";
+import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
+import Link from "next/link";
 import { useRouter } from "next/router";
 
 export default function SummaryPage() {
@@ -106,6 +106,16 @@ export default function SummaryPage() {
                       </span>
                     </h2>
                     <Bar submissions={submissions} schema={form.schema} fieldName={elem.name} />
+                  </div>
+                ) : ["nps"].includes(elem.type) ? (
+                  <div>
+                    <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                      {elem.label}
+                      <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
+                        {elem.type}
+                      </span>
+                    </h2>
+                    <Nps submissions={submissions} schema={form.schema} fieldName={elem.name} />
                   </div>
                 ) : null}
               </div>

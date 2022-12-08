@@ -5,7 +5,7 @@ import { hashString } from "./utils";
    and we cannot trace anything back to you or your customers. If you still want to
    disable telemetry, set the environment variable TELEMETRY_DISABLED=1 */
 
-export const captureTelemetryEvent = async (eventName: string, properties = {}) => {
+export const captureTelemetry = async (eventName: string, properties = {}) => {
   if (
     process.env.TELEMETRY_DISABLED !== "1" &&
     process.env.NODE_ENV === "production" &&

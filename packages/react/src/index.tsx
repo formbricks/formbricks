@@ -4,6 +4,7 @@ export * from "./components/FormbricksSchema";
 export * from "./components/inputs/Button";
 export * from "./components/inputs/Checkbox";
 export * from "./components/inputs/Email";
+export * from "./components/inputs/Nps";
 export * from "./components/inputs/Number";
 export * from "./components/inputs/Password";
 export * from "./components/inputs/Phone";
