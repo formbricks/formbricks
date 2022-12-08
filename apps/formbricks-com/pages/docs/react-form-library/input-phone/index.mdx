@@ -12,13 +12,17 @@ The `Phone` input uses HTML's [native tel input](https://developer.mozilla.org/e
 Like all other inputs it needs a `name` prop as an unique identifier:
 
 ```jsx
-<Phone name="phone" />
+import { Phone } from "@formbricks/react";
+
+<Phone name="phone" />;
 ```
 
 In most cases, it looks something like this:
 
 ```jsx
-<Phone name="phone" label="Phone" help="Enter your phone number." placeholder="+1 123 444 567" />
+import { Phone } from "@formbricks/react";
+
+<Phone name="phone" label="Phone" help="Enter your phone number." placeholder="+1 123 444 567" />;
 ```
 
 ### Props & Attributes
