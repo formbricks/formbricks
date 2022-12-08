@@ -1,6 +1,5 @@
 "use client";
 
-import CustomersPage from "@/components/customers/CustomersPage";
 import SingleCustomerPage from "@/components/customers/SingleCustomerPage";
 import LayoutApp from "@/components/layout/LayoutApp";
 import LayoutWrapperTeam from "@/components/layout/LayoutWrapperTeam";
