@@ -12,8 +12,8 @@ import HeadingCentered from "../shared/HeadingCentered";
 const features = [
   {
     id: "formCreation",
-    name: "Fast Form Creation",
-    description: "Build complex forms with our React Lib. Our data pipes also work with any other form.",
+    name: "Fast Survey Creation",
+    description: "Build complex forms with our React Lib. Use templates to assure consistent data.",
     icon: PlusIcon,
   },
   {
@@ -30,8 +30,8 @@ const features = [
   },
   {
     id: "nocodeBuilder",
-    name: "No-Code Builder",
-    description: "Let your operators create and change forms. Stick with React to style and embed forms.",
+    name: "100% customizable",
+    description: "Delight your users and get more responses with a native look & feel.",
     icon: RectangleGroupIcon,
     comingSoon: true,
   },
@@ -60,8 +60,8 @@ export default function Features() {
         <HeadingCentered
           closer
           teaser="the Swiss army knife for forms & surveys"
-          heading="Home-cooked taste, delivered in minutes"
-          subheading="Build a 'home-cooked' solution at the fraction of the time. We do the heavy lifting, you customize
+          heading="Build native surveys in minutes"
+          subheading="Build a 'home-cooked' solution in a fraction of the time. We do the heavy lifting, you customize
             to your needs."
         />
 

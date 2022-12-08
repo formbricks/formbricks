@@ -24,7 +24,7 @@ import { ThemeSelector } from "./ThemeSelector";
 const creation = [
   {
     name: "React Library",
-    description: "Build forms with React.js",
+    description: "Build surveys with React.js",
     href: "/react-form-library",
     icon: CodeBracketSquareIcon,
     status: true,
@@ -48,7 +48,7 @@ const creation = [
 const pipes = [
   {
     name: "Core API",
-    description: "The OS form engine",
+    description: "The OS survey engine",
     href: "/core-api",
     icon: CpuChipIcon,
     status: true,
@@ -137,7 +137,7 @@ export default function Header() {
                     <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
                       <div className="relative grid gap-6 bg-slate-50 px-5 py-6 dark:bg-slate-700 sm:gap-6 sm:p-8 lg:grid-cols-3">
                         <div>
-                          <h4 className="mb-6 ml-16 text-sm text-slate-400">Form Creation</h4>
+                          <h4 className="mb-6 ml-16 text-sm text-slate-400">Survey Creation</h4>
                           {creation.map((brick) => (
                             <Link
                               key={brick.name}
@@ -310,7 +310,7 @@ export default function Header() {
 
               <nav className="relative bg-gray-200 px-5 py-6 dark:bg-slate-800">
                 <div>
-                  <h4 className="mb-3 text-sm text-gray-900 dark:text-gray-300">Form Creation</h4>
+                  <h4 className="mb-3 text-sm text-gray-900 dark:text-gray-300">Survey Creation</h4>
                   {creation.map((brick) => (
                     <Link
                       key={brick.name}
