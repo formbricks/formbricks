@@ -10,7 +10,7 @@ export const sendToHq = async ({ submission, schema }: sendToHqProps) => {
       console.warn(`🧱 FormBricks: formId not set in <Form />. Can't send submission to Formbricks HQ.`);
       return;
     }
-    // send answer to snoop platform
+    // send answer to Formbricks HQ
     await Promise.all([
       await fetch(
         `${schema.config.hqUrl || "https://hq.formbricks.com"}/api/capture/forms/${

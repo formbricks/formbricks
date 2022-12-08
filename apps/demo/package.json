@@ -1,0 +1,33 @@
+{
+  "name": "@formbricks/demo",
+  "version": "1.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@formbricks/charts": "workspace:*",
+    "@formbricks/react": "workspace:*",
+    "@formbricks/ui": "workspace:*",
+    "@heroicons/react": "^2.0.13",
+    "@tailwindcss/forms": "^0.5.3",
+    "next": "latest",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@formbricks/tailwind-config": "workspace:*",
+    "@formbricks/tsconfig": "workspace:*",
+    "@types/node": "^18.11.10",
+    "@types/react": "^18.0.25",
+    "@types/react-dom": "^18.0.9",
+    "autoprefixer": "^10.4.13",
+    "eslint-config-formbricks": "workspace:*",
+    "postcss": "^8.4.19",
+    "tailwindcss": "^3.2.4",
+    "typescript": "^4.9.3"
+  }
+}
