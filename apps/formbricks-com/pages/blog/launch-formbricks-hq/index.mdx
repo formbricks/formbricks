@@ -6,6 +6,10 @@ import LaunchDay from "./launch formbricks HQ open source alternative formspree.
 import Polling from "../weekly-update-021222/chart-3.webp";
 import Schema from "../../docs/formbricks-hq/schema/data-visualisation-open-source-survey-builder.png";
 import NoSchema from "../../docs/formbricks-hq/schema/no-schema-visualisation-of-open-source-data-form-builder-creator-webform.png";
+import NPS1 from "./NPS-filled-out.webp";
+import NPS2 from "./NPS-feedback-summary.webp";
+import NPS3 from "./NPS-feedback-overview.webp";
+import API from "./API-endpoint.webp";
 
 export const meta = {
   title: "Formbricks HQ launched! 🚀",
@@ -28,6 +32,32 @@ In our last [Weekly Update](/blog/weekly-update-021222), we already shared the u
 
 To showcase the power of Formbricks HQ, we built another common use case: The NPS survey. We used Formbricks React to build the survey natively into our example app. When the survey is submitted, the data is sent to Formbricks HQ and displayed.
 
+### Step 1: Create NPS survey in Formbricks HQ
+
+With a few clicks you create a new form in Formbricks HQ:
+
+<Image src={API} alt="Polling users natively in-app" className="rounded-lg" />
+
+### Step 2: Using Formbricks React to build the survey
+
+We built the NPS survey with Formbricks React. It is a simple form with two questions and a submit button. The form is built with the following code:
+
+```jsx
+code;
+```
+
+<Image src={NPS1} alt="NPS natively embedded into app" className="rounded-lg" />
+
+From the HQ you can copy the endpoint to your form action. The endpoint is a POST request which accepts JSON data. The data is then sent to your personal endpoint hosted on Formbricks HQ.
+
+### Step 3: Displaying the results
+
+The results are displayed in the HQ dashboard. You can see the results in real-time. The dashboard is built with Formbricks Charts and uses the same schema as Formbricks React.
+
+<Image src={NPS2} alt="Results summary" className="rounded-lg" />
+
+<Image src={NPS3} alt="Results overview" className="rounded-lg" />
+
 ### What is a schema good for?
 
 The cool thing - apart from you being able to self-host and customize the complete solution - is that Frombricks React and HQ are using the same schema.
@@ -38,6 +68,8 @@ You get a full image of the survey data including questions and not selected opt
 
 <Image src={NoSchema} alt="Open Source Form with Question about favorite food" className="rounded-lg" />
 <Image src={Schema} alt="Open Source Form with Question about favorite food" className="rounded-lg" />
+
+And just like that you have a native NPS survey with full data insights! 🚀
 
 ## What else can you use Formbricks HQ for?
 
