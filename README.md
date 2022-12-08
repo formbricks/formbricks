@@ -64,11 +64,13 @@ export default function WaitlistForm() {
 
 [Get started with the React Library](https://formbricks.com/docs/react-form-library/introduction)
 
-### Core API - The OS form engine
+### Formbricks HQ - The OS form engine
 
 Your form looks perfect? Time to build integrations...
 
-Our core API handles all of the submission handling of your forms and surveys. Our main objective is versatility, so that you can use it with any currently existing form. Soon we will integrate it with our React Form Builder. This allows for handling schemas so that you get a full image of your submission data.
+Formbricks HQ is your backend for your submissions. Our main objective is versatility, so that you can use it with any currently existing form or survey. Soon we will integrate it with our React Form Builder. This allows for handling schemas so that you get a full image of your submission data.
+
+<img width="1000" alt="Screenshot 2022-12-08 at 15 55 17" src="https://user-images.githubusercontent.com/675065/206478755-537ea73f-a7c9-4184-87a2-01c95586bc15.png">
 
 ### Features
 
@@ -96,6 +98,10 @@ Our core API handles all of the submission handling of your forms and surveys. O
 - [TailwindCSS](https://tailwindcss.com/)
 - [Prisma](https://prisma.io/)
 
-## Installation and usage
+## Cloud vs. self-hosted
 
-Coming soon - we will update this Readme in the weeks ahead and show you how to leverage all the advantages of Formbricks
+We offer you a ready hosted and maintained version of Formbricks HQ on [formbricks.com](https://hq.formbricks.com). It is currently in a open beta phase, free to use and always up to date. If you want to try Formbricks HQ, or save yourself the hassle and stress of self-hosting, this is the place to start.
+
+The version of Formbricks HQ you'll find in this repository is the same version that runs in the cloud, and you can easily host it yourself on your servers. Check out our [docs](https://formbricks.com/docs/formbricks-hq/self-hosting) to see how to self-host Formbricks HQ.
+
+(In the future we may develop additional features that aren't in the free Open-Source version)
