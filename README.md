@@ -5,7 +5,7 @@
   <h3 align="center">Formbricks</h3>
 
   <p align="center">
-    The Open Source Forms & Survey Toolbox
+    The Open Source Survey Toolbox
     <br />
     <a href="https://formbricks.com/">Website</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
   </p>

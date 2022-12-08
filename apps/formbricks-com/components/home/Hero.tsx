@@ -12,9 +12,9 @@ export default function Hero({}: Props) {
       <HeroTitle
         headingPt1="The"
         headingTeal="Open Source"
-        headingPt2="Forms & Survey Toolbox"
-        subheading="We're building all essential form functionality so you don't have to. Modular, customizable,
-        extendable. And open source.">
+        headingPt2="Form & Survey Toolbox"
+        subheading="Bring all qualitative user data on one open source platform. Modular, customizable,
+        extendable.">
         <Button variant="secondary" onClick={() => router.push("/docs")}>
           Read docs
         </Button>

@@ -63,9 +63,7 @@ export default function Footer() {
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8 xl:col-span-1">
             <FooterLogo className="h-8 w-auto sm:h-10" />
-            <p className="text-base text-slate-500 dark:text-slate-400">
-              The Open Source Forms & Survey Toolbox
-            </p>
+            <p className="text-base text-slate-500 dark:text-slate-400">The Open Source Survey Toolbox</p>
             <div className="flex space-x-6">
               {navigation.social.map((item) => (
                 <Link key={item.name} href={item.href} className="text-slate-400 hover:text-gray-500">
@@ -78,7 +76,7 @@ export default function Footer() {
           <div className="mt-12 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
-                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Form Creation</h3>
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Survey Creation</h3>
                 <ul role="list" className="mt-4 space-y-4">
                   {navigation.creation.map((item) => (
                     <li key={item.name}>

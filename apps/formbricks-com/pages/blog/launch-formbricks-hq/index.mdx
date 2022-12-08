@@ -1,0 +1,57 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import NewsletterSignup from "@/components/shared/NewsletterSignup";
+
+import LaunchDay from "./launch formbricks HQ open source alternative formspree.png";
+import Polling from "../weekly-update-021222/chart-3.webp";
+import Schema from "../../docs/formbricks-hq/schema/data-visualisation-open-source-survey-builder.png";
+import NoSchema from "../../docs/formbricks-hq/schema/no-schema-visualisation-of-open-source-data-form-builder-creator-webform.png";
+
+export const meta = {
+  title: "Formbricks HQ launched! 🚀",
+  description:
+    "we are thrilled to announce the launch of Formbricks HQ, the newest addition to our suite of open source survey tools!",
+  date: "2022-12-08",
+};
+
+<Image src={LaunchDay} alt="Formbricks HQ launched" className="rounded-lg" />
+
+_Today, we are thrilled to announce the launch of Formbricks HQ, the newest addition to our suite of open source survey tools! Formbricks HQ is an easy-to-use product that allows developers to quickly and easily create, manage, and deploy forms for their websites, without the need for a server._
+
+### What can you use it for?
+
+In our last [Weekly Update](/blog/weekly-update-021222), we already shared the use case of polling users natively in your app or webshop and showing them the results right away.
+
+<Image src={Polling} alt="Polling users natively in-app" className="rounded-lg" />
+
+## Use case: Native NPS survey
+
+To showcase the power of Formbricks HQ, we built another common use case: The NPS survey. We used Formbricks React to build the survey natively into our example app. When the survey is submitted, the data is sent to Formbricks HQ and displayed.
+
+### What is a schema good for?
+
+The cool thing - apart from you being able to self-host and customize the complete solution - is that Frombricks React and HQ are using the same schema.
+
+We’ve wrote about the [benefit in-depth in our Docs](/docs/formbricks-hq/schema), but here is the benefit in a nutshell:
+
+You get a full image of the survey data including questions and not selected options. Without a schema, your stuck with the data which is sent along so the selected value and the input label. Here is the difference:
+
+<Image src={NoSchema} alt="Open Source Form with Question about favorite food" className="rounded-lg" />
+<Image src={Schema} alt="Open Source Form with Question about favorite food" className="rounded-lg" />
+
+## What else can you use Formbricks HQ for?
+
+Apart from the use case above, you can send any form data to your personal endpoint. Here is a short tutorial on how to do that, [the full guide is in our docs](/docs/react-form-library/link-formbricks-hq):
+
+1. Sign up at [hq.formbricks.com](http://hq.formbricks.com)
+2. Create a new form
+3. Copy the endpoint to your form action
+4. Receive responses
+
+### What do you think?
+
+[Join our Discord to share feedback and request features!](https://formbricks.com/discord)
+
+<NewsletterSignup />
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
