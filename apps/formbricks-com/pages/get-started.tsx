@@ -44,7 +44,10 @@ export default function GetStartedPage() {
               <p>All enterprise features included</p>
             </div>
           </div>
-          <Button disabled className="mt-7 w-full justify-center text-center font-bold" variant="highlight">
+          <Button
+            className="mt-7 w-full justify-center text-center font-bold"
+            variant="highlight"
+            onClick={() => router.push("https://hq.formbricks.com")}>
             Start FREE on Formbricks Cloud
           </Button>
         </div>
@@ -73,7 +76,7 @@ export default function GetStartedPage() {
           </div>
           <Button
             className="mt-7 w-full justify-center text-center font-bold"
-            variant="highlight"
+            variant="secondary"
             onClick={() => router.push("/discord")}>
             Sign up for beta test
           </Button>
