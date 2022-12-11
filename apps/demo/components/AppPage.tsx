@@ -1,5 +1,12 @@
-import { Fragment, useState } from "react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
+import {
+  BanknotesIcon,
+  BuildingOfficeIcon,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/20/solid";
 import {
   Bars3CenterLeftIcon,
   BellIcon,
@@ -14,15 +21,7 @@ import {
   UserGroupIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import {
-  BanknotesIcon,
-  BuildingOfficeIcon,
-  CheckCircleIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/20/solid";
-import FeedbackModal from "../components/FeedbackModal";
+import { Fragment, useState } from "react";
 
 const navigation = [
   { name: "Home", href: "#", icon: HomeIcon, current: true },
@@ -64,7 +63,7 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function Example() {
+export default function AppPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
 
@@ -574,7 +573,6 @@ export default function Example() {
           </main>
         </div>
       </div>
-      <FeedbackModal show={showFeedback} setShow={setShowFeedback} />
     </>
   );
 }
