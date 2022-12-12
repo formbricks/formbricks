@@ -3,8 +3,9 @@
  */
 
 var path = require("path");
+const { withSentryConfig } = require("@sentry/nextjs");
 
-module.exports = {
+const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
   experimental: {
@@ -52,3 +53,15 @@ module.exports = {
     ];
   },
 };
+
+if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  nextConfig.sentry = {
+    hideSourceMaps: true,
+  };
+}
+
+const sentryWebpackPluginOptions = {
+  silent: true, // Suppresses all logs
+};
+
+module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

@@ -14,6 +14,7 @@
     "@formbricks/ui": "workspace:*",
     "@headlessui/react": "^1.7.4",
     "@heroicons/react": "^2.0.13",
+    "@sentry/nextjs": "^7.24.2",
     "@vercel/analytics": "^0.1.5",
     "bcryptjs": "^2.4.3",
     "clsx": "^1.2.1",
