@@ -23,7 +23,7 @@ export default function FormsPage() {
   }
 
   if (isErrorCustomers || isErrorTeam) {
-    return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
+    return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights.</div>;
   }
   return (
     <div className="mx-auto py-8 sm:px-6 lg:px-8">
@@ -34,6 +34,9 @@ export default function FormsPage() {
             {team.name}
           </span>
         </h1>
+        <p className="mt-4 text-slate-600">
+          Pass a customerID with each submission and get an overview of all submissions per customer.
+        </p>
       </header>
       {customers.length === 0 ? (
         <EmptyPageFiller

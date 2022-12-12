@@ -1,0 +1,103 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import HeaderImage from "../weekly-update-181122/weeklyupdate.png";
+import { Callout } from "@/components/shared/Callout";
+import NewsletterSignup from "@/components/shared/NewsletterSignup";
+
+import HQ1 from "./hq-1.webp";
+import HQAPI from "./hq-api.webp";
+import HQOverview from "./hq-overview.webp";
+import HQSummary from "./hq-summary.webp";
+import NPS1 from "../launch-formbricks-hq/NPS-filled-out.webp";
+import NPS2 from "../launch-formbricks-hq/NPS-feedback-summary.webp";
+
+export const meta = {
+  title: "Weekly Summary - 9th Dec 2022",
+  description:
+    "We launched the Formbricks HQ - and with it our Cloud offering is back! Apart from that, we’re building use cases to get you the insights that you need.",
+  date: "2022-12-09",
+};
+
+_We launched the Formbricks HQ - and with it our Cloud offering is back! Apart from that, we’re building use cases to get you the insights that you need. But let’s look at it 👇_
+
+<Image src={HeaderImage} alt="Weekly Update" className="rounded-lg" />
+
+### Highlights
+
+- We launched [Formbricks HQ](https://hq.formbricks.com) 🤸
+- Native NPS survey use case built 📊
+- YC Interview Round 2 coming up 🍊
+
+##
+
+# Formbricks HQ is live!
+
+<Image src={HQ1} alt="Formbricks HQ Screenshot" className="rounded-lg" />
+
+The Formbricks HQ - and with it the Formbricks Cloud - is here. What is it and what can you do with it?
+
+Let’s find out:
+
+- Pipe data from any type of form to the API
+- View submissions
+- Forward submissions via Email
+- Forward submissions via Webhook
+
+Here is an [in-depth comparison to a similar tool](/vs-formspree), which is not open source.
+
+Have a look:
+
+<Image src={HQAPI} alt="Formbricks HQ Screenshot" className="rounded-lg" />
+After you created a form you get an API to POST any form data to.
+
+<Image src={HQOverview} alt="Formbricks HQ Screenshot" className="rounded-lg" />
+If you send a [schema](/docs/formbricks-hq/schema) along, Formbricks HQ will chart your data.
+
+<Image src={HQSummary} alt="Formbricks HQ Screenshot" className="rounded-lg" />
+You can also view all submissions in a table.
+
+## How are Formbricks and snoopForms different?
+
+In our Discord we were asked how Formbricks and the first iteration called _snoopForms_ are different. In a nutshell:
+
+**Formbricks is more modular **and** more specific.**
+
+How is that possible? And why are you building it that way?
+
+After we launched snoopforms, a typical monolythic solution, we found that engineers took it apart to build use cases different to what we had in mind. Which is great! We decided to do two things:
+
+1. Build a modular infrastructure to allow maximum flexibility for engineers
+2. Build more specific use cases on top of it to move closer to the Job To Be Done
+
+In practice, this means that instead of building “one solution for all use cases” (which is what Typeform is) we are building a set of LEGOs for engineers to build **specific solutions for specific problems.** Examples are Bug Report Forms, Feature Request Widgets, Docs Feedback or User Polling - to name a few.
+
+The beauty of open source is that you are able to build exactly what you need, natively integrated into your app.
+
+##
+
+# Native NPS Survey build with Formbricks
+
+After live user polling, we’ve dogfooded our own tech to build an NPS survey natively. We wrote more about it in our launch blog post yesterday. Check it out for all the details, here is a sneak peak:
+
+<div className="grid md:grid-cols-2 gap-1">
+  <div>
+    <Image src={NPS1} alt="NPS natively embedded into app" className="rounded-lg" />
+  </div>
+  <div>
+    <Image src={NPS2} alt="Results summary" className="rounded-lg" />
+  </div>
+</div>
+
+[Here is a detailed description of how we built it.](/blog/weekly-update-021222)
+
+##
+
+# YC Interview Round 2
+
+YC isn’t done with us yet. They invited is for a second interview early next week. Let’s see if we can convince a different set of partners of the potential of Formbricks 🤞 Keep you posted!
+
+### Until then, enjoy your weekend!
+
+<NewsletterSignup />
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

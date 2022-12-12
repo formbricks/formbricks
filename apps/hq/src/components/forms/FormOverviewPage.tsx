@@ -109,129 +109,137 @@ export default function FormOverviewPage() {
 
         {activeTab.id === "overview" ? (
           <div>
-            <div>
-              <div className="mt-4 mb-12 text-sm text-gray-600">
-                <p className="text-slate-700">
-                  To get started post your submission to the Formbricks HQ capture endpoint. All submissions
-                  are stored in Formbricks HQ and can be viewed here.
-                  <br /> <br />
-                  If you want to get notified when a submission is made you can also set up a webhook or email
-                  notifications in{" "}
-                  <Link
-                    href={`/app/teams/${router.query.teamId}/forms/${router.query.formId}/pipelines`}
-                    className="underline">
-                    Pipelines
-                  </Link>
-                  .<br />
-                  <br />
-                  Optionally you can set a schema for your form. This schema tells Formbricks HQ more about
-                  the structure of your form and enables better form evaluation, e.g. displays the correct
-                  labels for your form fields in the Formbricks HQ UI insted of the fieldName or filters data
-                  that doesn&apos;t match the schema. The easiest way to get started with a schema is to used
-                  our react library because it handles schema creation and sending to Formbricks HQ
-                  automatically.
-                  <br /> To learn more about the schema please check out our{" "}
-                  <Link href="https://formbricks.com/docs/formbricks-hq/schema">docs</Link>.
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="formId" className="block text-base text-slate-800">
-                  Your form ID
-                </label>
-                <div className="mt-3 w-96">
-                  <input
-                    id="formId"
-                    type="text"
-                    className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100 sm:text-sm"
-                    value={form.id}
-                    disabled
-                  />
-
-                  <Button
-                    variant="secondary"
-                    className="mt-2 w-full justify-center"
-                    onClick={() => {
-                      navigator.clipboard.writeText(form.id);
-                      toast("Copied form ID to clipboard");
-                    }}>
-                    copy
-                  </Button>
-                </div>
-              </div>
-              <hr className="my-6" />
-              <div className="max-w-2xl">
-                <label htmlFor="formId" className="block text-base text-slate-800">
-                  Capture POST Url:
-                </label>
-                <div className="mt-3">
-                  <div className="mt-1 flex rounded-md shadow-sm">
-                    <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-200 px-3 text-gray-500  sm:text-sm">
-                      POST
-                    </span>
+            <div className="grid grid-cols-5 gap-8 py-4">
+              <div className="col-span-3">
+                <div>
+                  <label htmlFor="formId" className="block text-lg font-semibold text-slate-800">
+                    Your form ID
+                  </label>
+                  <div className="mt-3 w-96">
                     <input
-                      id="captureUrl"
+                      id="formId"
                       type="text"
-                      className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm"
-                      value={`${window.location.protocol}//${window.location.host}/capture/forms/${form.id}/submissions`}
+                      className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100 sm:text-sm"
+                      value={form.id}
                       disabled
                     />
-                  </div>
 
-                  <Button
-                    variant="secondary"
-                    className="mt-2 w-full justify-center"
-                    onClick={() => {
-                      navigator.clipboard.writeText(form.id);
-                      toast("Copied form url to clipboard");
-                    }}>
-                    copy
-                  </Button>
+                    <Button
+                      variant="secondary"
+                      className="mt-2 w-full justify-center"
+                      onClick={() => {
+                        navigator.clipboard.writeText(form.id);
+                        toast("Copied form ID to clipboard");
+                      }}>
+                      copy
+                    </Button>
+                  </div>
                 </div>
+
+                <div className="max-w-2xl py-6">
+                  <label htmlFor="formId" className="block text-lg font-semibold text-slate-800">
+                    Capture POST Url:
+                  </label>
+                  <div className="mt-3">
+                    <div className="mt-1 flex rounded-md shadow-sm">
+                      <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-200 px-3 text-gray-500  sm:text-sm">
+                        POST
+                      </span>
+                      <input
+                        id="captureUrl"
+                        type="text"
+                        className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm"
+                        value={`${window.location.protocol}//${window.location.host}/capture/forms/${form.id}/submissions`}
+                        disabled
+                      />
+                    </div>
+
+                    <Button
+                      variant="secondary"
+                      className="mt-2 w-full justify-center"
+                      onClick={() => {
+                        navigator.clipboard.writeText(form.id);
+                        toast("Copied form url to clipboard");
+                      }}>
+                      copy
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-span-2  text-sm text-gray-600">
+                <h3 className="block text-lg font-semibold text-slate-800">How to get started</h3>
+                <ol className="list-decimal leading-8 text-slate-700">
+                  <li>POST a submission to the capture endpoint.</li>
+                  <li>
+                    View submission under{" "}
+                    <Link
+                      href={`/app/teams/${router.query.teamId}/forms/${router.query.formId}/submissions`}
+                      className="underline">
+                      Submissions
+                    </Link>{" "}
+                    tab.
+                  </li>
+                  <li>
+                    Get notified or pipe submission data to a different tool in the{" "}
+                    <Link
+                      href={`/app/teams/${router.query.teamId}/forms/${router.query.formId}/pipelines`}
+                      className="underline">
+                      Pipelines
+                    </Link>{" "}
+                    tab.
+                  </li>
+                  <li>
+                    For a summary of form data a schema is required. Learn all about schemas in our{" "}
+                    <Link
+                      target="_blank"
+                      href="https://formbricks.com/docs/formbricks-hq/schema"
+                      className="underline">
+                      docs
+                    </Link>
+                    .
+                  </li>
+                </ol>
               </div>
             </div>
           </div>
         ) : activeTab.id === "api" ? (
-          <div className="mt-5">
-            <p className="my-3 text-sm text-gray-600">
-              You can send submissions directly to Formbricks HQ via our API. The API doesn&apos;t need any
-              authentication and can also called in the users browser.
-            </p>
-            <hr className="my-8" />
-            <div className="max-w-2xl">
-              <label htmlFor="formId" className="block text-base text-slate-800">
-                Capture POST Url:
-              </label>
-              <div className="mt-3">
-                <div className="mt-1 flex rounded-md shadow-sm">
-                  <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-200 px-3 text-gray-500  sm:text-sm">
-                    POST
-                  </span>
-                  <input
-                    id="captureUrl"
-                    type="text"
-                    className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm"
-                    value={`${window.location.protocol}//${window.location.host}/capture/forms/${form.id}/submissions`}
-                    disabled
-                  />
-                </div>
+          <div>
+            <div className="grid grid-cols-5 gap-8 py-4">
+              <div className="col-span-3">
+                <div>
+                  <label htmlFor="formId" className="block text-lg font-semibold text-slate-800">
+                    Capture POST Url:
+                  </label>
+                  <div className="mt-3">
+                    <div className="mt-1 flex rounded-md shadow-sm">
+                      <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-200 px-3 text-gray-500  sm:text-sm">
+                        POST
+                      </span>
+                      <input
+                        id="captureUrl"
+                        type="text"
+                        className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm"
+                        value={`${window.location.protocol}//${window.location.host}/capture/forms/${form.id}/submissions`}
+                        disabled
+                      />
+                    </div>
 
-                <Button
-                  variant="secondary"
-                  className="mt-2 w-full justify-center"
-                  onClick={() => {
-                    navigator.clipboard.writeText(form.id);
-                    toast("Copied form url to clipboard");
-                  }}>
-                  copy
-                </Button>
-              </div>
-            </div>
-            <hr className="my-8" />
-            <div className="rounded-md bg-black p-8 text-sm font-light text-gray-200">
-              <pre>
-                <code className="language-js whitespace-pre-wrap">
-                  {`{
+                    <Button
+                      variant="secondary"
+                      className="mt-2 w-full justify-center"
+                      onClick={() => {
+                        navigator.clipboard.writeText(form.id);
+                        toast("Copied form url to clipboard");
+                      }}>
+                      copy
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-4 rounded-md bg-black p-4 font-light text-gray-200 first-letter:text-sm">
+                  <pre>
+                    <code className="language-js whitespace-pre-wrap">
+                      {`{
 "customerId": "user@example.com", /* optional */
 "data": {
   "firstname": "John",
@@ -239,23 +247,32 @@ export default function FormOverviewPage() {
   "feedback": "I like the app very much"
   }
 }`}
-                </code>
-              </pre>
+                    </code>
+                  </pre>
+                </div>
+              </div>
+              <div className="col-span-2  text-sm text-gray-600">
+                <h3 className="block pb-4 text-lg font-semibold text-slate-800">Quick Tips</h3>
+                <p className="font-bold">Authentication</p>
+                <p className="my-3 text-sm text-gray-600">
+                  Via the API you can send submissions directly to Formbricks HQ. The API doesn&apos;t need
+                  any authentication and can also be called in the users browser.
+                </p>
+                <p className="pt-3 font-bold">CustomerId</p>
+                <p className="my-3 text-sm text-gray-600">
+                  You can pass along a customer ID to identify the respondent. This allows you to attribute
+                  submissions of several surveys to the same respondent.
+                </p>
+              </div>
             </div>
           </div>
         ) : activeTab.id === "react" ? (
-          <div className="mt-5">
-            <p className="my-3 text-sm text-gray-600">
-              The best way to send submissions to Formbricks HQ in React is our simple to use{" "}
-              <Link target="_blank" href="https://www.npmjs.com/package/@formbricks/react">
-                React Library
-              </Link>
-              because it also creates and sends a schema to Formbricks HQ.
-            </p>
-            <div className="rounded-md bg-black p-8 text-sm font-light text-gray-200">
-              <pre>
-                <code className="language-js whitespace-pre-wrap">
-                  {`import { Form, Text, Email, Checkbox, Submit, sendToHq } from "@formbricks/react";
+          <div>
+            <div className="mt-5 grid grid-cols-5 gap-8">
+              <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-gray-200">
+                <pre>
+                  <code className="language-js whitespace-pre-wrap">
+                    {`import { Form, Text, Email, Checkbox, Submit, sendToHq } from "@formbricks/react";
 import "@formbricks/react/styles.css";
 
 export default function WaitlistForm() {
@@ -278,17 +295,29 @@ return (
 </Form>
 );
 }`}
-                </code>
-              </pre>
+                  </code>
+                </pre>
+              </div>
+              <div className="col-span-2">
+                <h3 className="block text-lg font-semibold text-slate-800">Formbricks React</h3>
+                <p className="my-3 text-sm text-gray-600">
+                  The best way to send submissions to Formbricks HQ in React is{" "}
+                  <Link
+                    target="_blank"
+                    className="underline"
+                    href="https://www.npmjs.com/package/@formbricks/react">
+                    Formbricks React.
+                  </Link>{" "}
+                  It makes form creation easy and automatically creates a schema to get a full picture of your
+                  data in the Summary tab.
+                </p>
+              </div>
             </div>
-            <p className="my-3 text-sm text-gray-600">
-              But you can also use the default React Form functionality (or another form library) to send the
-              submissions to Formbricks HQ.
-            </p>
-            <div className="rounded-md bg-black p-8 text-sm font-light text-gray-200">
-              <pre>
-                <code className="language-js whitespace-pre-wrap">
-                  {`<form
+            <div className="mt-5 grid grid-cols-5 gap-8">
+              <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-gray-200">
+                <pre>
+                  <code className="language-js whitespace-pre-wrap">
+                    {`<form
 onSubmit={({ data }) => {
   fetch("${window.location.protocol}//${window.location.host}/capture/forms/${form.id}/submissions", {
     method: "POST",
@@ -300,20 +329,25 @@ onSubmit={({ data }) => {
 }}>
 {/* YOUR FORM */}
 </form>`}
-                </code>
-              </pre>
+                  </code>
+                </pre>
+              </div>
+              <div className="col-span-2">
+                <h3 className="block text-lg font-semibold text-slate-800">Standard React Forms</h3>
+                <p className="my-3 text-sm text-gray-600">
+                  You can also use the default React Form functionality (or another form library) to send the
+                  submissions to Formbricks HQ.
+                </p>
+              </div>
             </div>
           </div>
         ) : activeTab.id === "vue" ? (
-          <div className="mt-5">
-            {" "}
-            <p className="my-3 text-sm text-gray-600">
-              To send a submission in Vue.Js you can use the default form functionality.
-            </p>
-            <div className="rounded-md bg-black p-8 text-sm font-light text-gray-200">
-              <pre>
-                <code className="language-js whitespace-pre-wrap">
-                  {`<template>
+          <div>
+            <div className="mt-5 grid grid-cols-5 gap-8">
+              <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-gray-200">
+                <pre>
+                  <code className="language-js whitespace-pre-wrap">
+                    {`<template>
   <form @submit.prevent="submitForm">
     <label>
       <span>Email</span>
@@ -347,15 +381,22 @@ export default {
   },
 }
 </script>`}
-                </code>
-              </pre>
+                  </code>
+                </pre>
+              </div>
+              <div className="col-span-2">
+                <h3 className="block text-lg font-semibold text-slate-800">Standard Vue Forms</h3>
+                <p className="my-3 text-sm text-gray-600">
+                  You can also use the default Vue form functionality to send submissions to Formbricks HQ.
+                </p>
+              </div>
             </div>
           </div>
         ) : null}
 
         {/* <div className="mt-16">
           <h2 className="text-xl font-bold text-slate-800">Code your form</h2>
-          <div className="mt-4 mb-12">
+          <div className="">
             <p className="text-slate-800">
               Build your form with the code library of your choice. Manage your data in this dashboard.
             </p>

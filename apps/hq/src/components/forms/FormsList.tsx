@@ -101,7 +101,7 @@ export default function FormsList({ teamId }) {
                                             onClick={() => {
                                               if (
                                                 confirm(
-                                                  "Are you sure you want to delete this form? This also deletes all submissions that are captures with this form. This action cannot be undone."
+                                                  "Are you sure you want to delete this form? This also deletes all submissions that are captured with this form. This action cannot be undone."
                                                 )
                                               ) {
                                                 deleteFormAction(form, formIdx);

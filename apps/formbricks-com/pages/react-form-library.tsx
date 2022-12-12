@@ -127,7 +127,7 @@ const ReactFormBuilderPage = () => (
             </dt>
           </div>
         ))}
-        <a href="mailto:johannes@formbricks.com">
+        <a href="https://github.com/formbricks/formbricks/issues/new/choose">
           <div className="mx-auto flex max-w-sm items-center transition delay-100 duration-200 ease-in-out hover:scale-105">
             <PlusIcon
               className="text-brand-dark dark:text-brand-lightml-4 h-6 w-6 md:ml-5"
