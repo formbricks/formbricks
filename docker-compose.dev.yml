@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     image: postgres:13-alpine
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - snoopforms-postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=snoopforms
       - POSTGRES_USER=postgres
@@ -23,5 +23,5 @@ services:
       - 1025:1025 # smtp server
 
 volumes:
-  postgres:
+  snoopforms-postgres:
     driver: local

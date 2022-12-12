@@ -1,3 +1,4 @@
+import { sub } from "date-fns";
 import useSWR from "swr";
 import { Schema, SubmissionSession, SubmissionSummary } from "./types";
 import { fetcher } from "./utils";
@@ -47,6 +48,26 @@ export const getSubmission = (submissionSession, schema) => {
         }
       }
       submission.pages.push(submissionPage);
+    }
+  }
+  return submission;
+};
+
+export const getRawSubmission = (submissionSession) => {
+  const submission = {
+    id: submissionSession.id,
+    createdAt: submissionSession.createdAt,
+    data: {},
+  };
+  if (submissionSession.events.length > 0) {
+    for (const event of submissionSession.events) {
+      if (event.type === "pageSubmission") {
+        if ("submission" in event.data) {
+          for (const [key, value] of Object.entries(event.data.submission)) {
+            submission.data[key] = value;
+          }
+        }
+      }
     }
   }
   return submission;
