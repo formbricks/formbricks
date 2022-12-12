@@ -61,20 +61,17 @@ export default function SummaryPage() {
               <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">This form doesn&apos;t have a schema </h3>
+              <h3 className="text-sm font-medium text-yellow-800">No schema detected for this form.</h3>
               <div className="mt-2 text-sm text-yellow-700">
-                <p>
-                  Formbricks HQ needs a schema of your form to display a summary. Learn more about the schema
-                  and how you can add one in our docs.
-                </p>
+                <p>To summarize your data Formbricks HQ needs a schema of your form.</p>
               </div>
               <div className="mt-4">
                 <div className="-mx-2 -my-1.5 flex">
                   <Link
                     target="_blank"
                     href="https://formbricks.com/docs/formbricks-hq/schema"
-                    className="rounded-md bg-yellow-50 px-2 py-1.5 text-sm font-medium text-yellow-800 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-600 focus:ring-offset-2 focus:ring-offset-yellow-50">
-                    View docs
+                    className="rounded-md bg-yellow-100 px-2 py-1.5 text-sm font-medium text-yellow-800 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-600 focus:ring-offset-2 focus:ring-offset-yellow-50">
+                    Setup schema
                   </Link>
                 </div>
               </div>
