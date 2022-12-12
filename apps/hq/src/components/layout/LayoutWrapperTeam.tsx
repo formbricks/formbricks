@@ -27,12 +27,12 @@ export default function LayoutWrapperTeam({ children }) {
         icon: UsersIcon,
         current: pathname.includes("/customers"),
       },
-      {
+      /*     {
         name: "Settings",
-        href: `/app/teams/${router.query.teamId}/<settings>`,
+        href: `/app/teams/${router.query.teamId}/settings`,
         icon: Cog8ToothIcon,
         current: pathname.includes("/settings"),
-      },
+      }, */
     ],
     [router.query, pathname]
   );

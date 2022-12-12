@@ -152,7 +152,7 @@ export default function PipelinesPage({}) {
       </header>
       <div className="my-4">
         <p className="text-slate-800">
-          Pipe your data exactly where you need it. Add conditions for variable data piping.
+          Pipe your data to third party tools. Setup email notifications for new submissions.
         </p>
       </div>
       {pipelines.length > 0 ? (
