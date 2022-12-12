@@ -17,7 +17,6 @@ importers:
   apps/demo:
     specifiers:
       '@formbricks/charts': workspace:*
-      '@formbricks/react': workspace:*
       '@formbricks/tailwind-config': workspace:*
       '@formbricks/tsconfig': workspace:*
       '@formbricks/ui': workspace:*
@@ -36,7 +35,6 @@ importers:
       typescript: ^4.9.3
     dependencies:
       '@formbricks/charts': link:../../packages/charts
-      '@formbricks/react': link:../../packages/react
       '@formbricks/ui': link:../../packages/ui
       '@heroicons/react': 2.0.13_react@18.2.0
       '@tailwindcss/forms': 0.5.3_tailwindcss@3.2.4

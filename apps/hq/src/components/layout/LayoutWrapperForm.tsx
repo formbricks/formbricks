@@ -2,6 +2,7 @@
 
 import { Disclosure } from "@headlessui/react";
 import clsx from "clsx";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/router";
 import { useMemo } from "react";
@@ -42,7 +43,7 @@ export default function LayoutWrapperForm({ children }) {
             <div className="px-2 sm:px-4 lg:divide-y lg:divide-gray-200 lg:px-8">
               <nav className="hidden lg:flex lg:space-x-8 lg:py-2" aria-label="Global">
                 {navigation.map((item) => (
-                  <a
+                  <Link
                     key={item.name}
                     href={item.href}
                     className={clsx(
@@ -53,7 +54,7 @@ export default function LayoutWrapperForm({ children }) {
                     )}
                     aria-current={item.current ? "page" : undefined}>
                     {item.name}
-                  </a>
+                  </Link>
                 ))}
               </nav>
             </div>

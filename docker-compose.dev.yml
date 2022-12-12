@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres:15-alpine
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - formbricks-postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -21,5 +21,5 @@ services:
       - 1025:1025 # smtp server
 
 volumes:
-  postgres:
+  formbricks-postgres:
     driver: local
