@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@formbricks/charts": "workspace:*",
+    "@formbricks/react": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@heroicons/react": "^2.0.13",
     "@tailwindcss/forms": "^0.5.3",
