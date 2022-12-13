@@ -149,7 +149,7 @@ export default function FormOverviewPage() {
                         id="captureUrl"
                         type="text"
                         className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm"
-                        value={`${window.location.protocol}//${window.location.host}/capture/forms/${form.id}/submissions`}
+                        value={`${window.location.protocol}//${window.location.host}/api/capture/forms/${form.id}/submissions`}
                         disabled
                       />
                     </div>
@@ -220,7 +220,7 @@ export default function FormOverviewPage() {
                         id="captureUrl"
                         type="text"
                         className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm"
-                        value={`${window.location.protocol}//${window.location.host}/capture/forms/${form.id}/submissions`}
+                        value={`${window.location.protocol}//${window.location.host}/api/capture/forms/${form.id}/submissions`}
                         disabled
                       />
                     </div>
@@ -317,17 +317,35 @@ return (
               <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-gray-200">
                 <pre>
                   <code className="language-js whitespace-pre-wrap">
-                    {`<form
-onSubmit={({ data }) => {
-  fetch("${window.location.protocol}//${window.location.host}/capture/forms/${form.id}/submissions", {
-    method: "POST",
-    body: JSON.stringify({data}),
-    headers: {
-      Accept: "application/json",
-    },
-  });
-}}>
-{/* YOUR FORM */}
+                    {`
+<form
+onSubmit={(e) => {
+  e.preventDefault();
+  fetch(
+    "${window.location.protocol}//${window.location.host}/api/capture/forms/${form.id}/submissions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        data: {
+          firstname: e.target.firstname.value,
+          email: e.target.email.value,
+        },
+      }),
+    }
+  );
+  console.log("submission sent!");
+  e.target.reset();
+}}
+>
+<label htmlFor="firstname">First name</label>
+<input type="text" name="firstname" id="firstname" />
+<label htmlFor="email">Email</label>
+<input type="email" name="email" id="email" placeholder="you@example.com" />
+
+<button type="submit">Submit</button>
 </form>`}
                   </code>
                 </pre>
