@@ -7,7 +7,7 @@ export default function Example() {
 
   return (
     <>
-      <AppPage />
+      <AppPage setShowFeedback={setShowFeedback} />
       <FeedbackModal show={showFeedback} setShow={setShowFeedback} />
     </>
   );

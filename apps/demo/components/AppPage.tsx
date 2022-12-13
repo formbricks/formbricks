@@ -21,7 +21,7 @@ import {
   UserGroupIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 const navigation = [
   { name: "Home", href: "#", icon: HomeIcon, current: true },
@@ -63,9 +63,8 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function AppPage() {
+export default function AppPage({ setShowFeedback = () => {} }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
 
   return (
     <>

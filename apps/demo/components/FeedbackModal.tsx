@@ -1,7 +1,8 @@
 import { Form, Nps, sendToHq, Submit, Textarea } from "@formbricks/react";
 import { Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
+import { toast } from "react-toastify";
 
 export default function FeedbackModal({ show, setShow }) {
   return (
@@ -28,10 +29,14 @@ export default function FeedbackModal({ show, setShow }) {
                     <p className="text-sm font-medium text-gray-900">We would like to hear your feedback</p>
                     <div className="mt-3 flex space-x-7">
                       <Form
-                        formId="clbfbfqjh0000jz0803qh43y8"
-                        hqUrl="https://hq.formbricks.com"
+                        formId="clbmck9t90000yznpabjc4j9f"
+                        hqUrl="http://localhost:3000"
                         customerId="johannes@formbricks.com"
-                        onSubmit={sendToHq}>
+                        onSubmit={({ submission, schema, event }) => {
+                          sendToHq({ submission, schema, event });
+                          toast("Thanks a lot for your feedback");
+                          setShow(false);
+                        }}>
                         <Nps
                           name="nps"
                           label="How likely are you to recommend Formbricks to a friend or colleague?"
