@@ -35,5 +35,6 @@ export const sendToHq = async ({ submission, schema }: sendToHqProps) => {
     ]);
   } catch (e) {
     console.error(`🧱 FormBricks: Unable to send submission to Formbricks HQ. Error: ${e}`);
+    throw e;
   }
 };
