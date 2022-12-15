@@ -29,6 +29,12 @@ export default function BaseLayoutManagement({
       <Head>
         <title>{title}</title>
       </Head>
+      {process.env.SNOOP_CLOUD === "1" && (
+        <div className="bg-red flex w-full justify-center py-2 text-sm text-white">
+          SnoopForms Cloud stops operation on 31.12.2022. Please export your data before then.
+        </div>
+      )}
+
       <div
         className={classNames(
           bgClass,

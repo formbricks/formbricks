@@ -23,6 +23,7 @@
         "SMTP_USER",
         "SMTP_PASSWORD",
         "SMTP_SECURE_ENABLED",
+        "SNOOP_CLOUD",
         "TELEMETRY_DISABLED",
         "VERCEL_URL"
       ]
