@@ -15,6 +15,7 @@
         "NEXT_PUBLIC_PRIVACY_URL",
         "NEXT_PUBLIC_PRIVACY_URL",
         "NEXT_PUBLIC_SIGNUP_DISABLED",
+        "NEXT_PUBLIC_SNOOP_CLOUD",
         "NEXT_PUBLIC_TERMS_URL",
         "POSTHOG_API_HOST",
         "POSTHOG_API_KEY",
@@ -23,7 +24,6 @@
         "SMTP_USER",
         "SMTP_PASSWORD",
         "SMTP_SECURE_ENABLED",
-        "SNOOP_CLOUD",
         "TELEMETRY_DISABLED",
         "VERCEL_URL"
       ]

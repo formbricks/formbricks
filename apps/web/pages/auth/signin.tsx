@@ -19,6 +19,11 @@ export default function SignInPage() {
   };
   return (
     <BaseLayoutUnauthorized title="Sign in">
+      {process.env.NEXT_PUBLIC_SNOOP_CLOUD === "1" && (
+        <div className="bg-red flex w-full justify-center py-2 text-sm text-white">
+          SnoopForms Cloud stops operations on 31.12.2022. Please export your data before then.
+        </div>
+      )}
       <div className="bg-ui-gray-light flex min-h-screen">
         <div className="mx-auto flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           {error && (
