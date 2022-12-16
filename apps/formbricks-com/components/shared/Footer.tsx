@@ -5,7 +5,7 @@ import { FooterLogo } from "./Logo";
 const navigation = {
   creation: [
     { name: "React Form Builder", href: "/react-form-library", status: true },
-    { name: "No Code Builder", href: "/visual-builder", status: true },
+    { name: "No Code Builder", href: "/visual-builder", status: false },
     { name: "Templates", href: "#", status: false },
   ],
   pipelines: [

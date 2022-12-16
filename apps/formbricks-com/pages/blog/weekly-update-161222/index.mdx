@@ -1,0 +1,69 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import HeaderImage from "../weekly-update-181122/weeklyupdate.png";
+import { Callout } from "@/components/shared/Callout";
+import NewsletterSignup from "@/components/shared/NewsletterSignup";
+
+import FBBox1 from "./feedback-box-1.png";
+import FBBox2 from "./feedback-box-2.png";
+
+export const meta = {
+  title: "Weekly Summary - 16th Dec 2022",
+  description:
+    "Happy Friday! Another week is over, another YC interview done 😄  We decided to niche down, found two design partners and with them secured the first MRR. What happened exactly?",
+  date: "2022-12-16",
+};
+
+_Happy Friday! Another week is over, another YC interview done 😄 We decided to niche down, found two design partners and with them secured the first MRR. What happened exactly?_
+
+<Image src={HeaderImage} alt="Weekly Update" className="rounded-lg" />
+
+### Highlights
+
+- Niching down: Building Feedback Box first
+- $100 MRR for collaboration with two SaaS companies 🎉
+- Second YC Interview
+
+### Niching down: The Feedback Box
+
+Next week we’ll release a longer article on our journey from “Typeform OS” to “Modular Form & Survey Infrastructure” to “Survey needs of SaaS companies”. For now, let’s have a look at the mock-up of the Feedback Box we are building:
+
+<Image src={FBBox1} alt="Feedback Box Mock Up" className="rounded-lg" />
+
+### First two customers acquired, first MRR 🎉
+
+We acquired two SaaS companies as customers with a set of different survey needs. The overall objective is to open up and maintain a continuous channel to learn from users. Both are in need of a conversion-optimized Feedback widget they can self-host. Here were the requirements and how we address themthem:
+
+- Very little dev attention needed for setup and maintenance
+
+  **→ One snippet to embed**
+
+- Gives respondents the feeling that they are listened to and the feedback is acted upon
+
+  **→ Founder / Head of Product as recipient**
+
+- Makes users reply in a polite way
+
+  **→ Highlighting that there are people on the other end**
+
+- Have users share positive feedback to be used as testimonial (and increase team morale)
+
+  **→ “I like something” option**
+
+- Easy to act upon
+
+  **→ One click to email back with template, later integration with Linear / GitHub issues**
+
+<Image src={FBBox2} alt="Feedback Box Mock Up 2" className="rounded-lg" />
+
+### 2nd YC Interview
+
+On Tuesday night we had our second YC interview. This time, we didn’t prepare too much and it went similar to the last one: It was a friendly chat about what we are building and why.
+
+We haven’t yet heared back from them, you’ll hear about the decision in the next Weekly 😃
+
+### Until then, enjoy your weekend!
+
+<NewsletterSignup />
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

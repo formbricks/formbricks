@@ -34,7 +34,7 @@ const creation = [
     description: "Notion-like visual builder",
     href: "/visual-builder",
     icon: CursorArrowRaysIcon,
-    status: true,
+    status: false,
   },
   {
     name: "Templates",
@@ -260,7 +260,7 @@ export default function Header() {
           <Link
             href="/blog"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Blog
+            Blog <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
           </Link>
           <Link
             href="/docs"
