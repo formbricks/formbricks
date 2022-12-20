@@ -12,12 +12,12 @@ generator client {
 }
 
 enum PipelineType {
-  WEBHOOK
-  EMAIL_NOTIFICATION
+  webhook
+  emailNotification
 }
 
 enum PipelineEvent {
-  SUBMISSION_CREATED
+  submissionCreated
 }
 
 model Pipeline {
@@ -45,10 +45,15 @@ model Customer {
   @@id([id, teamId])
 }
 
+enum FormType {
+  feedback
+}
+
 model Form {
   id          String       @id @default(cuid())
   createdAt   DateTime     @default(now()) @map(name: "created_at")
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
+  type        FormType
   label       String
   team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId      String
@@ -61,6 +66,7 @@ model Submission {
   id         String    @id @default(cuid())
   createdAt  DateTime  @default(now()) @map(name: "created_at")
   updatedAt  DateTime  @updatedAt @map(name: "updated_at")
+  archived   Boolean   @default(false)
   form       Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId     String
   customer   Customer? @relation(fields: [customerId, teamId], references: [id, teamId])
