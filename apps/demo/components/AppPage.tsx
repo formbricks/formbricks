@@ -64,7 +64,11 @@ function classNames(...classes) {
 }
 
 interface AppPageProps {
+<<<<<<< HEAD
   setShowFeedback?: (b: boolean) => void;
+=======
+  setShowFeedback?: (show: boolean) => void;
+>>>>>>> 8715824 (add react feedback widget to demo, add connection between widget and hq, update capture submission api, update results view)
 }
 
 export default function AppPage({ setShowFeedback = () => {} }: AppPageProps) {

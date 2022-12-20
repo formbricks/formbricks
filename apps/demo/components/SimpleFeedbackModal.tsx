@@ -4,7 +4,7 @@ import { XMarkIcon } from "@heroicons/react/20/solid";
 import { Fragment, useEffect } from "react";
 import { toast } from "react-toastify";
 
-export default function FeedbackModal({ show, setShow }) {
+export default function SimpleFeedbackModal({ show, setShow }) {
   return (
     <>
       {/* Global notification live region, render this permanently at the end of the document */}

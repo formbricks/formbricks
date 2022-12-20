@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AppPage from "../components/AppPage";
-import FeedbackModal from "../components/FeedbackModal";
+import FeedbackModal from "../components/feedback/FeedbackModal";
 
 export default function Example() {
   const [showFeedback, setShowFeedback] = useState(false);

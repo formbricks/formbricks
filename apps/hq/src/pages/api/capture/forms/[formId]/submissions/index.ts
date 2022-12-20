@@ -31,26 +31,33 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       data: {
         data: submission.data,
         form: { connect: { id: formId } },
+        meta: { userAgent: req.headers["user-agent"] },
       },
     };
 
-    if (submission.customerId) {
+    if (submission.customer && "id" in submission.customer) {
+      const customerId = submission.customer.id;
+      const customerData = { ...submission.customer };
+      delete customerData.id;
       // create or link customer
       event.data.customer = {
         connectOrCreate: {
           where: {
             id_teamId: {
-              id: submission.customerId,
+              id: submission.customer.id,
               teamId: form.teamId,
             },
           },
           create: {
-            id: submission.customerId,
+            id: customerId,
             team: { connect: { id: form.teamId } },
+            data: customerData,
           },
         },
       };
     }
+
+    console.log(JSON.stringify(event, null, 2));
 
     // create form in db
     const submissionResult = await prisma.submission.create(event);

@@ -73,6 +73,7 @@ model Submission {
   customerId String?
   teamId     String?
   data       Json      @default("{}")
+  meta       Json      @default("{}")
 }
 
 model Team {
