@@ -62,6 +62,7 @@ CREATE TABLE "Submission" (
     "customerId" TEXT,
     "teamId" TEXT,
     "data" JSONB NOT NULL DEFAULT '{}',
+    "meta" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Submission_pkey" PRIMARY KEY ("id")
 );

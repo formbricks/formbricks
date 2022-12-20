@@ -10,12 +10,11 @@ export const runPipelines = async (form, submission) => {
       enabled: true,
     },
   });
-  console.log(form);
   for (const pipeline of pipelines) {
-    if (pipeline.type === "WEBHOOK") {
+    if (pipeline.type === "webhook") {
       await handleWebhook(pipeline, submission);
     }
-    if (pipeline.type === "EMAIL_NOTIFICATION") {
+    if (pipeline.type === "emailNotification") {
       await handleEmailNotification(pipeline, form, submission);
     }
   }
@@ -23,7 +22,7 @@ export const runPipelines = async (form, submission) => {
 
 async function handleWebhook(pipeline, submission) {
   if (pipeline.config.hasOwnProperty("endpointUrl") && pipeline.config.hasOwnProperty("secret")) {
-    if (pipeline.events.includes("SUBMISSION_CREATED")) {
+    if (pipeline.events.includes("submissionCreated")) {
       const webhookData = pipeline.config;
       const body = { time: Math.floor(Date.now() / 1000), submission };
       fetch(webhookData.endpointUrl.toString(), {

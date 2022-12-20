@@ -1,19 +1,40 @@
+import { persistSubmission, useSubmissions } from "@/lib/submissions";
 import { convertDateTimeString } from "@/lib/utils";
 import { BugIcon, Button, ComplimentIcon, IdeaIcon } from "@formbricks/ui";
 import { sub } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { toast } from "react-toastify";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function FeedbackTimeline({ submissions }) {
+export default function FeedbackTimeline({ submissions, setSubmissions }) {
   const router = useRouter();
 
-  const archiveSubmission = (submission) => {
+  const { submissions: allSubmissions, mutateSubmissions } = useSubmissions(
+    router.query.teamId?.toString(),
+    router.query.formId?.toString()
+  );
+
+  const toggleArchiveSubmission = (submission) => {
     const updatedSubmission = JSON.parse(JSON.stringify(submission));
-    updatedSubmission.data.archived = true;
+    updatedSubmission.archived = !updatedSubmission.archived;
+    // save submission without customer
+    const submissionWoCustomer = { ...updatedSubmission };
+    delete submissionWoCustomer.customer;
+    persistSubmission(submissionWoCustomer);
+    // update all submissions
+    const submissionIdx = allSubmissions.findIndex((s) => s.id === submission.id);
+    const updatedSubmissions = JSON.parse(JSON.stringify(allSubmissions));
+    updatedSubmissions[submissionIdx] = updatedSubmission;
+    mutateSubmissions(updatedSubmissions, false);
+    if (updatedSubmission.archived) {
+      toast.success("Submission archived");
+    } else {
+      toast.success("Submission restored");
+    }
   };
   return (
     <div className="flow-root">
@@ -68,14 +89,18 @@ export default function FeedbackTimeline({ submissions }) {
                     </div>
                   </div>
                   <div className=" bg-gray-50 p-4 sm:p-6">
-                    <div className="flex w-full justify-between">
+                    <div className="flex w-full justify-between gap-4">
                       <div>
                         <p className="text-sm font-thin text-gray-500">User</p>
-                        <Link
-                          className="text-brand text-sm font-medium"
-                          href={`/teams/${router.query.teamId}/customers/${submission.customer.id}`}>
-                          Bobfried
-                        </Link>
+                        {submission.customer ? (
+                          <Link
+                            className="text-sm font-medium text-gray-700"
+                            href={`/teams/${router.query.teamId}/customers/${submission.customer.id}`}>
+                            {submission.customer.id}
+                          </Link>
+                        ) : (
+                          <p className="text-sm text-gray-500">Anonymous</p>
+                        )}
                       </div>
                       <div>
                         <p className="text-sm font-thin text-gray-500">Device</p>
@@ -83,21 +108,33 @@ export default function FeedbackTimeline({ submissions }) {
                       </div>
                       <div>
                         <p className="text-sm font-thin text-gray-500">Page</p>
-                        <p className="text-sm text-gray-500">{submission.meta.sourceUrl}</p>
+                        <p className="text-sm text-gray-500">{submission.data.pageUrl}</p>
                       </div>
                     </div>
-                    {"email" in submission.customer && (
-                      <div className="mt-8 flex w-full justify-end">
+
+                    <div className="mt-8 flex w-full justify-end">
+                      {!submission.archived ? (
                         <button
-                          className="mr-4 text-base text-gray-500 underline"
-                          onClick={() => archiveSubmission(submission.id)}>
+                          className="text-base text-gray-500 underline"
+                          onClick={() => toggleArchiveSubmission(submission)}>
                           Archive
                         </button>
-                        <Button variant="primary" href={`mailto:${submission.customer.email}`}>
+                      ) : (
+                        <button
+                          className="text-base text-gray-500 underline"
+                          onClick={() => toggleArchiveSubmission(submission)}>
+                          Restore
+                        </button>
+                      )}
+                      {submission.customer && "email" in submission.customer.data && (
+                        <Button
+                          variant="primary"
+                          href={`mailto:${submission.customer.email}`}
+                          className="ml-4">
                           Send Email
                         </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

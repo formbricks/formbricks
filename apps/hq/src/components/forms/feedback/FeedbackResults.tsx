@@ -41,7 +41,7 @@ const filters = [
   }, */
 ];
 
-const submissions = [
+/* const submissions = [
   {
     id: 1,
     createdAt: "2022-12-19T11:30:02.574Z",
@@ -80,7 +80,7 @@ const submissions = [
     },
     archived: false,
   },
-];
+]; */
 
 export default function FeedbackResults() {
   const router = useRouter();
@@ -89,27 +89,35 @@ export default function FeedbackResults() {
     router.query.teamId?.toString()
   );
   const { team, isLoadingTeam, isErrorTeam } = useTeam(router.query.teamId?.toString());
-  /* const { submissions, isLoadingSubmissions, mutateSubmissions } = useSubmissions(
+  const { submissions, isLoadingSubmissions, isErrorSubmissions, mutateSubmissions } = useSubmissions(
     router.query.teamId?.toString(),
     router.query.formId?.toString()
-  ); */
+  );
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [currentFilter, setCurrentFilter] = useState("all");
-  const [filteredSubmissions, setFilteredSubmissions] = useState(submissions);
+  const [filteredSubmissions, setFilteredSubmissions] = useState([]);
 
   useEffect(() => {
+    if (!submissions) return;
     let newSubmissions = [];
     if (currentFilter === "all") {
-      newSubmissions = submissions;
+      newSubmissions = submissions.filter((submission) => !submission.archived);
     } else if (currentFilter === "archive") {
       newSubmissions = submissions.filter((submission) => submission.archived);
     } else {
       newSubmissions = submissions.filter((submission) => submission.data.feedbackType === currentFilter);
     }
     setFilteredSubmissions(newSubmissions);
-  }, [currentFilter]);
+  }, [currentFilter, submissions]);
+
+  useEffect(() => {
+    if (!isLoadingSubmissions) {
+      setFilteredSubmissions(submissions.filter((submission) => !submission.archived));
+    }
+  }, [isLoadingSubmissions]);
 
   const navigation = useMemo(() => {
+    if (!submissions) return [];
     const feedbackCounts = {
       bug: 0,
       compliment: 0,
@@ -130,7 +138,7 @@ export default function FeedbackResults() {
         href: "#",
         icon: FormIcon,
         current: true,
-        count: submissions.length,
+        count: submissions.length - feedbackCounts.archive,
         color: "bg-indigo-400",
       },
       {
@@ -172,7 +180,7 @@ export default function FeedbackResults() {
     ];
   }, [submissions]);
 
-  if (isLoadingForm || isLoadingTeam) {
+  if (isLoadingForm || isLoadingTeam || isLoadingSubmissions) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <LoadingSpinner />
@@ -180,7 +188,7 @@ export default function FeedbackResults() {
     );
   }
 
-  if (isErrorForm || isErrorTeam) {
+  if (isErrorForm || isErrorTeam || isErrorSubmissions) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
   return (
@@ -418,7 +426,7 @@ export default function FeedbackResults() {
 
               {/* Product grid */}
               <div className="lg:col-span-3">
-                <FeedbackTimeline submissions={filteredSubmissions} />
+                <FeedbackTimeline submissions={filteredSubmissions} setSubmissions={setFilteredSubmissions} />
               </div>
             </div>
           </section>
