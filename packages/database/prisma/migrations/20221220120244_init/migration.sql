@@ -1,8 +1,11 @@
 -- CreateEnum
-CREATE TYPE "PipelineType" AS ENUM ('WEBHOOK', 'EMAIL_NOTIFICATION');
+CREATE TYPE "PipelineType" AS ENUM ('webhook', 'emailNotification');
 
 -- CreateEnum
-CREATE TYPE "PipelineEvent" AS ENUM ('SUBMISSION_CREATED');
+CREATE TYPE "PipelineEvent" AS ENUM ('submissionCreated');
+
+-- CreateEnum
+CREATE TYPE "FormType" AS ENUM ('feedback');
 
 -- CreateEnum
 CREATE TYPE "MembershipRole" AS ENUM ('MEMBER', 'ADMIN', 'OWNER');
@@ -41,6 +44,7 @@ CREATE TABLE "Form" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "type" "FormType" NOT NULL,
     "label" TEXT NOT NULL,
     "teamId" TEXT NOT NULL,
     "schema" JSONB NOT NULL DEFAULT '{}',
@@ -53,6 +57,7 @@ CREATE TABLE "Submission" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "archived" BOOLEAN NOT NULL DEFAULT false,
     "formId" TEXT NOT NULL,
     "customerId" TEXT,
     "teamId" TEXT,

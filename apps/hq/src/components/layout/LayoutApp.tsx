@@ -157,7 +157,7 @@ export default function LayoutApp({ children }) {
           )}
         </Disclosure>
 
-        <main className="h-full">{children}</main>
+        <main className="h-full bg-gray-50">{children}</main>
         <ToastContainer />
       </div>
     </>

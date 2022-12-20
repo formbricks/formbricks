@@ -22,3 +22,15 @@ export const deleteSubmission = async (teamId: string, formId: string, submissio
     throw Error(`deleteSubmission: unable to delete submission: ${error.message}`);
   }
 };
+
+export const persistSubmission = async (teamId, formId, submission) => {
+  try {
+    await fetch(`/api/teams/${teamId}/forms/${formId}/submissions/${submission.id}/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(submission),
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};

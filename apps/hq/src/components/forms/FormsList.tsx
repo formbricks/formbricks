@@ -40,7 +40,7 @@ export default function FormsList({ teamId }) {
                 onClick={() => newForm()}
                 alertText="You don't have any forms yet."
                 hintText="Start by creating a form."
-                buttonText="create form"
+                buttonText="create feedback form"
                 borderStyles="border-4 border-dotted border-red"
                 hasButton={true}>
                 <DocumentPlusIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
@@ -67,7 +67,7 @@ export default function FormsList({ teamId }) {
                         <p className="line-clamp-3 text-lg">{form.label}</p>
                       </div>
                       <Link
-                        href={`/app/teams/${teamId}/forms/${form.id}`}
+                        href={`/app/teams/${teamId}/forms/${form.id}/${form.type}/`}
                         className="absolute h-full w-full"></Link>
                       <div className="divide-y divide-slate-100 ">
                         <div className="flex justify-between px-4 py-2 text-right sm:px-6">
