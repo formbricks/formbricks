@@ -25,7 +25,6 @@ export function Nps({ color, submissions, schema, fieldName }: Props) {
     for (const option of [...Array(11).keys()]) {
       dataDict[option] = { name: option, value: 0 };
     }
-    console.log(dataDict);
     for (const submission of submissions) {
       if (fieldName in submission.data) {
         if (submission.data[fieldName] in dataDict) {

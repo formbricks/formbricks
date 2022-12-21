@@ -8,7 +8,16 @@ export default function Example() {
   return (
     <>
       <AppPage setShowFeedback={setShowFeedback} />
-      <FeedbackModal show={showFeedback} setShow={setShowFeedback} />
+      <FeedbackModal
+        show={showFeedback}
+        setShow={setShowFeedback}
+        formId="clbxex6f70006yz3f2n4knxfa"
+        customer={{
+          id: "johannes@formbricks.com",
+          email: "johannes@formbricks.com",
+          name: "Johannes",
+        }}
+      />
     </>
   );
 }

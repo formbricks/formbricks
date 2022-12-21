@@ -30,7 +30,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // GET /api/teams[teamId]/forms/[formId]/pipelines/[pipelineId]
   // Get a specific pipeline
   if (req.method === "GET") {
-    console.log("call2");
     const pipeline = await prisma.pipeline.findFirst({
       where: {
         id: pipelineId,

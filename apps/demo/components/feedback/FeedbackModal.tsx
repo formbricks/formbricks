@@ -7,15 +7,20 @@ import { BugIconGray } from "./BugIconGray";
 import { ComplimentIconGray } from "./ComplimentIconGray";
 import { IdeaIconGray } from "./IdeaIconGray";
 
-const formId = "clbw7dc0g0006yzxzry0o160t";
-
 const navigation = [
   { id: "idea", name: "I have an idea", icon: IdeaIconGray },
   { id: "compliment", name: "I like something", icon: ComplimentIconGray },
   { id: "bug", name: "Something’s broken", icon: BugIconGray },
 ];
 
-export default function FeedbackModal({ show, setShow }) {
+interface FeedbackModalProps {
+  show: boolean;
+  setShow: (show: boolean) => void;
+  formId: string;
+  customer?: any;
+}
+
+export default function FeedbackModal({ show, setShow, formId, customer }: FeedbackModalProps) {
   const [feedbackType, setFeedbackType] = useState<any>();
   const [feedbackSent, setFeedbackSent] = useState(false);
   return (
@@ -117,24 +122,23 @@ export default function FeedbackModal({ show, setShow }) {
                     </div>
                     <form
                       onSubmit={(e: any) => {
+                        const body = {
+                          data: {
+                            feedbackType: feedbackType.id,
+                            message: e.target.message.value,
+                            pageUrl: window.location.href,
+                          },
+                        };
+                        if (customer) {
+                          body["customer"] = customer;
+                        }
                         e.preventDefault();
                         fetch(`http://localhost:3000/api/capture/forms/${formId}/submissions`, {
                           method: "POST",
                           headers: {
                             "Content-Type": "application/json",
                           },
-                          body: JSON.stringify({
-                            customer: {
-                              id: "johannes@formbricks.com",
-                              email: "johannes@formbricks.com",
-                              name: "Johannes",
-                            },
-                            data: {
-                              feedbackType: feedbackType.id,
-                              message: e.target.message.value,
-                              pageUrl: window.location.href,
-                            },
-                          }),
+                          body: JSON.stringify(body),
                         });
                         console.log("submission sent!");
                         e.target.reset();
@@ -176,8 +180,8 @@ export default function FeedbackModal({ show, setShow }) {
                     {feedbackType.id === "bug"
                       ? "We are doing our best to fix this asap. Thank you!"
                       : feedbackType.id === "compliment"
-                      ? "We&apos;re working hard on this. Your warm words make it fun!"
-                      : "We&apos;ll look into it and get back to you. Thank you!"}
+                      ? "We're working hard on this. Your warm words make it fun!"
+                      : "We'll look into it and get back to you. Thank you!"}
                   </div>
                   <div className="group mt-6 block flex-shrink-0">
                     <div className="flex items-center justify-center">

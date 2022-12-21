@@ -57,8 +57,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       };
     }
 
-    console.log(JSON.stringify(event, null, 2));
-
     // create form in db
     const submissionResult = await prisma.submission.create(event);
     await runPipelines(form, submission);
