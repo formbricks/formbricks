@@ -1,0 +1,4 @@
+{
+  "extends": "@formbricks/tsconfig/base.json",
+  "include": ["src", "types"]
+}
