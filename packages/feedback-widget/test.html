@@ -1,0 +1,17 @@
+<head>
+  <!-- <script src="../packages/feedbackfin/dist/index.umd.js" defer></script> -->
+  <script src="./dist/index.umd.js" charset="UTF-8" defer></script>
+  <script>
+    window.formbricks = { config: {}, ...window.feedbackfin };
+    window.formbricks.config.hqUrl = "http://localhost:3000";
+    window.formbricks.config.formId = "clbxex6f70006yz3f2n4knxfa";
+    window.formbricks.config.customer = {
+      id: "matti@formbricks.com",
+      name: "Matti",
+      email: "matti@formbricks.com",
+    };
+  </script>
+</head>
+<body>
+  <button data-formbricks-button>Feedback</button>
+</body>
