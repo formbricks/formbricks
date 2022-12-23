@@ -247,6 +247,7 @@
 #formbricks__contact-info {
   padding-left: 0.6rem;
   font-size: 0.8rem;
+  text-align: left;
 }
 
 #formbricks__contact-title {
@@ -293,7 +294,10 @@
   position: relative;
   background-color: var(--formbricks-primary-color);
   color: white;
+  display: flex;
+  justify-content: center;
 }
+
 #formbricks__submit:hover,
 #formbricks__submit:focus-visible,
 #formbricks__submit:active {
