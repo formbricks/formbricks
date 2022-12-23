@@ -15,9 +15,11 @@
     </svg>
   </button>
 
-  <div className="formbricks__title">We &hearts; your feedback</div>
+  <div class="formbricks__title">We &hearts; your feedback</div>
+  <div class="formbricks__subtitle">Need help?&nbsp;<span class="formbricks__CTA">Contact us</span></div>
 </div>
 
+<div class="formbricks__mind">What's on your mind?</div>
 <form id="formbricks__form">
   <div id="formbricks__step1">
     <div id="formbricks__radio-group" role="radiogroup" aria-label="Feedback type">
@@ -143,31 +145,48 @@
     <label id="formbricks__type-switch" class="formbricks__button formbricks__type-switch">
       <!-- The icon and text of the current feedback type gets in here automatically with JS -->
     </label>
-    <div id="formbricks__contact">
-      <img
-        id="formbricks__contact-image"
-        src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-        alt="" />
+    <div id="formbricks__step2__content">
+      <div id="formbricks__contact">
+        <img
+          id="formbricks__contact-image"
+          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+          alt="" />
 
-      <div className="formbricks__contact-info">
-        <p id="formbricks__contact-title">What do you want to share?</p>
-        <p id="formbricks__contact-subtitle">Tom Cook, CEO</p>
+        <div id="formbricks__contact-info">
+          <p id="formbricks__contact-title">Placeholder</p>
+          <p id="formbricks__contact-subtitle">Tom Cook, CEO</p>
+        </div>
       </div>
-    </div>
-    <textarea
-      id="formbricks__message"
-      name="message"
-      type="text"
-      placeholder="I think…"
-      required
-      rows="2"
-      aria-label="Message"></textarea>
+      <textarea
+        id="formbricks__message"
+        name="message"
+        type="text"
+        placeholder="I think…"
+        required
+        rows="2"
+        aria-label="Message"></textarea>
 
-    <button id="formbricks__submit" class="formbricks__button" type="submit">Send</button>
+      <button id="formbricks__submit" class="formbricks__button" type="submit">Send</button>
+    </div>
   </div>
 </form>
 
 <div id="formbricks__success">
   <p id="formbricks__success-title">Thanks for sharing!</p>
   <p id="formbricks__success-subtitle">We’re working hard on this. Your warm words make it fun!</p>
+  <div id="formbricks__contact">
+    <img
+      id="formbricks__contact-image"
+      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+      alt="" />
+
+    <div id="formbricks__contact-info">
+      <p id="formbricks__contact-title">Placeholder</p>
+      <p id="formbricks__contact-subtitle">Tom Cook, CEO</p>
+    </div>
+  </div>
+  <div id="formbricks__success__CTA__group">
+    <p id="formbricks__success_lead">More to share?</p>
+    <p class="formbricks__CTA">Join Slack</p>
+  </div>
 </div>
