@@ -25,7 +25,7 @@ export const useForm = (id: string, teamId: string) => {
 
 export const persistForm = async (form) => {
   try {
-    await fetch(`/api/forms/${form.id}/`, {
+    await fetch(`/api/teams/${form.teamId}/forms/${form.id}/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
