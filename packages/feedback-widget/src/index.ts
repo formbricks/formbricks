@@ -37,7 +37,7 @@ const containerElement = document.createElement("div");
 containerElement.id = "formbricks__container";
 
 const trap = createFocusTrap(containerElement, {
-  initialFocus: "#formbricks__radio--issue",
+  initialFocus: "#formbricks__radio--idea",
   allowOutsideClick: true,
 });
 
@@ -82,6 +82,7 @@ function close() {
 }
 
 function resetType(e: Event) {
+  document.getElementById("formbricks__type-switch")!.innerHTML = "";
   containerElement.removeAttribute("data-feedback-type");
 }
 
@@ -111,6 +112,7 @@ function changeType(e: Event) {
   const typeElem = document.getElementById(`formbricks__radio-label--${feedbackType}`);
   if (typeSwitchElem !== null && typeElem !== null) {
     // replace children with feedback type elements (icon & text)
+    typeSwitchElem.innerHTML = "";
     typeSwitchElem.replaceChildren(...typeElem.cloneNode(true).childNodes);
     // add chevron
     const chevronElem = document.createElement("div");
