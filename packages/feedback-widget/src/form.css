@@ -233,10 +233,9 @@
   display: flex;
   gap: 0.5rem;
   justify-content: center;
-  background-color: hsla(var(--formbricks-text-color), var(--formbricks-button-opacity-hover));
   border-radius: 0px;
   font-size: 0.8rem;
-  color: #4b5563;
+  color: #7d8da3;
 }
 
 #formbricks__contact {
@@ -296,12 +295,14 @@
   color: white;
   display: flex;
   justify-content: center;
+  transition: all 0.2s ease-in-out;
 }
 
 #formbricks__submit:hover,
 #formbricks__submit:focus-visible,
 #formbricks__submit:active {
   background-color: var(--formbricks-primary-color);
+  transform: scale(1.05);
 }
 #formbricks__submit::before {
   content: "";
@@ -375,4 +376,19 @@
 #formbricks__success_lead {
   margin: 0;
   font-weight: 300;
+}
+
+/* Animations */
+
+.fade-in {
+  animation: fadeInBottom 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeInBottom {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
