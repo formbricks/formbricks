@@ -96,17 +96,20 @@ export default class MultipleChoiceQuestion implements BlockTool {
    * @param {string} tune — tune name from this.settings
    */
   _toggleTune(tune) {
-    //this.wrapper.classList.toggle(tune.name, !!this.data[tune.name]);
+    this.wrapper.classList.toggle(tune.name, !!this.data[tune.name]);
 
     if (tune === "required") {
       this.data.required = !this.data.required;
+      this.wrapper.childNodes[0].childNodes[0].childNodes[1].textContent = this
+        .data.required
+        ? "*"
+        : "";
     }
   }
 
   render() {
-    const rootNode = document.createElement("div");
+    this.wrapper = document.createElement("div");
     //rootNode.setAttribute("class", this.CSS.wrapper);
-    this.nodes.holder = rootNode;
 
     const onDataChange = (newData) => {
       this.data = {
@@ -120,10 +123,10 @@ export default class MultipleChoiceQuestion implements BlockTool {
         readOnly={this.readOnly}
         data={this.data}
       />,
-      rootNode
+      this.wrapper
     );
 
-    return this.nodes.holder;
+    return this.wrapper;
   }
 
   save() {

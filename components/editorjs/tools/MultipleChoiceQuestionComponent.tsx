@@ -16,13 +16,13 @@ const DEFAULT_INITIAL_DATA = () => {
       {
         id: uuidv4(),
         label: "",
-        image:""
+        image: "",
       },
     ],
   };
 };
 
-const SingleChoiceQuestion = (props) => {
+const MultipleChoiceQuestion = (props) => {
   const [choiceData, setChoiceData] = React.useState(
     props.data.options.length > 0 ? props.data : DEFAULT_INITIAL_DATA
   );
@@ -35,13 +35,11 @@ const SingleChoiceQuestion = (props) => {
     }
   };
   const uploadImage = async (file, optionId) => {
-   
-    const imgUrl =  (await upload(file)).Location;
-      choiceData.options.map(option =>{
-        if(optionId === option.id) return option.image = imgUrl;
-      }
-    )
-   setChoiceData({...choiceData})
+    const imgUrl = (await upload(file)).Location;
+    choiceData.options.map((option) => {
+      if (optionId === option.id) return (option.image = imgUrl);
+    });
+    setChoiceData({ ...choiceData });
   };
   const onAddOption = () => {
     const newData = {
@@ -50,7 +48,7 @@ const SingleChoiceQuestion = (props) => {
     newData.options.push({
       id: uuidv4(),
       label: "",
-      image:""
+      image: "",
     });
     updateData(newData);
   };
@@ -94,56 +92,65 @@ const SingleChoiceQuestion = (props) => {
           className="w-full p-0 border-0 border-transparent ring-0 focus:ring-0 placeholder:text-gray-300"
           placeholder="Your Question"
         />
-        {choiceData.required && (
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-red-500 pointer-events-none">
-            *
-          </div>
-        )}
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-red-500 pointer-events-none">
+          {choiceData.required ? "*" : ""}
+        </div>
       </div>
       <div className="max-w-sm mt-2 space-y-2">
-        {choiceData.options.map((option, optionIdx) => (
-          option &&
-          <div
-            key={optionIdx}
-            className={classNames("w-3/4 flex items-center max-sm:w-full max-md:w-full max-sm:flex-col max-md:flex-col")}
-          >    
-            <span className="w-full flex items-center text-sm max-sm:items-start">
-              <span
+        {choiceData.options.map(
+          (option, optionIdx) =>
+            option && (
+              <div
+                key={optionIdx}
                 className={classNames(
-                  choiceData.multipleChoice ? "rounded-full" : "rounded-full",
-                  "flex items-center justify-center w-4 h-4 bg-white border border-gray-300 max-sm:h-3 max-sm:w-3  max-sm:mt-1"
+                  "w-3/4 flex items-center max-sm:w-full max-md:w-full max-sm:flex-col max-md:flex-col"
                 )}
-                aria-hidden="true"
               >
-                <span className="rounded-full bg-white w-1.5 h-1.5 max-sm:w-2.5" />
-              </span>
-              <input
-                type="text"
-                defaultValue={option?.label}
-                onBlur={onOptionChange(optionIdx, "label")}
-                className="p-0 ml-3 font-medium text-gray-900 border-0 border-transparent outline-none focus:ring-0 focus:outline-none placeholder:text-gray-300  max-sm:pb-3"
-                placeholder={`Option ${optionIdx + 1}`}
-              />
-            </span>
-            <input type="file" hidden id={option? option.id : ""} onChange={(e)=>uploadImage(e.target.files[0], option.id)} />
-            {option.image && <img src={option.image} alt={option.label}/>}
-            <div className="flex items-center">
-              <button className="p-1 mx-2 right-3">
-                  <label htmlFor={option.id}><PhotoIcon className="w-4 h-4 text-gray-300" /></label>                
-              </button>
-              {optionIdx !== 0 && (
-                
-                <button
-                  onClick={() => onDeleteOption(optionIdx)}
-                  className="p-1 mx-2 right-3"
-                >
-                  <TrashIcon className="w-4 h-4 text-gray-300" />
-                </button>
-              )}
-            </div>
-
-          </div>
-        ))}
+                <span className="w-full flex items-center text-sm max-sm:items-start">
+                  <span
+                    className={classNames(
+                      choiceData.multipleChoice
+                        ? "rounded-full"
+                        : "rounded-full",
+                      "flex items-center justify-center w-4 h-4 bg-white border border-gray-300 max-sm:h-3 max-sm:w-3  max-sm:mt-1"
+                    )}
+                    aria-hidden="true"
+                  >
+                    <span className="rounded-full bg-white w-1.5 h-1.5 max-sm:w-2.5" />
+                  </span>
+                  <input
+                    type="text"
+                    defaultValue={option?.label}
+                    onBlur={onOptionChange(optionIdx, "label")}
+                    className="p-0 ml-3 font-medium text-gray-900 border-0 border-transparent outline-none focus:ring-0 focus:outline-none placeholder:text-gray-300  max-sm:pb-3"
+                    placeholder={`Option ${optionIdx + 1}`}
+                  />
+                </span>
+                <input
+                  type="file"
+                  hidden
+                  id={option ? option.id : ""}
+                  onChange={(e) => uploadImage(e.target.files[0], option.id)}
+                />
+                {option.image && <img src={option.image} alt={option.label} />}
+                <div className="flex items-center">
+                  <button className="p-1 mx-2 right-3">
+                    <label htmlFor={option.id}>
+                      <PhotoIcon className="w-4 h-4 text-gray-300" />
+                    </label>
+                  </button>
+                  {optionIdx !== 0 && (
+                    <button
+                      onClick={() => onDeleteOption(optionIdx)}
+                      className="p-1 mx-2 right-3"
+                    >
+                      <TrashIcon className="w-4 h-4 text-gray-300" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+        )}
       </div>
       <input
         type="text"
@@ -153,7 +160,7 @@ const SingleChoiceQuestion = (props) => {
         className="block w-full max-w-sm p-0 mt-2 text-sm font-light text-gray-500 border-0 border-transparent ring-0 focus:ring-0 placeholder:text-gray-300"
         placeholder="optional help text"
       />
-      
+
       <div className="relative z-0 flex mt-2 divide-x divide-gray-200">
         <button
           className="mr-3 justify-center mt-2 inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
@@ -195,4 +202,4 @@ const SingleChoiceQuestion = (props) => {
   );
 };
 
-export default SingleChoiceQuestion;
+export default MultipleChoiceQuestion;
