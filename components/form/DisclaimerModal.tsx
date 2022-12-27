@@ -55,7 +55,7 @@ export default function Modal({ open, setOpen, onClick, message }) {
                   <span>{message}</span>
                   <span className="mt-5 sm:mt-6">
                     <StandardButton onClick={onClick} fullwidth>
-                      I Agree
+                      J&apos;accepte
                     </StandardButton>
                   </span>
                 </div>

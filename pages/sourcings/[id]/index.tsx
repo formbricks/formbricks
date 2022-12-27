@@ -36,6 +36,7 @@ function NoCodeFormPublic() {
   } = useNoCodeFormPublic(formId);
 
   const [openDisclaimer, setOpenDisclaimer] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
   const [pageIdOnModal, setPageIdOnModal] = useState("");
   const [roll, setRoll] = useState();
 
@@ -103,6 +104,11 @@ function NoCodeFormPublic() {
       if (isTimedPage(page)) {
         setOpenDisclaimer(true);
         setPageIdOnModal(page.id);
+        setModalMessage(
+          `Vous êtes sur le point de commencer un formulaire chronométré et vous disposez de ${getPageTimer(
+            page.blocks
+          )} minutes pour remplir ce formulaire. Une fois commencé, vous ne pouvez plus quitter le formulaire, sous peine de voir vos réponses considérées comme soumises.`
+        );
       } else router.push(`/sourcings/${formId}/${page.id}`);
     } else {
       router.push(`/sourcings/${formId}/${pageIdOnModal}`);
@@ -227,21 +233,15 @@ function NoCodeFormPublic() {
                           </button>
                         )}
                       </div>
-                      <DisclaimerModal
-                        open={openDisclaimer}
-                        setOpen={setOpenDisclaimer}
-                        message={
-                          isTimedPage(page)
-                            ? `Vous êtes sur le point de commencer un formulaire chronométré et vous disposez de ${getPageTimer(
-                                page.blocks
-                              )} minutes pour remplir ce formulaire. Une fois commencé, vous ne pouvez plus quitter le formulaire, sous peine de voir vos réponses considérées comme soumises.`
-                            : ""
-                        }
-                        onClick={() => handleClickAction(page, true)}
-                      />
                     </div>
                   );
               })}
+              <DisclaimerModal
+                open={openDisclaimer}
+                setOpen={setOpenDisclaimer}
+                message={modalMessage}
+                onClick={() => handleClickAction(null, true)}
+              />
             </div>
           )}
           {(publicPrivacyUrl || publicImprintUrl) && (
