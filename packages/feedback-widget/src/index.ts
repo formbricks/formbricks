@@ -146,7 +146,7 @@ function submit(e: Event) {
     customer: config.customer,
   };
 
-  fetch(`${config.hqUrl || "https://hq.formbricks.com"}/api/capture/forms/${config.formId}/submissions`, {
+  fetch(`${config.hqUrl || "https://xm.formbricks.com"}/api/capture/forms/${config.formId}/submissions`, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
