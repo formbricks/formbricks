@@ -230,7 +230,7 @@ function NoCodeFormPublic() {
                       <DisclaimerModal
                         open={openDisclaimer}
                         setOpen={setOpenDisclaimer}
-                        message={`Vous êtes sur le point de commencer un formulaire chronométré et vous disposez de ${page.blocks[1].data.timerDuration} minutes pour remplir ce formulaire. Une fois commencé, vous ne pouvez plus quitter le formulaire, sous peine de voir vos réponses considérées comme soumises.`}
+                        message={`Vous êtes sur le point de commencer un formulaire chronométré et vous disposez de ${getPageTimer(page.blocks)} minutes pour remplir ce formulaire. Une fois commencé, vous ne pouvez plus quitter le formulaire, sous peine de voir vos réponses considérées comme soumises.`}
                         onClick={() => handleClickAction(page, true)}
                       />
                     </div>
