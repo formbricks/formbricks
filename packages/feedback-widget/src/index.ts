@@ -37,7 +37,7 @@ const containerElement = document.createElement("div");
 containerElement.id = "formbricks__container";
 
 const trap = createFocusTrap(containerElement, {
-  initialFocus: "#formbricks__radio--idea",
+  // initialFocus: "#formbricks__radio--idea",
   allowOutsideClick: true,
 });
 
@@ -63,7 +63,7 @@ function open(e: Event) {
   document.getElementById("formbricks__close")!.addEventListener("click", close);
 
   Array.from(containerElement.getElementsByClassName("formbricks__radio")).forEach((el) => {
-    el.addEventListener("change", changeType);
+    el.addEventListener("click", changeType);
   });
 
   document.getElementById("formbricks__type-switch")!.addEventListener("click", resetType);
