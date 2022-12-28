@@ -12,7 +12,7 @@ import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useState, useEffect } from "react";
 import { useForms } from "../lib/forms";
-import { UserRole, Location as Cities, Formation } from "@prisma/client";
+import { UserRole } from "@prisma/client";
 import { useSession, signIn } from "next-auth/react";
 import { classNames } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
@@ -23,6 +23,7 @@ import { timeSince } from "../lib/utils";
 import SearchBar from "./form/SearchBar";
 
 import { fr } from "date-fns/locale";
+import { SourcingFormations, SourcingLocations } from "../lib/enums";
 
 export default function FormList() {
   const { forms, mutateForms } = useForms();
@@ -32,6 +33,7 @@ export default function FormList() {
   const [filteredData, setFilteredData] = useState(forms);
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedFormation, setSelectedFormation] = useState("");
+
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -41,8 +43,8 @@ export default function FormList() {
   });
 
   useEffect(() => {
-    let filtering = filterBySelectLocation(forms);
-    filtering = filterBySelectFormation(filtering);
+    let filtering = filterByLocation(forms);
+    filtering = filterByFormation(filtering);
     setFilteredData(filtering);
   }, [selectedFormation, selectedLocation, forms]);
 
@@ -54,27 +56,24 @@ export default function FormList() {
     return days_difference;
   };
 
-  const filterBySelectLocation = (filteredList) => {
+  const filterByLocation = (filteredList) => {
     // Avoid filter for empty string
     if (!selectedLocation) {
       return filteredList;
     }
 
-    const filteredDatas = filteredList.filter(
-      (card) => card.place.split(" ").indexOf(selectedLocation) !== -1,
+    const filteredData = filteredList.filter(
+      (card) => card.place.split(" ").indexOf(selectedLocation) !== -1
     );
-    return filteredDatas;
+    return filteredData;
   };
-  const filterBySelectFormation = (filteredList) => {
+  const filterByFormation = (filteredList) => {
     // Avoid filter for empty string
-    if (!selectedFormation) {
-      return filteredList;
-    }
-
-    const filteredDatas = filteredList.filter(
-      (card) => card.formation.split(" ").indexOf(selectedFormation) !== -1,
-    );
-    return filteredDatas;
+    return !selectedFormation
+      ? filteredList
+      : filteredList.filter(
+          (card) => card.formation.split(" ").indexOf(selectedFormation) !== -1
+        );
   };
 
   const handleChangeLocation = (event) => {
@@ -122,6 +121,8 @@ export default function FormList() {
   const filterSourcings = (button) => {
     if (button === "RESET") {
       setFilteredData(forms);
+      setSelectedFormation("");
+      setSelectedLocation("");
       return;
     }
   };
@@ -143,38 +144,31 @@ export default function FormList() {
           {session.user.role !== UserRole.ADMIN ? (
             <div className="flex flex-row">
               <select
-                className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5"
+                className="flex justify-center text-sm font-medium text-black py-1 px-1 md:py-2 md:px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black mr-1"
                 value={selectedLocation}
                 onChange={handleChangeLocation}
               >
-                <option value=""> &#8212; LIEU &#8212; </option>
-                {[
-                  Cities.Autre,
-                  Cities.Lubumbashi,
-                  Cities.Kinshasa,
-                  Cities.Goma,
-                ].map((city, cityIndex) => (
+                <option value="">LIEU</option>
+                {SourcingLocations.map((city, cityIndex) => (
                   <option key={cityIndex} value={city}>
                     {city}
                   </option>
                 ))}
               </select>
               <select
-                className="flex justify-center text-sm font-medium text-black py-2 px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black ml-5"
+                className="flex justify-center text-sm font-medium text-black py-1 px-6 md:py-2 md:px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black mx-1"
                 value={selectedFormation}
                 onChange={handleChangeFormation}
               >
-                <option value=""> &#8212; FORMATION &#8212; </option>
-                {[Formation.AUTRE, Formation.DEV, Formation.SMD].map(
-                  (formation, formationIndex) => (
-                    <option key={formationIndex} value={formation}>
-                      {formation}
-                    </option>
-                  ),
-                )}
+                <option value="">FORMATION</option>
+                {SourcingFormations.map((formation, formationIndex) => (
+                  <option key={formationIndex} value={formation}>
+                    {formation}
+                  </option>
+                ))}
               </select>
               <button
-                className="flex justify-center text-sm font-medium py-2 px-10 rounded-md shadow-sm focus:outline-none focus:ring-2 bg-snoopfade text-white focus:ring-offset-2 focus:ring-red-500 ml-5"
+                className="flex justify-center text-sm font-medium py-2 px-2 md:py-2 md:px-10 rounded-md shadow-sm focus:outline-none focus:ring-2 bg-snoopfade text-white focus:ring-offset-2 focus:ring-red-500 mx-1"
                 onClick={() => filterSourcings("RESET")}
               >
                 RESET
@@ -189,8 +183,8 @@ export default function FormList() {
             <div className="mt-5 text-center">
               {session.user.role !== UserRole.ADMIN ? (
                 <EmptyPageFiller
-                  alertText="Vous n'avez pas encore de sourcing."
-                  hintText="Attendez que le sourcing soit créé"
+                  alertText="Aucune session d'inscription trouvée."
+                  hintText=""
                   borderStyles="border-4 border-dotted border-red"
                 >
                   <FolderOpenIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
@@ -345,7 +339,7 @@ export default function FormList() {
                                                   active
                                                     ? "bg-ui-gray-light rounded-sm text-ui-black"
                                                     : "text-ui-gray-dark",
-                                                  "flex px-4 py-2 text-sm w-full",
+                                                  "flex px-4 py-2 text-sm w-full"
                                                 )}
                                               >
                                                 <TrashIcon
@@ -362,7 +356,7 @@ export default function FormList() {
                                                   active
                                                     ? "bg-ui-gray-light rounded-sm text-ui-black"
                                                     : "text-ui-gray-dark",
-                                                  "flex px-4 py-2 text-sm w-full",
+                                                  "flex px-4 py-2 text-sm w-full"
                                                 )}
                                               >
                                                 <HiDocumentDuplicate
