@@ -1,6 +1,8 @@
 /* Cal Look */
 
 :root {
+  --formbricks-highlight-color: /*{{highlightColor}}*/ ;
+  --formbricks-highlight-text-color: /*{{highlightTextColor}}*/ ;
   --formbricks-bg-color: #fff;
   --formbricks-text-color: 240, 100%, 10%;
   --formbricks-shadow: rgba(7, 0, 20, 0.06) 0px 0px 0px 1px, rgba(7, 0, 20, 0.1) 0px 10px 15px -3px,

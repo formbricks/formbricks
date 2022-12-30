@@ -27,6 +27,8 @@ function init() {
   // add css to head
   const styleElement = document.createElement("style");
   styleElement.id = "formbricks__css";
+  formCSS.replaceAll("/*{{highlightColor}}*/", config.style.highlightColor || "#ff0000");
+  formCSS.replaceAll("/*{{highlightTextColor}}*/", config.style.highlightTextColor || "#000000");
   styleElement.innerHTML = formCSS;
 
   document.head.insertBefore(styleElement, document.head.firstChild);
