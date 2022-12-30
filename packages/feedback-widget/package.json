@@ -4,6 +4,7 @@
   "source": "src/index.ts",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "unpkg": "./dist/index.umd.js",
   "type": "module",
   "license": "Apache-2.0",
   "exports": {
