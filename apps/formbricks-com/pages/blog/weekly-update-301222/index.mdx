@@ -2,6 +2,7 @@ import Image from "next/image";
 import LayoutMdx from "@/components/shared/LayoutMdx";
 import NewsletterSignup from "@/components/shared/NewsletterSignup";
 import HeaderImage from "../weekly-update-181122/weeklyupdate.png";
+import ResponsiveEmbed from "react-responsive-embed";
 
 import CDetail from "./customer-detail.png";
 import CXM from "./customers-xm.png";
@@ -27,12 +28,11 @@ _Holidays, illness and iterations: The Feedback Box is ready in plain JS and the
 - Prototype for Formbricks XM
 - Illness and testing setup
 
-<iframe
-  width="800"
-  height="450"
+<ResponsiveEmbed
   src="https://www.tella.tv/video/clbxj4vgj00hj0fjrckk42fw6/embed"
-  allowfullscreen
-  allowtransparency></iframe>
+  allowFullScreen
+  className="rounded-lg"
+/>
 
 ## Feedback Box in Vanilla JS
 
