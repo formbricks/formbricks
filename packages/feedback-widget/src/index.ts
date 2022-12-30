@@ -5,6 +5,11 @@ import { formHTML } from "./form-html";
 import formCSS from "./form.css";
 
 export interface FormbricksConfig {
+  contact: {
+    name: string;
+    position: string;
+    imgUrl: string;
+  };
   formId?: string;
   hqUrl?: string;
   customer?: Record<any, any>;
@@ -41,9 +46,29 @@ const trap = createFocusTrap(containerElement, {
   allowOutsideClick: true,
 });
 
+function applyConfig() {
+  if (config.contact) {
+    const contactNameElements = document.getElementsByClassName("formbricks__contact-name");
+    console.log(contactNameElements);
+    for (const elem of contactNameElements) {
+      elem.innerHTML = config.contact.name;
+    }
+  }
+  const contactPositionElements = document.getElementsByClassName("formbricks__contact-position");
+  for (const elem of contactPositionElements) {
+    elem.innerHTML = config.contact.position;
+  }
+  const contactImageElements = document.getElementsByClassName("formbricks__contact-image");
+  for (const elem of contactImageElements) {
+    (<HTMLImageElement>elem).src = config.contact.imgUrl;
+  }
+}
+
 function open(e: Event) {
   document.body.appendChild(containerElement);
   containerElement.innerHTML = formHTML;
+
+  applyConfig();
   containerElement.style.display = "block";
 
   const target = (e?.target as HTMLElement) || document.body;
@@ -102,7 +127,7 @@ function changeType(e: Event) {
   if (feedbackType === "bug") contactTitle = "What is not working anymore?";
   else if (feedbackType === "compliment") contactTitle = "Thanks a lot for sharing this!";
   else if (feedbackType === "idea") contactTitle = "What’s your idea?";
-  const contactMessageElem = document.getElementById("formbricks__contact-title");
+  const contactMessageElem = document.getElementById("formbricks__contact-placeholder");
   if (contactMessageElem !== null) {
     contactMessageElem.innerText = contactTitle;
   }

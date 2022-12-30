@@ -222,7 +222,7 @@
   flex-direction: column;
   gap: 0.5rem;
   display: flex;
-  padding: 1rem 1rem 0 1rem;
+  padding: 1rem 1rem 1rem 1rem;
 }
 
 #formbricks__container[data-feedback-type] #formbricks__step2 {
@@ -250,17 +250,17 @@
   text-align: left;
 }
 
-#formbricks__contact-title {
+.formbricks__contact-title {
   margin: 0;
   font-weight: bold;
 }
 
-#formbricks__contact-subtitle {
+.formbricks__contact-subtitle {
   margin: 0;
   font-weight: 300;
 }
 
-#formbricks__contact-image {
+.formbricks__contact-image {
   border-radius: 9999px;
   width: 2.25rem;
   height: 2.25rem;
