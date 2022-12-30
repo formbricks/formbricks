@@ -381,10 +381,10 @@
 /* Animations */
 
 .fade-in {
-  animation: fadeInBottom 0.3s ease-in-out forwards;
+  animation: fadeIn 0.3s ease-in-out forwards;
 }
 
-@keyframes fadeInBottom {
+@keyframes fadeIn {
   0% {
     opacity: 0;
   }

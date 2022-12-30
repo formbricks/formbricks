@@ -24,7 +24,7 @@ import FeedbackTimeline from "./FeedbackTimeline";
 const subCategories = [
   { name: "All", href: "#" },
   { name: "Ideas", href: "#" },
-  { name: "Compliments", href: "#" },
+  { name: "Love", href: "#" },
   { name: "Bugs", href: "#" },
 ];
 const filters = [
@@ -153,7 +153,7 @@ export default function FeedbackResults() {
       },
       {
         id: "compliment",
-        name: "Compliment",
+        name: "Love",
         href: "#",
         icon: ComplimentIcon,
         current: false,

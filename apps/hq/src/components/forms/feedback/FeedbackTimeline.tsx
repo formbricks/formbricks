@@ -77,7 +77,7 @@ export default function FeedbackTimeline({ submissions, setSubmissions }) {
                         <div className="flex w-full justify-between">
                           {submission.data.feedbackType === "compliment" ? (
                             <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                              Compliment
+                              Love
                             </span>
                           ) : submission.data.feedbackType === "bug" ? (
                             <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
