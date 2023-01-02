@@ -7,7 +7,7 @@ export default function Example() {
 
   return (
     <>
-      <AppPage setShowFeedback={setShowFeedback} />
+      <AppPage onClickFeedback={() => setShowFeedback(true)} />
       <SimpleFeedbackModal show={showFeedback} setShow={setShowFeedback} />
     </>
   );

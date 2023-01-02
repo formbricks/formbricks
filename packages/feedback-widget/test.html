@@ -2,13 +2,22 @@
   <!-- <script src="../packages/feedbackfin/dist/index.umd.js" defer></script> -->
   <script src="./dist/index.umd.js" charset="UTF-8" defer></script>
   <script>
-    window.formbricks = { config: {}, ...window.feedbackfin };
-    window.formbricks.config.hqUrl = "http://localhost:3000";
-    window.formbricks.config.formId = "clbxex6f70006yz3f2n4knxfa";
-    window.formbricks.config.customer = {
-      id: "matti@formbricks.com",
-      name: "Matti",
-      email: "matti@formbricks.com",
+    window.formbricks = {
+      config: {
+        hqUrl: "http://localhost:3000",
+        formId: "clbxex6f70006yz3f2n4knxfa",
+        contact: {
+          name: "Matti Nannt",
+          position: "Founder",
+          imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+        },
+        customer: {
+          id: "matti@formbricks.com",
+          name: "Matti",
+          email: "matti@formbricks.com",
+        },
+      },
+      ...window.formbricks,
     };
   </script>
 </head>
