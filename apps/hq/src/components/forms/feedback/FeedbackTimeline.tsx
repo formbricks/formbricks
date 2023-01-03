@@ -142,7 +142,7 @@ export default function FeedbackTimeline({ submissions, setSubmissions }) {
                           {submission.customer && "email" in submission.customer.data && (
                             <Button
                               variant="primary"
-                              href={`mailto:${submission.customer.email}`}
+                              href={`mailto:${submission.customer.data.email}`}
                               className="ml-4">
                               Send Email
                             </Button>

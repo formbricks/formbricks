@@ -1,6 +1,8 @@
 /* Cal Look */
 
 :root {
+  --formbricks-header-bg-color: #e5e7eb;
+  --formbricks-header-text-color: #374151;
   --formbricks-bg-color: #fff;
   --formbricks-text-color: 240, 100%, 10%;
   --formbricks-shadow: rgba(7, 0, 20, 0.06) 0px 0px 0px 1px, rgba(7, 0, 20, 0.1) 0px 10px 15px -3px,
@@ -55,8 +57,8 @@
 }
 
 #formbricks__header {
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: var(--formbricks-header-bg-color);
+  color: var(--formbricks-header-text-color);
   padding: 1.6rem 0;
   font-weight: 600;
   text-align: center;
