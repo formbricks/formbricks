@@ -10,14 +10,14 @@ declare global {
 export default function FeedbackWidget() {
   return (
     <>
-      <Script src="/index.umd.js" defer />
+      <Script src="https://unpkg.com/@formbricks/feedback@0.1.1" defer />
       <Script id="feedbackfin-setup">{`
       window.formbricks = {
       config: {
         hqUrl: "http://localhost:3000",
-        formId: "clbxex6f70006yz3f2n4knxfa",
+        formId: "clbxj2upz000mu0j8vip6r9u0",
         contact: {
-          name: "Matti Nannt",
+          name: "Johannes",
           position: "Founder",
           imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
         },
