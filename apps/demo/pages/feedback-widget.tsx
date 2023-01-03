@@ -11,7 +11,7 @@ export default function FeedbackWidget() {
   return (
     <>
       <Script src="https://unpkg.com/@formbricks/feedback@0.1.1" defer />
-      <Script id="feedbackfin-setup">{`
+      <Script id="feedback-setup">{`
       window.formbricks = {
       config: {
         hqUrl: "http://localhost:3000",
