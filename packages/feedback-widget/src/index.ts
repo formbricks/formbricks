@@ -63,10 +63,16 @@ function applyConfig() {
     (<HTMLImageElement>elem).src = config.contact.imgUrl;
   }
   // apply styles
-  const root = document.querySelector(":root") as HTMLElement;
-  if (root !== null) {
-    root.style.setProperty("--formbricks-header-bg-color", config.style.headerBgColor || "#e5e7eb");
-    root.style.setProperty("--formbricks-header-text-color", config.style.headerTextColor || "#374151");
+  if (config.style) {
+    const root = document.querySelector(":root") as HTMLElement;
+    if (root !== null) {
+      if (config.style.headerBgColor) {
+        root.style.setProperty("--formbricks-header-bg-color", config.style.headerBgColor || "#e5e7eb");
+      }
+      if (config.style.headerTextColor) {
+        root.style.setProperty("--formbricks-header-text-color", config.style.headerTextColor || "#374151");
+      }
+    }
   }
 }
 
@@ -173,6 +179,7 @@ function submit(e: Event) {
     data: {
       feedbackType: (target.elements as any).feedbackType.value,
       message: (target.elements as any).message.value,
+      pageUrl: window.location.href,
     },
     customer: config.customer,
   };
