@@ -43,7 +43,7 @@ const containerElement = document.createElement("div");
 containerElement.id = "formbricks__container";
 
 const trap = createFocusTrap(containerElement, {
-  // initialFocus: "#formbricks__radio--idea",
+  initialFocus: "#formbricks__form",
   allowOutsideClick: true,
 });
 
