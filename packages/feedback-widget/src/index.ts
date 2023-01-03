@@ -10,6 +10,7 @@ export interface FormbricksConfig {
     position: string;
     imgUrl: string;
   };
+  style?: any;
   formId?: string;
   hqUrl?: string;
   customer?: Record<any, any>;
@@ -27,8 +28,6 @@ function init() {
   // add css to head
   const styleElement = document.createElement("style");
   styleElement.id = "formbricks__css";
-  formCSS.replaceAll("/*{{highlightColor}}*/", config.style.highlightColor || "#ff0000");
-  formCSS.replaceAll("/*{{highlightTextColor}}*/", config.style.highlightTextColor || "#000000");
   styleElement.innerHTML = formCSS;
 
   document.head.insertBefore(styleElement, document.head.firstChild);
@@ -51,7 +50,6 @@ const trap = createFocusTrap(containerElement, {
 function applyConfig() {
   if (config.contact) {
     const contactNameElements = document.getElementsByClassName("formbricks__contact-name");
-    console.log(contactNameElements);
     for (const elem of contactNameElements) {
       elem.innerHTML = config.contact.name;
     }
@@ -63,6 +61,12 @@ function applyConfig() {
   const contactImageElements = document.getElementsByClassName("formbricks__contact-image");
   for (const elem of contactImageElements) {
     (<HTMLImageElement>elem).src = config.contact.imgUrl;
+  }
+  // apply styles
+  const root = document.querySelector(":root") as HTMLElement;
+  if (root !== null) {
+    root.style.setProperty("--formbricks-header-bg-color", config.style.headerBgColor || "#e5e7eb");
+    root.style.setProperty("--formbricks-header-text-color", config.style.headerTextColor || "#374151");
   }
 }
 
