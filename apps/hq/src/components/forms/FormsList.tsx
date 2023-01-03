@@ -47,11 +47,11 @@ export default function FormsList({ teamId }) {
               </EmptyPageFiller>
             </div>
           ) : (
-            <ul className="grid grid-cols-2 place-content-stretch gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 ">
+            <ul className="grid grid-cols-2 place-content-stretch gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-6 ">
               <button onClick={() => newForm()}>
                 <li className="col-span-1 h-56">
                   <div className="from-brand-light to-brand-dark delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-b font-light text-white shadow transition ease-in-out hover:scale-105">
-                    <div className="px-4 py-8 sm:p-14">
+                    <div className="px-4 py-8 sm:p-14 xl:p-10">
                       <PlusIcon className="stroke-thin mx-auto h-14 w-14" />
                       create form
                     </div>
