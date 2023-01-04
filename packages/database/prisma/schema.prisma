@@ -29,7 +29,7 @@ model Pipeline {
   events    PipelineEvent[]
   form      Form            @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId    String
-  enabled   Boolean         @default(false)
+  enabled   Boolean         @default(true)
   config    Json            @default("{}")
 }
 
@@ -87,9 +87,9 @@ model Team {
 }
 
 enum MembershipRole {
-  MEMBER
-  ADMIN
-  OWNER
+  member
+  admin
+  owner
 }
 
 model Membership {
@@ -114,8 +114,8 @@ model ApiKey {
 }
 
 enum IdentityProvider {
-  EMAIL
-  GITHUB
+  email
+  github
 }
 
 model Account {
@@ -146,7 +146,7 @@ model User {
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
   password                  String?
-  identityProvider          IdentityProvider @default(EMAIL)
+  identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
   teams                     Membership[]
   accounts                  Account[]

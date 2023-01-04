@@ -5,10 +5,10 @@ import { WebhookSettings } from "./webhook";
 
 const PipelineSettings = ({ typeId, pipeline, setPipeline }) => {
   switch (typeId) {
-    case "WEBHOOK":
+    case "webhook":
       return <WebhookSettings pipeline={pipeline} setPipeline={setPipeline} />;
       break;
-    case "EMAIL_NOTIFICATION":
+    case "emailNotification":
       return <EmailNotificationSettings pipeline={pipeline} setPipeline={setPipeline} />;
     default:
       return <></>;

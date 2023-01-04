@@ -25,7 +25,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             create: [
               {
                 accepted: true,
-                role: "OWNER",
+                role: "owner",
                 team: {
                   create: {
                     name: `${user.name}'s Team`,
