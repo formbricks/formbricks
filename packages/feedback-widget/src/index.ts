@@ -66,11 +66,17 @@ function applyConfig() {
   if (config.style) {
     const root = document.querySelector(":root") as HTMLElement;
     if (root !== null) {
-      if (config.style.headerBgColor) {
-        root.style.setProperty("--formbricks-header-bg-color", config.style.headerBgColor || "#e5e7eb");
+      if (config.style.brandColor) {
+        root.style.setProperty("--formbricks-brand-color", config.style.brandColor || "71, 85, 105");
       }
-      if (config.style.headerTextColor) {
-        root.style.setProperty("--formbricks-header-text-color", config.style.headerTextColor || "#374151");
+      if (config.style.headerBGColor) {
+        root.style.setProperty("--formbricks-header-bg-color", config.style.headerBGColor || "203, 213, 225");
+      }
+      if (config.style.boxBGColor) {
+        root.style.setProperty("--formbricks-brand-color", config.style.boxBGColor || "248, 250, 252");
+      }
+      if (config.style.textColor) {
+        root.style.setProperty("--formbricks-brand-color", config.style.textColor || "51, 65, 85");
       }
     }
   }
@@ -136,8 +142,8 @@ function changeType(e: Event) {
   document.getElementById("formbricks__message")?.setAttribute("placeholder", placeholder);
 
   let contactTitle = "";
-  if (feedbackType === "bug") contactTitle = "What is not working anymore?";
-  else if (feedbackType === "compliment") contactTitle = "Thanks a lot for sharing this!";
+  if (feedbackType === "bug") contactTitle = "What is broken?";
+  else if (feedbackType === "compliment") contactTitle = "Thanks for sharing this!";
   else if (feedbackType === "idea") contactTitle = "What’s your idea?";
   const contactMessageElem = document.getElementById("formbricks__contact-placeholder");
   if (contactMessageElem !== null) {
