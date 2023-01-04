@@ -10,7 +10,7 @@ The days of scattered response data are counted. Manage all form data in one pla
 
 To get the project running locally on your machine you need to have the following development tools installed:
 
-- Node.JS (we recommend v16)
+- Node.JS (we recommend v18)
 - [pnpm](https://pnpm.io/)
 - [Docker](https://www.docker.com/) (to run PostgreSQL / MailHog)
 
