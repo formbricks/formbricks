@@ -10,12 +10,12 @@ declare global {
 export default function FeedbackWidget() {
   return (
     <>
-      <Script src="https://unpkg.com/@formbricks/feedback@0.1.1" defer />
+      <Script src="https://unpkg.com/@formbricks/feedback@0.1.2" defer />
       <Script id="feedbackfin-setup">{`
       window.formbricks = {
       config: {
-        hqUrl: "http://localhost:3000",
-        formId: "clbxj2upz000mu0j8vip6r9u0",
+        hqUrl: "http://localhost:3000", 
+        formId: "clchlxdi60006yz3rjf4sunaj",
         contact: {
           name: "Johannes",
           position: "Founder",
@@ -29,7 +29,6 @@ export default function FeedbackWidget() {
       },
       ...window.formbricks,
     };`}</Script>
-      <button onClick={(event) => window.formbricks!.open(event)}>Feedback</button>
       <>
         <AppPage onClickFeedback={(event) => window.formbricks.open(event)} />
       </>

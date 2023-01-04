@@ -228,7 +228,7 @@ export const authOptions: NextAuthOptions = {
               create: [
                 {
                   accepted: true,
-                  role: "OWNER",
+                  role: "owner",
                   team: {
                     create: {
                       name: `${user.name}'s Team`,
