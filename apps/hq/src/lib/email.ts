@@ -78,15 +78,44 @@ export const sendPasswordResetNotifyEmail = async (user) => {
   });
 };
 
-export const sendSubmissionEmail = async (email: string, formLabel: string, formId: string, submission) => {
+export const sendSubmissionEmail = async (
+  email: string,
+  formId,
+  formLabel: string,
+  schema: any,
+  submission
+) => {
+  const MergeWithSchema = (submissionData, schema) => {
+    if (Object.keys(schema).length === 0) {
+      // no schema provided
+      return submissionData;
+    }
+    const mergedData = {};
+    for (const elem of schema.children) {
+      if (["submit"].includes(elem.type)) {
+        continue;
+      }
+      if (elem.name in submissionData) {
+        mergedData[elem.label] = submissionData[elem.name];
+      } else {
+        mergedData[elem.label] = "not provided";
+      }
+    }
+    return mergedData;
+  };
+
   await sendEmail({
     to: email,
     subject: `${formLabel} new submission`,
     html: `Hey, someone just filled out your form ${formLabel} in Formbricks.<br/>
 
-    ${Object.entries(submission.data)
+    <hr/>
+
+    ${Object.entries(MergeWithSchema(submission.data, schema))
       .map(([key, value]) => `<p><strong>${key}</strong></p><p>${value}</p>`)
       .join("")}
+
+    <hr/>
     
     Click <a href="${
       process.env.NEXTAUTH_URL

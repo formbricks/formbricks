@@ -1,12 +1,12 @@
 export const emailNotification = {
-  typeId: "EMAIL_NOTIFICATION",
+  typeId: "emailNotification",
   title: "Email Notification",
   description: "Get an email notifications",
 };
 
 const eventTypes = [
   {
-    id: "SUBMISSION_CREATED",
+    id: "submissionCreated",
     name: "Submission Created",
     description: "Every time a new submission is created",
   },

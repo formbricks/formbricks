@@ -45,7 +45,7 @@ async function handleEmailNotification(pipeline, form, submission) {
 
   const { email } = pipeline.config.valueOf() as { email: string };
 
-  if (pipeline.events.includes("SUBMISSION_CREATED")) {
-    await sendSubmissionEmail(email, form.label, pipeline.formId, submission);
+  if (pipeline.events.includes("submissionCreated")) {
+    await sendSubmissionEmail(email, form.id, form.label, form.schema, submission);
   }
 }

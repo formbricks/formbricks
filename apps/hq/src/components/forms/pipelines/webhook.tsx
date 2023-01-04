@@ -1,12 +1,12 @@
 export const webhook = {
-  typeId: "WEBHOOK",
+  typeId: "webhook",
   title: "Webhook",
   description: "Notify an external endpoint when events happen in your form (e.g. a new submission).",
 };
 
 const eventTypes = [
   {
-    id: "SUBMISSION_CREATED",
+    id: "submissionCreated",
     name: "Submission Created",
     description: "Every time a new submission is created",
   },

@@ -8,10 +8,10 @@ CREATE TYPE "PipelineEvent" AS ENUM ('submissionCreated');
 CREATE TYPE "FormType" AS ENUM ('feedback');
 
 -- CreateEnum
-CREATE TYPE "MembershipRole" AS ENUM ('MEMBER', 'ADMIN', 'OWNER');
+CREATE TYPE "MembershipRole" AS ENUM ('member', 'admin', 'owner');
 
 -- CreateEnum
-CREATE TYPE "IdentityProvider" AS ENUM ('EMAIL', 'GITHUB');
+CREATE TYPE "IdentityProvider" AS ENUM ('email', 'github');
 
 -- CreateTable
 CREATE TABLE "Pipeline" (
@@ -22,7 +22,7 @@ CREATE TABLE "Pipeline" (
     "type" "PipelineType" NOT NULL,
     "events" "PipelineEvent"[],
     "formId" TEXT NOT NULL,
-    "enabled" BOOLEAN NOT NULL DEFAULT false,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
     "config" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Pipeline_pkey" PRIMARY KEY ("id")
@@ -128,7 +128,7 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "email_verified" TIMESTAMP(3),
     "password" TEXT,
-    "identityProvider" "IdentityProvider" NOT NULL DEFAULT 'EMAIL',
+    "identityProvider" "IdentityProvider" NOT NULL DEFAULT 'email',
     "identityProviderAccountId" TEXT,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
