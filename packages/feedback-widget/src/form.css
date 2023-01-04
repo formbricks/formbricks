@@ -265,6 +265,10 @@
   justify-content: center;
   border-radius: 0px;
   font-size: 0.8rem;
+  background-color: var(--formbricks-button-hover-bg-color);
+}
+
+.formbricks__type-switch span {
   opacity: 0.8;
   transition: opacity 0.2s ease;
   -webkit-transition: opacity 0.2s ease-out;
@@ -272,7 +276,7 @@
   -o-transition: opacity 0.2s ease-out;
 }
 
-.formbricks__type-switch:hover {
+.formbricks__type-switch:hover span {
   opacity: 1;
 }
 
@@ -295,6 +299,8 @@
 .formbricks__contact-subtitle {
   margin: 0;
   font-weight: 300;
+  padding-top: 3px;
+  margin-bottom: -5px;
 }
 
 .formbricks__contact-image {
