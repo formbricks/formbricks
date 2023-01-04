@@ -13,7 +13,11 @@ export default function FeedbackButton() {
   const [scriptReady, setScriptReady] = useState(false);
   return (
     <>
-      <Script src="https://unpkg.com/@formbricks/feedback@0.1.2" defer onReady={() => setScriptReady(true)} />
+      <Script
+        src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.1.2/dist/index.umd.js"
+        defer
+        onReady={() => setScriptReady(true)}
+      />
       <Script id="feedback-setup">{`
       window.formbricks = {
       config: {
