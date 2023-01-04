@@ -67,16 +67,22 @@ function applyConfig() {
     const root = document.querySelector(":root") as HTMLElement;
     if (root !== null) {
       if (config.style.brandColor) {
-        root.style.setProperty("--formbricks-brand-color", config.style.brandColor || "71, 85, 105");
+        root.style.setProperty("--formbricks-brand-color", config.style.brandColor);
       }
       if (config.style.headerBGColor) {
-        root.style.setProperty("--formbricks-header-bg-color", config.style.headerBGColor || "203, 213, 225");
+        root.style.setProperty("--formbricks-header-bg-color", config.style.headerBGColor);
+      }
+      if (config.style.headerTitleColor) {
+        root.style.setProperty("--formbricks-header-text-color", config.style.headerTitleColor);
       }
       if (config.style.boxBGColor) {
-        root.style.setProperty("--formbricks-brand-color", config.style.boxBGColor || "248, 250, 252");
+        root.style.setProperty("--formbricks-bg-color", config.style.boxBGColor);
       }
       if (config.style.textColor) {
-        root.style.setProperty("--formbricks-brand-color", config.style.textColor || "51, 65, 85");
+        root.style.setProperty("--formbricks-text-color", config.style.textColor);
+      }
+      if (config.style.buttonHoverColor) {
+        root.style.setProperty("--formbricks-button-hover-bg-color", config.style.buttonHoverColor);
       }
     }
   }
