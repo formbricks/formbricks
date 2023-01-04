@@ -1,35 +1,34 @@
 :root {
   /* Initial Settings */
-  --formbricks-brand-color: #00c4b8;
+  --formbricks-brand-color: 71, 85, 105;
   --formbricks-border-radius: 0.4rem;
 
   /* Globals */
   --formbricks-shadow: rgba(7, 0, 20, 0.06) 0px 0px 0px 1px, rgba(7, 0, 20, 0.1) 0px 10px 15px -3px,
     rgba(7, 0, 20, 0.05) 0px 4px 6px, rgba(7, 0, 20, 0.05) 0px 30px 40px;
-  --formbricks-focus-shadow: 0 0 0 2px var(--formbricks-bg-color);
+  --formbricks-focus-shadow: 0 0 0 2px rgb(var(--formbricks-bg-color));
   --formbricks-bold: 600;
 
   /* Header */
-  --formbricks-header-text-color: #1e293b;
-  --formbricks-header-bg-color: #cbd5e1;
+  --formbricks-header-text-color: 15, 23, 42;
+  --formbricks-header-bg-color: rgba(var(--formbricks-brand-color), 0.2);
+  --formbricks-header-cta-color: rgba(var(--formbricks-header-text-color), 0.7);
+  --formbricks-header-cta-prefix-color: rgba(var(--formbricks-header-text-color), 0.5);
 
   /* Box */
-  --formbricks-bg-color: #f8fafc;
-  --formbricks-text-color: #0f172a;
-  --formbricks-intro-text-color: #64748b;
+  --formbricks-bg-color: 248, 250, 252;
+  --formbricks-text-color: 51, 65, 85;
+  --formbricks-intro-text-color: rgba(var(--formbricks-text-color), 0.7);
 
   /* Buttons */
   --formbricks-button-weight: 500;
   --formbricks-button-border-radius: calc(var(--formbricks-border-radius) / 2);
-  --formbricks-button-hover-bg-color: #e2e8f0;
+  --formbricks-button-hover-bg-color: rgba(var(--formbricks-brand-color), 0.1);
 
   /* Submit Button */
   --formbricks-submit-color: white;
-  --formbricks-submit-bg-color: var(--formbricks-brand-color);
-  --formbricks-submit-hover-bg-color: var(--formbricks-brand-color);
-
-  /* Textarea */
-  --formbricks-message-border-color: #e2e8f0;
+  --formbricks-submit-bg-color: rgb(var(--formbricks-brand-color));
+  --formbricks-submit-hover-bg-color: rgba(var(--formbricks-brand-color), 0.9);
 }
 
 /* Container */
@@ -41,7 +40,7 @@
   width: 18rem;
   box-sizing: border-box;
 
-  background-color: var(--formbricks-bg-color);
+  background-color: rgb(var(--formbricks-bg-color));
   box-shadow: var(--formbricks-shadow);
   border-radius: var(--formbricks-border-radius);
 
@@ -49,7 +48,7 @@
 
   font-family: sans-serif;
   font-size: 1rem;
-  color: var(--formbricks-text-color);
+  color: rgb(var(--formbricks-text-color));
 }
 
 #formbricks__container * {
@@ -67,7 +66,7 @@
   border: 2px solid transparent;
 }
 #formbricks__container[data-feedback-type] .formbricks__radio:checked + .formbricks__radio-label {
-  border-color: var(--formbricks-text-color);
+  border-color: rgba(var(--formbricks-text-color), 0.5);
 }
 #formbricks__container[data-feedback-type] .formbricks__radio:checked:focus + .formbricks__radio-label {
   border-color: transparent;
@@ -92,7 +91,7 @@
 
 #formbricks__header {
   background-color: var(--formbricks-header-bg-color);
-  color: var(--formbricks-header-text-color);
+  color: rgb(var(--formbricks-header-text-color));
   padding: 1.6rem 0;
   text-align: center;
   border-top-left-radius: var(--formbricks-border-radius);
@@ -192,7 +191,7 @@
 
 #formbricks__close:hover,
 #formbricks__close:focus-visible {
-  background-color: rgba(0, 0, 0, 0.15);
+  background-color: rgba(var(--formbricks-brand-color), 0.3);
   opacity: 1;
 }
 
@@ -234,8 +233,9 @@
 }
 
 #formbricks__submit[disabled] {
+  background-color: rgba(var(--formbricks-text-color) 0.5);
+  color: rgba(var(--formbricks-text-color), 0.5);
   cursor: default;
-  opacity: 0.7;
 }
 #formbricks__submit[disabled]::before {
   content: none;
@@ -265,15 +265,16 @@
   justify-content: center;
   border-radius: 0px;
   font-size: 0.8rem;
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
-  -webkit-transition: opacity 0.2s ease-out;
-  -moz-transition: opacity 0.2s ease-out;
-  -o-transition: opacity 0.2s ease-out;
+  color: rgba(var(--formbricks-text-color), 0.6);
+  background-color: rgba(var(--formbricks-brand-color), 0.1);
+  transition: background-color 0.2s ease;
+  -webkit-transition: background-color 0.2s ease-out;
+  -moz-transition: background-color 0.2s ease-out;
+  -o-transition: background-color 0.2s ease-out;
 }
 
 .formbricks__type-switch:hover {
-  opacity: 1;
+  background-color: rgba(var(--formbricks-brand-color), 0.15);
 }
 
 #formbricks__contact {
@@ -310,7 +311,7 @@
   resize: none;
 
   border-radius: calc(var(--formbricks-border-radius) / 2);
-  border: 2px solid var(--formbricks-message-border-color);
+  border: 2px solid rgba(var(--formbricks-text-color), 0.12);
   background: none;
 
   font: inherit;
@@ -319,7 +320,7 @@
   font-size: 0.8rem;
 }
 #formbricks__message:focus {
-  border-color: var(--formbricks-brand-color);
+  border-color: rgb(var(--formbricks-text-color));
   box-shadow: none;
 }
 
