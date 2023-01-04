@@ -118,6 +118,14 @@ function open(e: Event) {
   document.getElementById("formbricks__type-switch")!.addEventListener("click", resetType);
 
   document.getElementById("formbricks__form")!.addEventListener("submit", submit);
+
+  // click outside of container closes widget
+  e.preventDefault();
+  e.stopPropagation();
+  document.addEventListener("click", close);
+  document.getElementById("formbricks__container")!.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
 }
 
 function close() {
