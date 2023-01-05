@@ -13,8 +13,8 @@ export default function FeedbackButton() {
   const [scriptReady, setScriptReady] = useState(false);
   return (
     <>
-      <Script
-        src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.1.2/dist/index.umd.js"
+      {/* <Script
+        src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.1.3/dist/index.umd.js"
         defer
         onReady={() => setScriptReady(true)}
       />
@@ -40,7 +40,7 @@ export default function FeedbackButton() {
           }}>
           Feedback
         </button>
-      )}
+      )} */}
     </>
   );
 }

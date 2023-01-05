@@ -63,7 +63,11 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function AppPage({ setShowFeedback = () => {} }) {
+interface AppPageProps {
+  setShowFeedback?: (b: boolean) => void;
+}
+
+export default function AppPage({ setShowFeedback = () => {} }: AppPageProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
