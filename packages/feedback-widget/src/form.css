@@ -100,7 +100,7 @@
 }
 
 #formbricks__title {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-size: 1.1rem;
   font-weight: var(--formbricks-bold);
   text-align: center;
@@ -110,11 +110,15 @@
 #formbricks__subtitle {
   font-size: 0.8rem;
   font-weight: 400;
-  margin-top: 0.4rem;
+  margin-top: 0.8rem;
   opacity: 0.8;
 }
 
-.formbricks__CTA {
+#formbricks__cta {
+  display: none;
+}
+
+.formbricks__cta_link {
   margin: 0;
   font-size: 0.8rem;
   font-weight: var(--formbricks-bold);
