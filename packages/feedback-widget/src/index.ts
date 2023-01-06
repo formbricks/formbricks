@@ -53,14 +53,14 @@ function applyConfig() {
     for (const elem of contactNameElements) {
       elem.innerHTML = config.contact.name;
     }
-  }
-  const contactPositionElements = document.getElementsByClassName("formbricks__contact-position");
-  for (const elem of contactPositionElements) {
-    elem.innerHTML = config.contact.position;
-  }
-  const contactImageElements = document.getElementsByClassName("formbricks__contact-image");
-  for (const elem of contactImageElements) {
-    (<HTMLImageElement>elem).src = config.contact.imgUrl;
+    const contactPositionElements = document.getElementsByClassName("formbricks__contact-position");
+    for (const elem of contactPositionElements) {
+      elem.innerHTML = config.contact.position;
+    }
+    const contactImageElements = document.getElementsByClassName("formbricks__contact-image");
+    for (const elem of contactImageElements) {
+      (<HTMLImageElement>elem).src = config.contact.imgUrl;
+    }
   }
   // apply styles
   if (config.style) {
