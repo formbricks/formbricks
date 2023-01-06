@@ -13,7 +13,7 @@ export default function FeedbackButton() {
   const [scriptReady, setScriptReady] = useState(false);
   return (
     <>
-      {/* <Script
+      <Script
         src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.1.3/dist/index.umd.js"
         defer
         onReady={() => setScriptReady(true)}
@@ -33,14 +33,14 @@ export default function FeedbackButton() {
     };`}</Script>
       {scriptReady && (
         <button
-          className="bg-brand fixed top-1/2 -right-8 z-40 hidden -translate-y-1/2 -rotate-90 rounded p-4 font-medium text-white sm:block"
+          className="bg-brand rounded p-4 font-medium text-white sm:block"
           onClick={(event) => {
             window.formbricks.open(event);
             plausible("openFeedback");
           }}>
           Feedback
         </button>
-      )} */}
+      )}
     </>
   );
 }
