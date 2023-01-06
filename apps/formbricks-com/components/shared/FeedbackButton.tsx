@@ -20,16 +20,16 @@ export default function FeedbackButton() {
       />
       <Script id="feedback-setup">{`
       window.formbricks = {
-      config: {
-        hqUrl: "https://xm.formbricks.com",
-        formId: "clchup08o0000lj08526vdujt",
-        contact: {
-          name: "Matti",
-          position: "Co-Founder",
-          imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+        ...window.formbricks,
+        config: {
+          hqUrl: "https://xm.formbricks.com",
+          formId: "clchup08o0000lj08526vdujt",
+          contact: {
+            name: "Matti",
+            position: "Co-Founder",
+            imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+          },
         },
-      },
-      ...window.formbricks,
     };`}</Script>
       {scriptReady && (
         <button
