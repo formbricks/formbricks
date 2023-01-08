@@ -89,6 +89,12 @@ function applyConfig() {
 }
 
 function open(e: Event) {
+  // check if initialized
+  const styleElement = document.getElementById("formbricks__css");
+  if (styleElement === null) {
+    init();
+  }
+
   document.body.appendChild(containerElement);
   containerElement.innerHTML = formHTML;
 
