@@ -37,8 +37,6 @@
 #formbricks__container {
   position: fixed;
   z-index: 9999;
-  margin: 0 0 0.5rem;
-
   width: 18rem;
   box-sizing: border-box;
 
@@ -139,6 +137,7 @@
 #formbricks__form {
   position: relative;
   width: 100%;
+  margin-bottom: 1rem;
 }
 
 /* Buttons */
