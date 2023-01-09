@@ -37,6 +37,7 @@
 #formbricks__container {
   position: fixed;
   z-index: 9999;
+  margin: 0 0 0.5rem;
 
   width: 18rem;
   box-sizing: border-box;
@@ -62,7 +63,7 @@
 
 #formbricks__container[data-feedback-type] .formbricks__radio-label {
   height: 2rem;
-  margin: 0 0 0.5rem;
+
   flex-direction: row;
   border: 2px solid transparent;
 }
