@@ -303,8 +303,7 @@
 .formbricks__contact-subtitle {
   margin: 0;
   font-weight: 300;
-  padding-top: 3px;
-  margin-bottom: -5px;
+  opacity: 70%;
 }
 
 .formbricks__contact-image {
