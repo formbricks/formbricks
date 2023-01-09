@@ -14,7 +14,7 @@ export default function FeedbackButton() {
   return (
     <>
       <Script
-        src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.1.3/dist/index.umd.js"
+        src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.1.5/dist/index.umd.js"
         defer
         onReady={() => setScriptReady(true)}
       />
