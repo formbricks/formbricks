@@ -1,26 +1,20 @@
 "use client";
 
 import TabNavigation from "@/components/TabNavigation";
-import { RectangleStackIcon, ShareIcon } from "@heroicons/react/20/solid";
+import { InformationCircleIcon, RectangleStackIcon, ShareIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import FeedbackResults from "./FeedbackResults";
 import PipelinesOverview from "../pipelines/PipelinesOverview";
-
-const subCategories = [
-  { name: "All", href: "#" },
-  { name: "Ideas", href: "#" },
-  { name: "Love", href: "#" },
-  { name: "Bugs", href: "#" },
-];
+import SetupInstructions from "./SetupInstructions";
 
 const tabs = [
   { name: "Results", icon: RectangleStackIcon },
   { name: "Data Pipelines", icon: ShareIcon },
+  { name: "Setup Instructions", icon: InformationCircleIcon },
 ];
 
 export default function FeedbackPage() {
-  const router = useRouter();
   const [currentTab, setCurrentTab] = useState("Results");
 
   return (
@@ -34,6 +28,8 @@ export default function FeedbackPage() {
           <FeedbackResults />
         ) : currentTab === "Data Pipelines" ? (
           <PipelinesOverview />
+        ) : currentTab === "Setup Instructions" ? (
+          <SetupInstructions />
         ) : null}
       </main>
     </div>

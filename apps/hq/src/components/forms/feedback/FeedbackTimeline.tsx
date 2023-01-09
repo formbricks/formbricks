@@ -4,7 +4,6 @@ import { convertDateTimeString } from "@/lib/utils";
 import { BugIcon, Button, ComplimentIcon, IdeaIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import { sub } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
@@ -23,7 +22,7 @@ export default function FeedbackTimeline({ submissions, setSubmissions }) {
     // save submission without customer
     const submissionWoCustomer = { ...updatedSubmission };
     delete submissionWoCustomer.customer;
-    persistSubmission(submissionWoCustomer);
+    persistSubmission(submissionWoCustomer, router.query.teamId?.toString());
     // update all submissions
     const submissionIdx = allSubmissions.findIndex((s) => s.id === submission.id);
     const updatedSubmissions = JSON.parse(JSON.stringify(allSubmissions));

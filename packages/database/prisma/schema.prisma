@@ -63,17 +63,17 @@ model Form {
 }
 
 model Submission {
-  id         String    @id @default(cuid())
-  createdAt  DateTime  @default(now()) @map(name: "created_at")
-  updatedAt  DateTime  @updatedAt @map(name: "updated_at")
-  archived   Boolean   @default(false)
-  form       Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId     String
-  customer   Customer? @relation(fields: [customerId, teamId], references: [id, teamId])
-  customerId String?
-  teamId     String?
-  data       Json      @default("{}")
-  meta       Json      @default("{}")
+  id             String    @id @default(cuid())
+  createdAt      DateTime  @default(now()) @map(name: "created_at")
+  updatedAt      DateTime  @updatedAt @map(name: "updated_at")
+  archived       Boolean   @default(false)
+  form           Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId         String
+  customer       Customer? @relation(fields: [customerId, customerTeamId], references: [id, teamId])
+  customerId     String?
+  customerTeamId String?
+  data           Json      @default("{}")
+  meta           Json      @default("{}")
 }
 
 model Team {

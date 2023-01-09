@@ -23,9 +23,9 @@ export const deleteSubmission = async (teamId: string, formId: string, submissio
   }
 };
 
-export const persistSubmission = async (submission) => {
+export const persistSubmission = async (submission, teamId) => {
   try {
-    await fetch(`/api/teams/${submission.teamId}/forms/${submission.formId}/submissions/${submission.id}/`, {
+    await fetch(`/api/teams/${teamId}/forms/${submission.formId}/submissions/${submission.id}/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(submission),
