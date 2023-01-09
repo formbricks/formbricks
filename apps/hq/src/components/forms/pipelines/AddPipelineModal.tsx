@@ -13,7 +13,7 @@ import { Button } from "@formbricks/ui";
 const availablePipelines = [webhook, emailNotification];
 
 const getEmptyPipeline = () => {
-  return { label: "", type: null, events: [], config: {} };
+  return { label: "", type: null, events: ["submissionCreated"], config: {} };
 };
 
 export default function AddPipelineModal({ open, setOpen }) {
