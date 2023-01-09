@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 
 interface sendEmailData {
   to: string;
+  replyTo?: string;
   subject: string;
   text?: string;
   html: string;
@@ -107,6 +108,7 @@ export const sendSubmissionEmail = async (
   await sendEmail({
     to: email,
     subject: `${formLabel} new submission`,
+    replyTo: submission.customer?.email || process.env.MAIL_FROM,
     html: `Hey, someone just filled out your form ${formLabel} in Formbricks.<br/>
 
     <hr/>
@@ -119,6 +121,7 @@ export const sendSubmissionEmail = async (
     
     Click <a href="${
       process.env.NEXTAUTH_URL
-    }/forms/${formId}/results/responses">here</a> to see new submission`,
+    }/forms/${formId}/results/responses">here</a> to see new submission.
+    ${submission.customer?.email ? "<hr/>You can reply to this email to contact the user directly." : ""}`,
   });
 };

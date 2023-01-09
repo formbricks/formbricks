@@ -10,7 +10,7 @@ declare global {
 export default function FeedbackWidget() {
   return (
     <>
-      <Script src="https://unpkg.com/@formbricks/feedback@0.1.4" defer />
+      <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.1.5/dist/index.umd.js" defer />
       <Script id="feedback-setup">{`
       window.formbricks = {
       config: {
