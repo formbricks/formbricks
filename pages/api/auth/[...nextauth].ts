@@ -41,17 +41,17 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             });
           } catch (e) {
             console.error(e);
-            throw Error("Internal server error. Please try again later");
+            throw Error("Erreur interne du serveur. Réessaie plus tard");
           }
 
           if (!user) {
-            throw new Error("User not found");
+            throw new Error("Utilisateur introuvable");
           }
           if (!credentials) {
-            throw new Error("No credentials");
+            throw new Error("Aucun identifiant trouvé");
           }
           if (!user.password) {
-            throw new Error("Incorrect password");
+            throw new Error("Mot de passe incorrect");
           }
 
           const isValid = await verifyPassword(
@@ -60,7 +60,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           );
 
           if (!isValid) {
-            throw new Error("Incorrect password");
+            throw new Error("Mot de passe incorrect");
           }
           //test here
           return {
