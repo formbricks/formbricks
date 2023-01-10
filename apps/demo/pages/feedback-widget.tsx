@@ -14,7 +14,7 @@ export default function FeedbackWidget() {
       <Script id="feedback-setup">{`
       window.formbricks = {
       config: {
-        hqUrl: "http://localhost:3000", 
+        hqUrl: "http://localhost:3000",
         formId: "clcovbccf000019uss1gyqufg",
         contact: {
           name: "Johannes",
