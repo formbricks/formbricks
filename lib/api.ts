@@ -1,3 +1,4 @@
+import { Session } from "next-auth";
 import { prisma } from "./prisma";
 
 export const formHasOwnership = async (session, formId) => {
@@ -19,4 +20,8 @@ export const formHasOwnership = async (session, formId) => {
     console.error(`can't verify ownership: ${e}`);
     return false;
   }
+};
+
+export const isAdmin = (session: Session) => {
+  return session.user.role === "ADMIN";
 };

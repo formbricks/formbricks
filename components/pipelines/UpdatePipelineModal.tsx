@@ -6,6 +6,7 @@ import {
 import Loading from "../Loading";
 import Modal from "../Modal";
 import { WebhookSettings } from "./webhook";
+import { AirtableSettings } from "./airtable";
 
 export default function UpdatePipelineModal({
   open,
@@ -42,6 +43,12 @@ export default function UpdatePipelineModal({
         >
           {pipeline.type === "WEBHOOK" ? (
             <WebhookSettings
+              pipeline={pipeline}
+              setPipeline={(p) => mutatePipeline(p, false)}
+            />
+          ) : null}
+          {pipeline.type === "AIRTABLE" ? (
+            <AirtableSettings
               pipeline={pipeline}
               setPipeline={(p) => mutatePipeline(p, false)}
             />
