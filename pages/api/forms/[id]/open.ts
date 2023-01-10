@@ -36,13 +36,18 @@ export default async function handle(
         createdAt: "desc",
       },
     });
+    const form = await prisma.form.findUnique({
+      where: {
+        id: formId,
+      },
+    });
 
     const events: openFormEvent[] = [
       {
         type: "formOpened",
         data: {
-          formId,
-          userId: session.user.id,
+          form,
+          user: { ...session.user, id: session.user.id.toString() },
           roll: parseInt(
             formLastSessionEvent ? formLastSessionEvent.data["roll"] + 1 : 0
           ),
