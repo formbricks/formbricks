@@ -31,10 +31,12 @@ enum Formation {
 
 enum PipelineType {
   WEBHOOK
+  AIRTABLE
 }
 
 enum PipelineEvent {
   PAGE_SUBMISSION
+  FORM_OPENED
 }
 
 enum UserRole {
