@@ -36,7 +36,6 @@ export const createUser = async (
     }
     return await res.json();
   } catch (error) {
-    console.log('%%%%%%%%%%%%% error: ', error)
     throw Error(`${error.message}`);
   }
 };

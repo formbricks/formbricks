@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">
                     Une erreur s&apos;est produite lors de la réinitialisation
-                    de votre mot de passe{" "}
+                    de ton mot de passe{" "}
                   </h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p className="space-y-1 whitespace-pre-wrap">{error}</p>

@@ -22,8 +22,7 @@ export default function ResetPasswordSuccess() {
                 Mot de passe réinitialisé avec succès
               </h1>
               <p className="text-center">
-                Vous pouvez maintenant vous connecter avec votre nouveau mot de
-                passe{" "}
+                Tu peux maintenant te connecter avec ton nouveau mot de passe{" "}
               </p>
               <div className="mt-3 text-center">
                 <Link href="/auth/signin">

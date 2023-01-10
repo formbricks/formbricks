@@ -22,7 +22,7 @@ export default async function handle(
 
       if (!foundUser) {
         return res.status(409).json({
-          error: "no user with this email found",
+          error: "Aucun utilisateur avec cet e-mail n'a été trouvé",
         });
       }
 
