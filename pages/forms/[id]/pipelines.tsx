@@ -40,6 +40,15 @@ const libs = [
     action: () => {},
   },
   {
+    id: "airtable",
+    name: "Airtable",
+    comingSoon: false,
+    href: "#",
+    bgColor: "bg-ui-gray-light",
+    icon: SiAirtable,
+    action: () => {},
+  },
+  {
     id: "Notion",
     name: "Notion",
     comingSoon: true,
@@ -67,15 +76,6 @@ const libs = [
     action: () => {},
   },
   {
-    id: "airtable",
-    name: "Airtable",
-    comingSoon: true,
-    href: "#",
-    bgColor: "bg-ui-gray-light",
-    icon: SiAirtable,
-    action: () => {},
-  },
-  {
     id: "slack",
     name: "Slack",
     comingSoon: true,
@@ -90,8 +90,12 @@ function PipelinesPage() {
   const router = useRouter();
   const formId = router.query.id.toString();
   const { form, isLoadingForm, isErrorForm } = useForm(formId);
-  const { pipelines, isLoadingPipelines, isErrorPipelines, mutatePipelines } =
-    usePipelines(formId);
+  const {
+    pipelines,
+    isLoadingPipelines,
+    isErrorPipelines,
+    mutatePipelines,
+  } = usePipelines(formId);
   const formMenuSteps = useFormMenuSteps(formId);
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openUpdateModal, setOpenUpdateModal] = useState(false);
