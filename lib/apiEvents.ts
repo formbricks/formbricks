@@ -1,3 +1,4 @@
+import { handleAirtable } from "../components/pipelines/airtable";
 import { handleWebhook } from "../components/pipelines/webhook";
 import { capturePosthogEvent } from "./posthog";
 import { prisma } from "./prisma";
@@ -35,6 +36,7 @@ export const validateEvents = (
 };
 
 export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
+  let userOpenFormSession = null;
   // save submission
   if (event.type === "pageSubmission") {
     const data = event.data;
@@ -108,7 +110,7 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
   } else if (event.type === "formOpened") {
     // check if usr  opened form
 
-    const userOpenFormSession = await prisma.sessionEvent.findFirst({
+    userOpenFormSession = await prisma.sessionEvent.findFirst({
       where: {
         type: "formOpened",
         AND: [
@@ -127,6 +129,9 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
         ],
       },
     });
+
+    console.log(userOpenFormSession);
+
     if (userOpenFormSession === null) {
       const { id } = await prisma.submissionSession.create({
         data: { form: { connect: { id: formId } } },
@@ -161,9 +166,16 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
       },
     ],
   });
+
   for (const pipeline of pipelines) {
     if (pipeline.type === "WEBHOOK") {
       handleWebhook(pipeline, event);
+    } else if (pipeline.type === "AIRTABLE") {
+      if (event.type !== "formOpened") {
+        handleAirtable(pipeline, event);
+      } else if (event.type === "formOpened" && userOpenFormSession === null) {
+        handleAirtable(pipeline, event);
+      }
     }
   }
 };

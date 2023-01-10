@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { createPipeline, usePipelines } from "../../lib/pipelines";
 import Modal from "../Modal";
 import { webhook, WebhookSettings } from "./webhook";
+import { airtable, AirtableSettings } from "./airtable";
 
-const availablePipelines = [webhook];
+const availablePipelines = [webhook, airtable];
 
 const getEmptyPipeline = () => {
   return { name: "", type: null, events: [], data: {} };
@@ -50,7 +51,7 @@ export default function AddPipelineModal({ open, setOpen }) {
             </h2>
             {availablePipelines.map((pipeline) => (
               <div
-                className="w-full bg-white border shadow border-ui-gray-light sm:rounded"
+                className="w-full bg-white border shadow border-ui-gray-light sm:rounded mb-4"
                 key={pipeline.title}
               >
                 <div className="px-4 py-5 sm:p-6">
@@ -84,6 +85,9 @@ export default function AddPipelineModal({ open, setOpen }) {
           >
             {typeId === "WEBHOOK" ? (
               <WebhookSettings pipeline={pipeline} setPipeline={setPipeline} />
+            ) : null}
+            {typeId === "AIRTABLE" ? (
+              <AirtableSettings pipeline={pipeline} setPipeline={setPipeline} />
             ) : null}
             <div className="pt-5">
               <div className="flex justify-end">
