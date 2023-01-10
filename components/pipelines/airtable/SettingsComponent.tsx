@@ -36,7 +36,7 @@ export function AirtableSettings({ pipeline, setPipeline }) {
     <div className="space-y-8 divide-y divide-gray-200">
       <div>
         <h2 className="mb-3 text-xl font-bold text-ui-gray-dark">
-          Configurer le Webhook
+          Configurer l&rsquo;intégration
         </h2>
         <p className="mt-1 text-sm text-gray-500">
           Configurez votre intégration à AirTable.. Pour en savoir plus sur le
