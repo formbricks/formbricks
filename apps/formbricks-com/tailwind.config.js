@@ -41,6 +41,9 @@ module.exports = {
       maxWidth: {
         "8xl": "88rem",
       },
+      screens: {
+        xs: "390px",
+      },
     },
   },
   plugins: [require("@tailwindcss/typography"), require("@tailwindcss/forms")],
