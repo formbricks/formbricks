@@ -1,9 +1,10 @@
 {
   "name": "@formbricks/feedback",
-  "version": "0.1.5",
+  "version": "0.1.9",
   "source": "src/index.ts",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "jsdelivr": "./dist/index.umd.js",
   "unpkg": "./dist/index.umd.js",
   "type": "module",
   "license": "Apache-2.0",

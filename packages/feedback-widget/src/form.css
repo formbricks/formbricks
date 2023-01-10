@@ -32,20 +32,22 @@
   --formbricks-message-border-color: #e2e8f0;
 }
 
-/* Container */
+/* Modal specific */
 
-#formbricks__container {
+.formbricks__modal {
   position: fixed;
   z-index: 9999;
   width: 18rem;
   box-sizing: border-box;
-
-  background-color: var(--formbricks-bg-color);
   box-shadow: var(--formbricks-shadow);
   border-radius: var(--formbricks-border-radius);
+}
 
+/* Container */
+
+#formbricks__container {
+  background-color: var(--formbricks-bg-color);
   padding: 0;
-
   font-family: sans-serif;
   font-size: 1rem;
   color: var(--formbricks-text-color);
@@ -94,6 +96,9 @@
   color: var(--formbricks-header-text-color);
   padding: 1.6rem 0;
   text-align: center;
+}
+
+.formbricks__modal #formbricks__header {
   border-top-left-radius: var(--formbricks-border-radius);
   border-top-right-radius: var(--formbricks-border-radius);
 }
@@ -167,6 +172,7 @@
 }
 
 #formbricks__close {
+  display: none;
   position: absolute;
   top: 0.25rem;
   right: 0.25rem;
@@ -180,7 +186,6 @@
   padding: 0;
   cursor: pointer;
 
-  display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
@@ -202,6 +207,7 @@
 
 #formbricks__radio-group {
   display: block;
+  height: 100%;
 }
 
 .formbricks__radio {

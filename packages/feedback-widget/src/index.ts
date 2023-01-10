@@ -10,6 +10,7 @@ export interface FormbricksConfig {
     position: string;
     imgUrl: string;
   };
+  divId?: string;
   style?: any;
   formId?: string;
   hqUrl?: string;
@@ -36,6 +37,9 @@ function init() {
   document.querySelectorAll("[data-formbricks-button]").forEach((el) => {
     el.addEventListener("click", open);
   });
+  if (config.divId) {
+    render();
+  }
 }
 window.addEventListener("load", init);
 
@@ -88,18 +92,40 @@ function applyConfig() {
   }
 }
 
-function open(e: Event) {
-  // check if initialized
+function onDisplay() {
+  // check if styles are initialized
   const styleElement = document.getElementById("formbricks__css");
   if (styleElement === null) {
     init();
   }
 
-  document.body.appendChild(containerElement);
   containerElement.innerHTML = formHTML;
+  containerElement.style.display = "block";
 
   applyConfig();
-  containerElement.style.display = "block";
+
+  document.getElementById("formbricks__close")!.addEventListener("click", close);
+
+  Array.from(containerElement.getElementsByClassName("formbricks__radio")).forEach((el) => {
+    el.addEventListener("click", changeType);
+  });
+
+  document.getElementById("formbricks__type-switch")!.addEventListener("click", resetForm);
+
+  document.getElementById("formbricks__form")!.addEventListener("submit", submit);
+
+  trap.activate();
+}
+
+function open(e: Event) {
+  if (config.divId) {
+    console.error('open() is not supported when using "divId" in config.');
+    return;
+  }
+
+  if (!containerElement.classList.contains("formbricks__modal")) {
+    containerElement.classList.add("formbricks__modal");
+  }
 
   const target = (e?.target as HTMLElement) || document.body;
   computePosition(target, containerElement, {
@@ -113,17 +139,10 @@ function open(e: Event) {
     });
   });
 
-  trap.activate();
+  document.body.appendChild(containerElement);
+  onDisplay();
 
-  document.getElementById("formbricks__close")!.addEventListener("click", close);
-
-  Array.from(containerElement.getElementsByClassName("formbricks__radio")).forEach((el) => {
-    el.addEventListener("click", changeType);
-  });
-
-  document.getElementById("formbricks__type-switch")!.addEventListener("click", resetType);
-
-  document.getElementById("formbricks__form")!.addEventListener("submit", submit);
+  document.getElementById("formbricks__close")!.style.display = "flex";
 
   // click outside of container closes widget
   e.preventDefault();
@@ -134,7 +153,24 @@ function open(e: Event) {
   });
 }
 
+function render() {
+  if (config.divId) {
+    const div = document.getElementById(config.divId);
+    if (div === null) {
+      throw new Error(`No div with id ${config.divId} found`);
+    }
+    div.appendChild(containerElement);
+    onDisplay();
+  } else {
+    console.error('render() only works when "divId" is present in config.');
+  }
+}
+
 function close() {
+  if (config.divId) {
+    console.error('close() is not supported when using "divId" in config.');
+    return;
+  }
   trap.deactivate();
 
   containerElement.innerHTML = "";
@@ -144,7 +180,7 @@ function close() {
   containerElement.removeAttribute("data-success");
 }
 
-function resetType(e: Event) {
+function resetForm(e: Event) {
   document.getElementById("formbricks__type-switch")!.innerHTML = "";
   containerElement.removeAttribute("data-feedback-type");
 }
@@ -241,7 +277,7 @@ function submit(e: Event) {
   return false;
 }
 
-const formbricks = { init, open, changeType, close, submit, config };
+const formbricks = { init, open, changeType, close, render, submit, resetForm, config };
 (window as any).formbricks = formbricks;
 
 export default formbricks;
