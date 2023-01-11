@@ -182,6 +182,7 @@ module.exports = {
           700: "#395465",
           800: "#354855",
           900: "#1e272e",
+          tile: "#333"
         },
         white: {
           DEFAULT: "#ffffff",

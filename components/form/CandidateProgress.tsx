@@ -4,7 +4,6 @@ import usePages from "../../hooks/usePages";
 // import { getFormPages, getFormPage} from "../../lib/forms";
 
 function CandidateProgress({ form }) {
-
   const [progress, setProgress] = useState(0);
   const pages = usePages({ blocks: form.noCodeForm.blocks, formId: form.id });
 
@@ -26,10 +25,24 @@ function CandidateProgress({ form }) {
   }, []);
 
   return (
-    <div className={progress < (pages.length - 1)? "flex items-center px-3 py-1 text-xs font-bold text-neutral-500" : "flex items-center px-3 py-1 text-xs font-bold text-green-700"}>
-      <span className="flex items-center mr-1">
-        <CheckCircleIcon className={progress < (pages.length - 1) ? "w-5 h-5 text-black mr-2" : "w-5 h-5 text-green-700 mr-2"} />
-        { progress < (pages.length - 1)?`${progress} / ${(pages.length - 1)}`: "completed"}
+    <div
+      className={
+        progress < pages.length - 1
+          ? "flex items-center px-6 py-1 text-base font-normal text-black-title"
+          : "flex items-center px-6 py-1 text-base font-normal text-green-700"
+      }
+    >
+      <span className='flex items-center mr-1'>
+        <CheckCircleIcon
+          className={
+            progress < pages.length - 1
+              ? "w-5 h-5 text-rose-500 mr-2"
+              : "w-5 h-5 text-green-700 mr-2"
+          }
+        />
+        {progress < pages.length - 1
+          ? `${progress} / ${pages.length - 1}`
+          : "completed"}
       </span>
     </div>
   );
