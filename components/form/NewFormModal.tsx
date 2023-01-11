@@ -98,7 +98,7 @@ export default function NewFormModal({
                 </div>
                 <form
                   onSubmit={(e) => createFormAction(e)}
-                  className="inline-block w-full p-2 overflow-hidden text-left align-bottom transition-all transform sm:align-middle"
+                  className="inline-block relative w-full p-2 overflow-hidden text-left align-bottom transition-all transform sm:align-middle"
                 >
                   <div>
                     <label
@@ -123,11 +123,11 @@ export default function NewFormModal({
                   <div>
                     <label
                       htmlFor="answeringOrder"
-                      className="text-sm font-light text-ui-gray-dark"
+                      className="text-sm relative font-light text-ui-gray-dark"
                     >
                       Définissez l&apos;ordre des étapes de votre sourcing
                     </label>
-                    <div className="mt-2">
+                    <div className="mt-2 relative">
                       <Listbox
                         value={answeringOrder}
                         onChange={setAnsweringOrder}
@@ -149,7 +149,7 @@ export default function NewFormModal({
                           leaveFrom="opacity-100"
                           leaveTo="opacity-0"
                         >
-                          <Listbox.Options className="absolute mt-1 max-h-60 w-11/12 z-20 overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                          <Listbox.Options className="absolute mt-1 max-h-60 w-full z-20 overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                             {SourcingAnsweringOrderOptions.map(
                               (option, optionIdx) => {
                                 return (
@@ -223,7 +223,7 @@ export default function NewFormModal({
                     >
                       Définissez le lieu de votre sourcing
                     </label>
-                    <div className="mt-2">
+                    <div className="mt-2 relative">
                       <Listbox value={location} onChange={setLocation}>
                         <Listbox.Button className="relative w-full cursor-default rounded bg-ui-gray-light py-2 pl-3 pr-10 text-left focus:ring-2 focus:ring-red sm:text-sm">
                           <span className="block truncate">{location}</span>
@@ -240,7 +240,7 @@ export default function NewFormModal({
                           leaveFrom="opacity-100"
                           leaveTo="opacity-0"
                         >
-                          <Listbox.Options className="absolute mt-1 max-h-60 w-11/12 z-20 overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                          <Listbox.Options className="absolute mt-1 max-h-60 w-full z-20 overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                             {SourcingLocations.map((place, placeIdx) => {
                               return (
                                 <Listbox.Option
@@ -291,7 +291,7 @@ export default function NewFormModal({
                     >
                       Choisissez la formation
                     </label>
-                    <div className="mt-2">
+                    <div className="mt-2 relative">
                       <Listbox value={formation} onChange={setFormation}>
                         <Listbox.Button className="relative w-full cursor-default rounded bg-ui-gray-light py-2 pl-3 pr-10 text-left focus:ring-2 focus:ring-red sm:text-sm">
                           <span className="block truncate">{formation}</span>
@@ -308,7 +308,7 @@ export default function NewFormModal({
                           leaveFrom="opacity-100"
                           leaveTo="opacity-0"
                         >
-                          <Listbox.Options className="absolute mt-1 max-h-60 w-11/12 z-20 overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                          <Listbox.Options className="absolute mt-1 max-h-60 w-full z-20 overflow-auto rounded bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                             {SourcingFormations.map(
                               (formation, formationIdx) => {
                                 return (
