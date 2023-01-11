@@ -1,6 +1,7 @@
 import { Analytics } from "@vercel/analytics/react";
 import { SessionProvider } from "next-auth/react";
 import { ToastContainer } from "react-toastify";
+import { FeedbackButton } from "@/components/FeedbackButton";
 import "@/styles/globals.css";
 import "@/styles/toastify.css";
 import "@/styles/prism.css";
@@ -11,6 +12,7 @@ function FormbricksApp({ Component, pageProps: { session, ...pageProps } }) {
       <Component {...pageProps} />
       <ToastContainer />
       <Analytics />
+      <FeedbackButton />
     </SessionProvider>
   );
 }

@@ -131,6 +131,7 @@ export const authOptions: NextAuthOptions = {
         where: { email: token.email! },
         select: {
           id: true,
+          name: true,
         },
       });
 
@@ -146,6 +147,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token, user }) {
       // @ts-ignore
       session.user.id = token.id;
+      session.user.name = token.name;
 
       return session;
     },
