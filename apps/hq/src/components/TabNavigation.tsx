@@ -1,7 +1,6 @@
 import clsx from "clsx";
 
 export default function TabNavigation({ tabs, currentTab, setCurrentTab }) {
-  console.log(currentTab);
   return (
     <div>
       <div className="sm:hidden">

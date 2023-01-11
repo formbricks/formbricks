@@ -8,6 +8,8 @@
     ".": "./dist",
     "./styles.css": "./dist/styles.css"
   },
+  "module": "dist/index.mjs",
+  "sideEffects": false,
   "license": "MIT",
   "scripts": {
     "build": "tsup src/index.tsx --format esm,cjs --dts --external react",
