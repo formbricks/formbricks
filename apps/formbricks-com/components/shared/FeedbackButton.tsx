@@ -49,7 +49,7 @@ export default function FeedbackButton() {
     };`}</Script>
       <div
         className={clsx(
-          "xs:right-0 xs:top-1/2 xs:w-[26rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-96 w-full transition-transform duration-500 ease-in-out",
+          "xs:right-0 xs:top-1/2 xs:w-[26rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-[22rem] w-full transition-transform duration-500 ease-in-out",
           isOpen ? "xs:-translate-x-0 translate-y-0" : "xs:translate-x-[21.2rem] translate-y-[21.8rem]"
         )}>
         <div
