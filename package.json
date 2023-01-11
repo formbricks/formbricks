@@ -8,6 +8,7 @@
     "prebuild": "git submodule update --init && yarn",
     "build": "next build",
     "start": "next start",
+    "migrate-dev": "prisma migrate dev",
     "migrate-and-start": "prisma migrate deploy && next start",
     "lint": "next lint"
   },
