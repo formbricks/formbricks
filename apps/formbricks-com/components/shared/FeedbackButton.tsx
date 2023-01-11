@@ -49,8 +49,8 @@ export default function FeedbackButton() {
     };`}</Script>
       <div
         className={clsx(
-          "xs:right-0 xs:top-1/2 xs:w-[26rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-[22rem] w-full transition-transform duration-500 ease-in-out",
-          isOpen ? "xs:-translate-x-0 translate-y-0" : "xs:translate-x-[21.2rem] translate-y-[21.8rem]"
+          "xs:right-0 xs:top-1/2 xs:w-[26rem] xs:-translate-y-1/2 xs:h-[22rem] fixed bottom-0 z-50 h-96 w-full transition-transform duration-500 ease-in-out",
+          isOpen ? "xs:-translate-x-0 translate-y-0" : "xs:translate-x-[21.2rem] translate-y-[21rem]"
         )}>
         <div
           className="xs:flex-row flex h-full flex-col"
@@ -59,7 +59,7 @@ export default function FeedbackButton() {
           }}
           ref={feedbackRef}>
           <button
-            className="bg-brand xs:-rotate-90 xs:-mr-7 xs:my-auto z-30 mx-auto -mb-2 max-h-16 w-32 rounded p-4 font-medium text-white"
+            className="bg-brand-dark xs:-rotate-90 xs:-mr-7 xs:my-auto z-30 mx-auto -mb-2 max-h-16 w-32 rounded p-4 font-medium text-white"
             onClick={() => {
               if (!isOpen) {
                 plausible("openFeedback");
