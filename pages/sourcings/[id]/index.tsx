@@ -118,6 +118,26 @@ function NoCodeFormPublic() {
     }
   };
 
+  const returnCurrentSubmission = (
+    candidateSubmissions: any,
+    user: {
+      id: number;
+      firstname: string;
+      lastname: string;
+      email: string;
+      phone: string;
+      role: string;
+      gender: string;
+    },
+    page: any
+  ) => {
+    return candidateSubmissions.find(
+      (submission) =>
+        submission.data.candidateId === user.id &&
+        submission.data.pageName === page.id
+    );
+  };
+
   return (
     <BaseLayoutManagement
       title={"Forms - KDA Sourcing"}
@@ -187,10 +207,10 @@ function NoCodeFormPublic() {
               {pages.map((page, index) => {
                 let numberOfQuestions = 0;
                 let numberOfQuestionsAnswerd = 0;
-                const currentSubmission = candidateSubmissions.find(
-                  (submission) =>
-                    submission.data.candidateId === user.id &&
-                    submission.data.pageName === page.id
+                const currentSubmission = returnCurrentSubmission(
+                  candidateSubmissions,
+                  user,
+                  page
                 );
                 if (page) {
                   const { blocks } = page;
