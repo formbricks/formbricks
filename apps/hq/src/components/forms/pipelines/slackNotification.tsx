@@ -1,7 +1,9 @@
-export const webhook = {
-  typeId: "webhook",
-  title: "Webhook",
-  description: "Notify an external endpoint when events happen in your form (e.g. a new submission).",
+import Link from "next/link";
+
+export const slackNotification = {
+  typeId: "slackNotification",
+  title: "Slack Notification",
+  description: "Get a Slack notification when events happen in your form (e.g. a new submission).",
 };
 
 const eventTypes = [
@@ -12,7 +14,7 @@ const eventTypes = [
   },
 ];
 
-export function WebhookSettings({ pipeline, setPipeline }) {
+export function SlackNotificationSettings({ pipeline, setPipeline }) {
   const toggleEvent = (eventId) => {
     const newPipeline = JSON.parse(JSON.stringify(pipeline));
     const eventIdx = newPipeline.events.indexOf(eventId);
@@ -37,22 +39,25 @@ export function WebhookSettings({ pipeline, setPipeline }) {
   return (
     <div className="space-y-8 divide-y divide-gray-200">
       <div>
-        <h2 className="text-ui-gray-dark mb-3 text-xl font-bold">Configure Webhook</h2>
+        <h2 className="text-ui-gray-dark mb-3 text-xl font-bold">Configure Slack Notification</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Configure your webhook. To learn more about how webhooks work, please check out our docs.
+          This pipeline uses Slack webhooks. To learn more how to setup these please checkout the{" "}
+          <Link href="https://api.slack.com/messaging/webhooks" target="_blank">
+            Slack Documentation
+          </Link>
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
           <div className="sm:col-span-4">
             <label htmlFor="label" className="block text-sm font-medium text-gray-700">
-              Webhook Label
+              Pipeline Label
             </label>
             <div className="mt-1">
               <input
                 type="text"
                 name="label"
                 id="label"
-                placeholder="My Webhook Pipeline"
+                placeholder="My Slack Notification Pipeline"
                 value={pipeline.label || ""}
                 onChange={(e) => updateField("label", e.target.value)}
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
@@ -75,33 +80,15 @@ export function WebhookSettings({ pipeline, setPipeline }) {
                 onInput={(e: any) => e.target.setCustomValidity("")}
                 name="endpointUrl"
                 id="endpointUrl"
+                placeholder="https://hooks.slack.com/services/ABC123/DEFGH456/IJKLM7890"
                 value={pipeline.config.endpointUrl || ""}
-                placeholder="https://api.example.com"
                 onChange={(e) => updateField("endpointUrl", e.target.value, "config")}
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
                 required
               />
             </div>
-            <p className="mt-2 text-xs text-gray-500" id="email-description">
-              Your server URL to which the data should be sent (https requiteal)
-            </p>
-          </div>
-          <div className="sm:col-span-4">
-            <label htmlFor="secret" className="block text-sm font-medium text-gray-700">
-              Secret
-            </label>
-            <div className="mt-1">
-              <input
-                type="text"
-                name="secret"
-                id="secret"
-                value={pipeline.config.secret || ""}
-                onChange={(e) => updateField("secret", e.target.value, "config")}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
-              />
-            </div>
-            <p className="mt-2 text-xs text-gray-500" id="email-description">
-              We sign all event notification payloads with a SHA256 signature using this secret
+            <p className="mt-2 text-xs text-gray-500" id="url-description">
+              The Webhook URL provided by Slack
             </p>
           </div>
         </div>
@@ -141,21 +128,6 @@ export function WebhookSettings({ pipeline, setPipeline }) {
                   </div>
                 </div>
               ))}
-            </div>
-          </fieldset>
-        </div>
-        <div className="mt-6">
-          <fieldset>
-            <legend className="sr-only">Conditions</legend>
-            <div className="text-base font-medium text-gray-900" aria-hidden="true">
-              Conditions
-            </div>
-            <div className="mt-4 space-y-4">
-              <div className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-5">
-                <p className="flex justify-center text-xs text-gray-600">
-                  conditional data piping coming soon
-                </p>
-              </div>
             </div>
           </fieldset>
         </div>

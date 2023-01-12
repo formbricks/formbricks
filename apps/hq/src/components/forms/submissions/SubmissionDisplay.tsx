@@ -1,29 +1,9 @@
 "use client";
 
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { useForm } from "@/lib/forms";
+import { MergeWithSchema } from "@/lib/submissions";
 import clsx from "clsx";
 
 export default function SubmissionDisplay({ schema, submission }) {
-  const MergeWithSchema = (submissionData, schema) => {
-    if (Object.keys(schema).length === 0) {
-      // no schema provided
-      return submissionData;
-    }
-    const mergedData = {};
-    for (const elem of schema.children) {
-      if (["submit"].includes(elem.type)) {
-        continue;
-      }
-      if (elem.name in submissionData) {
-        mergedData[elem.label] = submissionData[elem.name];
-      } else {
-        mergedData[elem.label] = "not provided";
-      }
-    }
-    return mergedData;
-  };
-
   return (
     <div className="flow-root">
       <ul role="list" className="divide-ui-gray-light divide-y">

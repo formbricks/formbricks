@@ -1,6 +1,7 @@
 import { prisma } from "@formbricks/database";
 import crypto from "crypto";
 import { sendSubmissionEmail } from "./email";
+import { MergeWithSchema } from "./submissions";
 
 export const runPipelines = async (form, submission) => {
   // handle integrations
@@ -11,11 +12,14 @@ export const runPipelines = async (form, submission) => {
     },
   });
   for (const pipeline of pipelines) {
-    if (pipeline.type === "webhook") {
-      await handleWebhook(pipeline, submission);
-    }
     if (pipeline.type === "emailNotification") {
       await handleEmailNotification(pipeline, form, submission);
+    }
+    if (pipeline.type === "slackNotification") {
+      await handleSlackNotification(pipeline, form, submission);
+    }
+    if (pipeline.type === "webhook") {
+      await handleWebhook(pipeline, submission);
     }
   }
 };
@@ -46,6 +50,41 @@ async function handleEmailNotification(pipeline, form, submission) {
   const { email } = pipeline.config.valueOf() as { email: string };
 
   if (pipeline.events.includes("submissionCreated")) {
-    await sendSubmissionEmail(email, form.id, form.label, form.schema, submission);
+    await sendSubmissionEmail(email, form.teamId, form.id, form.label, form.schema, submission);
+  }
+}
+
+async function handleSlackNotification(pipeline, form, submission) {
+  if (pipeline.config.hasOwnProperty("endpointUrl")) {
+    if (pipeline.events.includes("submissionCreated")) {
+      const body = {
+        text: `Someone just filled out your form "${form.label}" in Formbricks.`,
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `Someone just filled out your form "${form.label}". <${process.env.NEXTAUTH_URL}/teams/${form.teamId}/forms/${form.id}/feedback|View in Formbricks>`,
+            },
+          },
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `${Object.entries(MergeWithSchema(submission.data, form.schema))
+                .map(([key, value]) => `*${key}*\n${value}\n`)
+                .join("")}`,
+            },
+          },
+        ],
+      };
+      fetch(pipeline.config.endpointUrl.toString(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+    }
   }
 }

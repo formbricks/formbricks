@@ -34,3 +34,22 @@ export const persistSubmission = async (submission, teamId) => {
     console.error(error);
   }
 };
+
+export const MergeWithSchema = (submissionData, schema) => {
+  if (Object.keys(schema).length === 0) {
+    // no schema provided
+    return submissionData;
+  }
+  const mergedData = {};
+  for (const elem of schema.children) {
+    if (["submit"].includes(elem.type)) {
+      continue;
+    }
+    if (elem.name in submissionData) {
+      mergedData[elem.label] = submissionData[elem.name];
+    } else {
+      mergedData[elem.label] = "not provided";
+    }
+  }
+  return mergedData;
+};

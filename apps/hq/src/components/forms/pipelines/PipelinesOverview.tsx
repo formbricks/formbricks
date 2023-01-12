@@ -37,6 +37,15 @@ const integrations = [
     action: () => {},
   },
   {
+    id: "slack",
+    name: "Slack Notification",
+    comingSoon: false,
+    href: "#",
+    bgColor: "bg-slate-500",
+    icon: SiSlack,
+    action: () => {},
+  },
+  {
     id: "Notion",
     name: "Notion",
     comingSoon: true,
@@ -70,15 +79,6 @@ const integrations = [
     href: "#",
     bgColor: "bg-slate-500",
     icon: SiAirtable,
-    action: () => {},
-  },
-  {
-    id: "slack",
-    name: "Slack",
-    comingSoon: true,
-    href: "#",
-    bgColor: "bg-slate-500",
-    icon: SiSlack,
     action: () => {},
   },
 ];
