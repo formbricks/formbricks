@@ -13,7 +13,7 @@ import getConfig from "next/config";
 import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
-import { isTimedPage } from "../../../lib/utils";
+import { isTimedPage, isBlockAQuestion } from "../../../lib/utils";
 import {
   CheckCircleIcon,
   InboxArrowDownIcon,
@@ -118,7 +118,7 @@ function NoCodeFormPublic() {
     }
   };
 
-  const returnCurrentSubmission = (
+  const getPageSubmission = (
     candidateSubmissions: any,
     user: {
       id: number;
@@ -155,24 +155,24 @@ function NoCodeFormPublic() {
       ]}
     >
       <LimitedWidth>
-        <div className='flex flex-col justify-between h-screen bg-white'>
+        <div className="flex flex-col justify-between h-screen bg-white">
           {noCodeForm.closed ? (
-            <div className='flex min-h-screen bg-ui-gray-light'>
-              <div className='flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24'>
-                <div className='w-full max-w-sm p-8 mx-auto lg:w-96'>
+            <div className="flex min-h-screen bg-ui-gray-light">
+              <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+                <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
                   <div>
                     <Image
-                      src='/img/kda_logo.png'
-                      alt='kinshasa digital academy logo'
+                      src="/img/kda_logo.png"
+                      alt="kinshasa digital academy logo"
                       width={180}
                       height={60}
                     />
                   </div>
-                  <div className='mt-8'>
-                    <h1 className='mb-4 font-bold text-center leading-2'>
+                  <div className="mt-8">
+                    <h1 className="mb-4 font-bold text-center leading-2">
                       Formulaire fermé !
                     </h1>
-                    <p className='text-center'>
+                    <p className="text-center">
                       Ce formulaire est fermé pour toute autre soumission.
                     </p>
                   </div>
@@ -180,13 +180,13 @@ function NoCodeFormPublic() {
               </div>
             </div>
           ) : (
-            <div className='flex-col'>
-              <h1 className='text-2xl mt-10 mb-10 ml-12 mx-auto font-bold  max-sm:ml-6 max-md:ml-6 max-sm:mt-8 max-md:mb-8'>
+            <div className="flex-col">
+              <h1 className="text-2xl mt-10 mb-10 ml-12 mx-auto font-bold  max-sm:ml-6 max-md:ml-6 max-sm:mt-8 max-md:mb-8">
                 {noCodeForm.form.name}
               </h1>
-              <p className='flex items-center text-sm mb-10 ml-12 mx-auto max-sm:ml-6 max-md:ml-6'>
-                <CalendarDaysIcon className='w-6 h-6 stroke-thin mr-2' />
-                <span className='font-bold mr-1'>Date limite : </span>
+              <p className="flex items-center text-sm mb-10 ml-12 mx-auto max-sm:ml-6 max-md:ml-6">
+                <CalendarDaysIcon className="w-6 h-6 stroke-thin mr-2" />
+                <span className="font-bold mr-1">Date limite : </span>
                 {new Date(noCodeForm.form.dueDate).toLocaleDateString(
                   "fr-FR",
                   options
@@ -195,76 +195,69 @@ function NoCodeFormPublic() {
               {noCodeForm.form.place === "" ? (
                 <></>
               ) : (
-                <p className='flex  items-center text-sm mb-10 ml-12 mx-auto max-sm:ml-6 max-md:ml-6'>
-                  <HiOutlineLocationMarker className='w-6 h-6 stroke-thin mr-2' />
-                  <span className='font-bold mr-1'>Lieu : </span>
+                <p className="flex  items-center text-sm mb-10 ml-12 mx-auto max-sm:ml-6 max-md:ml-6">
+                  <HiOutlineLocationMarker className="w-6 h-6 stroke-thin mr-2" />
+                  <span className="font-bold mr-1">Lieu : </span>
                   {noCodeForm.form.place}
                 </p>
               )}
-              <p className='text-lg mb-3 ml-12  mr-11'>
+              <p className="text-lg mb-3 ml-12  mr-11">
                 {noCodeForm.form.description}
               </p>
               {pages.map((page, index) => {
                 let numberOfQuestions = 0;
-                let numberOfQuestionsAnswerd = 0;
-                const currentSubmission = returnCurrentSubmission(
+                let numberOfAnsweredQuestions = 0;
+                const pageSubmission = getPageSubmission(
                   candidateSubmissions,
                   user,
                   page
                 );
                 if (page) {
-                  const { blocks } = page;
-                  const blocksQuestions = blocks.filter(
-                    ({ type }) =>
-                      type === "emailQuestion" ||
-                      type === "multipleChoiceQuestion" ||
-                      type === "numberQuestion" ||
-                      type === "phoneQuestion" ||
-                      type === "websiteQuestion" ||
-                      type === "textQuestion" ||
-                      type === "timerToolboxOption"
-                  );
-                  numberOfQuestions = blocksQuestions.length;
-                  numberOfQuestionsAnswerd = !currentSubmission
+                  numberOfQuestions = page.blocks.filter((block) =>
+                    isBlockAQuestion(block)
+                  ).length;
+                  numberOfAnsweredQuestions = !pageSubmission
                     ? 0
-                    : Object.keys(currentSubmission?.data?.submission).length;
+                    : Object.values(pageSubmission?.data?.submission).filter(
+                        (v) => v
+                      ).length;
                 }
                 if (pages.length - 1 !== index)
                   return (
                     <div
-                      className='w-full py-4 border-y-2 border-slate-100 flex justify-between  max-sm:flex-col max-md:flex-col'
+                      className="w-full py-4 border-y-2 border-slate-100 flex justify-between  max-sm:flex-col max-md:flex-col"
                       key={index}
                     >
-                      <div className='pl-12 flex items-center'>
+                      <div className="pl-12 flex items-center">
                         {(isTimedPage(page) && pageIsCompleted(page.id)) ||
-                        numberOfQuestions === numberOfQuestionsAnswerd ? (
-                          <CheckCircleIcon className='text-green-800 w-7 mr-2' />
+                        numberOfQuestions === numberOfAnsweredQuestions ? (
+                          <CheckCircleIcon className="text-green-800 w-7 mr-2" />
                         ) : (
-                          <XCircleIcon className='text-red-800 w-7 mr-2' />
+                          <XCircleIcon className="text-red-800 w-7 mr-2" />
                         )}
                       </div>
-                      <div className='pl-12 flex items-center max-sm:pl-6 max-sm:pr-6 max-sm:pb-5 max-md:pb-5 max-sm:font-semibold max-md:font-semibold max-md:pl-6 max-md:pr-6 w-2/5'>
+                      <div className="pl-12 flex items-center max-sm:pl-6 max-sm:pr-6 max-sm:pb-5 max-md:pb-5 max-sm:font-semibold max-md:font-semibold max-md:pl-6 max-md:pr-6 w-2/5">
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
-                      <div className='flex items-center justify-between w-2/5 pr-8 max-sm:w-full max-md:w-full max-sm:pl-6 max-sm:pr-6 max-sm:flex-col max-sm:items-start max-md:pl-6 max-md:pr-6'>
-                        <div className='flex items-center w-3/8 max-sm:pb-5 max-md:pb-5  '>
+                      <div className="flex items-center justify-between w-2/5 pr-8 max-sm:w-full max-md:w-full max-sm:pl-6 max-sm:pr-6 max-sm:flex-col max-sm:items-start max-md:pl-6 max-md:pr-6">
+                        <div className="flex items-center w-3/8 max-sm:pb-5 max-md:pb-5  ">
                           {isTimedPage(page) ? (
                             <>
-                              <span className='flex items-center mr-7 text-gray-800'>
-                                <ClockIcon className='w-7 mr-2' />
+                              <span className="flex items-center mr-7 text-gray-800">
+                                <ClockIcon className="w-7 mr-2" />
                                 {getPageTimer(page.blocks)} min.
                               </span>
-                              <span className='flex items-center text-gray-800'>
-                                <InboxArrowDownIcon className='w-5 mr-2' />1
+                              <span className="flex items-center text-gray-800">
+                                <InboxArrowDownIcon className="w-5 mr-2" />1
                                 tentative
                               </span>
                             </>
                           ) : (
                             <>
                               {" "}
-                              <span className='flex items-center text-gray-800'>
-                                {numberOfQuestionsAnswerd} / {numberOfQuestions}{" "}
-                                questions
+                              <span className="flex items-center text-gray-800">
+                                {numberOfAnsweredQuestions} /{" "}
+                                {numberOfQuestions} questions
                               </span>
                             </>
                           )}
@@ -273,7 +266,7 @@ function NoCodeFormPublic() {
                           <button
                             onClick={() => handleClickAction(page)}
                             disabled={isTimedPage(page)}
-                            className='w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold'
+                            className="w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold"
                           >
                             {isTimedPage(page) ? "Terminé" : "Modifier"}
                           </button>
@@ -281,7 +274,7 @@ function NoCodeFormPublic() {
                           <button
                             disabled={!pageIsEnabled(page.id)}
                             onClick={() => handleClickAction(page)}
-                            className='w-107 rounded-full bg-gray-800 p-2.5 text-white font-bold disabled:opacity-10'
+                            className="w-107 rounded-full bg-gray-800 p-2.5 text-white font-bold disabled:opacity-10"
                           >
                             Commencer
                           </button>
@@ -299,19 +292,19 @@ function NoCodeFormPublic() {
             </div>
           )}
           {(publicPrivacyUrl || publicImprintUrl) && (
-            <footer className='flex items-center justify-center w-full h-10 text-xs text-gray-300'>
+            <footer className="flex items-center justify-center w-full h-10 text-xs text-gray-300">
               {publicImprintUrl && (
                 <>
-                  <a href={publicImprintUrl} target='_blank' rel='noreferrer'>
+                  <a href={publicImprintUrl} target="_blank" rel="noreferrer">
                     Impression
                   </a>
                 </>
               )}
               {publicImprintUrl && publicPrivacyUrl && (
-                <span className='px-2'>|</span>
+                <span className="px-2">|</span>
               )}
               {publicPrivacyUrl && (
-                <a href={publicPrivacyUrl} target='_blank' rel='noreferrer'>
+                <a href={publicPrivacyUrl} target="_blank" rel="noreferrer">
                   Politique de confidentialité
                 </a>
               )}

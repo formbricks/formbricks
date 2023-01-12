@@ -76,7 +76,8 @@ export const slugify = (...args: (string | number)[]): string => {
 
 export const handlePhoneNumberValidity = (phone) => {
   const validity = /^(\+243|0)[0-9]{9}$/.test(phone);
-  if (validity === false) throw new Error("Le numéro de téléphone entré est incorrect");
+  if (validity === false)
+    throw new Error("Le numéro de téléphone entré est incorrect");
   return phone;
 };
 
@@ -160,7 +161,10 @@ export const generateId = (length) => {
 };
 
 export const hashString = (string: string) => {
-  return crypto.createHash("sha256").update(string).digest("hex");
+  return crypto
+    .createHash("sha256")
+    .update(string)
+    .digest("hex");
 };
 
 export const isNotAdmin = (session, res) => {
@@ -192,4 +196,8 @@ export const findTimer = (page, startDate: Date) => {
 export const isTimedPage = (page) => {
   return page.blocks.find((e) => e.type === "timerToolboxOption")?.data
     .timerDuration;
+};
+
+export const isBlockAQuestion = ({ type }) => {
+  return /Question/.test(type);
 };
