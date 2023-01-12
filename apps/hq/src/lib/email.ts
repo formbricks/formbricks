@@ -1,4 +1,5 @@
 import { createToken } from "./jwt";
+import { MergeWithSchema } from "./submissions";
 const nodemailer = require("nodemailer");
 
 interface sendEmailData {
@@ -81,30 +82,12 @@ export const sendPasswordResetNotifyEmail = async (user) => {
 
 export const sendSubmissionEmail = async (
   email: string,
+  teamId,
   formId,
   formLabel: string,
   schema: any,
   submission
 ) => {
-  const MergeWithSchema = (submissionData, schema) => {
-    if (Object.keys(schema).length === 0) {
-      // no schema provided
-      return submissionData;
-    }
-    const mergedData = {};
-    for (const elem of schema.children) {
-      if (["submit"].includes(elem.type)) {
-        continue;
-      }
-      if (elem.name in submissionData) {
-        mergedData[elem.label] = submissionData[elem.name];
-      } else {
-        mergedData[elem.label] = "not provided";
-      }
-    }
-    return mergedData;
-  };
-
   await sendEmail({
     to: email,
     subject: `${formLabel} new submission`,
@@ -121,7 +104,7 @@ export const sendSubmissionEmail = async (
     
     Click <a href="${
       process.env.NEXTAUTH_URL
-    }/forms/${formId}/results/responses">here</a> to see new submission.
+    }/teams/${teamId}/forms/${formId}/feedback">here</a> to see new submission.
     ${submission.customer?.email ? "<hr/>You can reply to this email to contact the user directly." : ""}`,
   });
 };
