@@ -72,7 +72,7 @@ function NoCodeFormPublic() {
 
   if (isErrorNoCodeForm || !noCodeForm?.published) {
     return (
-      <MessagePage text='Form not found. Are you sure this is the right URL?' />
+      <MessagePage text="Formulaire introuvable. Es-tu sûr d'avoir le bon lien ?" />
     );
   }
 
@@ -108,9 +108,9 @@ function NoCodeFormPublic() {
         setOpenDisclaimer(true);
         setPageIdOnModal(page.id);
         setModalMessage(
-          `Vous êtes sur le point de commencer un formulaire chronométré et vous disposez de ${getPageTimer(
+          `Tu es sur le point de commencer un formulaire chronométré et tu disposes de ${getPageTimer(
             page.blocks
-          )} minutes pour remplir ce formulaire. Une fois commencé, vous ne pouvez plus quitter le formulaire, sous peine de voir vos réponses considérées comme soumises.`
+          )} minutes pour remplir ce formulaire. Une fois commencé, tu ne peux plus quitter le formulaire, sous peine de voir tes réponses considérées comme soumises.`
         );
       } else router.push(`/sourcings/${formId}/${page.id}`);
     } else {

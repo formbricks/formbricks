@@ -130,6 +130,20 @@ const App: FC<IProps> = ({
                   }}
                   required={block.data.required}
                 />
+              ) : block.type === "textareaQuestion" ? (
+                <SnoopElement
+                  type="textarea"
+                  name={block.id}
+                  label={block.data.label}
+                  help={block.data.help}
+                  placeholder={block.data.placeholder}
+                  defaultValue={submission?.data?.submission[block.id]}
+                  classNames={{
+                    label:
+                      "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
+                  }}
+                  required={block.data.required}
+                />
               ) : block.type === "emailQuestion" ? (
                 <SnoopElement
                   type='email'

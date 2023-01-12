@@ -17,14 +17,14 @@ export default function SignIn({}: props) {
     try {
       await resendVerificationEmail(email, callbackUrl);
       toast(
-        "E-mail de vérification envoyé avec succès. Veuillez vérifier votre boîte de réception."
+        "E-mail de vérification envoyé avec succès. Vérifie ta boîte de réception."
       );
     } catch (e) {
       toast.error(`Error: ${e.message}`);
     }
   };
   return (
-    <BaseLayoutUnauthorized title="Vérifiez votre e-mail">
+    <BaseLayoutUnauthorized title="Vérifie ta boîte de réception">
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
@@ -41,21 +41,18 @@ export default function SignIn({}: props) {
               {email ? (
                 <>
                   <h1 className="mb-4 font-bold text-center leading-2">
-                    Veuillez vérifier votre boîte de réception
+                    Vérifie ta boîte de réception
                   </h1>
                   <p className="text-center">
                     Un e-mail a été envoyé à l&apos;adresse{" "}
-                    <span className="italic">{router.query.email}</span>.
-                    Cliquez sur le lien dans l&apos;e-mail reçu pour activer
-                    votre compte.
+                    <span className="italic">{router.query.email}</span>. Clique
+                    sur le lien dans l&apos;e-mail reçu pour activer ton compte.
                   </p>
                   <hr className="my-4" />
                   <p className="text-xs text-center">
-                    Vous n&apos;avez pas reçu d&apos;e-mail ou votre lien a
-                    expiré ?
+                    Tu n&apos;as pas reçu d&apos;e-mail ou ton lien a expiré ?
                     <br />
-                    Cliquez sur le bouton ci-dessous pour en demander un
-                    nouveau.
+                    Clique sur le bouton ci-dessous pour en demander un nouveau.
                   </p>
                   <button
                     type="button"

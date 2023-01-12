@@ -76,6 +76,7 @@ export default function SignUpPage() {
                         name="firstname"
                         type="text"
                         autoComplete="given-name"
+                        placeholder="Jean"
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
@@ -94,6 +95,7 @@ export default function SignUpPage() {
                         name="lastname"
                         type="text"
                         autoComplete="family-name"
+                        placeholder="Kingandi"
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
@@ -192,6 +194,7 @@ export default function SignUpPage() {
                         name="email"
                         type="email"
                         autoComplete="email"
+                        placeholder="jean.kingandi@exemple.cd"
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
@@ -209,6 +212,7 @@ export default function SignUpPage() {
                         id="password"
                         name="password"
                         type="password"
+                        placeholder="••••••••••"
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
@@ -257,7 +261,8 @@ export default function SignUpPage() {
                           </a>
                         )}
                         .<br />
-                        We&apos;ll occasionally send you account related emails.
+                        Nous t&apos;enverrons occasionnellement des informations
+                        sur ton compte par e-mail.
                       </div>
                     )}
                   </div>

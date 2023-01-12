@@ -22,9 +22,9 @@ export default function ForgotPasswordEmailSent() {
                 Demande de la réinitialisation du mot de passe faite avec succès{" "}
               </h1>
               <p className="text-center">
-                Vérifiez votre e-mail pour un lien de réinitialisation de votre
-                mot de passe. Si ça n&apos;apparaît pas au bout de quelques
-                minutes, vérifiez vos spams.
+                Vérifie ton e-mail pour un lien de réinitialisation de ton mot
+                de passe. Si ça n&apos;apparaît pas au bout de quelques minutes,
+                vérifie tes spams.
               </p>
               <div className="mt-3 text-center">
                 <Link href="/auth/signin">
