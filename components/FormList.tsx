@@ -208,7 +208,7 @@ export default function FormList() {
                 <></>
               ) : (
                 <button onClick={() => newForm()}>
-                  <li className='h-56 col-span-1'>
+                  <li className='h-80 col-span-1'>
                     <div className='flex items-center justify-center h-full overflow-hidden font-light text-white rounded shadow bg-snoopfade'>
                       <div className='px-4 py-8 sm:p-14'>
                         <PlusIcon className='mx-auto w-14 h-14 stroke-thin' />
@@ -223,13 +223,13 @@ export default function FormList() {
                 .map((form, formIdx) => (
                   <li key={form.id} className='relative h-80 col-span-1'>
                     <div className='flex flex-col justify-between h-full border border-gray-300 bg-white rounded-md hover:border hover:border-black'>
-                      <div className='p-6'>
+                      <div className='p-6 h-2/5'>
                         <p className='text-2xl font-semibold line-clamp-3'>
                           {form.name}
                         </p>
                       </div>
 
-                      <div>
+                      <div className="h-2/5">
                         <div className='px-6 mb-4'>
                           <hr />
                         </div>

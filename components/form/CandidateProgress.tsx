@@ -42,7 +42,7 @@ function CandidateProgress({ form }) {
         />
         {progress < pages.length - 1
           ? `${progress} / ${pages.length - 1}`
-          : "completed"}
+          : "Terminé"}
       </span>
     </div>
   );
