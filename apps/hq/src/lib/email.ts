@@ -104,7 +104,7 @@ export const sendSubmissionEmail = async (
     
     Click <a href="${
       process.env.NEXTAUTH_URL
-    }/teams/${teamId}/forms/${formId}/feedback">here</a> to see new submission.
+    }/app/teams/${teamId}/forms/${formId}/feedback">here</a> to see new submission.
     ${submission.customer?.email ? "<hr/>You can reply to this email to contact the user directly." : ""}`,
   });
 };

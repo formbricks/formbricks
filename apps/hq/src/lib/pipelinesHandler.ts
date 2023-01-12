@@ -64,7 +64,7 @@ async function handleSlackNotification(pipeline, form, submission) {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `Someone just filled out your form "${form.label}". <${process.env.NEXTAUTH_URL}/teams/${form.teamId}/forms/${form.id}/feedback|View in Formbricks>`,
+              text: `Someone just filled out your form "${form.label}". <${process.env.NEXTAUTH_URL}/app/teams/${form.teamId}/forms/${form.id}/feedback|View in Formbricks>`,
             },
           },
           {
