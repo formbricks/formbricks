@@ -1,0 +1,34 @@
+<head>
+  <script src="./dist/index.umd.js" charset="UTF-8" defer></script>
+  <script>
+    window.formbricks = {
+      config: {
+        hqUrl: "http://localhost:3000",
+        formId: "clcovbccf000019uss1gyqufg",
+        contact: {
+          name: "Mikael",
+          position: "Co-Founder",
+          imgUrl: "https://avatars.githubusercontent.com/u/33556500?v=4",
+        },
+        customer: {
+          id: "test@cal.com",
+          name: "Test Customer",
+          email: "test@cal.com",
+        },
+        style: {
+          brandColor: "#c3986b",
+          headerBGColor: "#1d1d1f",
+          headerTitleColor: "#ffffff",
+          boxBGColor: "#ffffff",
+          textColor: "#374151",
+          buttonHoverColor: "#EEEEF5",
+          borderRadius: "4px",
+        },
+      },
+      ...window.formbricks,
+    };
+  </script>
+</head>
+<body>
+  <button data-formbricks-button>Feedback</button>
+</body>

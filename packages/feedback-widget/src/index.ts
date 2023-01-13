@@ -88,6 +88,9 @@ function applyConfig() {
       if (config.style.buttonHoverColor) {
         root.style.setProperty("--formbricks-button-hover-bg-color", config.style.buttonHoverColor);
       }
+      if (config.style.borderRadius) {
+        root.style.setProperty("--formbricks-border-radius", config.style.borderRadius);
+      }
     }
   }
 }
