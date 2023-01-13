@@ -13,7 +13,11 @@ import getConfig from "next/config";
 import usePages from "../../../hooks/usePages";
 import LimitedWidth from "../../../components/layout/LimitedWidth";
 import DisclaimerModal from "../../../components/form/DisclaimerModal";
-import { isTimedPage, isBlockAQuestion, getPageSubmission } from "../../../lib/utils";
+import {
+  isTimedPage,
+  isBlockAQuestion,
+  getPageSubmission,
+} from "../../../lib/utils";
 import {
   CheckCircleIcon,
   InboxArrowDownIcon,
@@ -119,8 +123,6 @@ function NoCodeFormPublic() {
     }
   };
 
-  
-
   return (
     <BaseLayoutManagement
       title={"Forms - KDA Sourcing"}
@@ -211,7 +213,7 @@ function NoCodeFormPublic() {
                       className='w-full py-4 border-y-2 border-slate-100 flex justify-between  max-sm:flex-col max-md:flex-col'
                       key={index}
                     >
-                      <div className='pl-12 flex items-center'>
+                      <div className='pl-12 flex items-center max-md:pl-6 max-md:pb-2'>
                         {(isTimedPage(page) && pageIsCompleted(page.id)) ||
                         numberOfQuestions === numberOfAnsweredQuestions ? (
                           <CheckCircleIcon className='text-green-800 w-7 mr-2' />
@@ -221,7 +223,7 @@ function NoCodeFormPublic() {
                           <XCircleIcon className='text-red-800 w-7 mr-2' />
                         )}
                       </div>
-                      <div className='pl-12 flex items-center max-sm:pl-6 max-sm:pr-6 max-sm:pb-5 max-md:pb-5 max-sm:font-semibold max-md:font-semibold max-md:pl-6 max-md:pr-6 w-2/5'>
+                      <div className='pl-12 flex items-center max-sm:pl-6 max-sm:pr-6 max-sm:pb-5 max-md:pb-5 max-sm:font-semibold max-md:font-semibold max-md:pl-6 max-md:pr-6  max-md:w-5/5 md:w-2/5'>
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
                       <div className='flex items-center justify-between w-2/5 pr-8 max-sm:w-full max-md:w-full max-sm:pl-6 max-sm:pr-6 max-sm:flex-col max-sm:items-start max-md:pl-6 max-md:pr-6'>
