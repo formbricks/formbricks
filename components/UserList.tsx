@@ -4,11 +4,12 @@ import { UserCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { TailSpin } from "react-loader-spinner";
 import { toast } from "react-toastify";
 import Link from "next/link";
-import { isAdmin, usersDataGridSchemaColumn } from "../lib/utils";
+import { isAdmin } from "../lib/utils";
 import { useState } from "react";
 import { useUsers, persistUserRole } from "../lib/users";
 import { UserRole } from "@prisma/client";
 import { classNames } from "../lib/utils";
+import { usersDataGridSchemaColumn } from "./usersDataGridSchemaColumn";
 
 export default function UserList() {
   const { users, mutateUsers } = useUsers();
