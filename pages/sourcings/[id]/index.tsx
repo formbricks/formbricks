@@ -223,10 +223,10 @@ function NoCodeFormPublic() {
                           <XCircleIcon className='text-red-800 w-7 mr-2' />
                         )}
                       </div>
-                      <div className='pl-12 flex items-center max-sm:pl-6 max-sm:pr-6 max-sm:pb-5 max-md:pb-5 max-sm:font-semibold max-md:font-semibold max-md:pl-6 max-md:pr-6  max-md:w-5/5 md:w-2/5'>
+                      <div className='pl-12 flex items-center max-sm:pl-6 max-sm:pr-6 max-sm:pb-5 max-md:pb-5 max-sm:font-semibold max-md:font-semibold max-md:pl-6 max-md:pr-6  max-md:w-5/5 md:w-3/5'>
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
-                      <div className='flex items-center justify-between w-2/5 pr-8 max-sm:w-full max-md:w-full max-sm:pl-6 max-sm:pr-6 max-sm:flex-col max-sm:items-start max-md:pl-6 max-md:pr-6'>
+                      <div className='flex items-center justify-between w-4/8 pr-8 max-sm:w-full max-md:w-full max-sm:pl-6 max-sm:pr-6 max-sm:flex-col max-sm:items-start max-md:pl-6 max-md:pr-6'>
                         <div className='flex items-center w-3/8 max-sm:pb-5 max-md:pb-5  '>
                           {isTimedPage(page) ? (
                             <>
