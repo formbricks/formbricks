@@ -42,3 +42,14 @@ export const usersDataGridSchemaColumn = [
     },
   },
 ];
+
+  const updateUserRole = async (user, role) => {
+    try {
+      await fetch(`/api/users/${user.id}`, {
+        method: "UPDATE",
+      });
+   
+    } catch (error) {
+      console.error(error);
+    }
+  };

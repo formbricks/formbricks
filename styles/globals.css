@@ -119,7 +119,12 @@ button.MuiButtonBase-root.MuiButton-root.MuiButton-text.MuiButton-textPrimary.Mu
   color: #f24563 !important;
   font-weight: 600;
 }
-.css-5ryogn-MuiButtonBase-root-MuiSwitch-switchBase.Mui-checked {
+ .css-5ryogn-MuiButtonBase-root-MuiSwitch-switchBase.Mui-checked {
   color: #f24563 !important;
 
+}
+
+.css-5ryogn-MuiButtonBase-root-MuiSwitch-switchBase.Mui-checked+.MuiSwitch-track {
+
+  background-color: #f24563 !important;
 }
