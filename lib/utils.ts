@@ -243,3 +243,31 @@ export const getFormState = (pages, candidateSubmissions, user) => {
   });
   return { questionsCounter, responsesCounter };
 };
+
+export const usersDataGridSchemaColumn = [
+  {
+    field: "Noms",
+    width: 250,
+  },
+  
+  {
+    field: "Genre",
+    width: 100,
+  },
+  {
+    field: "Email",
+    width: 220,
+  },
+  {
+    field: "Phone",
+    width: 150,
+  },
+  {
+    field: "Whatsapp",
+    width: 150,
+  },
+  {
+    field: "Rôle",
+    width: 100,
+  },
+];

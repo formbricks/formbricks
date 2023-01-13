@@ -2,7 +2,9 @@
   "name": "snoopforms",
   "version": "0.0.0",
   "private": true,
-  "workspaces": ["kda-snoopforms-react"],
+  "workspaces": [
+    "kda-snoopforms-react"
+  ],
   "scripts": {
     "dev": "next dev",
     "prebuild": "git submodule update --init && yarn",
@@ -16,8 +18,12 @@
     "@editorjs/editorjs": "^2.24.3",
     "@editorjs/header": "^2.6.2",
     "@editorjs/paragraph": "^2.8.0",
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
     "@headlessui/react": "^1.6.1",
     "@heroicons/react": "^2.0.8",
+    "@mui/material": "^5.11.4",
+    "@mui/x-data-grid": "^5.17.18",
     "@prisma/client": "^4.2.1",
     "aws-sdk": "^2.1230.0",
     "bcryptjs": "^2.4.3",
