@@ -229,7 +229,7 @@ export default function FormList() {
                         </p>
                       </div>
 
-                      <div className="h-2/5">
+                      <div className='h-2/5'>
                         <div className='px-6 mb-4'>
                           <hr />
                         </div>

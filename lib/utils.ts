@@ -201,3 +201,45 @@ export const isTimedPage = (page) => {
 export const isBlockAQuestion = ({ type }) => {
   return /Question/.test(type);
 };
+
+export const getPageSubmission = (
+  candidateSubmissions: any,
+  user: {
+    id: number;
+    firstname: string;
+    lastname: string;
+    email: string;
+    phone: string;
+    role: string;
+    gender: string;
+  },
+  page: any
+) => {
+  return candidateSubmissions.find(
+    (submission) =>
+      submission.data.candidateId === user.id &&
+      submission.data.pageName === page.id
+  );
+};
+
+export const getFormState = (pages, candidateSubmissions, user) => {
+  let questionsCounter = 0;
+  let responsesCounter = 0;
+
+  pages.map((page) => {
+    if (candidateSubmissions) {
+      const pageSubmission = getPageSubmission(
+        candidateSubmissions,
+        user,
+        page
+      );
+      responsesCounter += !pageSubmission
+        ? 0
+        : Object.values(pageSubmission?.data?.submission).filter((v) => v)
+            .length;
+      questionsCounter += page.blocks.filter((block) => isBlockAQuestion(block))
+        .length;
+    }
+  });
+  return { questionsCounter, responsesCounter };
+};

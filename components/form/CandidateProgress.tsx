@@ -1,11 +1,24 @@
 import { useState, useEffect } from "react";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import {
+  CheckCircleIcon,
+  EllipsisHorizontalCircleIcon,
+} from "@heroicons/react/24/outline";
 import usePages from "../../hooks/usePages";
-// import { getFormPages, getFormPage} from "../../lib/forms";
+import { getFormState } from "../../lib/utils";
+import { useSession } from "next-auth/react";
+import { useNoCodeFormPublic } from "../../lib/noCodeForm";
 
 function CandidateProgress({ form }) {
   const [progress, setProgress] = useState(0);
+  const { candidateSubmissions } = useNoCodeFormPublic(form.id);
   const pages = usePages({ blocks: form.noCodeForm.blocks, formId: form.id });
+  const session = useSession();
+  const { user } = session.data;
+  const { questionsCounter, responsesCounter } = getFormState(
+    pages,
+    candidateSubmissions,
+    user
+  );
 
   const candidateProgress = async () => {
     try {
@@ -20,6 +33,7 @@ function CandidateProgress({ form }) {
       setProgress(data ? data.events.length : 0);
     } catch (error) {}
   };
+
   useEffect(() => {
     candidateProgress();
   }, []);
@@ -32,18 +46,37 @@ function CandidateProgress({ form }) {
           : "flex items-center px-6 py-1 text-base font-normal text-green-700"
       }
     >
-      <span className='flex items-center mr-1'>
-        <CheckCircleIcon
-          className={
-            progress < pages.length - 1
-              ? "w-5 h-5 text-rose-500 mr-2"
-              : "w-5 h-5 text-green-700 mr-2"
-          }
-        />
-        {progress < pages.length - 1
-          ? `${progress} / ${pages.length - 1}`
-          : "Terminé"}
-      </span>
+      {!(progress < pages.length - 1) &&
+      questionsCounter === responsesCounter ? (
+        <span className='flex items-center mr-1'>
+          <CheckCircleIcon
+            className={
+              progress < pages.length - 1
+                ? "w-5 h-5 text-rose-500 mr-2"
+                : "w-5 h-5 text-green-700 mr-2"
+            }
+          />
+          Terminé
+        </span>
+      ) : !(progress < pages.length - 1) && responsesCounter > 0 ? (
+        <span className='flex items-center text-orange-600 mr-1'>
+          <EllipsisHorizontalCircleIcon
+            className={
+              progress < pages.length - 1
+                ? "w-5 h-5 text-rose-500 mr-2"
+                : "w-5 h-5 text-orange-600 mr-2"
+            }
+          />
+          {"Continuer"}
+        </span>
+      ) : (
+        <span className='flex items-center text-black mr-1'>
+          <EllipsisHorizontalCircleIcon
+            className={"w-5 h-5 text-rose-500 mr-2"}
+          />
+          Commencer
+        </span>
+      )}
     </div>
   );
 }
