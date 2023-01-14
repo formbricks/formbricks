@@ -64,15 +64,8 @@ function classNames(...classes) {
 }
 
 interface AppPageProps {
-<<<<<<< HEAD
-<<<<<<< HEAD
-  setShowFeedback?: (b: boolean) => void;
-=======
   setShowFeedback?: (show: boolean) => void;
->>>>>>> 8715824 (add react feedback widget to demo, add connection between widget and hq, update capture submission api, update results view)
-=======
   onClickFeedback?: (args: any) => void;
->>>>>>> a1dfc2f (update demo page with feedback widget)
 }
 
 export default function AppPage({ onClickFeedback = () => {} }: AppPageProps) {
