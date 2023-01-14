@@ -27,7 +27,7 @@ export default function GetStartedPage() {
           <h2 className="mt-7 text-4xl font-bold text-slate-800 dark:text-slate-200">Cloud</h2>
           <p className="text-sm text-slate-500">Managed hosting by Formbricks core team</p>
           <p className="mt-7 font-semibold text-slate-700 dark:text-slate-300">
-            <span className="font-bold ">Free</span> for 500 submissions/mo
+            <span className="font-bold ">Free</span> for 200 submissions/mo
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-500">then $0.01/submission</p>
           <div className="font-medium text-slate-500 dark:text-slate-400">
@@ -44,15 +44,22 @@ export default function GetStartedPage() {
               <p>All enterprise features included</p>
             </div>
           </div>
-          <Button
+          {/*  <Button
             className="mt-7 w-full justify-center text-center font-bold"
             variant="highlight"
             onClick={() => router.push("https://hq.formbricks.com")}>
             Start FREE on Formbricks Cloud
+          </Button> */}
+          <Button
+            className="mt-7 w-full justify-center text-center font-bold"
+            variant="highlight"
+            onClick={() => router.push("https://hq.formbricks.com")}
+            disabled>
+            Coming soon
           </Button>
         </div>
 
-        <div className="rounded-lg bg-gradient-to-b from-slate-200 to-slate-300 px-10 py-6 dark:from-slate-800 dark:to-slate-700 ">
+        {/* <div className="rounded-lg bg-gradient-to-b from-slate-200 to-slate-300 px-10 py-6 dark:from-slate-800 dark:to-slate-700 ">
           <ServerStackIcon className="h-20 w-20 flex-shrink-0 text-slate-600 dark:text-slate-400" />
           <h2 className="mt-7 text-4xl font-bold text-slate-800 dark:text-slate-200">Self-host</h2>
           <p className="text-sm text-gray-500">Submission data never leaves your infrastructure</p>
@@ -79,6 +86,36 @@ export default function GetStartedPage() {
             variant="secondary"
             onClick={() => router.push("/discord")}>
             Sign up for beta test
+          </Button>
+        </div> */}
+        <div className="rounded-lg bg-gradient-to-b from-slate-200 to-slate-300 px-10 py-6 dark:from-slate-800 dark:to-slate-700 ">
+          <ServerStackIcon className="h-20 w-20 flex-shrink-0 text-slate-600 dark:text-slate-400" />
+          <h2 className="mt-7 text-4xl font-bold text-slate-800 dark:text-slate-200">Self-host</h2>
+          <p className="text-sm text-gray-500">Submission data never leaves your infrastructure</p>
+          <p className="mt-7 font-semibold text-slate-700 dark:text-slate-300">
+            Open-Source, free forever
+            <br />
+            <br />
+          </p>
+          <div className="font-medium text-slate-500 dark:text-slate-400">
+            <div className="mt-7 flex items-center py-1">
+              <ShieldCheckIcon className="h- mr-3 w-7 flex-shrink-0 text-slate-600 dark:text-slate-300" />
+              <p>Easy deploy for most private cloud platforms</p>
+            </div>
+            <div className="flex items-center py-1">
+              <CommandLineIcon className="mr-3 h-7 w-7 flex-shrink-0 text-slate-600 dark:text-slate-300" />
+              <p>Infinite Customization Capabilities</p>
+            </div>
+            <div className="flex items-center py-1">
+              <BuildingLibraryIcon className="mr-3 h-7 w-7 flex-shrink-0 text-slate-600 dark:text-slate-300" />
+              <p>Open Source under MIT License</p>
+            </div>
+          </div>
+          <Button
+            className="mt-7 w-full justify-center text-center font-bold"
+            variant="primary"
+            onClick={() => router.push("https://github.com/formbricks/formbricks")}>
+            View on Github
           </Button>
         </div>
       </div>
