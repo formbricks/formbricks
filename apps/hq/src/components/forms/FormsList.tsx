@@ -40,18 +40,18 @@ export default function FormsList({ teamId }) {
                 onClick={() => newForm()}
                 alertText="You don't have any forms yet."
                 hintText="Start by creating a form."
-                buttonText="create form"
+                buttonText="create feedback form"
                 borderStyles="border-4 border-dotted border-red"
                 hasButton={true}>
                 <DocumentPlusIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
               </EmptyPageFiller>
             </div>
           ) : (
-            <ul className="grid grid-cols-2 place-content-stretch gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 ">
+            <ul className="grid grid-cols-2 place-content-stretch gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-6 ">
               <button onClick={() => newForm()}>
                 <li className="col-span-1 h-56">
                   <div className="from-brand-light to-brand-dark delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-b font-light text-white shadow transition ease-in-out hover:scale-105">
-                    <div className="px-4 py-8 sm:p-14">
+                    <div className="px-4 py-8 sm:p-14 xl:p-10">
                       <PlusIcon className="stroke-thin mx-auto h-14 w-14" />
                       create form
                     </div>
@@ -67,7 +67,7 @@ export default function FormsList({ teamId }) {
                         <p className="line-clamp-3 text-lg">{form.label}</p>
                       </div>
                       <Link
-                        href={`/app/teams/${teamId}/forms/${form.id}`}
+                        href={`/app/teams/${teamId}/forms/${form.id}/${form.type}/`}
                         className="absolute h-full w-full"></Link>
                       <div className="divide-y divide-slate-100 ">
                         <div className="flex justify-between px-4 py-2 text-right sm:px-6">

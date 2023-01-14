@@ -5,7 +5,7 @@
   <h3 align="center">Formbricks</h3>
 
   <p align="center">
-    The Open Source Survey Toolbox
+    The Open Source Experience Management solution for fast growing companies
     <br />
     <a href="https://formbricks.com/">Website</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
   </p>
@@ -19,7 +19,7 @@
 
 <br/>
 
-> :octocat: Are you looking for snoopForms - the Open Source Typeform Alternative? We're building the next stage of the snoopForms evolution here with Formbricks - more modular, more open, and for all your form needs. If you still are looking for the code of snoopForms you can find it in the [snoopforms branch](https://github.com/formbricks/formbricks/tree/snoopforms).
+> :octocat: Are you looking for snoopForms - the Open Source Typeform Alternative? We're building the next stage of the snoopForms evolution here with Formbricks - focused on experience management for fast growing companies. If you still are looking for the code of snoopForms you can find it in the [snoopforms branch](https://github.com/formbricks/formbricks/tree/snoopforms).
 
 > :warning: Repository still in progress `#buildinpublic`
 
@@ -27,68 +27,33 @@
 
 ![formbricks-twitter-header-open source forms and survey tools_smaller](https://user-images.githubusercontent.com/72809645/201055057-0883bbcf-86f2-4ea1-83f0-3a190a12f6cd.png)
 
-We're building all essential form functionality so you don't have to. Modular, customizable, extendable. And open source.
+Formbricks productizes best practices for qualitative in-app user discovery. Feedback Management, Onboarding-Segmentation, Product-Market-Fit surveys and much more...
 
-### Mission: Stop rewriting existing code
+### Mission: Base your decisions on qualitative data.
 
-We want to solve forms once and for all. If, in 10 years, a web developer rewrites core form functionality instead of building on top of our stack, we didn’t do our job. We want you to build your next big thing faster. Our big thing is the last form tool humanity needs. Hold us accountable!
-
-[Read more in our blog](https://formbricks.com/blog/snoopforms-becomes-formbricks)
+Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Use Formbricks to collect and manage feedback from your users; run a product market fit survey to know which audience to focus on and whether your value proposition is being recognized. Formrbicks guides you through the process and assists with data analysis and deriving decisions.
 
 ## Our Toolbox
 
-Build a 'home-cooked' solution at the fraction of the time. We do the heavy lifting, you customize to your needs.
+Use Formbricks in your product on different touchpoints.
 
-### React Forms Library
+### Feedback Survey
 
-Building React forms has never been quicker. But there is more...
+Embed our feedback survey widget to give your users a channel to get in touch easily. Encourage them to report bugs and feature ideas while they are using their product and start a conversation from there.
 
-Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all the good stuff you want, but don't want to build yourself.
-Building forms fast is great, but where do you pipe your data? And what is it worth without a schema?"
+![image](https://user-images.githubusercontent.com/675065/212466794-e271546a-c8dd-4d13-b372-bfedd8cfd5ea.png)
 
-```jsx
-import { Form, Text, Textarea, Submit } from "@formbricks/react";
-import "@formbricks/react/styles.css";
+### Product Market Fit survey (coming soon)
 
-export default function WaitlistForm() {
-  return (
-    <Form onSubmit={({ data, schema }) => console.log("data:", data, "schema:", schema)}>
-      <Text name="firstname" label="What's your first name?" validation="required" />
-      <Text name="lastname" label="What's your last name?" />
-      <Textarea name="about" label="About you" help="Please keep it short" />
-      <Submit name="submit" label="Submit" />
-    </Form>
-  );
-}
-```
+Formbrick's Product-Market-Fit survey based on the Superhuman-approach helps fast growing early-stage companies measuring their path towards an established company.
 
-[Get started with the React Library](https://formbricks.com/docs/react-form-library/introduction)
+Pre-Segmentation: Integrations for Segment, PostHog, Amplitude allow creating cohorts on usage data.
 
-### Formbricks HQ - The OS form engine
+Forms: Open source UI components to ask the right questions natively embedded for best possible conversion.
 
-Your form looks perfect? Time to build integrations...
+Engine: Formbricks issues the survey, nudges and follows up on Data Analysis: Formbricks offers specific dashboards for each best practice to enhance understanding of the data to build conviction for product decisions.
 
-Formbricks HQ is your backend for your submissions. Our main objective is versatility, so that you can use it with any currently existing form or survey. Soon we will integrate it with our React Form Builder. This allows for handling schemas so that you get a full image of your submission data.
-
-<img width="1000" alt="Screenshot 2022-12-08 at 15 55 17" src="https://user-images.githubusercontent.com/675065/206478755-537ea73f-a7c9-4184-87a2-01c95586bc15.png">
-
-### Features
-
-- **Fast Form Creation**: Build complex forms with our React Lib. Our data pipes also work with any other form.
-- **Data Pipelines**: Save your data where you need it. Use webhooks or pre-built integrations.
-- **Powerful Data Insights**: View and manage your results quicker. Handle submissions in our dahsboard.
-- **No-Code Builder**: Let your operators create and change forms. Stick with React to style and embed forms. `(coming soon)`
-- **Built-in Analytics**: Opening rate, drop-offs, conversions. Use privacy-first analytics out of the box. `(coming soon)`
-- **Survey Templates**: NPS, CSAT, Employee Surveys. Name your business objective, we have the questions. `(coming soon)`
-
-### Why Formbricks
-
-- **Futureproof**: Form needs change. With Formbricks you’ll avoid island solutions right from the start.
-- **Privacy by design**: Self-host the entire product and fly through privacy compliance reviews.
-- **Community driven**: We're building for you. If you need something specific, we’re happy to build it!
-- **Great DX**: We love a solid developer experience. We felt your pain and do our best to avoid it.
-- **Customizable**: We have to build opinionated. If it doesn't suit your need, just change it up.
-- **Extendable**: Even though we try, we cannot build every single integration. With Formbricks, you can.
+Actions: Formbricks facilitates acting on the insights e.g. by in-app interview prompts, templates to follow up on negative feedback, etc.
 
 ### Built With
 
@@ -100,8 +65,7 @@ Formbricks HQ is your backend for your submissions. Our main objective is versat
 
 ## Cloud vs. self-hosted
 
-We offer you a ready hosted and maintained version of Formbricks HQ on [formbricks.com](https://hq.formbricks.com). It is currently in a open beta phase, free to use and always up to date. If you want to try Formbricks HQ, or save yourself the hassle and stress of self-hosting, this is the place to start.
-
-The version of Formbricks HQ you'll find in this repository is the same version that runs in the cloud, and you can easily host it yourself on your servers. Check out our [docs](https://formbricks.com/docs/formbricks-hq/self-hosting) to see how to self-host Formbricks HQ.
+Formbricks is available Open-Source under a permissive MIT license. You can host Formbricks on your own servers without a subscription. Check out our [docs](https://formbricks.com/docs/formbricks-hq/self-hosting) to see how to self-host Formbricks.
+We will soon offer a cloud version of Formbricks which saves you the hassle of maintaining your own servers. We will update this Readme once the cloud version is available.
 
 (In the future we may develop additional features that aren't in the free Open-Source version)

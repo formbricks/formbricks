@@ -1,8 +1,9 @@
 "use client";
 
 import { Logo } from "@/components/Logo";
+import { CustomersIcon, FormIcon } from "@formbricks/ui";
 import { Dialog, Transition } from "@headlessui/react";
-import { Cog8ToothIcon, RectangleStackIcon, UsersIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,13 +19,13 @@ export default function LayoutWrapperTeam({ children }) {
       {
         name: "Forms",
         href: `/app/teams/${router.query.teamId}/forms`,
-        icon: RectangleStackIcon,
+        icon: FormIcon,
         current: pathname.includes("/form"),
       },
       {
         name: "Customers",
         href: `/app/teams/${router.query.teamId}/customers`,
-        icon: UsersIcon,
+        icon: CustomersIcon,
         current: pathname.includes("/customers"),
       },
       /*     {
@@ -41,28 +42,27 @@ export default function LayoutWrapperTeam({ children }) {
     <>
       <div className="flex h-full">
         {/* Narrow sidebar */}
-        <div className="bg-brand-dark hidden w-28 overflow-y-auto bg-gradient-to-r md:block">
+        <div className="hidden overflow-y-auto border-r border-gray-200 bg-white bg-gradient-to-r md:block md:w-64">
           <div className="flex w-full flex-col items-center py-6">
-            <div className="w-full flex-1 space-y-1 px-2">
+            <div className="w-full flex-1 space-y-2 px-2">
               {sidebarNavigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={clsx(
                     item.current
-                      ? "bg-brand-light text-white"
-                      : "hover:bg-brand-light text-teal-100 hover:text-white",
-                    "group flex w-full flex-col items-center rounded-md p-3 text-xs font-medium"
-                  )}
-                  aria-current={item.current ? "page" : undefined}>
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                    "group flex items-center rounded-md px-2 py-2 text-sm font-medium"
+                  )}>
                   <item.icon
                     className={clsx(
-                      item.current ? "text-white" : "text-teal-300 group-hover:text-white",
-                      "h-6 w-6"
+                      item.current ? "text-gray-500" : "text-gray-400 group-hover:text-gray-500",
+                      "mr-3 h-6 w-6 flex-shrink-0"
                     )}
                     aria-hidden="true"
                   />
-                  <span className="mt-2">{item.name}</span>
+                  {item.name}
                 </Link>
               ))}
             </div>

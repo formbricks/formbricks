@@ -1,12 +1,12 @@
 export const webhook = {
-  typeId: "WEBHOOK",
+  typeId: "webhook",
   title: "Webhook",
   description: "Notify an external endpoint when events happen in your form (e.g. a new submission).",
 };
 
 const eventTypes = [
   {
-    id: "SUBMISSION_CREATED",
+    id: "submissionCreated",
     name: "Submission Created",
     description: "Every time a new submission is created",
   },
@@ -52,6 +52,7 @@ export function WebhookSettings({ pipeline, setPipeline }) {
                 type="text"
                 name="label"
                 id="label"
+                placeholder="My Webhook Pipeline"
                 value={pipeline.label || ""}
                 onChange={(e) => updateField("label", e.target.value)}
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
@@ -75,6 +76,7 @@ export function WebhookSettings({ pipeline, setPipeline }) {
                 name="endpointUrl"
                 id="endpointUrl"
                 value={pipeline.config.endpointUrl || ""}
+                placeholder="https://api.example.com"
                 onChange={(e) => updateField("endpointUrl", e.target.value, "config")}
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
                 required

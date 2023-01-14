@@ -1,12 +1,12 @@
 export const emailNotification = {
-  typeId: "EMAIL_NOTIFICATION",
+  typeId: "emailNotification",
   title: "Email Notification",
-  description: "Get an email notifications",
+  description: "Get email notifications (e.g. for every new submission).",
 };
 
 const eventTypes = [
   {
-    id: "SUBMISSION_CREATED",
+    id: "submissionCreated",
     name: "Submission Created",
     description: "Every time a new submission is created",
   },
@@ -53,6 +53,7 @@ export function EmailNotificationSettings({ pipeline, setPipeline }) {
                 type="text"
                 name="label"
                 id="label"
+                placeholder="My Email Notification Pipeline"
                 value={pipeline.label || ""}
                 onChange={(e) => updateField("label", e.target.value)}
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
@@ -73,6 +74,7 @@ export function EmailNotificationSettings({ pipeline, setPipeline }) {
                 onInput={(e: any) => e.target.setCustomValidity("")}
                 name="email"
                 id="email"
+                placeholder="mail@example.com"
                 value={pipeline.config.email || ""}
                 onChange={(e) => updateField("email", e.target.value, "config")}
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
@@ -123,7 +125,7 @@ export function EmailNotificationSettings({ pipeline, setPipeline }) {
             </div>
           </fieldset>
         </div>
-        <div className="mt-6">
+        {/*  <div className="mt-6">
           <fieldset>
             <legend className="sr-only">Conditions</legend>
             <div className="text-base font-medium text-gray-900" aria-hidden="true">
@@ -137,7 +139,7 @@ export function EmailNotificationSettings({ pipeline, setPipeline }) {
               </div>
             </div>
           </fieldset>
-        </div>
+        </div> */}
       </div>
     </div>
   );

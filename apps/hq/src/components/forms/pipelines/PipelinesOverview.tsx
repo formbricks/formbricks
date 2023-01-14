@@ -1,21 +1,21 @@
 "use client";
 
-import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyPageFiller from "@/components/EmptyPageFiller";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { deletePipeline, persistPipeline, usePipelines } from "@/lib/pipelines";
 import { useTeam } from "@/lib/teams";
 import { Button } from "@formbricks/ui";
 import { Switch } from "@headlessui/react";
 import { BoltIcon, Cog6ToothIcon, TrashIcon } from "@heroicons/react/20/solid";
-import { CodeBracketSquareIcon } from "@heroicons/react/24/outline";
+import { CodeBracketSquareIcon, ShareIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { AiOutlineMail } from "react-icons/ai";
 import { SiAirtable, SiGoogle, SiNotion, SiSlack, SiZapier } from "react-icons/si";
 import AddPipelineModal from "./AddPipelineModal";
 import UpdatePipelineModal from "./UpdatePipelineModal";
-import { useRouter } from "next/router";
 
 const integrations = [
   {
@@ -34,6 +34,15 @@ const integrations = [
     comingSoon: false,
     bgColor: "bg-slate-500",
     icon: AiOutlineMail,
+    action: () => {},
+  },
+  {
+    id: "slack",
+    name: "Slack Notification",
+    comingSoon: false,
+    href: "#",
+    bgColor: "bg-slate-500",
+    icon: SiSlack,
     action: () => {},
   },
   {
@@ -72,18 +81,9 @@ const integrations = [
     icon: SiAirtable,
     action: () => {},
   },
-  {
-    id: "slack",
-    name: "Slack",
-    comingSoon: true,
-    href: "#",
-    bgColor: "bg-slate-500",
-    icon: SiSlack,
-    action: () => {},
-  },
 ];
 
-export default function PipelinesPage({}) {
+export default function PipelinesOverview({}) {
   const router = useRouter();
   const { form, isLoadingForm, isErrorForm } = useForm(
     router.query.formId?.toString(),
@@ -138,23 +138,15 @@ export default function PipelinesPage({}) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
   return (
-    <div className="mx-auto py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto py-8">
       <header className="mb-8">
         <div className="flex justify-between">
-          <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
-            Pipelines - {form.label}
-            <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-              {team.name}
-            </span>
-          </h1>
+          <p className="text-slate-800">
+            Pipe your data to third party tools. Setup email notifications for new submissions.
+          </p>
           <Button onClick={() => setOpenAddModal(true)}>Add Pipeline</Button>
         </div>
       </header>
-      <div className="my-4">
-        <p className="text-slate-800">
-          Pipe your data to third party tools. Setup email notifications for new submissions.
-        </p>
-      </div>
       {pipelines.length > 0 ? (
         <>
           <div className="overflow-hidden bg-white shadow sm:rounded-md">
@@ -272,6 +264,7 @@ export default function PipelinesPage({}) {
             ))}
           </div>
           <hr />
+          <ShareIcon className="stroke-thin mx-auto h-20 w-20 pt-6 text-slate-300" />
         </EmptyPageFiller>
       )}
       <AddPipelineModal open={openAddModal} setOpen={setOpenAddModal} />

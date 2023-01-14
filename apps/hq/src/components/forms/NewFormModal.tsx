@@ -1,13 +1,12 @@
 "use client";
 
-import { Dialog, RadioGroup, Transition } from "@headlessui/react";
-import { CheckCircleIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { createForm } from "@/lib/forms";
+import { Button } from "@formbricks/ui";
+import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 import { BsPlus } from "react-icons/bs";
-import { createForm } from "@/lib/forms";
-import clsx from "clsx";
-import { Button } from "@formbricks/ui";
 
 type FormOnboardingModalProps = {
   open: boolean;
@@ -23,8 +22,26 @@ export default function NewFormModal({ open, setOpen, teamId }: FormOnboardingMo
     e.preventDefault();
     const form = await createForm(teamId, {
       label,
+      type: "feedback",
+      schema: {
+        type: "form",
+        config: {},
+        children: [
+          {
+            type: "radio",
+            name: "feedbackType",
+            label: "What's on your mind?",
+            options: ["idea", "compliment", "bug"],
+          },
+          {
+            type: "textarea",
+            name: "message",
+            label: "What's your feedback?",
+          },
+        ],
+      },
     });
-    router.push(`/app/teams/${teamId}/forms/${form.id}/`);
+    router.push(`/app/teams/${teamId}/forms/${form.id}/feedback/`);
   };
 
   return (
@@ -76,7 +93,7 @@ export default function NewFormModal({ open, setOpen, teamId }: FormOnboardingMo
                         type="text"
                         name="label"
                         className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
-                        placeholder="e.g. Customer Research Survey"
+                        placeholder="e.g. Feedback Box App"
                         value={label}
                         onChange={(e) => setLabel(e.target.value)}
                         autoFocus
@@ -87,7 +104,7 @@ export default function NewFormModal({ open, setOpen, teamId }: FormOnboardingMo
 
                   <div className="mt-5 sm:mt-6">
                     <Button type="submit" className="w-full justify-center">
-                      create form
+                      create feedback form
                       <BsPlus className="ml-1 h-6 w-6"></BsPlus>
                     </Button>
                   </div>

@@ -9,7 +9,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Prism from "prismjs";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AiFillApi } from "react-icons/ai";
 import { FaReact, FaVuejs } from "react-icons/fa";
 import { toast } from "react-toastify";

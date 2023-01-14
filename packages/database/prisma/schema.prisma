@@ -12,12 +12,13 @@ generator client {
 }
 
 enum PipelineType {
-  WEBHOOK
-  EMAIL_NOTIFICATION
+  webhook
+  emailNotification
+  slackNotification
 }
 
 enum PipelineEvent {
-  SUBMISSION_CREATED
+  submissionCreated
 }
 
 model Pipeline {
@@ -29,7 +30,7 @@ model Pipeline {
   events    PipelineEvent[]
   form      Form            @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId    String
-  enabled   Boolean         @default(false)
+  enabled   Boolean         @default(true)
   config    Json            @default("{}")
 }
 
@@ -45,10 +46,15 @@ model Customer {
   @@id([id, teamId])
 }
 
+enum FormType {
+  feedback
+}
+
 model Form {
   id          String       @id @default(cuid())
   createdAt   DateTime     @default(now()) @map(name: "created_at")
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
+  type        FormType
   label       String
   team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId      String
@@ -58,15 +64,17 @@ model Form {
 }
 
 model Submission {
-  id         String    @id @default(cuid())
-  createdAt  DateTime  @default(now()) @map(name: "created_at")
-  updatedAt  DateTime  @updatedAt @map(name: "updated_at")
-  form       Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId     String
-  customer   Customer? @relation(fields: [customerId, teamId], references: [id, teamId])
-  customerId String?
-  teamId     String?
-  data       Json      @default("{}")
+  id             String    @id @default(cuid())
+  createdAt      DateTime  @default(now()) @map(name: "created_at")
+  updatedAt      DateTime  @updatedAt @map(name: "updated_at")
+  archived       Boolean   @default(false)
+  form           Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId         String
+  customer       Customer? @relation(fields: [customerId, customerTeamId], references: [id, teamId])
+  customerId     String?
+  customerTeamId String?
+  data           Json      @default("{}")
+  meta           Json      @default("{}")
 }
 
 model Team {
@@ -80,9 +88,9 @@ model Team {
 }
 
 enum MembershipRole {
-  MEMBER
-  ADMIN
-  OWNER
+  member
+  admin
+  owner
 }
 
 model Membership {
@@ -107,8 +115,8 @@ model ApiKey {
 }
 
 enum IdentityProvider {
-  EMAIL
-  GITHUB
+  email
+  github
 }
 
 model Account {
@@ -139,7 +147,7 @@ model User {
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
   password                  String?
-  identityProvider          IdentityProvider @default(EMAIL)
+  identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
   teams                     Membership[]
   accounts                  Account[]

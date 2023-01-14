@@ -1,0 +1,30 @@
+{
+  "name": "@formbricks/feedback",
+  "version": "0.1.9",
+  "source": "src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "jsdelivr": "./dist/index.umd.js",
+  "unpkg": "./dist/index.umd.js",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./dist"
+  },
+  "scripts": {
+    "build": "node ./html-to-ts && microbundle --define process.env.NODE_ENV=production",
+    "dev": "node ./html-to-ts && tsup src/index.ts --format esm,cjs --watch",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@floating-ui/dom": "^0.4.2",
+    "@formbricks/tsconfig": "workspace:*",
+    "eslint": "^8.27.0",
+    "eslint-config-formbricks": "workspace:*",
+    "focus-trap": "^6.7.3",
+    "html-minifier": "^4.0.0",
+    "microbundle": "^0.14.2",
+    "tsup": "^6.4.0",
+    "typescript": "^4.8.4"
+  }
+}

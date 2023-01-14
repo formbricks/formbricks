@@ -1,19 +1,20 @@
 "use client";
 
 /* This example requires Tailwind CSS v2.0+ */
+import Modal from "@/components/Modal";
+import { createPipeline, usePipelines } from "@/lib/pipelines";
+import { Button } from "@formbricks/ui";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { createPipeline, usePipelines } from "@/lib/pipelines";
-import { webhook } from "./webhook";
 import { emailNotification } from "./emailNotification";
 import PipelineSettings from "./PipelineSettings";
-import Modal from "@/components/Modal";
-import { Button } from "@formbricks/ui";
+import { slackNotification } from "./slackNotification";
+import { webhook } from "./webhook";
 
-const availablePipelines = [webhook, emailNotification];
+const availablePipelines = [webhook, emailNotification, slackNotification];
 
 const getEmptyPipeline = () => {
-  return { label: "", type: null, events: [], config: {} };
+  return { label: "", type: null, events: ["submissionCreated"], config: {} };
 };
 
 export default function AddPipelineModal({ open, setOpen }) {

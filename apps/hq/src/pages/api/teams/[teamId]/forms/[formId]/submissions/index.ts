@@ -35,13 +35,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           id: formId,
         },
       },
+      include: { customer: true },
       orderBy: [
         {
           createdAt: "desc",
         },
       ],
     });
-
     return res.json(submissions);
   }
 

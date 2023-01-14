@@ -1,8 +1,10 @@
 import { createToken } from "./jwt";
+import { MergeWithSchema } from "./submissions";
 const nodemailer = require("nodemailer");
 
 interface sendEmailData {
   to: string;
+  replyTo?: string;
   subject: string;
   text?: string;
   html: string;
@@ -78,18 +80,31 @@ export const sendPasswordResetNotifyEmail = async (user) => {
   });
 };
 
-export const sendSubmissionEmail = async (email: string, formLabel: string, formId: string, submission) => {
+export const sendSubmissionEmail = async (
+  email: string,
+  teamId,
+  formId,
+  formLabel: string,
+  schema: any,
+  submission
+) => {
   await sendEmail({
     to: email,
     subject: `${formLabel} new submission`,
+    replyTo: submission.customer?.email || process.env.MAIL_FROM,
     html: `Hey, someone just filled out your form ${formLabel} in Formbricks.<br/>
 
-    ${Object.entries(submission.data)
+    <hr/>
+
+    ${Object.entries(MergeWithSchema(submission.data, schema))
       .map(([key, value]) => `<p><strong>${key}</strong></p><p>${value}</p>`)
       .join("")}
+
+    <hr/>
     
     Click <a href="${
       process.env.NEXTAUTH_URL
-    }/forms/${formId}/results/responses">here</a> to see new submission`,
+    }/app/teams/${teamId}/forms/${formId}/feedback">here</a> to see new submission.
+    ${submission.customer?.email ? "<hr/>You can reply to this email to contact the user directly." : ""}`,
   });
 };

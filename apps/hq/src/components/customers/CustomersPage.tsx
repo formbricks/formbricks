@@ -74,7 +74,9 @@ export default function FormsPage() {
                     {customers.map((customer, customerIdx) => (
                       <tr key={customer.email} className={customerIdx % 2 === 0 ? undefined : "bg-gray-50"}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          {customer.id}
+                          <Link href={`/app/teams/${router.query.teamId}/customers/${customer.id}`}>
+                            {customer.id}
+                          </Link>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {convertDateTimeString(customer.createdAt)}

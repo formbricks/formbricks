@@ -64,10 +64,11 @@ function classNames(...classes) {
 }
 
 interface AppPageProps {
-  setShowFeedback?: (b: boolean) => void;
+  setShowFeedback?: (show: boolean) => void;
+  onClickFeedback?: (args: any) => void;
 }
 
-export default function AppPage({ setShowFeedback = () => {} }: AppPageProps) {
+export default function AppPage({ onClickFeedback = () => {} }: AppPageProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -249,7 +250,7 @@ export default function AppPage({ setShowFeedback = () => {} }: AppPageProps) {
               </div>
               <div className="ml-4 flex items-center md:ml-6">
                 <button
-                  onClick={() => setShowFeedback(true)}
+                  onClick={onClickFeedback}
                   className="mr-2 flex max-w-xs items-center rounded-full bg-white text-sm text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 lg:rounded-md lg:p-2 lg:hover:bg-gray-50">
                   Feedback
                 </button>

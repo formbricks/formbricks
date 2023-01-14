@@ -2,14 +2,13 @@
 
 import LayoutApp from "@/components/layout/LayoutApp";
 import { useMemberships } from "@/lib/memberships";
-import { Button } from "@formbricks/ui";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function ProjectsPage() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const { memberships, isErrorMemberships } = useMemberships();
   const router = useRouter();
 
