@@ -5,7 +5,7 @@
   <h3 align="center">Formbricks</h3>
 
   <p align="center">
-    The Open Source Experience Management for fast growing companies
+    The Open Source Experience Management solution for fast growing companies
     <br />
     <a href="https://formbricks.com/">Website</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
   </p>
@@ -45,23 +45,15 @@ Embed our feedback survey widget to give your users a channel to get in touch ea
 
 ### Product Market Fit survey (coming soon)
 
-### Features
+Formbrick's Product-Market-Fit survey based on the Superhuman-approach helps fast growing early-stage companies measuring their path towards an established company.
 
-- **Fast Form Creation**: Build complex forms with our React Lib. Our data pipes also work with any other form.
-- **Data Pipelines**: Save your data where you need it. Use webhooks or pre-built integrations.
-- **Powerful Data Insights**: View and manage your results quicker. Handle submissions in our dahsboard.
-- **No-Code Builder**: Let your operators create and change forms. Stick with React to style and embed forms. `(coming soon)`
-- **Built-in Analytics**: Opening rate, drop-offs, conversions. Use privacy-first analytics out of the box. `(coming soon)`
-- **Survey Templates**: NPS, CSAT, Employee Surveys. Name your business objective, we have the questions. `(coming soon)`
+Pre-Segmentation: Integrations for Segment, PostHog, Amplitude allow creating cohorts on usage data.
 
-### Why Formbricks
+Forms: Open source UI components to ask the right questions natively embedded for best possible conversion.
 
-- **Futureproof**: Form needs change. With Formbricks you’ll avoid island solutions right from the start.
-- **Privacy by design**: Self-host the entire product and fly through privacy compliance reviews.
-- **Community driven**: We're building for you. If you need something specific, we’re happy to build it!
-- **Great DX**: We love a solid developer experience. We felt your pain and do our best to avoid it.
-- **Customizable**: We have to build opinionated. If it doesn't suit your need, just change it up.
-- **Extendable**: Even though we try, we cannot build every single integration. With Formbricks, you can.
+Engine: Formbricks issues the survey, nudges and follows up on Data Analysis: Formbricks offers specific dashboards for each best practice to enhance understanding of the data to build conviction for product decisions.
+
+Actions: Formbricks facilitates acting on the insights e.g. by in-app interview prompts, templates to follow up on negative feedback, etc.
 
 ### Built With
 
@@ -73,8 +65,7 @@ Embed our feedback survey widget to give your users a channel to get in touch ea
 
 ## Cloud vs. self-hosted
 
-We offer you a ready hosted and maintained version of Formbricks HQ on [formbricks.com](https://hq.formbricks.com). It is currently in a open beta phase, free to use and always up to date. If you want to try Formbricks HQ, or save yourself the hassle and stress of self-hosting, this is the place to start.
-
-The version of Formbricks HQ you'll find in this repository is the same version that runs in the cloud, and you can easily host it yourself on your servers. Check out our [docs](https://formbricks.com/docs/formbricks-hq/self-hosting) to see how to self-host Formbricks HQ.
+Formbricks is available Open-Source under a permissive MIT license. You can host Formbricks on your own servers without a subscription. Check out our [docs](https://formbricks.com/docs/formbricks-hq/self-hosting) to see how to self-host Formbricks.
+We will soon offer a cloud version of Formbricks which saves you the hassle of maintaining your own servers. We will update this Readme once the cloud version is available.
 
 (In the future we may develop additional features that aren't in the free Open-Source version)
