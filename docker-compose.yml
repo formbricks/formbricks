@@ -10,7 +10,7 @@ services:
   formbricks-hq:
     build:
       context: .
-      dockerfile: ./apps/hq/Dockerfile
+      dockerfile: ./apps/web/Dockerfile
     depends_on:
       - postgres
     ports:
