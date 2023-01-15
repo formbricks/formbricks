@@ -38,12 +38,12 @@ model Customer {
   id          String
   createdAt   DateTime     @default(now()) @map(name: "created_at")
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
-  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId      String
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
   submissions Submission[]
   data        Json         @default("{}")
 
-  @@id([id, teamId])
+  @@id([id, workspaceId])
 }
 
 enum FormType {
@@ -56,28 +56,28 @@ model Form {
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
   type        FormType
   label       String
-  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId      String
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
   schema      Json         @default("{}")
   submissions Submission[]
   pipelines   Pipeline[]
 }
 
 model Submission {
-  id             String    @id @default(cuid())
-  createdAt      DateTime  @default(now()) @map(name: "created_at")
-  updatedAt      DateTime  @updatedAt @map(name: "updated_at")
-  archived       Boolean   @default(false)
-  form           Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId         String
-  customer       Customer? @relation(fields: [customerId, customerTeamId], references: [id, teamId])
-  customerId     String?
-  customerTeamId String?
-  data           Json      @default("{}")
-  meta           Json      @default("{}")
+  id                  String    @id @default(cuid())
+  createdAt           DateTime  @default(now()) @map(name: "created_at")
+  updatedAt           DateTime  @updatedAt @map(name: "updated_at")
+  archived            Boolean   @default(false)
+  form                Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId              String
+  customer            Customer? @relation(fields: [customerId, customerWorkspaceId], references: [id, workspaceId])
+  customerId          String?
+  customerWorkspaceId String?
+  data                Json      @default("{}")
+  meta                Json      @default("{}")
 }
 
-model Team {
+model Workspace {
   id        String       @id @default(cuid())
   createdAt DateTime     @default(now()) @map(name: "created_at")
   updatedAt DateTime     @updatedAt @map(name: "updated_at")
@@ -94,14 +94,14 @@ enum MembershipRole {
 }
 
 model Membership {
-  team     Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId   String
-  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
-  accepted Boolean        @default(false)
-  role     MembershipRole
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  accepted    Boolean        @default(false)
+  role        MembershipRole
 
-  @@id([userId, teamId])
+  @@id([userId, workspaceId])
 }
 
 model ApiKey {
@@ -149,7 +149,7 @@ model User {
   password                  String?
   identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
-  teams                     Membership[]
+  workspaces                Membership[]
   accounts                  Account[]
   apiKeys                   ApiKey[]
 }
