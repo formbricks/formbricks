@@ -44,6 +44,9 @@ module.exports = {
       screens: {
         xs: "430px",
       },
+      dropShadow: {
+        card: "0px 4px 12px rgba(0, 0, 0, 0.5);",
+      },
     },
   },
   plugins: [require("@tailwindcss/typography"), require("@tailwindcss/forms")],

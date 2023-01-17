@@ -2,18 +2,19 @@ import Layout from "@/components/shared/Layout";
 import Hero from "@/components/home/Hero";
 import Features from "@/components/home/Features";
 import Highlights from "@/components/home/Highlights";
-import WhyFormbricks from "../components/shared/WhyFormbricks";
-import CTA from "@/components/shared/CTA";
+import InsightOppos from "@/components/shared/InsightOppos";
+import JoinWaitlist from "@/components/shared/JoinWaitlist";
 
 const IndexPage = () => (
   <Layout
-    title="Formbricks | Open Source Forms & Survey Toolbox"
-    description="Modular, customizable and extendable form infrastructure. Build exactly the form or survey solution you need in a fraction of the time. 100% data ownership.">
+    title="Formbricks | Natively embedded user research for B2B SaaS"
+    description="Build qualitative user research into your product. Leverage Best practices to increase Product-Market Fit.">
     <Hero />
     <Features />
+    <JoinWaitlist />
     <Highlights />
-    <WhyFormbricks />
-    <CTA />
+    <InsightOppos />
+    <JoinWaitlist inverted />
   </Layout>
 );
 
