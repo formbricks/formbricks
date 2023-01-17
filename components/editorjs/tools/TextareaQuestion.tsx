@@ -2,14 +2,14 @@ import { API, BlockTool, BlockToolData, ToolConfig } from "@editorjs/editorjs";
 import ReactDOM from "react-dom";
 
 //styles imports in angular.json
-interface TextQuestionData extends BlockToolData {
+interface TextareaQuestionData extends BlockToolData {
   label: string;
   help: string;
   placeholder: string;
   required: boolean;
 }
 
-export default class TextQuestion implements BlockTool {
+export default class TextareaQuestion implements BlockTool {
   settings: { name: string; icon: string }[];
   api: API;
   data: any;
@@ -17,8 +17,8 @@ export default class TextQuestion implements BlockTool {
 
   static get toolbox(): { icon: string; title?: string } {
     return {
-      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-align-justify"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>`,
-      title: "Short Text Question",
+      icon: `📝`,
+      title: "Long Text Question",
     };
   }
 
@@ -27,7 +27,7 @@ export default class TextQuestion implements BlockTool {
   }: {
     api: API;
     config?: ToolConfig;
-    data?: TextQuestionData;
+    data?: TextareaQuestionData;
   }) {
     this.wrapper = undefined;
     this.settings = [
@@ -114,8 +114,8 @@ export default class TextQuestion implements BlockTool {
             *
           </div>
         </div>
-        <input
-          type="text"
+        <textarea
+          // type="text"
           className="block w-full max-w-sm mt-1 text-sm text-gray-400 border-gray-300 rounded-md shadow-sm placeholder:text-gray-300"
           placeholder="optional placeholder"
           defaultValue={this.data.placeholder}

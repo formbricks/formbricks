@@ -13,6 +13,7 @@ import EmailQuestion from "./tools/EmailQuestion";
 import PageTransition from "./tools/PageTransition";
 import MultipleChoiceQuestion from "./tools/MultipleChoiceQuestion";
 import TextQuestion from "./tools/TextQuestion";
+import TextareaQuestion from "./tools/TextareaQuestion";
 import WebsiteQuestion from "./tools/WebsiteQuestion";
 import PhoneQuestion from "./tools/PhoneQuestion";
 import NumberQuestion from "./tools/NumberQuestion";
@@ -95,6 +96,7 @@ const Editor = ({
       tools: {
         timerToolboxOption: TimerToolboxOption,
         textQuestion: TextQuestion,
+        textareaQuestion: TextareaQuestion,
         emailQuestion: EmailQuestion,
         multipleChoiceQuestion: MultipleChoiceQuestion,
         numberQuestion: NumberQuestion,
