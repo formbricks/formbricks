@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { FooterLogo } from "./Logo";
 
 const navigation = {
-  creation: [
+  /*   creation: [
     { name: "React Form Builder", href: "/react-form-library", status: true },
     { name: "No Code Builder", href: "/visual-builder", status: false },
     { name: "Templates", href: "#", status: false },
@@ -17,10 +17,9 @@ const navigation = {
   insights: [
     { name: "Formbricks HQ", href: "/formbricks-hq", status: true },
     { name: "Reports", href: "#", status: false },
-  ],
+  ], */
   other: [
     { name: "Community", href: "/community", status: true },
-    { name: "Docs", href: "/docs", status: true },
     { name: "Blog", href: "/blog", status: true },
     { name: "GDPR FAQ", href: "/gdpr", status: true },
     { name: "GDPR Guide", href: "/gdpr-guide", status: true },
@@ -54,119 +53,29 @@ const navigation = {
 export default function Footer() {
   return (
     <footer
-      className="bg-gradient-to-b from-slate-100 to-slate-300 dark:from-slate-900 dark:to-slate-800"
+      className="mt-32 bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-900 dark:to-slate-800"
       aria-labelledby="footer-heading">
       <h2 id="footer-heading" className="sr-only">
         Footer
       </h2>
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16 lg:px-8">
-        <div className="xl:grid xl:grid-cols-3 xl:gap-8">
-          <div className="space-y-8 xl:col-span-1">
-            <FooterLogo className="h-8 w-auto sm:h-10" />
-            <p className="text-base text-slate-500 dark:text-slate-400">The Open Source Survey Toolbox</p>
-            <div className="flex space-x-6">
-              {navigation.social.map((item) => (
-                <Link key={item.name} href={item.href} className="text-slate-400 hover:text-gray-500">
-                  <span className="sr-only">{item.name}</span>
-                  <item.icon className="h-6 w-6" aria-hidden="true" />
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div className="mt-12 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Survey Creation</h3>
-                <ul role="list" className="mt-4 space-y-4">
-                  {navigation.creation.map((item) => (
-                    <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        scroll={item.status}
-                        className={clsx(
-                          item.status
-                            ? "cursor-pointer text-slate-600 hover:text-slate-500 dark:text-slate-400 dark:hover:text-slate-300"
-                            : "cursor-default text-slate-400 dark:text-slate-600",
-                          "text-base"
-                        )}>
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Data Pipelines</h3>
-                <ul role="list" className="mt-4 space-y-4">
-                  {navigation.pipelines.map((item) => (
-                    <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        scroll={item.status}
-                        className={clsx(
-                          item.status
-                            ? "cursor-pointer text-slate-600 hover:text-slate-500 dark:text-slate-400 dark:hover:text-slate-300"
-                            : "cursor-default text-slate-400 dark:text-slate-600",
-                          "text-base"
-                        )}>
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Data Insights</h3>
-                <ul role="list" className="mt-4 space-y-4">
-                  {navigation.insights.map((item) => (
-                    <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        scroll={item.status}
-                        className={clsx(
-                          item.status
-                            ? "cursor-pointer text-slate-600 hover:text-slate-500 dark:text-slate-400 dark:hover:text-slate-300"
-                            : "cursor-default text-slate-400 dark:text-slate-600",
-                          "text-base"
-                        )}>
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Other</h3>
-                <ul role="list" className="mt-4 space-y-4">
-                  {navigation.other.map((item) => (
-                    <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        scroll={item.status}
-                        className={clsx(
-                          item.status
-                            ? "cursor-pointer text-slate-600 hover:text-slate-500 dark:text-slate-400 dark:hover:text-slate-300"
-                            : "cursor-default text-slate-400 dark:text-slate-600",
-                          "text-base"
-                        )}>
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="mt-12 border-gray-500 pt-8">
-          <p className="text-sm text-slate-400 dark:text-gray-500 xl:text-center">
+      <div className="mx-auto flex max-w-7xl flex-col space-y-6 px-4 py-12 text-center sm:px-6 lg:py-16 lg:px-8">
+        <FooterLogo className="mx-auto h-8 w-auto sm:h-10" />
+        <p className="text-base text-slate-500 dark:text-slate-400">Experience Management for B2B SaaS</p>
+        <div className="border-gray-500">
+          <p className="text-sm text-slate-400 dark:text-gray-500">
             &copy; 2022. All rights reserved.
             <br />
             <Link href="/imprint">Imprint</Link> | <Link href="/privacy">Privacy Policy</Link> |{" "}
             <Link href="/terms">Terms</Link>
           </p>
+        </div>
+        <div className="flex justify-center space-x-6">
+          {navigation.social.map((item) => (
+            <Link key={item.name} href={item.href} className="text-slate-400 hover:text-gray-500">
+              <span className="sr-only">{item.name}</span>
+              <item.icon className="h-6 w-6" aria-hidden="true" />
+            </Link>
+          ))}
         </div>
       </div>
     </footer>

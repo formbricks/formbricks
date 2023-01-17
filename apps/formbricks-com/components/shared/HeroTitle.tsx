@@ -2,11 +2,21 @@ interface Props {
   headingPt1: string;
   headingTeal?: string;
   headingPt2?: string;
-  subheading?: string;
+  subheading1?: string;
+  subheading2?: string;
+  subheadingmobile?: string;
   children?: React.ReactNode;
 }
 
-export default function HeroTitle({ headingPt1, headingTeal, headingPt2, subheading, children }: Props) {
+export default function HeroTitle({
+  headingPt1,
+  headingTeal,
+  headingPt2,
+  subheading1,
+  subheading2,
+  subheadingmobile,
+  children,
+}: Props) {
   return (
     <div className="px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
       <h1 className="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">

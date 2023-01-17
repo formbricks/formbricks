@@ -99,17 +99,186 @@ export default function Header() {
   const router = useRouter();
   return (
     <Popover className="relative" as="header">
-      <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start ">
+      <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start md:space-x-10">
         <div className="flex justify-start lg:w-0 lg:flex-1">
           <Link href="/">
             <span className="sr-only">Formbricks</span>
             <FooterLogo className="h-8 w-auto sm:h-10" />
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end">
+        <div className="-my-2 -mr-2 md:hidden">
+          <Popover.Button className="inline-flex items-center justify-center rounded-md bg-gray-100 p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-slate-700 dark:text-slate-200">
+            <span className="sr-only">Open menu</span>
+            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+          </Popover.Button>
+        </div>
+        <Popover.Group as="nav" className="hidden space-x-10 md:flex">
+          <Popover className="relative">
+            {({ open }) => (
+              <>
+                <Popover.Button
+                  className={clsx(
+                    open ? "text-slate-700" : "text-slate-400",
+                    "group inline-flex items-center rounded-md text-base font-medium hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-slate-300"
+                  )}>
+                  <span>Bricks</span>
+                  <ChevronDownIcon className="ml-2 h-5 w-5" aria-hidden="true" />
+                </Popover.Button>
+
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-200"
+                  enterFrom="opacity-0 translate-y-1"
+                  enterTo="opacity-100 translate-y-0"
+                  leave="transition ease-in duration-150"
+                  leaveFrom="opacity-100 translate-y-0"
+                  leaveTo="opacity-0 translate-y-1">
+                  <Popover.Panel className="absolute z-10 mt-3 -ml-4 w-screen max-w-lg transform lg:left-1/2 lg:ml-0 lg:max-w-4xl lg:-translate-x-1/2">
+                    <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                      <div className="relative grid gap-6 bg-slate-50 px-5 py-6 dark:bg-slate-700 sm:gap-6 sm:p-8 lg:grid-cols-3">
+                        <div>
+                          <h4 className="mb-6 ml-16 text-sm text-slate-400">Survey Creation</h4>
+                          {creation.map((brick) => (
+                            <Link
+                              key={brick.name}
+                              href={brick.href}
+                              className={clsx(
+                                brick.status
+                                  ? "cursor-pointer hover:bg-slate-100  dark:hover:bg-slate-600 dark:hover:bg-opacity-50"
+                                  : "cursor-default",
+                                "-m-3 flex items-start rounded-lg p-3 py-4"
+                              )}>
+                              <div
+                                className={clsx(
+                                  brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
+                                  "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
+                                )}>
+                                <brick.icon className="h-6 w-6" aria-hidden="true" />
+                              </div>
+                              <div className="ml-4">
+                                <p
+                                  className={clsx(
+                                    brick.status
+                                      ? "text-slate-800 dark:text-slate-50"
+                                      : "text-slate-500 dark:text-slate-400",
+                                    "text-lg font-semibold"
+                                  )}>
+                                  {brick.name}
+                                </p>
+                                <p className="text-sm text-slate-400 dark:text-slate-500">
+                                  {brick.description}
+                                </p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                        <div>
+                          <h4 className="mb-6 ml-16 text-sm text-slate-400">Data Pipelines</h4>
+                          {pipes.map((brick) => (
+                            <Link
+                              key={brick.name}
+                              href={brick.href}
+                              className={clsx(
+                                brick.status
+                                  ? "cursor-pointer hover:bg-slate-100  dark:hover:bg-slate-600 dark:hover:bg-opacity-50"
+                                  : "cursor-default",
+                                "-m-3 flex items-start rounded-lg p-3 py-4"
+                              )}>
+                              <div
+                                className={clsx(
+                                  brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
+                                  "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
+                                )}>
+                                <brick.icon className="h-6 w-6" aria-hidden="true" />
+                              </div>
+                              <div className="ml-4">
+                                <p
+                                  className={clsx(
+                                    brick.status
+                                      ? "text-slate-800 dark:text-slate-50"
+                                      : "text-slate-500 dark:text-slate-400",
+                                    "text-lg font-semibold"
+                                  )}>
+                                  {brick.name}
+                                </p>
+                                <p className="text-sm text-slate-400 dark:text-slate-500">
+                                  {brick.description}
+                                </p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                        <div>
+                          <h4 className="mb-6 ml-16 text-sm text-slate-400">Data Insights</h4>
+                          {insights.map((brick) => (
+                            <Link
+                              key={brick.name}
+                              href={brick.href}
+                              className={clsx(
+                                brick.status
+                                  ? "cursor-pointer hover:bg-slate-100  dark:hover:bg-slate-600 dark:hover:bg-opacity-50"
+                                  : "cursor-default",
+                                "-m-3 flex items-start rounded-lg p-3 py-4"
+                              )}>
+                              <div
+                                className={clsx(
+                                  brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
+                                  "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
+                                )}>
+                                <brick.icon className="h-6 w-6" aria-hidden="true" />
+                              </div>
+                              <div className="ml-4">
+                                <p
+                                  className={clsx(
+                                    brick.status
+                                      ? "text-slate-800 dark:text-slate-50"
+                                      : "text-slate-500 dark:text-slate-400",
+                                    "text-lg font-semibold"
+                                  )}>
+                                  {brick.name}
+                                </p>
+                                <p className="text-sm text-slate-400 dark:text-slate-500">
+                                  {brick.description}
+                                </p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </Popover.Panel>
+                </Transition>
+              </>
+            )}
+          </Popover>
+
+          <Link
+            href="/community"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Community
+          </Link>
+          <Link
+            href="/blog"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Blog <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
+          </Link>
+          <Link
+            href="/docs"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Docs
+          </Link>
+        </Popover.Group>
+        <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0">
           <ThemeSelector className="relative z-10 mr-5" />
+          <Button
+            variant="secondary"
+            EndIcon={GitHubIcon}
+            endIconClassName="fill-slate-800 dark:fill-slate-200"
+            onClick={() => router.push("https://github.com/formbricks/formbricks")}>
+            View on Github
+          </Button>
           <Button variant="highlight" className="ml-2" onClick={() => router.push("/get-started")}>
-            Get Access
+            Get started
           </Button>
         </div>
       </div>
