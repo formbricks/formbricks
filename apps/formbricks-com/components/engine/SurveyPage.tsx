@@ -8,9 +8,10 @@ interface SurveyProps {
   onSubmit: () => void;
   submission: any;
   setSubmission: (v: any) => void;
+  finished: boolean;
 }
 
-export function SurveyPage({ page, onSubmit, submission, setSubmission }: SurveyProps) {
+export function SurveyPage({ page, onSubmit, submission, setSubmission, finished }: SurveyProps) {
   const [submittingPage, setSubmittingPage] = useState(false);
 
   useEffect(() => {
@@ -22,8 +23,8 @@ export function SurveyPage({ page, onSubmit, submission, setSubmission }: Survey
     }
   }, [submittingPage, onSubmit]);
 
-  const handleSubmitQuestion = () => {
-    if (page.config?.autoSubmit && page.questions.length == 1) {
+  const handleSubmitElement = () => {
+    if (page.config?.autoSubmit && page.elements.length == 1) {
       setSubmittingPage(true);
     }
   };
@@ -38,29 +39,29 @@ export function SurveyPage({ page, onSubmit, submission, setSubmission }: Survey
   };
 
   return (
-    <div>
+    <>
       <div className="grid grid-cols-1 gap-8">
-        {page.questions.map((question) => {
-          const QuestionComponent = question.component;
+        {page.elements.map((element) => {
+          const ElementComponent = element.component;
           return (
-            <div key={question.id} className={clsx(submittingPage && "animate-pulse")}>
-              <QuestionComponent
-                question={question}
-                value={getField(question.id)}
-                setValue={(v: any) => setField(question.id, v)}
-                onSubmit={() => handleSubmitQuestion()}
+            <div key={element.id} className={clsx(submittingPage && "animate-pulse")}>
+              <ElementComponent
+                element={element}
+                value={getField(element.id)}
+                setValue={(v: any) => setField(element.id, v)}
+                onSubmit={() => handleSubmitElement()}
               />
             </div>
           );
         })}
       </div>
-      {!(page.config?.autoSubmit && page.questions.length == 1) && (
+      {!finished && !(page.config?.autoSubmit && page.elements.length == 1) && (
         <div className="my-8 flex w-full justify-end">
           <Button variant="primary" onClick={() => setSubmittingPage(true)}>
             Next
           </Button>
         </div>
       )}
-    </div>
+    </>
   );
 }

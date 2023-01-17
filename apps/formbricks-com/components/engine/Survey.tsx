@@ -1,7 +1,4 @@
-import { Transition } from "@headlessui/react";
-import clsx from "clsx";
 import { useEffect, useState } from "react";
-import Button from "../shared/Button";
 import { Survey } from "./engineTypes";
 import Progressbar from "./Progressbar";
 import { SurveyPage } from "./SurveyPage";
@@ -28,34 +25,49 @@ export function Survey({ survey }: SurveyProps) {
   }, [submittingPage]);
 
   const onPageSubmit = () => {
-    const currentPageIdx = survey.pages.findIndex((p) => p.id === currentPage.id);
-    if (currentPageIdx === survey.pages.length - 1) {
-      console.log("submission complete", JSON.stringify(submission));
-      setProgress(1);
+    console.log("page submission complete", JSON.stringify(submission, null, 2));
+    console.log(currentPage);
+    const nextPage = calculateNextPage(survey, submission);
+    setCurrentPage(nextPage);
+    if (nextPage.endScreen) {
       setFinished(true);
+      setProgress(1);
     } else {
-      setCurrentPage(survey.pages[currentPageIdx + 1]);
-      setProgress((currentPageIdx + 1) / survey.pages.length);
+      const nextPageIdx = survey.pages.findIndex((p) => p.id === nextPage.id);
+      setProgress(nextPageIdx / survey.pages.length);
     }
   };
 
-  return (
-    <div className="flex h-full flex-col justify-between">
-      <div></div>
-      {finished ? (
-        <div className="text-white">Done</div>
-      ) : (
-        <SurveyPage
-          page={currentPage}
-          onSubmit={() => onPageSubmit()}
-          submission={submission}
-          setSubmission={setSubmission}
-        />
-      )}
+  const calculateNextPage = (survey: Survey, submission: any) => {
+    if (currentPage.branchingRules) {
+      for (const rule of currentPage.branchingRules) {
+        if (rule.type === "value") {
+          if (rule.value === submission[rule.field]) {
+            const nextPage = survey.pages.find((p) => p.id === rule.nextPageId);
+            if (!nextPage) {
+              throw new Error(`Next page ${rule.nextPageId} not found`);
+            }
+            return nextPage;
+          }
+        }
+      }
+    }
+    const currentPageIdx = survey.pages.findIndex((p) => p.id === currentPage.id);
+    return survey.pages[currentPageIdx + 1];
+  };
 
-      <div className="h-3">
+  return (
+    <div className="flex h-full w-full flex-col">
+      <div className="mb-8 h-3">
         <Progressbar progress={progress} />
       </div>
+      <SurveyPage
+        page={currentPage}
+        onSubmit={() => onPageSubmit()}
+        submission={submission}
+        setSubmission={setSubmission}
+        finished={finished}
+      />
     </div>
   );
 }

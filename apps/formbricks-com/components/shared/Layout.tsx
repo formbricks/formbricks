@@ -15,9 +15,11 @@ export default function Layout({ title, description, children }: LayoutProps) {
       <MetaInformation title={title} description={description} />
       <Header />
       <FeedbackButton />
-      <main className="max-w-8xl relative mx-auto mb-auto flex flex-col justify-center sm:px-2 lg:px-8 xl:px-12">
-        {children}
-      </main>
+      {
+        <main className="max-w-8xl relative mx-auto mb-auto flex w-full flex-col justify-center sm:px-2 lg:px-8 xl:px-12">
+          {children}
+        </main>
+      }
       <Footer />
     </div>
   );

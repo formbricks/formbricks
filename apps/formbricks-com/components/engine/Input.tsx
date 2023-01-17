@@ -8,7 +8,7 @@ interface TextareaProps {
   onSubmit: () => void;
 }
 
-export default function Textarea({ element, value, setValue, onSubmit }: TextareaProps) {
+export default function Input({ element, value, setValue, onSubmit }: TextareaProps) {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
@@ -23,11 +23,11 @@ export default function Textarea({ element, value, setValue, onSubmit }: Textare
         {element.label}
       </label>
       <div className="mt-1">
-        <textarea
-          rows={4}
-          name="comment"
-          id="comment"
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+        <input
+          type="email"
+          name="email"
+          id="email"
+          className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
           value={value || ""}
           onChange={(e) => setValue(e.target.value)}
         />
