@@ -18,7 +18,7 @@ export default function JoinWaitlist({ inverted = false }: Props) {
       )}>
       <div className="relative px-4 py-8 sm:px-6 sm:pt-8 sm:pb-12 lg:px-8 lg:pt-12">
         <div className="absolute right-10 md:top-1/2 md:-translate-y-1/2">
-          <Button variant="highlight" onClick={() => router.push("/get-started")}>
+          <Button variant="highlight" onClick={() => router.push("/waitlist")}>
             Get Access
           </Button>
         </div>

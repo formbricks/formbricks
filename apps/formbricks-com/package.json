@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@formbricks/ui": "workspace:*",
     "@docsearch/react": "^3.3.0",
     "@formbricks/react": "workspace:*",
     "@headlessui/react": "^1.7.3",

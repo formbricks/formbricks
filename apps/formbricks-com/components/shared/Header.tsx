@@ -1,19 +1,5 @@
 import { Popover, Transition } from "@headlessui/react";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
-import {
-  Bars3Icon,
-  BoltIcon,
-  ClipboardDocumentListIcon,
-  CodeBracketSquareIcon,
-  CpuChipIcon,
-  CursorArrowRaysIcon,
-  CursorArrowRippleIcon,
-  DocumentChartBarIcon,
-  EnvelopeIcon,
-  SquaresPlusIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
-import clsx from "clsx";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment } from "react";
@@ -21,94 +7,38 @@ import Button from "./Button";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
 
-const creation = [
-  {
-    name: "React Library",
-    description: "Build surveys with React.js",
-    href: "/react-form-library",
-    icon: CodeBracketSquareIcon,
-    status: true,
-  },
-  {
-    name: "No Code Builder",
-    description: "Notion-like visual builder",
-    href: "/visual-builder",
-    icon: CursorArrowRaysIcon,
-    status: false,
-  },
-  {
-    name: "Templates",
-    description: "CSAT, PMF survey, etc.",
-    href: "#",
-    icon: ClipboardDocumentListIcon,
-    status: false,
-  },
-];
-
-const pipes = [
-  {
-    name: "Core API",
-    description: "The OS survey engine",
-    href: "/core-api",
-    icon: CpuChipIcon,
-    status: true,
-  },
-  {
-    name: "Webhooks",
-    description: "Send JSON anywhere",
-    href: "/webhooks",
-    icon: BoltIcon,
-    status: true,
-  },
-  {
-    name: "Email",
-    description: "Send data and notifications",
-    href: "/email",
-    icon: EnvelopeIcon,
-    status: true,
-  },
-  {
-    name: "Integrations",
-    description: "Connect with 100+ apps",
-    href: "/integrations",
-    icon: SquaresPlusIcon,
-    status: false,
-  },
-];
-
-const insights = [
-  {
-    name: "Formbricks HQ",
-    description: "Manage submissions easily",
-    href: "/formbricks-hq",
-    icon: CursorArrowRippleIcon,
-    cat: "insights",
-    status: true,
-  },
-  {
-    name: "Reports",
-    description: "Based on Templates",
-    href: "#",
-    icon: DocumentChartBarIcon,
-    cat: "insights",
-    status: false,
-  },
-];
-
 export default function Header() {
   const router = useRouter();
   return (
     <Popover className="relative" as="header">
       <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start ">
-        <div className="flex justify-start lg:w-0 lg:flex-1">
+        <div className="flex w-0 flex-1 justify-start">
           <Link href="/">
             <span className="sr-only">Formbricks</span>
             <FooterLogo className="h-8 w-auto sm:h-10" />
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end">
+        <div className="-my-2 -mr-2 md:hidden">
+          <Popover.Button className="inline-flex items-center justify-center rounded-md bg-gray-100 p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-slate-700 dark:text-slate-200">
+            <span className="sr-only">Open menu</span>
+            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+          </Popover.Button>
+        </div>
+        <Popover.Group as="nav" className="hidden space-x-10 md:flex">
+          <Link
+            href="/community"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Community
+          </Link>
+          <Link
+            href="/blog"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Blog <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
+          </Link>
+        </Popover.Group>
+        <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
-          <Button variant="highlight" className="ml-2" onClick={() => router.push("/get-started")}>
+          <Button variant="highlight" className="ml-2" onClick={() => router.push("/waitlist")}>
             Get Access
           </Button>
         </div>
@@ -138,139 +68,11 @@ export default function Header() {
                   </Popover.Button>
                 </div>
               </div>
-
-              <nav className="relative bg-gray-200 px-5 py-6 dark:bg-slate-800">
-                <div>
-                  <h4 className="mb-3 text-sm text-gray-900 dark:text-gray-300">Survey Creation</h4>
-                  {creation.map((brick) => (
-                    <Link
-                      key={brick.name}
-                      href={brick.href}
-                      className={clsx(
-                        brick.status ? "cursor-pointer" : "cursor-default",
-                        "-m-3 flex items-start rounded-lg p-3 py-3"
-                      )}>
-                      <div
-                        className={clsx(
-                          brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
-                          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
-                        )}>
-                        <brick.icon className="h-6 w-6" aria-hidden="true" />
-                      </div>
-                      <div className="ml-4">
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-200"
-                              : "text-gray-400 dark:text-gray-500",
-                            "text-lg font-semibold"
-                          )}>
-                          {brick.name}
-                        </p>
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-400"
-                              : "text-gray-400 dark:text-gray-600",
-                            "text-sm"
-                          )}>
-                          {brick.description}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-                <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Pipelines</h4>
-                  {pipes.map((brick) => (
-                    <Link
-                      key={brick.name}
-                      href={brick.href}
-                      className={clsx(
-                        brick.status ? "cursor-pointer" : "cursor-default",
-                        "-m-3 flex items-start rounded-lg p-3 py-3"
-                      )}>
-                      <div
-                        className={clsx(
-                          brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
-                          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
-                        )}>
-                        <brick.icon className="h-6 w-6" aria-hidden="true" />
-                      </div>
-                      <div className="ml-4">
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-200"
-                              : "text-gray-400 dark:text-gray-500",
-                            "text-lg font-semibold"
-                          )}>
-                          {brick.name}
-                        </p>
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-400"
-                              : "text-gray-400 dark:text-gray-600",
-                            "text-sm"
-                          )}>
-                          {brick.description}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-                <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Insights</h4>
-                  {insights.map((brick) => (
-                    <Link
-                      key={brick.name}
-                      href={brick.href}
-                      className={clsx(
-                        brick.status ? "cursor-pointer" : "cursor-default",
-                        "-m-3 flex items-start rounded-lg p-3 py-3"
-                      )}>
-                      <div
-                        className={clsx(
-                          brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
-                          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
-                        )}>
-                        <brick.icon className="h-6 w-6" aria-hidden="true" />
-                      </div>
-                      <div className="ml-4">
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-200"
-                              : "text-gray-400 dark:text-gray-500",
-                            "text-lg font-semibold"
-                          )}>
-                          {brick.name}
-                        </p>
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-400"
-                              : "text-gray-400 dark:text-gray-600",
-                            "text-sm"
-                          )}>
-                          {brick.description}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </nav>
             </div>
             <div className="px-5 py-6">
-              <div className="grid grid-cols-3 text-center text-sm font-medium text-gray-900 hover:text-gray-700 dark:text-slate-200 sm:text-base">
+              <div className="flex flex-col space-y-5 text-center text-sm dark:text-slate-300">
                 <Link href="/community">Community</Link>
-
                 <Link href="/blog">Blog</Link>
-
-                <Link href="/docs">Documentation</Link>
-              </div>
-              <div className="mt-6">
                 <Button
                   variant="secondary"
                   EndIcon={GitHubIcon}
@@ -280,9 +82,9 @@ export default function Header() {
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={() => router.push("/get-started")}
-                  className="mt-3 flex w-full justify-center">
-                  Get started
+                  onClick={() => router.push("/waitlist")}
+                  className="flex w-full justify-center">
+                  Get access
                 </Button>
               </div>
             </div>

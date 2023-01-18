@@ -1,6 +1,5 @@
 import Button from "../shared/Button";
 import HeroAnimation from "../shared/HeroAnimation";
-import HeroTitle from "../shared/HeroTitle";
 import { useRouter } from "next/router";
 
 interface Props {}
@@ -30,7 +29,7 @@ export default function Hero({}: Props) {
           <Button variant="secondary" onClick={() => router.push("#best-practices")}>
             Best practices
           </Button>
-          <Button variant="primary" className="ml-3" onClick={() => router.push("/get-started")}>
+          <Button variant="primary" className="ml-3" onClick={() => router.push("/waitlist")}>
             Get Access
           </Button>
         </div>
