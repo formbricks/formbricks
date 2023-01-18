@@ -130,7 +130,6 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
       },
     });
 
-    console.log(userOpenFormSession);
 
     if (userOpenFormSession === null) {
       const { id } = await prisma.submissionSession.create({

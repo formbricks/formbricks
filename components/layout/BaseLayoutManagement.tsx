@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import { classNames } from "../../lib/utils";
 import MenuBreadcrumbs from "./MenuBreadcrumbs";
 import MenuProfile from "./MenuProfile";
@@ -50,12 +51,16 @@ export default function BaseLayoutManagement({
               <div className='grid w-full grid-cols-2 sm:grid-cols-3'>
                 <div className='flex-1  space-x-8 sm:flex'>
                   <div className='sm:w-fit m-auto flex items-center h-full'>
-                    <Image
-                      src='/img/kda_logo.png'
-                      alt='kinshasa digital academy logo'
-                      width={100}
-                      height={40}
-                    />
+                    <Link href='/forms/'>
+                      <a className='text-ui-gray-dark hover:text-ui-gray-dark'>
+                        <Image
+                          src='/img/kda_logo.png'
+                          alt='kinshasa digital academy logo'
+                          width={100}
+                          height={40}
+                        />
+                      </a>
+                    </Link>
                   </div>
                   <NewFormNavButton />
                   <MenuBreadcrumbs breadcrumbs={breadcrumbs} />
