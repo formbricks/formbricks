@@ -92,3 +92,7 @@ export const parseUserAgent = (userAgent: string) => {
   const info = platform.parse(userAgent);
   return info.description;
 };
+
+export const capitalizeFirstLetter = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};

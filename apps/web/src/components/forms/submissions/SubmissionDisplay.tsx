@@ -10,7 +10,6 @@ export default function SubmissionDisplay({ schema, submission }) {
         {Object.entries(MergeWithSchema(submission.data, schema)).map(([key, value]) => (
           <li key={key} className="py-5">
             <p className="text-sm font-semibold text-gray-800">{key}</p>
-
             <p
               className={clsx(
                 value ? "text-gray-600" : "text-gray-400",

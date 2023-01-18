@@ -1,6 +1,6 @@
 import SubmissionsPage from "@/components/forms/submissions/SubmissionsPage";
 import LayoutApp from "@/components/layout/LayoutApp";
-import LayoutWrapperForm from "@/components/layout/LayoutWrapperForm";
+import LayoutWrapperForm from "@/components/layout/LayoutWrapperCustomForm";
 import LayoutWrapperWorkspace from "@/components/layout/LayoutWrapperWorkspace";
 
 export default function Submissions({}) {

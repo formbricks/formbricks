@@ -7,29 +7,29 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/router";
 import { useMemo } from "react";
 
-export default function LayoutWrapperForm({ children }) {
+export default function LayoutWrapperCustomForm({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const navigation = useMemo(
     () => [
       {
         name: "Form",
-        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/`,
-        current: pathname.endsWith(router.query.formId?.toString()),
+        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/custom/`,
+        current: pathname.endsWith("custom") || pathname.endsWith("custom/"),
       },
       {
         name: "Pipelines",
-        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/pipelines/`,
+        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/custom/pipelines/`,
         current: pathname.includes("pipelines"),
       },
       {
         name: "Summary",
-        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/summary/`,
+        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/custom/summary/`,
         current: pathname.includes("summary"),
       },
       {
         name: "Submissions",
-        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/submissions/`,
+        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/custom/submissions/`,
         current: pathname.includes("submissions"),
       },
     ],

@@ -12,6 +12,7 @@ import { Fragment } from "react";
 import { ToastContainer } from "react-toastify";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Logo } from "../Logo";
+import Head from "next/head";
 
 export default function LayoutApp({ children }) {
   const userNavigation = [
@@ -36,13 +37,16 @@ export default function LayoutApp({ children }) {
   }
 
   if (!session) {
-    console.log("no sessions");
     router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`);
     return <div></div>;
   }
 
   return (
     <>
+      <Head>
+        <title>Formbricks</title>
+        <meta name="description" content="Build user research into your product" />
+      </Head>
       <div className="h-screen">
         <Disclosure as="nav" className="border-b border-gray-200 bg-white">
           {({ open }) => (

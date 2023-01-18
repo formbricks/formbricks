@@ -10,9 +10,22 @@ interface SurveyProps {
   submission: any;
   setSubmission: (v: any) => void;
   finished: boolean;
+  formbricksUrl: string;
+  formId: string;
+  schema: any;
 }
 
-export function SurveyPage({ page, onSubmit, submission, setSubmission, finished }: SurveyProps) {
+export function SurveyPage({
+  page,
+  onSubmit,
+  submission,
+  setSubmission,
+  finished,
+  formbricksUrl,
+  formId,
+  schema,
+}: SurveyProps) {
+  const [submissionId, setSubmissionId] = useState<string>();
   const {
     handleSubmit,
     control,
@@ -27,15 +40,42 @@ export function SurveyPage({ page, onSubmit, submission, setSubmission, finished
     reset();
   }, [page, reset]);
 
-  const submitPage = (data: any) => {
-    console.log("page submitted:", JSON.stringify(data));
+  const sendToFormbricks = async (partialSubmission: any) => {
+    if (!submissionId) {
+      const res = await Promise.all([
+        await fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: partialSubmission }),
+        }),
+        await fetch(`${formbricksUrl}/api/capture/forms/${formId}/schema`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(schema),
+        }),
+      ]);
+      const submission = await res[0].json();
+      setSubmissionId(submission.id);
+    } else {
+      await fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions/${submissionId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: partialSubmission }),
+      });
+    }
+  };
+
+  const submitPage = async (data: any) => {
     setSubmittingPage(true);
     const updatedSubmission = { ...submission, ...data };
     setSubmission(updatedSubmission);
-    setTimeout(() => {
+    try {
+      await sendToFormbricks(data);
       setSubmittingPage(false);
       onSubmit(updatedSubmission);
-    }, 1000);
+    } catch (e) {
+      alert("There was an error sending this form. Please try again later.");
+    }
   };
 
   const handleSubmitElement = () => {
@@ -52,7 +92,7 @@ export function SurveyPage({ page, onSubmit, submission, setSubmission, finished
           const ElementComponent = element.component;
           return (
             <div key={element.id} className={clsx(submittingPage && "animate-pulse")}>
-              {element.field ? (
+              {element.name ? (
                 <ElementComponent
                   element={element}
                   control={control}

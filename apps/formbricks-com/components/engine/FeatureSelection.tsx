@@ -30,7 +30,7 @@ export default function FeatureSelection({ element, field, register }: FeatureSe
                       type="checkbox"
                       value={option.value}
                       className="text-brand focus:ring-brand h-4 w-4 rounded border-gray-300"
-                      {...register(element.field!)}
+                      {...register(element.name!)}
                     />
                   </div>
                   <div className="h-12 w-12">

@@ -13,7 +13,7 @@ export interface SurveyPage {
   };
   branchingRules?: {
     type: "value";
-    field: string;
+    name: string;
     value: string;
     nextPageId: string;
   }[];
@@ -21,7 +21,7 @@ export interface SurveyPage {
 
 export interface SurveyElement {
   id: string;
-  field?: string;
+  name?: string;
   label?: string;
   type: "radio" | "text" | "checkbox" | "html";
   options?: SurveyOption[];

@@ -40,7 +40,7 @@ export default function FormsList({ workspaceId }) {
                 onClick={() => newForm()}
                 alertText="You don't have any forms yet."
                 hintText="Start by creating a form."
-                buttonText="create feedback form"
+                buttonText="create form"
                 borderStyles="border-4 border-dotted border-red"
                 hasButton={true}>
                 <DocumentPlusIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />

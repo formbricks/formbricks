@@ -14,12 +14,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   });
 
   const formId = req.query.formId.toString();
+  const submissionId = req.query.submissionId.toString();
 
-  // POST/capture/forms/[formId]/submissions
-  // Create a new form submission
+  // PUT /capture/forms/[formId]/submissions/[submissionId]
+  // Extend an existing form submission
   // Required fields in body: -
   // Optional fields in body: customerId, data
-  if (req.method === "POST") {
+  if (req.method === "PUT") {
     const submission = req.body;
 
     // get form
@@ -27,10 +28,22 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       where: { id: formId },
     });
 
+    const prevSubmission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+    });
+
+    if (prevSubmission === null) {
+      return res.status(404).json({ message: "Submission not found" });
+    }
+
+    if (typeof prevSubmission.data !== "object") {
+      prevSubmission.data = {};
+    }
+
     const event: any = {
+      where: { id: submissionId },
       data: {
-        data: submission.data,
-        form: { connect: { id: formId } },
+        data: { ...prevSubmission.data, ...submission.data },
         meta: { userAgent: req.headers["user-agent"] },
       },
     };
@@ -58,7 +71,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // create form in db
-    const submissionResult = await prisma.submission.create(event);
+    const submissionResult = await prisma.submission.update(event);
     await runPipelines(form, submission);
     // tracking
     capturePosthogEvent(form.workspaceId, "submission received", {

@@ -31,11 +31,13 @@ import {
 
 const WaitlistPage = () => (
   <Layout title="Waitlist" description="Join our Waitlist today">
-    <h1 className="my-10 w-full text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
+    <h1 className="my-10 w-full px-4 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
       Join Waitlist
     </h1>
-    <div className="max-w-8xl mb-20 w-full">
+    <div className="max-w-8xl mb-20 w-full px-4">
       <Survey
+        formbricksUrl="http://localhost:3000"
+        formId="cld1q32h7000619twdt9ykqza"
         survey={{
           config: {
             progressBar: false,
@@ -51,7 +53,7 @@ const WaitlistPage = () => (
                   id: "role",
                   type: "radio",
                   label: "How would you describe your role?",
-                  field: "role",
+                  name: "role",
                   options: [
                     { label: "Founder", value: "founder", frontend: { icon: RocketLaunchIcon } },
                     {
@@ -75,7 +77,7 @@ const WaitlistPage = () => (
                   id: "targetGroup",
                   type: "radio",
                   label: "Who are you serving?",
-                  field: "targetGroup",
+                  name: "targetGroup",
                   options: [
                     { label: "Companies", value: "companies", frontend: { icon: BuildingOfficeIcon } },
                     { label: "Consumers", value: "consumers", frontend: { icon: UsersIcon } },
@@ -91,7 +93,7 @@ const WaitlistPage = () => (
                   id: "featureSelection",
                   type: "radio",
                   label: "Pick two to get started",
-                  field: "featureSelection",
+                  name: "featureSelection",
                   options: [
                     {
                       label: "Onboarding Segmentation",
@@ -192,7 +194,7 @@ const WaitlistPage = () => (
                   id: "email",
                   type: "text",
                   label: "What's your email?",
-                  field: "email",
+                  name: "email",
                   frontend: {
                     required: true,
                     type: "email",
@@ -212,7 +214,7 @@ const WaitlistPage = () => (
                   id: "wau",
                   type: "radio",
                   label: "How many weekly active users do you have?",
-                  field: "targetGroup",
+                  name: "wau",
                   options: [
                     { label: "Not launched", value: "notLaunched", frontend: { icon: NoSymbolIcon } },
                     { label: "10-100", value: "10-100", frontend: { icon: UserIcon } },
@@ -233,7 +235,7 @@ const WaitlistPage = () => (
                   id: "goal",
                   type: "radio",
                   label: "What are you here for?",
-                  field: "goal",
+                  name: "goal",
                   options: [
                     {
                       label: "Just notify me on launch",
@@ -252,7 +254,7 @@ const WaitlistPage = () => (
               branchingRules: [
                 {
                   type: "value",
-                  field: "goal",
+                  name: "goal",
                   value: "justNotify",
                   nextPageId: "thankYouPageNotify",
                 },
@@ -265,7 +267,7 @@ const WaitlistPage = () => (
                   id: "name",
                   type: "text",
                   label: "First of all, what’s your name?",
-                  field: "name",
+                  name: "name",
                   frontend: { placeholder: "First name" },
                   component: Input,
                 },
@@ -279,9 +281,21 @@ const WaitlistPage = () => (
               elements: [
                 {
                   id: "urgency",
-                  type: "text",
+                  type: "radio",
                   label: "How urgently do you need this?",
-                  field: "urgency",
+                  name: "urgency",
+                  options: [
+                    { label: "1", value: "1" },
+                    { label: "2", value: "2" },
+                    { label: "3", value: "3" },
+                    { label: "4", value: "4" },
+                    { label: "5", value: "5" },
+                    { label: "6", value: "6" },
+                    { label: "7", value: "7" },
+                    { label: "8", value: "8" },
+                    { label: "9", value: "9" },
+                    { label: "10", value: "10" },
+                  ],
                   frontend: {
                     min: 1,
                     max: 10,
@@ -302,7 +316,7 @@ const WaitlistPage = () => (
                   id: "pmf",
                   type: "radio",
                   label: "Have you found Product-Market-Fit?",
-                  field: "pmf",
+                  name: "pmf",
                   options: [
                     {
                       label: "Yes",
@@ -321,7 +335,7 @@ const WaitlistPage = () => (
               branchingRules: [
                 {
                   type: "value",
-                  field: "pmf",
+                  name: "pmf",
                   value: "no",
                   nextPageId: "pmfApproachPage",
                 },
@@ -334,7 +348,7 @@ const WaitlistPage = () => (
                   id: "scalingResearch",
                   type: "text",
                   label: "The hardest part about scaling user research is...",
-                  field: "scalingResearch",
+                  name: "scalingResearch",
                   frontend: { placeholder: "Please complete the sentence." },
                   component: Textarea,
                 },
@@ -347,7 +361,7 @@ const WaitlistPage = () => (
                   id: "triedSolveIt",
                   type: "text",
                   label: "We have tried to solve it by...",
-                  field: "triedSolveIt",
+                  name: "triedSolveIt",
                   frontend: { placeholder: "Please complete the sentence." },
                   component: Textarea,
                 },
@@ -360,7 +374,7 @@ const WaitlistPage = () => (
                   id: "toolsMaintainPmf",
                   type: "text",
                   label: "What tools help you maintain Product-Market Fit?",
-                  field: "toolsMaintainPmf",
+                  name: "toolsMaintainPmf",
                   frontend: { placehodler: "Mixpanel, Segment, Intercom..." },
                   component: Textarea,
                 },
@@ -368,7 +382,7 @@ const WaitlistPage = () => (
               branchingRules: [
                 {
                   type: "value",
-                  field: "pmf",
+                  name: "pmf",
                   value: "yes",
                   nextPageId: "thankYouPageBetaUser",
                 },
@@ -381,7 +395,7 @@ const WaitlistPage = () => (
                   id: "pmfApproach",
                   type: "text",
                   label: "What is your approach for finding Product-Market Fit?",
-                  field: "pmfApproach",
+                  name: "pmfApproach",
                   frontend: { placeholder: "Last time, I..." },
                   component: Textarea,
                 },
@@ -394,7 +408,7 @@ const WaitlistPage = () => (
                   id: "pmfHardestPart",
                   type: "text",
                   label: "What is the hardest part about it?",
-                  field: "pmfHardestPart",
+                  name: "pmfHardestPart",
                   frontend: { placeholder: "Please complete the sentence." },
                   component: Textarea,
                 },
@@ -407,7 +421,7 @@ const WaitlistPage = () => (
                   id: "pmfFindingTools",
                   type: "text",
                   label: "What tools help you finding Product-Market Fit?",
-                  field: "pmfFindingTools",
+                  name: "pmfFindingTools",
                   frontend: { placeholder: "Mixpanel, Segment, Intercom..." },
                   component: Textarea,
                 },
@@ -415,7 +429,7 @@ const WaitlistPage = () => (
               branchingRules: [
                 {
                   type: "value",
-                  field: "pmf",
+                  name: "pmf",
                   value: "no",
                   nextPageId: "thankYouPageBetaUser",
                 },

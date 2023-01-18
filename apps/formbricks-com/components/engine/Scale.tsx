@@ -16,7 +16,7 @@ interface IconRadioProps {
 export default function Scale({ element, control, onSubmit, disabled }: IconRadioProps) {
   const value = useWatch({
     control,
-    name: element.field!!,
+    name: element.name!!,
   });
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function Scale({ element, control, onSubmit, disabled }: IconRadi
   }, [value, onSubmit, disabled]);
   return (
     <Controller
-      name={element.field!}
+      name={element.name!}
       control={control}
       rules={{ required: true }}
       render={({ field }: { field: any }) => (

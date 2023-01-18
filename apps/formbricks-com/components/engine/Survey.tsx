@@ -1,20 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Survey } from "./engineTypes";
 import Progressbar from "./Progressbar";
 import { SurveyPage } from "./SurveyPage";
 
 interface SurveyProps {
   survey: Survey;
+  formbricksUrl: string;
+  formId: string;
 }
 
-export function Survey({ survey }: SurveyProps) {
+export function Survey({ survey, formbricksUrl, formId }: SurveyProps) {
   const [currentPage, setCurrentPage] = useState(survey.pages[0]);
   const [progress, setProgress] = useState(0);
   const [submission, setSubmission] = useState<any>({});
   const [finished, setFinished] = useState(false);
 
+  const schema = useMemo(() => generateSchema(survey), [survey]);
+
   const onPageSubmit = (updatedSubmission: any) => {
-    console.log("current submission state", JSON.stringify(updatedSubmission, null, 2));
     const nextPage = calculateNextPage(survey, updatedSubmission);
     setCurrentPage(nextPage);
     if (nextPage.endScreen) {
@@ -30,7 +33,7 @@ export function Survey({ survey }: SurveyProps) {
     if (currentPage.branchingRules) {
       for (const rule of currentPage.branchingRules) {
         if (rule.type === "value") {
-          if (rule.value === submission[rule.field]) {
+          if (rule.value === submission[rule.name]) {
             const nextPage = survey.pages.find((p) => p.id === rule.nextPageId);
             if (!nextPage) {
               throw new Error(`Next page ${rule.nextPageId} not found`);
@@ -58,7 +61,33 @@ export function Survey({ survey }: SurveyProps) {
         submission={submission}
         setSubmission={setSubmission}
         finished={finished}
+        formbricksUrl={formbricksUrl}
+        formId={formId}
+        schema={schema}
       />
     </div>
   );
+}
+
+function generateSchema(survey: Survey) {
+  const schema: any = JSON.parse(JSON.stringify(survey));
+  deleteProps(schema, "frontend");
+  return schema;
+}
+
+function deleteProps(obj: any, propName: string) {
+  if (Array.isArray(obj)) {
+    for (let v of obj) {
+      if (v instanceof Object) {
+        deleteProps(v, propName);
+      }
+    }
+    return;
+  }
+  delete obj[propName];
+  for (let v of Object.values(obj)) {
+    if (v instanceof Object) {
+      deleteProps(v, propName);
+    }
+  }
 }

@@ -16,7 +16,7 @@ interface IconRadioProps {
 export default function IconRadio({ element, control, onSubmit, disabled }: IconRadioProps) {
   const value = useWatch({
     control,
-    name: element.field!!,
+    name: element.name!!,
   });
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function IconRadio({ element, control, onSubmit, disabled }: Icon
 
   return (
     <Controller
-      name={element.field!}
+      name={element.name!}
       control={control}
       rules={{ required: true }}
       render={({ field }: { field: any }) => (

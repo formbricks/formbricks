@@ -4,6 +4,7 @@ import AnalyticsCard from "@/components/AnalyticsCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { useSubmissions } from "@/lib/submissions";
+import { capitalizeFirstLetter } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspaces";
 import { Bar, Nps, Table } from "@formbricks/charts";
 import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
@@ -35,6 +36,10 @@ export default function SummaryPage() {
   if (isErrorForm || isErrorWorkspace) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
+
+  {
+    console.log(JSON.stringify(submissions, null, 2));
+  }
   return (
     <div className="mx-auto py-8 sm:px-6 lg:px-8">
       <header className="mb-8">
@@ -53,7 +58,7 @@ export default function SummaryPage() {
           <div className="w-full border-t border-gray-300" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-white px-3 text-lg font-medium text-gray-900">Questions &amp; Answers</span>
+          <span className="bg-gray-50 px-3 text-lg font-medium text-gray-900">Questions &amp; Answers</span>
         </div>
       </div>
       {Object.keys(form.schema).length === 0 ? (
@@ -82,43 +87,59 @@ export default function SummaryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 divide-y">
-          {form.schema.children
-            .filter((e) => e.type !== "submit")
-            .map((elem) => (
-              <div className="py-12">
-                {["email", "number", "phone", "search", "text", "textarea", "url"].includes(elem.type) ? (
-                  <div>
-                    <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
-                      {elem.label}
-                      <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-                        Checkbox
-                      </span>
-                    </h2>
-                    <Table submissions={submissions} schema={form.schema} fieldName={elem.name} />
-                  </div>
-                ) : ["checkbox", "radio"].includes(elem.type) ? (
-                  <div>
-                    <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
-                      {elem.label}
-                      <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-                        {elem.type}
-                      </span>
-                    </h2>
-                    <Bar submissions={submissions} schema={form.schema} fieldName={elem.name} />
-                  </div>
-                ) : ["nps"].includes(elem.type) ? (
-                  <div>
-                    <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
-                      {elem.label}
-                      <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-                        {elem.type}
-                      </span>
-                    </h2>
-                    <Nps submissions={submissions} schema={form.schema} fieldName={elem.name} />
-                  </div>
-                ) : null}
-              </div>
-            ))}
+          {form.schema.pages.map((page) =>
+            page.elements
+              .filter((e) =>
+                [
+                  "checkbox",
+                  "email",
+                  "number",
+                  "nps",
+                  "phone",
+                  "radio",
+                  "search",
+                  "text",
+                  "textarea",
+                  "url",
+                ].includes(e.type)
+              )
+              .map((elem) => (
+                <div className="py-12">
+                  {["email", "number", "phone", "search", "text", "textarea", "url"].includes(elem.type) ? (
+                    <div>
+                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                        {elem.label}
+                        <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
+                          {capitalizeFirstLetter(elem.type)}
+                        </span>
+                      </h2>
+                      <Table submissions={submissions} schema={form.schema} fieldName={elem.name} />
+                    </div>
+                  ) : ["checkbox", "radio"].includes(elem.type) ? (
+                    <div>
+                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                        {elem.label}
+                        <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
+                          {capitalizeFirstLetter(elem.type)}
+                        </span>
+                      </h2>
+                      <Bar submissions={submissions} schema={form.schema} fieldName={elem.name} />
+                    </div>
+                  ) : ["nps"].includes(elem.type) ? (
+                    <div>
+                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                        {elem.label}
+                        <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
+                          {capitalizeFirstLetter(elem.type)}
+                        </span>
+                      </h2>
+                      <Nps submissions={submissions} schema={form.schema} fieldName={elem.name} />
+                    </div>
+                  ) : null}
+                </div>
+              ))
+          )}
+          {}
         </div>
       )}
     </div>

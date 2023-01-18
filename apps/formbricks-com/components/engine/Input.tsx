@@ -20,7 +20,7 @@ export default function Input({ element, field, register, disabled, onSubmit }: 
         className="focus:border-brand focus:ring-brand mx-auto mt-4 block w-full max-w-xl rounded-md border-gray-300 shadow-sm sm:text-sm"
         placeholder={element.frontend?.placeholder || ""}
         required={!!element.frontend?.required}
-        {...register(element.field!)}
+        {...register(element.name!)}
       />
     </div>
   );
