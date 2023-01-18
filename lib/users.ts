@@ -122,3 +122,15 @@ export const persistUserRole = async (data) => {
     console.error(error);
   }
 };
+
+export const updateUserRole = async ({ id, role }) => {
+  try {
+    await fetch(`/api/users`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, role }),
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};

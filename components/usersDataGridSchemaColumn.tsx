@@ -1,6 +1,33 @@
 import { Switch } from "@mui/material";
+import { UserRole } from "@prisma/client";
+import { useState } from "react";
+import { toast } from "react-toastify";
+import { updateUserRole } from "../lib/users";
 
-export const SwitchButton = () => <Switch size='medium' color='primary' />;
+const toggleRole = async (id, role, setIsAdmin) => {
+  setTimeout(async () => {
+    try {
+      setIsAdmin(role === "ADMIN" ? false : true);
+      await updateUserRole({ id, role });
+    } catch (e) {
+      setIsAdmin(role !== "ADMIN" ? false : true);
+      toast.error(`Error: ${e.message}`);
+    }
+  }, 500);
+};
+export const SwitchButton = ({ role, id }) => {
+  const [isAdmin, setIsAdmin] = useState(role === "ADMIN");
+  return (
+    <Switch
+      size='medium'
+      color='primary'
+      onClick={() => {
+        toggleRole(id, role, setIsAdmin);
+      }}
+      checked={isAdmin}
+    />
+  );
+};
 
 export const usersDataGridSchemaColumn = [
   {
@@ -31,25 +58,10 @@ export const usersDataGridSchemaColumn = [
       return (
         <div>
           <span>PUBLIC</span>
-          <Switch
-            size='medium'
-            color='primary'
-            checked={row["Rôle"] === "ADMIN"}
-          />
+          <SwitchButton role={row["Rôle"]} id={row.id} />
           <span>ADMIN</span>
         </div>
       );
     },
   },
 ];
-
-  const updateUserRole = async (user, role) => {
-    try {
-      await fetch(`/api/users/${user.id}`, {
-        method: "UPDATE",
-      });
-   
-    } catch (error) {
-      console.error(error);
-    }
-  };
