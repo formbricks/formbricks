@@ -1,37 +1,25 @@
-import { useEffect, useState } from "react";
 import { SurveyElement } from "./engineTypes";
 
 interface TextareaProps {
   element: SurveyElement;
-  value: any;
-  setValue: (v: any) => void;
+  field: any;
+  disabled: boolean;
   onSubmit: () => void;
 }
 
-export default function Input({ element, value, setValue, onSubmit }: TextareaProps) {
-  const [initialized, setInitialized] = useState(false);
-
-  useEffect(() => {
-    if (!initialized) {
-      //setValue(element.options[0].value);
-      setInitialized(true);
-    }
-  }, [initialized, element.options, setValue]);
+export default function Input({ element, field, disabled, onSubmit }: TextareaProps) {
   return (
-    <div>
-      <label htmlFor="comment" className="text-lg font-bold text-gray-700 dark:text-gray-100">
+    <div className="flex flex-col justify-center">
+      <label htmlFor={element.id} className="mx-auto text-lg font-bold text-gray-700 dark:text-gray-100">
         {element.label}
       </label>
-      <div className="mt-1">
-        <input
-          type="email"
-          name="email"
-          id="email"
-          className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
-          value={value || ""}
-          onChange={(e) => setValue(e.target.value)}
-        />
-      </div>
+      <input
+        type={element.frontend?.type || "text"}
+        className="focus:border-brand focus:ring-brand mx-auto mt-4 block w-full max-w-xl rounded-md border-gray-300 shadow-sm sm:text-sm"
+        placeholder={element.frontend?.placeholder || ""}
+        required={!!element.frontend?.required}
+        {...field}
+      />
     </div>
   );
 }

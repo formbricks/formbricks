@@ -2,31 +2,39 @@ import { RadioGroup } from "@headlessui/react";
 import { CheckCircleIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { SurveyElement } from "./engineTypes";
 
 interface IconRadioProps {
   element: SurveyElement;
-  value: any;
-  setValue: (v: any) => void;
+  field: any;
+  control: any;
   onSubmit: () => void;
+  disabled: boolean;
 }
 
-export default function IconRadio({ element, value, setValue, onSubmit }: IconRadioProps) {
+export default function IconRadio({ element, field, control, onSubmit, disabled }: IconRadioProps) {
   const [initialized, setInitialized] = useState(false);
+
+  const value = useWatch({
+    control,
+    name: element.field!!,
+  });
+
+  useEffect(() => {
+    if (value && !disabled) {
+      onSubmit();
+    }
+  }, [value, onSubmit, disabled]);
 
   useEffect(() => {
     if (!initialized) {
       setInitialized(true);
     }
-  }, [initialized, element.options, setValue]);
+  }, [initialized, element.options]);
   return (
-    <RadioGroup
-      value={value}
-      onChange={(v) => {
-        setValue(v);
-        onSubmit();
-      }}>
-      <RadioGroup.Label className="text-lg font-bold text-gray-700 dark:text-gray-100">
+    <RadioGroup className="flex flex-col justify-center" {...field}>
+      <RadioGroup.Label className="text-center text-lg font-bold text-gray-700 dark:text-gray-100">
         {element.label}
       </RadioGroup.Label>
 

@@ -11,23 +11,11 @@ export function Survey({ survey }: SurveyProps) {
   const [currentPage, setCurrentPage] = useState(survey.pages[0]);
   const [progress, setProgress] = useState(0);
   const [submission, setSubmission] = useState<any>({});
-  const [submittingPage, setSubmittingPage] = useState(false);
-  const [submitPage, setSubmitPage] = useState(false);
   const [finished, setFinished] = useState(false);
 
-  useEffect(() => {
-    if (submittingPage) {
-      setTimeout(() => {
-        setSubmittingPage(false);
-        setSubmitPage(true);
-      }, 1000);
-    }
-  }, [submittingPage]);
-
-  const onPageSubmit = () => {
-    console.log("page submission complete", JSON.stringify(submission, null, 2));
-    console.log(currentPage);
-    const nextPage = calculateNextPage(survey, submission);
+  const onPageSubmit = (updatedSubmission: any) => {
+    console.log("current submission state", JSON.stringify(updatedSubmission, null, 2));
+    const nextPage = calculateNextPage(survey, updatedSubmission);
     setCurrentPage(nextPage);
     if (nextPage.endScreen) {
       setFinished(true);
@@ -63,7 +51,7 @@ export function Survey({ survey }: SurveyProps) {
       </div>
       <SurveyPage
         page={currentPage}
-        onSubmit={() => onPageSubmit()}
+        onSubmit={onPageSubmit}
         submission={submission}
         setSubmission={setSubmission}
         finished={finished}

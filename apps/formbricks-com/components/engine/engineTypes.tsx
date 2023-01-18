@@ -26,6 +26,7 @@ export interface SurveyElement {
   type: "radio" | "text" | "checkbox" | "html";
   options?: SurveyOption[];
   component: React.FC<any>;
+  frontend?: any;
 }
 
 export interface Survey {

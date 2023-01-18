@@ -125,7 +125,7 @@ const WaitlistPage = () => (
                     },
                     {
                       label: "Bug Report Form",
-                      value: "onboardingSegmentation",
+                      value: "bugReportForm",
                       frontend: { icon: BugAntIcon },
                     },
                     {
@@ -151,6 +151,11 @@ const WaitlistPage = () => (
                   type: "text",
                   label: "What's your email?",
                   field: "email",
+                  frontend: {
+                    required: true,
+                    type: "email",
+                    placeholder: "email@example.com",
+                  },
                   component: Input,
                 },
               ],
