@@ -1,9 +1,11 @@
+import FeatureSelection from "@/components/engine/FeatureSelection";
 import IconRadio from "@/components/engine/IconRadio";
 import Input from "@/components/engine/Input";
+import Scale from "@/components/engine/Scale";
 import { Survey } from "@/components/engine/Survey";
 import Textarea from "@/components/engine/Textarea";
 import ThankYouHeading from "@/components/engine/ThankYouHeading";
-import HeroTitle from "@/components/shared/HeroTitle";
+import ThankYouPlans from "@/components/engine/ThankYouPlans";
 import Layout from "@/components/shared/Layout";
 import {
   BeakerIcon,
@@ -21,7 +23,6 @@ import {
   UserCircleIcon,
   UserGroupIcon,
   UserIcon,
-  UserMinusIcon,
   UsersIcon,
   VideoCameraIcon,
   WindowIcon,
@@ -36,6 +37,9 @@ const WaitlistPage = () => (
     <div className="max-w-8xl mb-20 w-full">
       <Survey
         survey={{
+          config: {
+            progressBar: false,
+          },
           pages: [
             {
               id: "rolePage",
@@ -82,9 +86,6 @@ const WaitlistPage = () => (
             },
             {
               id: "featureSelectionPage",
-              config: {
-                autoSubmit: true,
-              },
               elements: [
                 {
                   id: "featureSelection",
@@ -95,51 +96,92 @@ const WaitlistPage = () => (
                     {
                       label: "Onboarding Segmentation",
                       value: "onboardingSegmentation",
-                      frontend: { icon: IdentificationIcon },
+                      frontend: {
+                        icon: IdentificationIcon,
+                        description:
+                          "Get to know your users right from the start. Ask a few questions early, let us enrich the profile.",
+                      },
                     },
-                    { label: "Superhuman PMF Engine", value: "pmf", frontend: { icon: UsersIcon } },
+                    {
+                      label: "Superhuman PMF Engine",
+                      value: "pmf",
+                      frontend: {
+                        icon: UsersIcon,
+                        description:
+                          "Find out how disappointed people would be if they could not use your service any more.",
+                      },
+                    },
                     {
                       label: "Feature Chaser",
                       value: "featureChaser",
-                      frontend: { icon: BuildingOfficeIcon },
+                      frontend: {
+                        icon: BuildingOfficeIcon,
+                        description: "Show a survey about a new feature shown only to people who used it.",
+                      },
                     },
                     {
                       label: "Cancel Subscription Flow",
                       value: "cancelSubscriptionFlow",
-                      frontend: { icon: XCircleIcon },
+                      frontend: {
+                        icon: XCircleIcon,
+                        description:
+                          "Request users going through a cancel subscription flow before cancelling.",
+                      },
                     },
                     {
                       label: "Interview Prompt",
                       value: "interviewPrompt",
-                      frontend: { icon: VideoCameraIcon },
+                      frontend: {
+                        icon: VideoCameraIcon,
+                        description:
+                          "Ask high-interest users to book a time in your calendar to get all the juicy details.",
+                      },
                     },
                     {
                       label: "Fake Door Follow-Up",
                       value: "fakeDoorFollowUp",
-                      frontend: { icon: BeakerIcon },
+                      frontend: {
+                        icon: BeakerIcon,
+                        description:
+                          "Running a fake door experiment? Catch users right when they are full of expectations.",
+                      },
                     },
                     {
                       label: "FeedbackBox",
                       value: "feedbackBox",
-                      frontend: { icon: ChatBubbleBottomCenterIcon },
+                      frontend: {
+                        icon: ChatBubbleBottomCenterIcon,
+                        description: "Give users the chance to share feedback in a single click.",
+                      },
                     },
                     {
                       label: "Bug Report Form",
                       value: "bugReportForm",
-                      frontend: { icon: BugAntIcon },
+                      frontend: {
+                        icon: BugAntIcon,
+                        description: "Catch all bugs in your SaaS with easy and accessible bug reports.",
+                      },
                     },
                     {
                       label: "Rage Click Survey",
                       value: "rageClickSurvey",
-                      frontend: { icon: CursorArrowRippleIcon },
+                      frontend: {
+                        icon: CursorArrowRippleIcon,
+                        description:
+                          "Sometimes things don’t work. Trigger this rage click survey to catch users in rage.",
+                      },
                     },
                     {
                       label: "Feature Request Widget",
                       value: "featureRequestWidget",
-                      frontend: { icon: ChatBubbleBottomCenterTextIcon },
+                      frontend: {
+                        icon: ChatBubbleBottomCenterTextIcon,
+                        description:
+                          "Allow users to request features and pipe it to GitHub projects or Linear.",
+                      },
                     },
                   ],
-                  component: IconRadio,
+                  component: FeatureSelection,
                 },
               ],
             },
@@ -224,19 +266,29 @@ const WaitlistPage = () => (
                   type: "text",
                   label: "First of all, what’s your name?",
                   field: "name",
+                  frontend: { placeholder: "First name" },
                   component: Input,
                 },
               ],
             },
             {
               id: "urgencyPage",
+              config: {
+                autoSubmit: true,
+              },
               elements: [
                 {
                   id: "urgency",
                   type: "text",
                   label: "How urgently do you need this?",
                   field: "urgency",
-                  component: Input,
+                  frontend: {
+                    min: 1,
+                    max: 10,
+                    minLabel: "I’m just curious",
+                    maxLabel: "As soon as possible",
+                  },
+                  component: Scale,
                 },
               ],
             },
@@ -283,6 +335,7 @@ const WaitlistPage = () => (
                   type: "text",
                   label: "The hardest part about scaling user research is...",
                   field: "scalingResearch",
+                  frontend: { placeholder: "Please complete the sentence." },
                   component: Textarea,
                 },
               ],
@@ -295,6 +348,7 @@ const WaitlistPage = () => (
                   type: "text",
                   label: "We have tried to solve it by...",
                   field: "triedSolveIt",
+                  frontend: { placeholder: "Please complete the sentence." },
                   component: Textarea,
                 },
               ],
@@ -307,6 +361,7 @@ const WaitlistPage = () => (
                   type: "text",
                   label: "What tools help you maintain Product-Market Fit?",
                   field: "toolsMaintainPmf",
+                  frontend: { placehodler: "Mixpanel, Segment, Intercom..." },
                   component: Textarea,
                 },
               ],
@@ -327,6 +382,7 @@ const WaitlistPage = () => (
                   type: "text",
                   label: "What is your approach for finding Product-Market Fit?",
                   field: "pmfApproach",
+                  frontend: { placeholder: "Last time, I..." },
                   component: Textarea,
                 },
               ],
@@ -339,6 +395,7 @@ const WaitlistPage = () => (
                   type: "text",
                   label: "What is the hardest part about it?",
                   field: "pmfHardestPart",
+                  frontend: { placeholder: "Please complete the sentence." },
                   component: Textarea,
                 },
               ],
@@ -351,6 +408,7 @@ const WaitlistPage = () => (
                   type: "text",
                   label: "What tools help you finding Product-Market Fit?",
                   field: "pmfFindingTools",
+                  frontend: { placeholder: "Mixpanel, Segment, Intercom..." },
                   component: Textarea,
                 },
               ],
@@ -382,6 +440,11 @@ const WaitlistPage = () => (
                   id: "thankYouBetaUser",
                   type: "html",
                   component: ThankYouHeading,
+                },
+                {
+                  id: "thankYouBetaUser",
+                  type: "html",
+                  component: ThankYouPlans,
                 },
               ],
             },

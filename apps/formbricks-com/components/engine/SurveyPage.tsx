@@ -16,6 +16,7 @@ export function SurveyPage({ page, onSubmit, submission, setSubmission, finished
   const {
     handleSubmit,
     control,
+    register,
     reset,
     formState: { errors },
   } = useForm();
@@ -52,19 +53,12 @@ export function SurveyPage({ page, onSubmit, submission, setSubmission, finished
           return (
             <div key={element.id} className={clsx(submittingPage && "animate-pulse")}>
               {element.field ? (
-                <Controller
-                  name={element.field!}
+                <ElementComponent
+                  element={element}
                   control={control}
-                  rules={{ required: true }}
-                  render={({ field }: { field: any }) => (
-                    <ElementComponent
-                      element={element}
-                      field={field}
-                      control={control}
-                      onSubmit={() => handleSubmitElement()}
-                      disabled={submittingPage}
-                    />
-                  )}
+                  register={register}
+                  onSubmit={() => handleSubmitElement()}
+                  disabled={submittingPage}
                 />
               ) : (
                 <ElementComponent element={element} />
@@ -75,7 +69,7 @@ export function SurveyPage({ page, onSubmit, submission, setSubmission, finished
       </div>
       {!finished && !(page.config?.autoSubmit && page.elements.length == 1) && (
         <div className="my-8 flex w-full justify-end">
-          <Button variant="primary" type="submit">
+          <Button variant="primary" type="submit" className="transition-all ease-in-out hover:scale-105">
             Next
           </Button>
         </div>

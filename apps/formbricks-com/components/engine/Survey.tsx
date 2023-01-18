@@ -46,9 +46,12 @@ export function Survey({ survey }: SurveyProps) {
 
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="mb-8 h-3">
-        <Progressbar progress={progress} />
-      </div>
+      {!(survey.config?.progressBar === false) && (
+        <div className="mb-8 h-3">
+          <Progressbar progress={progress} />
+        </div>
+      )}
+
       <SurveyPage
         page={currentPage}
         onSubmit={onPageSubmit}

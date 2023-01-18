@@ -31,4 +31,7 @@ export interface SurveyElement {
 
 export interface Survey {
   pages: SurveyPage[];
+  config?: {
+    progressBar?: boolean;
+  };
 }
