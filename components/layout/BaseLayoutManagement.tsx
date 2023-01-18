@@ -48,8 +48,8 @@ export default function BaseLayoutManagement({
           <header className='w-full'>
             <div className='relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-ui-gray-light max-sm:pr-2 max-sm:pl-2 max-md:pr-2 max-md:pl-2'>
               <div className='grid w-full grid-cols-2 sm:grid-cols-3'>
-                <div className='flex-1 hidden space-x-8 sm:flex'>
-                  <div className='w-fit m-auto'>
+                <div className='flex-1  space-x-8 sm:flex'>
+                  <div className='sm:w-fit m-auto flex items-center h-full'>
                     <Image
                       src='/img/kda_logo.png'
                       alt='kinshasa digital academy logo'
@@ -60,7 +60,7 @@ export default function BaseLayoutManagement({
                   <NewFormNavButton />
                   <MenuBreadcrumbs breadcrumbs={breadcrumbs} />
                 </div>
-                <div className='flex flex-1'>
+                <div className='hidden sm:flex sm:flex-1'>
                   {steps && (
                     <MenuSteps steps={steps} currentStep={currentStep} />
                   )}
