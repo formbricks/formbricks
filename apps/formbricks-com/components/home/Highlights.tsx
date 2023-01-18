@@ -44,17 +44,9 @@ export default function Highlights({}) {
                 cohorts in-app.
               </p>
             </div>
-            <div className="rounded-lg bg-slate-100 p-8  dark:bg-slate-800">
-              <Image
-                src={ImageAnalytics}
-                alt="react library"
-                className="mb-8 block rounded-lg dark:hidden lg:mb-0"
-              />
-              <Image
-                src={ImageDarkAnalytics}
-                alt="react library"
-                className="mb-8 hidden rounded-lg dark:block lg:mb-0"
-              />
+            <div className="rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:p-8">
+              <Image src={ImageAnalytics} alt="react library" className="block rounded-lg dark:hidden" />
+              <Image src={ImageDarkAnalytics} alt="react library" className="hidden rounded-lg dark:block" />
             </div>
           </div>
         </div>
@@ -62,17 +54,9 @@ export default function Highlights({}) {
       <div className="mx-auto mt-8 mb-12 max-w-lg md:mt-32 md:mb-0  md:max-w-none">
         <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
-            <div className="order-last rounded-lg bg-slate-100 p-8 dark:bg-slate-800 md:order-first">
-              <Image
-                src={ImageInsights}
-                alt="react library"
-                className="mb-8 block rounded-lg dark:hidden lg:mb-0"
-              />
-              <Image
-                src={ImageDarkInsights}
-                alt="react library"
-                className="mb-8 hidden rounded-lg dark:block lg:mb-0"
-              />
+            <div className="order-last rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:p-8 md:order-first">
+              <Image src={ImageInsights} alt="react library" className="block rounded-lg dark:hidden" />
+              <Image src={ImageDarkInsights} alt="react library" className="hidden rounded-lg dark:block" />
             </div>
             <div className="pb-8 md:pb-0">
               <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">

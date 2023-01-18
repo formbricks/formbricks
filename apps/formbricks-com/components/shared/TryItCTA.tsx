@@ -21,7 +21,7 @@ export default function HeadingCentered() {
         <Button variant="secondary" onClick={() => router.push("/docs")}>
           Read docs
         </Button>
-        <Button variant="primary" className="ml-3" onClick={() => router.push("/get-started")}>
+        <Button variant="primary" className="ml-3" onClick={() => router.push("/waitlist")}>
           Get started
         </Button>
       </div>
