@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import {
   GlobeAltIcon,
   EnvelopeIcon,
@@ -31,10 +31,12 @@ const App: FC<IProps> = ({
   localOnly = false,
   startDate = new Date(),
 }) => {
+  const [fieldErrors, setFieldErrors] = useState({});
   const router = useRouter();
 
   const onSubmit = () => {
-    router.push(`/sourcings/${formId}`);
+    if (Object.values(fieldErrors).filter((f) => f).length)
+      router.push(`/sourcings/${formId}`);
   };
   //TODO Find better way to handle this
   if (findTimer(page, startDate) < 0 && isTimedPage(page)) {
@@ -74,6 +76,8 @@ const App: FC<IProps> = ({
         localOnly={localOnly}
         className='w-full max-w-3xl mx-auto space-y-6'
         onSubmit={onSubmit}
+        setFieldErrors={setFieldErrors}
+        page={page}
       >
         <SnoopPage
           name={page.id}
@@ -129,6 +133,7 @@ const App: FC<IProps> = ({
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
+                  error={fieldErrors[block.id]}
                 />
               ) : block.type === "textareaQuestion" ? (
                 <SnoopElement
@@ -143,6 +148,7 @@ const App: FC<IProps> = ({
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
+                  error={fieldErrors[block.id]}
                 />
               ) : block.type === "emailQuestion" ? (
                 <SnoopElement
@@ -162,6 +168,7 @@ const App: FC<IProps> = ({
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
+                  error={fieldErrors[block.id]}
                 />
               ) : block.type === "multipleChoiceQuestion" &&
                 block.data.multipleChoice ? (
@@ -181,6 +188,7 @@ const App: FC<IProps> = ({
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
+                  error={fieldErrors[block.id]}
                 />
               ) : block.type === "multipleChoiceQuestion" &&
                 !block.data.multipleChoice ? (
@@ -200,6 +208,7 @@ const App: FC<IProps> = ({
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
+                  error={fieldErrors[block.id]}
                 />
               ) : block.type === "numberQuestion" ? (
                 <SnoopElement
@@ -218,6 +227,7 @@ const App: FC<IProps> = ({
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
+                  error={fieldErrors[block.id]}
                 />
               ) : block.type === "phoneQuestion" ? (
                 <SnoopElement
@@ -237,6 +247,7 @@ const App: FC<IProps> = ({
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
+                  error={fieldErrors[block.id]}
                 />
               ) : block.type === "submitButton" ? (
                 <SnoopElement
@@ -266,6 +277,7 @@ const App: FC<IProps> = ({
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
                   }}
                   required={block.data.required}
+                  error={fieldErrors[block.id]}
                 />
               ) : block.type === "dashboardRedirectButton" ? (
                 <SnoopElement
