@@ -38,7 +38,7 @@ const EmailPage = () => (
       img={<Image src={ImageEmail} alt="react library" className="rounded-lg" />}
       isImgLeft
       cta="Get started"
-      href="/get-started"
+      href="/waitlist"
     />
     <ul role="list" className="grid grid-cols-1 gap-6 px-12 pt-2 pb-16 sm:grid-cols-2 md:grid-cols-3">
       {features.map((feature) => (

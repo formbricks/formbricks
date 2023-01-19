@@ -1,62 +1,103 @@
 import Image from "next/image";
-import ImageReactLib from "@/images/react-lib.png";
-import ImageDataPipelines from "@/images/data-pipelines.png";
-import Link from "next/link";
-import Button from "../shared/Button";
-import { useRouter } from "next/router";
+import ImageAnalytics from "@/images/connect-analytics.png";
+import ImageInsights from "@/images/insights.png";
+import ImageDarkAnalytics from "@/images/dark-connect-analytics.png";
+import ImageDarkInsights from "@/images/dark-insights.png";
+
+const userBase = [
+  {
+    email: "anna@open.com",
+    status: "Signed Up",
+  },
+  {
+    email: "tim@yama.com",
+    status: "Activated",
+  },
+  {
+    email: "beth@lehem.com",
+    status: "Customer",
+  },
+  {
+    email: "pied@piper.com",
+    status: "Customer",
+  },
+  {
+    email: "janice@late.com",
+    status: "Churned",
+  },
+];
 
 export default function Highlights({}) {
-  const router = useRouter();
   return (
     <>
-      <div className="mt-8 md:mt-32">
-        <div className="mx-auto max-w-md px-4 sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
-          <div className="grid lg:grid-cols-2 lg:items-center lg:gap-24">
-            <div className="order-last lg:order-first">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-3xl">
-                Build forms in minutes with our{" "}
-                <span className="text-brand-dark dark:text-brand-light font-light">lightweight</span> React
-                Form Builder.
+      <div className="mx-auto mt-8 mb-12 max-w-lg md:mt-32 md:mb-0 md:max-w-none">
+        <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
+          <div className="grid md:grid-cols-2 md:items-center md:gap-16">
+            <div className="pb-8 md:pb-0">
+              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200">
+                Connect product analytics,
+                <br />
+                <span className="font-light">ask specific user cohorts.</span>
               </h2>
               <p className="text-md mt-6 max-w-3xl leading-7 text-slate-500 dark:text-slate-400">
-                Loads of question types, validation, multi-page forms, logic jumps, i18n, custom styles - all
-                the good stuff you want, but don&apos;t want to build yourself.
-                <br />
-                <br />
-                Build <span className="font-semibold">exactly</span> the form you want in a fraction of the
-                time.
+                Email is spammy and ineffective. Create cohorts based on usage data and reach out to specific
+                cohorts in-app.
               </p>
-              <div className="my-6">
-                <Button variant="minimal" size="sm" onClick={() => router.push("/react-form-library")}>
-                  Read more
-                </Button>
-              </div>
             </div>
-            <Image src={ImageReactLib} alt="react library" className="mb-8 rounded-lg lg:mb-0" />
+            <div className="rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:p-8">
+              <Image src={ImageAnalytics} alt="react library" className="block rounded-lg dark:hidden" />
+              <Image src={ImageDarkAnalytics} alt="react library" className="hidden rounded-lg dark:block" />
+            </div>
           </div>
         </div>
       </div>
-      <div className="mt-16 md:mt-32">
-        <div className="mx-auto max-w-md px-4 sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
-          <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-24">
-            <Image src={ImageDataPipelines} alt="react library" className="mb-8 rounded-lg lg:mb-0" />
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
-                <span className="text-brand-dark dark:text-brand-light ">API</span> all the way
+      <div className="mx-auto mt-8 mb-12 max-w-lg md:mt-32 md:mb-0  md:max-w-none">
+        <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
+          <div className="grid md:grid-cols-2 md:items-center md:gap-16">
+            <div className="order-last rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:p-8 md:order-first">
+              <Image src={ImageInsights} alt="react library" className="block rounded-lg dark:hidden" />
+              <Image src={ImageDarkInsights} alt="react library" className="hidden rounded-lg dark:block" />
+            </div>
+            <div className="pb-8 md:pb-0">
+              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
+                Fill the gaps between
+                <br />
+                <span className="font-light">analytics and interviews.</span>
               </h2>
               <p className="text-md mt-6 max-w-3xl leading-7 text-slate-500 dark:text-slate-400">
-                Your form looks perfect? Time to build integrations...
-                <br />
-                <br />
-                <span className="font-semibold">Or use our prebuilt data pipelines.</span> Pipe submissions
-                right into your database. Set up webhooks, email notifications and 3rd party integrations in
-                our webUI.
+                Product analytics don’t tell a story, people do. Complement user interviews with a constant
+                flow of qualitative user insights.
               </p>
-              <div className="mt-6">
-                <Button variant="minimal" size="sm" onClick={() => router.push("/core-api")}>
-                  Read more
-                </Button>
-              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="mx-auto mt-8 mb-12 max-w-lg md:mt-32 md:mb-0  md:max-w-none">
+        <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
+          <div className="grid md:grid-cols-2 md:items-center md:gap-16">
+            <div className="pb-8 md:pb-0">
+              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-3xl">
+                From sign up to paid plan:
+                <br />
+                <span className="font-light">Never ask something twice.</span>
+              </h2>
+              <p className="text-md mt-6 max-w-3xl leading-7 text-slate-500 dark:text-slate-400">
+                With Formbricks you build a database of everyone who signs up to your product. Enrich their
+                profile at key moments in the user journey.
+              </p>
+            </div>
+            <div className="w-full rounded-lg bg-slate-100 p-8 dark:bg-slate-800">
+              {userBase.map((user) => (
+                <div className="my-2 flex w-full justify-between rounded-lg bg-slate-50 py-2 px-4 text-slate-700 transition-all duration-75 ease-in-out hover:scale-105 dark:bg-slate-700 dark:text-slate-300">
+                  {user.email}
+                  <p className="xs:max-md:block hidden rounded-full bg-slate-200 px-3 text-sm dark:bg-slate-600 lg:block ">
+                    {user.status}
+                  </p>
+                  <a href={"mailto:" + user.email} className="text-brand font-semibold">
+                    Reach Out
+                  </a>
+                </div>
+              ))}
             </div>
           </div>
         </div>

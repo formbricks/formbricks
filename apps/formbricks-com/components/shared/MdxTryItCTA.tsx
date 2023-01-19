@@ -19,7 +19,7 @@ export default function HeadingCentered() {
         <Button variant="secondary" onClick={() => router.push("/discord")}>
           Join Discord
         </Button>
-        <Button variant="primary" className="ml-3" onClick={() => router.push("/get-started")}>
+        <Button variant="primary" className="ml-3" onClick={() => router.push("/waitlist")}>
           Get started
         </Button>
       </div>

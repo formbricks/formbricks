@@ -35,7 +35,7 @@ model Pipeline {
 }
 
 model Customer {
-  id          String
+  email       String
   createdAt   DateTime     @default(now()) @map(name: "created_at")
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
   workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -43,10 +43,11 @@ model Customer {
   submissions Submission[]
   data        Json         @default("{}")
 
-  @@id([id, workspaceId])
+  @@id([email, workspaceId])
 }
 
 enum FormType {
+  custom
   feedback
 }
 
@@ -70,8 +71,8 @@ model Submission {
   archived            Boolean   @default(false)
   form                Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId              String
-  customer            Customer? @relation(fields: [customerId, customerWorkspaceId], references: [id, workspaceId])
-  customerId          String?
+  customer            Customer? @relation(fields: [customerEmail, customerWorkspaceId], references: [email, workspaceId])
+  customerEmail       String?
   customerWorkspaceId String?
   data                Json      @default("{}")
   meta                Json      @default("{}")

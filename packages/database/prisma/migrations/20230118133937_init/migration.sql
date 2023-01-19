@@ -5,7 +5,7 @@ CREATE TYPE "PipelineType" AS ENUM ('webhook', 'emailNotification', 'slackNotifi
 CREATE TYPE "PipelineEvent" AS ENUM ('submissionCreated');
 
 -- CreateEnum
-CREATE TYPE "FormType" AS ENUM ('feedback');
+CREATE TYPE "FormType" AS ENUM ('custom', 'feedback');
 
 -- CreateEnum
 CREATE TYPE "MembershipRole" AS ENUM ('member', 'admin', 'owner');
@@ -30,13 +30,13 @@ CREATE TABLE "Pipeline" (
 
 -- CreateTable
 CREATE TABLE "Customer" (
-    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "workspaceId" TEXT NOT NULL,
     "data" JSONB NOT NULL DEFAULT '{}',
 
-    CONSTRAINT "Customer_pkey" PRIMARY KEY ("id","workspaceId")
+    CONSTRAINT "Customer_pkey" PRIMARY KEY ("email","workspaceId")
 );
 
 -- CreateTable
@@ -59,7 +59,7 @@ CREATE TABLE "Submission" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "archived" BOOLEAN NOT NULL DEFAULT false,
     "formId" TEXT NOT NULL,
-    "customerId" TEXT,
+    "customerEmail" TEXT,
     "customerWorkspaceId" TEXT,
     "data" JSONB NOT NULL DEFAULT '{}',
     "meta" JSONB NOT NULL DEFAULT '{}',
@@ -159,7 +159,7 @@ ALTER TABLE "Form" ADD CONSTRAINT "Form_workspaceId_fkey" FOREIGN KEY ("workspac
 ALTER TABLE "Submission" ADD CONSTRAINT "Submission_formId_fkey" FOREIGN KEY ("formId") REFERENCES "Form"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Submission" ADD CONSTRAINT "Submission_customerId_customerWorkspaceId_fkey" FOREIGN KEY ("customerId", "customerWorkspaceId") REFERENCES "Customer"("id", "workspaceId") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Submission" ADD CONSTRAINT "Submission_customerEmail_customerWorkspaceId_fkey" FOREIGN KEY ("customerEmail", "customerWorkspaceId") REFERENCES "Customer"("email", "workspaceId") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Membership" ADD CONSTRAINT "Membership_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;

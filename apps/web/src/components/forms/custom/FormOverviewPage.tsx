@@ -9,7 +9,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Prism from "prismjs";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AiFillApi } from "react-icons/ai";
 import { FaReact, FaVuejs } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -19,8 +19,6 @@ require("prismjs/components/prism-javascript");
 const tabs = [
   { id: "overview", name: "Overview", icon: UserIcon },
   { id: "api", name: "API", icon: AiFillApi },
-  { id: "react", name: "React", icon: FaReact },
-  { id: "vue", name: "Vue", icon: FaVuejs },
 ];
 
 export default function FormOverviewPage() {
@@ -33,6 +31,12 @@ export default function FormOverviewPage() {
     router.query.workspaceId?.toString()
   );
   const [activeTab, setActiveTab] = useState(tabs[0]);
+
+  const capturePostUrl = useMemo(() => {
+    if (form) {
+      return `${window.location.protocol}//${window.location.host}/api/capture/forms/${form.id}/submissions`;
+    }
+  }, [form]);
 
   useEffect(() => {
     if (!isLoadingForm) {
@@ -151,7 +155,7 @@ export default function FormOverviewPage() {
                         id="captureUrl"
                         type="text"
                         className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm"
-                        value={`${window.location.protocol}//${window.location.host}/api/capture/forms/${form.id}/submissions`}
+                        value={capturePostUrl}
                         disabled
                       />
                     </div>
@@ -160,7 +164,7 @@ export default function FormOverviewPage() {
                       variant="secondary"
                       className="mt-2 w-full justify-center"
                       onClick={() => {
-                        navigator.clipboard.writeText(form.id);
+                        navigator.clipboard.writeText(capturePostUrl);
                         toast("Copied form url to clipboard");
                       }}>
                       copy
@@ -268,212 +272,7 @@ export default function FormOverviewPage() {
               </div>
             </div>
           </div>
-        ) : activeTab.id === "react" ? (
-          <div>
-            <div className="mt-5 grid grid-cols-5 gap-8">
-              <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-gray-200">
-                <pre>
-                  <code className="language-js whitespace-pre-wrap">
-                    {`import { Form, Text, Email, Checkbox, Submit, sendToHq } from "@formbricks/react";
-import "@formbricks/react/styles.css";
-
-export default function WaitlistForm() {
-return (
-<Form formId="${form.id}" hqUrl="${window.location.protocol}//${window.location.host}" onSubmit={sendToHq}> 
-  <Text name="name" label="What's your name?" validation="required" />
-  <Email
-    name="email"
-    label="What's your email address?"
-    placeholder="you@example.com"
-    validation="required|email"
-  />
-  <Checkbox
-    name="terms"
-    label="Terms & Conditions"
-    help="To use our service, please accept."
-    validation="accepted"
-  />
-  <Submit label="Let's go!" />
-</Form>
-);
-}`}
-                  </code>
-                </pre>
-              </div>
-              <div className="col-span-2">
-                <h3 className="block text-lg font-semibold text-slate-800">Formbricks React</h3>
-                <p className="my-3 text-sm text-gray-600">
-                  The best way to send submissions to Formbricks HQ in React is{" "}
-                  <Link
-                    target="_blank"
-                    className="underline"
-                    href="https://www.npmjs.com/package/@formbricks/react">
-                    Formbricks React.
-                  </Link>{" "}
-                  It makes form creation easy and automatically creates a schema to get a full picture of your
-                  data in the Summary tab.
-                </p>
-              </div>
-            </div>
-            <div className="mt-5 grid grid-cols-5 gap-8">
-              <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-gray-200">
-                <pre>
-                  <code className="language-js whitespace-pre-wrap">
-                    {`
-<form
-onSubmit={(e) => {
-  e.preventDefault();
-  fetch(
-    "${window.location.protocol}//${window.location.host}/api/capture/forms/${form.id}/submissions",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        data: {
-          firstname: e.target.firstname.value,
-          email: e.target.email.value,
-        },
-      }),
-    }
-  );
-  console.log("submission sent!");
-  e.target.reset();
-}}
->
-<label htmlFor="firstname">First name</label>
-<input type="text" name="firstname" id="firstname" />
-<label htmlFor="email">Email</label>
-<input type="email" name="email" id="email" placeholder="you@example.com" />
-
-<button type="submit">Submit</button>
-</form>`}
-                  </code>
-                </pre>
-              </div>
-              <div className="col-span-2">
-                <h3 className="block text-lg font-semibold text-slate-800">Standard React Forms</h3>
-                <p className="my-3 text-sm text-gray-600">
-                  You can also use the default React Form functionality (or another form library) to send the
-                  submissions to Formbricks HQ.
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : activeTab.id === "vue" ? (
-          <div>
-            <div className="mt-5 grid grid-cols-5 gap-8">
-              <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-gray-200">
-                <pre>
-                  <code className="language-js whitespace-pre-wrap">
-                    {`<template>
-  <form @submit.prevent="submitForm">
-    <label>
-      <span>Email</span>
-      <input type="email" name="email" v-model="email" />
-    </label>
-    <label>
-      <span>Message</span>
-      <textarea name="message" v-model="message"></textarea>
-    </label>
-    <button type="submit">Submit</button>
-  </form>
-</template>
-
-<script>
-export default {
-  data() {
-    return {
-      email: '',
-      message: '',
-      endpoint: '${window.location.protocol}//${window.location.host}/capture/forms/${form.id}/submissions',
-    }
-  },
-  methods: {
-    async submitForm() {
-      const data = {
-        email: this.email,
-        message: this.message,
-      }
-      const response = await this.$axios.post(this.endpoint, {data})
-    },
-  },
-}
-</script>`}
-                  </code>
-                </pre>
-              </div>
-              <div className="col-span-2">
-                <h3 className="block text-lg font-semibold text-slate-800">Standard Vue Forms</h3>
-                <p className="my-3 text-sm text-gray-600">
-                  You can also use the default Vue form functionality to send submissions to Formbricks HQ.
-                </p>
-              </div>
-            </div>
-          </div>
         ) : null}
-
-        {/* <div className="mt-16">
-          <h2 className="text-xl font-bold text-slate-800">Code your form</h2>
-          <div className="">
-            <p className="text-slate-800">
-              Build your form with the code library of your choice. Manage your data in this dashboard.
-            </p>
-          </div>
-          <ul role="list" className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
-            {libs.map((lib) => (
-              <Link
-                key={lib.id}
-                href={lib.href}
-                className={clsx(
-                  "col-span-1 flex rounded-md shadow-sm",
-                  lib.disabled && "pointer-events-none"
-                )}
-                target={lib.target || ""}
-                rel="noreferrer">
-                <li
-                  className={clsx(
-                    lib.comingSoon ? "text-slate-500" : "text-slate-800 shadow-sm hover:text-black",
-                    "col-span-1 flex w-full rounded-md"
-                  )}>
-                  <div
-                    className={clsx(
-                      lib.bgColor || "bg-slate-300",
-                      "flex w-20 flex-shrink-0 items-center justify-center rounded-l-md text-sm font-medium text-white"
-                    )}>
-                    <lib.icon
-                      className={clsx(lib.comingSoon ? "text-slate-100" : "stroke-1 text-white", "h-10 w-10")}
-                    />
-                  </div>
-                  <div
-                    className={clsx(
-                      lib.comingSoon ? "border-dashed" : "",
-                      "flex flex-1 items-center justify-between truncate rounded-r-md bg-white"
-                    )}>
-                    <div className="inline-flex truncate px-4 py-6 text-lg">
-                      <p className="font-light">{lib.name}</p>
-                      {lib.comingSoon && (
-                        <div className="ml-3 rounded bg-teal-100 p-1 px-3">
-                          <p className="text-xs text-black">coming soon</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              </Link>
-            ))}
-          </ul>
-
-          <div className="my-12 text-center font-light text-slate-500">
-            <p>
-              Your form is running? Go to{" "}
-              <Link href={`/forms/${form.id}/preview`} className="text-red underline">
-                Pipelines
-              </Link>
-            </p>
-          </div>
-        </div> */}
       </div>
     </div>
   );

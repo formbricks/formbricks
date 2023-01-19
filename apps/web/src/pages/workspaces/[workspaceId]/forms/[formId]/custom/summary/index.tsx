@@ -1,14 +1,14 @@
-import PipelinesPage from "@/components/forms/pipelines/PipelinesOverview";
+import SummaryPage from "@/components/forms/summary/SummaryPage";
 import LayoutApp from "@/components/layout/LayoutApp";
-import LayoutWrapperForm from "@/components/layout/LayoutWrapperForm";
+import LayoutWrapperForm from "@/components/layout/LayoutWrapperCustomForm";
 import LayoutWrapperWorkspace from "@/components/layout/LayoutWrapperWorkspace";
 
-export default function Pipeline({}) {
+export default function Submissions({}) {
   return (
     <LayoutApp>
       <LayoutWrapperWorkspace>
         <LayoutWrapperForm>
-          <PipelinesPage />
+          <SummaryPage />
         </LayoutWrapperForm>
       </LayoutWrapperWorkspace>
     </LayoutApp>

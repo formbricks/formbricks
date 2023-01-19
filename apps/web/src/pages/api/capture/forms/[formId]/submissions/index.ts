@@ -35,21 +35,21 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     };
 
-    if (submission.customer && "id" in submission.customer) {
-      const customerId = submission.customer.id;
+    if (submission.customer && "email" in submission.customer) {
+      const customerEmail = submission.customer.email;
       const customerData = { ...submission.customer };
-      delete customerData.id;
+      delete customerData.email;
       // create or link customer
       event.data.customer = {
         connectOrCreate: {
           where: {
-            id_workspaceId: {
-              id: submission.customer.id,
+            email_workspaceId: {
+              email: submission.customer.email,
               workspaceId: form.workspaceId,
             },
           },
           create: {
-            id: customerId,
+            email: customerEmail,
             workspace: { connect: { id: form.workspaceId } },
             data: customerData,
           },

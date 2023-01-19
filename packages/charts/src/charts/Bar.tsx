@@ -18,9 +18,21 @@ export function FbBar({ color, submissions, schema, fieldName }: Props) {
     }
     // build data object by finding schema definition of field and scanning submissions for this key
     const dataDict: any = {};
-    const schemaElem = schema.children.find((e: any) => e.name === fieldName);
+    let schemaElem;
+    for (const pages of schema.pages) {
+      for (const elem of pages.elements) {
+        if (elem.name === fieldName) {
+          schemaElem = elem;
+          break;
+        }
+      }
+    }
     if (typeof schemaElem === "undefined") {
       throw Error("key not found in schema");
+    }
+    console.log(schemaElem);
+    if (!("options" in schemaElem)) {
+      throw Error(`No options found for element "${schemaElem.name}"`);
     }
     for (const option of schemaElem.options) {
       dataDict[option.value] = { name: option.label, value: 0 };

@@ -17,7 +17,7 @@ export default function HeroAnimation(props: any) {
         loop: true,
         autoplay: true,
         // path to your animation file, place it inside public folder
-        path: "/animations/hero-v2.json",
+        path: "/animations/xm-hero-v1.json",
       });
 
       return () => animation.destroy();

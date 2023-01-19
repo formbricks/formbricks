@@ -1,53 +1,25 @@
-import {
-  PlusIcon,
-  SquaresPlusIcon,
-  ChartBarIcon,
-  ArrowTrendingUpIcon,
-  DocumentPlusIcon,
-  RectangleGroupIcon,
-} from "@heroicons/react/24/outline";
+import { PlusIcon, SquaresPlusIcon, ChartBarIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import HeadingCentered from "../shared/HeadingCentered";
 
 const features = [
   {
-    id: "formCreation",
-    name: "Fast Survey Creation",
-    description: "Build complex forms with our React Lib. Use templates to assure consistent data.",
+    id: "devAttention",
+    name: "Minimal Dev Attention",
+    description: "All you want is building your product. Set it up once, keep insights flowing in..",
     icon: PlusIcon,
   },
   {
-    id: "dataPipelines",
-    name: "Data Pipelines",
-    description: "Save your data where you need it. Use webhooks or pre-built integrations.",
+    id: "nativeLookFeel",
+    name: "Native Look & Feel",
+    description: "No more UX clutter. Use headless forms or highly customizabale UI components.",
     icon: SquaresPlusIcon,
   },
   {
-    id: "dataInsights",
-    name: "Powerful Data Insights",
-    description: "View and manage your results quicker. Handle submissions in our dahsboard.",
+    id: "openSourcer",
+    name: "Open Source",
+    description: "Own your data. Run Formbricks on your servers and comply with all regulation.",
     icon: ChartBarIcon,
-  },
-  {
-    id: "nocodeBuilder",
-    name: "100% customizable",
-    description: "Delight your users and get more responses with a native look & feel.",
-    icon: RectangleGroupIcon,
-    comingSoon: true,
-  },
-  {
-    id: "analytics",
-    name: "Built-in Analytics",
-    description: "Opening rate, drop-offs, conversions. Use privacy-first analytics out of the box.",
-    icon: ArrowTrendingUpIcon,
-    comingSoon: true,
-  },
-  {
-    id: "templates",
-    name: "Survey Templates",
-    description: "NPS, CSAT, Employee Surveys. Name your business objective, we have the questions.",
-    icon: DocumentPlusIcon,
-    comingSoon: true,
   },
 ];
 export default function Features() {
@@ -59,30 +31,19 @@ export default function Features() {
       <div className="relative mx-auto max-w-7xl">
         <HeadingCentered
           closer
-          teaser="the Swiss army knife for forms & surveys"
-          heading="Build native surveys in minutes"
-          subheading="Build a 'home-cooked' solution in a fraction of the time. We do the heavy lifting, you customize
-            to your needs."
+          teaser="Built for Product-minded founders"
+          heading="Hack you way to Product-Market Fit"
+          subheading="We redesigned experience management for SaaS founding teams:
+          Developer-first, native look & feel, private at heart."
         />
 
-        <ul role="list" className="grid grid-cols-1 gap-6 pt-8 sm:grid-cols-2 md:grid-cols-3">
+        <ul role="list" className="grid grid-cols-1 gap-4 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:gap-10">
           {features.map((feature) => (
             <li
               key={feature.id}
-              className={clsx(
-                feature.comingSoon
-                  ? "bg-gradient-to-b from-slate-200  to-slate-100 dark:from-slate-800 dark:to-slate-900"
-                  : "bg-slate-200 drop-shadow-sm dark:bg-slate-800 ",
-                "relative col-span-1 mt-16 flex flex-col rounded-xl text-center"
-              )}>
+              className="relative col-span-1 mt-16 flex flex-col rounded-xl bg-slate-100 text-center dark:bg-slate-700">
               <div className="absolute -mt-12 w-full">
-                <div
-                  className={clsx(
-                    feature.comingSoon
-                      ? "from-slate-100 via-slate-200  to-slate-200 dark:from-slate-800  dark:to-slate-900"
-                      : "from-slate-200 via-slate-100  to-slate-100 dark:from-slate-900 dark:to-slate-700 ",
-                    "mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br shadow"
-                  )}>
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-200 shadow dark:bg-slate-800">
                   <feature.icon className="text-brand-dark dark:text-brand-light mx-auto h-10 w-10 flex-shrink-0" />
                 </div>
               </div>
@@ -93,13 +54,6 @@ export default function Features() {
                 <dl className="mt-1 flex flex-grow flex-col justify-between">
                   <dt className="sr-only">Description</dt>
                   <dd className="text-sm text-gray-600 dark:text-slate-400">{feature.description}</dd>
-                  {feature.comingSoon && (
-                    <dd className="mt-4">
-                      <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                        coming soon
-                      </span>
-                    </dd>
-                  )}
                 </dl>
               </div>
             </li>

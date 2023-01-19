@@ -1,18 +1,17 @@
 "use client";
 
+import SubmissionDisplay from "@/components/forms/submissions/SubmissionDisplay";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { useForm } from "@/lib/forms";
 import { deleteSubmission, useSubmissions } from "@/lib/submissions";
+import { convertDateTimeString } from "@/lib/utils";
 import { RadioGroup } from "@headlessui/react";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import { convertDateTimeString } from "@/lib/utils";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import type { Submission } from "@prisma/client";
 import clsx from "clsx";
-import SubmissionDisplay from "@/components/forms/submissions/SubmissionDisplay";
-import { format } from "path";
-import { useForm } from "@/lib/forms";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 export default function SubmissionsPage() {
   const router = useRouter();

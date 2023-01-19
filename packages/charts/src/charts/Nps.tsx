@@ -18,7 +18,15 @@ export function Nps({ color, submissions, schema, fieldName }: Props) {
     }
     // build data object by finding schema definition of field and scanning submissions for this key
     const dataDict: any = {};
-    const schemaElem = schema.children.find((e: any) => e.name === fieldName);
+    let schemaElem;
+    for (const pages of schema.pages) {
+      for (const elem of pages.elements) {
+        if (elem.name === fieldName) {
+          schemaElem = elem;
+          break;
+        }
+      }
+    }
     if (typeof schemaElem === "undefined") {
       throw Error("key not found in schema");
     }

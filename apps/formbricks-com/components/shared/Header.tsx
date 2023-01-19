@@ -1,19 +1,5 @@
 import { Popover, Transition } from "@headlessui/react";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
-import {
-  Bars3Icon,
-  BoltIcon,
-  ClipboardDocumentListIcon,
-  CodeBracketSquareIcon,
-  CpuChipIcon,
-  CursorArrowRaysIcon,
-  CursorArrowRippleIcon,
-  DocumentChartBarIcon,
-  EnvelopeIcon,
-  SquaresPlusIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
-import clsx from "clsx";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment } from "react";
@@ -21,86 +7,12 @@ import Button from "./Button";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
 
-const creation = [
-  {
-    name: "React Library",
-    description: "Build surveys with React.js",
-    href: "/react-form-library",
-    icon: CodeBracketSquareIcon,
-    status: true,
-  },
-  {
-    name: "No Code Builder",
-    description: "Notion-like visual builder",
-    href: "/visual-builder",
-    icon: CursorArrowRaysIcon,
-    status: false,
-  },
-  {
-    name: "Templates",
-    description: "CSAT, PMF survey, etc.",
-    href: "#",
-    icon: ClipboardDocumentListIcon,
-    status: false,
-  },
-];
-
-const pipes = [
-  {
-    name: "Core API",
-    description: "The OS survey engine",
-    href: "/core-api",
-    icon: CpuChipIcon,
-    status: true,
-  },
-  {
-    name: "Webhooks",
-    description: "Send JSON anywhere",
-    href: "/webhooks",
-    icon: BoltIcon,
-    status: true,
-  },
-  {
-    name: "Email",
-    description: "Send data and notifications",
-    href: "/email",
-    icon: EnvelopeIcon,
-    status: true,
-  },
-  {
-    name: "Integrations",
-    description: "Connect with 100+ apps",
-    href: "/integrations",
-    icon: SquaresPlusIcon,
-    status: false,
-  },
-];
-
-const insights = [
-  {
-    name: "Formbricks HQ",
-    description: "Manage submissions easily",
-    href: "/formbricks-hq",
-    icon: CursorArrowRippleIcon,
-    cat: "insights",
-    status: true,
-  },
-  {
-    name: "Reports",
-    description: "Based on Templates",
-    href: "#",
-    icon: DocumentChartBarIcon,
-    cat: "insights",
-    status: false,
-  },
-];
-
 export default function Header() {
   const router = useRouter();
   return (
     <Popover className="relative" as="header">
-      <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start md:space-x-10">
-        <div className="flex justify-start lg:w-0 lg:flex-1">
+      <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start ">
+        <div className="flex w-0 flex-1 justify-start">
           <Link href="/">
             <span className="sr-only">Formbricks</span>
             <FooterLogo className="h-8 w-auto sm:h-10" />
@@ -113,145 +25,6 @@ export default function Header() {
           </Popover.Button>
         </div>
         <Popover.Group as="nav" className="hidden space-x-10 md:flex">
-          <Popover className="relative">
-            {({ open }) => (
-              <>
-                <Popover.Button
-                  className={clsx(
-                    open ? "text-slate-700" : "text-slate-400",
-                    "group inline-flex items-center rounded-md text-base font-medium hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-slate-300"
-                  )}>
-                  <span>Bricks</span>
-                  <ChevronDownIcon className="ml-2 h-5 w-5" aria-hidden="true" />
-                </Popover.Button>
-
-                <Transition
-                  as={Fragment}
-                  enter="transition ease-out duration-200"
-                  enterFrom="opacity-0 translate-y-1"
-                  enterTo="opacity-100 translate-y-0"
-                  leave="transition ease-in duration-150"
-                  leaveFrom="opacity-100 translate-y-0"
-                  leaveTo="opacity-0 translate-y-1">
-                  <Popover.Panel className="absolute z-10 mt-3 -ml-4 w-screen max-w-lg transform lg:left-1/2 lg:ml-0 lg:max-w-4xl lg:-translate-x-1/2">
-                    <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                      <div className="relative grid gap-6 bg-slate-50 px-5 py-6 dark:bg-slate-700 sm:gap-6 sm:p-8 lg:grid-cols-3">
-                        <div>
-                          <h4 className="mb-6 ml-16 text-sm text-slate-400">Survey Creation</h4>
-                          {creation.map((brick) => (
-                            <Link
-                              key={brick.name}
-                              href={brick.href}
-                              className={clsx(
-                                brick.status
-                                  ? "cursor-pointer hover:bg-slate-100  dark:hover:bg-slate-600 dark:hover:bg-opacity-50"
-                                  : "cursor-default",
-                                "-m-3 flex items-start rounded-lg p-3 py-4"
-                              )}>
-                              <div
-                                className={clsx(
-                                  brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
-                                  "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
-                                )}>
-                                <brick.icon className="h-6 w-6" aria-hidden="true" />
-                              </div>
-                              <div className="ml-4">
-                                <p
-                                  className={clsx(
-                                    brick.status
-                                      ? "text-slate-800 dark:text-slate-50"
-                                      : "text-slate-500 dark:text-slate-400",
-                                    "text-lg font-semibold"
-                                  )}>
-                                  {brick.name}
-                                </p>
-                                <p className="text-sm text-slate-400 dark:text-slate-500">
-                                  {brick.description}
-                                </p>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                        <div>
-                          <h4 className="mb-6 ml-16 text-sm text-slate-400">Data Pipelines</h4>
-                          {pipes.map((brick) => (
-                            <Link
-                              key={brick.name}
-                              href={brick.href}
-                              className={clsx(
-                                brick.status
-                                  ? "cursor-pointer hover:bg-slate-100  dark:hover:bg-slate-600 dark:hover:bg-opacity-50"
-                                  : "cursor-default",
-                                "-m-3 flex items-start rounded-lg p-3 py-4"
-                              )}>
-                              <div
-                                className={clsx(
-                                  brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
-                                  "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
-                                )}>
-                                <brick.icon className="h-6 w-6" aria-hidden="true" />
-                              </div>
-                              <div className="ml-4">
-                                <p
-                                  className={clsx(
-                                    brick.status
-                                      ? "text-slate-800 dark:text-slate-50"
-                                      : "text-slate-500 dark:text-slate-400",
-                                    "text-lg font-semibold"
-                                  )}>
-                                  {brick.name}
-                                </p>
-                                <p className="text-sm text-slate-400 dark:text-slate-500">
-                                  {brick.description}
-                                </p>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                        <div>
-                          <h4 className="mb-6 ml-16 text-sm text-slate-400">Data Insights</h4>
-                          {insights.map((brick) => (
-                            <Link
-                              key={brick.name}
-                              href={brick.href}
-                              className={clsx(
-                                brick.status
-                                  ? "cursor-pointer hover:bg-slate-100  dark:hover:bg-slate-600 dark:hover:bg-opacity-50"
-                                  : "cursor-default",
-                                "-m-3 flex items-start rounded-lg p-3 py-4"
-                              )}>
-                              <div
-                                className={clsx(
-                                  brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
-                                  "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
-                                )}>
-                                <brick.icon className="h-6 w-6" aria-hidden="true" />
-                              </div>
-                              <div className="ml-4">
-                                <p
-                                  className={clsx(
-                                    brick.status
-                                      ? "text-slate-800 dark:text-slate-50"
-                                      : "text-slate-500 dark:text-slate-400",
-                                    "text-lg font-semibold"
-                                  )}>
-                                  {brick.name}
-                                </p>
-                                <p className="text-sm text-slate-400 dark:text-slate-500">
-                                  {brick.description}
-                                </p>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </Popover.Panel>
-                </Transition>
-              </>
-            )}
-          </Popover>
-
           <Link
             href="/community"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
@@ -262,23 +35,11 @@ export default function Header() {
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Blog <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
           </Link>
-          <Link
-            href="/docs"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Docs
-          </Link>
         </Popover.Group>
-        <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0">
+        <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
-          <Button
-            variant="secondary"
-            EndIcon={GitHubIcon}
-            endIconClassName="fill-slate-800 dark:fill-slate-200"
-            onClick={() => router.push("https://github.com/formbricks/formbricks")}>
-            View on Github
-          </Button>
-          <Button variant="highlight" className="ml-2" onClick={() => router.push("/get-started")}>
-            Get started
+          <Button variant="highlight" className="ml-2" onClick={() => router.push("/waitlist")}>
+            Get Access
           </Button>
         </div>
       </div>
@@ -307,139 +68,11 @@ export default function Header() {
                   </Popover.Button>
                 </div>
               </div>
-
-              <nav className="relative bg-gray-200 px-5 py-6 dark:bg-slate-800">
-                <div>
-                  <h4 className="mb-3 text-sm text-gray-900 dark:text-gray-300">Survey Creation</h4>
-                  {creation.map((brick) => (
-                    <Link
-                      key={brick.name}
-                      href={brick.href}
-                      className={clsx(
-                        brick.status ? "cursor-pointer" : "cursor-default",
-                        "-m-3 flex items-start rounded-lg p-3 py-3"
-                      )}>
-                      <div
-                        className={clsx(
-                          brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
-                          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
-                        )}>
-                        <brick.icon className="h-6 w-6" aria-hidden="true" />
-                      </div>
-                      <div className="ml-4">
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-200"
-                              : "text-gray-400 dark:text-gray-500",
-                            "text-lg font-semibold"
-                          )}>
-                          {brick.name}
-                        </p>
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-400"
-                              : "text-gray-400 dark:text-gray-600",
-                            "text-sm"
-                          )}>
-                          {brick.description}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-                <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Pipelines</h4>
-                  {pipes.map((brick) => (
-                    <Link
-                      key={brick.name}
-                      href={brick.href}
-                      className={clsx(
-                        brick.status ? "cursor-pointer" : "cursor-default",
-                        "-m-3 flex items-start rounded-lg p-3 py-3"
-                      )}>
-                      <div
-                        className={clsx(
-                          brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
-                          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
-                        )}>
-                        <brick.icon className="h-6 w-6" aria-hidden="true" />
-                      </div>
-                      <div className="ml-4">
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-200"
-                              : "text-gray-400 dark:text-gray-500",
-                            "text-lg font-semibold"
-                          )}>
-                          {brick.name}
-                        </p>
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-400"
-                              : "text-gray-400 dark:text-gray-600",
-                            "text-sm"
-                          )}>
-                          {brick.description}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-                <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Insights</h4>
-                  {insights.map((brick) => (
-                    <Link
-                      key={brick.name}
-                      href={brick.href}
-                      className={clsx(
-                        brick.status ? "cursor-pointer" : "cursor-default",
-                        "-m-3 flex items-start rounded-lg p-3 py-3"
-                      )}>
-                      <div
-                        className={clsx(
-                          brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
-                          "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
-                        )}>
-                        <brick.icon className="h-6 w-6" aria-hidden="true" />
-                      </div>
-                      <div className="ml-4">
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-200"
-                              : "text-gray-400 dark:text-gray-500",
-                            "text-lg font-semibold"
-                          )}>
-                          {brick.name}
-                        </p>
-                        <p
-                          className={clsx(
-                            brick.status
-                              ? "text-gray-900 dark:text-gray-400"
-                              : "text-gray-400 dark:text-gray-600",
-                            "text-sm"
-                          )}>
-                          {brick.description}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </nav>
             </div>
             <div className="px-5 py-6">
-              <div className="grid grid-cols-3 text-center text-sm font-medium text-gray-900 hover:text-gray-700 dark:text-slate-200 sm:text-base">
+              <div className="flex flex-col space-y-5 text-center text-sm dark:text-slate-300">
                 <Link href="/community">Community</Link>
-
                 <Link href="/blog">Blog</Link>
-
-                <Link href="/docs">Documentation</Link>
-              </div>
-              <div className="mt-6">
                 <Button
                   variant="secondary"
                   EndIcon={GitHubIcon}
@@ -449,9 +82,9 @@ export default function Header() {
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={() => router.push("/get-started")}
-                  className="mt-3 flex w-full justify-center">
-                  Get started
+                  onClick={() => router.push("/waitlist")}
+                  className="flex w-full justify-center">
+                  Get access
                 </Button>
               </div>
             </div>

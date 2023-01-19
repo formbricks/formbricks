@@ -12,7 +12,15 @@ export function Table({ submissions, schema, fieldName }: Props) {
       return [];
     }
     // check if fieldName in schema
-    const schemaElem = schema.children.find((e: any) => e.name === fieldName);
+    let schemaElem;
+    for (const pages of schema.pages) {
+      for (const elem of pages.elements) {
+        if (elem.name === fieldName) {
+          schemaElem = elem;
+          break;
+        }
+      }
+    }
     if (typeof schemaElem === "undefined") {
       throw Error("key not found in schema");
     }
