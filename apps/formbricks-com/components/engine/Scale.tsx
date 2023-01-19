@@ -105,7 +105,7 @@ export default function Scale({ element, control, onSubmit, disabled }: IconRadi
               </RadioGroup.Option>
             ))}
           </div>
-          <div className="mt-2 flex justify-between text-sm text-gray-800">
+          <div className="mt-2 flex justify-between text-sm text-gray-700 dark:text-slate-400">
             <p>{element.frontend.minLabel}</p>
             <p>{element.frontend.maxLabel}</p>
           </div>

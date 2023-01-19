@@ -19,7 +19,7 @@ export default function Input({ element, field, register, disabled, onSubmit }: 
       <input
         type={element.frontend?.type || "text"}
         onBlur=""
-        className="focus:border-brand focus:ring-brand mx-auto mt-4 block w-full max-w-xl rounded-md border-gray-300 shadow-sm sm:text-sm"
+        className="focus:border-brand focus:ring-brand mx-auto mt-4 block w-full max-w-xl rounded-md border-gray-300 text-slate-700 shadow-sm dark:bg-slate-700 dark:text-slate-200 dark:placeholder:text-slate-400 dark:focus:bg-slate-700 dark:active:bg-slate-700 sm:text-sm"
         placeholder={element.frontend?.placeholder || ""}
         required={!!element.frontend?.required}
         {...register(element.name!)}

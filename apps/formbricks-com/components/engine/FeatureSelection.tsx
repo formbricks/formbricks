@@ -30,7 +30,7 @@ export default function FeatureSelection({ element, field, register }: FeatureSe
                       aria-describedby={`${element.id}-${option.value}-description`}
                       type="checkbox"
                       value={option.value}
-                      className="text-brand focus:ring-brand border-brand h-5 w-5 rounded border-2 bg-slate-50"
+                      className="text-brand focus:ring-brand border-brand h-5 w-5 rounded border-2 bg-slate-50 dark:bg-slate-600"
                       {...register(element.name!)}
                     />
                   </div>
