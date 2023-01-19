@@ -32,7 +32,7 @@ export default function IconRadio({ element, control, onSubmit, disabled }: Icon
       rules={{ required: true }}
       render={({ field }: { field: any }) => (
         <RadioGroup className="flex flex-col justify-center" {...field}>
-          <RadioGroup.Label className="text-center text-lg font-bold text-gray-700 dark:text-gray-100">
+          <RadioGroup.Label className="pb-6 text-center text-lg font-bold text-slate-600 dark:text-slate-300 sm:text-xl md:text-2xl">
             {element.label}
           </RadioGroup.Label>
 
@@ -54,23 +54,21 @@ export default function IconRadio({ element, control, onSubmit, disabled }: Icon
                   value={option.value}
                   className={({ checked, active }) =>
                     clsx(
-                      checked ? "border-transparent" : "border-gray-200 dark:border-slate-700",
+                      checked ? "border-transparent" : "border-slate-200 dark:border-slate-700",
                       active ? "border-brand ring-brand ring-2" : "",
-                      "relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm transition-all ease-in-out hover:scale-105 focus:outline-none dark:bg-slate-700"
+                      "relative flex cursor-pointer rounded-lg border bg-white py-8 shadow-sm transition-all ease-in-out hover:scale-105 focus:outline-none dark:bg-slate-700"
                     )
                   }>
                   {({ checked, active }) => (
                     <>
-                      <div className="flex flex-1 flex-col justify-center">
+                      <div className="flex flex-1 flex-col justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 hover:dark:text-slate-200">
                         {option.frontend?.icon && (
                           <option.frontend.icon
                             className="text-brand mx-auto mb-3 h-8 w-8"
                             aria-hidden="true"
                           />
                         )}
-                        <RadioGroup.Label
-                          as="span"
-                          className="mx-auto text-sm font-medium text-gray-900 dark:text-gray-200">
+                        <RadioGroup.Label as="span" className="mx-auto text-sm font-medium ">
                           {option.label}
                         </RadioGroup.Label>
                       </div>

@@ -31,7 +31,7 @@ export default function Scale({ element, control, onSubmit, disabled }: IconRadi
       rules={{ required: true }}
       render={({ field }: { field: any }) => (
         <RadioGroup className="flex flex-col justify-center" {...field}>
-          <RadioGroup.Label className="text-center text-lg font-bold text-gray-700 dark:text-gray-100">
+          <RadioGroup.Label className="pb-6 text-center text-lg font-bold text-slate-600 dark:text-slate-300 sm:text-xl md:text-2xl">
             {element.label}
           </RadioGroup.Label>
           <div

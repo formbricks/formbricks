@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { SurveyElement } from "./engineTypes";
 
 interface FeatureSelectionProps {
@@ -13,7 +12,9 @@ interface FeatureSelectionProps {
 export default function FeatureSelection({ element, field, register }: FeatureSelectionProps) {
   return (
     <div className="flex flex-col justify-center">
-      <label htmlFor={element.id} className="mx-auto text-lg font-bold text-gray-700 dark:text-gray-100">
+      <label
+        htmlFor={element.id}
+        className="pb-6 text-center text-lg font-bold text-slate-600 dark:text-slate-300 sm:text-xl md:text-2xl">
         {element.label}
       </label>
       <fieldset className="space-y-5">
@@ -29,7 +30,7 @@ export default function FeatureSelection({ element, field, register }: FeatureSe
                       aria-describedby={`${element.id}-${option.value}-description`}
                       type="checkbox"
                       value={option.value}
-                      className="text-brand focus:ring-brand h-4 w-4 rounded border-gray-300"
+                      className="text-brand focus:ring-brand border-brand h-5 w-5 rounded border-2 bg-slate-50"
                       {...register(element.name!)}
                     />
                   </div>

@@ -108,8 +108,12 @@ export function SurveyPage({
         })}
       </div>
       {!finished && !(page.config?.autoSubmit && page.elements.length == 1) && (
-        <div className="my-8 flex w-full justify-end">
-          <Button variant="primary" type="submit" className="transition-all ease-in-out hover:scale-105">
+        <div className="mx-auto mt-8 flex w-full max-w-xl justify-end">
+          <Button
+            variant="primary"
+            type="submit"
+            onClick={() => window.scrollTo(0, 0)}
+            className="transition-all ease-in-out hover:scale-105">
             Next
           </Button>
         </div>

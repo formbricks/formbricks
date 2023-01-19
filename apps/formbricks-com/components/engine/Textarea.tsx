@@ -10,7 +10,9 @@ interface TextareaProps {
 export default function Textarea({ element, register, onSubmit }: TextareaProps) {
   return (
     <div className="flex flex-col justify-center">
-      <label htmlFor={element.id} className="mx-auto text-lg font-bold text-gray-700 dark:text-gray-100">
+      <label
+        htmlFor={element.id}
+        className="pb-6 text-center text-lg font-bold text-slate-600 dark:text-slate-300 sm:text-xl md:text-2xl">
         {element.label}
       </label>
       <textarea
