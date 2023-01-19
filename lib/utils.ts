@@ -204,11 +204,16 @@ export const isBlockAQuestion = ({ type }) => {
   return /Question/.test(type);
 };
 
-export const isPageTimerCompleted = ({ blocks }) =>
-  blocks.filter((block) => {
-    return /timerToolboxOption/.test(block.type) && block?.data?.timerDuration ;
-
+export const isPageTimerCompleted = ({ blocks }, pageSubmission) => {
+  return blocks.filter((block) => {
+    if (
+      /timerToolboxOption/.test(block.type) &&
+      pageSubmission?.data?.pageName
+    ) {
+      return true;
+    }
   }).length;
+};
 
 // export const isBlockAQuestion = ({ type }) => {
 //   return /Question/.test(type);
@@ -242,23 +247,26 @@ export const getFormState = (pages, candidateSubmissions, user) => {
   };
 
   pages.map((page) => {
-    if (candidateSubmissions && isPageTimerCompleted(page)) {
-      formProgress.pageFinished += 1;
-    } else if (candidateSubmissions) {
+    if (candidateSubmissions) {
       const pageSubmission = getPageSubmission(
         candidateSubmissions,
         user,
         page
       );
-      const responsesCounter = !pageSubmission?.data?.submission
-        ? 0
-        : Object.values(pageSubmission?.data?.submission).filter((v) => v)
-            .length;
-      const questionsCounter = page.blocks.filter((block) =>
-        isBlockAQuestion(block)
-      ).length;
-      formProgress.pageFinished +=
-        responsesCounter === questionsCounter && responsesCounter > 0 ? 1 : 0;
+
+      if (isPageTimerCompleted(page, pageSubmission)) {
+        formProgress.pageFinished += 1;
+      } else {
+        const responsesCounter = !pageSubmission?.data?.submission
+          ? 0
+          : Object.values(pageSubmission?.data?.submission).filter((v) => v)
+              .length;
+        const questionsCounter = page.blocks.filter((block) =>
+          isBlockAQuestion(block)
+        ).length;
+        formProgress.pageFinished +=
+          responsesCounter === questionsCounter && responsesCounter > 0 ? 1 : 0;
+      }
     }
   });
   return formProgress;
