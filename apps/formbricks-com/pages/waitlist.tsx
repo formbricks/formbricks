@@ -49,8 +49,8 @@ const WaitlistPage = () => (
 
       <div className="mx-auto my-6 w-full max-w-5xl rounded-xl bg-slate-100 px-8 py-10 md:my-12 md:px-16 md:py-20">
         <Survey
-          formbricksUrl="http://localhost:3000"
-          formId="cld2xwo2r000cu0mdkju2nj96"
+          formbricksUrl="https://app.formbricks.com"
+          formId="cld37mt2i0000ld08p9q572bc"
           survey={{
             config: {
               progressBar: false,
