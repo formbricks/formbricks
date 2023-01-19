@@ -7,6 +7,7 @@ export * from "./icons/BugBlueIcon";
 export * from "./icons/ComplimentIcon";
 export * from "./icons/CustomersIcon";
 export * from "./icons/FormIcon";
+export * from "./icons/PMFIcon";
 export * from "./icons/IdeaIcon";
 export * from "./icons/AngryBirdRageIcon";
 export * from "./icons/AngryBirdRage2Icon";
