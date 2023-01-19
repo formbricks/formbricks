@@ -4,7 +4,7 @@ import { fr } from "date-fns/locale";
 import crypto from "crypto";
 import { UserRole } from "@prisma/client";
 import AWS from "aws-sdk";
-import Switch from '@mui/material/Switch';
+import Switch from "@mui/material/Switch";
 import { SwitchButton } from "../components/usersDataGridSchemaColumn";
 
 export const fetcher = async (url) => {
@@ -204,6 +204,17 @@ export const isBlockAQuestion = ({ type }) => {
   return /Question/.test(type);
 };
 
+export const isPageTimerCompleted = ({ blocks }) =>
+  blocks.filter((block) => {
+    return /timerToolboxOption/.test(block.type) && block?.data?.timerDuration ;
+
+  }).length;
+
+// export const isBlockAQuestion = ({ type }) => {
+//   return /Question/.test(type);
+// };
+// "timerToolboxOption"
+
 export const getPageSubmission = (
   candidateSubmissions: any,
   user: {
@@ -225,25 +236,30 @@ export const getPageSubmission = (
 };
 
 export const getFormState = (pages, candidateSubmissions, user) => {
-  let questionsCounter = 0;
-  let responsesCounter = 0;
+  const formProgress = {
+    pageFinished: 0,
+    totalPages: pages.length - 1,
+  };
 
   pages.map((page) => {
-    if (candidateSubmissions) {
+    if (candidateSubmissions && isPageTimerCompleted(page)) {
+      formProgress.pageFinished += 1;
+    } else if (candidateSubmissions) {
       const pageSubmission = getPageSubmission(
         candidateSubmissions,
         user,
         page
       );
-      responsesCounter += !pageSubmission
+      const responsesCounter = !pageSubmission?.data?.submission
         ? 0
         : Object.values(pageSubmission?.data?.submission).filter((v) => v)
             .length;
-      questionsCounter += page.blocks.filter((block) => isBlockAQuestion(block))
-        .length;
+      const questionsCounter = page.blocks.filter((block) =>
+        isBlockAQuestion(block)
+      ).length;
+      formProgress.pageFinished +=
+        responsesCounter === questionsCounter && responsesCounter > 0 ? 1 : 0;
     }
   });
-  return { questionsCounter, responsesCounter };
+  return formProgress;
 };
-
-

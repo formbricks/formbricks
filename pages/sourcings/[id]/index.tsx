@@ -201,7 +201,7 @@ function NoCodeFormPublic() {
                   numberOfQuestions = page.blocks.filter((block) =>
                     isBlockAQuestion(block)
                   ).length;
-                  numberOfAnsweredQuestions = !pageSubmission
+                  numberOfAnsweredQuestions = !pageSubmission?.data?.submission
                     ? 0
                     : Object.values(pageSubmission?.data?.submission).filter(
                         (v) => v
@@ -214,8 +214,8 @@ function NoCodeFormPublic() {
                       key={index}
                     >
                       <div className='pl-12 flex items-center max-md:pl-6 max-md:pb-2'>
-                        {(isTimedPage(page) && pageIsCompleted(page.id)) ||
-                        numberOfQuestions === numberOfAnsweredQuestions ? (
+                        {( pageIsCompleted(page.id)) ||
+                        !isTimedPage(page) && numberOfQuestions === numberOfAnsweredQuestions ? (
                           <CheckCircleIcon className='text-green-800 w-7 mr-2' />
                         ) : numberOfAnsweredQuestions > 0 ? (
                           <EllipsisHorizontalCircleIcon className='text-orange-600 w-7 mr-2' />
@@ -223,7 +223,7 @@ function NoCodeFormPublic() {
                           <XCircleIcon className='text-red-800 w-7 mr-2' />
                         )}
                       </div>
-                      <div className='pl-12 flex items-center max-sm:pl-6 max-sm:pr-6 max-sm:pb-5 max-md:pb-5 max-sm:font-semibold max-md:font-semibold max-md:pl-6 max-md:pr-6  max-md:w-5/5 md:w-3/5'>
+                      <div className={`pl-12 ${isTimedPage(page) ? "pl-16" : "pl-8"}  flex items-center max-sm:pl-6 max-sm:pr-6 max-sm:pb-5 max-md:pb-5 max-sm:font-semibold max-md:font-semibold max-md:pl-6 max-md:pr-6  max-md:w-5/5 md:w-2/5`}>
                         {page.length ? "" : page.blocks[0].data.text}
                       </div>
                       <div className='flex items-center justify-between w-4/8 pr-8 max-sm:w-full max-md:w-full max-sm:pl-6 max-sm:pr-6 max-sm:flex-col max-sm:items-start max-md:pl-6 max-md:pr-6'>
@@ -234,18 +234,19 @@ function NoCodeFormPublic() {
                                 <ClockIcon className='w-7 mr-2' />
                                 {getPageTimer(page.blocks)} min.
                               </span>
-                              <span className='flex items-center text-gray-800'>
+                              <span className='mr-2 flex items-center text-gray-800'>
                                 <InboxArrowDownIcon className='w-5 mr-2' />1
                                 tentative
                               </span>
                             </>
                           ) : (
                             <>
-                              {" "}
-                              <span className='flex items-center text-gray-800'>
+                              
+                              <span className='flex mr-2 items-center text-gray-800'>
                                 {numberOfAnsweredQuestions} /{" "}
-                                {numberOfQuestions} questions
+                                {numberOfQuestions} {"questions "}
                               </span>
+                              {" "}
                             </>
                           )}
                         </div>
@@ -253,7 +254,7 @@ function NoCodeFormPublic() {
                           <button
                             onClick={() => handleClickAction(page)}
                             disabled={isTimedPage(page)}
-                            className='w-107 rounded-full bg-green-800 p-2.5 text-white text-sm font-bold'
+                            className='w-107  rounded-full bg-green-800 p-2.5 text-white text-sm font-bold'
                           >
                             {isTimedPage(page) ? "Terminé" : "Modifier"}
                           </button>

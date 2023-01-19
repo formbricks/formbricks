@@ -14,7 +14,7 @@ function CandidateProgress({ form }) {
   const pages = usePages({ blocks: form.noCodeForm.blocks, formId: form.id });
   const session = useSession();
   const { user } = session.data;
-  const { questionsCounter, responsesCounter } = getFormState(
+  const { pageFinished, totalPages } = getFormState(
     pages,
     candidateSubmissions,
     user
@@ -46,8 +46,7 @@ function CandidateProgress({ form }) {
           : "flex items-center px-6 py-1 text-base font-normal text-green-700"
       }
     >
-      {!(progress < pages.length - 1) &&
-      questionsCounter === responsesCounter ? (
+      {!(progress < pages.length - 1) && pageFinished === totalPages ? (
         <span className='flex items-center mr-1'>
           <CheckCircleIcon
             className={
@@ -56,9 +55,10 @@ function CandidateProgress({ form }) {
                 : "w-5 h-5 text-green-700 mr-2"
             }
           />
+          {`${pageFinished} / ${totalPages} `}
           Terminé
         </span>
-      ) : !(progress < pages.length - 1) && responsesCounter > 0 ? (
+      ) : pageFinished > 0 && pageFinished < totalPages ? (
         <span className='flex items-center text-orange-600 mr-1'>
           <EllipsisHorizontalCircleIcon
             className={
@@ -67,6 +67,7 @@ function CandidateProgress({ form }) {
                 : "w-5 h-5 text-orange-600 mr-2"
             }
           />
+          {`${pageFinished} / ${totalPages} `}
           {"Continuer"}
         </span>
       ) : (
@@ -74,6 +75,7 @@ function CandidateProgress({ form }) {
           <EllipsisHorizontalCircleIcon
             className={"w-5 h-5 text-rose-500 mr-2"}
           />
+          {`${pageFinished} / ${totalPages} `}
           Commencer
         </span>
       )}
