@@ -35,7 +35,7 @@ const App: FC<IProps> = ({
   const router = useRouter();
 
   const onSubmit = () => {
-    if (Object.values(fieldErrors).filter((f) => f).length)
+    if (!Object.values(fieldErrors).filter((f) => f).length)
       router.push(`/sourcings/${formId}`);
   };
   //TODO Find better way to handle this
