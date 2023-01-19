@@ -59,7 +59,10 @@ export default function Footer() {
         Footer
       </h2>
       <div className="mx-auto flex max-w-7xl flex-col space-y-6 px-4 py-12 text-center sm:px-6 lg:py-16 lg:px-8">
-        <FooterLogo className="mx-auto h-8 w-auto sm:h-10" />
+        <Link href="/">
+          <span className="sr-only">Formbricks</span>
+          <FooterLogo className="mx-auto h-8 w-auto sm:h-10" />
+        </Link>
         <p className="text-base text-slate-500 dark:text-slate-400">Experience Management for B2B SaaS</p>
         <div className="border-gray-500">
           <p className="text-sm text-slate-400 dark:text-gray-500">

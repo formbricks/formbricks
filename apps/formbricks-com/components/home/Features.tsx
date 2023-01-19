@@ -1,25 +1,24 @@
-import { PlusIcon, SquaresPlusIcon, ChartBarIcon } from "@heroicons/react/24/outline";
-import clsx from "clsx";
+import { TabletTouchIcon, UserDeveloperIcon, CodeFileIcon } from "@formbricks/ui";
 import HeadingCentered from "../shared/HeadingCentered";
 
 const features = [
   {
     id: "devAttention",
     name: "Minimal Dev Attention",
-    description: "All you want is building your product. Set it up once, keep insights flowing in..",
-    icon: PlusIcon,
+    description: "All you want is building your product. Set it up once, keep insights flowing in.",
+    icon: UserDeveloperIcon,
   },
   {
     id: "nativeLookFeel",
     name: "Native Look & Feel",
     description: "No more UX clutter. Use headless forms or highly customizabale UI components.",
-    icon: SquaresPlusIcon,
+    icon: TabletTouchIcon,
   },
   {
     id: "openSourcer",
     name: "Open Source",
     description: "Own your data. Run Formbricks on your servers and comply with all regulation.",
-    icon: ChartBarIcon,
+    icon: CodeFileIcon,
   },
 ];
 export default function Features() {
