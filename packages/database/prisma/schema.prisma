@@ -19,6 +19,8 @@ enum PipelineType {
 
 enum PipelineEvent {
   submissionCreated
+  submissionUpdated
+  submissionFinished
 }
 
 model Pipeline {

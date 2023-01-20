@@ -59,7 +59,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     // create form in db
     const submissionResult = await prisma.submission.create(event);
-    await runPipelines(form, submission);
+    await runPipelines(["submissionCreated"], form, submission, submissionResult);
     // tracking
     capturePosthogEvent(form.workspaceId, "submission received", {
       formId,

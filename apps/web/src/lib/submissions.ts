@@ -44,6 +44,9 @@ export const MergeWithSchema = (submissionData, schema) => {
     return submissionData;
   }
   const mergedData = {};
+  if (!submissionData) {
+    return mergedData;
+  }
   const optionLabelMap = getOptionLabelMap(schema);
   for (const page of schema.pages) {
     for (const elem of page.elements) {
@@ -75,7 +78,7 @@ export const MergeWithSchema = (submissionData, schema) => {
           mergedData[elem.label] = submissionData[elem.name];
         }
       } else {
-        mergedData[elem.label] = "not provided";
+        // mergedData[elem.label] = "not provided";
       }
     }
   }

@@ -82,6 +82,7 @@ export const sendPasswordResetNotifyEmail = async (user) => {
 
 export const sendSubmissionEmail = async (
   email: string,
+  event: "created" | "updated" | "finished",
   workspaceId,
   formId,
   formLabel: string,
@@ -90,9 +91,24 @@ export const sendSubmissionEmail = async (
 ) => {
   await sendEmail({
     to: email,
-    subject: `${formLabel} new submission`,
+    subject:
+      event === "created"
+        ? `${formLabel} new submission created`
+        : event === "updated"
+        ? `${formLabel} submission updated`
+        : event === "finished"
+        ? `${formLabel} submission finished`
+        : `${formLabel} submission update`,
     replyTo: submission.customer?.email || process.env.MAIL_FROM,
-    html: `Hey, someone just filled out your form ${formLabel} in Formbricks.<br/>
+    html: `${
+      event === "created"
+        ? `Hey, someone just filled out your form "${formLabel}" in Formbricks.`
+        : event === "updated"
+        ? `Hey, a submission in "${formLabel}" in Formbricks just received an update.`
+        : event === "finished"
+        ? `Hey, someone just finished your form "${formLabel}" in Formbricks.`
+        : ""
+    }<br/>
 
     <hr/>
 
@@ -104,7 +120,7 @@ export const sendSubmissionEmail = async (
     
     Click <a href="${
       process.env.NEXTAUTH_URL
-    }/workspaces/${workspaceId}/forms/${formId}/feedback">here</a> to see new submission.
+    }/workspaces/${workspaceId}/forms/${formId}/feedback">here</a> to see the submission.
     ${submission.customer?.email ? "<hr/>You can reply to this email to contact the user directly." : ""}`,
   });
 };

@@ -8,7 +8,18 @@ const eventTypes = [
   {
     id: "submissionCreated",
     name: "Submission Created",
-    description: "Every time a new submission is created",
+    description:
+      "Every time a new submission is created in Formbricks (e.g. a new submission or first step in a multi-step form)",
+  },
+  {
+    id: "submissionUpdated",
+    name: "Submission Updated",
+    description: "Every time a submission is updated, e.g. one step in a multi-step form",
+  },
+  {
+    id: "submissionFinished",
+    name: "Submission Finished",
+    description: "Every time a submission is finished, e.g. a multi-step form is completed",
   },
 ];
 
@@ -124,8 +135,8 @@ export function WebhookSettings({ pipeline, setPipeline }) {
                   <div className="relative flex items-start">
                     <div className="flex h-5 items-center">
                       <input
-                        id="comments"
-                        name="comments"
+                        id={eventType.id}
+                        name={eventType.id}
                         type="checkbox"
                         checked={pipeline.events.includes(eventType.id)}
                         onChange={() => toggleEvent(eventType.id)}
@@ -133,7 +144,7 @@ export function WebhookSettings({ pipeline, setPipeline }) {
                       />
                     </div>
                     <div className="ml-3 text-sm">
-                      <label htmlFor="comments" className="font-medium text-gray-700">
+                      <label htmlFor={eventType.id} className="font-medium text-gray-700">
                         {eventType.name}
                       </label>
                       <p className="text-gray-500">{eventType.description}</p>

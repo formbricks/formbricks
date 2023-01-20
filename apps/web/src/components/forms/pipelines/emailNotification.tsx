@@ -8,7 +8,18 @@ const eventTypes = [
   {
     id: "submissionCreated",
     name: "Submission Created",
-    description: "Every time a new submission is created",
+    description:
+      "Every time a new submission is created in Formbricks (e.g. a new submission or first step in a multi-step form)",
+  },
+  {
+    id: "submissionUpdated",
+    name: "Submission Updated",
+    description: "Every time a submission is updated, e.g. one step in a multi-step form",
+  },
+  {
+    id: "submissionFinished",
+    name: "Submission Finished",
+    description: "Every time a submission is finished, e.g. a multi-step form is completed",
   },
 ];
 

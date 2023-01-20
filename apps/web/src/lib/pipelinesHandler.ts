@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { sendSubmissionEmail } from "./email";
 import { MergeWithSchema } from "./submissions";
 
-export const runPipelines = async (form, submission) => {
+export const runPipelines = async (triggeredEvents, form, submissionReceived, submissionFull) => {
   // handle integrations
   const pipelines = await prisma.pipeline.findMany({
     where: {
@@ -13,51 +13,95 @@ export const runPipelines = async (form, submission) => {
   });
   for (const pipeline of pipelines) {
     if (pipeline.type === "emailNotification") {
-      await handleEmailNotification(pipeline, form, submission);
+      await handleEmailNotification(triggeredEvents, pipeline, form, submissionReceived, submissionFull);
     }
     if (pipeline.type === "slackNotification") {
-      await handleSlackNotification(pipeline, form, submission);
+      await handleSlackNotification(triggeredEvents, pipeline, form, submissionReceived, submissionFull);
     }
     if (pipeline.type === "webhook") {
-      await handleWebhook(pipeline, submission);
+      await handleWebhook(triggeredEvents, pipeline, submissionReceived, submissionFull);
     }
   }
 };
 
-async function handleWebhook(pipeline, submission) {
+async function handleWebhook(triggeredEvents, pipeline, submissionReceived, submissionFull) {
   if (pipeline.config.hasOwnProperty("endpointUrl") && pipeline.config.hasOwnProperty("secret")) {
-    if (pipeline.events.includes("submissionCreated")) {
-      const webhookData = pipeline.config;
-      const body = { time: Math.floor(Date.now() / 1000), submission };
-      fetch(webhookData.endpointUrl.toString(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Hub-Signature-256": `sha256=${crypto
-            .createHmac("sha256", webhookData.secret.toString())
-            .update(JSON.stringify(body))
-            .digest("base64")}`,
-        },
-        body: JSON.stringify(body),
-      });
+    let body;
+    if (triggeredEvents.includes("submissionCreated") && pipeline.events.includes("submissionCreated")) {
+      body = { time: Math.floor(Date.now() / 1000), submissionFull };
+      await sendWebhook(pipeline, body);
+    }
+    if (triggeredEvents.includes("submissionUpdated") && pipeline.events.includes("submissionUpdated")) {
+      body = { time: Math.floor(Date.now() / 1000), submissionReceived };
+      await sendWebhook(pipeline, body);
+    }
+    if (triggeredEvents.includes("submissionUpdated") && pipeline.events.includes("submissionUpdated")) {
+      body = { time: Math.floor(Date.now() / 1000), submissionFull };
+      await sendWebhook(pipeline, body);
     }
   }
 }
 
-async function handleEmailNotification(pipeline, form, submission) {
+const sendWebhook = async (pipeline, body) => {
+  const webhookData = pipeline.config;
+  fetch(webhookData.endpointUrl.toString(), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Hub-Signature-256": `sha256=${crypto
+        .createHmac("sha256", webhookData.secret.toString())
+        .update(JSON.stringify(body))
+        .digest("base64")}`,
+    },
+    body: JSON.stringify(body),
+  });
+};
+
+async function handleEmailNotification(triggeredEvents, pipeline, form, submissionReceived, submissionFull) {
   if (!pipeline.config.hasOwnProperty("email")) return;
 
   const { email } = pipeline.config.valueOf() as { email: string };
 
-  if (pipeline.events.includes("submissionCreated")) {
-    await sendSubmissionEmail(email, form.workspaceId, form.id, form.label, form.schema, submission);
+  if (triggeredEvents.includes("submissionCreated") && pipeline.events.includes("submissionCreated")) {
+    await sendSubmissionEmail(
+      email,
+      "created",
+      form.workspaceId,
+      form.id,
+      form.label,
+      form.schema,
+      submissionFull
+    );
+  }
+  if (triggeredEvents.includes("submissionUpdated") && pipeline.events.includes("submissionUpdated")) {
+    await sendSubmissionEmail(
+      email,
+      "updated",
+      form.workspaceId,
+      form.id,
+      form.label,
+      form.schema,
+      submissionReceived
+    );
+  }
+  if (triggeredEvents.includes("submissionFinished") && pipeline.events.includes("submissionFinished")) {
+    await sendSubmissionEmail(
+      email,
+      "finished",
+      form.workspaceId,
+      form.id,
+      form.label,
+      form.schema,
+      submissionFull
+    );
   }
 }
 
-async function handleSlackNotification(pipeline, form, submission) {
+async function handleSlackNotification(triggeredEvents, pipeline, form, submissionReceived, submissionFull) {
   if (pipeline.config.hasOwnProperty("endpointUrl")) {
-    if (pipeline.events.includes("submissionCreated")) {
-      const body = {
+    let body;
+    if (triggeredEvents.includes("submissionCreated") && pipeline.events.includes("submissionCreated")) {
+      body = {
         text: `Someone just filled out your form "${form.label}" in Formbricks.`,
         blocks: [
           {
@@ -71,20 +115,72 @@ async function handleSlackNotification(pipeline, form, submission) {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `${Object.entries(MergeWithSchema(submission.data, form.schema))
+              text: `${Object.entries(MergeWithSchema(submissionFull.data, form.schema))
                 .map(([key, value]) => `*${key}*\n${value}\n`)
                 .join("")}`,
             },
           },
         ],
       };
-      fetch(pipeline.config.endpointUrl.toString(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
+      await sendSlackMessage(pipeline, body);
+    }
+    if (triggeredEvents.includes("submissionUpdated") && pipeline.events.includes("submissionUpdated")) {
+      body = {
+        text: `Someone just updated a submission in your form "${form.label}" in Formbricks.`,
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `Someone just updated a submission in your form "${form.label}". <${process.env.NEXTAUTH_URL}/workspaces/${form.workspaceId}/forms/${form.id}/feedback|View in Formbricks>`,
+            },
+          },
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `${Object.entries(MergeWithSchema(submissionReceived.data, form.schema))
+                .map(([key, value]) => `*${key}*\n${value}\n`)
+                .join("")}`,
+            },
+          },
+        ],
+      };
+      await sendSlackMessage(pipeline, body);
+    }
+    if (triggeredEvents.includes("submissionFinished") && pipeline.events.includes("submissionFinished")) {
+      body = {
+        text: `Someone just finished your form "${form.label}" in Formbricks.`,
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `Someone just finished your form "${form.label}". <${process.env.NEXTAUTH_URL}/workspaces/${form.workspaceId}/forms/${form.id}/feedback|View in Formbricks>`,
+            },
+          },
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `${Object.entries(MergeWithSchema(submissionFull.data, form.schema))
+                .map(([key, value]) => `*${key}*\n${value}\n`)
+                .join("")}`,
+            },
+          },
+        ],
+      };
+      await sendSlackMessage(pipeline, body);
     }
   }
 }
+
+const sendSlackMessage = async (pipeline, body) => {
+  fetch(pipeline.config.endpointUrl.toString(), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+};

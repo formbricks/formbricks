@@ -14,7 +14,7 @@ import { webhook } from "./webhook";
 const availablePipelines = [webhook, emailNotification, slackNotification];
 
 const getEmptyPipeline = () => {
-  return { label: "", type: null, events: ["submissionCreated"], config: {} };
+  return { label: "", type: null, events: ["submissionFinished"], config: {} };
 };
 
 export default function AddPipelineModal({ open, setOpen }) {

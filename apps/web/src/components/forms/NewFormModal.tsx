@@ -72,6 +72,16 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
                 },
               ],
             },
+            {
+              id: "thankYouPage",
+              endScreen: true,
+              elements: [
+                {
+                  type: "html",
+                  name: "thankYou",
+                },
+              ],
+            },
           ],
         },
       };
