@@ -7,7 +7,6 @@ import Textarea from "@/components/engine/Textarea";
 import ThankYouHeading from "@/components/engine/ThankYouHeading";
 import ThankYouPlans from "@/components/engine/ThankYouPlans";
 import LayoutWaitlist from "@/components/shared/LayoutWaitlist";
-import { NoSymbolIcon, UserIcon } from "@heroicons/react/24/outline";
 import {
   OnboardingIcon,
   PMFIcon,
@@ -251,16 +250,17 @@ const WaitlistPage = () => (
                   {
                     id: "goal",
                     type: "radio",
-                    label: "What are you here for?",
+                    label: "Want to become a beta user?",
+                    help: "Answer 3 open-ended questions and get 50% off in the first year.",
                     name: "goal",
                     options: [
                       {
-                        label: "Just notify me on launch",
+                        label: "No, just notify me on launch",
                         value: "justNotify",
                         frontend: { icon: BellIcon },
                       },
                       {
-                        label: "Become a beta user",
+                        label: "Yes, take the survey",
                         value: "becomeBetaUser",
                         frontend: { icon: UserCommentIcon },
                       },

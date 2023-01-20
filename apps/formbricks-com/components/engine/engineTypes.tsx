@@ -23,6 +23,7 @@ export interface SurveyElement {
   id: string;
   name?: string;
   label?: string;
+  help?: string;
   type: "radio" | "text" | "checkbox" | "html";
   options?: SurveyOption[];
   component: React.FC<any>;
