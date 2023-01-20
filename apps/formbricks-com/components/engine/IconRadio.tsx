@@ -35,6 +35,9 @@ export default function IconRadio({ element, control, onSubmit, disabled }: Icon
           <RadioGroup.Label className="pb-6 text-center text-lg font-bold text-slate-600 dark:text-slate-300 sm:text-xl md:text-2xl">
             {element.label}
           </RadioGroup.Label>
+          <div className="mx-auto -mt-3 mb-3 text-center text-sm text-slate-500 dark:text-slate-300 md:max-w-lg">
+            {element.help}
+          </div>
 
           <div
             className={clsx(
