@@ -5,7 +5,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { deleteSubmission, useSubmissions } from "@/lib/submissions";
 import { convertDateTimeString } from "@/lib/utils";
-import { RadioGroup } from "@headlessui/react";
+import { RadioGroup, Switch } from "@headlessui/react";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import type { Submission } from "@prisma/client";
 import clsx from "clsx";
@@ -15,6 +15,8 @@ import { toast } from "react-toastify";
 
 export default function SubmissionsPage() {
   const router = useRouter();
+  const [finishedOnly, setFinishedOnly] = useState(false);
+  const [filteredSubmissions, setFileredSubmission] = useState([]);
   const { submissions, isLoadingSubmissions, mutateSubmissions, isErrorSubmissions } = useSubmissions(
     router.query.workspaceId?.toString(),
     router.query.formId?.toString()
@@ -24,6 +26,14 @@ export default function SubmissionsPage() {
     router.query.workspaceId?.toString()
   );
   const [activeSubmission, setActiveSubmission] = useState<Submission | null>(null);
+
+  useEffect(() => {
+    if (finishedOnly) {
+      setFileredSubmission(submissions.filter((submission) => submission.finished));
+    } else {
+      setFileredSubmission(submissions);
+    }
+  }, [finishedOnly, submissions]);
 
   const handleDelete = async (submission: Submission) => {
     try {
@@ -63,7 +73,7 @@ export default function SubmissionsPage() {
             {!activeSubmission ? (
               <button
                 type="button"
-                className="relative mx-auto mt-8 block w-96 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                className="relative mx-auto mt-8 block w-96 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
                 <span className="mt-2 block text-sm font-medium text-gray-500">
                   Select a response on the left to see the details here
                 </span>
@@ -100,10 +110,30 @@ export default function SubmissionsPage() {
         </main>
         <aside className="border-ui-gray-light order-first flex h-full flex-1 flex-shrink-0 flex-col border-r md:w-96 md:flex-none">
           {/*  <DownloadResponses formId={params.formId} /> */}
-          <div className="pt-4 pb-2">
+          <div className="flex justify-between pt-4 pb-2">
             <h2 className="px-5 text-lg font-medium text-gray-900">Responses</h2>
+            <Switch.Group as="div" className="mr-3 flex items-center">
+              <Switch
+                checked={finishedOnly}
+                onChange={setFinishedOnly}
+                className={clsx(
+                  finishedOnly ? "bg-teal-600" : "bg-gray-200",
+                  "relative inline-flex h-5 w-8 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                )}>
+                <span
+                  aria-hidden="true"
+                  className={clsx(
+                    finishedOnly ? "translate-x-3" : "translate-x-0",
+                    "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                  )}
+                />
+              </Switch>
+              <Switch.Label as="span" className="ml-3">
+                <span className="text-sm text-slate-800">Finished only</span>
+              </Switch.Label>
+            </Switch.Group>
           </div>
-          {submissions.length === 0 ? (
+          {filteredSubmissions.length === 0 ? (
             <p className="mt-3 px-5 text-sm text-gray-500">No responses yet</p>
           ) : (
             <RadioGroup
@@ -113,7 +143,7 @@ export default function SubmissionsPage() {
               as="div">
               <div className="relative">
                 <ul className="divide-ui-gray-light relative z-0 divide-y">
-                  {submissions.map((submission) => (
+                  {filteredSubmissions.map((submission) => (
                     <RadioGroup.Option
                       key={submission.id}
                       value={submission}
@@ -127,7 +157,7 @@ export default function SubmissionsPage() {
                           {/* Extend touch target to entire panel */}
                           <span className="absolute inset-0" aria-hidden="true" />
                           <p className="text-sm font-medium text-gray-900">
-                            {convertDateTimeString(submission.createdAt)}
+                            {submission.finished ? "✅" : "💬"} {convertDateTimeString(submission.createdAt)}
                           </p>
                         </button>
                       </div>

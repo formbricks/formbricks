@@ -68,6 +68,7 @@ model Submission {
   id                  String    @id @default(cuid())
   createdAt           DateTime  @default(now()) @map(name: "created_at")
   updatedAt           DateTime  @updatedAt @map(name: "updated_at")
+  finished            Boolean   @default(false)
   archived            Boolean   @default(false)
   form                Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId              String

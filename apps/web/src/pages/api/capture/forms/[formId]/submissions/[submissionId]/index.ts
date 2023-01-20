@@ -43,10 +43,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const event: any = {
       where: { id: submissionId },
       data: {
-        data: { ...prevSubmission.data, ...submission.data },
         meta: { userAgent: req.headers["user-agent"] },
       },
     };
+
+    if (submission.finished) {
+      event.data.finished = submission.finished;
+    }
+
+    if (submission.data) {
+      event.data.data = { ...prevSubmission.data, ...submission.data };
+    }
 
     if (submission.customer && "email" in submission.customer) {
       const customerEmail = submission.customer.email;

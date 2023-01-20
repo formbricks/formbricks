@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import Button from "../shared/Button";
 import { SurveyPage } from "./engineTypes";
 
@@ -39,6 +39,16 @@ export function SurveyPage({
   useEffect(() => {
     reset();
   }, [page, reset]);
+
+  useEffect(() => {
+    if (page.endScreen) {
+      fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions/${submissionId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ finished: true }),
+      });
+    }
+  }, [page, formId, formbricksUrl, submissionId]);
 
   const sendToFormbricks = async (partialSubmission: any) => {
     if (!submissionId) {

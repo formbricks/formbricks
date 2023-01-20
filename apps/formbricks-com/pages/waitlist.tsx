@@ -49,8 +49,12 @@ const WaitlistPage = () => (
 
       <div className="mx-auto my-6 w-full max-w-5xl rounded-xl bg-slate-100 px-8 py-10 dark:bg-slate-800 md:my-12 md:px-16 md:py-20">
         <Survey
-          formbricksUrl="https://app.formbricks.com"
-          formId="cld37mt2i0000ld08p9q572bc"
+          formbricksUrl={
+            process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
+          }
+          formId={
+            process.env.NODE_ENV === "production" ? "cld37mt2i0000ld08p9q572bc" : "cld1q32h7000619twdt9ykqza"
+          }
           survey={{
             config: {
               progressBar: false,

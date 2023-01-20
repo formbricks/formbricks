@@ -30,7 +30,6 @@ export function FbBar({ color, submissions, schema, fieldName }: Props) {
     if (typeof schemaElem === "undefined") {
       throw Error("key not found in schema");
     }
-    console.log(schemaElem);
     if (!("options" in schemaElem)) {
       throw Error(`No options found for element "${schemaElem.name}"`);
     }
