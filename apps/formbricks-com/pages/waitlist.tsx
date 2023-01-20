@@ -364,22 +364,25 @@ const WaitlistPage = () => (
                   {
                     id: "scalingResearch",
                     type: "text",
-                    label: "The hardest part about scaling user research is...",
+                    label: "What is your approach for scaling user research?",
                     name: "scalingResearch",
-                    frontend: { placeholder: "Please complete the sentence." },
+                    frontend: { required: true, placeholder: "Last time, I..." },
                     component: Textarea,
                   },
                 ],
               },
               {
-                id: "triedSolveItPage",
+                id: "userResearchHardestPartPage",
+                config: {
+                  allowSkip: true,
+                },
                 elements: [
                   {
-                    id: "triedSolveIt",
+                    id: "userResearchHardestPart",
                     type: "text",
-                    label: "We have tried to solve it by...",
-                    name: "triedSolveIt",
-                    frontend: { placeholder: "Please complete the sentence." },
+                    label: "What is the hardest part about it?",
+                    name: "userResearchHardestPart",
+                    frontend: { required: false, placeholder: "Please tell us about your challenges." },
                     component: Textarea,
                   },
                 ],
@@ -392,7 +395,7 @@ const WaitlistPage = () => (
                     type: "text",
                     label: "What tools help you maintain Product-Market Fit?",
                     name: "toolsMaintainPmf",
-                    frontend: { placehodler: "Mixpanel, Segment, Intercom..." },
+                    frontend: { required: true, placehodler: "Mixpanel, Segment, Intercom..." },
                     component: Textarea,
                   },
                 ],
@@ -420,13 +423,16 @@ const WaitlistPage = () => (
               },
               {
                 id: "pmfHardestPartPage",
+                config: {
+                  allowSkip: true,
+                },
                 elements: [
                   {
                     id: "pmfHardestPart",
                     type: "text",
                     label: "What is the hardest part about it?",
                     name: "pmfHardestPart",
-                    frontend: { placeholder: "Please complete the sentence." },
+                    frontend: { placeholder: "Please tell us about your challenges." },
                     component: Textarea,
                   },
                 ],

@@ -7,6 +7,7 @@ import { SurveyPage } from "./engineTypes";
 
 interface SurveyProps {
   page: SurveyPage;
+  onSkip: () => void;
   onSubmit: (submission: any) => void;
   submission: any;
   setSubmission: (v: any) => void;
@@ -18,6 +19,7 @@ interface SurveyProps {
 
 export function SurveyPage({
   page,
+  onSkip,
   onSubmit,
   submission,
   setSubmission,
@@ -87,6 +89,7 @@ export function SurveyPage({
       setSubmittingPage(false);
       onSubmit(updatedSubmission);
       plausible(`waitlistSubmitPage-${page.id}`);
+      window.scrollTo(0, 0);
     } catch (e) {
       alert("There was an error sending this form. Please try again later.");
     }
@@ -121,15 +124,25 @@ export function SurveyPage({
           );
         })}
       </div>
-      {!finished && !(page.config?.autoSubmit && page.elements.length == 1) && (
-        <div className="mx-auto mt-8 flex w-full max-w-xl justify-end">
-          <Button
-            variant="primary"
-            type="submit"
-            onClick={() => window.scrollTo(0, 0)}
-            className="transition-all ease-in-out hover:scale-105">
-            Next
-          </Button>
+      {!finished && (
+        <div className="mx-auto mt-8 flex w-full justify-end">
+          {page.config?.allowSkip && (
+            <Button
+              variant="secondary"
+              type="button"
+              className="transition-all ease-in-out hover:scale-105"
+              onClick={() => onSkip()}>
+              Skip
+            </Button>
+          )}
+          {!(page.config?.autoSubmit && page.elements.length == 1) && (
+            <Button
+              variant="primary"
+              type="submit"
+              className="ml-2 transition-all ease-in-out hover:scale-105">
+              Next
+            </Button>
+          )}
         </div>
       )}
     </form>
