@@ -1,0 +1,107 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import NewsletterSignup from "@/components/shared/NewsletterSignup";
+import HeaderImage from "../weekly-update-181122/weeklyupdate.png";
+import ResponsiveEmbed from "react-responsive-embed";
+import HeroAnimation from "@/components/shared/HeroAnimation";
+
+import hackPMF from "./hackPMF.png";
+import Waitlist from "./waitlist.png";
+import pmfMock from "./pmfmock.png";
+
+export const meta = {
+  title: "Weekly Summary - 20th Jan 2023",
+  description:
+    "We’ve been 🚢ing: Big landing page update, new survey engine, PMF prototype in the making. Let’s have a closer look at what we worked on this week.",
+  date: "2023-01-20",
+};
+
+_We’ve been 🚢ing: Big landing page update, new survey engine, PMF prototype in the making. Let’s have a closer look at what we worked on this week 👇_
+
+<Image src={HeaderImage} alt="Weekly Update" className="rounded-lg" />
+
+### TLDR
+
+- Big update on the landing page to reflect niching down
+- Survey engine v0.1
+- New validation approach implemented, waitlist built
+- PMF survey prototyped
+
+<HeroAnimation />
+
+## Landing Page Update
+
+We’ve talked about niching down in our Weekly for some time already, but it wasn’t reflected on the landing page. As we are reaching out to more and more potential design partners, we revamped the landing page. Most obvious changes:
+
+- Directly address pains and gains of target audience
+- Removed everything related to “Open source Form and Survey Infrastructure”
+- Added Waitlist survey (built with survey engine)
+
+<Image src={hackPMF} alt="Landing Page Update" className="rounded-lg" />
+_Addressing technical founders and growth engineers._
+
+## New validation approach
+
+Instead of making our prototypes available to the public we decided to add a layer of friction. It doesn’t help us when people create an account, click around and never come back.
+
+Instead, we’re going into a deeper conversation with users who fit our target persona - and ask everyone else to hold out until we’ve built a product which provides substatial value for a small set of users. What does it mean in practice?
+
+<Image src={Waitlist} alt="Screenshot Landing Page Waitlist" className="rounded-lg" />
+
+_If they don’t fill out this survey, they don’t have a pressing problem._
+
+In practice this means that we took down the public sign up and added a waitlist survey. The waitlist contains quite a few questions which is intentional: If people are not willing to take 5 minutes to answer a few questions, they are unlikely to take up with the additional time and attention of being a design partner. Only if they have a pressing problem, we should take their feedback into account.
+
+## Survey engine v0.1
+
+We’ve developed an engine which can generate surveys based on a schema. This engine will be the technical foundation for all upcoming surveys. It allows us to:
+
+- Decouple the content of the surveys from the user interface in which they are shown. We can standardize the survey content in our backend and stay flexible on how customers want to put the surveys in front of their users.
+- Later on, we can rather quickly build a visual survey builder to manipulate the schema. This way, customers can change survey content in the Formbricks dashboard instead of having to dive into their frontend code.
+
+```tsx
+{
+    id: "rolePage",
+    config: {
+      autoSubmit: true,
+    },
+    elements: [
+      {
+        id: "role",
+        type: "radio",
+        label: "How would you describe your role?",
+        name: "role",
+        options: [
+          { label: "Founder", value: "founder", frontend: { icon: FounderIcon } },
+          {
+            label: "Product Manager",
+            value: "productManager",
+            frontend: { icon: LaptopWorkerIcon },
+          },
+          { label: "Engineer", value: "engineer", frontend: { icon: EngineerIcon } },
+        ],
+        component: IconRadio,
+      },
+    ],
+  },
+```
+
+_A glimpse into the schema, [see the whole thing here.](https://github.com/formbricks/formbricks/blob/main/apps/formbricks-com/pages/waitlist.tsx)_
+
+### PMF Prototype in the making
+
+With the new survey engine at hand, we’re proceeding to building the first proper survey. We’ll focus on the Superhuman PMF survey as a lot of SaaS founder ran it in the past with a subpar experience.
+
+The survey is built quick. Getting that native look & feel with the product will require some investigation. We haven’t yet determined the right balance between custom frontend code built by the user and easy implementation of prestyled components.
+
+<Image src={pmfMock} alt="PMF Mock Up" className="rounded-lg" />
+
+_Most founders email out their surveys. We focus on delivering a 10x better conversion rate to get people to try out Formbricks._
+
+##
+
+# Check out our [new Landing Page!](https://formbricks.com)
+
+<NewsletterSignup />
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
