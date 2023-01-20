@@ -17,8 +17,8 @@ export function Survey({ survey, formbricksUrl, formId }: SurveyProps) {
 
   const schema = useMemo(() => generateSchema(survey), [survey]);
 
-  const onPageSubmit = (updatedSubmission: any) => {
-    const nextPage = calculateNextPage(survey, updatedSubmission);
+  const navigateToNextPage = (currentSubmission: any) => {
+    const nextPage = calculateNextPage(survey, currentSubmission);
     setCurrentPage(nextPage);
     if (nextPage.endScreen) {
       setFinished(true);
@@ -57,7 +57,8 @@ export function Survey({ survey, formbricksUrl, formId }: SurveyProps) {
 
       <SurveyPage
         page={currentPage}
-        onSubmit={onPageSubmit}
+        onSkip={() => navigateToNextPage(submission)}
+        onSubmit={(updatedSubmission) => navigateToNextPage(updatedSubmission)}
         submission={submission}
         setSubmission={setSubmission}
         finished={finished}

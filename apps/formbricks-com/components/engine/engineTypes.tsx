@@ -9,7 +9,8 @@ export interface SurveyPage {
   endScreen?: boolean;
   elements: SurveyElement[];
   config?: {
-    autoSubmit: boolean;
+    autoSubmit?: boolean;
+    allowSkip?: boolean;
   };
   branchingRules?: {
     type: "value";

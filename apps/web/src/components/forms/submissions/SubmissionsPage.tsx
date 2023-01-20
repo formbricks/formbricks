@@ -28,10 +28,12 @@ export default function SubmissionsPage() {
   const [activeSubmission, setActiveSubmission] = useState<Submission | null>(null);
 
   useEffect(() => {
-    if (finishedOnly) {
-      setFileredSubmission(submissions.filter((submission) => submission.finished));
-    } else {
-      setFileredSubmission(submissions);
+    if (submissions) {
+      if (finishedOnly) {
+        setFileredSubmission(submissions.filter((submission) => submission.finished));
+      } else {
+        setFileredSubmission(submissions);
+      }
     }
   }, [finishedOnly, submissions]);
 
