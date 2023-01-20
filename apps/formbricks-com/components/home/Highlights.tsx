@@ -65,7 +65,7 @@ export default function Highlights({}) {
                 <span className="font-light">analytics and interviews.</span>
               </h2>
               <p className="text-md mt-6 max-w-3xl leading-7 text-slate-500 dark:text-slate-400">
-                Product analytics don’t tell a story, people do. Complement user interviews with a constant
+                Product analytics tell you WHAT users do, not WHY. Complement user interviews with a constant
                 flow of qualitative user insights.
               </p>
             </div>
