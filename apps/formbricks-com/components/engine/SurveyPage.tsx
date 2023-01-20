@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { usePlausible } from "next-plausible";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import Button from "../shared/Button";
@@ -33,6 +34,7 @@ export function SurveyPage({
     reset,
     formState: { errors },
   } = useForm();
+  const plausible = usePlausible();
   const [submittingPage, setSubmittingPage] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -47,8 +49,9 @@ export function SurveyPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ finished: true }),
       });
+      plausible("waitlistFinished");
     }
-  }, [page, formId, formbricksUrl, submissionId]);
+  }, [page, formId, formbricksUrl, submissionId, plausible]);
 
   const sendToFormbricks = async (partialSubmission: any) => {
     if (!submissionId) {
@@ -83,6 +86,7 @@ export function SurveyPage({
       await sendToFormbricks(data);
       setSubmittingPage(false);
       onSubmit(updatedSubmission);
+      plausible(`waitlistSubmitPage-${page.id}`);
     } catch (e) {
       alert("There was an error sending this form. Please try again later.");
     }
