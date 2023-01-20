@@ -64,12 +64,33 @@ export const getSubmissionAnalytics = (
 ) => {
   let totalSubmissions = 0;
   let lastSubmissionAt = null;
+  let totalCandidateSubmited = [];
+  let totalCandidateOpenedForm = [];
   for (const submissionSession of submissionSessions) {
+    console.log({ submissionSession });
     // collect unique users
     if (submissionSession.events.length > 0) {
       totalSubmissions += 1;
       const lastSubmission =
         submissionSession.events[submissionSession.events.length - 1];
+
+      submissionSession.events.map(({ type, data }) => {
+        if (type === "formOpened") {
+          const isCandidateExist = totalCandidateOpenedForm.findIndex(
+            (id) => data.candidateId === id
+          );
+          if (isCandidateExist) {
+            totalCandidateOpenedForm.push(data.candidateId);
+          }
+        } else if (type === "pageSubmission") {
+          const isCandidateExist = totalCandidateSubmited.findIndex(
+            (id) => data.candidateId === id
+          );
+          if (isCandidateExist) {
+          totalCandidateSubmited.push(data.candidateId);
+        }
+        }
+      });
       if (!lastSubmissionAt) {
         lastSubmissionAt = lastSubmission.createdAt;
       } else if (
@@ -82,6 +103,8 @@ export const getSubmissionAnalytics = (
   }
   return {
     lastSubmissionAt,
+    totalCandidateSubmited: totalCandidateSubmited.length,
+    totalCandidateOpenedForm: totalCandidateOpenedForm.length,
     totalSubmissions: totalSubmissions,
   };
 };
