@@ -247,6 +247,7 @@ function submit(e: Event) {
       pageUrl: window.location.href,
     },
     customer: config.customer,
+    finished: true,
   };
 
   fetch(`${config.hqUrl || "https://xm.formbricks.com"}/api/capture/forms/${config.formId}/submissions`, {
