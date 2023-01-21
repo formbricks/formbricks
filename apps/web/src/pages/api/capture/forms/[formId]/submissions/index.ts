@@ -35,6 +35,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     };
 
+    if (submission.finished) {
+      event.data.finished = submission.finished;
+    }
+
     if (submission.customer && "email" in submission.customer) {
       const customerEmail = submission.customer.email;
       const customerData = { ...submission.customer };
@@ -58,8 +62,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // create form in db
+    const pipelineEvents = ["submissionCreated"];
+    if (submission.finished) {
+      pipelineEvents.push("submissionFinished");
+    }
     const submissionResult = await prisma.submission.create(event);
-    await runPipelines(["submissionCreated"], form, submission, submissionResult);
+    await runPipelines(pipelineEvents, form, submission, submissionResult);
     // tracking
     capturePosthogEvent(form.workspaceId, "submission received", {
       formId,
