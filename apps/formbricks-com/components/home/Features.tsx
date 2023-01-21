@@ -31,7 +31,7 @@ export default function Features() {
         <HeadingCentered
           closer
           teaser="Built for Product-minded founders"
-          heading="Hack you way to Product-Market Fit"
+          heading="Hack your way to Product-Market Fit"
           subheading="We redesigned experience management for SaaS founding teams:
           Developer-first, native look & feel, private at heart."
         />
