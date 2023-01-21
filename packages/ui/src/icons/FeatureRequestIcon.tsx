@@ -20,16 +20,16 @@ export function FeatureRequestIcon(props: any) {
       <path
         d="M31.975 38.6934C30.7795 35.1905 28.3792 32.2256 25.2018 30.3272C22.0244 28.4287 18.2762 27.7198 14.6249 28.3268C10.9737 28.9339 7.65647 30.8174 5.26428 33.6419C2.87209 36.4663 1.56027 40.0483 1.5625 43.7497V54.6872H9.375L10.9375 73.4372H23.4375L25 54.6872H28.125"
         stroke="black"
-        stroke-width="3.2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
         d="M17.1875 23.4375C23.2281 23.4375 28.125 18.5406 28.125 12.5C28.125 6.45938 23.2281 1.5625 17.1875 1.5625C11.1469 1.5625 6.25 6.45938 6.25 12.5C6.25 18.5406 11.1469 23.4375 17.1875 23.4375Z"
         stroke="black"
-        stroke-width="3.2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
         d="M54.6875 73.4375C58.3959 73.4375 62.021 72.3378 65.1044 70.2776C68.1879 68.2173 70.5911 65.2889 72.0102 61.8628C73.4294 58.4367 73.8007 54.6667 73.0772 51.0296C72.3538 47.3924 70.568 44.0515 67.9458 41.4293C65.3235 38.807 61.9826 37.0213 58.3454 36.2978C54.7083 35.5743 50.9383 35.9456 47.5122 37.3648C44.0861 38.7839 41.1577 41.1871 39.0974 44.2706C37.0372 47.354 35.9375 50.9791 35.9375 54.6875C35.9375 59.6603 37.9129 64.4295 41.4292 67.9458C44.9456 71.4621 49.7147 73.4375 54.6875 73.4375Z"
@@ -42,23 +42,23 @@ export function FeatureRequestIcon(props: any) {
       <path
         d="M54.6875 73.4375C58.3959 73.4375 62.021 72.3378 65.1044 70.2776C68.1879 68.2173 70.5911 65.2889 72.0102 61.8628C73.4294 58.4367 73.8007 54.6667 73.0772 51.0296C72.3538 47.3924 70.568 44.0515 67.9458 41.4293C65.3235 38.807 61.9826 37.0213 58.3454 36.2978C54.7083 35.5743 50.9383 35.9456 47.5122 37.3648C44.0861 38.7839 41.1577 41.1871 39.0974 44.2706C37.0372 47.354 35.9375 50.9791 35.9375 54.6875C35.9375 59.6603 37.9129 64.4295 41.4292 67.9458C44.9456 71.4621 49.7147 73.4375 54.6875 73.4375Z"
         stroke="black"
-        stroke-width="3.2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
         d="M54.6875 45.3125V64.0625"
         stroke="black"
-        stroke-width="3.2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
         d="M64.0625 54.6875H45.3125"
         stroke="black"
-        stroke-width="3.2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
