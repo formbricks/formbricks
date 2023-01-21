@@ -3,24 +3,21 @@ import { capturePosthogEvent } from "@/lib/posthog";
 import { captureTelemetry } from "@/lib/telemetry";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
-import NextCors from "nextjs-cors";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-  await NextCors(req, res, {
-    // Options
-    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
-    origin: "*",
-    optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-  });
-
   const formId = req.query.formId.toString();
   const submissionId = req.query.submissionId.toString();
+
+  // CORS
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+  }
 
   // PUT /capture/forms/[formId]/submissions/[submissionId]
   // Extend an existing form submission
   // Required fields in body: -
   // Optional fields in body: customerId, data
-  if (req.method === "PUT") {
+  else if (req.method === "PUT") {
     const submission = req.body;
 
     // get form
