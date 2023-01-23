@@ -1,6 +1,6 @@
 import useSWR from "swr";
 import { Schema, SubmissionSession, SubmissionSummary } from "./types";
-import { fetcher } from "./utils";
+import { fetcher, isBlockAQuestion } from "./utils";
 
 export const useSubmissionSessions = (formId: string) => {
   const { data, error, mutate } = useSWR(
@@ -60,35 +60,78 @@ export const getSubmission = (submissionSession, schema) => {
 };
 
 export const getSubmissionAnalytics = (
-  submissionSessions: SubmissionSession[]
+  submissionSessions: SubmissionSession[],
+  pages
 ) => {
   let totalSubmissions = 0;
   let lastSubmissionAt = null;
   let totalCandidateSubmited = [];
   let totalCandidateOpenedForm = [];
+  let questionsInsights = [];
+  let totalQuestionSubmission = [];
   for (const submissionSession of submissionSessions) {
-    console.log({ submissionSession });
     // collect unique users
     if (submissionSession.events.length > 0) {
       totalSubmissions += 1;
       const lastSubmission =
         submissionSession.events[submissionSession.events.length - 1];
 
+      const submissionSessionsSubmitedType = submissionSession.events.filter(
+        ({ data, type }) => type === "pageSubmission" && data.submission
+      );
+
+      pages.forEach(({ blocks }) => {
+        blocks.forEach((question) => {
+          if (
+            submissionSessionsSubmitedType[0]?.data?.submission[question.id]
+          ) {
+            const isQuestionExist = questionsInsights.findIndex(
+              (element) => element.id === question.id
+            );
+            const isCandidateExist = questionsInsights.filter((element) =>
+              element.candidate.findIndex(
+                (candidateId) =>
+                  candidateId ===
+                  submissionSessionsSubmitedType[0]?.data?.candidateId
+              )
+            );
+            if (isQuestionExist === -1) {
+              questionsInsights.push({
+                candidate: [
+                  submissionSessionsSubmitedType[0]?.data?.candidateId,
+                ],
+                id: question.id,
+                name: question.data.label,
+                stat: 1,
+                trend: undefined,
+              });
+            } else if (isCandidateExist) {
+              const currentQuestion = questionsInsights.find(
+                (element) => element.id === question.id
+              );
+              currentQuestion.stat = currentQuestion.stat + 1;
+            }
+          }
+        });
+      });
+
+      //Pour chaque page, on a des bloques, et pour chaque bloque on a des questions et pour chaque question, on a des candidats ayant répondus
+
       submissionSession.events.map(({ type, data }) => {
         if (type === "formOpened") {
-          const isCandidateExist = totalCandidateOpenedForm.findIndex(
+          const isCandidateExist = totalCandidateOpenedForm.find(
             (id) => data.candidateId === id
           );
-          if (isCandidateExist) {
+          if (!isCandidateExist) {
             totalCandidateOpenedForm.push(data.candidateId);
           }
         } else if (type === "pageSubmission") {
-          const isCandidateExist = totalCandidateSubmited.findIndex(
+          const isCandidateExist = totalCandidateSubmited.find(
             (id) => data.candidateId === id
           );
-          if (isCandidateExist) {
-          totalCandidateSubmited.push(data.candidateId);
-        }
+          if (!isCandidateExist) {
+            totalCandidateSubmited.push(data.candidateId);
+          }
         }
       });
       if (!lastSubmissionAt) {
@@ -106,6 +149,7 @@ export const getSubmissionAnalytics = (
     totalCandidateSubmited: totalCandidateSubmited.length,
     totalCandidateOpenedForm: totalCandidateOpenedForm.length,
     totalSubmissions: totalSubmissions,
+    questionsInsights,
   };
 };
 

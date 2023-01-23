@@ -1,16 +1,17 @@
-import { useMemo } from "react";
-import { useForm } from "../../lib/forms";
+import { useEffect, useMemo, useState } from "react";
+import { useForm, getFormPages } from "../../lib/forms";
 import {
   getSubmissionAnalytics,
   getSubmissionSummary,
   useSubmissionSessions,
 } from "../../lib/submissionSessions";
 import { SubmissionSummary } from "../../lib/types";
-import { timeSince } from "../../lib/utils";
+import { isBlockAQuestion, timeSince } from "../../lib/utils";
 import AnalyticsCard from "./AnalyticsCard";
 import Loading from "../Loading";
 import TextResults from "./summary/TextResults";
 import ChoiceResults from "./summary/ChoiceResults";
+import usePages from "../../hooks/usePages";
 
 export default function ResultsSummary({ formId }) {
   const {
@@ -19,14 +20,33 @@ export default function ResultsSummary({ formId }) {
   } = useSubmissionSessions(formId);
 
   const { form, isLoadingForm } = useForm(formId);
+  const [formBlocks, setFormBlocks] = useState([]);
 
-  console.log({ form });
+  const getNocodeFormBlocks = async () => {
+    try {
+      const progress = await fetch(`/api/public/forms/${form.id}/nocodeform`, {
+        method: "GET",
+      });
+
+      if (progress && !progress.ok) {
+        console.error("error");
+      }
+      const data = await progress.json();
+      setFormBlocks(data?.form?.blocks);
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    getNocodeFormBlocks();
+  }, []);
+
+  const pages = usePages({ blocks: formBlocks, formId: form.id });
 
   const insights = useMemo(() => {
     if (!isLoadingSubmissionSessions) {
-      return getSubmissionAnalytics(submissionSessions);
+      return getSubmissionAnalytics(submissionSessions, pages);
     }
-  }, [isLoadingSubmissionSessions, submissionSessions]);
+  }, [isLoadingSubmissionSessions, submissionSessions, pages]);
 
   const summary: SubmissionSummary | undefined = useMemo(() => {
     if (!isLoadingSubmissionSessions && !isLoadingForm) {
@@ -36,7 +56,8 @@ export default function ResultsSummary({ formId }) {
 
   const stats = useMemo(() => {
     if (insights) {
-      return [
+      const questionsInsights = insights.questionsInsights;
+      const defaultInsights = [
         {
           id: "totalCandidateSubmited",
           name: "Nombre de candidats ayant soumis",
@@ -61,6 +82,10 @@ export default function ResultsSummary({ formId }) {
           toolTipText: undefined,
         },
       ];
+
+      const combineInsights = [...defaultInsights, ...questionsInsights];
+
+      return combineInsights;
     }
   }, [insights]);
 
