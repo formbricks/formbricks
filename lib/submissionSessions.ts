@@ -87,29 +87,68 @@ export const getSubmissionAnalytics = (
             const isQuestionExist = questionsInsights.findIndex(
               (element) => element.id === question.id
             );
-            const isCandidateExist = questionsInsights.filter((element) =>
-              element.candidate.findIndex(
+            const isCandidateExist = questionsInsights.filter((element) => {
+              const isExist = element.candidate.findIndex(
                 (candidateId) =>
                   candidateId ===
                   submissionSessionsSubmitedType[0]?.data?.candidateId
-              )
-            );
+              );
+              if (isExist === -1) return false;
+              return true;
+            });
+
             if (isQuestionExist === -1) {
-              questionsInsights.push({
-                candidate: [
-                  submissionSessionsSubmitedType[0]?.data?.candidateId,
-                ],
-                id: question.id,
-                name: question.data.label,
-                stat: 1,
-                trend: undefined,
-              });
-            } else if (isCandidateExist) {
+              if (question.type === "multipleChoiceQuestion") {
+                const options = question.data.options.map(({ label }) => {
+                  if (
+                    submissionSessionsSubmitedType[0]?.data?.submission[
+                      question.id
+                    ] === label
+                  ) {
+                    return {
+                      label,
+                      candidates: [
+                        submissionSessionsSubmitedType[0]?.data?.candidateId,
+                      ],
+                    };
+                  } else {
+                    return {
+                      label,
+                      candidates: [],
+                    };
+                  }
+                });
+                console.log({ options });
+                questionsInsights.push({
+                  candidate: [
+                    submissionSessionsSubmitedType[0]?.data?.candidateId,
+                  ],
+                  id: question.id,
+                  name: question.data.label,
+                  stat: 1,
+                  trend: undefined,
+                  options,
+                });
+                console.log("in", { submissionSessionsSubmitedType });
+              } else {
+                questionsInsights.push({
+                  candidate: [
+                    submissionSessionsSubmitedType[0]?.data?.candidateId,
+                  ],
+                  id: question.id,
+                  name: question.data.label,
+                  stat: 1,
+                  trend: undefined,
+                });
+              }
+            } else if (isCandidateExist.length) {
               const currentQuestion = questionsInsights.find(
                 (element) => element.id === question.id
               );
+              if (question.type === "multipleChoiceQuestion") {
+              }
               currentQuestion.stat = currentQuestion.stat + 1;
-            } else if (!isCandidateExist) {
+            } else if (isCandidateExist.length < 1) {
               const currentQuestion = questionsInsights.find(
                 (element) => element.id === question.id
               );
@@ -121,7 +160,6 @@ export const getSubmissionAnalytics = (
           }
         });
       });
-
 
       submissionSession.events.map(({ type, data }) => {
         if (type === "formOpened") {
