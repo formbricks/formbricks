@@ -18,7 +18,7 @@ export interface FormbricksConfig {
   disableErrorAlert: boolean;
 }
 
-const config: FormbricksConfig = {
+let config: FormbricksConfig = {
   customer: {},
   disableErrorAlert: false,
   // Merge with existing config
@@ -120,7 +120,10 @@ function onDisplay() {
   trap.activate();
 }
 
-function open(e: Event) {
+function open(e: Event, updatedConfig?: FormbricksConfig) {
+  if (updatedConfig) {
+    config = { ...config, ...updatedConfig };
+  }
   if (config.divId) {
     console.error('open() is not supported when using "divId" in config.');
     return;
@@ -130,7 +133,7 @@ function open(e: Event) {
     containerElement.classList.add("formbricks__modal");
   }
 
-  const target = (e?.target as HTMLElement) || document.body;
+  const target = (e.target as HTMLElement) || document.body;
   computePosition(target, containerElement, {
     placement: "bottom",
     middleware: [flip(), shift({ crossAxis: true, padding: 8 })],
@@ -247,6 +250,7 @@ function submit(e: Event) {
       pageUrl: window.location.href,
     },
     customer: config.customer,
+    finished: true,
   };
 
   fetch(`${config.hqUrl || "https://xm.formbricks.com"}/api/capture/forms/${config.formId}/submissions`, {

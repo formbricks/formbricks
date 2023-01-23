@@ -24,6 +24,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       where: { id: formId },
     });
 
+    if (form === null) {
+      return res.status(404).json({ error: `Form with id "${formId}" not found` });
+    }
+
     const event: any = {
       data: {
         data: submission.data,

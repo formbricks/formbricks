@@ -56,7 +56,7 @@ export function EmailNotificationSettings({ pipeline, setPipeline }) {
 
         <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
           <div className="sm:col-span-4">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="label" className="block text-sm font-medium text-gray-700">
               Pipeline Label
             </label>
             <div className="mt-1">
@@ -74,15 +74,12 @@ export function EmailNotificationSettings({ pipeline, setPipeline }) {
           </div>
 
           <div className="sm:col-span-4">
-            <label htmlFor="endpointUrl" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email address
             </label>
             <div className="mt-1">
               <input
                 type="email"
-                //   pattern="/^[^@]+@[^.]+\..+$/"
-                onInvalid={(e: any) => e.target.setCustomValidity("please provide a valid email")}
-                onInput={(e: any) => e.target.setCustomValidity("")}
                 name="email"
                 id="email"
                 placeholder="mail@example.com"
