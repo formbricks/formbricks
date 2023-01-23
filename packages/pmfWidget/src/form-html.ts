@@ -1,0 +1,1 @@
+export const formHtml = `<div id="formbricks-form"><div id="formbricks-question-disappointed"><p class="formbricks-element-label">How disappointed would you be if you could no longer use our service?</p></div></div>`;

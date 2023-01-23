@@ -1,0 +1,84 @@
+:root {
+  /* Initial Settings */
+  --formbricks-brand-color: #00c4b8;
+  --formbricks-border-radius: 0.4rem;
+
+  /* Globals */
+  --formbricks-shadow: rgba(7, 0, 20, 0.06) 0px 0px 0px 1px, rgba(7, 0, 20, 0.1) 0px 10px 15px -3px,
+    rgba(7, 0, 20, 0.05) 0px 4px 6px, rgba(7, 0, 20, 0.05) 0px 30px 40px;
+  --formbricks-focus-shadow: 0 0 0 2px var(--formbricks-bg-color);
+  --formbricks-bold: 600;
+
+  /* Header */
+  --formbricks-header-text-color: #1e293b;
+  --formbricks-header-bg-color: #cbd5e1;
+
+  /* Box */
+  --formbricks-bg-color: #f8fafc;
+  --formbricks-text-color: #0f172a;
+  --formbricks-intro-text-color: #64748b;
+
+  /* Buttons */
+  --formbricks-button-weight: 500;
+  --formbricks-button-border-radius: calc(var(--formbricks-border-radius) / 2);
+  --formbricks-button-hover-bg-color: #e2e8f0;
+
+  /* Submit Button */
+  --formbricks-submit-color: white;
+  --formbricks-submit-bg-color: var(--formbricks-brand-color);
+  --formbricks-submit-hover-bg-color: var(--formbricks-brand-color);
+
+  /* Textarea */
+  --formbricks-message-border-color: #e2e8f0;
+}
+
+/* Container */
+
+#formbricks-container {
+  height: 100%;
+  display: flex;
+  background-color: var(--formbricks-bg-color);
+  padding: 0;
+  font-family: sans-serif;
+  font-size: 1rem;
+  color: var(--formbricks-text-color);
+}
+
+#formbricks-container * {
+  box-sizing: border-box;
+}
+
+#formbricks-container *:focus {
+  outline: none;
+}
+
+#formbricks-form {
+  margin: auto;
+}
+
+.formbricks-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Animations */
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
