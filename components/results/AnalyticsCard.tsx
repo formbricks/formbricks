@@ -171,7 +171,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
 
         {options?.length &&
           options.map(({ label, candidates }, index) => {
-            const trend = (candidates / candidate.length) * 100;
+            const trend = Math.ceil((candidates / candidate.length) * 100);
             return (
               <div
                 key={index}
