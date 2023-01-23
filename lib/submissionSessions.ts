@@ -80,6 +80,9 @@ export const getSubmissionAnalytics = (
       );
 
       pages.forEach(({ blocks }) => {
+        // if (blocks.length > 1) {
+        const pageName = blocks[0]?.data.text;
+        // }
         blocks.forEach((question) => {
           if (
             submissionSessionsSubmitedType[0]?.data?.submission[question.id]
@@ -87,14 +90,15 @@ export const getSubmissionAnalytics = (
             const isQuestionExist = questionsInsights.findIndex(
               (element) => element.id === question.id
             );
-            const isCandidateExist = questionsInsights.filter((element) => {
+            let isCandidateExist = false;
+
+            questionsInsights.map((element) => {
               const isExist = element.candidate.findIndex(
                 (candidateId) =>
                   candidateId ===
                   submissionSessionsSubmitedType[0]?.data?.candidateId
               );
-              if (isExist === -1) return false;
-              return true;
+              isCandidateExist = isExist === -1 ? false : true;
             });
 
             if (isQuestionExist === -1) {
@@ -107,18 +111,15 @@ export const getSubmissionAnalytics = (
                   ) {
                     return {
                       label,
-                      candidates: [
-                        submissionSessionsSubmitedType[0]?.data?.candidateId,
-                      ],
+                      candidates: 1,
                     };
                   } else {
                     return {
                       label,
-                      candidates: [],
+                      candidates: 0,
                     };
                   }
                 });
-                console.log({ options });
                 questionsInsights.push({
                   candidate: [
                     submissionSessionsSubmitedType[0]?.data?.candidateId,
@@ -128,8 +129,8 @@ export const getSubmissionAnalytics = (
                   stat: 1,
                   trend: undefined,
                   options,
+                  pageName,
                 });
-                console.log("in", { submissionSessionsSubmitedType });
               } else {
                 questionsInsights.push({
                   candidate: [
@@ -139,19 +140,24 @@ export const getSubmissionAnalytics = (
                   name: question.data.label,
                   stat: 1,
                   trend: undefined,
+                  pageName,
                 });
               }
-            } else if (isCandidateExist.length) {
+            } else if (isQuestionExist !== -1 && !isCandidateExist) {
               const currentQuestion = questionsInsights.find(
                 (element) => element.id === question.id
               );
               if (question.type === "multipleChoiceQuestion") {
+                currentQuestion.options.map((option, index) => {
+                  if (
+                    submissionSessionsSubmitedType[0]?.data?.submission[
+                      question.id
+                    ] === option.label
+                  ) {
+                    currentQuestion.options[index].candidates += 1;
+                  }
+                });
               }
-              currentQuestion.stat = currentQuestion.stat + 1;
-            } else if (isCandidateExist.length < 1) {
-              const currentQuestion = questionsInsights.find(
-                (element) => element.id === question.id
-              );
               currentQuestion.candidate.push(
                 submissionSessionsSubmitedType[0]?.data?.candidateId
               );
@@ -188,12 +194,42 @@ export const getSubmissionAnalytics = (
       }
     }
   }
+  const pagesInsights = [];
+  questionsInsights.map((question) => {
+    const ispageExist = pagesInsights.find(
+      (page) => question.pageName === page.name
+    );
+    if (!ispageExist) {
+      pagesInsights.push({
+        name: question.pageName,
+        questions: [question],
+        id: question.pageName,
+        stat: question.stat,
+        trend: undefined,
+        candidates: question.candidate,
+      });
+    } else {
+      const pageIndex = pagesInsights.findIndex((element) => {
+        return ispageExist.name === element.name;
+      });
+      pagesInsights[pageIndex].questions.push(question);
+      question.candidate.map((candidateId) => {
+        const candidateIndex = ispageExist.candidates.findIndex((element) => {
+          return candidateId === element;
+        });
+        if (candidateIndex === -1) {
+          pagesInsights[pageIndex].stat += 1;
+        }
+      });
+    }
+  });
+
   return {
     lastSubmissionAt,
     totalCandidateSubmited: totalCandidateSubmited.length,
     totalCandidateOpenedForm: totalCandidateOpenedForm.length,
     totalSubmissions: totalSubmissions,
-    questionsInsights,
+    pagesInsights,
   };
 };
 

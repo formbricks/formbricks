@@ -56,7 +56,7 @@ export default function ResultsSummary({ formId }) {
 
   const stats = useMemo(() => {
     if (insights) {
-      const questionsInsights = insights.questionsInsights;
+      const questionsInsights = insights.pagesInsights;
       const defaultInsights = [
         {
           id: "totalCandidateSubmited",

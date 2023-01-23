@@ -1,3 +1,4 @@
+
 import BaseResults from "./BaseResults";
 
 export default function TextResults({ element }) {
