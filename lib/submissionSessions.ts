@@ -68,7 +68,6 @@ export const getSubmissionAnalytics = (
   let totalCandidateSubmited = [];
   let totalCandidateOpenedForm = [];
   let questionsInsights = [];
-  let totalQuestionSubmission = [];
   for (const submissionSession of submissionSessions) {
     // collect unique users
     if (submissionSession.events.length > 0) {
@@ -110,12 +109,19 @@ export const getSubmissionAnalytics = (
                 (element) => element.id === question.id
               );
               currentQuestion.stat = currentQuestion.stat + 1;
+            } else if (!isCandidateExist) {
+              const currentQuestion = questionsInsights.find(
+                (element) => element.id === question.id
+              );
+              currentQuestion.candidate.push(
+                submissionSessionsSubmitedType[0]?.data?.candidateId
+              );
+              currentQuestion.stat = currentQuestion.stat + 1;
             }
           }
         });
       });
 
-      //Pour chaque page, on a des bloques, et pour chaque bloque on a des questions et pour chaque question, on a des candidats ayant répondus
 
       submissionSession.events.map(({ type, data }) => {
         if (type === "formOpened") {
