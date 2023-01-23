@@ -102,11 +102,12 @@ export default function ResultsSummary({ formId }) {
         {stats.map((item) => (
           <AnalyticsCard
             key={item.id}
-            value={item.stat}
+            value={item.type === "page" ? `${item.stat} candidats ont répondus` : item.stat}
             label={item.name}
             toolTipText={item.toolTipText}
             trend={item.trend}
             smallerText={item.smallerText}
+            questions={item.questions}
           />
         ))}
       </dl>

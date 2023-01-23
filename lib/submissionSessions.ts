@@ -207,6 +207,7 @@ export const getSubmissionAnalytics = (
         stat: question.stat,
         trend: undefined,
         candidates: question.candidate,
+        type: "page"
       });
     } else {
       const pageIndex = pagesInsights.findIndex((element) => {
