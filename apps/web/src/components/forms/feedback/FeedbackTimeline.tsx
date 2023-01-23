@@ -104,11 +104,11 @@ export default function FeedbackTimeline({ submissions, setSubmissions }) {
                         <div className="flex w-full justify-between gap-4">
                           <div>
                             <p className="text-sm font-thin text-gray-500">User</p>
-                            {submission.customer ? (
+                            {submission.customerEmail ? (
                               <Link
                                 className="text-sm font-medium text-gray-700"
-                                href={`/workspaces/${router.query.workspaceId}/customers/${submission.customer.id}`}>
-                                {submission.customer.id}
+                                href={`/workspaces/${router.query.workspaceId}/customers/${submission.customerEmail}`}>
+                                {submission.customerEmail}
                               </Link>
                             ) : (
                               <p className="text-sm text-gray-500">Anonymous</p>
@@ -140,10 +140,10 @@ export default function FeedbackTimeline({ submissions, setSubmissions }) {
                               Restore
                             </button>
                           )}
-                          {submission.customer && "email" in submission.customer.data && (
+                          {submission.customerEmail && (
                             <Button
                               variant="primary"
-                              href={`mailto:${submission.customer.data.email}`}
+                              href={`mailto:${submission.customerEmail}`}
                               className="ml-4">
                               Send Email
                             </Button>

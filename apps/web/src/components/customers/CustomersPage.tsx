@@ -61,7 +61,7 @@ export default function FormsPage() {
                       <th
                         scope="col"
                         className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                        Id
+                        Email
                       </th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                         created At
@@ -78,8 +78,8 @@ export default function FormsPage() {
                     {customers.map((customer, customerIdx) => (
                       <tr key={customer.email} className={customerIdx % 2 === 0 ? undefined : "bg-gray-50"}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          <Link href={`/workspaces/${router.query.workspaceId}/customers/${customer.id}`}>
-                            {customer.id}
+                          <Link href={`/workspaces/${router.query.workspaceId}/customers/${customer.email}`}>
+                            {customer.email}
                           </Link>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">

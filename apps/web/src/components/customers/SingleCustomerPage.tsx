@@ -52,7 +52,7 @@ export default function SingleCustomerPage() {
           Back to customers overview
         </Link>
         <div className="flex items-baseline justify-between border-b border-gray-200 pt-4 pb-6">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">{customer.id}</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900">{customer.email}</h1>
         </div>
 
         <section className="pt-6 pb-24">
@@ -65,12 +65,10 @@ export default function SingleCustomerPage() {
                   <dd className="mt-1 text-sm text-gray-900">{customer.data.name}</dd>
                 </div>
               )}
-              {"email" in customer.data && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Email</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{customer.data.email}</dd>
-                </div>
-              )}
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                <dd className="mt-1 text-sm text-gray-900">{customer.email}</dd>
+              </div>
               {Object.entries(customer.data).map(
                 ([key, value]) =>
                   !["name", "email"].includes(key) && (
