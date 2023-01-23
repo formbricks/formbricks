@@ -1,6 +1,6 @@
 import useSWR from "swr";
 import { Schema, SubmissionSession, SubmissionSummary } from "./types";
-import { fetcher, isBlockAQuestion } from "./utils";
+import { fetcher } from "./utils";
 
 export const useSubmissionSessions = (formId: string) => {
   const { data, error, mutate } = useSWR(

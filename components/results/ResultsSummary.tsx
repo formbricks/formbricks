@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { useForm, getFormPages } from "../../lib/forms";
+import { useForm } from "../../lib/forms";
 import {
   getSubmissionAnalytics,
   getSubmissionSummary,
   useSubmissionSessions,
 } from "../../lib/submissionSessions";
 import { SubmissionSummary } from "../../lib/types";
-import { isBlockAQuestion, timeSince } from "../../lib/utils";
+import {  timeSince } from "../../lib/utils";
 import AnalyticsCard from "./AnalyticsCard";
 import Loading from "../Loading";
 import TextResults from "./summary/TextResults";
