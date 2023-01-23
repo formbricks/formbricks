@@ -52,7 +52,7 @@ const WaitlistPage = () => (
             process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
           }
           formId={
-            process.env.NODE_ENV === "production" ? "cld37mt2i0000ld08p9q572bc" : "cld1q32h7000619twdt9ykqza"
+            process.env.NODE_ENV === "production" ? "cld37mt2i0000ld08p9q572bc" : "cld2xwo2r000cu0mdkju2nj96"
           }
           survey={{
             config: {
@@ -99,6 +99,23 @@ const WaitlistPage = () => (
                       { label: "Consumers", value: "consumers", frontend: { icon: UserGroupIcon } },
                     ],
                     component: IconRadio,
+                  },
+                ],
+              },
+              {
+                id: "emailPage",
+                elements: [
+                  {
+                    id: "email",
+                    type: "text",
+                    label: "What's your email?",
+                    name: "email",
+                    frontend: {
+                      required: true,
+                      type: "email",
+                      placeholder: "email@example.com",
+                    },
+                    component: Input,
                   },
                 ],
               },
@@ -200,23 +217,6 @@ const WaitlistPage = () => (
                       },
                     ],
                     component: FeatureSelection,
-                  },
-                ],
-              },
-              {
-                id: "emailPage",
-                elements: [
-                  {
-                    id: "email",
-                    type: "text",
-                    label: "What's your email?",
-                    name: "email",
-                    frontend: {
-                      required: true,
-                      type: "email",
-                      placeholder: "email@example.com",
-                    },
-                    component: Input,
                   },
                 ],
               },
