@@ -32,3 +32,7 @@ export * from "./icons/CheckMarkIcon";
 export * from "./icons/BellIcon";
 export * from "./icons/SkyscraperIcon";
 export * from "./icons/UserDeveloperIcon";
+export * from "./icons/VeryDisappointed";
+export * from "./icons/SomewhatDisappointed";
+export * from "./icons/NotDisappointed";
+export * from "./icons/ArchiveIcon";

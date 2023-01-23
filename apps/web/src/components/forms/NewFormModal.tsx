@@ -3,7 +3,7 @@
 import { createForm } from "@/lib/forms";
 import { Button } from "@formbricks/ui";
 import { Dialog, RadioGroup, Transition } from "@headlessui/react";
-import { UserIcon } from "@heroicons/react/24/outline";
+import { PMFIcon, FeedbackIcon, UserCommentIcon } from "@formbricks/ui";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
@@ -21,13 +21,19 @@ const formTypes = [
     id: "feedback",
     name: "Feedback Box",
     description: "A direct channel to feel the pulse of your users.",
-    icon: UserIcon,
+    icon: FeedbackIcon,
   },
   {
     id: "custom",
-    name: "Custom Form",
-    description: "Send and analyze your custom form.",
-    icon: UserIcon,
+    name: "Custom Survey",
+    description: "Create and analyze your custom survey.",
+    icon: UserCommentIcon,
+  },
+  {
+    id: "pmf",
+    name: "Product-Market Fit Survey",
+    description: "Leverage the Superhuman PMF engine.",
+    icon: PMFIcon,
   },
 ];
 
@@ -89,6 +95,52 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
       formTemplate = {
         label,
         type: "custom",
+      };
+    } else if (formType === "pmf") {
+      formTemplate = {
+        label,
+        type: "feedback",
+        schema: {
+          type: "form",
+          config: {},
+          pages: [
+            {
+              id: "feedbackTypePage",
+              elements: [
+                {
+                  type: "radio",
+                  name: "feedbackType",
+                  label: "What's on your mind?",
+                  options: [
+                    { label: "Idea", value: "idea" },
+                    { label: "Compliment", value: "compliment" },
+                    { label: "Bug", value: "bug" },
+                  ],
+                },
+              ],
+            },
+            {
+              id: "messagePage",
+              elements: [
+                {
+                  type: "textarea",
+                  name: "message",
+                  label: "What's your feedback?",
+                },
+              ],
+            },
+            {
+              id: "thankYouPage",
+              endScreen: true,
+              elements: [
+                {
+                  type: "html",
+                  name: "thankYou",
+                },
+              ],
+            },
+          ],
+        },
       };
     } else {
       throw new Error("Unknown form type");
@@ -176,7 +228,7 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
                               <RadioGroup.Description
                                 as="span"
                                 className="mt-2 mr-3 flex text-sm sm:mt-0 sm:flex-col sm:text-right">
-                                <formType.icon className="h-6 w-6" />
+                                <formType.icon className="h-8 w-8" />
                               </RadioGroup.Description>
                               <span className="flex items-center">
                                 <span className="flex flex-col text-sm">

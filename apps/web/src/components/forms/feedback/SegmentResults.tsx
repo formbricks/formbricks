@@ -17,6 +17,7 @@ import { useRouter } from "next/router";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import FeedbackTimeline from "./FeedbackTimeline";
 import { Button } from "@formbricks/ui";
+import sq from "date-fns/esm/locale/sq/index.js";
 
 const subCategories = [
   { name: "Somewhat disappointed", href: "#" },
@@ -24,7 +25,7 @@ const subCategories = [
   { name: "Not disappointed", href: "#" },
 ];
 
-export default function FeedbackResults() {
+export default function SegmentResults() {
   const router = useRouter();
   const { submissions, isLoadingSubmissions, isErrorSubmissions, mutateSubmissions } = useSubmissions(
     router.query.workspaceId?.toString(),
@@ -148,6 +149,40 @@ export default function FeedbackResults() {
   if (isErrorSubmissions) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
+
+  const submissionz = [
+    {
+      question: "What is the main benefit you receive from our service?",
+    },
+    {
+      question: "How can we improve our service for you?",
+    },
+    {
+      question: "What type of people would benefit most from using our service?",
+    },
+  ];
+
+  const q1responses = [
+    {
+      response:
+        "A think it would be awesome if your app could do this because I keep having this problem! I would use it everyday and tell all my friends.",
+      feeling: "very disapp.",
+      segment: "Founder",
+    },
+    {
+      response:
+        "B think it would be awesome if your app could do this because I keep having this problem! I would use it everyday and tell all my friends.",
+      feeling: "somewhat disapp.",
+      segment: "Entrepreneur",
+    },
+    {
+      response:
+        "C think it would be awesome if your app could do this because I keep having this problem! I would use it everyday and tell all my friends.",
+      feeling: "not disapp.",
+      segment: "Product Manager",
+    },
+  ];
+
   return (
     <div>
       {/* Mobile filter dialog */}
@@ -280,7 +315,7 @@ export default function FeedbackResults() {
 
               {/* Segments */}
 
-              <form className="mt-4 hidden max-w-3xl lg:block">
+              <form className="mt-4 hidden lg:block">
                 <h3 className="sr-only">Segments</h3>
                 <div className="flex py-2 text-sm font-bold">
                   <h4 className="text-slate-600">Segments</h4>{" "}
@@ -317,16 +352,50 @@ export default function FeedbackResults() {
             {/* Submission grid */}
 
             <div className="max-w-3xl lg:col-span-3">
-              {submissions.length === 0 ? (
-                <EmptyPageFiller
-                  alertText="You haven't received any submissions yet."
-                  hintText="Embed the PMF survey on your website to start gathering insights."
-                  borderStyles="border-4 border-dotted border-red">
-                  <InboxIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
-                </EmptyPageFiller>
-              ) : (
-                <FeedbackTimeline submissions={filteredSubmissions} setSubmissions={setFilteredSubmissions} />
-              )}
+              <div className="flex w-full space-x-3">
+                <div className="flex h-12 w-1/2 items-center justify-center rounded-lg bg-white">
+                  overall results
+                </div>
+                <div className="flex h-12 w-1/2 items-center justify-center rounded-lg bg-white">
+                  segment results
+                </div>
+              </div>
+              {submissionz.map((s) => (
+                <div key={s.question} className="my-4 rounded-lg bg-white">
+                  <div className="rounded-t-lg bg-slate-100 p-4 text-lg font-bold text-slate-800">
+                    {" "}
+                    {s.question}{" "}
+                  </div>
+                  <div className="grid grid-cols-5 gap-2 bg-slate-100 px-4 pb-2 text-sm font-semibold text-slate-500">
+                    <div className="col-span-3">Response</div>
+                    <div>Feeling</div>
+                    <div>Segment</div>
+                  </div>
+                  {q1responses.map((r) => (
+                    <div className="grid grid-cols-5 gap-2 px-4 pt-2 pb-4">
+                      <div className="col-span-3">{r.response}</div>
+                      <div>
+                        <div
+                          className={clsx(
+                            // base styles independent what type of button it is
+                            "inline-grid rounded-full px-2 text-xs",
+                            // different styles depending on size
+                            r.feeling === "very disapp." && "bg-green-100 text-green-700 ",
+                            r.feeling === "somewhat disapp." && "bg-orange-100 text-orange-500 ",
+                            r.feeling === "not disapp." && "bg-red-100 text-red-500"
+                          )}>
+                          {r.feeling}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="inline-grid rounded-full bg-slate-100 px-2 text-xs text-slate-600">
+                          {r.segment}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         </section>
