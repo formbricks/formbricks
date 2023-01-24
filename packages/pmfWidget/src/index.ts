@@ -30,7 +30,7 @@ function init() {
   const styleElement = document.createElement("style");
   styleElement.id = "formbricks__css";
   styleElement.innerHTML = formCss;
-  document.head.insertBefore(styleElement, document.head.firstChild);
+  document.head.appendChild(styleElement);
 
   // add div content
   const div = document.getElementById(config.containerId);
@@ -100,8 +100,6 @@ async function submitElement(name?: string, value?: string) {
   const currentQuestion = document.getElementById(`formbricks-question-${currentElementIdx}`);
   currentQuestion?.classList.add("formbricks-pulse");
   // submit to formbricks
-  //await delay(2000);
-
   if (submissionId === null) {
     const response = await createSubmission(submission);
     submissionId = response.id;
@@ -164,6 +162,7 @@ async function updateSubmission(submissionId: string, submission: any) {
   return response.json();
 }
 
-function delay(t: number) {
-  new Promise((resolve) => setTimeout(resolve, t));
-}
+const formbricks = { init, config };
+(window as any).formbricks = formbricks;
+
+export default formbricks;

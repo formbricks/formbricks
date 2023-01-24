@@ -1,7 +1,7 @@
 import { Form, Nps, sendToHq, Submit, Textarea } from "@formbricks/react";
 import { Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
-import { Fragment, useEffect } from "react";
+import { Fragment } from "react";
 import { toast } from "react-toastify";
 
 export default function SimpleFeedbackModal({ show, setShow }) {

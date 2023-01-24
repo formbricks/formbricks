@@ -9,10 +9,11 @@ module.exports = {
   ],
   theme: {
     extend: {
-      extend: {
-        colors: {
-          cyan: colors.cyan,
-        },
+      screens: {
+        xs: "430px",
+      },
+      colors: {
+        cyan: colors.cyan,
       },
     },
   },

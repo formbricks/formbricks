@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/pmf",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "source": "src/index.ts",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,6 +24,7 @@
     "focus-trap": "^7.2.0",
     "html-minifier": "^4.0.0",
     "microbundle": "^0.15.1",
+    "tsup": "^6.4.0",
     "typescript": "^4.9.4"
   }
 }
