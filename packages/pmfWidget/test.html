@@ -2,10 +2,11 @@
   <script src="./dist/index.umd.js" charset="UTF-8" defer></script>
   <script>
     window.formbricks = {
+      ...window.formbricks,
       config: {
-        hqUrl: "http://localhost:3000",
-        formId: "clcxavrfm0006yz11frfb0ms2",
-        divId: "test-div",
+        formbricksUrl: "http://localhost:3000",
+        formId: "clda6d0ot0000yzikvnnz07lm",
+        containerId: "test-div",
         contact: {
           name: "Peer",
           position: "Co-Founder",
@@ -16,16 +17,15 @@
           name: "Test Customer",
           email: "test@cal.com",
         },
-        style: {
+        /* style: {
           brandColor: "#0E1420",
           headerBGColor: "#E5E7EB",
           headerTitleColor: "#4B5563",
           boxBGColor: "#F9FAFB",
           textColor: "#374151",
           buttonHoverColor: "#F3F4F6",
-        },
+        }, */
       },
-      ...window.formbricks,
     };
   </script>
 </head>

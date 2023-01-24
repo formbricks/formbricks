@@ -1,6 +1,6 @@
 {
-  "name": "@formbricks/feedback",
-  "version": "0.2.0",
+  "name": "@formbricks/pmf",
+  "version": "0.0.1",
   "source": "src/index.ts",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,13 +17,13 @@
     "clean": "rm -rf dist"
   },
   "devDependencies": {
-    "@floating-ui/dom": "^0.4.2",
+    "@floating-ui/dom": "^1.1.0",
     "@formbricks/tsconfig": "workspace:*",
-    "eslint": "^8.27.0",
+    "eslint": "^8.32.0",
     "eslint-config-formbricks": "workspace:*",
-    "focus-trap": "^6.7.3",
+    "focus-trap": "^7.2.0",
     "html-minifier": "^4.0.0",
-    "microbundle": "^0.14.2",
-    "typescript": "^4.8.4"
+    "microbundle": "^0.15.1",
+    "typescript": "^4.9.4"
   }
 }
