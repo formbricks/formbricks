@@ -7,9 +7,9 @@ import {
   ArchiveIcon,
   ComplimentIcon,
   IdeaIcon,
-  VeryDisappointed,
-  SomewhatDisappointed,
-  NotDisappointed,
+  VeryDisappointedIcon,
+  SomewhatDisappointedIcon,
+  NotDisappointedIcon,
 } from "@formbricks/ui";
 import Image from "next/image";
 import PMFThumb from "@/images/pmfthumb.webp";
@@ -19,7 +19,7 @@ import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/router";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import FeedbackTimeline from "./FeedbackTimeline";
+import FeedbackTimeline from "./PMFTimeline";
 import { Button } from "@formbricks/ui";
 import sq from "date-fns/esm/locale/sq/index.js";
 

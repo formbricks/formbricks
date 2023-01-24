@@ -3,25 +3,19 @@
 import EmptyPageFiller from "@/components/EmptyPageFiller";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useSubmissions } from "@/lib/submissions";
-import {
-  ArchiveIcon,
-  ComplimentIcon,
-  IdeaIcon,
-  VeryDisappointed,
-  SomewhatDisappointed,
-  NotDisappointed,
-} from "@formbricks/ui";
-import { InboxIcon } from "@heroicons/react/24/outline";
+import { BugIcon, ComplimentIcon, FormIcon, IdeaIcon } from "@formbricks/ui";
+import { Dialog, Transition } from "@headlessui/react";
+import { InboxIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/router";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import FeedbackTimeline from "./FeedbackTimeline";
-import { Button } from "@formbricks/ui";
 
 const subCategories = [
-  { name: "Somewhat disappointed", href: "#" },
-  { name: "Very disappointed", href: "#" },
-  { name: "Not disappointed", href: "#" },
+  { name: "All", href: "#" },
+  { name: "Ideas", href: "#" },
+  { name: "Love", href: "#" },
+  { name: "Bugs", href: "#" },
 ];
 
 export default function FeedbackResults() {
@@ -56,9 +50,9 @@ export default function FeedbackResults() {
   const navigation = useMemo(() => {
     if (!submissions) return [];
     const feedbackCounts = {
-      nodis: 0,
-      vdis: 0,
-      sdis: 0,
+      bug: 0,
+      compliment: 0,
+      idea: 0,
       archive: 0,
     };
     for (const submission of submissions) {
@@ -70,69 +64,49 @@ export default function FeedbackResults() {
     }
     return [
       {
-        id: "vdis",
-        name: "Very disappointed",
+        id: "all",
+        name: "All",
         href: "#",
-        icon: VeryDisappointed,
-        current: false,
-        count: feedbackCounts.vdis,
-        color: "bg-green-400",
+        icon: FormIcon,
+        current: true,
+        count: submissions.length - feedbackCounts.archive,
+        color: "bg-indigo-400",
       },
       {
-        id: "sdis",
-        name: "Somewhat disappointed",
+        id: "bug",
+        name: "Bug",
         href: "#",
-        icon: SomewhatDisappointed,
-        current: false,
-        count: feedbackCounts.sdis,
-        color: "bg-yellow-400",
-      },
-      {
-        id: "nodis",
-        name: "Not disappointed",
-        href: "#",
-        icon: NotDisappointed,
+        icon: BugIcon,
         current: false,
         color: "bg-red-400",
-        count: feedbackCounts.nodis,
+        count: feedbackCounts.bug,
       },
       {
-        id: "archive",
-        name: "Archived",
-        href: "#",
-        icon: ArchiveIcon,
-        current: false,
-        count: feedbackCounts.archive,
-        color: "bg-gray-300",
-      },
-    ];
-  }, [submissions]);
-
-  const completed = useMemo(() => {
-    if (!submissions) return [];
-    const feedbackCounts = {
-      complete: 0,
-      partial: 0,
-    };
-
-    return [
-      {
-        id: "complete",
-        name: "Completed",
+        id: "compliment",
+        name: "Love",
         href: "#",
         icon: ComplimentIcon,
         current: false,
-        count: feedbackCounts.complete,
-        color: "bg-slate-400",
+        count: feedbackCounts.compliment,
+        color: "bg-green-400",
       },
       {
-        id: "partial",
-        name: "Partials",
+        id: "idea",
+        name: "Idea",
         href: "#",
         icon: IdeaIcon,
         current: false,
-        count: feedbackCounts.partial,
-        color: "bg-slate-400",
+        count: feedbackCounts.idea,
+        color: "bg-yellow-400",
+      },
+      {
+        id: "archive",
+        name: "Archive",
+        href: "#",
+        icon: IdeaIcon,
+        current: false,
+        count: feedbackCounts.archive,
+        color: "bg-gray-300",
       },
     ];
   }, [submissions]);
@@ -151,7 +125,7 @@ export default function FeedbackResults() {
   return (
     <div>
       {/* Mobile filter dialog */}
-      {/* <Transition.Root show={mobileFiltersOpen} as={Fragment}>
+      <Transition.Root show={mobileFiltersOpen} as={Fragment}>
         <Dialog as="div" className="relative z-40 lg:hidden" onClose={setMobileFiltersOpen}>
           <Transition.Child
             as={Fragment}
@@ -185,7 +159,7 @@ export default function FeedbackResults() {
                   </button>
                 </div>
 
-                {/* Filters 
+                {/* Filters */}
                 <form className="mt-4 border-t border-gray-200">
                   <h3 className="sr-only">Categories</h3>
                   <ul role="list" className="px-2 py-3 font-medium text-gray-900">
@@ -203,124 +177,46 @@ export default function FeedbackResults() {
             </Transition.Child>
           </div>
         </Dialog>
-      </Transition.Root> */}
+      </Transition.Root>
       <div>
-        <section aria-labelledby="filters" className="pt-6 pb-24">
-          <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-4">
+        <section aria-labelledby="products-heading" className="pt-6 pb-24">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
             {/* Filters */}
+            <form className="hidden lg:block">
+              <h3 className="sr-only">Categories</h3>
+              {navigation.map((item) => (
+                <button
+                  type="button"
+                  key={item.name}
+                  onClick={() => setCurrentFilter(item.id)}
+                  className={clsx(
+                    item.id === currentFilter
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                    "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium"
+                  )}
+                  aria-current={item.id === currentFilter ? "page" : undefined}>
+                  <div className={clsx(item.color, "-ml-1 mr-3 h-2 w-2 flex-shrink-0 rounded-full")} />
+                  <span className="truncate">{item.name}</span>
+                  {item.count ? (
+                    <span
+                      className={clsx(
+                        item.id === currentFilter ? "bg-white" : "bg-gray-100 group-hover:bg-white",
+                        "ml-auto inline-block rounded-full py-0.5 px-3 text-xs"
+                      )}>
+                      {item.count}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </form>
 
-            <div>
-              <form className="hidden lg:block">
-                <h3 className="sr-only">Filter</h3>
-                <div className="flex py-2 text-sm font-bold">
-                  <h4 className="text-slate-600">Filter</h4>{" "}
-                  <a className="text-brand-dark ml-3 cursor-pointer">Clear</a>
-                </div>
-                {navigation.map((item) => (
-                  <button
-                    type="button"
-                    key={item.name}
-                    onClick={() => setCurrentFilter(item.id)}
-                    className={clsx(
-                      item.id === currentFilter
-                        ? "bg-gray-100 text-gray-900"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-                      "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium"
-                    )}
-                    aria-current={item.id === currentFilter ? "page" : undefined}>
-                    <div className={clsx(item.color, "-ml-1 mr-3 h-2 w-2 flex-shrink-0 rounded-full")} />
-                    <span className="truncate">{item.name}</span>
-                    {item.count ? (
-                      <span
-                        className={clsx(
-                          item.id === currentFilter ? "bg-white" : "bg-gray-100 group-hover:bg-white",
-                          "ml-auto inline-block rounded-full py-0.5 px-3 text-xs"
-                        )}>
-                        {item.count}
-                      </span>
-                    ) : null}
-                  </button>
-                ))}
-              </form>
-
-              {/* Partials vs. Completed */}
-
-              <form className="mt-4 hidden lg:block">
-                <h3 className="sr-only">Completed</h3>
-                <div className="flex py-2 text-sm font-bold">
-                  <h4 className="text-slate-600">Completed</h4>{" "}
-                  <a className="text-brand-dark ml-3 cursor-pointer">Clear</a>
-                </div>
-                {completed.map((item) => (
-                  <button
-                    type="button"
-                    key={item.name}
-                    onClick={() => setCurrentFilter(item.id)}
-                    className={clsx(
-                      item.id === currentFilter
-                        ? "bg-gray-100 text-gray-900"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-                      "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium"
-                    )}
-                    aria-current={item.id === currentFilter ? "page" : undefined}>
-                    <div className={clsx(item.color, "-ml-1 mr-3 h-2 w-2 flex-shrink-0 rounded-full")} />
-                    <span className="truncate">{item.name}</span>
-                    {item.count ? (
-                      <span
-                        className={clsx(
-                          item.id === currentFilter ? "bg-white" : "bg-gray-100 group-hover:bg-white",
-                          "ml-auto inline-block rounded-full py-0.5 px-3 text-xs"
-                        )}>
-                        {item.count}
-                      </span>
-                    ) : null}
-                  </button>
-                ))}
-              </form>
-
-              {/* Segments */}
-
-              <form className="mt-4 hidden max-w-3xl lg:block">
-                <h3 className="sr-only">Segments</h3>
-                <div className="flex py-2 text-sm font-bold">
-                  <h4 className="text-slate-600">Segments</h4>{" "}
-                  <a className="text-brand-dark ml-3 cursor-pointer">Clear</a>
-                </div>
-                {completed.map((item) => (
-                  <button
-                    type="button"
-                    key={item.name}
-                    onClick={() => setCurrentFilter(item.id)}
-                    className={clsx(
-                      item.id === currentFilter
-                        ? "bg-gray-100 text-gray-900"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-                      "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium"
-                    )}
-                    aria-current={item.id === currentFilter ? "page" : undefined}>
-                    <div className={clsx(item.color, "-ml-1 mr-3 h-2 w-2 flex-shrink-0 rounded-full")} />
-                    <span className="truncate">{item.name}</span>
-                    {item.count ? (
-                      <span
-                        className={clsx(
-                          item.id === currentFilter ? "bg-white" : "bg-gray-100 group-hover:bg-white",
-                          "ml-auto inline-block rounded-full py-0.5 px-3 text-xs"
-                        )}>
-                        {item.count}
-                      </span>
-                    ) : null}
-                  </button>
-                ))}
-              </form>
-            </div>
-
-            {/* Submission grid */}
-
-            <div className="max-w-3xl lg:col-span-3">
+            {/* Product grid */}
+            <div className="lg:col-span-3">
               {submissions.length === 0 ? (
                 <EmptyPageFiller
                   alertText="You haven't received any submissions yet."
-                  hintText="Embed the PMF survey on your website to start gathering insights."
+                  hintText="Embed the feedback widget on your website to start receiving feedback."
                   borderStyles="border-4 border-dotted border-red">
                   <InboxIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
                 </EmptyPageFiller>

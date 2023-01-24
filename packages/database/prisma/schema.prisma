@@ -51,6 +51,7 @@ model Customer {
 enum FormType {
   custom
   feedback
+  pmf
 }
 
 model Form {

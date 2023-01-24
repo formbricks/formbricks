@@ -1,4 +1,4 @@
-export function NotDisappointment(props: any) {
+export function NotDisappointedIcon(props: any) {
   return (
     <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g clip-path="url(#clip0_1_431)">

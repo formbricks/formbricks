@@ -99,33 +99,80 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
     } else if (formType === "pmf") {
       formTemplate = {
         label,
-        type: "feedback",
+        type: "pmf",
         schema: {
           type: "form",
           config: {},
           pages: [
             {
-              id: "feedbackTypePage",
+              id: "pmfTypePage",
+              config: {
+                autoSubmit: true,
+              },
               elements: [
                 {
+                  id: "pmfType",
                   type: "radio",
-                  name: "feedbackType",
-                  label: "What's on your mind?",
+                  name: "pmfType",
+                  label: "How disappointed would you be if you could no longer use our service?",
                   options: [
-                    { label: "Idea", value: "idea" },
-                    { label: "Compliment", value: "compliment" },
-                    { label: "Bug", value: "bug" },
+                    { label: "Very disappointed", value: "veryDisappointed" },
+                    { label: "Somewhat disappointed", value: "somewhatDisappointed" },
+                    { label: "Not disappointed", value: "notDisappointed" },
                   ],
                 },
               ],
             },
             {
-              id: "messagePage",
+              id: "mainBenefitPage",
               elements: [
                 {
-                  type: "textarea",
-                  name: "message",
-                  label: "What's your feedback?",
+                  id: "mainBenefit",
+                  type: "text",
+                  name: "mainBenefit",
+                  label: "What is the main benefit you receive from our service?",
+                },
+              ],
+            },
+            {
+              id: "userSegmentPage",
+              config: {
+                autoSubmit: true,
+              },
+              elements: [
+                {
+                  id: "userSegment",
+                  type: "radio",
+                  name: "userSegment",
+                  label: "What is your job title?",
+                  options: [
+                    { label: "Founder", value: "founder" },
+                    { label: "Executive", value: "executive" },
+                    { label: "Product Manager", value: "product manager" },
+                    { label: "Software Engineer", value: "engineer" },
+                  ],
+                },
+              ],
+            },
+            {
+              id: "improvementPage",
+              elements: [
+                {
+                  id: "improvement",
+                  type: "text",
+                  name: "improvement",
+                  label: "How can we improve our service for you?",
+                },
+              ],
+            },
+            {
+              id: "selfSegmentationPage",
+              elements: [
+                {
+                  id: "selfSegmentation",
+                  type: "text",
+                  name: "selfSegmentation",
+                  label: "What type of people would benefit most from using our service?",
                 },
               ],
             },
@@ -134,6 +181,7 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
               endScreen: true,
               elements: [
                 {
+                  id: "thankYou",
                   type: "html",
                   name: "thankYou",
                 },

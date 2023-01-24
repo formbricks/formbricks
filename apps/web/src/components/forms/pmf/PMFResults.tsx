@@ -7,17 +7,16 @@ import {
   ArchiveIcon,
   ComplimentIcon,
   IdeaIcon,
-  VeryDisappointed,
-  SomewhatDisappointed,
-  NotDisappointed,
+  VeryDisappointedIcon,
+  SomewhatDisappointedIcon,
+  NotDisappointedIcon,
 } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/router";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import FeedbackTimeline from "./FeedbackTimeline";
+import PMFTimeline from "./PMFTimeline";
 import { Button } from "@formbricks/ui";
-import sq from "date-fns/esm/locale/sq/index.js";
 
 const subCategories = [
   { name: "Somewhat disappointed", href: "#" },
@@ -25,13 +24,13 @@ const subCategories = [
   { name: "Not disappointed", href: "#" },
 ];
 
-export default function SegmentResults() {
+export default function PMFResults() {
   const router = useRouter();
   const { submissions, isLoadingSubmissions, isErrorSubmissions, mutateSubmissions } = useSubmissions(
     router.query.workspaceId?.toString(),
     router.query.formId?.toString()
   );
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
   const [currentFilter, setCurrentFilter] = useState("all");
   const [filteredSubmissions, setFilteredSubmissions] = useState([]);
 
@@ -43,7 +42,7 @@ export default function SegmentResults() {
     } else if (currentFilter === "archive") {
       newSubmissions = submissions.filter((submission) => submission.archived);
     } else {
-      newSubmissions = submissions.filter((submission) => submission.data.feedbackType === currentFilter);
+      newSubmissions = submissions.filter((submission) => submission.data.pmfType === currentFilter);
     }
     setFilteredSubmissions(newSubmissions);
   }, [currentFilter, submissions]);
@@ -54,9 +53,14 @@ export default function SegmentResults() {
     }
   }, [isLoadingSubmissions, submissions]);
 
+  const resetFilter = (e) => {
+    e.preventDefault();
+    setCurrentFilter("all");
+  };
+
   const navigation = useMemo(() => {
     if (!submissions) return [];
-    const feedbackCounts = {
+    const pmfCounts = {
       nodis: 0,
       vdis: 0,
       sdis: 0,
@@ -64,38 +68,38 @@ export default function SegmentResults() {
     };
     for (const submission of submissions) {
       if (submission.archived) {
-        feedbackCounts.archive++;
+        pmfCounts.archive++;
       } else {
-        feedbackCounts[submission.data.feedbackType]++;
+        pmfCounts[submission.data.pmfType]++;
       }
     }
     return [
       {
-        id: "vdis",
+        id: "veryDisappointed",
         name: "Very disappointed",
         href: "#",
-        icon: VeryDisappointed,
+        icon: VeryDisappointedIcon,
         current: false,
-        count: feedbackCounts.vdis,
+        count: pmfCounts.vdis,
         color: "bg-green-400",
       },
       {
-        id: "sdis",
+        id: "somewhatDisappointed",
         name: "Somewhat disappointed",
         href: "#",
-        icon: SomewhatDisappointed,
+        icon: SomewhatDisappointedIcon,
         current: false,
-        count: feedbackCounts.sdis,
+        count: pmfCounts.sdis,
         color: "bg-yellow-400",
       },
       {
-        id: "nodis",
+        id: "notDisappointed",
         name: "Not disappointed",
         href: "#",
-        icon: NotDisappointed,
+        icon: NotDisappointedIcon,
         current: false,
         color: "bg-red-400",
-        count: feedbackCounts.nodis,
+        count: pmfCounts.nodis,
       },
       {
         id: "archive",
@@ -103,7 +107,7 @@ export default function SegmentResults() {
         href: "#",
         icon: ArchiveIcon,
         current: false,
-        count: feedbackCounts.archive,
+        count: pmfCounts.archive,
         color: "bg-gray-300",
       },
     ];
@@ -111,7 +115,7 @@ export default function SegmentResults() {
 
   const completed = useMemo(() => {
     if (!submissions) return [];
-    const feedbackCounts = {
+    const pmfCounts = {
       complete: 0,
       partial: 0,
     };
@@ -123,7 +127,7 @@ export default function SegmentResults() {
         href: "#",
         icon: ComplimentIcon,
         current: false,
-        count: feedbackCounts.complete,
+        count: pmfCounts.complete,
         color: "bg-slate-400",
       },
       {
@@ -132,7 +136,7 @@ export default function SegmentResults() {
         href: "#",
         icon: IdeaIcon,
         current: false,
-        count: feedbackCounts.partial,
+        count: pmfCounts.partial,
         color: "bg-slate-400",
       },
     ];
@@ -149,40 +153,6 @@ export default function SegmentResults() {
   if (isErrorSubmissions) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
-
-  const submissionz = [
-    {
-      question: "What is the main benefit you receive from our service?",
-    },
-    {
-      question: "How can we improve our service for you?",
-    },
-    {
-      question: "What type of people would benefit most from using our service?",
-    },
-  ];
-
-  const q1responses = [
-    {
-      response:
-        "A think it would be awesome if your app could do this because I keep having this problem! I would use it everyday and tell all my friends.",
-      feeling: "very disapp.",
-      segment: "Founder",
-    },
-    {
-      response:
-        "B think it would be awesome if your app could do this because I keep having this problem! I would use it everyday and tell all my friends.",
-      feeling: "somewhat disapp.",
-      segment: "Entrepreneur",
-    },
-    {
-      response:
-        "C think it would be awesome if your app could do this because I keep having this problem! I would use it everyday and tell all my friends.",
-      feeling: "not disapp.",
-      segment: "Product Manager",
-    },
-  ];
-
   return (
     <div>
       {/* Mobile filter dialog */}
@@ -245,11 +215,13 @@ export default function SegmentResults() {
             {/* Filters */}
 
             <div>
-              <form className="hidden lg:block">
+              <form className="hidden md:block">
                 <h3 className="sr-only">Filter</h3>
                 <div className="flex py-2 text-sm font-bold">
                   <h4 className="text-slate-600">Filter</h4>{" "}
-                  <a className="text-brand-dark ml-3 cursor-pointer">Clear</a>
+                  <a onClick={(e) => resetFilter(e)} className="text-brand-dark ml-3 cursor-pointer">
+                    All
+                  </a>
                 </div>
                 {navigation.map((item) => (
                   <button
@@ -280,11 +252,13 @@ export default function SegmentResults() {
 
               {/* Partials vs. Completed */}
 
-              <form className="mt-4 hidden lg:block">
+              <form className="mt-4 hidden md:block">
                 <h3 className="sr-only">Completed</h3>
                 <div className="flex py-2 text-sm font-bold">
                   <h4 className="text-slate-600">Completed</h4>{" "}
-                  <a className="text-brand-dark ml-3 cursor-pointer">Clear</a>
+                  <a onClick={(e) => resetFilter(e)} className="text-brand-dark ml-3 cursor-pointer">
+                    All
+                  </a>
                 </div>
                 {completed.map((item) => (
                   <button
@@ -315,11 +289,13 @@ export default function SegmentResults() {
 
               {/* Segments */}
 
-              <form className="mt-4 hidden lg:block">
+              <form className="mt-4 hidden max-w-3xl md:block">
                 <h3 className="sr-only">Segments</h3>
                 <div className="flex py-2 text-sm font-bold">
                   <h4 className="text-slate-600">Segments</h4>{" "}
-                  <a className="text-brand-dark ml-3 cursor-pointer">Clear</a>
+                  <a onClick={(e) => resetFilter(e)} className="text-brand-dark ml-3 cursor-pointer">
+                    All
+                  </a>
                 </div>
                 {completed.map((item) => (
                   <button
@@ -351,51 +327,17 @@ export default function SegmentResults() {
 
             {/* Submission grid */}
 
-            <div className="max-w-3xl lg:col-span-3">
-              <div className="flex w-full space-x-3">
-                <div className="flex h-12 w-1/2 items-center justify-center rounded-lg bg-white">
-                  overall results
-                </div>
-                <div className="flex h-12 w-1/2 items-center justify-center rounded-lg bg-white">
-                  segment results
-                </div>
-              </div>
-              {submissionz.map((s) => (
-                <div key={s.question} className="my-4 rounded-lg bg-white">
-                  <div className="rounded-t-lg bg-slate-100 p-4 text-lg font-bold text-slate-800">
-                    {" "}
-                    {s.question}{" "}
-                  </div>
-                  <div className="grid grid-cols-5 gap-2 bg-slate-100 px-4 pb-2 text-sm font-semibold text-slate-500">
-                    <div className="col-span-3">Response</div>
-                    <div>Feeling</div>
-                    <div>Segment</div>
-                  </div>
-                  {q1responses.map((r) => (
-                    <div className="grid grid-cols-5 gap-2 px-4 pt-2 pb-4">
-                      <div className="col-span-3">{r.response}</div>
-                      <div>
-                        <div
-                          className={clsx(
-                            // base styles independent what type of button it is
-                            "inline-grid rounded-full px-2 text-xs",
-                            // different styles depending on size
-                            r.feeling === "very disapp." && "bg-green-100 text-green-700 ",
-                            r.feeling === "somewhat disapp." && "bg-orange-100 text-orange-500 ",
-                            r.feeling === "not disapp." && "bg-red-100 text-red-500"
-                          )}>
-                          {r.feeling}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="inline-grid rounded-full bg-slate-100 px-2 text-xs text-slate-600">
-                          {r.segment}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ))}
+            <div className="max-w-3xl md:col-span-3">
+              {submissions.length === 0 ? (
+                <EmptyPageFiller
+                  alertText="You haven't received any submissions yet."
+                  hintText="Embed the PMF survey on your website to start gathering insights."
+                  borderStyles="border-4 border-dotted border-red">
+                  <InboxIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
+                </EmptyPageFiller>
+              ) : (
+                <PMFTimeline submissions={filteredSubmissions} setSubmissions={setFilteredSubmissions} />
+              )}
             </div>
           </div>
         </section>

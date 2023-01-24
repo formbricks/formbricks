@@ -1,15 +1,17 @@
 import EmptyPageFiller from "@/components/EmptyPageFiller";
-import { persistSubmission, useSubmissions } from "@/lib/submissions";
+import { MergeWithSchema, persistSubmission, useSubmissions } from "@/lib/submissions";
 import { convertDateTimeString, parseUserAgent } from "@/lib/utils";
-import { BugIcon, Button, ComplimentIcon, IdeaIcon } from "@formbricks/ui";
+import { NotDisappointedIcon, Button, VeryDisappointedIcon, SomewhatDisappointedIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
 
-export default function FeedbackTimeline({ submissions, setSubmissions }) {
+export default function PMFTimeline({ submissions, setSubmissions }) {
   const router = useRouter();
+
+  console.log(JSON.stringify(submissions, null, 2));
 
   const { submissions: allSubmissions, mutateSubmissions } = useSubmissions(
     router.query.workspaceId?.toString(),
@@ -62,29 +64,29 @@ export default function FeedbackTimeline({ submissions, setSubmissions }) {
                           "bg-white",
                           "flex h-8 w-8 items-center justify-center rounded-full ring-8 ring-gray-50"
                         )}>
-                        {submission.data.feedbackType === "compliment" ? (
-                          <ComplimentIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                        ) : submission.data.feedbackType === "bug" ? (
-                          <BugIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                        {submission.data.pmfType === "veryDisappointed" ? (
+                          <VeryDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                        ) : submission.data.pmfType === "notDisappointed" ? (
+                          <NotDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
                         ) : (
-                          <IdeaIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                          <SomewhatDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
                         )}
                       </span>
                     </div>
                     <div className="w-full overflow-hidden rounded-lg bg-white shadow">
                       <div className="px-4 py-5 sm:p-6">
                         <div className="flex w-full justify-between">
-                          {submission.data.feedbackType === "compliment" ? (
+                          {submission.data.pmfType === "veryDisappointed" ? (
                             <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                              Love
+                              Very disappointed
                             </span>
-                          ) : submission.data.feedbackType === "bug" ? (
+                          ) : submission.data.pmfType === "notDisappointed" ? (
                             <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                              Bug
+                              Not disappointed
                             </span>
                           ) : (
                             <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                              Idea
+                              Somewhat disappointed
                             </span>
                           )}
 
@@ -96,7 +98,7 @@ export default function FeedbackTimeline({ submissions, setSubmissions }) {
                         </div>
                         <div className="mt-3">
                           <p className="whitespace-pre-wrap text-sm text-gray-500">
-                            {submission.data.message}{" "}
+                            {submission.data.pmfType}
                           </p>
                         </div>
                       </div>
