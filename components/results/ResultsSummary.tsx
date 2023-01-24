@@ -43,7 +43,6 @@ export default function ResultsSummary({ formId }) {
   const pages = usePages({ blocks: formBlocks, formId: form.id });
 
   const insights = useMemo(() => {
-    console.log({pages})
     if (!isLoadingSubmissionSessions) {
       return getSubmissionAnalytics(submissionSessions, pages);
     }

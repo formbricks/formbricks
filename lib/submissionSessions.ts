@@ -193,35 +193,37 @@ export const getSubmissionAnalytics = (
       }
     }
   }
-  const pagesInsights = [];
+  const pagesInsights = pages.map((page) => {
+    if (page?.blocks[0]?.type === "header") {
+      return {
+        name: page.blocks[0].data.text,
+        questions: [],
+        id: page.blocks[0].data.text,
+        stat: 0,
+        trend: undefined,
+        candidates: [],
+        type: "page",
+      };
+    }
+  });
+  pagesInsights.splice(pagesInsights.length - 1, 1);
   questionsInsights.map((question) => {
     const ispageExist = pagesInsights.find(
       (page) => question.pageName === page.name
     );
-    if (!ispageExist) {
-      pagesInsights.push({
-        name: question.pageName,
-        questions: [question],
-        id: question.pageName,
-        stat: question.stat,
-        trend: undefined,
-        candidates: question.candidate,
-        type: "page",
+
+    const pageIndex = pagesInsights.findIndex((element) => {
+      return ispageExist.name === element.name;
+    });
+    pagesInsights[pageIndex].questions.push(question);
+    question.candidate.map((candidateId) => {
+      const candidateIndex = ispageExist.candidates.findIndex((element) => {
+        return candidateId === element;
       });
-    } else {
-      const pageIndex = pagesInsights.findIndex((element) => {
-        return ispageExist.name === element.name;
-      });
-      pagesInsights[pageIndex].questions.push(question);
-      question.candidate.map((candidateId) => {
-        const candidateIndex = ispageExist.candidates.findIndex((element) => {
-          return candidateId === element;
-        });
-        if (candidateIndex === -1) {
-          pagesInsights[pageIndex].stat += 1;
-        }
-      });
-    }
+      if (candidateIndex === -1) {
+        pagesInsights[pageIndex].stat += 1;
+      }
+    });
   });
 
   return {
