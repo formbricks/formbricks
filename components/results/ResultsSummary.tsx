@@ -6,7 +6,7 @@ import {
   useSubmissionSessions,
 } from "../../lib/submissionSessions";
 import { SubmissionSummary } from "../../lib/types";
-import {  timeSince } from "../../lib/utils";
+import { timeSince } from "../../lib/utils";
 import AnalyticsCard from "./AnalyticsCard";
 import Loading from "../Loading";
 import TextResults from "./summary/TextResults";
@@ -44,6 +44,7 @@ export default function ResultsSummary({ formId }) {
 
   const insights = useMemo(() => {
     if (!isLoadingSubmissionSessions) {
+      console.log({ submissionSessions });
       return getSubmissionAnalytics(submissionSessions, pages);
     }
   }, [isLoadingSubmissionSessions, submissionSessions, pages]);
@@ -59,19 +60,20 @@ export default function ResultsSummary({ formId }) {
       const questionsInsights = insights.pagesInsights;
       const defaultInsights = [
         {
-          id: "totalCandidateSubmited",
-          name: "Nombre de candidats ayant soumis",
-          stat: insights.totalCandidateSubmited || "--",
-          trend: undefined,
-          toolTipText: undefined,
-        },
-        {
           id: "totalCandidateOpenedForm",
           name: "Nombre de candidats ayant vu",
           stat: insights.totalCandidateOpenedForm || "--",
           trend: undefined,
           toolTipText: undefined,
         },
+        {
+          id: "totalCandidateSubmited",
+          name: "Nombre de candidats ayant soumis",
+          stat: `${insights.totalCandidateSubmited} (${Math.ceil((insights.totalCandidateSubmited / insights.totalCandidateOpenedForm) * 100)}%)` || "--",
+          trend: undefined,
+          toolTipText: undefined,
+        },
+        
         {
           id: "lastSubmission",
           name: "Dernière soumission",
@@ -102,7 +104,11 @@ export default function ResultsSummary({ formId }) {
         {stats.map((item) => (
           <AnalyticsCard
             key={item.id}
-            value={item.type === "page" ? `${item.stat} candidats ont répondus` : item.stat}
+            value={
+              item.type === "page"
+                ? `${item.stat} candidats ont répondus`
+                : item.stat
+            }
             label={item.name}
             toolTipText={item.toolTipText}
             trend={item.trend}

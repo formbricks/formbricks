@@ -45,7 +45,7 @@ const AnalyticsCard: React.FC<Props> = ({
       }}
       className={`bg-white rounded-md shadow-md flex justify-center flex-wrap transition-opacity duration-200 ${
         isItemOpened && questions.length ? "pb-5" : "pb-5"
-      } `}
+      } ${questions?.length ? "cursor-pointer" : ""}`}
     >
       <div key={label} className='px-4 py-5 sm:p-6 w-full'>
         <dt className='inline-flex w-full justify-between text-xl font-semibold text-gray-900 has-tooltip'>
@@ -74,7 +74,7 @@ const AnalyticsCard: React.FC<Props> = ({
           <div
             className={classNames(
               smallerText ? "text-lg" : "text-lg",
-              "flex items-baseline text-md font-semibold text-gray-800 mt-3"
+              "flex items-baseline text-md font-semibold text-gray-300 mt-3"
             )}
           >
             {value}
@@ -108,17 +108,15 @@ const AnalyticsCard: React.FC<Props> = ({
           )}
         </dd>
       </div>
-      {!questions?.length || !isItemOpened
-        ? null
-        : questions?.map((question) => (
+      {!questions?.length || !isItemOpened ? null : (
+        <>
+          <div
+            className={"flex items-baseline text-lg font-normal text-gray-800 w-full px-5 "}
+          >
+            Questions :
+          </div>
+          {questions?.map((question) => (
             <div key={question.id} className='w-full px-5'>
-              <div
-                className={
-                  "flex items-baseline text-lg font-normal text-gray-800 "
-                }
-              >
-                Questions :
-              </div>
               <QuestionItem
                 key={question.id}
                 value={question.stat}
@@ -130,6 +128,8 @@ const AnalyticsCard: React.FC<Props> = ({
               />
             </div>
           ))}
+        </>
+      )}
       <div key={label} className='px-4 py-5 sm:p-6'></div>
     </div>
   );
@@ -159,7 +159,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
           </span>
         )}
       </dt>
-      <dd className='flex items-baseline justify-between mt-1 md:block lg:flex'>
+      <dd className='flex items-baseline justify-between mt-1 md:block lg:flex-col'>
         <div
           className={classNames(
             smallerText ? "text-lg" : "text-xl",
@@ -179,27 +179,16 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
                   trend >= 50
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800",
-                  "inline-flex items-baseline px-2.5 py-0.5 mr-5 rounded-full text-sm font-medium md:mt-2 lg:mt-0"
+                  "inline-flex items-baseline px-2.5 py-0.5 mr-5 rounded-full text-sm font-medium md:mt-2 lg:mt-0 lg:mt-3"
                 )}
               >
                 {" "}
                 {label}
-                {trend >= 50 ? (
-                  <ArrowUpIcon
-                    className='ml-2 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-green-500'
-                    aria-hidden='true'
-                  />
-                ) : (
-                  <ArrowDownIcon
-                    className='ml-2 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-red-500'
-                    aria-hidden='true'
-                  />
-                )}
                 <span className='sr-only'>
                   {trend >= 0 ? "Increased" : "Decreased"}
                 </span>{" "}
-                {` : ${candidates} candidats ou `}
-                {trend}%
+                {` : ${candidates}/${candidate.length} `}
+                ({trend}%)
               </div>
             );
           })}

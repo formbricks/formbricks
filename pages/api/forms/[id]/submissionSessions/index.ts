@@ -24,14 +24,7 @@ export default async function handle(
     if (!session) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    // check if user is form owner
-    const ownership = await formHasOwnership(session, formId);
-    if (!ownership) {
-      return res.status(401).json({
-        message:
-          "You are not authorized to access this form and their submissions",
-      });
-    }
+   
 
     const submissionSessionsData = await prisma.submissionSession.findMany({
       where: {

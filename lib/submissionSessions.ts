@@ -7,7 +7,7 @@ export const useSubmissionSessions = (formId: string) => {
     () => `/api/forms/${formId}/submissionSessions`,
     fetcher
   );
-
+  console.log({ data, error });
   return {
     submissionSessions: data,
     isLoadingSubmissionSessions: !error && !data,
@@ -68,6 +68,7 @@ export const getSubmissionAnalytics = (
   let totalCandidateSubmited = [];
   let totalCandidateOpenedForm = [];
   let questionsInsights = [];
+  console.log({ submissionSessions });
   for (const submissionSession of submissionSessions) {
     // collect unique users
     if (submissionSession.events.length > 0) {
