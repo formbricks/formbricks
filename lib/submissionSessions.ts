@@ -198,7 +198,7 @@ export const getSubmissionAnalytics = (
       return {
         name: page.blocks[0].data.text,
         questions: [],
-        id: page.blocks[0].data.text,
+        id: `${page.blocks[0].data.text}-${page.blocks[0].data.level}`,
         stat: 0,
         trend: undefined,
         candidates: [],
@@ -222,6 +222,7 @@ export const getSubmissionAnalytics = (
       });
       if (candidateIndex === -1) {
         pagesInsights[pageIndex].stat += 1;
+        pagesInsights[pageIndex].candidates.push(candidateId);
       }
     });
   });
