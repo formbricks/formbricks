@@ -43,7 +43,7 @@ const AnalyticsCard: React.FC<Props> = ({
           setIsItemOpened(!isItemOpened);
         }
       }}
-      className={`bg-white rounded-md shadow-md flex justify-center flex-wrap transition-opacity duration-200 ${
+      className={`bg-white  rounded-md shadow-md flex justify-center flex-wrap transition-opacity duration-200 ${
         isItemOpened && questions.length ? "pb-5" : "pb-5"
       } ${questions?.length ? "cursor-pointer" : ""}`}
     >

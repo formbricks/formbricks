@@ -18,6 +18,7 @@
     "@editorjs/editorjs": "^2.24.3",
     "@editorjs/header": "^2.6.2",
     "@editorjs/paragraph": "^2.8.0",
+    "@emotion/react": "^11.10.5",
     "@headlessui/react": "^1.6.1",
     "@heroicons/react": "^2.0.8",
     "@mui/material": "^5.11.4",

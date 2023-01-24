@@ -43,6 +43,7 @@ export default function ResultsSummary({ formId }) {
   const pages = usePages({ blocks: formBlocks, formId: form.id });
 
   const insights = useMemo(() => {
+    console.log({pages})
     if (!isLoadingSubmissionSessions) {
       return getSubmissionAnalytics(submissionSessions, pages);
     }
@@ -68,11 +69,16 @@ export default function ResultsSummary({ formId }) {
         {
           id: "totalCandidateSubmited",
           name: "Nombre de candidats ayant soumis",
-          stat: `${insights.totalCandidateSubmited} (${Math.ceil((insights.totalCandidateSubmited / insights.totalCandidateOpenedForm) * 100)}%)` || "--",
+          stat:
+            `${insights.totalCandidateSubmited} (${Math.ceil(
+              (insights.totalCandidateSubmited /
+                insights.totalCandidateOpenedForm) *
+                100
+            )}%)` || "--",
           trend: undefined,
           toolTipText: undefined,
         },
-        
+
         {
           id: "lastSubmission",
           name: "Dernière soumission",
@@ -84,7 +90,7 @@ export default function ResultsSummary({ formId }) {
         },
       ];
 
-      const combineInsights = [...defaultInsights, ...questionsInsights];
+      const combineInsights = { defaultInsights, questionsInsights };
 
       return combineInsights;
     }
@@ -100,7 +106,27 @@ export default function ResultsSummary({ formId }) {
         Aperçu des réponses
       </h2>
       <dl className='grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2'>
-        {stats.map((item) => (
+        {stats.defaultInsights.map((item) => (
+          <AnalyticsCard
+            key={item.id}
+            value={
+              item.type === "page"
+                ? `${item.stat} candidats ont répondus`
+                : item.stat
+            }
+            label={item.name}
+            toolTipText={item.toolTipText}
+            trend={item.trend}
+            smallerText={item.smallerText}
+            questions={item.questions}
+          />
+        ))}
+      </dl>
+      <h2 className='mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4'>
+        Diférentes étapes
+      </h2>
+      <dl className='grid  gap-5 mt-8 mb-12 '>
+        {stats.questionsInsights.map((item) => (
           <AnalyticsCard
             key={item.id}
             value={
