@@ -44,7 +44,6 @@ export default function ResultsSummary({ formId }) {
 
   const insights = useMemo(() => {
     if (!isLoadingSubmissionSessions) {
-      console.log({ submissionSessions });
       return getSubmissionAnalytics(submissionSessions, pages);
     }
   }, [isLoadingSubmissionSessions, submissionSessions, pages]);
