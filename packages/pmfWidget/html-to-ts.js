@@ -5,8 +5,8 @@ const html = readFileSync("./src/form.html").toString();
 
 writeFileSync(
   "./src/form-html.ts",
-  `export const formHTML = \`${minify(html, {
-    collapseInlineTagWhitespace: true,
+  `export const formHtml = \`${minify(html, {
     collapseWhitespace: true,
+    collapseInlineTagWhitespace: true,
   })}\`;`
 );

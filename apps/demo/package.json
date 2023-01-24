@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@formbricks/charts": "workspace:*",
+    "@formbricks/pmf": "workspace:*",
     "@formbricks/react": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@heroicons/react": "^2.0.13",

@@ -1,0 +1,245 @@
+:root {
+  /* Initial Settings */
+  --formbricks-brand-color: #00c4b8;
+  --formbricks-brand-color-transparent: #00c4b850;
+  --formbricks-border-radius: 0.4rem;
+
+  /* Globals */
+  --formbricks-shadow: rgba(7, 0, 20, 0.06) 0px 0px 0px 1px, rgba(7, 0, 20, 0.1) 0px 10px 15px -3px,
+    rgba(7, 0, 20, 0.05) 0px 4px 6px, rgba(7, 0, 20, 0.05) 0px 30px 40px;
+  --formbricks-focus-shadow: 0 0 0 2px var(--formbricks-bg-color);
+  --formbricks-bold: 600;
+
+  /* Header */
+  --formbricks-header-text-color: #1e293b;
+  --formbricks-header-bg-color: #cbd5e1;
+
+  /* Box */
+  --formbricks-bg-color: #f8fafc;
+  --formbricks-text-color: #0f172a;
+  --formbricks-intro-text-color: #64748b;
+
+  /* Buttons */
+  --formbricks-button-color: white;
+  --formbricks-button-bg-color: var(--formbricks-brand-color);
+  --formbricks-button-hover-bg-color: var(--formbricks-brand-color);
+  --formbricks-button-border-radius: calc(var(--formbricks-border-radius) / 2);
+
+  /* Textarea */
+  --formbricks-message-border-color: #e2e8f0;
+
+  /* Element */
+  --formbricks-bold: 600;
+}
+
+/* Container */
+
+#formbricks-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--formbricks-bg-color);
+  padding: 0;
+  font-family: sans-serif;
+  font-size: 1rem;
+  color: var(--formbricks-text-color);
+}
+
+#formbricks-container * {
+  box-sizing: border-box;
+}
+
+#formbricks-container *:focus {
+  outline: none;
+}
+
+#formbricks-content {
+  flex: 1 0 auto;
+}
+
+#formbricks-form {
+  padding: 2rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Element */
+
+.formbricks-element {
+  width: 100%;
+}
+
+.formbricks-element-label {
+  display: block;
+  font-weight: var(--formbricks-bold);
+  margin-bottom: 0.5rem;
+}
+
+.formbricks-next-button-wrapper {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.formbricks-next-button {
+  display: block;
+  padding: 0.75rem 1rem 0.75rem 1rem;
+  border: 0;
+  border-radius: var(--formbricks-button-border-radius);
+  background-color: var(--formbricks-button-bg-color);
+  color: var(--formbricks-button-color);
+  font-weight: var(--formbricks-bold);
+  cursor: pointer;
+  transition: all 0.3s ease-out;
+}
+
+/* Textarea */
+
+.formbricks-textarea {
+  width: 100%;
+  height: 100px;
+  padding: 0.5rem;
+  border: 1px solid var(--formbricks-message-border-color);
+  border-radius: var(--formbricks-border-radius);
+  resize: none;
+  transition: all 0.3s ease-out;
+}
+
+/* Radio */
+
+.formbricks-radio-fieldset {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.formbricks-radio-option {
+  margin-top: 1rem;
+}
+
+.formbricks-radio-input {
+  display: none;
+}
+
+.formbricks-radio-label {
+  width: 100%;
+  display: block;
+  text-align: center;
+  cursor: pointer;
+  background-color: var(--formbricks-brand-color-transparent);
+  background: transparent\9;
+  border: 1px;
+  border-style: solid;
+  border-color: var(--formbricks-brand-color);
+  padding: 5px 10px;
+  border-radius: var(--formbricks-button-border-radius);
+  transition: all 0.3s ease-out;
+}
+
+.formbricks-radio-input:checked + label {
+  background-color: #58ba83;
+}
+
+/* Thank you slide */
+.formbricks-thankyou-icon {
+  width: 100%;
+  text-align: center;
+  font-size: 3rem;
+  margin: 0;
+}
+
+.formbricks-thankyou-title {
+  width: 100%;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: var(--formbricks-bold);
+  margin: 1rem 0;
+}
+
+.formbricks-thankyou-subtitle {
+  width: 100%;
+  text-align: center;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Progressbar */
+
+#formbricks-progressbar-wrapper {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  margin: 1rem 0 1rem 0;
+}
+
+.formbricks-progressbar {
+  display: grid;
+  height: 0.4rem;
+  width: 14rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.formbricks-progressbar-item {
+  background-color: var(--formbricks-brand-color-transparent);
+  width: 2rem;
+  height: 100%;
+  border-radius: 0.25rem;
+  transition: all 0.3s ease-out;
+}
+
+.formbricks-progressbar-item-current {
+  background-color: var(--formbricks-brand-color);
+}
+
+/* Helpers */
+
+.formbricks-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.formbricks-hidden {
+  display: none !important;
+}
+
+/* Animations */
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+.fade-out {
+  transition: all 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.formbricks-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
