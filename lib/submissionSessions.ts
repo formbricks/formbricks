@@ -149,18 +149,25 @@ export const getSubmissionAnalytics = (
               if (question.type === "multipleChoiceQuestion") {
                 currentQuestion.options.map((option, index) => {
                   if (
+                    "Option 3* : - Montant total à payer est de:  2 000$ - Paiements: paie 500$ pendant la période de formation. Paie le solde de $1500 à crédit grace à un pret bancaire remboursable en 24 mensualités dès la fin de la formation (soit 64$/mois durant 24 mois avec un taux d'intérêt réduit)" ===
+                    submissionSessionsSubmitedType[0]?.data?.submission[
+                      question.id
+                    ]
+                  ) {
+                  }
+                  if (
                     submissionSessionsSubmitedType[0]?.data?.submission[
                       question.id
                     ] === option.label
                   ) {
                     currentQuestion.options[index].candidates += 1;
+                    currentQuestion.candidate.push(
+                      submissionSessionsSubmitedType[0]?.data?.candidateId
+                    );
+                    currentQuestion.stat = currentQuestion.stat + 1;
                   }
                 });
               }
-              currentQuestion.candidate.push(
-                submissionSessionsSubmitedType[0]?.data?.candidateId
-              );
-              currentQuestion.stat = currentQuestion.stat + 1;
             }
           }
         });
