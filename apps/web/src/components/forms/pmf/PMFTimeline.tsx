@@ -13,8 +13,6 @@ import { toast } from "react-toastify";
 export default function PMFTimeline({ submissions, setSubmissions }) {
   const router = useRouter();
 
-  console.log("submissions", JSON.stringify(submissions, null, 2));
-
   const {
     submissions: allSubmissions,
     mutateSubmissions,
@@ -113,7 +111,7 @@ export default function PMFTimeline({ submissions, setSubmissions }) {
                           </div>
                         </div>
                         <div className="mt-3">
-                          <p className="whitespace-pre-wrap text-sm text-gray-500">
+                          <ul className="whitespace-pre-wrap text-sm text-gray-500">
                             {Object.entries(MergeWithSchema(submission.data, form.schema)).map(
                               ([key, value]) => (
                                 <li key={key} className="py-5">
@@ -128,7 +126,7 @@ export default function PMFTimeline({ submissions, setSubmissions }) {
                                 </li>
                               )
                             )}
-                          </p>
+                          </ul>
                         </div>
                       </div>
                       <div className=" bg-gray-50 p-4 sm:p-6">
