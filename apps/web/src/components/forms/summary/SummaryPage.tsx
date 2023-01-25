@@ -37,9 +37,6 @@ export default function SummaryPage() {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
 
-  {
-    console.log(JSON.stringify(submissions, null, 2));
-  }
   return (
     <div className="mx-auto py-8 sm:px-6 lg:px-8">
       <header className="mb-8">

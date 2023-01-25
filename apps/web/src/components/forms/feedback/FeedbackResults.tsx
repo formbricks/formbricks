@@ -9,6 +9,7 @@ import { InboxIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/router";
 import { Fragment, useEffect, useMemo, useState } from "react";
+import FilterNavigation from "../shared/FilterNavigation";
 import FeedbackTimeline from "./FeedbackTimeline";
 
 const subCategories = [
@@ -181,35 +182,7 @@ export default function FeedbackResults() {
       <div>
         <section aria-labelledby="products-heading" className="pt-6 pb-24">
           <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
-            {/* Filters */}
-            <form className="hidden lg:block">
-              <h3 className="sr-only">Categories</h3>
-              {navigation.map((item) => (
-                <button
-                  type="button"
-                  key={item.name}
-                  onClick={() => setCurrentFilter(item.id)}
-                  className={clsx(
-                    item.id === currentFilter
-                      ? "bg-gray-100 text-gray-900"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-                    "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium"
-                  )}
-                  aria-current={item.id === currentFilter ? "page" : undefined}>
-                  <div className={clsx(item.color, "-ml-1 mr-3 h-2 w-2 flex-shrink-0 rounded-full")} />
-                  <span className="truncate">{item.name}</span>
-                  {item.count ? (
-                    <span
-                      className={clsx(
-                        item.id === currentFilter ? "bg-white" : "bg-gray-100 group-hover:bg-white",
-                        "ml-auto inline-block rounded-full py-0.5 px-3 text-xs"
-                      )}>
-                      {item.count}
-                    </span>
-                  ) : null}
-                </button>
-              ))}
-            </form>
+            <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
 
             {/* Product grid */}
             <div className="lg:col-span-3">

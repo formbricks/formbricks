@@ -120,7 +120,7 @@ async function submitElement(name?: string, value?: string) {
     const response = await createSubmission(submission);
     submissionId = response.id;
   } else {
-    await updateSubmission(submissionId, submission, !!("idealCustomer" in submission));
+    await updateSubmission(submissionId, submission, !!("selfSegmentation" in submission));
   }
 
   // loading indication end

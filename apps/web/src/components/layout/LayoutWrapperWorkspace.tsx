@@ -42,7 +42,7 @@ export default function LayoutWrapperWorkspace({ children }) {
     <>
       <div className="flex h-full">
         {/* Narrow sidebar */}
-        <div className="hidden overflow-y-auto border-r border-gray-200 bg-white bg-gradient-to-r md:block md:w-64">
+        <div className="hidden overflow-y-auto border-r border-gray-200 bg-white bg-gradient-to-r sm:w-40 md:block xl:w-64">
           <div className="flex w-full flex-col items-center py-6">
             <div className="w-full flex-1 space-y-2 px-2">
               {sidebarNavigation.map((item) => (

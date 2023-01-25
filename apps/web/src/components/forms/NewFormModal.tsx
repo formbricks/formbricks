@@ -3,7 +3,7 @@
 import { createForm } from "@/lib/forms";
 import { Button } from "@formbricks/ui";
 import { Dialog, RadioGroup, Transition } from "@headlessui/react";
-import { UserIcon } from "@heroicons/react/24/outline";
+import { PMFIcon, FeedbackIcon, UserCommentIcon } from "@formbricks/ui";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
@@ -21,13 +21,19 @@ const formTypes = [
     id: "feedback",
     name: "Feedback Box",
     description: "A direct channel to feel the pulse of your users.",
-    icon: UserIcon,
+    icon: FeedbackIcon,
   },
   {
     id: "custom",
-    name: "Custom Form",
-    description: "Send and analyze your custom form.",
-    icon: UserIcon,
+    name: "Custom Survey",
+    description: "Create and analyze your custom survey.",
+    icon: UserCommentIcon,
+  },
+  {
+    id: "pmf",
+    name: "Product-Market Fit Survey",
+    description: "Leverage the Superhuman PMF engine.",
+    icon: PMFIcon,
   },
 ];
 
@@ -44,7 +50,7 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
         label,
         type: "feedback",
         schema: {
-          type: "form",
+          schemaVersion: 1,
           config: {},
           pages: [
             {
@@ -89,6 +95,101 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
       formTemplate = {
         label,
         type: "custom",
+      };
+    } else if (formType === "pmf") {
+      formTemplate = {
+        label,
+        type: "pmf",
+        schema: {
+          schemaVersion: 1,
+          config: {},
+          pages: [
+            {
+              id: "disappointmentPage",
+              config: {
+                autoSubmit: true,
+              },
+              elements: [
+                {
+                  id: "disappointment",
+                  type: "radio",
+                  name: "disappointment",
+                  label: "How disappointed would you be if you could no longer use our service?",
+                  options: [
+                    { label: "Very disappointed", value: "veryDisappointed" },
+                    { label: "Somewhat disappointed", value: "somewhatDisappointed" },
+                    { label: "Not disappointed", value: "notDisappointed" },
+                  ],
+                },
+              ],
+            },
+            {
+              id: "mainBenefitPage",
+              elements: [
+                {
+                  id: "mainBenefit",
+                  type: "text",
+                  name: "mainBenefit",
+                  label: "What is the main benefit you receive from our service?",
+                },
+              ],
+            },
+            {
+              id: "userSegmentPage",
+              config: {
+                autoSubmit: true,
+              },
+              elements: [
+                {
+                  id: "userSegment",
+                  type: "radio",
+                  name: "userSegment",
+                  label: "What is your job title?",
+                  options: [
+                    { label: "Founder", value: "founder" },
+                    { label: "Executive", value: "executive" },
+                    { label: "Product Manager", value: "productManager" },
+                    { label: "Product Owner", value: "productOwner" },
+                    { label: "Software Engineer", value: "softwareEngineer" },
+                  ],
+                },
+              ],
+            },
+            {
+              id: "improvementPage",
+              elements: [
+                {
+                  id: "improvement",
+                  type: "text",
+                  name: "improvement",
+                  label: "How can we improve our service for you?",
+                },
+              ],
+            },
+            {
+              id: "selfSegmentationPage",
+              elements: [
+                {
+                  id: "selfSegmentation",
+                  type: "text",
+                  name: "selfSegmentation",
+                  label: "What type of people would benefit most from using our service?",
+                },
+              ],
+            },
+            {
+              id: "thankYouPage",
+              endScreen: true,
+              elements: [
+                {
+                  id: "thankYou",
+                  type: "html",
+                  name: "thankYou",
+                },
+              ],
+            },
+          ],
+        },
       };
     } else {
       throw new Error("Unknown form type");
@@ -176,7 +277,7 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
                               <RadioGroup.Description
                                 as="span"
                                 className="mt-2 mr-3 flex text-sm sm:mt-0 sm:flex-col sm:text-right">
-                                <formType.icon className="h-6 w-6" />
+                                <formType.icon className="h-8 w-8" />
                               </RadioGroup.Description>
                               <span className="flex items-center">
                                 <span className="flex flex-col text-sm">

@@ -85,7 +85,7 @@ export const MergeWithSchema = (submissionData, schema) => {
   return mergedData;
 };
 
-const getOptionLabelMap = (schema) => {
+export const getOptionLabelMap = (schema) => {
   const optionLabelMap = {};
   for (const page of schema.pages) {
     for (const elem of page.elements) {
