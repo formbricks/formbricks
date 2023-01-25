@@ -17,7 +17,7 @@ const config: FormbricksConfig = {
   ...(window as any).formbricks?.config,
 };
 
-const submission: any = {};
+let submission: any = {};
 let currentElementIdx = 0;
 let submissionId: null | string = null;
 
@@ -91,6 +91,22 @@ function applyConfig() {
   }
 }
 
+async function reset() {
+  submission = {};
+  currentElementIdx = 0;
+  submissionId = null;
+
+  const questionElements = Array.from(
+    formContainer.getElementsByClassName("formbricks-element") as HTMLCollectionOf<HTMLFormElement>
+  );
+  questionElements.forEach((el) => {
+    if (!el.classList.contains("formbricks-hidden")) {
+      el.classList.add("formbricks-hidden");
+    }
+  });
+  questionElements[0].classList.remove("formbricks-hidden");
+}
+
 async function submitElement(name?: string, value?: string) {
   if (!name || !value) {
     throw new Error('Missing "name" or "value"');
@@ -104,7 +120,7 @@ async function submitElement(name?: string, value?: string) {
     const response = await createSubmission(submission);
     submissionId = response.id;
   } else {
-    await updateSubmission(submissionId, submission);
+    await updateSubmission(submissionId, submission, !!("idealCustomer" in submission));
   }
 
   // loading indication end
@@ -143,9 +159,15 @@ async function createSubmission(submission: any) {
   return response.json();
 }
 
-async function updateSubmission(submissionId: string, submission: any) {
+async function updateSubmission(submissionId: string, submission: any, finished: boolean = false) {
   if (!config.formId) {
     throw new Error("Missing formId");
+  }
+  const body: any = {
+    data: submission,
+  };
+  if (finished) {
+    body["finished"] = true;
   }
   const response = await fetch(
     `${config.formbricksUrl}/api/capture/forms/${config.formId}/submissions/${submissionId}`,
@@ -154,15 +176,13 @@ async function updateSubmission(submissionId: string, submission: any) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        data: submission,
-      }),
+      body: JSON.stringify(body),
     }
   );
   return response.json();
 }
 
-const formbricks = { init, config };
+const formbricks = { init, reset, config };
 (window as any).formbricks = formbricks;
 
 export default formbricks;
