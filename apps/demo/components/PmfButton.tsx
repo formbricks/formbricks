@@ -43,20 +43,6 @@ export default function PmfButton() {
 
   return (
     <>
-      {/* <Script src="https://cdn.jsdelivr.net/npm/@formbricks/pmf@0.0.3/dist/index.umd.js" defer />
-
-      <Script id="feedback-setup">{`
-      window.formbricks = {
-        ...window.formbricks, 
-        config: {
-          formbricksUrl: "http://localhost:3000",
-          formId: "clda6d0ot0000yzikvnnz07lm",
-          containerId: "formbricks-container",
-          style: {
-            brandColor: "#0891b2",
-          },
-        },
-    };`}</Script> */}
       <div
         className={clsx(
           "xs:right-0 xs:top-1/2 xs:w-[26rem] xs:-translate-y-1/2 xs:h-[30rem] fixed bottom-0 z-50 h-96 w-full transition-transform duration-500 ease-in-out",
@@ -74,8 +60,7 @@ export default function PmfButton() {
               if (!isOpen) {
                 if (window) {
                   window.formbricks.init();
-                  /*  window.formbricks.render();
-                  window.formbricks.resetForm(); */
+                  window.formbricks.reset();
                 }
               }
               setIsOpen(!isOpen);
