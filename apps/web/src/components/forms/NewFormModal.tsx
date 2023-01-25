@@ -50,7 +50,7 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
         label,
         type: "feedback",
         schema: {
-          type: "form",
+          schemaVersion: 1,
           config: {},
           pages: [
             {
@@ -101,19 +101,19 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
         label,
         type: "pmf",
         schema: {
-          type: "form",
+          schemaVersion: 1,
           config: {},
           pages: [
             {
-              id: "pmfTypePage",
+              id: "disappointmentPage",
               config: {
                 autoSubmit: true,
               },
               elements: [
                 {
-                  id: "pmfType",
+                  id: "disappointment",
                   type: "radio",
-                  name: "pmfType",
+                  name: "disappointment",
                   label: "How disappointed would you be if you could no longer use our service?",
                   options: [
                     { label: "Very disappointed", value: "veryDisappointed" },
@@ -148,8 +148,9 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
                   options: [
                     { label: "Founder", value: "founder" },
                     { label: "Executive", value: "executive" },
-                    { label: "Product Manager", value: "product manager" },
-                    { label: "Software Engineer", value: "engineer" },
+                    { label: "Product Manager", value: "productManager" },
+                    { label: "Product Owner", value: "productOwner" },
+                    { label: "Software Engineer", value: "softwareEngineer" },
                   ],
                 },
               ],

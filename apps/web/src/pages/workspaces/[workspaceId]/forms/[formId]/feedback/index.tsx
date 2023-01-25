@@ -1,6 +1,6 @@
 "use client";
 
-import FeedbackPage from "@/components/forms/pmf/PMFPage";
+import FeedbackPage from "@/components/forms/feedback/FeedbackPage";
 import LayoutApp from "@/components/layout/LayoutApp";
 import LayoutWrapperWorkspace from "@/components/layout/LayoutWrapperWorkspace";
 

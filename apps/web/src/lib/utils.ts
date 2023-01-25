@@ -96,3 +96,13 @@ export const parseUserAgent = (userAgent: string) => {
 export const capitalizeFirstLetter = (string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
+
+// camel case to title case
+export const camelToTitle = (string) => {
+  return string
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, function (str) {
+      return str.toUpperCase();
+    })
+    .trim();
+};

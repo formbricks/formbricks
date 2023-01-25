@@ -16,10 +16,14 @@ export default function PmfButton() {
       ...window.formbricks,
       config: {
         formbricksUrl: "http://localhost:3000",
-        formId: "clda6d0ot0000yzikvnnz07lm",
+        formId: "cldbru2nu000s19t6mtc4bhk4",
         containerId: "formbricks",
         style: {
           brandColor: "#0891b2",
+        },
+        customer: {
+          name: "John Doe",
+          email: "john@doe.com",
         },
       },
     };

@@ -1,7 +1,9 @@
 import EmptyPageFiller from "@/components/EmptyPageFiller";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { useForm } from "@/lib/forms";
 import { MergeWithSchema, persistSubmission, useSubmissions } from "@/lib/submissions";
 import { convertDateTimeString, parseUserAgent } from "@/lib/utils";
-import { NotDisappointedIcon, Button, VeryDisappointedIcon, SomewhatDisappointedIcon } from "@formbricks/ui";
+import { Button, NotDisappointedIcon, SomewhatDisappointedIcon, VeryDisappointedIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
@@ -11,11 +13,18 @@ import { toast } from "react-toastify";
 export default function PMFTimeline({ submissions, setSubmissions }) {
   const router = useRouter();
 
-  console.log(JSON.stringify(submissions, null, 2));
+  console.log("submissions", JSON.stringify(submissions, null, 2));
 
-  const { submissions: allSubmissions, mutateSubmissions } = useSubmissions(
-    router.query.workspaceId?.toString(),
-    router.query.formId?.toString()
+  const {
+    submissions: allSubmissions,
+    mutateSubmissions,
+    isLoadingSubmissions,
+    isErrorSubmissions,
+  } = useSubmissions(router.query.workspaceId?.toString(), router.query.formId?.toString());
+
+  const { form, isLoadingForm, isErrorForm } = useForm(
+    router.query.formId?.toString(),
+    router.query.workspaceId?.toString()
   );
 
   const toggleArchiveSubmission = (submission) => {
@@ -36,6 +45,13 @@ export default function PMFTimeline({ submissions, setSubmissions }) {
       toast.success("Submission restored");
     }
   };
+
+  if (isLoadingForm || isLoadingSubmissions) return <LoadingSpinner />;
+
+  if (isErrorForm || isErrorSubmissions) {
+    return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
+  }
+
   return (
     <div className="flow-root">
       <ul role="list" className="-mb-8">
@@ -64,31 +80,31 @@ export default function PMFTimeline({ submissions, setSubmissions }) {
                           "bg-white",
                           "flex h-8 w-8 items-center justify-center rounded-full ring-8 ring-gray-50"
                         )}>
-                        {submission.data.pmfType === "veryDisappointed" ? (
+                        {submission.data.disappointment === "veryDisappointed" ? (
                           <VeryDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                        ) : submission.data.pmfType === "notDisappointed" ? (
+                        ) : submission.data.disappointment === "notDisappointed" ? (
                           <NotDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                        ) : (
+                        ) : submission.data.disappointment === "somewhatDisappointed" ? (
                           <SomewhatDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                        )}
+                        ) : null}
                       </span>
                     </div>
                     <div className="w-full overflow-hidden rounded-lg bg-white shadow">
                       <div className="px-4 py-5 sm:p-6">
                         <div className="flex w-full justify-between">
-                          {submission.data.pmfType === "veryDisappointed" ? (
+                          {submission.data.disappointment === "veryDisappointed" ? (
                             <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                               Very disappointed
                             </span>
-                          ) : submission.data.pmfType === "notDisappointed" ? (
+                          ) : submission.data.disappointment === "notDisappointed" ? (
                             <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
                               Not disappointed
                             </span>
-                          ) : (
+                          ) : submission.data.disappointment === "somewhatDisappointed" ? (
                             <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
                               Somewhat disappointed
                             </span>
-                          )}
+                          ) : null}
 
                           <div className="text-sm text-gray-400">
                             <time dateTime={convertDateTimeString(submission.createdAt)}>
@@ -98,7 +114,20 @@ export default function PMFTimeline({ submissions, setSubmissions }) {
                         </div>
                         <div className="mt-3">
                           <p className="whitespace-pre-wrap text-sm text-gray-500">
-                            {submission.data.pmfType}
+                            {Object.entries(MergeWithSchema(submission.data, form.schema)).map(
+                              ([key, value]) => (
+                                <li key={key} className="py-5">
+                                  <p className="text-sm font-semibold text-gray-800">{key}</p>
+                                  <p
+                                    className={clsx(
+                                      value ? "text-gray-600" : "text-gray-400",
+                                      "whitespace-pre-line pt-1 text-sm text-gray-600"
+                                    )}>
+                                    {value.toString()}
+                                  </p>
+                                </li>
+                              )
+                            )}
                           </p>
                         </div>
                       </div>

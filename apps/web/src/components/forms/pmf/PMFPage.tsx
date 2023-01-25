@@ -1,27 +1,25 @@
 "use client";
 
+import LoadingSpinner from "@/components/LoadingSpinner";
 import TabNavigation from "@/components/TabNavigation";
+import { useForm } from "@/lib/forms";
 import {
+  BoltIcon,
+  ChartPieIcon,
   InformationCircleIcon,
   RectangleStackIcon,
   ShareIcon,
-  ChartPieIcon,
-  BoltIcon,
 } from "@heroicons/react/20/solid";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import PipelinesOverview from "../pipelines/PipelinesOverview";
 import PMFResults from "./PMFResults";
 import SegmentResults from "./SegmentResults";
-import SuperhumanApproach from "./SuperhumanApproach";
-import PipelinesOverview from "../pipelines/PipelinesOverview";
 import SetupInstructions from "./SetupInstructions";
-import { useForm } from "@/lib/forms";
-import LoadingSpinner from "@/components/LoadingSpinner";
 
 const tabs = [
   { name: "Results", icon: RectangleStackIcon },
   { name: "Segments", icon: ChartPieIcon },
-  { name: "Superhuman Method", icon: BoltIcon },
   { name: "Data Pipelines", icon: ShareIcon },
   { name: "Setup Instructions", icon: InformationCircleIcon },
 ];
@@ -57,8 +55,6 @@ export default function PMFPage() {
           <PMFResults />
         ) : currentTab === "Segments" ? (
           <SegmentResults />
-        ) : currentTab === "Superhuman Method" ? (
-          <SuperhumanApproach />
         ) : currentTab === "Data Pipelines" ? (
           <PipelinesOverview />
         ) : currentTab === "Setup Instructions" ? (
