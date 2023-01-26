@@ -70,7 +70,7 @@ export function SurveyPage({
         }),
       ]);
       if (!res[0].ok || !res[1].ok) {
-        alert("There was an error sending this form. Please try again later.");
+        alert("There was an error sending this form. Please contact us at hola@formbricks.com");
         return;
       }
       const submission = await res[0].json();
@@ -82,7 +82,7 @@ export function SurveyPage({
         body: JSON.stringify({ data: partialSubmission }),
       });
       if (!res.ok) {
-        alert("There was an error sending this form. Please try again later.");
+        alert("There was an error sending this form. Please contact us at hola@formbricks.com");
         return;
       }
     }
@@ -99,7 +99,7 @@ export function SurveyPage({
       plausible(`waitlistSubmitPage-${page.id}`);
       window.scrollTo(0, 0);
     } catch (e) {
-      alert("There was an error sending this form. Please try again later.");
+      alert("There was an error sending this form. Please contact us at hola@formbricks.com");
     }
   };
 
@@ -133,7 +133,7 @@ export function SurveyPage({
         })}
       </div>
       {!finished && (
-        <div className="mx-auto mt-8 flex w-full justify-end">
+        <div className="mx-auto mt-8 flex w-full max-w-xl justify-end">
           {page.config?.allowSkip && (
             <Button
               variant="secondary"

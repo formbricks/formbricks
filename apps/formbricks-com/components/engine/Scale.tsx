@@ -39,27 +39,27 @@ export default function Scale({ element, control, onSubmit, disabled }: IconRadi
               element.frontend.max &&
                 element.frontend.min &&
                 element.frontend.max - element.frontend.min + 1 >= 11
-                ? "lg:grid-cols-11"
+                ? "grid-cols-11"
                 : element.frontend.max - element.frontend.min + 1 === 10
-                ? "lg:grid-cols-10"
+                ? "grid-cols-10"
                 : element.frontend.max - element.frontend.min + 1 === 9
-                ? "lg:grid-cols-9"
+                ? "grid-cols-9"
                 : element.frontend.max - element.frontend.min + 1 === 8
-                ? "lg:grid-cols-8"
+                ? "grid-cols-8"
                 : element.frontend.max - element.frontend.min + 1 === 7
-                ? "lg:grid-cols-7"
+                ? "grid-cols-7"
                 : element.frontend.max - element.frontend.min + 1 === 6
-                ? "lg:grid-cols-6"
+                ? "grid-cols-6"
                 : element.frontend.max - element.frontend.min + 1 === 5
-                ? "lg:grid-cols-5"
+                ? "grid-cols-5"
                 : element.frontend.max - element.frontend.min + 1 === 4
-                ? "lg:grid-cols-4"
+                ? "grid-cols-4"
                 : element.frontend.max - element.frontend.min + 1 === 3
-                ? "lg:grid-cols-3"
+                ? "grid-cols-3"
                 : element.frontend.max - element.frontend.min + 1 === 2
-                ? "lg:grid-cols-2"
-                : "lg:grid-cols-1",
-              "mt-4 grid w-full gap-y-6 sm:gap-x-2"
+                ? "grid-cols-2"
+                : "grid-cols-1",
+              "mt-4 grid w-full gap-x-1  sm:gap-x-2"
             )}>
             {Array.from(
               { length: element.frontend.max - element.frontend.min + 1 },
@@ -72,7 +72,7 @@ export default function Scale({ element, control, onSubmit, disabled }: IconRadi
                   clsx(
                     checked ? "border-transparent" : "border-gray-200 dark:border-slate-700",
                     active ? "border-brand ring-brand ring-2" : "",
-                    "relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm transition-all ease-in-out hover:scale-105 focus:outline-none dark:bg-slate-700"
+                    "xs:rounded-lg relative flex cursor-pointer rounded-md border bg-white py-3 shadow-sm transition-all ease-in-out hover:scale-105 focus:outline-none dark:bg-slate-700 sm:p-4"
                   )
                 }>
                 {({ checked, active }) => (
@@ -105,7 +105,7 @@ export default function Scale({ element, control, onSubmit, disabled }: IconRadi
               </RadioGroup.Option>
             ))}
           </div>
-          <div className="mt-2 flex justify-between text-sm text-gray-700 dark:text-slate-400">
+          <div className="xs:text-sm mt-2 flex justify-between  text-xs text-gray-700 dark:text-slate-400">
             <p>{element.frontend.minLabel}</p>
             <p>{element.frontend.maxLabel}</p>
           </div>
