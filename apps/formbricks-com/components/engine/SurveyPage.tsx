@@ -94,6 +94,7 @@ export function SurveyPage({
     setSubmission(updatedSubmission);
     try {
       sendToFormbricks(data);
+      await waitForAnimation(400);
       setSubmittingPage(false);
       onSubmit(updatedSubmission);
       plausible(`waitlistSubmitPage-${page.id}`);
@@ -102,6 +103,9 @@ export function SurveyPage({
       alert("There was an error sending this form. Please contact us at hola@formbricks.com");
     }
   };
+
+  // set timeout promise
+  const waitForAnimation = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
   const handleSubmitElement = () => {
     if (page.config?.autoSubmit && page.elements.length == 1) {
@@ -116,7 +120,9 @@ export function SurveyPage({
         {page.elements.map((element) => {
           const ElementComponent = element.component;
           return (
-            <div key={element.id} className={clsx(submittingPage && "animate-pulse")}>
+            <div
+              key={element.id}
+              className={clsx(submittingPage && "animate-[pulse_0.8s_ease-out_infinite]")}>
               {element.name ? (
                 <ElementComponent
                   element={element}

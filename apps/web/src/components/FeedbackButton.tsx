@@ -67,8 +67,8 @@ export function FeedbackButton() {
 
       <div
         className={clsx(
-          "xs:right-0 xs:top-1/2 xs:w-[26rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-96 w-full transition-transform duration-500 ease-in-out",
-          isOpen ? "xs:-translate-x-0 translate-y-0" : "xs:translate-x-[21.3rem] translate-y-[21.5rem]"
+          "xs:flex-row xs:right-0 xs:top-1/2 xs:w-[18rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-fit w-full transition-all duration-500 ease-in-out",
+          isOpen ? "xs:-translate-x-0 translate-y-0" : "xs:translate-x-full xs:-mr-1 translate-y-full"
         )}>
         <div
           className="xs:flex-row flex h-full flex-col"
@@ -77,7 +77,7 @@ export function FeedbackButton() {
           }}
           ref={feedbackRef}>
           <button
-            className="bg-brand xs:-rotate-90 xs:-mr-8 xs:my-auto z-30 mx-auto -mb-1 max-h-16 w-32 rounded-t p-3 text-sm font-medium text-white"
+            className="xs:-rotate-90  xs:top-1/2 xs:-left-[5.75rem] xs:-translate-y-1/2 xs:-translate-x-0 xs:w-32 xs:p-4 bg-brand-dark absolute left-1/2 w-28 -translate-x-1/2 -translate-y-full rounded-t-lg p-3 font-medium text-white"
             onClick={() => {
               if (!isOpen) {
                 if (window) {
@@ -90,7 +90,7 @@ export function FeedbackButton() {
             {isOpen ? "Close" : "Feedback"}
           </button>
           <div
-            className="z-40 h-full w-full overflow-hidden rounded-l-lg bg-[#f8fafc] shadow-lg"
+            className="xs:rounded-bl-lg xs:rounded-tr-none h-full w-full  overflow-hidden rounded-bl-none rounded-tr-lg rounded-tl-lg  bg-slate-50 shadow-lg"
             id="formbricks-feedback-wrapper"></div>
         </div>
       </div>

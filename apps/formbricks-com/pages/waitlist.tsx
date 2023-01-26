@@ -52,7 +52,7 @@ const WaitlistPage = () => (
             process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
           }
           formId={
-            process.env.NODE_ENV === "production" ? "cld37mt2i0000ld08p9q572bc" : "cld2xwo2r000cu0mdkju2nj96"
+            process.env.NODE_ENV === "production" ? "cld37mt2i0000ld08p9q572bc" : "cldd3mrbs0007u0w0g2m6verd"
           }
           survey={{
             config: {
