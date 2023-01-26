@@ -164,7 +164,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (account.provider) {
-        const provider = account.provider.toUpperCase() as IdentityProvider;
+        const provider = account.provider.toLowerCase() as IdentityProvider;
         // check if accounts for this provider / account Id already exists
         const existingUserWithAccount = await prisma.user.findFirst({
           include: {
