@@ -58,25 +58,33 @@ export function SurveyPage({
   const sendToFormbricks = async (partialSubmission: any) => {
     if (!submissionId) {
       const res = await Promise.all([
-        await fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions`, {
+        fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ data: partialSubmission }),
         }),
-        await fetch(`${formbricksUrl}/api/capture/forms/${formId}/schema`, {
+        fetch(`${formbricksUrl}/api/capture/forms/${formId}/schema`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(schema),
         }),
       ]);
+      if (!res[0].ok || !res[1].ok) {
+        alert("There was an error sending this form. Please try again later.");
+        return;
+      }
       const submission = await res[0].json();
       setSubmissionId(submission.id);
     } else {
-      await fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions/${submissionId}`, {
+      const res = await fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions/${submissionId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: partialSubmission }),
       });
+      if (!res.ok) {
+        alert("There was an error sending this form. Please try again later.");
+        return;
+      }
     }
   };
 
@@ -85,7 +93,7 @@ export function SurveyPage({
     const updatedSubmission = { ...submission, ...data };
     setSubmission(updatedSubmission);
     try {
-      await sendToFormbricks(data);
+      sendToFormbricks(data);
       setSubmittingPage(false);
       onSubmit(updatedSubmission);
       plausible(`waitlistSubmitPage-${page.id}`);
