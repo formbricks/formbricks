@@ -16,7 +16,7 @@ const config: FormbricksConfig = {
   customer: {},
   onFinished: () => {},
   // Merge existing config
-  ...(window as any).formbricks?.config,
+  ...(window as any).formbricksPmf?.config,
 };
 
 let submission: any = {};
