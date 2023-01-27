@@ -78,14 +78,17 @@ export const getSubmissionAnalytics = (
         ({ data, type }) => type === "pageSubmission" && data.submission
       );
 
+      const candidateSubmited =
+        submissionSessionsSubmitedType[0]?.data?.candidateId;
+
       pages.forEach(({ blocks }) => {
         // if (blocks.length > 1) {
         const pageName = blocks[0]?.data.text;
         // }
         blocks.forEach((question) => {
-          if (
-            submissionSessionsSubmitedType[0]?.data?.submission[question.id]
-          ) {
+          const submissionResponse =
+            submissionSessionsSubmitedType[0]?.data?.submission[question.id];
+          if (submissionResponse) {
             const isQuestionExist = questionsInsights.findIndex(
               (element) => element.id === question.id
             );
@@ -93,21 +96,18 @@ export const getSubmissionAnalytics = (
 
             questionsInsights.map((element) => {
               const isExist = element.candidate.findIndex(
-                (candidateId) =>
-                  candidateId ===
-                  submissionSessionsSubmitedType[0]?.data?.candidateId
+                (candidateId) => candidateId === candidateSubmited
               );
               isCandidateExist = isExist === -1 ? false : true;
             });
 
             if (isQuestionExist === -1) {
-              if (question.type === "multipleChoiceQuestion") {
+              if (
+                question.type === "multipleChoiceQuestion" &&
+                Array.isArray(submissionResponse)
+              ) {
                 const options = question.data.options.map(({ label }) => {
-                  if (
-                    submissionSessionsSubmitedType[0]?.data?.submission[
-                      question.id
-                    ] === label
-                  ) {
+                  if (isOptionSelected(label, submissionResponse.toString())) {
                     return {
                       label,
                       candidates: 1,
@@ -119,28 +119,41 @@ export const getSubmissionAnalytics = (
                     };
                   }
                 });
-                questionsInsights.push({
-                  candidate: [
-                    submissionSessionsSubmitedType[0]?.data?.candidateId,
-                  ],
-                  id: question.id,
-                  name: question.data.label,
-                  stat: 1,
-                  trend: undefined,
-                  options,
+                questionSchema(
+                  questionsInsights,
+                  candidateSubmited,
+                  question,
                   pageName,
+                  options
+                );
+              } else if (question.type === "multipleChoiceQuestion") {
+                const options = question.data.options.map(({ label }) => {
+                  if (submissionResponse === label) {
+                    return {
+                      label,
+                      candidates: 1,
+                    };
+                  } else {
+                    return {
+                      label,
+                      candidates: 0,
+                    };
+                  }
                 });
+                questionSchema(
+                  questionsInsights,
+                  candidateSubmited,
+                  question,
+                  pageName,
+                  options
+                );
               } else {
-                questionsInsights.push({
-                  candidate: [
-                    submissionSessionsSubmitedType[0]?.data?.candidateId,
-                  ],
-                  id: question.id,
-                  name: question.data.label,
-                  stat: 1,
-                  trend: undefined,
-                  pageName,
-                });
+                questionSchema(
+                  questionsInsights,
+                  candidateSubmited,
+                  question,
+                  pageName
+                );
               }
             } else if (isQuestionExist !== -1 && !isCandidateExist) {
               const currentQuestion = questionsInsights.find(
@@ -149,24 +162,34 @@ export const getSubmissionAnalytics = (
               if (question.type === "multipleChoiceQuestion") {
                 currentQuestion.options.map((option, index) => {
                   if (
-                    "Option 3* : - Montant total à payer est de:  2 000$ - Paiements: paie 500$ pendant la période de formation. Paie le solde de $1500 à crédit grace à un pret bancaire remboursable en 24 mensualités dès la fin de la formation (soit 64$/mois durant 24 mois avec un taux d'intérêt réduit)" ===
-                    submissionSessionsSubmitedType[0]?.data?.submission[
-                      question.id
-                    ]
+                    question.type === "multipleChoiceQuestion" &&
+                    Array.isArray(submissionResponse)
                   ) {
-                  }
-                  if (
-                    submissionSessionsSubmitedType[0]?.data?.submission[
-                      question.id
-                    ] === option.label
-                  ) {
-                    currentQuestion.options[index].candidates += 1;
-                    currentQuestion.candidate.push(
-                      submissionSessionsSubmitedType[0]?.data?.candidateId
+                    const isCandidateExist = findCandidateInQuestion(
+                      currentQuestion.candidate,
+                      candidateSubmited
                     );
+
+                    if (
+                      isOptionSelected(
+                        option.label,
+                        submissionResponse.toString()
+                      ) &&
+                      isCandidateExist === undefined
+                    ) {
+                      currentQuestion.options[index].candidates += 1;
+                      currentQuestion.candidate.push(candidateSubmited);
+                      currentQuestion.stat = currentQuestion.stat + 1;
+                    }
+                  } else if (submissionResponse === option.label) {
+                    currentQuestion.options[index].candidates += 1;
+                    currentQuestion.candidate.push(candidateSubmited);
                     currentQuestion.stat = currentQuestion.stat + 1;
                   }
                 });
+              } else {
+                currentQuestion.candidate.push(candidateSubmited);
+                currentQuestion.stat = currentQuestion.stat + 1;
               }
             }
           }
@@ -175,8 +198,9 @@ export const getSubmissionAnalytics = (
 
       submissionSession.events.map(({ type, data }) => {
         if (type === "formOpened") {
-          const isCandidateExist = totalCandidateOpenedForm.find(
-            (id) => data.candidateId === id
+          const isCandidateExist = findCandidateInQuestion(
+            totalCandidateOpenedForm,
+            data.candidateId
           );
           if (!isCandidateExist) {
             totalCandidateOpenedForm.push(data.candidateId);
@@ -208,7 +232,6 @@ export const getSubmissionAnalytics = (
         id: `${page.blocks[0].data.text}-${page.blocks[0].data.level}`,
         stat: 0,
         trend: undefined,
-        candidates: [],
         type: "page",
       };
     }
@@ -223,15 +246,10 @@ export const getSubmissionAnalytics = (
       return ispageExist.name === element.name;
     });
     pagesInsights[pageIndex].questions.push(question);
-    question.candidate.map((candidateId) => {
-      const candidateIndex = ispageExist.candidates.findIndex((element) => {
-        return candidateId === element;
-      });
-      if (candidateIndex === -1) {
-        pagesInsights[pageIndex].stat += 1;
-        pagesInsights[pageIndex].candidates.push(candidateId);
-      }
-    });
+
+    if (pagesInsights[pageIndex].stat < question.candidate.length) {
+      pagesInsights[pageIndex].stat = question.candidate.length;
+    }
   });
 
   return {
@@ -310,4 +328,30 @@ export const getSubmissionSummary = (
     }
   }
   return summary;
+};
+function findCandidateInQuestion(totalCandidateOpenedForm: any[], candidateId) {
+  return totalCandidateOpenedForm.find((id) => candidateId === id);
+}
+
+function questionSchema(
+  questionsInsights: any[],
+  candidateSubmited: any,
+  question: any,
+  pageName: any,
+  options?: any
+) {
+  questionsInsights.push({
+    candidate: [candidateSubmited],
+    id: question.id,
+    name: question.data.label,
+    stat: 1,
+    trend: undefined,
+    options: options || undefined,
+    pageName,
+  });
+}
+
+export const isOptionSelected = (label: string, response: string) => {
+  const testRegex = new RegExp(label);
+  return testRegex.test(response);
 };

@@ -69,7 +69,7 @@ export default function ResultsSummary({ formId }) {
           id: "totalCandidateSubmited",
           name: "Nombre de candidats ayant soumis",
           stat:
-            `${insights.totalCandidateSubmited} (${Math.ceil(
+            `${insights.totalCandidateSubmited} (${Math.round(
               (insights.totalCandidateSubmited /
                 insights.totalCandidateOpenedForm) *
                 100
