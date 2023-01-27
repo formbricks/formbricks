@@ -7,12 +7,14 @@ export interface FormbricksConfig {
   containerId: string;
   customer?: Record<any, any>;
   style?: any;
+  onFinished?: () => void;
 }
 
 const config: FormbricksConfig = {
   formbricksUrl: "https://app.formbricks.com",
   containerId: "formbricks",
   customer: {},
+  onFinished: () => {},
   // Merge existing config
   ...(window as any).formbricks?.config,
 };
@@ -120,7 +122,11 @@ async function submitElement(name?: string, value?: string) {
     const response = await createSubmission(submission);
     submissionId = response.id;
   } else {
-    await updateSubmission(submissionId, submission, !!("selfSegmentation" in submission));
+    const finished = !!("selfSegmentation" in submission);
+    await updateSubmission(submissionId, submission, finished);
+    if (finished) {
+      config.onFinished();
+    }
   }
 
   // loading indication end
