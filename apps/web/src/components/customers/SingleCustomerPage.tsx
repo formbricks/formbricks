@@ -1,13 +1,11 @@
 "use client";
 
-import AnalyticsCard from "@/components/AnalyticsCard";
-import SubmissionDisplay from "@/components/forms/submissions/SubmissionDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useCustomer } from "@/lib/customers";
+import { MergeWithSchema } from "@/lib/submissions";
+import { convertDateTimeString, onlyUnique, parseUserAgent } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspaces";
-import { convertDateTimeString, onlyUnique } from "@/lib/utils";
-import { BackIcon, BugIcon, ComplimentIcon, IdeaIcon } from "@formbricks/ui";
-import { Dialog, Transition } from "@headlessui/react";
+import { BackIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
@@ -17,9 +15,6 @@ import EmptyPageFiller from "../EmptyPageFiller";
 
 export default function SingleCustomerPage() {
   const router = useRouter();
-  const { workspace, isLoadingWorkspace, isErrorWorkspace } = useWorkspace(
-    router.query.workspaceId?.toString()
-  );
   const { customer, isLoadingCustomer, isErrorCustomer } = useCustomer(
     router.query.workspaceId?.toString(),
     router.query.customerId?.toString()
@@ -31,7 +26,7 @@ export default function SingleCustomerPage() {
     }
   }, [customer]);
 
-  if (isLoadingWorkspace || isLoadingCustomer) {
+  if (isLoadingCustomer) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <LoadingSpinner />
@@ -39,7 +34,7 @@ export default function SingleCustomerPage() {
     );
   }
 
-  if (isErrorWorkspace || isErrorCustomer) {
+  if (isErrorCustomer) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
   return (
@@ -110,37 +105,10 @@ export default function SingleCustomerPage() {
                           />
                         ) : null}
                         <div className="relative flex space-x-3">
-                          <div>
-                            <span
-                              className={clsx(
-                                "bg-white",
-                                "flex h-8 w-8 items-center justify-center rounded-full ring-8 ring-gray-50"
-                              )}>
-                              {submission.data.feedbackType === "compliment" ? (
-                                <ComplimentIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                              ) : submission.data.feedbackType === "bug" ? (
-                                <BugIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                              ) : (
-                                <IdeaIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                              )}
-                            </span>
-                          </div>
                           <div className="w-full overflow-hidden rounded-lg bg-white shadow">
                             <div className="px-4 py-5 sm:p-6">
                               <div className="flex w-full justify-between">
-                                {submission.data.feedbackType === "compliment" ? (
-                                  <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                    Love
-                                  </span>
-                                ) : submission.data.feedbackType === "bug" ? (
-                                  <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                                    Bug
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                                    Idea
-                                  </span>
-                                )}
+                                <div></div>
 
                                 <div className="text-sm text-gray-400">
                                   <time dateTime={convertDateTimeString(submission.createdAt)}>
@@ -150,7 +118,20 @@ export default function SingleCustomerPage() {
                               </div>
                               <div className="mt-3">
                                 <p className="whitespace-pre-wrap text-sm text-gray-500">
-                                  {submission.data.message}{" "}
+                                  {Object.entries(
+                                    MergeWithSchema(submission.data, submission.form.schema)
+                                  ).map(([key, value]) => (
+                                    <li key={key} className="py-5">
+                                      <p className="text-sm font-semibold text-gray-800">{key}</p>
+                                      <p
+                                        className={clsx(
+                                          value ? "text-gray-600" : "text-gray-400",
+                                          "whitespace-pre-line pt-1 text-sm text-gray-600"
+                                        )}>
+                                        {value.toString()}
+                                      </p>
+                                    </li>
+                                  ))}
                                 </p>
                               </div>
                             </div>
@@ -158,11 +139,9 @@ export default function SingleCustomerPage() {
                               <div className="flex w-full justify-between gap-4">
                                 <div>
                                   <p className="text-sm font-thin text-gray-500">Device</p>
-                                  <p className="text-sm text-gray-500">{submission.meta.userAgent}</p>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-thin text-gray-500">Page</p>
-                                  <p className="text-sm text-gray-500">{submission.data.pageUrl}</p>
+                                  <p className="text-sm text-gray-500">
+                                    {parseUserAgent(submission.meta.userAgent)}
+                                  </p>
                                 </div>
                               </div>
                             </div>

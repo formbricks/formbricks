@@ -28,14 +28,19 @@ export default function FilterNavigation({ submissions, setFilteredSubmissions }
     if (form) {
       let newFilteredSubmissions = JSON.parse(JSON.stringify(submissions));
       for (const filter of filters) {
+        // special routine for archive
+        if (filter.type === "archive") {
+          const archivedSelected = filter.options.find((option) => option.value === "archived")?.active;
+          if (archivedSelected) {
+            newFilteredSubmissions = newFilteredSubmissions.filter((submission) => submission.archived);
+          } else {
+            newFilteredSubmissions = newFilteredSubmissions.filter((submission) => !submission.archived);
+          }
+          continue;
+        }
         const isAllActive = filter.options.find((option) => option.value === "all")?.active;
         // no filter is all is selected, if not keep on filtering
         if (!isAllActive) {
-          // special routine for archive
-          if (filter.type === "archive") {
-            newFilteredSubmissions = newFilteredSubmissions.filter((submission) => submission.archived);
-            continue;
-          }
           // filter for all other types
           for (const option of filter.options) {
             if (option.active) {
@@ -86,11 +91,11 @@ export default function FilterNavigation({ submissions, setFilteredSubmissions }
       }
       // add archived filter at the end
       filters.push({
-        name: "archived",
-        label: "Archived",
+        name: "archive",
+        label: "Archive",
         type: "archive",
         options: [
-          { value: "all", label: "All", active: true },
+          { value: "inbox", label: "Inbox", active: true },
           { value: "archived", label: "Archived", active: false },
         ],
       });

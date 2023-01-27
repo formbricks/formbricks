@@ -19,7 +19,7 @@ import SetupInstructions from "./SetupInstructions";
 
 const tabs = [
   { name: "Results", icon: RectangleStackIcon },
-  { name: "Segments", icon: ChartPieIcon },
+  { name: "Overview", icon: ChartPieIcon },
   { name: "Data Pipelines", icon: ShareIcon },
   { name: "Setup Instructions", icon: InformationCircleIcon },
 ];
@@ -53,7 +53,7 @@ export default function PMFPage() {
         </div>
         {currentTab === "Results" ? (
           <PMFResults />
-        ) : currentTab === "Segments" ? (
+        ) : currentTab === "Overview" ? (
           <SegmentResults />
         ) : currentTab === "Data Pipelines" ? (
           <PipelinesOverview />

@@ -39,7 +39,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
       include: {
-        submissions: true,
+        submissions: { include: { form: true } },
       },
     });
 
