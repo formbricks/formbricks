@@ -188,7 +188,7 @@ async function updateSubmission(submissionId: string, submission: any, finished:
   return response.json();
 }
 
-const formbricks = { init, reset, config };
-(window as any).formbricks = formbricks;
+const formbricksPmf = { init, reset, config };
+(window as any).formbricksPmf = formbricksPmf;
 
-export default formbricks;
+export default formbricksPmf;
