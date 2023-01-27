@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
-    formbricks: any;
+    formbricksPmf: any;
   }
 }
 
@@ -12,8 +12,8 @@ export default function PmfButton() {
   const feedbackRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    window.formbricks = {
-      ...window.formbricks,
+    window.formbricksPmf = {
+      ...window.formbricksPmf,
       config: {
         formbricksUrl: "http://localhost:3000",
         formId: "cldbru2nu000s19t6mtc4bhk4",
@@ -70,8 +70,8 @@ export default function PmfButton() {
         onClick={() => {
           if (!isOpen) {
             if (window) {
-              window.formbricks.init();
-              window.formbricks.reset();
+              window.formbricksPmf.init();
+              window.formbricksPmf.reset();
             }
           }
           setIsOpen(!isOpen);

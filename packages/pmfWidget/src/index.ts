@@ -61,6 +61,7 @@ function init() {
       submitElement(el.dataset?.elementName, e.target.elements[el.dataset?.elementName].value);
     };
   });
+  sendWarmupRequest();
 }
 
 function applyConfig() {
@@ -186,6 +187,16 @@ async function updateSubmission(submissionId: string, submission: any, finished:
     }
   );
   return response.json();
+}
+
+async function sendWarmupRequest() {
+  if (!config.formId) {
+    throw new Error("Missing formId");
+  }
+  const response = await fetch(`${config.formbricksUrl}/api/capture/forms/${config.formId}/submissions`, {
+    method: "OPTIONS",
+  });
+  return;
 }
 
 const formbricksPmf = { init, reset, config };
