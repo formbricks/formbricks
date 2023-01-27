@@ -18,12 +18,22 @@ export default function PmfButton() {
         formbricksUrl: "http://localhost:3000",
         formId: "cldbru2nu000s19t6mtc4bhk4",
         containerId: "formbricks",
-        style: {
-          brandColor: "#0891b2",
+        contact: {
+          name: "Jonathan",
+          position: "Co-Founder",
+          imgUrl: "https://avatars.githubusercontent.com/u/41432658?v=4",
         },
         customer: {
-          name: "John Doe",
-          email: "john@doe.com",
+          id: "test@crowd.dev",
+          name: "Test Customer",
+          email: "test@crowd.dev",
+        },
+        style: {
+          brandColor: "#e94f2e",
+          headerBGColor: "#F9FAFB",
+          boxBGColor: "#ffffff",
+          textColor: "#140505",
+          buttonHoverColor: "#F9FAFB",
         },
       },
     };
