@@ -7,7 +7,7 @@ export interface FormbricksConfig {
   containerId: string;
   customer?: Record<any, any>;
   style?: any;
-  onFinished?: () => void;
+  onFinished: () => void;
 }
 
 const config: FormbricksConfig = {
