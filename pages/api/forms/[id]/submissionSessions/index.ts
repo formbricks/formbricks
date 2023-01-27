@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
 import NextCors from "nextjs-cors";
-import { formHasOwnership } from "../../../../../lib/api";
 import { prisma } from "../../../../../lib/prisma";
 
 export default async function handle(
@@ -24,7 +23,6 @@ export default async function handle(
     if (!session) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-   
 
     const submissionSessionsData = await prisma.submissionSession.findMany({
       where: {
@@ -32,13 +30,15 @@ export default async function handle(
       },
       orderBy: [
         {
-          createdAt: "desc",
+          updatedAt: "desc",
         },
       ],
       include: {
         events: true,
       },
     });
+
+    
     return res.json(submissionSessionsData);
   }
 

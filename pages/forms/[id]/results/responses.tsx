@@ -9,6 +9,7 @@ import { useFormMenuSteps } from "../../../../lib/navigation/formMenuSteps";
 import { useFormResultsSecondNavigation } from "../../../../lib/navigation/formResultsSecondNavigation";
 import { useRouter } from "next/router";
 import withAuthentication from "../../../../components/layout/WithAuthentication";
+import { useNoCodeForm } from "../../../../lib/noCodeForm";
 
 function ResultsResponsesPage() {
   const router = useRouter();
@@ -16,8 +17,9 @@ function ResultsResponsesPage() {
   const { form, isLoadingForm, isErrorForm } = useForm(formId);
   const formMenuSteps = useFormMenuSteps(formId);
   const formResultsSecondNavigation = useFormResultsSecondNavigation(formId);
+  const { noCodeForm, isLoadingNoCodeForm } = useNoCodeForm(formId);
 
-  if (isLoadingForm) {
+  if (isLoadingForm || isLoadingNoCodeForm) {
     return <Loading />;
   }
 
@@ -41,7 +43,7 @@ function ResultsResponsesPage() {
       />
 
       <FullWidth>
-        <ResultsResponses formId={formId} />
+        <ResultsResponses formId={formId} noCodeForm={noCodeForm} />
       </FullWidth>
     </BaseLayoutManagement>
   );

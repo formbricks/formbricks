@@ -41,7 +41,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             });
           } catch (e) {
             console.error(e);
-            throw Error("Erreur interne du serveur. R&egrave;essaie plus tard");
+            throw Error("Erreur interne du serveur. Ré-essaie plus tard");
           }
 
           if (!user) {
