@@ -14,6 +14,21 @@ export const useSubmissionSessions = (formId: string) => {
     mutateSubmissionSessions: mutate,
   };
 };
+export const getPageSubmissionStats = async (
+  formId: string,
+  pageId: string
+) => {
+  try {
+    const stats = await fetch(`/api/forms/${formId}/events/${pageId}/stats`, {
+      method: "GET",
+    });
+    console.log('stats....', stats);
+    
+    return { stats };
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 // fill the schema with the values provided by the user
 export const getSubmission = (submissionSession, schema) => {

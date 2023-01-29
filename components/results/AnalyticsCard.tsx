@@ -5,7 +5,8 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/24/solid";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getPageSubmissionStats } from "../../lib/submissionSessions";
 import { classNames } from "../../lib/utils";
 
 interface Props {
@@ -15,6 +16,8 @@ interface Props {
   trend?: number;
   smallerText?: boolean;
   questions: [];
+  formId: string;
+  pageId: string;
 }
 
 interface QuestionItemProps {
@@ -33,44 +36,55 @@ const AnalyticsCard: React.FC<Props> = ({
   toolTipText,
   trend,
   smallerText,
-  questions,
+  // questions,
+  formId,
+  pageId,
 }) => {
+  const [questions, setQuestions] = useState([]);
   const [isItemOpened, setIsItemOpened] = useState(false);
+
+  useEffect(() => {
+    if (isItemOpened) getPageSubmissionStats(formId, pageId);
+  }, [isItemOpened]);
+
   return (
     <div
-      onClick={() => {
-        if (questions?.length) {
-          setIsItemOpened(!isItemOpened);
-        }
-      }}
       className={`bg-white  rounded-md shadow-md flex justify-center flex-wrap transition-opacity duration-200 ${
         isItemOpened && questions.length ? "pb-5" : "pb-5"
       } ${questions?.length ? "cursor-pointer" : ""}`}
     >
-      <div key={label} className='px-4 py-5 sm:p-6 w-full'>
-        <dt className='inline-flex w-full justify-between text-xl font-semibold text-gray-900 has-tooltip'>
+      <div
+        onClick={() => {
+          if (questions?.length) {
+            setIsItemOpened(!isItemOpened);
+          }
+        }}
+        key={label}
+        className="px-4 py-5 sm:p-6 w-full"
+      >
+        <dt className="inline-flex w-full justify-between text-xl font-semibold text-gray-900 has-tooltip">
           {label}{" "}
           {toolTipText && (
-            <QuestionMarkCircleIcon className='w-4 h-4 ml-1 text-red hover:text-ui-gray-dark' />
+            <QuestionMarkCircleIcon className="w-4 h-4 ml-1 text-red hover:text-ui-gray-dark" />
           )}
           {toolTipText && (
-            <span className='flex p-1 px-4 -mt-6 -ml-8 text-xs text-center text-white bg-gray-600 rounded shadow-lg grow tooltip'>
+            <span className="flex p-1 px-4 -mt-6 -ml-8 text-xs text-center text-white bg-gray-600 rounded shadow-lg grow tooltip">
               {toolTipText}
             </span>
           )}
           {!questions?.length ? null : !isItemOpened ? (
             <ChevronDownIcon
-              className='-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 '
-              aria-hidden='true'
+              className="-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 "
+              aria-hidden="true"
             />
           ) : (
             <ChevronUpIcon
-              className='-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 '
-              aria-hidden='true'
+              className="-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 "
+              aria-hidden="true"
             />
           )}
         </dt>
-        <dd className='flex items-baseline justify-between mt-1 md:block lg:flex'>
+        <dd className="flex items-baseline justify-between mt-1 md:block lg:flex">
           <div
             className={classNames(
               smallerText ? "text-lg" : "text-lg",
@@ -91,16 +105,16 @@ const AnalyticsCard: React.FC<Props> = ({
             >
               {trend >= 0 ? (
                 <ArrowUpIcon
-                  className='-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-green-500'
-                  aria-hidden='true'
+                  className="-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-green-500"
+                  aria-hidden="true"
                 />
               ) : (
                 <ArrowDownIcon
-                  className='-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-red-500'
-                  aria-hidden='true'
+                  className="-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-red-500"
+                  aria-hidden="true"
                 />
               )}
-              <span className='sr-only'>
+              <span className="sr-only">
                 {trend >= 0 ? "Increased" : "Decreased"} by
               </span>
               {trend} %
@@ -111,12 +125,14 @@ const AnalyticsCard: React.FC<Props> = ({
       {!questions?.length || !isItemOpened ? null : (
         <>
           <div
-            className={"flex items-baseline text-lg font-normal text-gray-800 w-full px-5 "}
+            className={
+              "flex items-baseline text-lg font-normal text-gray-800 w-full px-5 "
+            }
           >
             Questions :
           </div>
           {questions?.map((question) => (
-            <div key={question.id} className='w-full px-5'>
+            <div key={question.id} className="w-full px-5">
               <QuestionItem
                 key={question.id}
                 value={question.stat}
@@ -130,7 +146,7 @@ const AnalyticsCard: React.FC<Props> = ({
           ))}
         </>
       )}
-      <div key={label} className='px-4 py-5 sm:p-6'></div>
+      <div key={label} className="px-4 py-5 sm:p-6"></div>
     </div>
   );
 };
@@ -146,20 +162,20 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
   options,
   candidate,
 }) => (
-  <div className='bg-white rounded-md  w-full ounded-md border-2 mt-3 mb-5 transition-opacity duration-200'>
-    <div key={label} className='px-2 py-2 sm:p-6'>
-      <dt className='inline-flex w-full justify-between text-lg font-normal text-gray-900 has-tooltip'>
+  <div className="bg-white rounded-md  w-full ounded-md border-2 mt-3 mb-5 transition-opacity duration-200">
+    <div key={label} className="px-2 py-2 sm:p-6">
+      <dt className="inline-flex w-full justify-between text-lg font-normal text-gray-900 has-tooltip">
         {label}{" "}
         {toolTipText && (
-          <QuestionMarkCircleIcon className='w-4 h-4 ml-1 text-red hover:text-ui-gray-dark' />
+          <QuestionMarkCircleIcon className="w-4 h-4 ml-1 text-red hover:text-ui-gray-dark" />
         )}
         {toolTipText && (
-          <span className='flex p-1 px-4 -mt-6 -ml-8 text-xs text-center text-white bg-gray-600 rounded shadow-lg grow tooltip'>
+          <span className="flex p-1 px-4 -mt-6 -ml-8 text-xs text-center text-white bg-gray-600 rounded shadow-lg grow tooltip">
             {toolTipText}
           </span>
         )}
       </dt>
-      <dd className='flex items-baseline justify-between mt-1 md:block lg:flex-col'>
+      <dd className="flex items-baseline justify-between mt-1 md:block lg:flex-col">
         <div
           className={classNames(
             smallerText ? "text-lg" : "text-xl",
@@ -184,11 +200,10 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
               >
                 {" "}
                 {label}
-                <span className='sr-only'>
+                <span className="sr-only">
                   {trend >= 0 ? "Increased" : "Decreased"}
                 </span>{" "}
-                {` : ${candidates}/${candidate.length} `}
-                ({trend}%)
+                {` : ${candidates}/${candidate.length} `}({trend}%)
               </div>
             );
           })}
