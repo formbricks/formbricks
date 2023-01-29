@@ -56,7 +56,7 @@ export default function ResultsSummary({ formId }) {
 
   const stats = useMemo(() => {
     if (insights) {
-      const questionsInsights = insights.pagesInsights;
+      const pagesInsights = insights.pagesInsights;
       const defaultInsights = [
         {
           id: "totalCandidateOpenedForm",
@@ -89,7 +89,7 @@ export default function ResultsSummary({ formId }) {
         },
       ];
 
-      const combineInsights = { defaultInsights, questionsInsights };
+      const combineInsights = { defaultInsights, pagesInsights };
 
       return combineInsights;
     }
@@ -99,12 +99,14 @@ export default function ResultsSummary({ formId }) {
     return <Loading />;
   }
 
+  console.log("insights", stats.pagesInsights);
+
   return (
     <>
-      <h2 className='mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4'>
+      <h2 className="mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4">
         Aperçu des réponses
       </h2>
-      <dl className='grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2'>
+      <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2">
         {stats.defaultInsights.map((item) => (
           <AnalyticsCard
             key={item.id}
@@ -121,23 +123,19 @@ export default function ResultsSummary({ formId }) {
           />
         ))}
       </dl>
-      <h2 className='mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4'>
+      <h2 className="mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4">
         Diférentes étapes
       </h2>
-      <dl className='grid  gap-5 mt-8 mb-12 '>
-        {stats.questionsInsights.map((item) => (
+      <dl className="grid  gap-5 mt-8 mb-12 ">
+        {stats.pagesInsights.map((page) => (
           <AnalyticsCard
-            key={item.id}
-            value={
-              item.type === "page"
-                ? `${item.stat} candidats ont répondus`
-                : item.stat
-            }
-            label={item.name}
-            toolTipText={item.toolTipText}
-            trend={item.trend}
-            smallerText={item.smallerText}
-            questions={item.questions}
+            key={page.id}
+            value={`${page.candidates} candidats ont répondus`}
+            label={page.name}
+            toolTipText={page.toolTipText}
+            trend={page.trend}
+            smallerText={page.smallerText}
+            questions={page.questions}
           />
         ))}
       </dl>

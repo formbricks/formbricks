@@ -1,6 +1,6 @@
 import useSWR from "swr";
 import { Schema, SubmissionSession, SubmissionSummary } from "./types";
-import { fetcher } from "./utils";
+import { fetcher, isBlockAQuestion } from "./utils";
 
 export const useSubmissionSessions = (formId: string) => {
   const { data, error, mutate } = useSWR(
@@ -82,136 +82,97 @@ export const getSubmissionAnalytics = (
   let totalCandidateSubmited = [];
   let totalCandidateOpenedForm = [];
   let questionsInsights = [];
-  for (const submissionSession of submissionSessions) {
+  // console.log("pages...", pages);
+  for (const candidateSubmission of submissionSessions) {
     // collect unique users
-    if (submissionSession.events.length > 0) {
-      totalSubmissions += 1;
-      const lastSubmission =
-        submissionSession.events[submissionSession.events.length - 1];
+    if (candidateSubmission.events.length > 0) {
+      const lastCandidateEvent = candidateSubmission.events.slice(-1)[0];
 
-      const submissionSessionsSubmitedType = submissionSession.events.filter(
-        ({ data, type }) => type === "pageSubmission" && data.submission
-      );
+      const lastCandidateSubmission =
+        lastCandidateEvent.type === "pageSubmission"
+          ? [lastCandidateEvent]
+          : [];
+      totalSubmissions += lastCandidateSubmission.length;
 
-      const candidateSubmited =
-        submissionSessionsSubmitedType[0]?.data?.candidateId;
+      const candidateId = lastCandidateSubmission[0]?.data?.candidateId;
 
       pages.forEach(({ blocks }) => {
-        // if (blocks.length > 1) {
-        const pageName = blocks[0]?.data.text;
-        // }
-        blocks.forEach((question) => {
-          const submissionResponse =
-            submissionSessionsSubmitedType[0]?.data?.submission[question.id];
-          if (submissionResponse) {
-            const isQuestionExist = questionsInsights.findIndex(
-              (element) => element.id === question.id
-            );
-            let isCandidateExist = false;
+        const pageTitle = blocks[0]?.data.text;
+        // console.log("boloke", pageTitle, lastCandidateSubmission);
+        blocks
+          .filter((b) => isBlockAQuestion(b))
+          .forEach((question) => {
+            if (!lastCandidateSubmission[0]?.data?.submission) return;
+            const candidateResponse =
+              lastCandidateSubmission[0]?.data?.submission[question.id];
+            if (candidateResponse) {
+              let isCandidateExist = false;
+              questionsInsights.map((qInsight) => {
+                isCandidateExist = qInsight.candidates.includes(candidateId);
+              });
 
-            questionsInsights.map((element) => {
-              const isExist = element.candidate.findIndex(
-                (candidateId) => candidateId === candidateSubmited
-              );
-              isCandidateExist = isExist === -1 ? false : true;
-            });
-
-            if (isQuestionExist === -1) {
-              if (
-                question.type === "multipleChoiceQuestion" &&
-                Array.isArray(submissionResponse)
-              ) {
-                const options = question.data.options.map(({ label }) => {
-                  if (isOptionSelected(label, submissionResponse.toString())) {
-                    return {
-                      label,
-                      candidates: 1,
-                    };
-                  } else {
-                    return {
-                      label,
-                      candidates: 0,
-                    };
-                  }
-                });
-                questionSchema(
-                  questionsInsights,
-                  candidateSubmited,
-                  question,
-                  pageName,
-                  options
-                );
-              } else if (question.type === "multipleChoiceQuestion") {
-                const options = question.data.options.map(({ label }) => {
-                  if (submissionResponse === label) {
-                    return {
-                      label,
-                      candidates: 1,
-                    };
-                  } else {
-                    return {
-                      label,
-                      candidates: 0,
-                    };
-                  }
-                });
-                questionSchema(
-                  questionsInsights,
-                  candidateSubmited,
-                  question,
-                  pageName,
-                  options
-                );
-              } else {
-                questionSchema(
-                  questionsInsights,
-                  candidateSubmited,
-                  question,
-                  pageName
-                );
-              }
-            } else if (isQuestionExist !== -1 && !isCandidateExist) {
-              const currentQuestion = questionsInsights.find(
+              const isQuestionExist = questionsInsights.findIndex(
                 (element) => element.id === question.id
               );
-              if (question.type === "multipleChoiceQuestion") {
-                currentQuestion.options.map((option, index) => {
-                  if (
-                    question.type === "multipleChoiceQuestion" &&
-                    Array.isArray(submissionResponse)
-                  ) {
-                    const isCandidateExist = findCandidateInQuestion(
-                      currentQuestion.candidate,
-                      candidateSubmited
-                    );
+              if (isQuestionExist === -1) {
+                const options = question.data.options?.map(({ label }) => {
+                  return {
+                    label,
+                    candidates:
+                      (candidateResponse.includes(label) &&
+                        Array.isArray(candidateResponse)) ||
+                      candidateResponse === label
+                        ? 1
+                        : 0,
+                  };
+                });
+                questionSchema(
+                  questionsInsights,
+                  candidateId,
+                  question,
+                  pageTitle,
+                  candidateResponse,
+                  options
+                );
+              } else if (isQuestionExist !== -1 && !isCandidateExist) {
+                const currentQuestion = questionsInsights.find(
+                  (element) => element.id === question.id
+                );
+                if (question.type === "multipleChoiceQuestion") {
+                  currentQuestion.options.map((option, index) => {
+                    if (Array.isArray(candidateResponse)) {
+                      const isCandidateExist = findCandidateInQuestion(
+                        Object.keys(currentQuestion.candidates),
+                        candidateId
+                      );
 
-                    if (
-                      isOptionSelected(
-                        option.label,
-                        submissionResponse.toString()
-                      ) &&
-                      isCandidateExist === undefined
-                    ) {
+                      if (
+                        isOptionSelected(
+                          option.label,
+                          candidateResponse.toString()
+                        ) &&
+                        isCandidateExist === undefined
+                      ) {
+                        currentQuestion.options[index].candidates += 1;
+                        currentQuestion.candidate.push(candidateId);
+                        currentQuestion.stat = currentQuestion.stat + 1;
+                      }
+                    } else if (candidateResponse === option.label) {
                       currentQuestion.options[index].candidates += 1;
-                      currentQuestion.candidate.push(candidateSubmited);
+                      currentQuestion.candidate.push(candidateId);
                       currentQuestion.stat = currentQuestion.stat + 1;
                     }
-                  } else if (submissionResponse === option.label) {
-                    currentQuestion.options[index].candidates += 1;
-                    currentQuestion.candidate.push(candidateSubmited);
-                    currentQuestion.stat = currentQuestion.stat + 1;
-                  }
-                });
-              } else {
-                currentQuestion.candidate.push(candidateSubmited);
-                currentQuestion.stat = currentQuestion.stat + 1;
+                  });
+                } else {
+                  currentQuestion.candidate.push(candidateId);
+                  currentQuestion.stat = currentQuestion.stat + 1;
+                }
               }
             }
-          }
-        });
+          });
       });
 
-      submissionSession.events.map(({ type, data }) => {
+      candidateSubmission.events.map(({ type, data }) => {
         if (type === "formOpened") {
           const isCandidateExist = findCandidateInQuestion(
             totalCandidateOpenedForm,
@@ -230,12 +191,12 @@ export const getSubmissionAnalytics = (
         }
       });
       if (!lastSubmissionAt) {
-        lastSubmissionAt = lastSubmission.createdAt;
+        lastSubmissionAt = lastCandidateEvent.createdAt;
       } else if (
-        Date.parse(lastSubmission.createdAt as string) >
+        Date.parse(lastCandidateEvent.createdAt as string) >
         Date.parse(lastSubmissionAt)
       ) {
-        lastSubmissionAt = lastSubmission.createdAt;
+        lastSubmissionAt = lastCandidateEvent.createdAt;
       }
     }
   }
@@ -252,18 +213,22 @@ export const getSubmissionAnalytics = (
     }
   });
   pagesInsights.splice(pagesInsights.length - 1, 1);
-  questionsInsights.map((question) => {
+  Object.keys(questionsInsights).map((question) => {
     const ispageExist = pagesInsights.find(
-      (page) => question.pageName === page.name
+      (page) => questionsInsights[question].pageTitle === page.name
     );
 
     const pageIndex = pagesInsights.findIndex((element) => {
       return ispageExist.name === element.name;
     });
-    pagesInsights[pageIndex].questions.push(question);
+    pagesInsights[pageIndex].questions.push(questionsInsights[question]);
 
-    if (pagesInsights[pageIndex].stat < question.candidate.length) {
-      pagesInsights[pageIndex].stat = question.candidate.length;
+    if (
+      pagesInsights[pageIndex].stat <
+      questionsInsights[question].candidates.length
+    ) {
+      pagesInsights[pageIndex].stat =
+        questionsInsights[question].candidates.length;
     }
   });
 
@@ -352,18 +317,36 @@ function questionSchema(
   questionsInsights: any[],
   candidateSubmited: any,
   question: any,
-  pageName: any,
+  pageTitle: any,
+  candidateResponse,
   options?: any
 ) {
-  questionsInsights.push({
-    candidate: [candidateSubmited],
-    id: question.id,
-    name: question.data.label,
-    stat: 1,
-    trend: undefined,
-    options: options || undefined,
-    pageName,
+  // console.log('res...',options);
+  
+  const newCandidateList = questionsInsights[question.id]
+    ? questionsInsights[question.id].candidates
+    : {};
+  newCandidateList.options = options?.map(({ label }, idx) => {
+    return {
+      label,
+      candidates:
+      options[idx].candidates +
+        ((candidateResponse.includes(label) &&
+          Array.isArray(candidateResponse)) ||
+        candidateResponse === label
+          ? 1
+          : 0),
+    };
   });
+  newCandidateList[candidateSubmited] = candidateResponse;
+  questionsInsights[question.id] = {
+    candidates: newCandidateList,
+    name: question.data.label,
+    stat: newCandidateList.length,
+    trend: undefined,
+    options: newCandidateList.options || undefined,
+    pageTitle,
+  };
 }
 
 export const isOptionSelected = (label: string, response: string) => {

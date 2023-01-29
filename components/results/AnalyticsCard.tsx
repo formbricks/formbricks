@@ -27,7 +27,7 @@ interface QuestionItemProps {
   trend?: number;
   smallerText?: boolean;
   options: [];
-  candidate: [];
+  candidates: [];
 }
 
 const AnalyticsCard: React.FC<Props> = ({
@@ -140,7 +140,7 @@ const AnalyticsCard: React.FC<Props> = ({
                 toolTipText={question.toolTipText}
                 options={question?.options}
                 smallerText={question.smallerText}
-                candidate={question.candidate}
+                candidates={question.candidate}
               />
             </div>
           ))}
@@ -160,7 +160,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
   trend,
   smallerText,
   options,
-  candidate,
+  candidates,
 }) => (
   <div className="bg-white rounded-md  w-full ounded-md border-2 mt-3 mb-5 transition-opacity duration-200">
     <div key={label} className="px-2 py-2 sm:p-6">
@@ -187,7 +187,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
 
         {options?.length &&
           options.map(({ label, candidates }, index) => {
-            const trend = Math.round((candidates / candidate.length) * 100);
+            const trend = Math.round((candidates / candidates.length) * 100);
             return (
               <div
                 key={index}
@@ -203,7 +203,8 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
                 <span className="sr-only">
                   {trend >= 0 ? "Increased" : "Decreased"}
                 </span>{" "}
-                {` : ${candidates}/${candidate.length} `}({trend}%)
+                {` : ${candidates}/${candidates.length} `}
+                ({trend}%)
               </div>
             );
           })}
