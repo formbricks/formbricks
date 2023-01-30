@@ -37,8 +37,8 @@ export default function FeedbackButton() {
       window.formbricks = {
         ...window.formbricks,
         config: {
-          hqUrl: "https://xm.formbricks.com",
-          formId: "clcrjztwl0000mi08e26rzjkg",
+          hqUrl: "https://app.formbricks.com",
+          formId: "cldipnvz80002le0ha2a3zhgl",
           divId: "formbricks-feedback-wrapper",
           contact: {
             name: "Matti",
