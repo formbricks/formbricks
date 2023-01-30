@@ -111,7 +111,7 @@ export const SignupForm = () => {
               <br />
               {process.env.NEXT_PUBLIC_TERMS_URL && (
                 <a
-                  className="text-sky hover:text-sky-600"
+                  className="text-sky underline hover:text-sky-600"
                   href={process.env.NEXT_PUBLIC_TERMS_URL}
                   rel="noreferrer"
                   target="_blank">
@@ -121,7 +121,7 @@ export const SignupForm = () => {
               {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
               {process.env.NEXT_PUBLIC_PRIVACY_URL && (
                 <a
-                  className="text-sky hover:text-sky-600"
+                  className="text-sky underline hover:text-sky-600"
                   href={process.env.NEXT_PUBLIC_PRIVACY_URL}
                   rel="noreferrer"
                   target="_blank">
