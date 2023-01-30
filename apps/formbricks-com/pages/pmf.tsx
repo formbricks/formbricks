@@ -3,11 +3,12 @@ import Button from "@/components/shared/Button";
 import { useRouter } from "next/router";
 import BreakerCTA from "@/components/shared/BreakerCTA";
 import Features from "@/components/home/Features";
-import Pricing from "@/components/shared/pmfPricing";
+import Pricing from "@/components/shared/PmfPricing";
 import Image from "next/image";
 import DashboardMockup from "@/images/dashboard-mockup.png";
 import Pipelines from "@/images/pipelines.png";
 import PreSegmentation from "@/images/pre-segmentation.png";
+import PmfDummy from "@/components/shared/PmfDummy";
 
 export default function GetStartedPage() {
   const router = useRouter();

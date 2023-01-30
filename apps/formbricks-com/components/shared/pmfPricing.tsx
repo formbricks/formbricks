@@ -108,12 +108,7 @@ export default function Pricelist() {
               This saves you $588 every year.
             </p>
             <div className="absolute -right-20 -bottom-36 mx-auto h-96 w-96 scale-75 sm:-right-10">
-              <Image
-                src={EarlyBird}
-                layout="fill"
-                objectFit="fill"
-                alt="formbricks favicon open source forms typeform alternative"
-              />
+              <Image src={EarlyBird} fill alt="formbricks favicon open source forms typeform alternative" />
             </div>
           </div>
         </div>
