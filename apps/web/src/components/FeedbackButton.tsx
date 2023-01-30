@@ -62,7 +62,7 @@ export function FeedbackButton() {
   return (
     <>
       {configLoaded && (
-        <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.1.9/dist/index.umd.js" defer />
+        <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2.1/dist/index.umd.js" defer />
       )}
 
       <div

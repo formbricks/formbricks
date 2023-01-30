@@ -31,7 +31,7 @@ export default function FeedbackButton() {
 
   return (
     <>
-      <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.1.9/dist/index.umd.js" defer />
+      <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2.1/dist/index.umd.js" defer />
 
       <Script id="feedback-setup">{`
       window.formbricks = {
