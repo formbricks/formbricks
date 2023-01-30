@@ -17,6 +17,13 @@ export function Survey({ survey, formbricksUrl, formId }: SurveyProps) {
 
   const schema = useMemo(() => generateSchema(survey), [survey]);
 
+  useEffect(() => {
+    // warmup request
+    fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions`, {
+      method: "OPTIONS",
+    });
+  });
+
   const navigateToNextPage = (currentSubmission: any) => {
     const nextPage = calculateNextPage(survey, currentSubmission);
     setCurrentPage(nextPage);
