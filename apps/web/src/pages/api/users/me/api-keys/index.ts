@@ -1,13 +1,11 @@
-import { hashApiKey } from "@/lib/apiHelper";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { getSessionOrUser, hashApiKey } from "@/lib/apiHelper";
 import { prisma } from "@formbricks/database";
 import { randomBytes } from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession } from "next-auth";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication
-  const session = await unstable_getServerSession(req, res, authOptions);
+  const session = await getSessionOrUser(req, res);
   if (!session) {
     return res.status(401).json({ message: "Not authenticated" });
   }
@@ -17,7 +15,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   if (req.method === "GET") {
     const apiKeys = await prisma.apiKey.findMany({
       where: {
-        user: { email: session.user.email },
+        user: { email: session.email },
       },
     });
     return res.json(apiKeys);
@@ -35,7 +33,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       data: {
         ...apiKey,
         hashedKey: hashApiKey(key),
-        user: { connect: { email: session?.user?.email } },
+        user: { connect: { email: session?.email } },
       },
     });
     res.json({ ...result, apiKey: key });

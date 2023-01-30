@@ -21,7 +21,7 @@ import {
   UserGroupIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 
 const navigation = [
   { name: "Home", href: "#", icon: HomeIcon, current: true },

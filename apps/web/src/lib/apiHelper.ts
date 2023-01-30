@@ -16,7 +16,7 @@ export const hasOwnership = async (model, session, id) => {
         },
       },
     });
-    if (entity.user.email === session.user.email) {
+    if (entity.user.email === session.email) {
       return true;
     } else {
       return false;

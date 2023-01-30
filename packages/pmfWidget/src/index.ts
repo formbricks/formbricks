@@ -214,12 +214,9 @@ async function sendWarmupRequest() {
   if (!config.formId) {
     throw new Error("Missing formId");
   }
-  const response = await fetch(
-    `${stripLastBackslash(config.formbricksUrl)}/api/capture/forms/${config.formId}/submissions`,
-    {
-      method: "OPTIONS",
-    }
-  );
+  await fetch(`${stripLastBackslash(config.formbricksUrl)}/api/capture/forms/${config.formId}/submissions`, {
+    method: "OPTIONS",
+  });
   return;
 }
 

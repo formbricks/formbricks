@@ -126,7 +126,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token }) {
       const existingUser = await prisma.user.findFirst({
         where: { email: token.email! },
         select: {
@@ -144,7 +144,7 @@ export const authOptions: NextAuthOptions = {
         ...token,
       };
     },
-    async session({ session, token, user }) {
+    async session({ session, token }) {
       // @ts-ignore
       session.user.id = token.id;
       session.user.name = token.name;

@@ -38,7 +38,7 @@ export default function LayoutWrapperCustomForm({ children }) {
   return (
     <>
       <Disclosure as="header" className="bg-white shadow">
-        {({ open }) => (
+        {({}) => (
           <>
             <div className="px-2 sm:px-4 lg:divide-y lg:divide-gray-200 lg:px-8">
               <nav className="hidden lg:flex lg:space-x-8 lg:py-2" aria-label="Global">

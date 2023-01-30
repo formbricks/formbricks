@@ -1,19 +1,17 @@
 "use client";
 
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { useForms } from "@/lib/forms";
 import { useWorkspace } from "@/lib/workspaces";
 import { InformationCircleIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/router";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { forms, isLoadingForms, isErrorForms } = useForms(router.query.workspaceId?.toString());
   const { workspace, isLoadingWorkspace, isErrorWorkspace } = useWorkspace(
     router.query.workspaceId?.toString()
   );
 
-  if (isLoadingForms || isLoadingWorkspace) {
+  if (isLoadingWorkspace) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <LoadingSpinner />
@@ -21,7 +19,7 @@ export default function SettingsPage() {
     );
   }
 
-  if (isErrorForms || isErrorWorkspace) {
+  if (isErrorWorkspace) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
   return (

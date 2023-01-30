@@ -1,5 +1,4 @@
 import { getSessionOrUser } from "@/lib/apiHelper";
-import { capturePosthogEvent } from "@/lib/posthog";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 

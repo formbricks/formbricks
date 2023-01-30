@@ -1,5 +1,4 @@
 import { Button } from "@formbricks/ui";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import Prism from "prismjs";
 import { useEffect } from "react";

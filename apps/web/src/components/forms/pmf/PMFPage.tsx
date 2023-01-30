@@ -4,7 +4,6 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import TabNavigation from "@/components/TabNavigation";
 import { useForm } from "@/lib/forms";
 import {
-  BoltIcon,
   ChartPieIcon,
   InformationCircleIcon,
   RectangleStackIcon,

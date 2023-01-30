@@ -15,7 +15,7 @@ export default function SegmentResults() {
     router.query.formId?.toString(),
     router.query.workspaceId?.toString()
   );
-  const { submissions, isLoadingSubmissions, isErrorSubmissions, mutateSubmissions } = useSubmissions(
+  const { submissions, isLoadingSubmissions, isErrorSubmissions } = useSubmissions(
     router.query.workspaceId?.toString(),
     router.query.formId?.toString()
   );

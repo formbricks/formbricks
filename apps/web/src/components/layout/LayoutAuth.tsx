@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function LayoutAuth({ title = "Formbricks HQ", children }: Props) {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
 
   if (session) {

@@ -186,7 +186,7 @@ function close() {
   containerElement.removeAttribute("data-success");
 }
 
-function resetForm(e: Event) {
+function resetForm() {
   document.getElementById("formbricks__type-switch")!.innerHTML = "";
   containerElement.removeAttribute("data-feedback-type");
 }

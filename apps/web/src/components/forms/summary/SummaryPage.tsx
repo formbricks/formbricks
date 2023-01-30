@@ -20,7 +20,7 @@ export default function SummaryPage() {
   const { workspace, isLoadingWorkspace, isErrorWorkspace } = useWorkspace(
     router.query.workspaceId?.toString()
   );
-  const { submissions, isLoadingSubmissions, mutateSubmissions } = useSubmissions(
+  const { submissions, isLoadingSubmissions } = useSubmissions(
     router.query.workspaceId?.toString(),
     router.query.formId?.toString()
   );

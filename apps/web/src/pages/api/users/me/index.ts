@@ -1,8 +1,6 @@
-import { getSessionOrUser, hashApiKey } from "@/lib/apiHelper";
+import { getSessionOrUser } from "@/lib/apiHelper";
 import { prisma } from "@formbricks/database";
-import { randomBytes } from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession } from "next-auth";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication

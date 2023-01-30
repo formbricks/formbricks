@@ -4,7 +4,6 @@ import EmptyPageFiller from "@/components/EmptyPageFiller";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { deletePipeline, persistPipeline, usePipelines } from "@/lib/pipelines";
-import { useWorkspace } from "@/lib/workspaces";
 import { Button } from "@formbricks/ui";
 import { Switch } from "@headlessui/react";
 import { BoltIcon, Cog6ToothIcon, TrashIcon } from "@heroicons/react/20/solid";
@@ -89,9 +88,6 @@ export default function PipelinesOverview({}) {
     router.query.formId?.toString(),
     router.query.workspaceId?.toString()
   );
-  const { workspace, isLoadingWorkspace, isErrorWorkspace } = useWorkspace(
-    router.query.workspaceId?.toString()
-  );
   const { pipelines, isLoadingPipelines, isErrorPipelines, mutatePipelines } = usePipelines(
     router.query.formId?.toString(),
     router.query.workspaceId?.toString()
@@ -128,7 +124,7 @@ export default function PipelinesOverview({}) {
     }
   };
 
-  if (isLoadingForm || isLoadingWorkspace || isLoadingPipelines) {
+  if (isLoadingForm || isLoadingPipelines) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <LoadingSpinner />
@@ -136,7 +132,7 @@ export default function PipelinesOverview({}) {
     );
   }
 
-  if (isErrorForm || isErrorWorkspace || isErrorPipelines) {
+  if (isErrorForm || isErrorPipelines) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
   return (

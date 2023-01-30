@@ -4,7 +4,6 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useCustomer } from "@/lib/customers";
 import { MergeWithSchema } from "@/lib/submissions";
 import { convertDateTimeString, onlyUnique, parseUserAgent } from "@/lib/utils";
-import { useWorkspace } from "@/lib/workspaces";
 import { BackIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";

@@ -1,13 +1,10 @@
-import type { NextApiResponse, NextApiRequest } from "next";
-import { getSession } from "next-auth/react";
-import { hasOwnership } from "@/lib/apiHelper";
+import { getSessionOrUser, hasOwnership } from "@/lib/apiHelper";
 import { prisma } from "@formbricks/database";
-import { unstable_getServerSession } from "next-auth";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication
-  const session = await unstable_getServerSession(req, res, authOptions);
+  const session = await getSessionOrUser(req, res);
   if (!session) {
     return res.status(401).json({ message: "Not authenticated" });
   }

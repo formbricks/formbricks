@@ -11,7 +11,7 @@ import PMFTimeline from "./PMFTimeline";
 
 export default function PMFResults() {
   const router = useRouter();
-  const { submissions, isLoadingSubmissions, isErrorSubmissions, mutateSubmissions } = useSubmissions(
+  const { submissions, isLoadingSubmissions, isErrorSubmissions } = useSubmissions(
     router.query.workspaceId?.toString(),
     router.query.formId?.toString()
   );
@@ -47,7 +47,7 @@ export default function PMFResults() {
                   <InboxIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
                 </EmptyPageFiller>
               ) : (
-                <PMFTimeline submissions={filteredSubmissions} setSubmissions={setFilteredSubmissions} />
+                <PMFTimeline submissions={filteredSubmissions} />
               )}
             </div>
           </div>

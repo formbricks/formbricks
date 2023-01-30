@@ -3,12 +3,10 @@
 import EmptyPageFiller from "@/components/EmptyPageFiller";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useSubmissions } from "@/lib/submissions";
-import { BugIcon, ComplimentIcon, FormIcon, IdeaIcon } from "@formbricks/ui";
 import { Dialog, Transition } from "@headlessui/react";
 import { InboxIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import clsx from "clsx";
 import { useRouter } from "next/router";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import FilterNavigation from "../shared/FilterNavigation";
 import FeedbackTimeline from "./FeedbackTimeline";
 
@@ -21,96 +19,18 @@ const subCategories = [
 
 export default function FeedbackResults() {
   const router = useRouter();
-  const { submissions, isLoadingSubmissions, isErrorSubmissions, mutateSubmissions } = useSubmissions(
+  const { submissions, isLoadingSubmissions, isErrorSubmissions } = useSubmissions(
     router.query.workspaceId?.toString(),
     router.query.formId?.toString()
   );
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [currentFilter, setCurrentFilter] = useState("all");
   const [filteredSubmissions, setFilteredSubmissions] = useState([]);
-
-  useEffect(() => {
-    if (!submissions) return;
-    let newSubmissions = [];
-    if (currentFilter === "all") {
-      newSubmissions = submissions.filter((submission) => !submission.archived);
-    } else if (currentFilter === "archive") {
-      newSubmissions = submissions.filter((submission) => submission.archived);
-    } else {
-      newSubmissions = submissions.filter((submission) => submission.data.feedbackType === currentFilter);
-    }
-    setFilteredSubmissions(newSubmissions);
-  }, [currentFilter, submissions]);
 
   useEffect(() => {
     if (!isLoadingSubmissions) {
       setFilteredSubmissions(submissions.filter((submission) => !submission.archived));
     }
   }, [isLoadingSubmissions, submissions]);
-
-  const navigation = useMemo(() => {
-    if (!submissions) return [];
-    const feedbackCounts = {
-      bug: 0,
-      compliment: 0,
-      idea: 0,
-      archive: 0,
-    };
-    for (const submission of submissions) {
-      if (submission.archived) {
-        feedbackCounts.archive++;
-      } else {
-        feedbackCounts[submission.data.feedbackType]++;
-      }
-    }
-    return [
-      {
-        id: "all",
-        name: "All",
-        href: "#",
-        icon: FormIcon,
-        current: true,
-        count: submissions.length - feedbackCounts.archive,
-        color: "bg-indigo-400",
-      },
-      {
-        id: "bug",
-        name: "Bug",
-        href: "#",
-        icon: BugIcon,
-        current: false,
-        color: "bg-red-400",
-        count: feedbackCounts.bug,
-      },
-      {
-        id: "compliment",
-        name: "Love",
-        href: "#",
-        icon: ComplimentIcon,
-        current: false,
-        count: feedbackCounts.compliment,
-        color: "bg-green-400",
-      },
-      {
-        id: "idea",
-        name: "Idea",
-        href: "#",
-        icon: IdeaIcon,
-        current: false,
-        count: feedbackCounts.idea,
-        color: "bg-yellow-400",
-      },
-      {
-        id: "archive",
-        name: "Archive",
-        href: "#",
-        icon: IdeaIcon,
-        current: false,
-        count: feedbackCounts.archive,
-        color: "bg-gray-300",
-      },
-    ];
-  }, [submissions]);
 
   if (isLoadingSubmissions) {
     return (
@@ -194,7 +114,7 @@ export default function FeedbackResults() {
                   <InboxIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
                 </EmptyPageFiller>
               ) : (
-                <FeedbackTimeline submissions={filteredSubmissions} setSubmissions={setFilteredSubmissions} />
+                <FeedbackTimeline submissions={filteredSubmissions} />
               )}
             </div>
           </div>

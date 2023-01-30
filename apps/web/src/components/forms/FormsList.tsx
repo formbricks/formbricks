@@ -9,6 +9,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import NewFormModal from "@/components/forms/NewFormModal";
+import LoadingSpinner from "../LoadingSpinner";
 
 export default function FormsList({ workspaceId }) {
   const { forms, mutateForms, isLoadingForms } = useForms(workspaceId);
@@ -29,6 +30,10 @@ export default function FormsList({ workspaceId }) {
       console.error(error);
     }
   };
+
+  if (isLoadingForms) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <>

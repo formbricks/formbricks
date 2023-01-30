@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
 
-export default function PMFTimeline({ submissions, setSubmissions }) {
+export default function PMFTimeline({ submissions }) {
   const router = useRouter();
 
   const {
