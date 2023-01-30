@@ -45,7 +45,7 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
   const isLink = typeof props.href !== "undefined";
   const elementType = isLink ? "span" : "button";
 
-  const element = React.createElement(
+  const element: any = React.createElement(
     elementType,
     {
       ...passThroughProps,

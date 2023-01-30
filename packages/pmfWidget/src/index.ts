@@ -161,20 +161,27 @@ async function submitElement(name?: string, value?: string) {
   }
 }
 
+const stripLastBackslash = (url: string) => {
+  return url.endsWith("/") ? url.slice(0, -1) : url;
+};
+
 async function createSubmission(submission: any) {
   if (!config.formId) {
     throw new Error("Missing formId");
   }
-  const response = await fetch(`${config.formbricksUrl}/api/capture/forms/${config.formId}/submissions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      customer: config.customer,
-      data: submission,
-    }),
-  });
+  const response = await fetch(
+    `${stripLastBackslash(config.formbricksUrl)}/api/capture/forms/${config.formId}/submissions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        customer: config.customer,
+        data: submission,
+      }),
+    }
+  );
   return response.json();
 }
 
@@ -189,7 +196,9 @@ async function updateSubmission(submissionId: string, submission: any, finished:
     body["finished"] = true;
   }
   const response = await fetch(
-    `${config.formbricksUrl}/api/capture/forms/${config.formId}/submissions/${submissionId}`,
+    `${stripLastBackslash(config.formbricksUrl)}/api/capture/forms/${
+      config.formId
+    }/submissions/${submissionId}`,
     {
       method: "PUT",
       headers: {
@@ -205,9 +214,12 @@ async function sendWarmupRequest() {
   if (!config.formId) {
     throw new Error("Missing formId");
   }
-  const response = await fetch(`${config.formbricksUrl}/api/capture/forms/${config.formId}/submissions`, {
-    method: "OPTIONS",
-  });
+  const response = await fetch(
+    `${stripLastBackslash(config.formbricksUrl)}/api/capture/forms/${config.formId}/submissions`,
+    {
+      method: "OPTIONS",
+    }
+  );
   return;
 }
 

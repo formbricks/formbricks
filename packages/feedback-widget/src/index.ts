@@ -226,6 +226,10 @@ function changeType(e: Event) {
   }
 }
 
+const stripLastBackslash = (url: string) => {
+  return url.endsWith("/") ? url.slice(0, -1) : url;
+};
+
 function submit(e: Event) {
   e.preventDefault();
   const target = e.target as HTMLFormElement;
@@ -253,11 +257,16 @@ function submit(e: Event) {
     finished: true,
   };
 
-  fetch(`${config.hqUrl || "https://xm.formbricks.com"}/api/capture/forms/${config.formId}/submissions`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  })
+  fetch(
+    `${stripLastBackslash(config.hqUrl || "https://xm.formbricks.com")}/api/capture/forms/${
+      config.formId
+    }/submissions`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    }
+  )
     .then(() => {
       containerElement.setAttribute("data-success", "");
       const feedbackType = containerElement.getAttribute("data-feedback-type");
