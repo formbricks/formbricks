@@ -1,3 +1,4 @@
+import { createFocusTrap } from "focus-trap";
 import { formHtml } from "./form-html";
 import formCss from "./form.css";
 
@@ -27,6 +28,11 @@ window.addEventListener("load", init);
 const formContainer = document.createElement("div");
 formContainer.id = "formbricks-container";
 
+const trap = createFocusTrap(formContainer, {
+  initialFocus: "#formbricksPmf-0-0",
+  allowOutsideClick: true,
+});
+
 function init() {
   // add css to head
   if (document.getElementById("formbricksPmf__css") === null) {
@@ -49,9 +55,12 @@ function init() {
   // add listeners
   // radio buttons
   Array.from(
-    formContainer.getElementsByClassName("formbricks-radio-option") as HTMLCollectionOf<HTMLElement>
+    formContainer.getElementsByClassName("formbricks-radio-input") as HTMLCollectionOf<HTMLElement>
   ).forEach((el) => {
     el.addEventListener("click", () => submitElement(el.dataset?.elementName, el.dataset?.elementValue));
+    el.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") return submitElement(el.dataset?.elementName, el.dataset?.elementValue);
+    });
   });
   // text inputs
   Array.from(
@@ -63,6 +72,7 @@ function init() {
       submitElement(el.dataset?.elementName, e.target.elements[el.dataset?.elementName].value);
     };
   });
+  trap.activate();
   sendWarmupRequest();
 }
 

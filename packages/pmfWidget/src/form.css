@@ -95,6 +95,10 @@
   transition: all 0.3s ease-out;
 }
 
+.formbricks-next-button:focus {
+  box-shadow: 0 0 0 3px var(--formbricksPmf-brand-color-transparent);
+}
+
 /* Textarea */
 
 .formbricks-textarea {
@@ -130,7 +134,9 @@
 }
 
 .formbricks-radio-input {
-  display: none;
+  width: 0;
+  position: fixed;
+  opacity: 0;
 }
 
 .formbricks-radio-label {
@@ -148,6 +154,10 @@
 
 .formbricks-radio-label:hover {
   background-color: var(--formbricksPmf-brand-color);
+}
+
+.formbricks-radio-input:focus + .formbricks-radio-label {
+  box-shadow: 0 0 0 3px var(--formbricksPmf-brand-color-transparent);
 }
 
 .formbricks-radio-input:checked + label {
