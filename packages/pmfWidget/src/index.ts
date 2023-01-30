@@ -29,10 +29,12 @@ formContainer.id = "formbricks-container";
 
 function init() {
   // add css to head
-  const styleElement = document.createElement("style");
-  styleElement.id = "formbricks__css";
-  styleElement.innerHTML = formCss;
-  document.head.appendChild(styleElement);
+  if (document.getElementById("formbricksPmf__css") === null) {
+    const styleElement = document.createElement("style");
+    styleElement.id = "formbricksPmf__css";
+    styleElement.innerHTML = formCss;
+    document.head.appendChild(styleElement);
+  }
 
   // add div content
   const div = document.getElementById(config.containerId);
@@ -69,26 +71,26 @@ function applyConfig() {
     const root = document.querySelector(":root") as HTMLElement;
     if (root !== null) {
       if (config.style.brandColor) {
-        root.style.setProperty("--formbricks-brand-color", config.style.brandColor);
-        root.style.setProperty("--formbricks-brand-color-transparent", config.style.brandColor + 50);
+        root.style.setProperty("--formbricksPmf-brand-color", config.style.brandColor);
+        root.style.setProperty("--formbricksPmf-brand-color-transparent", config.style.brandColor + 50);
       }
       if (config.style.headerBGColor) {
-        root.style.setProperty("--formbricks-header-bg-color", config.style.headerBGColor);
+        root.style.setProperty("--formbricksPmf-header-bg-color", config.style.headerBGColor);
       }
       if (config.style.headerTitleColor) {
-        root.style.setProperty("--formbricks-header-text-color", config.style.headerTitleColor);
+        root.style.setProperty("--formbricksPmf-header-text-color", config.style.headerTitleColor);
       }
       if (config.style.boxBGColor) {
-        root.style.setProperty("--formbricks-bg-color", config.style.boxBGColor);
+        root.style.setProperty("--formbricksPmf-bg-color", config.style.boxBGColor);
       }
       if (config.style.textColor) {
-        root.style.setProperty("--formbricks-text-color", config.style.textColor);
+        root.style.setProperty("--formbricksPmf-text-color", config.style.textColor);
       }
       if (config.style.buttonHoverColor) {
-        root.style.setProperty("--formbricks-button-hover-bg-color", config.style.buttonHoverColor);
+        root.style.setProperty("--formbricksPmf-button-hover-bg-color", config.style.buttonHoverColor);
       }
       if (config.style.borderRadius) {
-        root.style.setProperty("--formbricks-border-radius", config.style.borderRadius);
+        root.style.setProperty("--formbricksPmf-border-radius", config.style.borderRadius);
       }
     }
   }

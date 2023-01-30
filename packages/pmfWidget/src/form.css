@@ -1,35 +1,35 @@
 :root {
   /* Initial Settings */
-  --formbricks-brand-color: #00c4b8;
-  --formbricks-brand-color-transparent: #00c4b850;
-  --formbricks-border-radius: 0.4rem;
+  --formbricksPmf-brand-color: #00c4b8;
+  --formbricksPmf-brand-color-transparent: #00c4b850;
+  --formbricksPmf-border-radius: 0.4rem;
 
   /* Globals */
-  --formbricks-shadow: rgba(7, 0, 20, 0.06) 0px 0px 0px 1px, rgba(7, 0, 20, 0.1) 0px 10px 15px -3px,
+  --formbricksPmf-shadow: rgba(7, 0, 20, 0.06) 0px 0px 0px 1px, rgba(7, 0, 20, 0.1) 0px 10px 15px -3px,
     rgba(7, 0, 20, 0.05) 0px 4px 6px, rgba(7, 0, 20, 0.05) 0px 30px 40px;
-  --formbricks-focus-shadow: 0 0 0 2px var(--formbricks-bg-color);
-  --formbricks-bold: 600;
+  --formbricksPmf-focus-shadow: 0 0 0 2px var(--formbricksPmf-bg-color);
+  --formbricksPmf-bold: 600;
 
   /* Header */
-  --formbricks-header-text-color: #1e293b;
-  --formbricks-header-bg-color: #cbd5e1;
+  --formbricksPmf-header-text-color: #1e293b;
+  --formbricksPmf-header-bg-color: #cbd5e1;
 
   /* Box */
-  --formbricks-bg-color: #f8fafc;
-  --formbricks-text-color: #0f172a;
-  --formbricks-intro-text-color: #64748b;
+  --formbricksPmf-bg-color: #f8fafc;
+  --formbricksPmf-text-color: #0f172a;
+  --formbricksPmf-intro-text-color: #64748b;
 
   /* Buttons */
-  --formbricks-button-color: white;
-  --formbricks-button-bg-color: var(--formbricks-brand-color);
-  --formbricks-button-hover-bg-color: var(--formbricks-brand-color);
-  --formbricks-button-border-radius: calc(var(--formbricks-border-radius) / 2);
+  --formbricksPmf-button-color: white;
+  --formbricksPmf-button-bg-color: var(--formbricksPmf-brand-color);
+  --formbricksPmf-button-hover-bg-color: var(--formbricksPmf-brand-color);
+  --formbricksPmf-button-border-radius: calc(var(--formbricksPmf-border-radius) / 2);
 
   /* Textarea */
-  --formbricks-message-border-color: #e2e8f0;
+  --formbricksPmf-message-border-color: #e2e8f0;
 
   /* Element */
-  --formbricks-bold: 600;
+  --formbricksPmf-bold: 600;
 }
 
 /* Container */
@@ -38,11 +38,11 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: var(--formbricks-bg-color);
+  background-color: var(--formbricksPmf-bg-color);
   padding: 0;
   font-family: sans-serif;
   font-size: 1rem;
-  color: var(--formbricks-text-color);
+  color: var(--formbricksPmf-text-color);
 }
 
 #formbricks-container * {
@@ -73,7 +73,7 @@
 
 .formbricks-element-label {
   display: block;
-  font-weight: var(--formbricks-bold);
+  font-weight: var(--formbricksPmf-bold);
   margin-bottom: 0.5rem;
 }
 
@@ -88,9 +88,9 @@
   display: block;
   padding: 0.6rem 1.2rem 0.6rem 1.2rem;
   border: 0;
-  border-radius: var(--formbricks-button-border-radius);
-  background-color: var(--formbricks-button-bg-color);
-  color: var(--formbricks-button-color);
+  border-radius: var(--formbricksPmf-button-border-radius);
+  background-color: var(--formbricksPmf-button-bg-color);
+  color: var(--formbricksPmf-button-color);
   cursor: pointer;
   transition: all 0.3s ease-out;
 }
@@ -101,8 +101,8 @@
   width: 100%;
   height: 100px;
   padding: 0.5rem;
-  border: 2.5px solid var(--formbricks-message-border-color);
-  border-radius: var(--formbricks-border-radius);
+  border: 2.5px solid var(--formbricksPmf-message-border-color);
+  border-radius: var(--formbricksPmf-border-radius);
   resize: none;
   transition: all 0.3s ease-out;
   overflow: auto;
@@ -113,7 +113,7 @@
 }
 
 .formbricks-textarea:focus {
-  border-color: var(--formbricks-brand-color);
+  border-color: var(--formbricksPmf-brand-color);
   box-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color);
 }
 
@@ -138,16 +138,16 @@
   display: block;
   text-align: center;
   cursor: pointer;
-  background-color: var(--formbricks-brand-color-transparent);
+  background-color: var(--formbricksPmf-brand-color-transparent);
   background: transparent\8;
-  border: 1px solid var(--formbricks-brand-color);
+  border: 1px solid var(--formbricksPmf-brand-color);
   padding: 5px 10px;
-  border-radius: var(--formbricks-button-border-radius);
+  border-radius: var(--formbricksPmf-button-border-radius);
   transition: all 0.3s ease-out;
 }
 
 .formbricks-radio-label:hover {
-  background-color: var(--formbricks-brand-color);
+  background-color: var(--formbricksPmf-brand-color);
 }
 
 .formbricks-radio-input:checked + label {
@@ -166,7 +166,7 @@
   width: 100%;
   text-align: center;
   font-size: 1.5rem;
-  font-weight: var(--formbricks-bold);
+  font-weight: var(--formbricksPmf-bold);
   margin: 1rem 0;
 }
 
@@ -194,7 +194,7 @@
 }
 
 .formbricks-progressbar-item {
-  background-color: var(--formbricks-brand-color-transparent);
+  background-color: var(--formbricksPmf-brand-color-transparent);
   width: 2.1rem;
   height: 100%;
   border-radius: 0.25rem;
@@ -202,7 +202,7 @@
 }
 
 .formbricks-progressbar-item-current {
-  background-color: var(--formbricks-brand-color);
+  background-color: var(--formbricksPmf-brand-color);
 }
 
 /* Helpers */
