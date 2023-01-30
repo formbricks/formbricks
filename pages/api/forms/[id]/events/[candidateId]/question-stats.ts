@@ -25,7 +25,10 @@ export default async function handle(
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const pageSubmissions = await prisma.sessionEvent.aggregate({
+    const pageSubmissions = await prisma.sessionEvent.findMany({
+      select: {
+        data: true,
+      },
       where: {
         AND: [
           { type: "pageSubmission" },
@@ -48,12 +51,20 @@ export default async function handle(
           updatedAt: "desc",
         },
       ],
-      // _count:{
-      //   data: true
-      // }
     });
-
-    return res.json({stats: pageSubmissions});
+    const candidates = pageSubmissions.map((s) => s.data["candidateId"]);
+    const responses = pageSubmissions.map((s) => s.data["submission"]);
+    let qStats = {};
+    console.log("res...", responses);
+    responses.map((r) => {
+      if (r)
+        Object.keys(r).map((qId) => {
+          if ([qStats[r[qId]]]) qStats[r[qId]] += 1;
+          else qStats[r[qId]] = 1;
+        });
+    });
+    console.log('stats2...', qStats);
+    return res.json({ candidates, qStats });
   }
 
   // Unknown HTTP Method

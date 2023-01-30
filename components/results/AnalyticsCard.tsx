@@ -6,8 +6,14 @@ import {
   ChevronUpIcon,
 } from "@heroicons/react/24/solid";
 import React, { useState, useEffect } from "react";
-import { getPageSubmissionStats } from "../../lib/submissionSessions";
+import { getPageQuestionsStats } from "../../lib/submissionSessions";
 import { classNames } from "../../lib/utils";
+import Loading from "../Loading";
+
+type QuestionStatType = {
+  candidates: any;
+  qStats: any;
+} | null;
 
 interface Props {
   value: string | number;
@@ -16,8 +22,8 @@ interface Props {
   trend?: number;
   smallerText?: boolean;
   questions: [];
-  formId: string;
-  pageId: string;
+  formId?: string;
+  pageId?: string;
 }
 
 interface QuestionItemProps {
@@ -36,16 +42,29 @@ const AnalyticsCard: React.FC<Props> = ({
   toolTipText,
   trend,
   smallerText,
-  // questions,
+  questions,
   formId,
   pageId,
 }) => {
-  const [questions, setQuestions] = useState([]);
+  const [isLoadingQuestionStats, setIsLoadingQuestionStats] = useState(true);
   const [isItemOpened, setIsItemOpened] = useState(false);
+  const [questionsStats, setQuestionsStats] = useState<QuestionStatType>(null);
 
   useEffect(() => {
-    if (isItemOpened) getPageSubmissionStats(formId, pageId);
+    if (isItemOpened) {
+      getPageQuestionsStats(formId, pageId)
+        .then((res) => res.json())
+        .then((data) => {
+          setQuestionsStats(data);
+          setIsLoadingQuestionStats(false);
+        });
+    }
   }, [isItemOpened]);
+
+  console.log("qstats...", questionsStats);
+  // if (isLoadingQuestionStats && pageId) {
+  //   return <Loading />;
+  // }
 
   return (
     <div
@@ -122,7 +141,9 @@ const AnalyticsCard: React.FC<Props> = ({
           )}
         </dd>
       </div>
-      {!questions?.length || !isItemOpened ? null : (
+      {!questions?.length || !isItemOpened ? null : isLoadingQuestionStats ? (
+        <Loading />
+      ) : (
         <>
           <div
             className={
@@ -131,19 +152,23 @@ const AnalyticsCard: React.FC<Props> = ({
           >
             Questions :
           </div>
-          {questions?.map((question) => (
-            <div key={question.id} className="w-full px-5">
-              <QuestionItem
-                key={question.id}
-                value={question.stat}
-                label={question.name}
-                toolTipText={question.toolTipText}
-                options={question?.options}
-                smallerText={question.smallerText}
-                candidates={question.candidate}
-              />
-            </div>
-          ))}
+          {questions.map((question) => {
+            console.log("question...", question, questionsStats);
+
+            return (
+              <div key={question.id} className="w-full px-5">
+                <QuestionItem
+                  key={question.id}
+                  value={questionsStats.qStats[question.id]}
+                  label={question.data.label}
+                  toolTipText={question.toolTipText}
+                  options={questionsStats.qStats}
+                  smallerText={question.smallerText}
+                  candidates={question.candidate}
+                />
+              </div>
+            );
+          })}
         </>
       )}
       <div key={label} className="px-4 py-5 sm:p-6"></div>
@@ -166,14 +191,15 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
     <div key={label} className="px-2 py-2 sm:p-6">
       <dt className="inline-flex w-full justify-between text-lg font-normal text-gray-900 has-tooltip">
         {label}{" "}
-        {toolTipText && (
+        {
+          // toolTipText &&
           <QuestionMarkCircleIcon className="w-4 h-4 ml-1 text-red hover:text-ui-gray-dark" />
-        )}
-        {toolTipText && (
+        }
+        {/* {toolTipText && (
           <span className="flex p-1 px-4 -mt-6 -ml-8 text-xs text-center text-white bg-gray-600 rounded shadow-lg grow tooltip">
             {toolTipText}
           </span>
-        )}
+        )} */}
       </dt>
       <dd className="flex items-baseline justify-between mt-1 md:block lg:flex-col">
         <div
@@ -203,8 +229,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
                 <span className="sr-only">
                   {trend >= 0 ? "Increased" : "Decreased"}
                 </span>{" "}
-                {` : ${candidates}/${candidates.length} `}
-                ({trend}%)
+                {` : ${candidates}/${candidates.length} `}({trend}%)
               </div>
             );
           })}

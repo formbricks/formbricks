@@ -14,17 +14,37 @@ export const useSubmissionSessions = (formId: string) => {
     mutateSubmissionSessions: mutate,
   };
 };
-export const getPageSubmissionStats = async (
-  formId: string,
-  pageId: string
-) => {
+
+export const getFormSummaryStats = async (formId: string) => {
   try {
-    const stats = await fetch(`/api/forms/${formId}/events/${pageId}/stats`, {
+    let stats = null;
+    await fetch(`/api/forms/${formId}/events/summary-stats`, {
       method: "GET",
-    });
-    console.log('stats....', stats);
-    
-    return { stats };
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        stats = d;
+      });
+
+    return stats;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const getPageQuestionsStats = async (formId: string, pageId: string) => {
+  console.log(formId, pageId);
+  try {
+    const stats = await fetch(
+      `/api/forms/${formId}/events/${pageId}/question-stats`,
+      {
+        method: "GET",
+      }
+    );
+    // stats = await stats.json();
+    // console.log("stats....", stats);
+
+    return stats;
   } catch (error) {
     console.error(error);
   }
@@ -322,7 +342,7 @@ function questionSchema(
   options?: any
 ) {
   // console.log('res...',options);
-  
+
   const newCandidateList = questionsInsights[question.id]
     ? questionsInsights[question.id].candidates
     : {};
@@ -330,7 +350,7 @@ function questionSchema(
     return {
       label,
       candidates:
-      options[idx].candidates +
+        options[idx].candidates +
         ((candidateResponse.includes(label) &&
           Array.isArray(candidateResponse)) ||
         candidateResponse === label

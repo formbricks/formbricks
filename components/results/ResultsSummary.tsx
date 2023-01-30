@@ -1,26 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "../../lib/forms";
 import {
+  getFormSummaryStats,
   getSubmissionAnalytics,
   getSubmissionSummary,
   useSubmissionSessions,
 } from "../../lib/submissionSessions";
 import { SubmissionSummary } from "../../lib/types";
-import { timeSince } from "../../lib/utils";
+import { isBlockAQuestion, timeSince } from "../../lib/utils";
 import AnalyticsCard from "./AnalyticsCard";
 import Loading from "../Loading";
 import TextResults from "./summary/TextResults";
 import ChoiceResults from "./summary/ChoiceResults";
 import usePages from "../../hooks/usePages";
 
+type SummaryStatsType = {
+  opened: number;
+  submitted: number;
+  pages: any;
+} | null;
+
 export default function ResultsSummary({ formId }) {
-  const {
-    submissionSessions,
-    isLoadingSubmissionSessions,
-  } = useSubmissionSessions(formId);
+  const [summaryStats, setSummaryStats] = useState<SummaryStatsType>(null);
+
+  useEffect(() => {
+    (async () => {
+      const data = await getFormSummaryStats(formId);
+      if (data) setSummaryStats(data);
+    })();
+  }, []);
 
   const { form, isLoadingForm } = useForm(formId);
   const [formBlocks, setFormBlocks] = useState([]);
+  const getFormQuestions = (page) => {
+    return page.blocks.filter((b) => isBlockAQuestion(b));
+  };
 
   const getNocodeFormBlocks = async () => {
     try {
@@ -40,74 +54,51 @@ export default function ResultsSummary({ formId }) {
     getNocodeFormBlocks();
   }, []);
 
-  const pages = usePages({ blocks: formBlocks, formId: form.id });
+  const pages = usePages({ blocks: formBlocks, formId });
+  // console.log("blocks...", formBlocks);
+  // console.log("pages...", pages);
 
-  const insights = useMemo(() => {
-    if (!isLoadingSubmissionSessions) {
-      return getSubmissionAnalytics(submissionSessions, pages);
-    }
-  }, [isLoadingSubmissionSessions, submissionSessions, pages]);
+  const defaultInsights = [
+    {
+      id: "totalCandidateOpenedForm",
+      name: "Nombre de candidats ayant vu",
+      stat: summaryStats ? summaryStats.opened : 0,
+      trend: undefined,
+      toolTipText: undefined,
+    },
+    {
+      id: "totalCandidateSubmited",
+      name: "Nombre de candidats ayant soumis",
+      stat: summaryStats
+        ? `${summaryStats.submitted} (${Math.round(
+            (summaryStats.submitted / summaryStats.opened) * 100
+          )}%)`
+        : 0,
+      trend: undefined,
+      toolTipText: undefined,
+    },
+    // {
+    //   id: "lastSubmission",
+    //   name: "Dernière soumission",
+    //   stat: insights.lastSubmissionAt
+    //     ? timeSince(insights.lastSubmissionAt)
+    //     : "--",
+    //   smallerText: true,
+    //   toolTipText: undefined,
+    // },
+  ];
 
-  const summary: SubmissionSummary | undefined = useMemo(() => {
-    if (!isLoadingSubmissionSessions && !isLoadingForm) {
-      return getSubmissionSummary(submissionSessions, form?.schema);
-    }
-  }, [isLoadingSubmissionSessions, submissionSessions, isLoadingForm, form]);
-
-  const stats = useMemo(() => {
-    if (insights) {
-      const pagesInsights = insights.pagesInsights;
-      const defaultInsights = [
-        {
-          id: "totalCandidateOpenedForm",
-          name: "Nombre de candidats ayant vu",
-          stat: insights.totalCandidateOpenedForm || "--",
-          trend: undefined,
-          toolTipText: undefined,
-        },
-        {
-          id: "totalCandidateSubmited",
-          name: "Nombre de candidats ayant soumis",
-          stat:
-            `${insights.totalCandidateSubmited} (${Math.round(
-              (insights.totalCandidateSubmited /
-                insights.totalCandidateOpenedForm) *
-                100
-            )}%)` || "--",
-          trend: undefined,
-          toolTipText: undefined,
-        },
-
-        {
-          id: "lastSubmission",
-          name: "Dernière soumission",
-          stat: insights.lastSubmissionAt
-            ? timeSince(insights.lastSubmissionAt)
-            : "--",
-          smallerText: true,
-          toolTipText: undefined,
-        },
-      ];
-
-      const combineInsights = { defaultInsights, pagesInsights };
-
-      return combineInsights;
-    }
-  }, [insights]);
-
-  if (!summary || !insights) {
+  if (!summaryStats) {
     return <Loading />;
   }
-
-  console.log("insights", stats.pagesInsights);
 
   return (
     <>
       <h2 className="mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4">
-        Aperçu des réponses
+        General report
       </h2>
       <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2">
-        {stats.defaultInsights.map((item) => (
+        {defaultInsights.map((item) => (
           <AnalyticsCard
             key={item.id}
             value={
@@ -123,29 +114,32 @@ export default function ResultsSummary({ formId }) {
           />
         ))}
       </dl>
+
       <h2 className="mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4">
         Diférentes étapes
       </h2>
       <dl className="grid  gap-5 mt-8 mb-12 ">
-        {stats.pagesInsights.map((page) => (
+        {pages.map((page) => (
           <AnalyticsCard
             key={page.id}
-            value={`${page.candidates} candidats ont répondus`}
-            label={page.name}
+            value={`${summaryStats?.pages[page.id]} candidats ont répondus`}
+            label={page.blocks[0].data.text}
             toolTipText={page.toolTipText}
             trend={page.trend}
             smallerText={page.smallerText}
-            questions={page.questions}
+            questions={getFormQuestions(page)}
+            formId={formId}
+            pageId={page.id}
           />
         ))}
       </dl>
-      <div>
+      {/* <div>
         {summary?.pages &&
           summary.pages.map(
             (page) =>
               page.type === "form" && (
                 <div key={page.name}>
-                  {page.elements.map((element) =>
+                  {page.elements.map((element, idx) =>
                     [
                       "email",
                       "number",
@@ -154,15 +148,15 @@ export default function ResultsSummary({ formId }) {
                       "textarea",
                       "website",
                     ].includes(element.type) ? (
-                      <TextResults element={element} />
+                      <TextResults element={element} key={idx} />
                     ) : ["checkbox", "radio"].includes(element.type) ? (
-                      <ChoiceResults element={element} />
+                      <ChoiceResults element={element} key={idx} />
                     ) : null
                   )}
                 </div>
               )
           )}
-      </div>
+      </div> */}
     </>
   );
 }
