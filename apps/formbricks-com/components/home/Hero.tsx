@@ -1,4 +1,4 @@
-import Button from "../shared/Button";
+import { Button } from "@formbricks/ui";
 import HeroAnimation from "../shared/HeroAnimation";
 import { useRouter } from "next/router";
 

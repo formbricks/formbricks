@@ -1,4 +1,4 @@
-import Button from "@/components/shared/Button";
+import { Button } from "@formbricks/ui";
 import { useRouter } from "next/router";
 import HeadingCentered from "./HeadingCentered";
 

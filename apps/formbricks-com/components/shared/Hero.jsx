@@ -3,7 +3,7 @@ import Image from "next/image";
 import clsx from "clsx";
 import Highlight, { defaultProps } from "prism-react-renderer";
 
-import { Button } from "@/components/shared/Button";
+import { Button } from "@formbricks/ui";
 import { HeroBackground } from "@/components/shared/HeroBackground";
 import blurCyanImage from "@/images/blur-cyan.png";
 import blurIndigoImage from "@/images/blur-indigo.png";

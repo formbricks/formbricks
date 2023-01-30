@@ -26,20 +26,23 @@ export default function Header() {
         </div>
         <Popover.Group as="nav" className="hidden space-x-10 md:flex">
           <Link
-            href="/community"
+            href="#howitworks"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Community
+            How it works
           </Link>
           <Link
-            href="/blog"
+            href="#pricing"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Blog <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
+            Pricing <p className="bg-brand inline rounded-full px-2 text-xs text-white">50%</p>
           </Link>
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
-          <Button variant="highlight" className="ml-2" onClick={() => router.push("/waitlist")}>
-            Get Access
+          <Button variant="secondary" className="ml-2" href="https://demo.formbricks.com" target="_blank">
+            Try Demo
+          </Button>
+          <Button variant="highlight" className="ml-2" href="https://app.formbricks.com" target="_blank">
+            Sign Up
           </Button>
         </div>
       </div>
