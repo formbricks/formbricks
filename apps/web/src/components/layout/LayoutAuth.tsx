@@ -2,13 +2,16 @@ import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { Logo } from "@/components/Logo";
+import { LogoMark } from "@/components/LogoMark";
+import clsx from "clsx";
 
 interface Props {
   title?: string;
+  onboarding?: boolean;
   children: React.ReactNode;
 }
 
-export default function LayoutAuth({ title = "Formbricks HQ", children }: Props) {
+export default function LayoutAuth({ title = "Formbricks HQ", children, onboarding }: Props) {
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -20,15 +23,29 @@ export default function LayoutAuth({ title = "Formbricks HQ", children }: Props)
       <Head>
         <title>{title}</title>
       </Head>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-50">
         {" "}
         <div className="isolate bg-white">
-          <div className="bg-gradient-radial flex min-h-screen from-gray-200 to-gray-50">
-            <div className="mx-auto flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
-              <div className="mx-auto w-full max-w-sm rounded-xl bg-white p-8 shadow-xl lg:w-96">
-                <div className="mb-8">
-                  <Logo className="fill-zinc-900 px-16" />
-                </div>
+          <div className="bg-gradient-radial flex min-h-screen from-slate-200 to-slate-50">
+            <div
+              className={clsx(
+                "v mx-auto flex flex-1 flex-col justify-center px-4 py-12 xl:px-2",
+                onboarding ? "max-w-3xl" : "max-w-sm"
+              )}>
+              <div
+                className={clsx(
+                  "mx-auto rounded-xl bg-white p-8 shadow-xl",
+                  onboarding ? "md:px-10" : "w-full"
+                )}>
+                {onboarding ? (
+                  <div className="h-8">
+                    <LogoMark />
+                  </div>
+                ) : (
+                  <div className="mx-auto mb-8 w-3/4">
+                    <Logo />
+                  </div>
+                )}
 
                 {children}
               </div>

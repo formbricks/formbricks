@@ -37,11 +37,11 @@ export const SignupForm = () => {
         <div className="absolute top-10 rounded-md bg-sky-50 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <XCircleIcon className="h-5 w-5 text-sky-400" aria-hidden="true" />
+              <XCircleIcon className="text-brand-dark h-5 w-5" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-sky-800">An error occurred when logging you in</h3>
-              <div className="mt-2 text-sm text-sky-700">
+              <h3 className="text-sm font-medium text-red-800">An error occurred when logging you in</h3>
+              <div className="mt-2 text-sm text-red-700">
                 <p className="space-y-1 whitespace-pre-wrap">{error}</p>
               </div>
             </div>
@@ -49,21 +49,6 @@ export const SignupForm = () => {
         </div>
       )}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-800">
-            Full Name
-          </label>
-          <div className="mt-1">
-            <input
-              id="name"
-              name="name"
-              type="text"
-              autoComplete="given-name"
-              required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
-            />
-          </div>
-        </div>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-slate-800">
             Email address
@@ -75,13 +60,14 @@ export const SignupForm = () => {
               type="email"
               autoComplete="email"
               required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+              className="focus:border-brand focus:ring-brand-dark block w-full rounded-md border-gray-300 shadow-sm placeholder:text-slate-300 sm:text-sm"
+              placeholder="work@email.com"
             />
           </div>
         </div>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-slate-800">
-            Password
+            Set password
           </label>
           <div className="mt-1">
             <input
@@ -89,20 +75,27 @@ export const SignupForm = () => {
               name="password"
               type="password"
               required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+              className="focus:border-brand focus:ring-brand-dark block w-full rounded-md border-gray-300 shadow-sm placeholder:text-slate-300 sm:text-sm"
+              placeholder="'password123' isn't valid"
             />
           </div>
+          {/* <div className="mt-2">
+            <ul className="ml-5 list-disc text-xs text-slate-500">
+              <li>Mix of uppercase & lowercase letters</li>
+              <li>Minimum 8 characters long</li>
+              <li>Contains at least 1 number</li>
+            </ul>
+          </div> */}
         </div>
 
         <div>
           <Button type="submit" className="w-full justify-center">
-            Sign up
+            Create account
           </Button>
 
-          <div className="mt-3 text-center text-xs text-gray-600">
-            Already have an account?{" "}
-            <Link href="/auth/signin" className="text-sky hover:text-sky-600">
-              Log in.
+          <div className=" mt-3 text-center text-xs text-gray-600">
+            <Link href="/auth/signin" className="hover:text-brand-dark">
+              Already have an account? Log in.
             </Link>
           </div>
           {(process.env.NEXT_PUBLIC_TERMS_URL || process.env.NEXT_PUBLIC_PRIVACY_URL) && (
@@ -111,7 +104,7 @@ export const SignupForm = () => {
               <br />
               {process.env.NEXT_PUBLIC_TERMS_URL && (
                 <a
-                  className="text-sky underline hover:text-sky-600"
+                  className="text-sky hover:text-brand-dark underline"
                   href={process.env.NEXT_PUBLIC_TERMS_URL}
                   rel="noreferrer"
                   target="_blank">
@@ -121,7 +114,7 @@ export const SignupForm = () => {
               {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
               {process.env.NEXT_PUBLIC_PRIVACY_URL && (
                 <a
-                  className="text-sky underline hover:text-sky-600"
+                  className="text-sky hover:text-brand-dark underline"
                   href={process.env.NEXT_PUBLIC_PRIVACY_URL}
                   rel="noreferrer"
                   target="_blank">
@@ -147,6 +140,7 @@ export const SignupForm = () => {
           </>
         )}
       </form>
+      <div></div>
     </>
   );
 };
