@@ -29,7 +29,7 @@ export const hasOwnership = async (model, session, id) => {
 
 export const getSessionOrUser = async (req: NextApiRequest, res: NextApiResponse) => {
   // check for session (browser usage)
-  let session = await unstable_getServerSession(req, res, authOptions);
+  let session: any = await unstable_getServerSession(req, res, authOptions);
   if (session && "user" in session) return session.user;
   // check for api key
   if (req.headers["x-api-key"]) {
