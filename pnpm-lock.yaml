@@ -304,6 +304,31 @@ importers:
       tsx: 3.12.1
       typescript: 4.8.4
 
+  packages/ee:
+    specifiers:
+      '@formbricks/tsconfig': workspace:*
+      '@types/react': ^18.0.25
+      '@types/react-dom': ^18.0.8
+      concurrently: ^7.5.0
+      eslint: ^8.27.0
+      eslint-config-formbricks: workspace:*
+      next: ^13.1.6
+      postcss: ^8.4.19
+      react: ^18.2.0
+      typescript: ^4.8.4
+    dependencies:
+      next: 13.1.6_biqbaboplfbrettd7655fr4n2y
+    devDependencies:
+      '@formbricks/tsconfig': link:../tsconfig
+      '@types/react': 18.0.27
+      '@types/react-dom': 18.0.10
+      concurrently: 7.6.0
+      eslint: 8.33.0
+      eslint-config-formbricks: link:../eslint-config-formbricks
+      postcss: 8.4.21
+      react: 18.2.0
+      typescript: 4.9.4
+
   packages/eslint-config-formbricks:
     specifiers:
       eslint: ^8.26.0
@@ -711,6 +736,20 @@ packages:
       browserslist: 4.21.4
       lru-cache: 5.1.1
       semver: 6.3.0
+
+  /@babel/helper-compilation-targets/7.20.7_@babel+core@7.20.5:
+    resolution: {integrity: sha512-4tGORmfQcrc+bvrjb5y3dG9Mx1IOZjsHqQVUz7XCNHO+iTmqxWnVg3KRygjGmpRLJGdQSKuvFinbIb0CnZwHAQ==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0
+    dependencies:
+      '@babel/compat-data': 7.20.5
+      '@babel/core': 7.20.5
+      '@babel/helper-validator-option': 7.18.6
+      browserslist: 4.21.4
+      lru-cache: 5.1.1
+      semver: 6.3.0
+    dev: true
 
   /@babel/helper-create-class-features-plugin/7.20.5_@babel+core@7.20.12:
     resolution: {integrity: sha512-3RCdA/EmEaikrhayahwToF0fpweU/8o2p8vhc1c/1kftHOdTKuC65kik/TLc+qfbS8JKw4qqJbne4ovICDhmww==}
@@ -2521,7 +2560,7 @@ packages:
       '@babel/helper-module-imports': 7.18.6
       '@babel/helper-plugin-utils': 7.20.2
       '@babel/plugin-syntax-jsx': 7.18.6_@babel+core@7.20.5
-      '@babel/types': 7.20.5
+      '@babel/types': 7.20.7
     dev: true
 
   /@babel/plugin-transform-react-pure-annotations/7.18.6_@babel+core@7.20.12:
@@ -2840,7 +2879,7 @@ packages:
     dependencies:
       '@babel/compat-data': 7.20.5
       '@babel/core': 7.20.5
-      '@babel/helper-compilation-targets': 7.20.0_@babel+core@7.20.5
+      '@babel/helper-compilation-targets': 7.20.7_@babel+core@7.20.5
       '@babel/helper-plugin-utils': 7.20.2
       '@babel/helper-validator-option': 7.18.6
       '@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression': 7.18.6_@babel+core@7.20.5
@@ -2908,7 +2947,7 @@ packages:
       '@babel/plugin-transform-unicode-escapes': 7.18.10_@babel+core@7.20.5
       '@babel/plugin-transform-unicode-regex': 7.18.6_@babel+core@7.20.5
       '@babel/preset-modules': 0.1.5_@babel+core@7.20.5
-      '@babel/types': 7.20.5
+      '@babel/types': 7.20.7
       babel-plugin-polyfill-corejs2: 0.3.3_@babel+core@7.20.5
       babel-plugin-polyfill-corejs3: 0.6.0_@babel+core@7.20.5
       babel-plugin-polyfill-regenerator: 0.4.1_@babel+core@7.20.5
