@@ -16,7 +16,7 @@ export default function PmfButton() {
       ...window.formbricksPmf,
       config: {
         formbricksUrl: "http://localhost:3000",
-        formId: "cldbru2nu000s19t6mtc4bhk4",
+        formId: "cldm4bulx0018qfwqolaw4qav",
         containerId: "formbricks",
         contact: {
           name: "Jonathan",

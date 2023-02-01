@@ -29,7 +29,7 @@ export default function SimpleFeedbackModal({ show, setShow }) {
                     <p className="text-sm font-medium text-gray-900">We would like to hear your feedback</p>
                     <div className="mt-3 flex space-x-7">
                       <Form
-                        formId="clbmck9t90000yznpabjc4j9f"
+                        formId="cldlul6ky0008qfwqp58bxv2n"
                         hqUrl="http://localhost:3000"
                         customerId="johannes@formbricks.com"
                         onSubmit={({ submission, schema, event }) => {

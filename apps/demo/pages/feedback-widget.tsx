@@ -9,7 +9,7 @@ declare global {
 
 const formbricksConfig = {
   hqUrl: "http://localhost:3000",
-  formId: "cldbr2x45000i19t69ncbohnn",
+  formId: "cldlul6ky0008qfwqp58bxv2n",
   contact: {
     name: "Johannes",
     position: "Founder",

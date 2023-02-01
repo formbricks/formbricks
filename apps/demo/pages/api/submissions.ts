@@ -7,10 +7,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Optional fields in body: customerId, data
   if (req.method === "GET") {
     const submissionRequest = await fetch(
-      `http://localhost:3000/api/teams/clbdr4dp10001yztzqa9xdvyy/forms/clbgle5og0001yzltkc6iah7i/submissions`,
+      `http://localhost:3000/api/workspaces/cldluasmh0001qfwq6wzzhkqd/forms/cldlz5zxl0012qfwqj5zly1u3/submissions`,
       {
         method: "GET",
-        headers: { "Content-Type": "application/json", "X-API-Key": "83c7e175fe2155d9f02998396c23ee18" },
+        headers: { "Content-Type": "application/json", "X-API-Key": "b364435ae5dab956aec1b2b3e753258b" },
       }
     );
     const submissions = await submissionRequest.json();

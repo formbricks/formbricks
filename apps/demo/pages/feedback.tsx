@@ -11,7 +11,7 @@ export default function Example() {
       <FeedbackModal
         show={showFeedback}
         setShow={setShowFeedback}
-        formId="clbxex6f70006yz3f2n4knxfa"
+        formId="cldlul6ky0008qfwqp58bxv2n"
         customer={{
           id: "johannes@formbricks.com",
           email: "johannes@formbricks.com",

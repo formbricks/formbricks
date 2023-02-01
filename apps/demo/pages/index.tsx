@@ -103,7 +103,7 @@ export default function Demo() {
     await sendToHq({ submission, schema });
     const submissionRequest = await fetch(`/api/submissions`, {
       method: "GET",
-      headers: { "Content-Type": "application/json", "X-API-Key": "82967fcd502abc9ff213cf9daca9bc43" },
+      headers: { "Content-Type": "application/json", "X-API-Key": "b364435ae5dab956aec1b2b3e753258b" },
     });
     const submissions = await submissionRequest.json();
     setSchema(schema);
@@ -223,7 +223,7 @@ export default function Demo() {
                   {!answered ? (
                     /* Formbricks Form using React Library */
                     <Form
-                      formId="clbgle5og0001yzltkc6iah7i"
+                      formId="cldlz5zxl0012qfwqj5zly1u3"
                       hqUrl="http://localhost:3000"
                       onSubmit={handleSubmit}>
                       <Radio
