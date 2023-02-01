@@ -20,13 +20,13 @@ export default function LayoutWrapperWorkspace({ children }) {
         name: "Forms",
         href: `/workspaces/${router.query.workspaceId}/forms`,
         icon: FormIcon,
-        current: pathname.includes("/form"),
+        current: pathname?.includes("/form"),
       },
       {
         name: "Customers",
         href: `/workspaces/${router.query.workspaceId}/customers`,
         icon: CustomersIcon,
-        current: pathname.includes("/customers"),
+        current: pathname?.includes("/customers"),
       },
       /*     {
         name: "Settings",
