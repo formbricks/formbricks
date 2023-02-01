@@ -84,59 +84,56 @@ export default function SummaryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 divide-y">
-          {form.schema.pages.map((page) =>
-            page.elements
-              .filter((e) =>
-                [
-                  "checkbox",
-                  "email",
-                  "number",
-                  "nps",
-                  "phone",
-                  "radio",
-                  "search",
-                  "text",
-                  "textarea",
-                  "url",
-                ].includes(e.type)
-              )
-              .map((elem) => (
-                <div className="py-12">
-                  {["email", "number", "phone", "search", "text", "textarea", "url"].includes(elem.type) ? (
-                    <div>
-                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
-                        {elem.label}
-                        <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-                          {capitalizeFirstLetter(elem.type)}
-                        </span>
-                      </h2>
-                      <Table submissions={submissions} schema={form.schema} fieldName={elem.name} />
-                    </div>
-                  ) : ["checkbox", "radio"].includes(elem.type) ? (
-                    <div>
-                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
-                        {elem.label}
-                        <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-                          {capitalizeFirstLetter(elem.type)}
-                        </span>
-                      </h2>
-                      <Bar submissions={submissions} schema={form.schema} fieldName={elem.name} />
-                    </div>
-                  ) : ["nps"].includes(elem.type) ? (
-                    <div>
-                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
-                        {elem.label}
-                        <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-                          {capitalizeFirstLetter(elem.type)}
-                        </span>
-                      </h2>
-                      <Nps submissions={submissions} schema={form.schema} fieldName={elem.name} />
-                    </div>
-                  ) : null}
-                </div>
-              ))
-          )}
-          {}
+          {form.schema.children
+            .filter((element) =>
+              [
+                "checkbox",
+                "email",
+                "number",
+                "nps",
+                "phone",
+                "radio",
+                "search",
+                "text",
+                "textarea",
+                "url",
+              ].includes(element.type)
+            )
+            .map((elem) => (
+              <div className="py-12">
+                {["email", "number", "phone", "search", "text", "textarea", "url"].includes(elem.type) ? (
+                  <div>
+                    <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                      {elem.label}
+                      <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
+                        {capitalizeFirstLetter(elem.type)}
+                      </span>
+                    </h2>
+                    <Table submissions={submissions} schema={form.schema} fieldName={elem.name} />
+                  </div>
+                ) : ["checkbox", "radio"].includes(elem.type) ? (
+                  <div>
+                    <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                      {elem.label}
+                      <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
+                        {capitalizeFirstLetter(elem.type)}
+                      </span>
+                    </h2>
+                    <Bar submissions={submissions} schema={form.schema} fieldName={elem.name} />
+                  </div>
+                ) : ["nps"].includes(elem.type) ? (
+                  <div>
+                    <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                      {elem.label}
+                      <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
+                        {capitalizeFirstLetter(elem.type)}
+                      </span>
+                    </h2>
+                    <Nps submissions={submissions} schema={form.schema} fieldName={elem.name} />
+                  </div>
+                ) : null}
+              </div>
+            ))}
         </div>
       )}
     </div>

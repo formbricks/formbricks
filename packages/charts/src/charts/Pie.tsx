@@ -19,12 +19,10 @@ export function FbPie({ color, submissions, schema, fieldName }: Props) {
     // build data object by finding schema definition of field and scanning submissions for this key
     const dataDict: any = {};
     let schemaElem;
-    for (const pages of schema.pages) {
-      for (const elem of pages.elements) {
-        if (elem.name === fieldName) {
-          schemaElem = elem;
-          break;
-        }
+    for (const children of schema.children) {
+      if (children.name === fieldName) {
+        schemaElem = children;
+        break;
       }
     }
     if (typeof schemaElem === "undefined") {
