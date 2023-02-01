@@ -21,19 +21,18 @@ interface Props {
   toolTipText: string;
   trend?: number;
   smallerText?: boolean;
-  questions: [];
+  questions: { id: string; data: any; type: string }[];
   formId?: string;
   pageId?: string;
 }
 
 interface QuestionItemProps {
-  value: string | number;
   label: string;
   toolTipText: string;
   trend?: number;
   smallerText?: boolean;
-  options: [];
-  candidates: [];
+  options: { label: string; candidates: number }[];
+  respondants: number;
 }
 
 const AnalyticsCard: React.FC<Props> = ({
@@ -55,16 +54,11 @@ const AnalyticsCard: React.FC<Props> = ({
       getPageQuestionsStats(formId, pageId)
         .then((res) => res.json())
         .then((data) => {
-          setQuestionsStats(data);
+          setQuestionsStats(data.qStats);
           setIsLoadingQuestionStats(false);
         });
     }
   }, [isItemOpened]);
-
-  console.log("qstats...", questionsStats);
-  // if (isLoadingQuestionStats && pageId) {
-  //   return <Loading />;
-  // }
 
   return (
     <div
@@ -152,19 +146,29 @@ const AnalyticsCard: React.FC<Props> = ({
           >
             Questions :
           </div>
-          {questions.map((question) => {
-            console.log("question...", question, questionsStats);
+          {Object.keys(questionsStats).map((qId) => {
+            const qOptions = Object.keys(questionsStats[qId])
+              .map((k) => {
+                return { label: k, candidates: questionsStats[qId][k] };
+              })
+              .sort((b, a) => a.candidates - b.candidates);
+            const q = questions.find((question) => question.id === qId);
+
+            if (q?.type !== "multipleChoiceQuestion") return;
+
+            const getNumberOfResponses = () => {
+              return qOptions.reduce((a, v) => a + v.candidates, 0);
+            };
 
             return (
-              <div key={question.id} className="w-full px-5">
+              <div key={`qline-${qId}`} className="w-full px-5">
                 <QuestionItem
-                  key={question.id}
-                  value={questionsStats.qStats[question.id]}
-                  label={question.data.label}
-                  toolTipText={question.toolTipText}
-                  options={questionsStats.qStats}
-                  smallerText={question.smallerText}
-                  candidates={question.candidate}
+                  key={`qitem-${qId}`}
+                  label={q.data.label}
+                  toolTipText={qId}
+                  options={qOptions}
+                  smallerText={false}
+                  respondants={getNumberOfResponses()}
                 />
               </div>
             );
@@ -179,28 +183,16 @@ const AnalyticsCard: React.FC<Props> = ({
 export default AnalyticsCard;
 
 const QuestionItem: React.FC<QuestionItemProps> = ({
-  value,
+  // value,
   label,
   toolTipText,
   trend,
   smallerText,
   options,
-  candidates,
+  respondants,
 }) => (
   <div className="bg-white rounded-md  w-full ounded-md border-2 mt-3 mb-5 transition-opacity duration-200">
     <div key={label} className="px-2 py-2 sm:p-6">
-      <dt className="inline-flex w-full justify-between text-lg font-normal text-gray-900 has-tooltip">
-        {label}{" "}
-        {
-          // toolTipText &&
-          <QuestionMarkCircleIcon className="w-4 h-4 ml-1 text-red hover:text-ui-gray-dark" />
-        }
-        {/* {toolTipText && (
-          <span className="flex p-1 px-4 -mt-6 -ml-8 text-xs text-center text-white bg-gray-600 rounded shadow-lg grow tooltip">
-            {toolTipText}
-          </span>
-        )} */}
-      </dt>
       <dd className="flex items-baseline justify-between mt-1 md:block lg:flex-col">
         <div
           className={classNames(
@@ -208,12 +200,12 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
             "flex items-baseline text-xl font-semibold text-gray-800"
           )}
         >
-          {value} réponses
+          {`${label} (${respondants} réponses)`}
         </div>
 
         {options?.length &&
           options.map(({ label, candidates }, index) => {
-            const trend = Math.round((candidates / candidates.length) * 100);
+            const trend = ((candidates / respondants) * 100).toFixed(2);
             return (
               <div
                 key={index}
@@ -229,7 +221,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
                 <span className="sr-only">
                   {trend >= 0 ? "Increased" : "Decreased"}
                 </span>{" "}
-                {` : ${candidates}/${candidates.length} `}({trend}%)
+                {` : ${candidates}/${respondants} `}({trend}%)
               </div>
             );
           })}

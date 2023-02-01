@@ -17,8 +17,8 @@ export default async function handle(
   const pageId = req.query.candidateId.toString();
   const session = await getSession({ req: req });
 
-  // GET /api/forms
-  // Gets all forms of a user
+  // GET /api/forms/[id]/events/[pageId]/question-stats
+  // Gets all page submission statistics for a specific form
   if (req.method === "GET") {
     // check if session exist
     if (!session) {
@@ -55,15 +55,14 @@ export default async function handle(
     const candidates = pageSubmissions.map((s) => s.data["candidateId"]);
     const responses = pageSubmissions.map((s) => s.data["submission"]);
     let qStats = {};
-    console.log("res...", responses);
     responses.map((r) => {
       if (r)
         Object.keys(r).map((qId) => {
-          if ([qStats[r[qId]]]) qStats[r[qId]] += 1;
-          else qStats[r[qId]] = 1;
+          if(!qStats[qId]) qStats[qId]={};
+          if ((qStats[qId])[r[qId]]) (qStats[qId])[r[qId]] += 1;
+          else (qStats[qId])[r[qId]] = 1;
         });
     });
-    console.log('stats2...', qStats);
     return res.json({ candidates, qStats });
   }
 

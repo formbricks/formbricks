@@ -33,7 +33,6 @@ export const getFormSummaryStats = async (formId: string) => {
 };
 
 export const getPageQuestionsStats = async (formId: string, pageId: string) => {
-  console.log(formId, pageId);
   try {
     const stats = await fetch(
       `/api/forms/${formId}/events/${pageId}/question-stats`,
@@ -41,9 +40,6 @@ export const getPageQuestionsStats = async (formId: string, pageId: string) => {
         method: "GET",
       }
     );
-    // stats = await stats.json();
-    // console.log("stats....", stats);
-
     return stats;
   } catch (error) {
     console.error(error);
@@ -102,7 +98,6 @@ export const getSubmissionAnalytics = (
   let totalCandidateSubmited = [];
   let totalCandidateOpenedForm = [];
   let questionsInsights = [];
-  // console.log("pages...", pages);
   for (const candidateSubmission of submissionSessions) {
     // collect unique users
     if (candidateSubmission.events.length > 0) {
@@ -118,7 +113,6 @@ export const getSubmissionAnalytics = (
 
       pages.forEach(({ blocks }) => {
         const pageTitle = blocks[0]?.data.text;
-        // console.log("boloke", pageTitle, lastCandidateSubmission);
         blocks
           .filter((b) => isBlockAQuestion(b))
           .forEach((question) => {
@@ -341,8 +335,6 @@ function questionSchema(
   candidateResponse,
   options?: any
 ) {
-  // console.log('res...',options);
-
   const newCandidateList = questionsInsights[question.id]
     ? questionsInsights[question.id].candidates
     : {};

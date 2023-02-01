@@ -15,7 +15,6 @@ export default async function handle(
   });
   const formId = req.query.id.toString();
   const session = await getSession({ req: req });
-  // console.log("form....", formId);
 
   // GET /api/forms/[formId]/events/summary-stats
   // Gets summary stats for a form

@@ -1,17 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "../../lib/forms";
-import {
-  getFormSummaryStats,
-  getSubmissionAnalytics,
-  getSubmissionSummary,
-  useSubmissionSessions,
-} from "../../lib/submissionSessions";
-import { SubmissionSummary } from "../../lib/types";
-import { isBlockAQuestion, timeSince } from "../../lib/utils";
+import { getFormSummaryStats } from "../../lib/submissionSessions";
+import { isBlockAQuestion } from "../../lib/utils";
 import AnalyticsCard from "./AnalyticsCard";
 import Loading from "../Loading";
-import TextResults from "./summary/TextResults";
-import ChoiceResults from "./summary/ChoiceResults";
 import usePages from "../../hooks/usePages";
 
 type SummaryStatsType = {
@@ -55,8 +47,6 @@ export default function ResultsSummary({ formId }) {
   }, []);
 
   const pages = usePages({ blocks: formBlocks, formId });
-  // console.log("blocks...", formBlocks);
-  // console.log("pages...", pages);
 
   const defaultInsights = [
     {
@@ -119,7 +109,7 @@ export default function ResultsSummary({ formId }) {
         Diférentes étapes
       </h2>
       <dl className="grid  gap-5 mt-8 mb-12 ">
-        {pages.map((page) => (
+        {pages.slice(0, pages.length-1).map((page) => (
           <AnalyticsCard
             key={page.id}
             value={`${summaryStats?.pages[page.id]} candidats ont répondus`}
