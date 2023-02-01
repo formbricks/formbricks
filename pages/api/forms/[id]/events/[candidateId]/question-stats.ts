@@ -54,13 +54,20 @@ export default async function handle(
     });
     const candidates = pageSubmissions.map((s) => s.data["candidateId"]);
     const responses = pageSubmissions.map((s) => s.data["submission"]);
+
     let qStats = {};
     responses.map((r) => {
       if (r)
         Object.keys(r).map((qId) => {
-          if(!qStats[qId]) qStats[qId]={};
-          if ((qStats[qId])[r[qId]]) (qStats[qId])[r[qId]] += 1;
-          else (qStats[qId])[r[qId]] = 1;
+          const addOrIncrementOption = (opt) => {
+            if (qStats[qId][opt]) qStats[qId][opt] += 1;
+            else qStats[qId][opt] = 1;
+          };
+          if (!qStats[qId]) qStats[qId] = {};
+          if (typeof r[qId] !== "object") addOrIncrementOption(r[qId]);
+          else {
+            for (const opt of r[qId]) addOrIncrementOption(opt);
+          }
         });
     });
     return res.json({ candidates, qStats });
