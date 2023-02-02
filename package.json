@@ -11,20 +11,19 @@
   },
   "scripts": {
     "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:push": "turbo run db:push",
-    "dev": "turbo run dev --parallel",
+    "generate": "turbo run generate",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "fm": "prettier --write $(git diff --name-only --diff-filter d | grep -e '\\.[tj]sx\\?$' | xargs)",
-    "generate": "turbo run generate",
     "lint": "turbo run lint",
     "release": "turbo run build --filter=react^... && changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.22.0",
+    "@changesets/cli": "^2.26.0",
     "prettier": "^2.8.3",
-    "tsx": "^3.7.1",
-    "turbo": "latest"
+    "turbo": "^1.7.2"
   },
   "engines": {
     "node": ">=16.0.0"
