@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/prettier-config",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "devDependencies": {
     "prettier": "^2.8.3",

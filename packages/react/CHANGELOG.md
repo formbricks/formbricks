@@ -1,5 +1,11 @@
 # @formbricks/react
 
+## 1.0.0
+
+### Major Changes
+
+- Clean and update all dependencies
+
 ## 0.3.0
 
 ### Minor Changes
