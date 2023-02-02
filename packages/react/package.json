@@ -21,7 +21,7 @@
   "scripts": {
     "build": "tsup --dts && tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
     "dev": "concurrently \"tsup --dts --external react --watch && generate-tailwind\" \"tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch\"",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf .turbo && rm -rf dist && rm -rf node_modules"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",

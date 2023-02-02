@@ -7,7 +7,8 @@
     "build": "next build",
     "postbuild": "next-sitemap",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "TIMING=1 next lint",
+    "clean": "rm -rf .next && rm -rf .turbo && rm -rf node_modules"
   },
   "dependencies": {
     "@docsearch/react": "^3.3.2",

@@ -14,7 +14,7 @@
   "scripts": {
     "build": "node ./html-to-ts && microbundle --define process.env.NODE_ENV=production",
     "dev": "node ./html-to-ts && microbundle watch --define process.env.NODE_ENV=production",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf .turbo && rm -rf dist && rm -rf node_modules"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",

@@ -11,14 +11,14 @@
   ],
   "scripts": {
     "build": "tsup",
-    "clean": "rimraf .turbo node_modules dist",
+    "clean": "rm -rf .turbo && rm -rf dist && rm -rf node_modules",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:push": "prisma db push --accept-data-loss",
     "dev": "tsup --watch",
     "format": "prisma format",
     "generate": "prisma generate",
-    "lint": "eslint ./src --fix",
+    "lint": "TIMING=1 eslint ./src --fix",
     "prebuild": "npm run generate",
     "predev": "npm run generate",
     "studio": "prisma studio"
@@ -32,7 +32,6 @@
     "eslint-config-formbricks": "workspace:*",
     "prisma": "^4.6.1",
     "prisma-dbml-generator": "^0.10.0",
-    "rimraf": "^3.0.2",
     "tsup": "^6.4.0",
     "tsx": "^3.12.0",
     "typescript": "^4.8.4"
