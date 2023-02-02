@@ -7,11 +7,6 @@ const { withSentryConfig } = require("@sentry/nextjs");
 
 const nextConfig = {
   reactStrictMode: true,
-  output: "standalone",
-  experimental: {
-    outputFileTracingRoot: path.join(__dirname, "../../"),
-    /* serverComponentsExternalPackages: ["@prisma/client"], */
-  },
   images: {
     remotePatterns: [
       {
