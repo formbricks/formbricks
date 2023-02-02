@@ -26,7 +26,9 @@ export default function SimpleFeedbackModal({ show, setShow }) {
               <div className="p-4">
                 <div className="flex items-start">
                   <div className="ml-3 w-0 flex-1 pt-0.5">
-                    <p className="text-sm font-medium text-gray-900">We would like to hear your feedback</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      We would like to hear your feedback
+                    </p>
                     <div className="mt-3 flex space-x-7">
                       <Form
                         formId="cldlul6ky0008qfwqp58bxv2n"
@@ -47,8 +49,8 @@ export default function SimpleFeedbackModal({ show, setShow }) {
                     </div>
                     <hr className="my-2" />
                     <p className="mt-1 text-sm text-gray-500">
-                      If you have a specific issue, please contact support directly at email us or visit our
-                      docs
+                      If you have a specific issue, please contact support directly at email us or
+                      visit our docs
                     </p>
                   </div>
                   <div className="ml-4 flex flex-shrink-0">

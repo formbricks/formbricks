@@ -8,7 +8,9 @@ export default function Verify() {
   const searchParams = useSearchParams();
   return (
     <LayoutAuth title="Verify">
-      <p className="text-center">{!searchParams.get("token") ? "No Token provided" : "Verifying..."}</p>
+      <p className="text-center">
+        {!searchParams.get("token") ? "No Token provided" : "Verifying..."}
+      </p>
       <SignIn token={searchParams.get("token")} />
     </LayoutAuth>
   );

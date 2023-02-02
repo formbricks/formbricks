@@ -26,5 +26,7 @@ export default function PmfDummy() {
     window.formbricksPmf.init();
   }, []);
 
-  return <div className="my-4 overflow-hidden rounded-lg bg-slate-100 shadow-lg" id="formbricks"></div>;
+  return (
+    <div className="my-4 overflow-hidden rounded-lg bg-slate-100 shadow-lg" id="formbricks"></div>
+  );
 }

@@ -4,7 +4,10 @@ export function DoorIcon(props: any) {
       <defs />
       <title>{"architecture-door"}</title>
       <path d="M5,20.5V1.5a1,1,0,0,1,1-1H18a1,1,0,0,1,1,1v19Z" fill="#00e6ca" />
-      <path d="M18,.5H6a1,1,0,0,0-1,1v3a1,1,0,0,1,1-1H18a1,1,0,0,1,1,1v-3A1,1,0,0,0,18,.5Z" fill="#00e6ca" />
+      <path
+        d="M18,.5H6a1,1,0,0,0-1,1v3a1,1,0,0,1,1-1H18a1,1,0,0,1,1,1v-3A1,1,0,0,0,18,.5Z"
+        fill="#00e6ca"
+      />
       <circle
         cx={15.501}
         cy={11}

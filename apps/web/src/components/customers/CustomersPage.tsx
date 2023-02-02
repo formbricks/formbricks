@@ -39,7 +39,8 @@ export default function FormsPage() {
           </span>
         </h1>
         <p className="mt-4 text-slate-600">
-          Pass a customerID with each submission and get an overview of all submissions per customer.
+          Pass a customerID with each submission and get an overview of all submissions per
+          customer.
         </p>
       </header>
       {customers.length === 0 ? (
@@ -63,10 +64,14 @@ export default function FormsPage() {
                         className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
                         Email
                       </th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      <th
+                        scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                         created At
                       </th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      <th
+                        scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                         # submissions
                       </th>
                       <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
@@ -76,9 +81,12 @@ export default function FormsPage() {
                   </thead>
                   <tbody className="bg-white">
                     {customers.map((customer, customerIdx) => (
-                      <tr key={customer.email} className={customerIdx % 2 === 0 ? undefined : "bg-gray-50"}>
+                      <tr
+                        key={customer.email}
+                        className={customerIdx % 2 === 0 ? undefined : "bg-gray-50"}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          <Link href={`/workspaces/${router.query.workspaceId}/customers/${customer.email}`}>
+                          <Link
+                            href={`/workspaces/${router.query.workspaceId}/customers/${customer.email}`}>
                             {customer.email}
                           </Link>
                         </td>
@@ -92,7 +100,8 @@ export default function FormsPage() {
                           <Link
                             href={`/workspaces/${router.query.workspaceId}/customers/${customer.email}`}
                             className="text-brand-dark hover:text-brand-light">
-                            View<span className="sr-only">, {customer.name}</span>
+                            View
+                            <span className="sr-only">, {customer.name}</span>
                           </Link>
                         </td>
                       </tr>

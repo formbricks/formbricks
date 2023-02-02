@@ -47,7 +47,10 @@ export function Input(props: FormbricksProps) {
             placeholder={props.placeholder}
             {...props.additionalProps}
             {...register(props.name, {
-              required: { value: "required" in validationRules, message: "This field is required" },
+              required: {
+                value: "required" in validationRules,
+                message: "This field is required",
+              },
               validate: validate(validationRules),
               ...props.additionalValidation,
             })}

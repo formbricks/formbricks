@@ -10,7 +10,8 @@ import {
 const features = [
   {
     name: "Futureproof",
-    description: "Form needs change. With Formbricks you’ll avoid island solutions right from the start.",
+    description:
+      "Form needs change. With Formbricks you’ll avoid island solutions right from the start.",
     icon: CubeTransparentIcon,
   },
   {
@@ -25,7 +26,8 @@ const features = [
   },
   {
     name: "Great DX",
-    description: "We love a solid developer experience. We felt your pain and do our best to avoid it.",
+    description:
+      "We love a solid developer experience. We felt your pain and do our best to avoid it.",
     icon: CommandLineIcon,
   },
   {
@@ -35,7 +37,8 @@ const features = [
   },
   {
     name: "Extendable",
-    description: "Even though we try, we cannot build every single integration. With Formbricks, you can.",
+    description:
+      "Even though we try, we cannot build every single integration. With Formbricks, you can.",
     icon: SquaresPlusIcon,
   },
 ];
@@ -51,8 +54,8 @@ export default function FeatureTable({}) {
           The only complete open source option.
         </h2>
         <p className="mt-4 max-w-3xl text-lg text-slate-300 dark:text-slate-500">
-          We experienced how form needs develop as companies grow. We could&#39nt find a solution which ticked
-          all of the boxes. Now we&apos;re building it.
+          We experienced how form needs develop as companies grow. We could&#39nt find a solution
+          which ticked all of the boxes. Now we&apos;re building it.
         </p>
         <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-16">
           {features.map((feature) => (
@@ -66,7 +69,9 @@ export default function FeatureTable({}) {
                 </span>
               </div>
               <div className="mt-6">
-                <h3 className="text-lg font-semibold text-slate-200 dark:text-slate-700">{feature.name}</h3>
+                <h3 className="text-lg font-semibold text-slate-200 dark:text-slate-700">
+                  {feature.name}
+                </h3>
                 <p className="mt-2 text-base leading-6 text-slate-400 dark:text-slate-500">
                   {feature.description}
                 </p>

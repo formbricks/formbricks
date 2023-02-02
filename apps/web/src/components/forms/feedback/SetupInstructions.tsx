@@ -19,14 +19,17 @@ export default function SetupInstructions({}) {
           <h3 className="block text-lg font-semibold text-slate-800">How to get started</h3>
           <ol className="mt-2 list-decimal pl-4 leading-8 text-slate-700">
             <li>
-              Copy the Javascript widget below into your application and customize the config according to
-              your needs.
+              Copy the Javascript widget below into your application and customize the config
+              according to your needs.
             </li>
             <li>
-              Setup the button that opens the widget with the onClick handler let your users open the widget.
+              Setup the button that opens the widget with the onClick handler let your users open
+              the widget.
             </li>
             <li>You are ready to receive your first submission and view it in the Results tab.</li>
-            <li>Get notified or pipe submission data to a different tool in the Data Pipelines tab.</li>
+            <li>
+              Get notified or pipe submission data to a different tool in the Data Pipelines tab.
+            </li>
           </ol>
         </div>
         <div className="col-span-2">
@@ -62,8 +65,8 @@ export default function SetupInstructions({}) {
           Javascript Snippet
         </label>
         <p>
-          Place this Javascript script tags into the head of your HTML file and include the button into the
-          body to start using Formbricks Feedback.
+          Place this Javascript script tags into the head of your HTML file and include the button
+          into the body to start using Formbricks Feedback.
         </p>
         <div className="mt-3">
           <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-gray-200">

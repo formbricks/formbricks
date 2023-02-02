@@ -87,7 +87,9 @@ export function Layout({ children, meta }: LayoutProps) {
   let linkIndex = allLinks.findIndex((link) => link.href === router.pathname);
   let previousPage = allLinks[linkIndex - 1];
   let nextPage = allLinks[linkIndex + 1];
-  let section = navigation.find((section) => section.links.find((link) => link.href === router.pathname));
+  let section = navigation.find((section) =>
+    section.links.find((link) => link.href === router.pathname)
+  );
 
   return (
     <>

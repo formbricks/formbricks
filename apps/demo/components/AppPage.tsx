@@ -194,7 +194,10 @@ export default function AppPage({ onClickFeedback = () => {} }: AppPageProps) {
                       "group flex items-center rounded-md px-2 py-2 text-sm font-medium leading-6"
                     )}
                     aria-current={item.current ? "page" : undefined}>
-                    <item.icon className="mr-4 h-6 w-6 flex-shrink-0 text-cyan-200" aria-hidden="true" />
+                    <item.icon
+                      className="mr-4 h-6 w-6 flex-shrink-0 text-cyan-200"
+                      aria-hidden="true"
+                    />
                     {item.name}
                   </a>
                 ))}
@@ -270,7 +273,8 @@ export default function AppPage({ onClickFeedback = () => {} }: AppPageProps) {
                         alt=""
                       />
                       <span className="ml-3 hidden text-sm font-medium text-gray-700 lg:block">
-                        <span className="sr-only">Open user menu for </span>Emilia Birch
+                        <span className="sr-only">Open user menu for </span>
+                        Emilia Birch
                       </span>
                       <ChevronDownIcon
                         className="ml-1 hidden h-5 w-5 flex-shrink-0 text-gray-400 lg:block"
@@ -404,9 +408,13 @@ export default function AppPage({ onClickFeedback = () => {} }: AppPageProps) {
                           </div>
                           <div className="ml-5 w-0 flex-1">
                             <dl>
-                              <dt className="truncate text-sm font-medium text-gray-500">{card.name}</dt>
+                              <dt className="truncate text-sm font-medium text-gray-500">
+                                {card.name}
+                              </dt>
                               <dd>
-                                <div className="text-lg font-medium text-gray-900">{card.amount}</div>
+                                <div className="text-lg font-medium text-gray-900">
+                                  {card.amount}
+                                </div>
                               </dd>
                             </dl>
                           </div>
@@ -414,7 +422,9 @@ export default function AppPage({ onClickFeedback = () => {} }: AppPageProps) {
                       </div>
                       <div className="bg-gray-50 px-5 py-3">
                         <div className="text-sm">
-                          <a href={card.href} className="font-medium text-cyan-700 hover:text-cyan-900">
+                          <a
+                            href={card.href}
+                            className="font-medium text-cyan-700 hover:text-cyan-900">
                             View all
                           </a>
                         </div>
@@ -430,10 +440,14 @@ export default function AppPage({ onClickFeedback = () => {} }: AppPageProps) {
 
               {/* Activity list (smallest breakpoint only) */}
               <div className="shadow sm:hidden">
-                <ul role="list" className="mt-2 divide-y divide-gray-200 overflow-hidden shadow sm:hidden">
+                <ul
+                  role="list"
+                  className="mt-2 divide-y divide-gray-200 overflow-hidden shadow sm:hidden">
                   {transactions.map((transaction) => (
                     <li key={transaction.id}>
-                      <a href={transaction.href} className="block bg-white px-4 py-4 hover:bg-gray-50">
+                      <a
+                        href={transaction.href}
+                        className="block bg-white px-4 py-4 hover:bg-gray-50">
                         <span className="flex items-center space-x-4">
                           <span className="flex flex-1 space-x-2 truncate">
                             <BanknotesIcon
@@ -443,7 +457,9 @@ export default function AppPage({ onClickFeedback = () => {} }: AppPageProps) {
                             <span className="flex flex-col truncate text-sm text-gray-500">
                               <span className="truncate">{transaction.name}</span>
                               <span>
-                                <span className="font-medium text-gray-900">{transaction.amount}</span>{" "}
+                                <span className="font-medium text-gray-900">
+                                  {transaction.amount}
+                                </span>{" "}
                                 {transaction.currency}
                               </span>
                               <time dateTime={transaction.datetime}>{transaction.date}</time>
@@ -526,7 +542,9 @@ export default function AppPage({ onClickFeedback = () => {} }: AppPageProps) {
                                 </div>
                               </td>
                               <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">
-                                <span className="font-medium text-gray-900">{transaction.amount}</span>
+                                <span className="font-medium text-gray-900">
+                                  {transaction.amount}
+                                </span>
                                 {transaction.currency}
                               </td>
                               <td className="hidden whitespace-nowrap px-6 py-4 text-sm text-gray-500 md:block">
@@ -552,8 +570,8 @@ export default function AppPage({ onClickFeedback = () => {} }: AppPageProps) {
                         <div className="hidden sm:block">
                           <p className="text-sm text-gray-700">
                             Showing <span className="font-medium">1</span> to{" "}
-                            <span className="font-medium">10</span> of <span className="font-medium">20</span>{" "}
-                            results
+                            <span className="font-medium">10</span> of{" "}
+                            <span className="font-medium">20</span> results
                           </p>
                         </div>
                         <div className="flex flex-1 justify-between sm:justify-end">

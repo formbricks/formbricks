@@ -15,7 +15,9 @@ export default function ProfileSettingsPage() {
   return (
     <div className="mx-auto py-8 sm:px-6 lg:px-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">Account Settings</h1>
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
+          Account Settings
+        </h1>
       </header>
       {/* Payment details */}
       <div className="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
@@ -26,9 +28,9 @@ export default function ProfileSettingsPage() {
                 <div className="mt-6 sm:flex-auto">
                   <h1 className="text-xl font-semibold text-gray-900">Personal API Keys</h1>
                   <p className="mt-2 text-sm text-gray-700">
-                    These keys allow full access to your personal account through the API, as if you were
-                    logged in. Try not to keep disused keys around. If you have any suspicion that one of
-                    these may be compromised, delete it and use a new one.
+                    These keys allow full access to your personal account through the API, as if you
+                    were logged in. Try not to keep disused keys around. If you have any suspicion
+                    that one of these may be compromised, delete it and use a new one.
                   </p>
                 </div>
                 <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
@@ -105,7 +107,8 @@ export default function ProfileSettingsPage() {
                                       }
                                     }}
                                     className="text-brand-dark hover:text-brand">
-                                    Delete<span className="sr-only">, {apiKey.label}</span>
+                                    Delete
+                                    <span className="sr-only">, {apiKey.label}</span>
                                   </button>
                                 </td>
                               </tr>
@@ -139,8 +142,8 @@ export default function ProfileSettingsPage() {
               inputClassName="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
             />
             <p className="mt-3 text-sm text-gray-800">
-              Key value will only ever be shown once, immediately after creation. Copy it to your destination
-              right away.
+              Key value will only ever be shown once, immediately after creation. Copy it to your
+              destination right away.
             </p>
             <div className="mt-4 flex w-full justify-end">
               <Button variant="secondary" className="mr-2">

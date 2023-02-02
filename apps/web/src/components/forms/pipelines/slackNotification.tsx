@@ -53,7 +53,10 @@ export function SlackNotificationSettings({ pipeline, setPipeline }) {
         <h2 className="text-ui-gray-dark mb-3 text-xl font-bold">Configure Slack Notification</h2>
         <p className="mt-1 text-sm text-gray-500">
           This pipeline uses Slack webhooks. To learn more how to setup these please checkout the{" "}
-          <Link href="https://api.slack.com/messaging/webhooks" target="_blank" className="underline">
+          <Link
+            href="https://api.slack.com/messaging/webhooks"
+            target="_blank"
+            className="underline">
             Slack Documentation
           </Link>
         </p>

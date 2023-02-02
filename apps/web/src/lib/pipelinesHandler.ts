@@ -13,10 +13,22 @@ export const runPipelines = async (triggeredEvents, form, submissionReceived, su
   });
   for (const pipeline of pipelines) {
     if (pipeline.type === "emailNotification") {
-      await handleEmailNotification(triggeredEvents, pipeline, form, submissionReceived, submissionFull);
+      await handleEmailNotification(
+        triggeredEvents,
+        pipeline,
+        form,
+        submissionReceived,
+        submissionFull
+      );
     }
     if (pipeline.type === "slackNotification") {
-      await handleSlackNotification(triggeredEvents, pipeline, form, submissionReceived, submissionFull);
+      await handleSlackNotification(
+        triggeredEvents,
+        pipeline,
+        form,
+        submissionReceived,
+        submissionFull
+      );
     }
     if (pipeline.type === "webhook") {
       await handleWebhook(triggeredEvents, pipeline, submissionReceived, submissionFull);
@@ -27,15 +39,24 @@ export const runPipelines = async (triggeredEvents, form, submissionReceived, su
 async function handleWebhook(triggeredEvents, pipeline, submissionReceived, submissionFull) {
   if (pipeline.config.hasOwnProperty("endpointUrl") && pipeline.config.hasOwnProperty("secret")) {
     let body;
-    if (triggeredEvents.includes("submissionCreated") && pipeline.events.includes("submissionCreated")) {
+    if (
+      triggeredEvents.includes("submissionCreated") &&
+      pipeline.events.includes("submissionCreated")
+    ) {
       body = { time: Math.floor(Date.now() / 1000), submissionFull };
       await sendWebhook(pipeline, body);
     }
-    if (triggeredEvents.includes("submissionUpdated") && pipeline.events.includes("submissionUpdated")) {
+    if (
+      triggeredEvents.includes("submissionUpdated") &&
+      pipeline.events.includes("submissionUpdated")
+    ) {
       body = { time: Math.floor(Date.now() / 1000), submissionReceived };
       await sendWebhook(pipeline, body);
     }
-    if (triggeredEvents.includes("submissionUpdated") && pipeline.events.includes("submissionUpdated")) {
+    if (
+      triggeredEvents.includes("submissionUpdated") &&
+      pipeline.events.includes("submissionUpdated")
+    ) {
       body = { time: Math.floor(Date.now() / 1000), submissionFull };
       await sendWebhook(pipeline, body);
     }
@@ -57,12 +78,21 @@ const sendWebhook = async (pipeline, body) => {
   });
 };
 
-async function handleEmailNotification(triggeredEvents, pipeline, form, submissionReceived, submissionFull) {
+async function handleEmailNotification(
+  triggeredEvents,
+  pipeline,
+  form,
+  submissionReceived,
+  submissionFull
+) {
   if (!pipeline.config.hasOwnProperty("email")) return;
 
   const { email } = pipeline.config.valueOf() as { email: string };
 
-  if (triggeredEvents.includes("submissionCreated") && pipeline.events.includes("submissionCreated")) {
+  if (
+    triggeredEvents.includes("submissionCreated") &&
+    pipeline.events.includes("submissionCreated")
+  ) {
     await sendSubmissionEmail(
       email,
       "created",
@@ -73,7 +103,10 @@ async function handleEmailNotification(triggeredEvents, pipeline, form, submissi
       submissionFull
     );
   }
-  if (triggeredEvents.includes("submissionUpdated") && pipeline.events.includes("submissionUpdated")) {
+  if (
+    triggeredEvents.includes("submissionUpdated") &&
+    pipeline.events.includes("submissionUpdated")
+  ) {
     await sendSubmissionEmail(
       email,
       "updated",
@@ -84,7 +117,10 @@ async function handleEmailNotification(triggeredEvents, pipeline, form, submissi
       submissionReceived
     );
   }
-  if (triggeredEvents.includes("submissionFinished") && pipeline.events.includes("submissionFinished")) {
+  if (
+    triggeredEvents.includes("submissionFinished") &&
+    pipeline.events.includes("submissionFinished")
+  ) {
     await sendSubmissionEmail(
       email,
       "finished",
@@ -97,10 +133,19 @@ async function handleEmailNotification(triggeredEvents, pipeline, form, submissi
   }
 }
 
-async function handleSlackNotification(triggeredEvents, pipeline, form, submissionReceived, submissionFull) {
+async function handleSlackNotification(
+  triggeredEvents,
+  pipeline,
+  form,
+  submissionReceived,
+  submissionFull
+) {
   if (pipeline.config.hasOwnProperty("endpointUrl")) {
     let body;
-    if (triggeredEvents.includes("submissionCreated") && pipeline.events.includes("submissionCreated")) {
+    if (
+      triggeredEvents.includes("submissionCreated") &&
+      pipeline.events.includes("submissionCreated")
+    ) {
       body = {
         text: `Someone just filled out your form "${form.label}" in Formbricks.`,
         blocks: [
@@ -124,7 +169,10 @@ async function handleSlackNotification(triggeredEvents, pipeline, form, submissi
       };
       await sendSlackMessage(pipeline, body);
     }
-    if (triggeredEvents.includes("submissionUpdated") && pipeline.events.includes("submissionUpdated")) {
+    if (
+      triggeredEvents.includes("submissionUpdated") &&
+      pipeline.events.includes("submissionUpdated")
+    ) {
       body = {
         text: `Someone just updated a submission in your form "${form.label}" in Formbricks.`,
         blocks: [
@@ -148,7 +196,10 @@ async function handleSlackNotification(triggeredEvents, pipeline, form, submissi
       };
       await sendSlackMessage(pipeline, body);
     }
-    if (triggeredEvents.includes("submissionFinished") && pipeline.events.includes("submissionFinished")) {
+    if (
+      triggeredEvents.includes("submissionFinished") &&
+      pipeline.events.includes("submissionFinished")
+    ) {
       body = {
         text: `Someone just finished your form "${form.label}" in Formbricks.`,
         blocks: [

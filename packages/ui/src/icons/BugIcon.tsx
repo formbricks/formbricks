@@ -1,6 +1,12 @@
 export function BugIcon(props: any) {
   return (
-    <svg width={40} height={40} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg
+      width={40}
+      height={40}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}>
       <path
         d="M26.6668 10.7263V7.49967C26.6668 5.73156 25.9645 4.03587 24.7142 2.78563C23.464 1.53539 21.7683 0.833008 20.0002 0.833008C18.2321 0.833008 16.5364 1.53539 15.2861 2.78563C14.0359 4.03587 13.3335 5.73156 13.3335 7.49967V10.7263"
         fill="#EF4444"

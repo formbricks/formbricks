@@ -63,7 +63,9 @@ export default function Footer() {
           <span className="sr-only">Formbricks</span>
           <FooterLogo className="mx-auto h-8 w-auto sm:h-10" />
         </Link>
-        <p className="text-base text-slate-500 dark:text-slate-400">Experience Management for B2B SaaS</p>
+        <p className="text-base text-slate-500 dark:text-slate-400">
+          Experience Management for B2B SaaS
+        </p>
         <div className="border-gray-500">
           <p className="text-sm text-slate-400 dark:text-gray-500">
             &copy; 2022. All rights reserved.

@@ -76,14 +76,19 @@ export default function FormsList({ workspaceId }) {
                         className="absolute h-full w-full"></Link>
                       <div className="divide-y divide-slate-100 ">
                         <div className="flex justify-between px-4 py-2 text-right sm:px-6">
-                          <p className="text-xs text-slate-400 ">{form._count?.submissions} submissions</p>
+                          <p className="text-xs text-slate-400 ">
+                            {form._count?.submissions} submissions
+                          </p>
                           <Menu as="div" className="relative z-10 inline-block text-left">
                             {({ open }) => (
                               <>
                                 <div>
                                   <Menu.Button className="text-red -m-2 flex items-center rounded-full p-2">
                                     <span className="sr-only">Open options</span>
-                                    <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
+                                    <EllipsisHorizontalIcon
+                                      className="h-5 w-5"
+                                      aria-hidden="true"
+                                    />
                                   </Menu.Button>
                                 </div>
 
@@ -140,7 +145,11 @@ export default function FormsList({ workspaceId }) {
             </ul>
           ))}
       </div>
-      <NewFormModal open={openNewFormModal} setOpen={setOpenNewFormModal} workspaceId={workspaceId} />
+      <NewFormModal
+        open={openNewFormModal}
+        setOpen={setOpenNewFormModal}
+        workspaceId={workspaceId}
+      />
     </>
   );
 }

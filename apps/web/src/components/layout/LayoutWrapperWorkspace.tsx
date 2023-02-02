@@ -130,7 +130,9 @@ export default function LayoutWrapperWorkspace({ children }) {
                             aria-current={item.current ? "page" : undefined}>
                             <item.icon
                               className={clsx(
-                                item.current ? "text-white" : "text-teal-300 group-hover:text-white",
+                                item.current
+                                  ? "text-white"
+                                  : "text-teal-300 group-hover:text-white",
                                 "mr-3 h-6 w-6"
                               )}
                               aria-hidden="true"

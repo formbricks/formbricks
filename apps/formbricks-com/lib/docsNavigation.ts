@@ -3,8 +3,14 @@ const navigation = [
     title: "Introduction",
     links: [
       { title: "Why Formbricks?", href: "/docs/introduction/why-formbricks" },
-      { title: "How to achieve this?", href: "/docs/introduction/how-to-achieve-this" },
-      { title: "What is Formbricks?", href: "/docs/introduction/what-is-formbricks" },
+      {
+        title: "How to achieve this?",
+        href: "/docs/introduction/how-to-achieve-this",
+      },
+      {
+        title: "What is Formbricks?",
+        href: "/docs/introduction/what-is-formbricks",
+      },
       { title: "Quick start", href: "/docs/introduction/quick-start" },
     ],
   },
@@ -98,7 +104,10 @@ const navigation = [
     links: [
       { title: "Core API", href: "/docs/formbricks-hq/core-api" },
       { title: "Schema", href: "/docs/formbricks-hq/schema" },
-      { title: "Email Notifications (UI)", href: "/docs/formbricks-hq/ui/email-notifications" },
+      {
+        title: "Email Notifications (UI)",
+        href: "/docs/formbricks-hq/ui/email-notifications",
+      },
       { title: "Webhooks (UI)", href: "/docs/formbricks-hq/ui/webhooks" },
       { title: "Self-Hosting", href: "/docs/formbricks-hq/self-hosting" },
     ],

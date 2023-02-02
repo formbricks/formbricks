@@ -30,11 +30,17 @@ export default function FilterNavigation({ submissions, setFilteredSubmissions }
       for (const filter of filters) {
         // special routine for archive
         if (filter.type === "archive") {
-          const archivedSelected = filter.options.find((option) => option.value === "archived")?.active;
+          const archivedSelected = filter.options.find(
+            (option) => option.value === "archived"
+          )?.active;
           if (archivedSelected) {
-            newFilteredSubmissions = newFilteredSubmissions.filter((submission) => submission.archived);
+            newFilteredSubmissions = newFilteredSubmissions.filter(
+              (submission) => submission.archived
+            );
           } else {
-            newFilteredSubmissions = newFilteredSubmissions.filter((submission) => !submission.archived);
+            newFilteredSubmissions = newFilteredSubmissions.filter(
+              (submission) => !submission.archived
+            );
           }
           continue;
         }
@@ -83,7 +89,10 @@ export default function FilterNavigation({ submissions, setFilteredSubmissions }
               label: element.label,
               type: element.type,
               options: [{ value: "all", label: "All", active: true }].concat([
-                ...element.options.map((option) => ({ ...option, active: false })),
+                ...element.options.map((option) => ({
+                  ...option,
+                  active: false,
+                })),
               ]),
             });
           }

@@ -3,7 +3,10 @@ import useSWR from "swr";
 import { fetcher } from "./utils";
 
 export const usePipelines = (formId: string, workspaceId: string) => {
-  const { data, error, mutate } = useSWR(`/api/workspaces/${workspaceId}/forms/${formId}/pipelines`, fetcher);
+  const { data, error, mutate } = useSWR(
+    `/api/workspaces/${workspaceId}/forms/${formId}/pipelines`,
+    fetcher
+  );
 
   return {
     pipelines: data,

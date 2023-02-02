@@ -38,7 +38,9 @@ export function Nps(props: NpsProps) {
             rules={{ required: true }}
             render={({ field }: any) => (
               <RadioGroup {...field} id="test">
-                <RadioGroup.Label className="sr-only">Choose a number from 0 to 10</RadioGroup.Label>
+                <RadioGroup.Label className="sr-only">
+                  Choose a number from 0 to 10
+                </RadioGroup.Label>
                 <Options optionsClassName={props.optionsClassName}>
                   {[...Array(11).keys()].map((option) => (
                     <RadioGroup.Option
@@ -47,7 +49,9 @@ export function Nps(props: NpsProps) {
                       className={props.optionClassName || "formbricks-option"}>
                       <Wrapper wrapperClassName={props.wrapperClassName}>
                         <Inner innerClassName={props.innerClassName}>
-                          <RadioGroup.Label as="span" className={props.inputClassName || "formbricks-input"}>
+                          <RadioGroup.Label
+                            as="span"
+                            className={props.inputClassName || "formbricks-input"}>
                             {option}
                           </RadioGroup.Label>
                         </Inner>

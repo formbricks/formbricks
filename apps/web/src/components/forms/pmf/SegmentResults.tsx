@@ -4,7 +4,11 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { getOptionLabelMap, useSubmissions } from "@/lib/submissions";
 import { Pie } from "@formbricks/charts";
-import { NotDisappointedIcon, SomewhatDisappointedIcon, VeryDisappointedIcon } from "@formbricks/ui";
+import {
+  NotDisappointedIcon,
+  SomewhatDisappointedIcon,
+  VeryDisappointedIcon,
+} from "@formbricks/ui";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import FilterNavigation from "../shared/FilterNavigation";
@@ -59,7 +63,10 @@ export default function SegmentResults() {
       <div>
         <section aria-labelledby="filters" className="pt-6 pb-24">
           <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-4">
-            <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
+            <FilterNavigation
+              submissions={submissions}
+              setFilteredSubmissions={setFilteredSubmissions}
+            />
 
             {/* Submission grid */}
 
@@ -67,11 +74,19 @@ export default function SegmentResults() {
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
                   <h3 className="text-sm font-medium text-slate-800">Overall</h3>
-                  <Pie submissions={submissions} schema={form.schema} fieldName={"disappointment"} />
+                  <Pie
+                    submissions={submissions}
+                    schema={form.schema}
+                    fieldName={"disappointment"}
+                  />
                 </div>
                 <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
                   <h3 className="text-sm font-medium text-slate-800">Selected Segment</h3>
-                  <Pie submissions={filteredSubmissions} schema={form.schema} fieldName={"disappointment"} />
+                  <Pie
+                    submissions={filteredSubmissions}
+                    schema={form.schema}
+                    fieldName={"disappointment"}
+                  />
                 </div>
               </div>
               {questions.map((question) => (
@@ -93,11 +108,20 @@ export default function SegmentResults() {
                         <div className="col-span-3">{submission.data[question.name]}</div>
                         <div>
                           {submission.data.disappointment === "veryDisappointed" ? (
-                            <VeryDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                            <VeryDisappointedIcon
+                              className="h-6 w-6 text-white"
+                              aria-hidden="true"
+                            />
                           ) : submission.data.disappointment === "notDisappointed" ? (
-                            <NotDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                            <NotDisappointedIcon
+                              className="h-6 w-6 text-white"
+                              aria-hidden="true"
+                            />
                           ) : submission.data.disappointment === "somewhatDisappointed" ? (
-                            <SomewhatDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                            <SomewhatDisappointedIcon
+                              className="h-6 w-6 text-white"
+                              aria-hidden="true"
+                            />
                           ) : null}
                         </div>
                         <div>

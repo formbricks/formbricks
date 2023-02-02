@@ -15,7 +15,11 @@ export const useSubmissions = (workspaceId: string, formId: string) => {
   };
 };
 
-export const deleteSubmission = async (workspaceId: string, formId: string, submissionId: string) => {
+export const deleteSubmission = async (
+  workspaceId: string,
+  formId: string,
+  submissionId: string
+) => {
   try {
     await fetch(`/api/workspaces/${workspaceId}/forms/${formId}/submissions/${submissionId}`, {
       method: "DELETE",
@@ -28,11 +32,14 @@ export const deleteSubmission = async (workspaceId: string, formId: string, subm
 
 export const persistSubmission = async (submission, workspaceId) => {
   try {
-    await fetch(`/api/workspaces/${workspaceId}/forms/${submission.formId}/submissions/${submission.id}/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(submission),
-    });
+    await fetch(
+      `/api/workspaces/${workspaceId}/forms/${submission.formId}/submissions/${submission.id}/`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submission),
+      }
+    );
   } catch (error) {
     console.error(error);
   }
@@ -70,9 +77,12 @@ export const MergeWithSchema = (submissionData, schema) => {
       if (elem.name in submissionData) {
         if (["checkbox", "radio"].includes(elem.type)) {
           if (Array.isArray(submissionData[elem.name])) {
-            mergedData[elem.label] = submissionData[elem.name].map((value) => optionLabelMap[value] || value);
+            mergedData[elem.label] = submissionData[elem.name].map(
+              (value) => optionLabelMap[value] || value
+            );
           } else {
-            mergedData[elem.label] = optionLabelMap[submissionData[elem.name]] || submissionData[elem.name];
+            mergedData[elem.label] =
+              optionLabelMap[submissionData[elem.name]] || submissionData[elem.name];
           }
         } else {
           mergedData[elem.label] = submissionData[elem.name];

@@ -1,6 +1,12 @@
 export function AngryBirdRage2Icon(props: any) {
   return (
-    <svg width="79" height="75" viewBox="0 0 79 75" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg
+      width="79"
+      height="75"
+      viewBox="0 0 79 75"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}>
       <path
         d="M70.1683 50C70.1683 66.4 56.4144 73.4375 39.4459 73.4375C22.4774 73.4375 8.72339 66.4 8.72339 50C8.72339 33.6 22.4806 10.9375 39.4459 10.9375C56.4111 10.9375 70.1683 33.6062 70.1683 50Z"
         fill="#00E6CA"

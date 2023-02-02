@@ -34,7 +34,9 @@ export default function TabNavigation({ tabs, currentTab, setCurrentTab }) {
                 aria-current={currentTab === tab.name ? "page" : undefined}>
                 <tab.icon
                   className={clsx(
-                    tab.name === currentTab ? "text-teal-500" : "text-gray-400 group-hover:text-gray-500",
+                    tab.name === currentTab
+                      ? "text-teal-500"
+                      : "text-gray-400 group-hover:text-gray-500",
                     "-ml-0.5 mr-2 h-5 w-5"
                   )}
                   aria-hidden="true"

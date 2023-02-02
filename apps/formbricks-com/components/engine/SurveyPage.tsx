@@ -76,11 +76,14 @@ export function SurveyPage({
       const submission = await res[0].json();
       setSubmissionId(submission.id);
     } else {
-      const res = await fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions/${submissionId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: partialSubmission }),
-      });
+      const res = await fetch(
+        `${formbricksUrl}/api/capture/forms/${formId}/submissions/${submissionId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: partialSubmission }),
+        }
+      );
       if (!res.ok) {
         alert("There was an error sending this form. Please contact us at hola@formbricks.com");
         return;

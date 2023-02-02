@@ -34,7 +34,10 @@ export default function PMFResults() {
       <div>
         <section aria-labelledby="filters" className="pt-6 pb-24">
           <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-4">
-            <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
+            <FilterNavigation
+              submissions={submissions}
+              setFilteredSubmissions={setFilteredSubmissions}
+            />
 
             {/* Submission grid */}
 

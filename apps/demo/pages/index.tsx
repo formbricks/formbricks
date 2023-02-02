@@ -103,7 +103,10 @@ export default function Demo() {
     await sendToHq({ submission, schema });
     const submissionRequest = await fetch(`/api/submissions`, {
       method: "GET",
-      headers: { "Content-Type": "application/json", "X-API-Key": "b364435ae5dab956aec1b2b3e753258b" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": "b364435ae5dab956aec1b2b3e753258b",
+      },
     });
     const submissions = await submissionRequest.json();
     setSchema(schema);
@@ -196,7 +199,10 @@ export default function Demo() {
         {/* Alternating Feature Sections */}
 
         <div className="relative overflow-hidden pl-12 pb-16">
-          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-gray-100" />
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-gray-100"
+          />
           <div className="relative">
             <hr className="my-24 px-10" />
             <div className="lg:mx-auto lg:max-w-7xl">
@@ -208,13 +214,15 @@ export default function Demo() {
                     </span>
                   </div>
                   <div className="mt-6">
-                    <h2 className="text-3xl font-bold tracking-tight text-gray-900">The door is open</h2>
+                    <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+                      The door is open
+                    </h2>
                     <p className="mt-4 text-lg text-gray-500">
                       Now it&lsquo;s up to you to continue! And we are here to support you.
                       <br />
                       <br />
-                      Give us some feedback so we can improve our service. In the spirit of transparency,
-                      we&apos;ll also show you what other users have responded.
+                      Give us some feedback so we can improve our service. In the spirit of
+                      transparency, we&apos;ll also show you what other users have responded.
                     </p>
                   </div>
                 </div>
@@ -262,7 +270,12 @@ export default function Demo() {
                         Here you can see what other people answered.
                       </p>
                       {/* Visualize Submission using Formbricks Graphs Library */}
-                      <Bar submissions={submissions} schema={schema} fieldName="evaluate" color="#4f46e5" />
+                      <Bar
+                        submissions={submissions}
+                        schema={schema}
+                        fieldName="evaluate"
+                        color="#4f46e5"
+                      />
                     </>
                   )}
                 </div>

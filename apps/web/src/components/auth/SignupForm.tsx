@@ -23,7 +23,9 @@ export const SignupForm = () => {
       const url =
         process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED === "1"
           ? `/auth/signup-without-verification-success`
-          : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
+          : `/auth/verification-requested?email=${encodeURIComponent(
+              e.target.elements.email.value
+            )}`;
 
       router.push(url);
     } catch (e) {
@@ -40,7 +42,9 @@ export const SignupForm = () => {
               <XCircleIcon className="h-5 w-5 text-sky-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-sky-800">An error occurred when logging you in</h3>
+              <h3 className="text-sm font-medium text-sky-800">
+                An error occurred when logging you in
+              </h3>
               <div className="mt-2 text-sm text-sky-700">
                 <p className="space-y-1 whitespace-pre-wrap">{error}</p>
               </div>
@@ -118,7 +122,9 @@ export const SignupForm = () => {
                   terms of service
                 </a>
               )}
-              {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
+              {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && (
+                <span> and </span>
+              )}
               {process.env.NEXT_PUBLIC_PRIVACY_URL && (
                 <a
                   className="text-sky underline hover:text-sky-600"

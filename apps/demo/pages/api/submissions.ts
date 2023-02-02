@@ -10,7 +10,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       `http://localhost:3000/api/workspaces/cldluasmh0001qfwq6wzzhkqd/forms/cldlz5zxl0012qfwqj5zly1u3/submissions`,
       {
         method: "GET",
-        headers: { "Content-Type": "application/json", "X-API-Key": "b364435ae5dab956aec1b2b3e753258b" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": "b364435ae5dab956aec1b2b3e753258b",
+        },
       }
     );
     const submissions = await submissionRequest.json();

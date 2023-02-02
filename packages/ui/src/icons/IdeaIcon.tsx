@@ -1,6 +1,12 @@
 export function IdeaIcon(props: any) {
   return (
-    <svg width={40} height={40} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg
+      width={40}
+      height={40}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}>
       <path
         d="M24.1668 33.3337C24.1668 34.4387 23.7278 35.4985 22.9464 36.2799C22.165 37.0613 21.1052 37.5003 20.0002 37.5003C18.8951 37.5003 17.8353 37.0613 17.0539 36.2799C16.2725 35.4985 15.8335 34.4387 15.8335 33.3337V29.167H24.1668V33.3337Z"
         fill="#F59E0B"

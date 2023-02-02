@@ -36,7 +36,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           },
         },
       });
-      if (process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") await sendVerificationEmail(userData);
+      if (process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1")
+        await sendVerificationEmail(userData);
       // tracking
       capturePosthogEvent(userData.id, "user created");
       res.json(userData);

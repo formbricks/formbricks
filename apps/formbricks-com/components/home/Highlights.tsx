@@ -40,13 +40,21 @@ export default function Highlights({}) {
                 <span className="font-light">ask specific user cohorts.</span>
               </h2>
               <p className="text-md mt-6 max-w-3xl leading-7 text-slate-500 dark:text-slate-400">
-                Email is spammy and ineffective. Create cohorts based on usage data and reach out to specific
-                cohorts in-app.
+                Email is spammy and ineffective. Create cohorts based on usage data and reach out to
+                specific cohorts in-app.
               </p>
             </div>
             <div className="rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:p-8">
-              <Image src={ImageAnalytics} alt="react library" className="block rounded-lg dark:hidden" />
-              <Image src={ImageDarkAnalytics} alt="react library" className="hidden rounded-lg dark:block" />
+              <Image
+                src={ImageAnalytics}
+                alt="react library"
+                className="block rounded-lg dark:hidden"
+              />
+              <Image
+                src={ImageDarkAnalytics}
+                alt="react library"
+                className="hidden rounded-lg dark:block"
+              />
             </div>
           </div>
         </div>
@@ -55,8 +63,16 @@ export default function Highlights({}) {
         <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
             <div className="order-last rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:p-8 md:order-first">
-              <Image src={ImageInsights} alt="react library" className="block rounded-lg dark:hidden" />
-              <Image src={ImageDarkInsights} alt="react library" className="hidden rounded-lg dark:block" />
+              <Image
+                src={ImageInsights}
+                alt="react library"
+                className="block rounded-lg dark:hidden"
+              />
+              <Image
+                src={ImageDarkInsights}
+                alt="react library"
+                className="hidden rounded-lg dark:block"
+              />
             </div>
             <div className="pb-8 md:pb-0">
               <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
@@ -65,8 +81,8 @@ export default function Highlights({}) {
                 <span className="font-light">analytics and interviews.</span>
               </h2>
               <p className="text-md mt-6 max-w-3xl leading-7 text-slate-500 dark:text-slate-400">
-                Product analytics tell you WHAT users do, not WHY. Complement user interviews with a constant
-                flow of qualitative user insights.
+                Product analytics tell you WHAT users do, not WHY. Complement user interviews with a
+                constant flow of qualitative user insights.
               </p>
             </div>
           </div>
@@ -82,8 +98,8 @@ export default function Highlights({}) {
                 <span className="font-light">Never ask something twice.</span>
               </h2>
               <p className="text-md mt-6 max-w-3xl leading-7 text-slate-500 dark:text-slate-400">
-                With Formbricks you build a database of everyone who signs up to your product. Enrich their
-                profile at key moments in the user journey.
+                With Formbricks you build a database of everyone who signs up to your product.
+                Enrich their profile at key moments in the user journey.
               </p>
             </div>
             <div className="w-full rounded-lg bg-slate-100 p-8 dark:bg-slate-800">

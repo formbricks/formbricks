@@ -59,13 +59,17 @@ export default function FeedbackModal({ show, setShow, formId, customer }: Feedb
                   </button>
                 </div>
                 <div className="flex items-start">
-                  <div className="w-full text-center text-lg text-white">We &hearts; your feedback</div>
+                  <div className="w-full text-center text-lg text-white">
+                    We &hearts; your feedback
+                  </div>
                 </div>
               </div>
 
               {typeof feedbackType === "undefined" ? (
                 <div className="p-4">
-                  <div className="w-full text-center text-xs text-gray-700">What&apos;s on your mind?</div>
+                  <div className="w-full text-center text-xs text-gray-700">
+                    What&apos;s on your mind?
+                  </div>
                   <nav className="mt-3 space-y-1" aria-label="Sidebar">
                     {navigation.map((item) => (
                       <button
@@ -196,7 +200,9 @@ export default function FeedbackModal({ show, setShow, formId, customer }: Feedb
                         <p className="text-xs font-medium text-gray-700 group-hover:text-gray-900">
                           Tom Cook
                         </p>
-                        <p className="text-xs font-medium text-gray-500 group-hover:text-gray-700">CEO</p>
+                        <p className="text-xs font-medium text-gray-500 group-hover:text-gray-700">
+                          CEO
+                        </p>
                       </div>
                     </div>
                   </div>

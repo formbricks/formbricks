@@ -9,8 +9,8 @@ export default function SignUpPage() {
         <>
           <h1 className="leading-2 mb-4 text-center font-bold">Sign up disabled</h1>
           <p className="text-center">
-            The account creation is disabled in this instance. Please contact the site administrator to create
-            an account.
+            The account creation is disabled in this instance. Please contact the site administrator
+            to create an account.
           </p>
           <hr className="my-4" />
           <Link

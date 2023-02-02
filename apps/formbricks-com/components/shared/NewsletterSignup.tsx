@@ -21,7 +21,9 @@ export default function WaitlistForm() {
                 placeholder="Email"
                 className="block w-full rounded-xl text-slate-900 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
               />
-              <label htmlFor="email" className="ml-2 block text-sm text-slate-400 dark:text-slate-500">
+              <label
+                htmlFor="email"
+                className="ml-2 block text-sm text-slate-400 dark:text-slate-500">
                 Work or personal
               </label>
             </div>
@@ -33,7 +35,9 @@ export default function WaitlistForm() {
                 required
                 className="mt-4 block w-full rounded-xl text-slate-900 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
               />
-              <label htmlFor="name" className="ml-2 block text-sm text-slate-400 dark:text-slate-500">
+              <label
+                htmlFor="name"
+                className="ml-2 block text-sm text-slate-400 dark:text-slate-500">
                 Optional but appreciated
               </label>
             </div>

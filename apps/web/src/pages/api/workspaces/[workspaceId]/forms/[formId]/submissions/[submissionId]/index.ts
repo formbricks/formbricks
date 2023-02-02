@@ -23,9 +23,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     },
   });
   if (membership === null) {
-    return res
-      .status(403)
-      .json({ message: "You don't have access to this workspace or this workspace doesn't exist" });
+    return res.status(403).json({
+      message: "You don't have access to this workspace or this workspace doesn't exist",
+    });
   }
 
   // GET /api/workspaces[workspaceId]/forms/[formId]/submissions/[submissionId]

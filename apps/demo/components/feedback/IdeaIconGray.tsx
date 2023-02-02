@@ -1,6 +1,12 @@
 export function IdeaIconGray(props: any) {
   return (
-    <svg width={64} height={64} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg
+      width={64}
+      height={64}
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}>
       <path
         d="M32 15.334C41.9411 15.334 50 23.3929 50 33.334C50 43.2751 41.9411 51.334 32 51.334C22.0589 51.334 14 43.2751 14 33.334C14 23.3929 22.0589 15.334 32 15.334Z"
         fill="#CBD5E1"

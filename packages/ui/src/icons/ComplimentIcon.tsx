@@ -1,6 +1,12 @@
 export function ComplimentIcon(props: any) {
   return (
-    <svg width={40} height={40} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg
+      width={40}
+      height={40}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}>
       <g clipPath="url(#clip0_78_2670)">
         <path
           d="M20.0002 39.1663C30.5856 39.1663 39.1668 30.5851 39.1668 19.9997C39.1668 9.41422 30.5856 0.833008 20.0002 0.833008C9.41471 0.833008 0.833496 9.41422 0.833496 19.9997C0.833496 30.5851 9.41471 39.1663 20.0002 39.1663Z"

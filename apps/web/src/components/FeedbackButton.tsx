@@ -62,13 +62,18 @@ export function FeedbackButton() {
   return (
     <>
       {configLoaded && (
-        <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2.1/dist/index.umd.js" defer />
+        <Script
+          src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2.1/dist/index.umd.js"
+          defer
+        />
       )}
 
       <div
         className={clsx(
           "xs:flex-row xs:right-0 xs:top-1/2 xs:w-[18rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-fit w-full transition-all duration-500 ease-in-out",
-          isOpen ? "xs:-translate-x-0 translate-y-0" : "xs:translate-x-full xs:-mr-1 translate-y-full"
+          isOpen
+            ? "xs:-translate-x-0 translate-y-0"
+            : "xs:translate-x-full xs:-mr-1 translate-y-full"
         )}>
         <div
           className="xs:flex-row flex h-full flex-col"

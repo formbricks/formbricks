@@ -14,7 +14,8 @@ export default function HeadingCentered() {
           Try it right now!
         </p>
         <p className="text-slate-500 dark:text-slate-300 ">
-          Dive right in or browse docs for examples. Questions? Join our Discord, we’re happy to help
+          Dive right in or browse docs for examples. Questions? Join our Discord, we’re happy to
+          help
         </p>
         <Button variant="secondary" onClick={() => router.push("/discord")}>
           Join Discord

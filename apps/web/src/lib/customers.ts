@@ -13,7 +13,10 @@ export const useCustomers = (workspaceId: string) => {
 };
 
 export const useCustomer = (workspaceId: string, customerId: string) => {
-  const { data, error, mutate } = useSWR(`/api/workspaces/${workspaceId}/customers/${customerId}`, fetcher);
+  const { data, error, mutate } = useSWR(
+    `/api/workspaces/${workspaceId}/customers/${customerId}`,
+    fetcher
+  );
 
   return {
     customer: data,

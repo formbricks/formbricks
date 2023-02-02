@@ -57,9 +57,12 @@ function init() {
   Array.from(
     formContainer.getElementsByClassName("formbricks-radio-input") as HTMLCollectionOf<HTMLElement>
   ).forEach((el) => {
-    el.addEventListener("click", () => submitElement(el.dataset?.elementName, el.dataset?.elementValue));
+    el.addEventListener("click", () =>
+      submitElement(el.dataset?.elementName, el.dataset?.elementValue)
+    );
     el.addEventListener("keypress", function (e) {
-      if (e.key === "Enter") return submitElement(el.dataset?.elementName, el.dataset?.elementValue);
+      if (e.key === "Enter")
+        return submitElement(el.dataset?.elementName, el.dataset?.elementValue);
     });
   });
   // text inputs
@@ -82,7 +85,10 @@ function applyConfig() {
     if (root !== null) {
       if (config.style.brandColor) {
         root.style.setProperty("--formbricksPmf-brand-color", config.style.brandColor);
-        root.style.setProperty("--formbricksPmf-brand-color-transparent", config.style.brandColor + 50);
+        root.style.setProperty(
+          "--formbricksPmf-brand-color-transparent",
+          config.style.brandColor + 50
+        );
       }
       if (config.style.headerBGColor) {
         root.style.setProperty("--formbricksPmf-header-bg-color", config.style.headerBGColor);
@@ -97,7 +103,10 @@ function applyConfig() {
         root.style.setProperty("--formbricksPmf-text-color", config.style.textColor);
       }
       if (config.style.buttonHoverColor) {
-        root.style.setProperty("--formbricksPmf-button-hover-bg-color", config.style.buttonHoverColor);
+        root.style.setProperty(
+          "--formbricksPmf-button-hover-bg-color",
+          config.style.buttonHoverColor
+        );
       }
       if (config.style.borderRadius) {
         root.style.setProperty("--formbricksPmf-border-radius", config.style.borderRadius);
@@ -147,10 +156,14 @@ async function submitElement(name?: string, value?: string) {
   // update dom
   currentQuestion?.classList.add("formbricks-hidden");
   currentElementIdx = currentElementIdx + 1;
-  document.getElementById(`formbricks-question-${currentElementIdx}`)?.classList.remove("formbricks-hidden");
+  document
+    .getElementById(`formbricks-question-${currentElementIdx}`)
+    ?.classList.remove("formbricks-hidden");
   // update progressbar
   const progressBarItems = Array.from(
-    formContainer.getElementsByClassName("formbricks-progressbar-item") as HTMLCollectionOf<HTMLFormElement>
+    formContainer.getElementsByClassName(
+      "formbricks-progressbar-item"
+    ) as HTMLCollectionOf<HTMLFormElement>
   );
   if (currentElementIdx <= progressBarItems.length - 1) {
     progressBarItems[currentElementIdx].classList.add("formbricks-progressbar-item-current");
@@ -214,9 +227,12 @@ async function sendWarmupRequest() {
   if (!config.formId) {
     throw new Error("Missing formId");
   }
-  await fetch(`${stripLastBackslash(config.formbricksUrl)}/api/capture/forms/${config.formId}/submissions`, {
-    method: "OPTIONS",
-  });
+  await fetch(
+    `${stripLastBackslash(config.formbricksUrl)}/api/capture/forms/${config.formId}/submissions`,
+    {
+      method: "OPTIONS",
+    }
+  );
   return;
 }
 

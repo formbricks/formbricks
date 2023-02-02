@@ -26,7 +26,15 @@ interface APICallProps {
   example?: string;
 }
 
-export function APILayout({ method, url, description, queries, bodies, responses, example }: APICallProps) {
+export function APILayout({
+  method,
+  url,
+  description,
+  queries,
+  bodies,
+  responses,
+  example,
+}: APICallProps) {
   const [switchState, setSwitchState] = useState(false);
   function handleOnChange() {
     setSwitchState(!switchState);
@@ -68,7 +76,12 @@ export function APILayout({ method, url, description, queries, bodies, responses
               <p className="not-prose -mb-1 pt-2 font-bold">Query</p>
               <div>
                 {queries.map((q) => (
-                  <Parameter key={q.label} label={q.label} type={q.type} description={q.description} />
+                  <Parameter
+                    key={q.label}
+                    label={q.label}
+                    type={q.type}
+                    description={q.description}
+                  />
                 ))}
               </div>
             </div>

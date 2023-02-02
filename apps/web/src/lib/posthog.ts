@@ -1,7 +1,9 @@
 import { hashString } from "./utils";
 
 const enabled =
-  process.env.NODE_ENV === "production" && process.env.POSTHOG_API_HOST && process.env.POSTHOG_API_KEY;
+  process.env.NODE_ENV === "production" &&
+  process.env.POSTHOG_API_HOST &&
+  process.env.POSTHOG_API_KEY;
 
 export const capturePosthogEvent = async (userId, eventName, properties = {}) => {
   if (!enabled) {

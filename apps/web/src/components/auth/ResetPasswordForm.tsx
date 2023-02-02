@@ -30,7 +30,9 @@ export const ResetPasswordForm = ({ token }) => {
               <XCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">An error occurred when logging you in</h3>
+              <h3 className="text-sm font-medium text-red-800">
+                An error occurred when logging you in
+              </h3>
               <div className="mt-2 text-sm text-red-700">
                 <p className="space-y-1 whitespace-pre-wrap">{error}</p>
               </div>

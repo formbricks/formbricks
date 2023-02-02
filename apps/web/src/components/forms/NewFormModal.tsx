@@ -117,7 +117,10 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
                   label: "How disappointed would you be if you could no longer use our service?",
                   options: [
                     { label: "Very disappointed", value: "veryDisappointed" },
-                    { label: "Somewhat disappointed", value: "somewhatDisappointed" },
+                    {
+                      label: "Somewhat disappointed",
+                      value: "somewhatDisappointed",
+                    },
                     { label: "Not disappointed", value: "notDisappointed" },
                   ],
                 },
@@ -233,7 +236,9 @@ export default function NewFormModal({ open, setOpen, workspaceId }: FormOnboard
                   </button>
                 </div>
                 <div className="flex flex-row justify-between">
-                  <h2 className="flex-none p-2 text-xl font-bold text-slate-800">Create new form</h2>
+                  <h2 className="flex-none p-2 text-xl font-bold text-slate-800">
+                    Create new form
+                  </h2>
                 </div>
                 <form
                   onSubmit={(e) => createFormAction(e)}

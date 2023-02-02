@@ -46,7 +46,10 @@ export function Textarea(props: TextareaProps) {
             rows={props.rows}
             aria-invalid={errors[props.name] ? "true" : "false"}
             {...register(props.name, {
-              required: { value: "required" in validationRules, message: "This field is required" },
+              required: {
+                value: "required" in validationRules,
+                message: "This field is required",
+              },
               minLength: {
                 value: props.minLength || 0,
                 message: `Your answer must be at least ${props.minLength} characters long`,

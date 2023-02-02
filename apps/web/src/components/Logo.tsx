@@ -101,7 +101,12 @@ export function Logo(props) {
           <feComposite in2="hardAlpha" operator="out" />
           <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_2625_5904" />
-          <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_2625_5904" result="shape" />
+          <feBlend
+            mode="normal"
+            in="SourceGraphic"
+            in2="effect1_dropShadow_2625_5904"
+            result="shape"
+          />
         </filter>
         <filter
           id="filter1_f_2625_5904"

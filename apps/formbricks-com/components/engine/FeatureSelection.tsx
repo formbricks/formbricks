@@ -22,7 +22,9 @@ export default function FeatureSelection({ element, field, register }: FeatureSe
         <div className=" mx-auto grid max-w-5xl grid-cols-1 gap-6 px-2 sm:grid-cols-2">
           {element.options &&
             element.options.map((option) => (
-              <label htmlFor={`${element.id}-${option.value}`} key={`${element.id}-${option.value}`}>
+              <label
+                htmlFor={`${element.id}-${option.value}`}
+                key={`${element.id}-${option.value}`}>
                 <div className="drop-shadow-card duration-120 relative cursor-default rounded-lg border border-gray-200 bg-white p-6 transition-all ease-in-out hover:scale-105 dark:border-slate-700 dark:bg-slate-700">
                   <div className="absolute right-10">
                     <input
@@ -35,7 +37,9 @@ export default function FeatureSelection({ element, field, register }: FeatureSe
                     />
                   </div>
                   <div className="h-12 w-12">
-                    {option.frontend?.icon && <option.frontend.icon className="text-brand h-10 w-10" />}
+                    {option.frontend?.icon && (
+                      <option.frontend.icon className="text-brand h-10 w-10" />
+                    )}
                   </div>
                   <span className="text-md mt-3 mb-1 font-bold text-slate-700 dark:text-slate-200">
                     {option.label}

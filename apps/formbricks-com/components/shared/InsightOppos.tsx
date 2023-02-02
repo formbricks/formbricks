@@ -22,7 +22,8 @@ const BestPractices = [
   },
   {
     title: "Superhuman PMF Survey",
-    description: "Find out how disappointed people would be if they could not use your service any more.",
+    description:
+      "Find out how disappointed people would be if they could not use your service any more.",
     category: "In-Moment",
     icon: PMFIcon,
   },
@@ -40,13 +41,15 @@ const BestPractices = [
   },
   {
     title: "Interview Prompt",
-    description: "Ask high-interest users to book a time in your calendar to get all the juicy details.",
+    description:
+      "Ask high-interest users to book a time in your calendar to get all the juicy details.",
     category: "Exploration",
     icon: InterviewPromptIcon,
   },
   {
     title: "Fake Door Follow-Up",
-    description: "Running a fake door experiment? Catch users right when they are full of expectations.",
+    description:
+      "Running a fake door experiment? Catch users right when they are full of expectations.",
     category: "Exploration",
     icon: DoorIcon,
   },
@@ -64,7 +67,8 @@ const BestPractices = [
   },
   {
     title: "Rage Click Survey",
-    description: "Sometimes things don’t work. Trigger this rage click survey to catch users in rage.",
+    description:
+      "Sometimes things don’t work. Trigger this rage click survey to catch users in rage.",
     category: "Retain Users",
     icon: AngryBirdRageIcon,
   },
@@ -116,7 +120,9 @@ export default function InsightOppos() {
               <h3 className="mt-3 mb-1 text-xl font-bold text-slate-700 dark:text-slate-200">
                 {bestPractice.title}
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">{bestPractice.description}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                {bestPractice.description}
+              </p>
             </div>
           ))}
         </div>

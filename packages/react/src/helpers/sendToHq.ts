@@ -7,7 +7,9 @@ interface sendToHqProps {
 export const sendToHq = async ({ submission, schema }: sendToHqProps) => {
   try {
     if (!schema.config.formId) {
-      console.warn(`🧱 FormBricks: formId not set in <Form />. Can't send submission to Formbricks HQ.`);
+      console.warn(
+        `🧱 FormBricks: formId not set in <Form />. Can't send submission to Formbricks HQ.`
+      );
       return;
     }
     // send answer to Formbricks HQ

@@ -55,7 +55,9 @@ export default function SummaryPage() {
           <div className="w-full border-t border-gray-300" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-gray-50 px-3 text-lg font-medium text-gray-900">Questions &amp; Answers</span>
+          <span className="bg-gray-50 px-3 text-lg font-medium text-gray-900">
+            Questions &amp; Answers
+          </span>
         </div>
       </div>
       {Object.keys(form.schema).length === 0 ? (
@@ -65,7 +67,9 @@ export default function SummaryPage() {
               <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">No schema detected for this form.</h3>
+              <h3 className="text-sm font-medium text-yellow-800">
+                No schema detected for this form.
+              </h3>
               <div className="mt-2 text-sm text-yellow-700">
                 <p>To summarize your data Formbricks HQ needs a schema of your form.</p>
               </div>
@@ -102,7 +106,9 @@ export default function SummaryPage() {
               )
               .map((elem) => (
                 <div className="py-12">
-                  {["email", "number", "phone", "search", "text", "textarea", "url"].includes(elem.type) ? (
+                  {["email", "number", "phone", "search", "text", "textarea", "url"].includes(
+                    elem.type
+                  ) ? (
                     <div>
                       <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
                         {elem.label}

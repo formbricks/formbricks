@@ -1,6 +1,12 @@
 export function FeatureRequestIcon(props: any) {
   return (
-    <svg width="75" height="75" viewBox="0 0 75 75" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg
+      width="75"
+      height="75"
+      viewBox="0 0 75 75"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}>
       <path
         d="M23.4375 73.4375L25 54.6875H32.8125V43.75C32.8125 39.606 31.1663 35.6317 28.236 32.7015C25.3058 29.7712 21.3315 28.125 17.1875 28.125C13.0435 28.125 9.06921 29.7712 6.13896 32.7015C3.2087 35.6317 1.5625 39.606 1.5625 43.75V54.6875H9.375L10.9375 73.4375H23.4375Z"
         fill="#C4F0EB"

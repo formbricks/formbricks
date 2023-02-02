@@ -23,7 +23,8 @@ const EmptyPageFiller: React.FC<Props> = ({
   hasButton = false,
 }) => {
   return (
-    <div className={`mx-auto mt-8 rounded-lg border border-slate-200 p-8 text-center ` + borderStyles}>
+    <div
+      className={`mx-auto mt-8 rounded-lg border border-slate-200 p-8 text-center ` + borderStyles}>
       {children}
       <h3 className="mt-5 text-base font-bold text-slate-400">{alertText}</h3>
       <p className="mt-1 text-xs font-light text-slate-400">{hintText}</p>

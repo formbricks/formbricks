@@ -46,7 +46,10 @@ export function Radio(props: FormbricksProps) {
               type="radio"
               id={elemId}
               {...register(props.name, {
-                required: { value: "required" in validationRules, message: "This field is required" },
+                required: {
+                  value: "required" in validationRules,
+                  message: "This field is required",
+                },
               })}
             />
             <Label label={props.label} elemId={elemId} />

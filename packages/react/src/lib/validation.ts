@@ -55,7 +55,8 @@ export const validate = (validationRules: any) => {
   }
   if ("number" in validationRules) {
     validation.number = (v: string) =>
-      ("number" in validationRules && /^[+-]?([0-9]*[.])?[0-9]+$/.test(v)) || "Input must be a number";
+      ("number" in validationRules && /^[+-]?([0-9]*[.])?[0-9]+$/.test(v)) ||
+      "Input must be a number";
   }
   if ("url" in validationRules) {
     validation.url = (v: string) =>

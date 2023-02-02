@@ -49,10 +49,14 @@ const WaitlistPage = () => (
       <div className="mx-auto my-6 w-full max-w-5xl rounded-xl bg-slate-100 px-8 py-10 dark:bg-slate-800 md:my-12 md:px-16 md:py-20">
         <Survey
           formbricksUrl={
-            process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
+            process.env.NODE_ENV === "production"
+              ? "https://app.formbricks.com"
+              : "http://localhost:3000"
           }
           formId={
-            process.env.NODE_ENV === "production" ? "cld37mt2i0000ld08p9q572bc" : "cldd3mrbs0007u0w0g2m6verd"
+            process.env.NODE_ENV === "production"
+              ? "cld37mt2i0000ld08p9q572bc"
+              : "cldd3mrbs0007u0w0g2m6verd"
           }
           survey={{
             config: {
@@ -71,13 +75,21 @@ const WaitlistPage = () => (
                     label: "How would you describe your role?",
                     name: "role",
                     options: [
-                      { label: "Founder", value: "founder", frontend: { icon: FounderIcon } },
+                      {
+                        label: "Founder",
+                        value: "founder",
+                        frontend: { icon: FounderIcon },
+                      },
                       {
                         label: "Product Manager",
                         value: "productManager",
                         frontend: { icon: LaptopWorkerIcon },
                       },
-                      { label: "Engineer", value: "engineer", frontend: { icon: EngineerIcon } },
+                      {
+                        label: "Engineer",
+                        value: "engineer",
+                        frontend: { icon: EngineerIcon },
+                      },
                     ],
                     component: IconRadio,
                   },
@@ -95,8 +107,16 @@ const WaitlistPage = () => (
                     label: "Who are you serving?",
                     name: "targetGroup",
                     options: [
-                      { label: "Companies", value: "companies", frontend: { icon: SkyscraperIcon } },
-                      { label: "Consumers", value: "consumers", frontend: { icon: UserGroupIcon } },
+                      {
+                        label: "Companies",
+                        value: "companies",
+                        frontend: { icon: SkyscraperIcon },
+                      },
+                      {
+                        label: "Consumers",
+                        value: "consumers",
+                        frontend: { icon: UserGroupIcon },
+                      },
                     ],
                     component: IconRadio,
                   },
@@ -151,7 +171,8 @@ const WaitlistPage = () => (
                         value: "featureChaser",
                         frontend: {
                           icon: DogChaserIcon,
-                          description: "Show a survey about a new feature shown only to people who used it.",
+                          description:
+                            "Show a survey about a new feature shown only to people who used it.",
                         },
                       },
                       {
@@ -194,7 +215,8 @@ const WaitlistPage = () => (
                         value: "bugReportForm",
                         frontend: {
                           icon: BugBlueIcon,
-                          description: "Catch all bugs in your SaaS with easy and accessible bug reports.",
+                          description:
+                            "Catch all bugs in your SaaS with easy and accessible bug reports.",
                         },
                       },
                       {
@@ -232,10 +254,26 @@ const WaitlistPage = () => (
                     label: "How many weekly active users do you have?",
                     name: "wau",
                     options: [
-                      { label: "Not launched", value: "notLaunched", frontend: { icon: CrossMarkIcon } },
-                      { label: "10-100", value: "10-100", frontend: { icon: UserCoupleIcon } },
-                      { label: "100-1.000", value: "100-1000", frontend: { icon: UserGroupIcon } },
-                      { label: "1.000+", value: "10000+", frontend: { icon: UserGroupIcon } },
+                      {
+                        label: "Not launched",
+                        value: "notLaunched",
+                        frontend: { icon: CrossMarkIcon },
+                      },
+                      {
+                        label: "10-100",
+                        value: "10-100",
+                        frontend: { icon: UserCoupleIcon },
+                      },
+                      {
+                        label: "100-1.000",
+                        value: "100-1000",
+                        frontend: { icon: UserGroupIcon },
+                      },
+                      {
+                        label: "1.000+",
+                        value: "10000+",
+                        frontend: { icon: UserGroupIcon },
+                      },
                     ],
                     component: IconRadio,
                   },
@@ -366,7 +404,10 @@ const WaitlistPage = () => (
                     type: "text",
                     label: "What is your approach for scaling user research?",
                     name: "scalingResearch",
-                    frontend: { required: true, placeholder: "Last time, I..." },
+                    frontend: {
+                      required: true,
+                      placeholder: "Last time, I...",
+                    },
                     component: Textarea,
                   },
                 ],
@@ -382,7 +423,10 @@ const WaitlistPage = () => (
                     type: "text",
                     label: "What is the hardest part about it?",
                     name: "userResearchHardestPart",
-                    frontend: { required: false, placeholder: "Please tell us about your challenges." },
+                    frontend: {
+                      required: false,
+                      placeholder: "Please tell us about your challenges.",
+                    },
                     component: Textarea,
                   },
                 ],
@@ -395,7 +439,10 @@ const WaitlistPage = () => (
                     type: "text",
                     label: "What tools help you maintain Product-Market Fit?",
                     name: "toolsMaintainPmf",
-                    frontend: { required: true, placehodler: "Mixpanel, Segment, Intercom..." },
+                    frontend: {
+                      required: true,
+                      placehodler: "Mixpanel, Segment, Intercom...",
+                    },
                     component: Textarea,
                   },
                 ],
@@ -432,7 +479,9 @@ const WaitlistPage = () => (
                     type: "text",
                     label: "What is the hardest part about it?",
                     name: "pmfHardestPart",
-                    frontend: { placeholder: "Please tell us about your challenges." },
+                    frontend: {
+                      placeholder: "Please tell us about your challenges.",
+                    },
                     component: Textarea,
                   },
                 ],

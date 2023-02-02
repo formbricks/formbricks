@@ -18,7 +18,11 @@ export default function UpdatePipelineModal({ open, setOpen, pipelineId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await persistPipeline(router.query.formId?.toString(), router.query.workspaceId?.toString(), pipeline);
+    await persistPipeline(
+      router.query.formId?.toString(),
+      router.query.workspaceId?.toString(),
+      pipeline
+    );
     const newPipelines = JSON.parse(JSON.stringify(pipelines));
     const pipelineIdx = pipelines.findIndex((p) => p.id === pipelineId);
     if (pipelineIdx > -1) {

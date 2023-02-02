@@ -1,6 +1,12 @@
 export function PMFIcon(props: any) {
   return (
-    <svg width="59" height="77" viewBox="0 0 59 77" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg
+      width="59"
+      height="77"
+      viewBox="0 0 59 77"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}>
       <path
         d="M50.354 1.60449H8.64567C5.10184 1.60449 2.229 4.47733 2.229 8.02116V68.9795C2.229 72.5233 5.10184 75.3962 8.64567 75.3962H50.354C53.8978 75.3962 56.7707 72.5233 56.7707 68.9795V8.02116C56.7707 4.47733 53.8978 1.60449 50.354 1.60449Z"
         fill="#C4F0EB"

@@ -53,9 +53,9 @@ export const sendForgotPasswordEmail = async (user) => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
-  const verifyLink = `${process.env.NEXTAUTH_URL}/auth/forgot-password/reset?token=${encodeURIComponent(
-    token
-  )}`;
+  const verifyLink = `${
+    process.env.NEXTAUTH_URL
+  }/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
   await sendEmail({
     to: user.email,
     subject: "Reset your Formbricks password",
@@ -121,6 +121,10 @@ export const sendSubmissionEmail = async (
     Click <a href="${
       process.env.NEXTAUTH_URL
     }/workspaces/${workspaceId}/forms/${formId}/feedback">here</a> to see the submission.
-    ${submission.customerEmail ? "<hr/>You can reply to this email to contact the user directly." : ""}`,
+    ${
+      submission.customerEmail
+        ? "<hr/>You can reply to this email to contact the user directly."
+        : ""
+    }`,
   });
 };

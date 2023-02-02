@@ -293,7 +293,16 @@ function submit(e: Event) {
   return false;
 }
 
-const formbricks = { init, open, changeType, close, render, submit, resetForm, config };
+const formbricks = {
+  init,
+  open,
+  changeType,
+  close,
+  render,
+  submit,
+  resetForm,
+  config,
+};
 (window as any).formbricks = formbricks;
 
 export default formbricks;

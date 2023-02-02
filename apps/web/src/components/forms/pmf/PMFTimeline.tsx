@@ -3,7 +3,12 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { MergeWithSchema, persistSubmission, useSubmissions } from "@/lib/submissions";
 import { convertDateTimeString, parseUserAgent } from "@/lib/utils";
-import { Button, NotDisappointedIcon, SomewhatDisappointedIcon, VeryDisappointedIcon } from "@formbricks/ui";
+import {
+  Button,
+  NotDisappointedIcon,
+  SomewhatDisappointedIcon,
+  VeryDisappointedIcon,
+} from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
@@ -83,7 +88,10 @@ export default function PMFTimeline({ submissions }) {
                         ) : submission.data.disappointment === "notDisappointed" ? (
                           <NotDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
                         ) : submission.data.disappointment === "somewhatDisappointed" ? (
-                          <SomewhatDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                          <SomewhatDisappointedIcon
+                            className="h-6 w-6 text-white"
+                            aria-hidden="true"
+                          />
                         ) : null}
                       </span>
                     </div>

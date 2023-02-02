@@ -150,7 +150,9 @@ export default function Header() {
                               )}>
                               <div
                                 className={clsx(
-                                  brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
+                                  brick.status
+                                    ? "text-brand-dark dark:text-brand-light"
+                                    : "text-slate-500",
                                   "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
                                 )}>
                                 <brick.icon className="h-6 w-6" aria-hidden="true" />
@@ -186,7 +188,9 @@ export default function Header() {
                               )}>
                               <div
                                 className={clsx(
-                                  brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
+                                  brick.status
+                                    ? "text-brand-dark dark:text-brand-light"
+                                    : "text-slate-500",
                                   "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
                                 )}>
                                 <brick.icon className="h-6 w-6" aria-hidden="true" />
@@ -222,7 +226,9 @@ export default function Header() {
                               )}>
                               <div
                                 className={clsx(
-                                  brick.status ? "text-brand-dark dark:text-brand-light" : "text-slate-500",
+                                  brick.status
+                                    ? "text-brand-dark dark:text-brand-light"
+                                    : "text-slate-500",
                                   "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md sm:h-12 sm:w-12"
                                 )}>
                                 <brick.icon className="h-6 w-6" aria-hidden="true" />
@@ -350,7 +356,9 @@ export default function Header() {
                   ))}
                 </div>
                 <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Pipelines</h4>
+                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">
+                    Data Pipelines
+                  </h4>
                   {pipes.map((brick) => (
                     <Link
                       key={brick.name}
@@ -390,7 +398,9 @@ export default function Header() {
                   ))}
                 </div>
                 <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Insights</h4>
+                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">
+                    Data Insights
+                  </h4>
                   {insights.map((brick) => (
                     <Link
                       key={brick.name}

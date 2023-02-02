@@ -17,10 +17,8 @@ export default function SubmissionsPage() {
   const router = useRouter();
   const [finishedOnly, setFinishedOnly] = useState(false);
   const [filteredSubmissions, setFileredSubmission] = useState([]);
-  const { submissions, isLoadingSubmissions, mutateSubmissions, isErrorSubmissions } = useSubmissions(
-    router.query.workspaceId?.toString(),
-    router.query.formId?.toString()
-  );
+  const { submissions, isLoadingSubmissions, mutateSubmissions, isErrorSubmissions } =
+    useSubmissions(router.query.workspaceId?.toString(), router.query.formId?.toString());
   const { form, isLoadingForm, isErrorForm } = useForm(
     router.query.formId?.toString(),
     router.query.workspaceId?.toString()
@@ -97,7 +95,9 @@ export default function SubmissionsPage() {
                     className="flex w-full items-center justify-center gap-2 border border-transparent bg-gray-300 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-500 focus:outline-none"
                     onClick={() => {
                       if (
-                        confirm("Are you sure you want to delete this submission? It will be gone forever!")
+                        confirm(
+                          "Are you sure you want to delete this submission? It will be gone forever!"
+                        )
                       ) {
                         handleDelete(activeSubmission);
                       }
@@ -150,7 +150,10 @@ export default function SubmissionsPage() {
                       key={submission.id}
                       value={submission}
                       className={({ checked }) =>
-                        clsx(checked ? "bg-gray-100" : "", "relative flex items-center space-x-3 px-6 py-5 ")
+                        clsx(
+                          checked ? "bg-gray-100" : "",
+                          "relative flex items-center space-x-3 px-6 py-5 "
+                        )
                       }>
                       <div className="min-w-0 flex-1">
                         <button
@@ -159,7 +162,8 @@ export default function SubmissionsPage() {
                           {/* Extend touch target to entire panel */}
                           <span className="absolute inset-0" aria-hidden="true" />
                           <p className="text-sm font-medium text-gray-900">
-                            {submission.finished ? "✅" : "💬"} {convertDateTimeString(submission.createdAt)}
+                            {submission.finished ? "✅" : "💬"}{" "}
+                            {convertDateTimeString(submission.createdAt)}
                           </p>
                         </button>
                       </div>

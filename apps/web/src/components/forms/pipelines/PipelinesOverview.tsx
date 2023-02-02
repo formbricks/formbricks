@@ -115,7 +115,11 @@ export default function PipelinesOverview({}) {
   };
 
   const deletePipelineAction = async (pipelineId) => {
-    await deletePipeline(router.query.formId?.toString(), router.query.workspaceId?.toString(), pipelineId);
+    await deletePipeline(
+      router.query.formId?.toString(),
+      router.query.workspaceId?.toString(),
+      pipelineId
+    );
     const newPipelines = JSON.parse(JSON.stringify(pipelines));
     const pipelineIdx = newPipelines.findIndex((p) => p.id === pipelineId);
     if (pipelineIdx > -1) {
@@ -156,7 +160,9 @@ export default function PipelinesOverview({}) {
                       <div className="flex min-w-0 flex-1 items-center">
                         <div className="min-w-0 flex-1 px-4 md:grid md:grid-cols-2 md:gap-4">
                           <div>
-                            <p className="truncate text-sm font-medium text-slate-800">{pipeline.label}</p>
+                            <p className="truncate text-sm font-medium text-slate-800">
+                              {pipeline.label}
+                            </p>
                             <p className="mt-2 flex items-center text-sm text-gray-500">
                               <BoltIcon
                                 className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400"
@@ -189,7 +195,10 @@ export default function PipelinesOverview({}) {
                                       "absolute inset-0 flex h-full w-full items-center justify-center transition-opacity"
                                     )}
                                     aria-hidden="true">
-                                    <svg className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 12 12">
+                                    <svg
+                                      className="h-3 w-3 text-gray-400"
+                                      fill="none"
+                                      viewBox="0 0 12 12">
                                       <path
                                         d="M4 8l2-2m0 0l2-2M6 6L4 4m2 2l2 2"
                                         stroke="currentColor"
@@ -222,7 +231,10 @@ export default function PipelinesOverview({}) {
                       </div>
                       <div className="inline-flex">
                         <button onClick={() => openSettings(pipeline)}>
-                          <Cog6ToothIcon className="mx-2 h-4 w-4 text-gray-400" aria-hidden="true" />
+                          <Cog6ToothIcon
+                            className="mx-2 h-4 w-4 text-gray-400"
+                            aria-hidden="true"
+                          />
                         </button>
                         <button
                           onClick={() => {

@@ -11,7 +11,13 @@ export function InterviewPromptIcon(props: any) {
         strokeLinejoin="round"
         fill="none"
       />
-      <path d="M20.5,9.5v11" stroke="#0f172a" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path
+        d="M20.5,9.5v11"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
       <path
         d="M13.5,20.5v1h-5v-1H.5v2a1,1,0,0,0,1,1h19a1,1,0,0,0,1-1v-2Z"
         fill="#c4f0eb"

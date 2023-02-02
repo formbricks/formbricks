@@ -19,15 +19,17 @@ export default function SetupInstructions({}) {
           <h3 className="block text-lg font-semibold text-slate-800">How to get started</h3>
           <ol className="mt-2 list-decimal pl-4 leading-8 text-slate-700">
             <li>
-              Copy the Javascript widget below into your application and customize the config according to
-              your needs.
+              Copy the Javascript widget below into your application and customize the config
+              according to your needs.
             </li>
             <li>
-              Choose a HTML element which you want to replace with the PMF survey. Set a unique ID for this
-              element and configure the script accordingly.
+              Choose a HTML element which you want to replace with the PMF survey. Set a unique ID
+              for this element and configure the script accordingly.
             </li>
             <li>You are ready to receive your first submission and view it in the Results tab.</li>
-            <li>Get notified or pipe submission data to a different tool in the Data Pipelines tab.</li>
+            <li>
+              Get notified or pipe submission data to a different tool in the Data Pipelines tab.
+            </li>
           </ol>
         </div>
         <div className="col-span-2">
@@ -63,8 +65,8 @@ export default function SetupInstructions({}) {
           Javascript Snippet
         </label>
         <p>
-          Place this Javascript script tags into the head of your HTML file and include the HTML element to
-          hold the survey into the body to start using the Formbricks PMF survey.
+          Place this Javascript script tags into the head of your HTML file and include the HTML
+          element to hold the survey into the body to start using the Formbricks PMF survey.
         </p>
         <div className="mt-3">
           <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-gray-200">

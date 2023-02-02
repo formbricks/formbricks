@@ -260,13 +260,13 @@ export default function FormOverviewPage() {
                 <h3 className="block pb-4 text-lg font-semibold text-slate-800">Quick Tips</h3>
                 <p className="font-bold">Authentication</p>
                 <p className="my-3 text-sm text-gray-600">
-                  Via the API you can send submissions directly to Formbricks HQ. The API doesn&apos;t need
-                  any authentication and can also be called in the users browser.
+                  Via the API you can send submissions directly to Formbricks HQ. The API
+                  doesn&apos;t need any authentication and can also be called in the users browser.
                 </p>
                 <p className="pt-3 font-bold">CustomerId</p>
                 <p className="my-3 text-sm text-gray-600">
-                  You can pass along a customer ID to identify the respondent. This allows you to attribute
-                  submissions of several surveys to the same respondent.
+                  You can pass along a customer ID to identify the respondent. This allows you to
+                  attribute submissions of several surveys to the same respondent.
                 </p>
               </div>
             </div>

@@ -24,7 +24,10 @@ const formbricksConfig = {
 export default function FeedbackWidget() {
   return (
     <>
-      <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2.1/dist/index.umd.js" defer />
+      <Script
+        src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2.1/dist/index.umd.js"
+        defer
+      />
       <>
         <AppPage onClickFeedback={(event) => window.formbricks.open(event, formbricksConfig)} />
       </>
