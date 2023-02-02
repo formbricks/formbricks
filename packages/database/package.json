@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "eslint": "^8.27.0",
+    "eslint": "8.33.0",
     "eslint-config-formbricks": "workspace:*",
     "prisma": "^4.6.1",
     "prisma-dbml-generator": "^0.10.0",

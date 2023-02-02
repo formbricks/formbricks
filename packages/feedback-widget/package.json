@@ -19,7 +19,7 @@
   "devDependencies": {
     "@floating-ui/dom": "^0.4.2",
     "@formbricks/tsconfig": "workspace:*",
-    "eslint": "^8.27.0",
+    "eslint": "8.33.0",
     "eslint-config-formbricks": "workspace:*",
     "focus-trap": "^6.7.3",
     "html-minifier": "^4.0.0",

@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "eslint": "^8.32.0",
+    "eslint": "8.33.0",
     "eslint-config-formbricks": "workspace:*",
     "focus-trap": "^7.2.0",
     "html-minifier": "^4.0.0",
