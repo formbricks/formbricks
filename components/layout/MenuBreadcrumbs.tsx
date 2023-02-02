@@ -3,9 +3,9 @@ import Link from "next/link";
 
 export default function MenuBreadcrumbs({ breadcrumbs }) {
   return (
-    <div className="hidden overflow-hidden sm:flex sm:flex-1 text-ellipsis">
+    <div className="hidden overflow-hidden sm:flex sm:flex-1  text-ellipsis">
       <nav className="hidden lg:flex" aria-label="Breadcrumb">
-        <ol className="flex items-center space-x-4">
+        <ol className="flex items-center space-x-2">
           <li>
             <div>
               <Link href="/forms/">

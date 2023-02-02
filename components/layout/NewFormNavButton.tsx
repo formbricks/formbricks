@@ -21,7 +21,7 @@ export default function NewFormNavButton({}) {
         onClick={() => setOpenNewFormModal(true)}
       >
         <nav className="hidden sm:flex" aria-label="Breadcrumb">
-          <ol className="flex items-center space-x-4">
+          <ol className="flex items-center space-x-2">
             {/* TODO: maybe create a separate page for candidates and not mix both views */}
             {session.user?.role !== UserRole.ADMIN ? (
               <></>
