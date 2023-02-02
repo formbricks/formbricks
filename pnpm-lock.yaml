@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@changesets/cli': ^2.26.0
       prettier: ^2.8.3
-      turbo: ^1.7.2
+      turbo: latest
     devDependencies:
       '@changesets/cli': 2.26.0
       prettier: 2.8.3
