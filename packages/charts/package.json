@@ -17,7 +17,6 @@
       "require": "./dist/index.js"
     }
   },
-  "license": "MIT",
   "scripts": {
     "build": "tsup --dts && tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
     "dev": "concurrently \"tsup --dts --external react --watch && generate-tailwind\" \"tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch\"",
@@ -25,22 +24,22 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "@types/react": "^18.0.25",
-    "@types/react-dom": "^18.0.8",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
     "concurrently": "^7.5.0",
     "eslint": "8.33.0",
     "eslint-config-formbricks": "workspace:*",
     "react": "^18.2.0",
     "tailwindcss": "^3.2.2",
     "tsup": "^6.4.0",
-    "typescript": "^4.8.4"
+    "typescript": "^4.9.5"
   },
   "dependencies": {
     "clsx": "^1.2.1",
-    "recharts": "^2.1.16"
+    "recharts": "^2.3.2"
   },
   "peerDependencies": {
-    "react": "^16.8.0 || ^17 || ^18"
+    "react": "^17 || ^18"
   },
   "publishConfig": {
     "access": "public"
