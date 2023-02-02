@@ -22,7 +22,7 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build --filter=react^... && changeset publish",
-    "clean": "turbo run clean && rm -rf node_modules",
+    "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.0",
