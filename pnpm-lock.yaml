@@ -370,35 +370,35 @@ importers:
   packages/react:
     specifiers:
       '@formbricks/tsconfig': workspace:*
-      '@headlessui/react': ^1.7.4
+      '@headlessui/react': 1.7.8
       '@hookform/error-message': ^2.0.1
-      '@types/react': ^18.0.25
-      '@types/react-dom': ^18.0.8
-      clsx: ^1.2.1
-      concurrently: ^7.5.0
+      '@types/react': 18.0.27
+      '@types/react-dom': 18.0.10
+      clsx: 1.2.1
+      concurrently: 7.6.0
       eslint: 8.33.0
       eslint-config-formbricks: workspace:*
-      react: ^18.2.0
-      react-hook-form: ^7.39.1
-      tailwindcss: ^3.2.2
-      tsup: ^6.4.0
-      typescript: ^4.8.4
+      react: 18.2.0
+      react-hook-form: 7.43.0
+      tailwindcss: 3.2.4
+      tsup: 6.5.0
+      typescript: 4.9.5
     dependencies:
-      '@headlessui/react': 1.7.4_biqbaboplfbrettd7655fr4n2y
-      '@hookform/error-message': 2.0.1_nrnvpvixg5xdweezd67llqjwze
+      '@headlessui/react': 1.7.8_biqbaboplfbrettd7655fr4n2y
+      '@hookform/error-message': 2.0.1_tnon2c56rguu5lfvlbrc6byj3m
       clsx: 1.2.1
-      react-hook-form: 7.40.0_react@18.2.0
+      react-hook-form: 7.43.0_react@18.2.0
     devDependencies:
       '@formbricks/tsconfig': link:../tsconfig
-      '@types/react': 18.0.25
-      '@types/react-dom': 18.0.9
+      '@types/react': 18.0.27
+      '@types/react-dom': 18.0.10
       concurrently: 7.6.0
       eslint: 8.33.0
       eslint-config-formbricks: link:../eslint-config-formbricks
       react: 18.2.0
       tailwindcss: 3.2.4_postcss@8.4.21
-      tsup: 6.5.0_6a2cqitbvcmutfdk5rpoh5sgci
-      typescript: 4.8.4
+      tsup: 6.5.0_uujdqti2krmttzhqvubwnsmcci
+      typescript: 4.9.5
 
   packages/tailwind-config:
     specifiers:
@@ -3483,18 +3483,6 @@ packages:
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
     dev: true
 
-  /@headlessui/react/1.7.4_biqbaboplfbrettd7655fr4n2y:
-    resolution: {integrity: sha512-D8n5yGCF3WIkPsjEYeM8knn9jQ70bigGGb5aUvN6y4BGxcT3OcOQOKcM3zRGllRCZCFxCZyQvYJF6ZE7bQUOyQ==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      react: ^16 || ^17 || ^18
-      react-dom: ^16 || ^17 || ^18
-    dependencies:
-      client-only: 0.0.1
-      react: 18.2.0
-      react-dom: 18.2.0_react@18.2.0
-    dev: false
-
   /@headlessui/react/1.7.8_biqbaboplfbrettd7655fr4n2y:
     resolution: {integrity: sha512-zcwb0kd7L05hxmoAMIioEaOn235Dg0fUO+iGbLPgLVSjzl/l39V6DTpC2Df49PE5aG5/f5q0PZ9ZHZ78ENNV+A==}
     engines: {node: '>=10'}
@@ -3515,7 +3503,7 @@ packages:
       react: 18.2.0
     dev: false
 
-  /@hookform/error-message/2.0.1_nrnvpvixg5xdweezd67llqjwze:
+  /@hookform/error-message/2.0.1_tnon2c56rguu5lfvlbrc6byj3m:
     resolution: {integrity: sha512-U410sAr92xgxT1idlu9WWOVjndxLdgPUHEB8Schr27C9eh7/xUnITWpCMF93s+lGiG++D4JnbSnrb5A21AdSNg==}
     peerDependencies:
       react: '>=16.8.0'
@@ -3524,7 +3512,7 @@ packages:
     dependencies:
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
-      react-hook-form: 7.40.0_react@18.2.0
+      react-hook-form: 7.43.0_react@18.2.0
     dev: false
 
   /@humanwhocodes/config-array/0.11.8:
@@ -14221,7 +14209,7 @@ packages:
     dependencies:
       '@next/env': 13.1.6
       '@swc/helpers': 0.4.14
-      caniuse-lite: 1.0.30001435
+      caniuse-lite: 1.0.30001450
       postcss: 8.4.14
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -16048,15 +16036,6 @@ packages:
       react-dom: 18.2.0_react@18.2.0
       react-is: 17.0.2
     dev: true
-
-  /react-hook-form/7.40.0_react@18.2.0:
-    resolution: {integrity: sha512-0rokdxMPJs0k9bvFtY6dbcSydyNhnZNXCR49jgDr/aR03FDHFOK6gfh8ccqB3fl696Mk7lqh04xdm+agqWXKSw==}
-    engines: {node: '>=12.22.0'}
-    peerDependencies:
-      react: ^16.8.0 || ^17 || ^18
-    dependencies:
-      react: 18.2.0
-    dev: false
 
   /react-hook-form/7.43.0_react@18.2.0:
     resolution: {integrity: sha512-/rVEz7T0gLdSFwPqutJ1kn2e0sQNyb9ci/hmwEYr2YG0KF/LSuRLvNrf9QWJM+gj88CjDpDW5Bh/1AD7B2+z9Q==}
@@ -18308,43 +18287,6 @@ packages:
   /tslib/2.5.0:
     resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
 
-  /tsup/6.5.0_6a2cqitbvcmutfdk5rpoh5sgci:
-    resolution: {integrity: sha512-36u82r7rYqRHFkD15R20Cd4ercPkbYmuvRkz3Q1LCm5BsiFNUgpo36zbjVhCOgvjyxNBWNKHsaD5Rl8SykfzNA==}
-    engines: {node: '>=14'}
-    hasBin: true
-    peerDependencies:
-      '@swc/core': ^1
-      postcss: ^8.4.12
-      typescript: ^4.1.0
-    peerDependenciesMeta:
-      '@swc/core':
-        optional: true
-      postcss:
-        optional: true
-      typescript:
-        optional: true
-    dependencies:
-      bundle-require: 3.1.2_esbuild@0.15.16
-      cac: 6.7.14
-      chokidar: 3.5.3
-      debug: 4.3.4
-      esbuild: 0.15.16
-      execa: 5.1.1
-      globby: 11.1.0
-      joycon: 3.1.1
-      postcss: 8.4.21
-      postcss-load-config: 3.1.4_postcss@8.4.21
-      resolve-from: 5.0.0
-      rollup: 3.5.1
-      source-map: 0.8.0-beta.0
-      sucrase: 3.29.0
-      tree-kill: 1.2.2
-      typescript: 4.8.4
-    transitivePeerDependencies:
-      - supports-color
-      - ts-node
-    dev: true
-
   /tsup/6.5.0_idbjo54bpfgfu5hzy4ncsoa6f4:
     resolution: {integrity: sha512-36u82r7rYqRHFkD15R20Cd4ercPkbYmuvRkz3Q1LCm5BsiFNUgpo36zbjVhCOgvjyxNBWNKHsaD5Rl8SykfzNA==}
     engines: {node: '>=14'}
@@ -18444,6 +18386,43 @@ packages:
       globby: 11.1.0
       joycon: 3.1.1
       postcss-load-config: 3.1.4
+      resolve-from: 5.0.0
+      rollup: 3.5.1
+      source-map: 0.8.0-beta.0
+      sucrase: 3.29.0
+      tree-kill: 1.2.2
+      typescript: 4.9.5
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+    dev: true
+
+  /tsup/6.5.0_uujdqti2krmttzhqvubwnsmcci:
+    resolution: {integrity: sha512-36u82r7rYqRHFkD15R20Cd4ercPkbYmuvRkz3Q1LCm5BsiFNUgpo36zbjVhCOgvjyxNBWNKHsaD5Rl8SykfzNA==}
+    engines: {node: '>=14'}
+    hasBin: true
+    peerDependencies:
+      '@swc/core': ^1
+      postcss: ^8.4.12
+      typescript: ^4.1.0
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
+      postcss:
+        optional: true
+      typescript:
+        optional: true
+    dependencies:
+      bundle-require: 3.1.2_esbuild@0.15.16
+      cac: 6.7.14
+      chokidar: 3.5.3
+      debug: 4.3.4
+      esbuild: 0.15.16
+      execa: 5.1.1
+      globby: 11.1.0
+      joycon: 3.1.1
+      postcss: 8.4.21
+      postcss-load-config: 3.1.4_postcss@8.4.21
       resolve-from: 5.0.0
       rollup: 3.5.1
       source-map: 0.8.0-beta.0
@@ -18632,12 +18611,6 @@ packages:
 
   /typedarray/0.0.6:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
-    dev: true
-
-  /typescript/4.8.4:
-    resolution: {integrity: sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==}
-    engines: {node: '>=4.2.0'}
-    hasBin: true
     dev: true
 
   /typescript/4.9.3:
