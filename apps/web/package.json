@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "@formbricks/web",
+  "name": "web",
   "version": "0.0.1",
   "scripts": {
     "dev": "next dev",
