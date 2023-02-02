@@ -39,15 +39,13 @@
         "VERCEL_URL"
       ]
     },
-    "db:migrate:deploy": {
-      "outputs": []
+    "clean": {
+      "cache": false,
+      "persistent": true
     },
-    "db:push": {
-      "outputs": []
-    },
-    "db:seed": {
-      "outputs": []
-    },
+    "db:migrate:deploy": {},
+    "db:push": {},
+    "db:seed": {},
     "dev": {
       "cache": false,
       "persistent": true
@@ -55,8 +53,6 @@
     "generate": {
       "dependsOn": ["^generate"]
     },
-    "lint": {
-      "outputs": []
-    }
+    "lint": {}
   }
 }
