@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
   "display": "React Library",
   "extends": "./base.json",
   "compilerOptions": {
@@ -7,7 +6,5 @@
     "module": "ESNext",
     "target": "ES6",
     "jsx": "react-jsx",
-    "noUnusedLocals": true,
-    "noUnusedParameters": true
   }
 }
