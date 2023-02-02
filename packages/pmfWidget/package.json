@@ -23,6 +23,6 @@
     "focus-trap": "^7.2.0",
     "html-minifier": "^4.0.0",
     "microbundle": "^0.15.1",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.5"
   }
 }
