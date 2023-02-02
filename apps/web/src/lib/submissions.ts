@@ -48,36 +48,38 @@ export const MergeWithSchema = (submissionData, schema) => {
     return mergedData;
   }
   const optionLabelMap = getOptionLabelMap(schema);
-  for (const elem of schema.children) {
-    if (
-      ![
-        "checkbox",
-        "email",
-        "number",
-        "nps",
-        "phone",
-        "radio",
-        "search",
-        "text",
-        "textarea",
-        "url",
-        "scale",
-      ].includes(elem.type)
-    ) {
-      continue;
-    }
-    if (elem.name in submissionData) {
-      if (["checkbox", "radio"].includes(elem.type)) {
-        if (Array.isArray(submissionData[elem.name])) {
-          mergedData[elem.label] = submissionData[elem.name].map((value) => optionLabelMap[value] || value);
+  for (const page of schema.pages) {
+    for (const elem of page.elements) {
+      if (
+        ![
+          "checkbox",
+          "email",
+          "number",
+          "nps",
+          "phone",
+          "radio",
+          "search",
+          "text",
+          "textarea",
+          "url",
+          "scale",
+        ].includes(elem.type)
+      ) {
+        continue;
+      }
+      if (elem.name in submissionData) {
+        if (["checkbox", "radio"].includes(elem.type)) {
+          if (Array.isArray(submissionData[elem.name])) {
+            mergedData[elem.label] = submissionData[elem.name].map((value) => optionLabelMap[value] || value);
+          } else {
+            mergedData[elem.label] = optionLabelMap[submissionData[elem.name]] || submissionData[elem.name];
+          }
         } else {
-          mergedData[elem.label] = optionLabelMap[submissionData[elem.name]] || submissionData[elem.name];
+          mergedData[elem.label] = submissionData[elem.name];
         }
       } else {
-        mergedData[elem.label] = submissionData[elem.name];
+        // mergedData[elem.label] = "not provided";
       }
-    } else {
-      // mergedData[elem.label] = "not provided";
     }
   }
   return mergedData;
@@ -85,10 +87,12 @@ export const MergeWithSchema = (submissionData, schema) => {
 
 export const getOptionLabelMap = (schema) => {
   const optionLabelMap = {};
-  for (const elem of schema.children) {
-    if (elem.options && elem.options.length > 0) {
-      for (const option of elem.options) {
-        optionLabelMap[option.value] = option.label;
+  for (const page of schema.pages) {
+    for (const elem of page.elements) {
+      if (elem.options && elem.options.length > 0) {
+        for (const option of elem.options) {
+          optionLabelMap[option.value] = option.label;
+        }
       }
     }
   }
