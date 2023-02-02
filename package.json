@@ -11,6 +11,7 @@
   },
   "scripts": {
     "build": "turbo run build",
+    "build:web": "turbo run build --filter=web...",
     "dev": "turbo run dev --parallel",
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:push": "turbo run db:push",
@@ -18,7 +19,10 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "fm": "prettier --write $(git diff --name-only --diff-filter d | grep -e '\\.[tj]sx\\?$' | xargs)",
     "lint": "turbo run lint",
-    "release": "turbo run build --filter=react^... && changeset publish"
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build --filter=react^... && changeset publish",
+    "clean": "turbo run clean && rm -rf node_modules",
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.0",
