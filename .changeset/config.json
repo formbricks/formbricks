@@ -7,5 +7,5 @@
   "access": "restricted",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["demo", "@formbricks/formbricks-com"]
+  "ignore": ["@formbricks/demo", "@formbricks/formbricks-com"]
 }
