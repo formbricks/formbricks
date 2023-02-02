@@ -22,13 +22,12 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.22.0",
-    "prettier": "latest",
+    "prettier": "^2.8.3",
     "tsx": "^3.7.1",
     "turbo": "latest"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
-  "dependencies": {},
-  "packageManager": "pnpm@7.12.2"
+  "packageManager": "pnpm@7.26.3"
 }

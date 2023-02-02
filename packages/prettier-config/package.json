@@ -2,9 +2,8 @@
   "name": "@formbricks/prettier-config",
   "version": "1.0.0",
   "private": true,
-  "license": "MIT",
   "devDependencies": {
-    "prettier": "^2.7.1",
-    "prettier-plugin-tailwindcss": "^0.1.13"
+    "prettier": "^2.8.3",
+    "prettier-plugin-tailwindcss": "^0.2.2"
   }
 }
