@@ -65,3 +65,19 @@ export const usersDataGridSchemaColumn = [
     },
   },
 ];
+
+export const candidateDataGridSchemaColumn = [
+  {
+    field: "Noms",
+    width: 130,
+  },
+
+  {
+    field: "Genre",
+    width: 80,
+  },
+  {
+    field: "Email",
+    width: 200,
+  },
+];
