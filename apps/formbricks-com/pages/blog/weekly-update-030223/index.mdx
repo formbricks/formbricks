@@ -1,0 +1,139 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import NewsletterSignup from "@/components/shared/NewsletterSignup";
+import HeaderImage from "../weekly-update-181122/weeklyupdate.png";
+import HeroAnimation from "@/components/shared/HeroAnimation";
+
+import { Callout } from "@/components/shared/Callout";
+
+import Eating from "./eating.gif";
+import FeedbackBox from "./feedback-box.png";
+import Integrations from "./integrations.png";
+import OnboardingSurvey from "./onboarding-survey.png";
+import Stripe from "./stripe.png";
+import UserView from "./user.png";
+
+export const meta = {
+  title: "Weekly Summary - 3rd Feb 2023",
+  description:
+    "We converted our first customer via the waitlist! Apart from that: Another Feedback Box in production, PMF self-serve in the making and more dogfood for us 🐶",
+  date: "2023-02-03",
+};
+
+_We converted our first customer via the waitlist! Apart from that: Another Feedback Box in production, PMF self-serve in the making and more dogfood for us 🐶_
+
+<Image src={HeaderImage} alt="Weekly Update" className="rounded-lg" />
+
+## TLDR:
+
+- New customer (first one via waitlist) → $1.800 ARR 🎉
+- Self-serving PMF survey 🏗️
+  - Landing Page
+  - Onboarding segmentation survey
+  - Payment embedded
+  - Bug fixing
+- Dogfooding Formbricks 🐶
+- Feedback Box in production on question-aid.com 🤓
+
+## First customer via waitlist → $1.800 ARR 🎉
+
+We are currently not promoting the landing page. Nonetheless, we have several people per day filling out our waitlist survey (189 in 2 weeks).
+
+Yesterday, the first person bought the Early Bird subscription after filling out the form:
+
+<Image src={Stripe} alt="Stripe Screenshot" className="rounded-lg" />
+
+## Self-serve PMF survey 🏗️
+
+While onboarding people for the PMF survey, we noticed the following:
+
+- The setup still required a lot of manual support which was a lot harder to provide for non-open source companies (couldn’t access code ourselves, long time to production)
+- Prospects required some material to share within the team to assess if Formbricks adds value
+- Some were slow to book the onboarding call, requested self-serve
+
+This is why we decided to improve the self-serve experience.
+
+### Funnel Design Considerations
+
+This is how we plan to build an effective funnel:
+
+1. **Shortest way to experience value**
+   1. Live demo with dummy data
+   2. Video walk-through to provide more context (native embedding, open source)
+2. **Try tech before you buy + validation**
+   1. Feedback Widget is free to implement and use
+   2. Hard paywall for PMF survey (value experienceable in Demo)
+3. **Buying pressure**
+   1. 50% off for first year for first 20 buyers
+   2. Waitlist members can get in a day before everyone else
+
+###
+
+### What we have built so far
+
+✅ Landing Page for PMF survey (to be released)
+
+✅ Onboarding segmentation (frontend)
+
+✅ Added payment to app
+
+##
+
+### What we'll build next week
+
+▶️ Launch live demo with dummy data
+
+▶️ Add video walk-through
+
+▶️ Write docs
+
+▶️ In-app inline survey (Integrations)
+
+##
+
+## Dogfooding Formbricks 🐶
+
+<Image src={Eating} alt="Eating Dogfood" className="rounded-lg" />
+
+With the launch of the waitlist we started using Formbricks on a daily basis. So far, from a UX perspective, it’s a pretty standard survey data dashboard: Look at individual responses or aggregated views. Obviously, we aren’t done here.
+
+### Building Formbricks into Formbricks
+
+All respondents of the waitlist are fed into a database of users. For each user we create a profile where we gather all additional qualitative data points…
+
+<Image quality={100} src={UserView} alt="Stripe Screenshot" className="rounded-lg" />
+
+… like the reponses of the onboarding survey:
+
+<Image src={OnboardingSurvey} alt="Stripe Screenshot" className="rounded-lg" />
+
+<Callout title="Data-driven" type="note">
+  Over 50% of waitlist respondents (n=189) requested Onboarding Segmentation. We’re building it into
+  Formbricks to gather more qualitative user data and show users what it could look like in their products 👀
+</Callout>
+
+Additionally, we survey users as they explore the product:
+
+<Image src={Integrations} alt="Stripe Screenshot" className="rounded-lg" />
+
+Together with the usage data from PostHog we get a very good understanding of how **and - most importantly - why** users came to try out Formbricks.
+
+Spinning up and implementing these surveys is quick and easy. It is a great way to survey users contextualized to the product experience. Especially in larger products, well-positioned micro-surveys are another powerful tool in the belt of product managers.
+
+### Working with the user view
+
+And the best part? Once we’ve released an integration, we can filter our user base according to their answers and communicate highly targeted.
+
+For products with a larger user base and a more comprehensive set of tools, you can pipe the micro-survey responses to HubSpot / [customer.io](http://customer.io). This allows you to approach current and churned users in a much more granular way because you understand them better.
+
+## Feedback Box spotted in the wild 🤓
+
+We spotted another Feedback Box in the wild at [question-aid.com](https://question-aid.com)
+
+<Image src={FeedbackBox} alt="Stripe Screenshot" className="rounded-lg" />
+
+## Enjoy your weekends! 🍰
+
+<NewsletterSignup />
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
