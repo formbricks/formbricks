@@ -56,12 +56,23 @@ export function SurveyPage({
   }, [page, formId, formbricksUrl, submissionId, plausible]);
 
   const sendToFormbricks = async (partialSubmission: any) => {
+    const submissionBody: any = { data: partialSubmission };
+    if (page.config?.addFieldsToCustomer && Array.isArray(page.config?.addFieldsToCustomer)) {
+      for (const field of page.config?.addFieldsToCustomer) {
+        if (field in partialSubmission) {
+          if (!("customer" in submissionBody)) {
+            submissionBody.customer = {};
+          }
+          submissionBody.customer[field] = partialSubmission[field];
+        }
+      }
+    }
     if (!submissionId) {
       const res = await Promise.all([
         fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: partialSubmission }),
+          body: JSON.stringify(submissionBody),
         }),
         fetch(`${formbricksUrl}/api/capture/forms/${formId}/schema`, {
           method: "POST",
@@ -79,7 +90,7 @@ export function SurveyPage({
       const res = await fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions/${submissionId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: partialSubmission }),
+        body: JSON.stringify(submissionBody),
       });
       if (!res.ok) {
         alert("There was an error sending this form. Please contact us at hola@formbricks.com");
@@ -99,6 +110,7 @@ export function SurveyPage({
       plausible(`waitlistSubmitPage-${page.id}`);
       window.scrollTo(0, 0);
     } catch (e) {
+      console.error(e);
       alert("There was an error sending this form. Please contact us at hola@formbricks.com");
     }
   };

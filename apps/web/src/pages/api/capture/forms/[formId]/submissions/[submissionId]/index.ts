@@ -27,6 +27,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     const prevSubmission = await prisma.submission.findUnique({
       where: { id: submissionId },
+      include: { customer: true },
     });
 
     if (prevSubmission === null) {
@@ -52,26 +53,46 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       event.data.data = { ...prevSubmission.data, ...submission.data };
     }
 
-    if (submission.customer && "email" in submission.customer) {
-      const customerEmail = submission.customer.email;
-      const customerData = { ...submission.customer };
-      delete customerData.email;
-      // create or link customer
-      event.data.customer = {
-        connectOrCreate: {
+    if (submission.customer) {
+      // add fields to customer or create new one if it doesn't exist
+      if (prevSubmission.customerEmail) {
+        const customerData = { ...prevSubmission.customer.data, ...submission.customer };
+        delete customerData.email;
+        await prisma.customer.update({
           where: {
             email_organisationId: {
-              email: submission.customer.email,
+              email: prevSubmission.customerEmail,
               organisationId: form.organisationId,
             },
           },
-          create: {
-            email: customerEmail,
-            organisation: { connect: { id: form.organisationId } },
-            data: customerData,
-          },
-        },
-      };
+          data: { data: customerData },
+        });
+        return res.status(200).json({ message: "Submission updated" });
+      } else {
+        if ("email" in submission.customer) {
+          const customerEmail = submission.customer.email;
+          const customerData = { ...submission.customer };
+          delete customerData.email;
+          // create or link customer
+          event.data.customer = {
+            connectOrCreate: {
+              where: {
+                email_organisationId: {
+                  email: submission.customer.email,
+                  organisationId: form.organisationId,
+                },
+              },
+              create: {
+                email: customerEmail,
+                organisation: { connect: { id: form.organisationId } },
+                data: customerData,
+              },
+            },
+          };
+        } else {
+          console.error("Customer email is required to create a new customer");
+        }
+      }
     }
 
     // create form in db
