@@ -125,7 +125,7 @@ const WaitlistPage = () => (
                   {
                     id: "featureSelection",
                     type: "radio",
-                    label: "Pick 2 to get started",
+                    label: "Select the Best Practices you need:",
                     name: "featureSelection",
                     options: [
                       {
