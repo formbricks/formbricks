@@ -14,6 +14,7 @@
     "clean": "rimraf .turbo node_modules dist",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:vercel": "DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma migrate deploy",
     "db:push": "prisma db push --accept-data-loss",
     "dev": "tsup --watch",
     "format": "prisma format",
@@ -24,17 +25,17 @@
     "studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "^4.6.1"
+    "@prisma/client": "^4.9.0"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "eslint": "^8.27.0",
+    "eslint": "^8.33.0",
     "eslint-config-formbricks": "workspace:*",
-    "prisma": "^4.6.1",
+    "prisma": "^4.9.0",
     "prisma-dbml-generator": "^0.10.0",
-    "rimraf": "^3.0.2",
-    "tsup": "^6.4.0",
-    "tsx": "^3.12.0",
-    "typescript": "^4.8.4"
+    "rimraf": "^4.1.2",
+    "tsup": "^6.5.0",
+    "tsx": "^3.12.2",
+    "typescript": "^4.9.5"
   }
 }

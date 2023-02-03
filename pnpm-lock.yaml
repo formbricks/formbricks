@@ -288,27 +288,27 @@ importers:
   packages/database:
     specifiers:
       '@formbricks/tsconfig': workspace:*
-      '@prisma/client': ^4.6.1
-      eslint: ^8.27.0
+      '@prisma/client': ^4.9.0
+      eslint: ^8.33.0
       eslint-config-formbricks: workspace:*
-      prisma: ^4.6.1
+      prisma: ^4.9.0
       prisma-dbml-generator: ^0.10.0
-      rimraf: ^3.0.2
-      tsup: ^6.4.0
-      tsx: ^3.12.0
-      typescript: ^4.8.4
+      rimraf: ^4.1.2
+      tsup: ^6.5.0
+      tsx: ^3.12.2
+      typescript: ^4.9.5
     dependencies:
-      '@prisma/client': 4.7.0_prisma@4.7.0
+      '@prisma/client': 4.9.0_prisma@4.9.0
     devDependencies:
       '@formbricks/tsconfig': link:../tsconfig
-      eslint: 8.28.0
+      eslint: 8.33.0
       eslint-config-formbricks: link:../eslint-config-formbricks
-      prisma: 4.7.0
+      prisma: 4.9.0
       prisma-dbml-generator: 0.10.0
-      rimraf: 3.0.2
-      tsup: 6.5.0_typescript@4.8.4
-      tsx: 3.12.1
-      typescript: 4.8.4
+      rimraf: 4.1.2
+      tsup: 6.5.0_typescript@4.9.5
+      tsx: 3.12.2
+      typescript: 4.9.5
 
   packages/ee:
     specifiers:
@@ -4258,8 +4258,8 @@ packages:
       webpack: 5.75.0
     dev: true
 
-  /@prisma/client/4.7.0_prisma@4.7.0:
-    resolution: {integrity: sha512-keXMa0oJWJGOzMEFKp+CEgzJPwnOtGSrnTWw6qMYxnypYrRFdNxqyA06EzELZexBhgM4oLooZ1jDJ3iy46wExA==}
+  /@prisma/client/4.9.0_prisma@4.9.0:
+    resolution: {integrity: sha512-bz6QARw54sWcbyR1lLnF2QHvRW5R/Jxnbbmwh3u+969vUKXtBkXgSgjDA85nji31ZBlf7+FrHDy5x+5ydGyQDg==}
     engines: {node: '>=14.17'}
     requiresBuild: true
     peerDependencies:
@@ -4268,8 +4268,8 @@ packages:
       prisma:
         optional: true
     dependencies:
-      '@prisma/engines-version': 4.7.0-74.39190b250ebc338586e25e6da45e5e783bc8a635
-      prisma: 4.7.0
+      '@prisma/engines-version': 4.9.0-42.ceb5c99003b99c9ee2c1d2e618e359c14aef2ea5
+      prisma: 4.9.0
     dev: false
 
   /@prisma/debug/4.6.1:
@@ -4303,8 +4303,8 @@ packages:
       - supports-color
     dev: true
 
-  /@prisma/engines-version/4.7.0-74.39190b250ebc338586e25e6da45e5e783bc8a635:
-    resolution: {integrity: sha512-ImczGEQ8NS1OUApEeyAGxC4uLTtQp0wI1+2wM4MeQLVwIQbyMHk1vOhWWE8Pwbi3rnzLcPvsIrd9sm6oNXhERw==}
+  /@prisma/engines-version/4.9.0-42.ceb5c99003b99c9ee2c1d2e618e359c14aef2ea5:
+    resolution: {integrity: sha512-M16aibbxi/FhW7z1sJCX8u+0DriyQYY5AyeTH7plQm9MLnURoiyn3CZBqAyIoQ+Z1pS77usCIibYJWSgleBMBA==}
     dev: false
 
   /@prisma/engines/4.6.1:
@@ -4312,8 +4312,8 @@ packages:
     requiresBuild: true
     dev: true
 
-  /@prisma/engines/4.7.0:
-    resolution: {integrity: sha512-afKrVFktaZ1pOK12/uFl2hRsBWIJZuC5FdDtacuKk5x/mR+rC5AbA+PlN3ZCZbmYTaeiBMHjcU5wbT5z2N3nSQ==}
+  /@prisma/engines/4.9.0:
+    resolution: {integrity: sha512-t1pt0Gsp+HcgPJrHFc+d/ZSAaKKWar2G/iakrE07yeKPNavDP3iVKPpfXP22OTCHZUWf7OelwKJxQgKAm5hkgw==}
     requiresBuild: true
 
   /@prisma/fetch-engine/4.6.1:
@@ -13546,12 +13546,12 @@ packages:
       rollup-plugin-bundle-size: 1.0.3
       rollup-plugin-postcss: 4.0.2_postcss@8.4.21
       rollup-plugin-terser: 7.0.2_rollup@2.79.1
-      rollup-plugin-typescript2: 0.29.0_ntuob3xud5wukob6phfmz2mbyy
+      rollup-plugin-typescript2: 0.29.0_zptcx3kz3uwp66hzhyyt545weq
       sade: 1.8.1
       terser: 5.16.0
       tiny-glob: 0.2.9
       tslib: 2.4.1
-      typescript: 4.9.4
+      typescript: 4.9.5
     transitivePeerDependencies:
       - '@types/babel__core'
       - supports-color
@@ -13597,13 +13597,13 @@ packages:
       rollup-plugin-bundle-size: 1.0.3
       rollup-plugin-postcss: 4.0.2_postcss@8.4.21
       rollup-plugin-terser: 7.0.2_rollup@2.79.1
-      rollup-plugin-typescript2: 0.32.1_ntuob3xud5wukob6phfmz2mbyy
+      rollup-plugin-typescript2: 0.32.1_zptcx3kz3uwp66hzhyyt545weq
       rollup-plugin-visualizer: 5.9.0_rollup@2.79.1
       sade: 1.8.1
       terser: 5.16.0
       tiny-glob: 0.2.9
       tslib: 2.4.1
-      typescript: 4.9.4
+      typescript: 4.9.5
     transitivePeerDependencies:
       - '@types/babel__core'
       - supports-color
@@ -16001,13 +16001,13 @@ packages:
       - supports-color
     dev: true
 
-  /prisma/4.7.0:
-    resolution: {integrity: sha512-VsecNo0Ca3+bDTzSpJqIpdupKVhhQ8aOYeWc09JlUM89knqvhSrlMrg0U8BiOD4tFrY1OPaCcraK8leDBxKMBg==}
+  /prisma/4.9.0:
+    resolution: {integrity: sha512-bS96oZ5oDFXYgoF2l7PJ3Mp1wWWfLOo8B/jAfbA2Pn0Wm5Z/owBHzaMQKS3i1CzVBDWWPVnOohmbJmjvkcHS5w==}
     engines: {node: '>=14.17'}
     hasBin: true
     requiresBuild: true
     dependencies:
-      '@prisma/engines': 4.7.0
+      '@prisma/engines': 4.9.0
 
   /prismjs/1.27.0:
     resolution: {integrity: sha512-t13BGPUlFDR7wRB5kQDG4jjl7XeuH6jbJGt11JHPL96qwsEHNX2+68tFXqc1/k+/jALsbSWJKUOT/hcYAZ5LkA==}
@@ -17016,6 +17016,12 @@ packages:
     dependencies:
       glob: 7.2.3
 
+  /rimraf/4.1.2:
+    resolution: {integrity: sha512-BlIbgFryTbw3Dz6hyoWFhKk+unCcHMSkZGrTFVAx2WmttdBSonsdtRlwiuTbDqTKr+UlXIUqJVS4QT5tUzGENQ==}
+    engines: {node: '>=14'}
+    hasBin: true
+    dev: true
+
   /ripemd160/2.0.2:
     resolution: {integrity: sha512-ii4iagi25WusVoiC4B4lq7pbXfAp3D9v5CwfkY33vffw2+pkDjY1D8GaN7spsxvCSx8dkPqOZCEZyfxcmJG2IA==}
     dependencies:
@@ -17067,7 +17073,7 @@ packages:
       terser: 5.16.0
     dev: true
 
-  /rollup-plugin-typescript2/0.29.0_ntuob3xud5wukob6phfmz2mbyy:
+  /rollup-plugin-typescript2/0.29.0_zptcx3kz3uwp66hzhyyt545weq:
     resolution: {integrity: sha512-YytahBSZCIjn/elFugEGQR5qTsVhxhUwGZIsA9TmrSsC88qroGo65O5HZP/TTArH2dm0vUmYWhKchhwi2wL9bw==}
     peerDependencies:
       rollup: '>=1.26.3'
@@ -17079,10 +17085,10 @@ packages:
       resolve: 1.17.0
       rollup: 2.79.1
       tslib: 2.0.1
-      typescript: 4.9.4
+      typescript: 4.9.5
     dev: true
 
-  /rollup-plugin-typescript2/0.32.1_ntuob3xud5wukob6phfmz2mbyy:
+  /rollup-plugin-typescript2/0.32.1_zptcx3kz3uwp66hzhyyt545weq:
     resolution: {integrity: sha512-RanO8bp1WbeMv0bVlgcbsFNCn+Y3rX7wF97SQLDxf0fMLsg0B/QFF005t4AsGUcDgF3aKJHoqt4JF2xVaABeKw==}
     peerDependencies:
       rollup: '>=1.26.3'
@@ -17094,7 +17100,7 @@ packages:
       resolve: 1.22.1
       rollup: 2.79.1
       tslib: 2.4.1
-      typescript: 4.9.4
+      typescript: 4.9.5
     dev: true
 
   /rollup-plugin-visualizer/5.9.0_rollup@2.79.1:
@@ -18802,7 +18808,7 @@ packages:
       - ts-node
     dev: true
 
-  /tsup/6.5.0_typescript@4.8.4:
+  /tsup/6.5.0_typescript@4.9.5:
     resolution: {integrity: sha512-36u82r7rYqRHFkD15R20Cd4ercPkbYmuvRkz3Q1LCm5BsiFNUgpo36zbjVhCOgvjyxNBWNKHsaD5Rl8SykfzNA==}
     engines: {node: '>=14'}
     hasBin: true
@@ -18832,7 +18838,7 @@ packages:
       source-map: 0.8.0-beta.0
       sucrase: 3.29.0
       tree-kill: 1.2.2
-      typescript: 4.8.4
+      typescript: 4.9.5
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -18848,8 +18854,8 @@ packages:
       typescript: 4.9.3
     dev: false
 
-  /tsx/3.12.1:
-    resolution: {integrity: sha512-Rcg1x+rNe7qwlP8j7kx4VjP/pJo/V57k+17hlrn6a7FuQLNwkaw5W4JF75tYornNVCxkXdSUnqlIT8JY/ttvIw==}
+  /tsx/3.12.2:
+    resolution: {integrity: sha512-ykAEkoBg30RXxeOMVeZwar+JH632dZn9EUJVyJwhfag62k6UO/dIyJEV58YuLF6e5BTdV/qmbQrpkWqjq9cUnQ==}
     hasBin: true
     dependencies:
       '@esbuild-kit/cjs-loader': 2.4.1
@@ -19034,6 +19040,12 @@ packages:
 
   /typescript/4.9.4:
     resolution: {integrity: sha512-Uz+dTXYzxXXbsFpM86Wh3dKCxrQqUcVMxwU54orwlJjOpO3ao8L7j5lH+dWfTwgCwIuM9GQ2kvVotzYJMXTBZg==}
+    engines: {node: '>=4.2.0'}
+    hasBin: true
+    dev: true
+
+  /typescript/4.9.5:
+    resolution: {integrity: sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==}
     engines: {node: '>=4.2.0'}
     hasBin: true
     dev: true

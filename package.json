@@ -12,6 +12,7 @@
   "scripts": {
     "build": "turbo run build",
     "db:migrate:deploy": "turbo run db:migrate:deploy",
+    "db:migrate:vercel": "turbo run db:migrate:vercel",
     "db:push": "turbo run db:push",
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
