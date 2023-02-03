@@ -56,7 +56,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (submission.customer) {
       // add fields to customer or create new one if it doesn't exist
       if (prevSubmission.customerEmail) {
-        const customerData = { ...prevSubmission.customer.data, ...submission.customer };
+        const prevData = typeof prevSubmission.customer.data === "object" ? prevSubmission.customer.data : {};
+        const customerData = { ...prevData, ...submission.customer };
         delete customerData.email;
         await prisma.customer.update({
           where: {
