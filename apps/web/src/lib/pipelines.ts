@@ -2,8 +2,11 @@ import useSWR from "swr";
 
 import { fetcher } from "./utils";
 
-export const usePipelines = (formId: string, workspaceId: string) => {
-  const { data, error, mutate } = useSWR(`/api/workspaces/${workspaceId}/forms/${formId}/pipelines`, fetcher);
+export const usePipelines = (formId: string, organisationId: string) => {
+  const { data, error, mutate } = useSWR(
+    `/api/organisations/${organisationId}/forms/${formId}/pipelines`,
+    fetcher
+  );
 
   return {
     pipelines: data,
@@ -13,9 +16,9 @@ export const usePipelines = (formId: string, workspaceId: string) => {
   };
 };
 
-export const usePipeline = (workspaceId: string, formId: string, pipelineId: string) => {
+export const usePipeline = (organisationId: string, formId: string, pipelineId: string) => {
   const { data, error, mutate } = useSWR(
-    `/api/workspaces/${workspaceId}/forms/${formId}/pipelines/${pipelineId}`,
+    `/api/organisations/${organisationId}/forms/${formId}/pipelines/${pipelineId}`,
     fetcher
   );
 
@@ -27,9 +30,9 @@ export const usePipeline = (workspaceId: string, formId: string, pipelineId: str
   };
 };
 
-export const persistPipeline = async (formId, workspaceId, pipeline) => {
+export const persistPipeline = async (formId, organisationId, pipeline) => {
   try {
-    await fetch(`/api/workspaces/${workspaceId}/forms/${formId}/pipelines/${pipeline.id}/`, {
+    await fetch(`/api/organisations/${organisationId}/forms/${formId}/pipelines/${pipeline.id}/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pipeline),
@@ -39,9 +42,9 @@ export const persistPipeline = async (formId, workspaceId, pipeline) => {
   }
 };
 
-export const createPipeline = async (formId: string, workspaceId: string, pipeline = {}) => {
+export const createPipeline = async (formId: string, organisationId: string, pipeline = {}) => {
   try {
-    const res = await fetch(`/api/workspaces/${workspaceId}/forms/${formId}/pipelines`, {
+    const res = await fetch(`/api/organisations/${organisationId}/forms/${formId}/pipelines`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pipeline),
@@ -53,9 +56,9 @@ export const createPipeline = async (formId: string, workspaceId: string, pipeli
   }
 };
 
-export const deletePipeline = async (formId: string, workspaceId: string, pipelineId: string) => {
+export const deletePipeline = async (formId: string, organisationId: string, pipelineId: string) => {
   try {
-    await fetch(`/api/workspaces/${workspaceId}/forms/${formId}/pipelines/${pipelineId}`, {
+    await fetch(`/api/organisations/${organisationId}/forms/${formId}/pipelines/${pipelineId}`, {
       method: "DELETE",
     });
   } catch (error) {

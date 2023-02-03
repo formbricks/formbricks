@@ -66,7 +66,7 @@ async function handleEmailNotification(triggeredEvents, pipeline, form, submissi
     await sendSubmissionEmail(
       email,
       "created",
-      form.workspaceId,
+      form.organisationId,
       form.id,
       form.label,
       form.schema,
@@ -77,7 +77,7 @@ async function handleEmailNotification(triggeredEvents, pipeline, form, submissi
     await sendSubmissionEmail(
       email,
       "updated",
-      form.workspaceId,
+      form.organisationId,
       form.id,
       form.label,
       form.schema,
@@ -88,7 +88,7 @@ async function handleEmailNotification(triggeredEvents, pipeline, form, submissi
     await sendSubmissionEmail(
       email,
       "finished",
-      form.workspaceId,
+      form.organisationId,
       form.id,
       form.label,
       form.schema,
@@ -108,7 +108,7 @@ async function handleSlackNotification(triggeredEvents, pipeline, form, submissi
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `Someone just filled out your form "${form.label}". <${process.env.NEXTAUTH_URL}/workspaces/${form.workspaceId}/forms/${form.id}/feedback|View in Formbricks>`,
+              text: `Someone just filled out your form "${form.label}". <${process.env.NEXTAUTH_URL}/organisations/${form.organisationId}/forms/${form.id}/feedback|View in Formbricks>`,
             },
           },
           {
@@ -132,7 +132,7 @@ async function handleSlackNotification(triggeredEvents, pipeline, form, submissi
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `Someone just updated a submission in your form "${form.label}". <${process.env.NEXTAUTH_URL}/workspaces/${form.workspaceId}/forms/${form.id}/feedback|View in Formbricks>`,
+              text: `Someone just updated a submission in your form "${form.label}". <${process.env.NEXTAUTH_URL}/organisations/${form.organisationId}/forms/${form.id}/feedback|View in Formbricks>`,
             },
           },
           {
@@ -156,7 +156,7 @@ async function handleSlackNotification(triggeredEvents, pipeline, form, submissi
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `Someone just finished your form "${form.label}". <${process.env.NEXTAUTH_URL}/workspaces/${form.workspaceId}/forms/${form.id}/feedback|View in Formbricks>`,
+              text: `Someone just finished your form "${form.label}". <${process.env.NEXTAUTH_URL}/organisations/${form.organisationId}/forms/${form.id}/feedback|View in Formbricks>`,
             },
           },
           {

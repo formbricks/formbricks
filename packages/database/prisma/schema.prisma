@@ -82,14 +82,21 @@ model Submission {
   meta                   Json      @default("{}")
 }
 
+enum Plan {
+  free
+  pro
+}
+
 model Organisation {
-  id        String       @id @default(cuid())
-  createdAt DateTime     @default(now()) @map(name: "created_at")
-  updatedAt DateTime     @updatedAt @map(name: "updated_at")
-  name      String
-  members   Membership[]
-  forms     Form[]
-  customers Customer[]
+  id               String       @id @default(cuid())
+  createdAt        DateTime     @default(now()) @map(name: "created_at")
+  updatedAt        DateTime     @updatedAt @map(name: "updated_at")
+  name             String
+  members          Membership[]
+  forms            Form[]
+  customers        Customer[]
+  plan             Plan         @default(free)
+  stripeCustomerId String?
 }
 
 enum MembershipRole {

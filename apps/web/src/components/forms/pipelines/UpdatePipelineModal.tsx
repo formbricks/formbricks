@@ -7,18 +7,18 @@ import PipelineSettings from "./PipelineSettings";
 export default function UpdatePipelineModal({ open, setOpen, pipelineId }) {
   const router = useRouter();
   const { pipeline, isLoadingPipeline, mutatePipeline } = usePipeline(
-    router.query.workspaceId?.toString(),
+    router.query.organisationId?.toString(),
     router.query.formId?.toString(),
     pipelineId
   );
   const { pipelines, mutatePipelines } = usePipelines(
     router.query.formId?.toString(),
-    router.query.workspaceId?.toString()
+    router.query.organisationId?.toString()
   );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await persistPipeline(router.query.formId?.toString(), router.query.workspaceId?.toString(), pipeline);
+    await persistPipeline(router.query.formId?.toString(), router.query.organisationId?.toString(), pipeline);
     const newPipelines = JSON.parse(JSON.stringify(pipelines));
     const pipelineIdx = pipelines.findIndex((p) => p.id === pipelineId);
     if (pipelineIdx > -1) {

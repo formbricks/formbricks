@@ -15,7 +15,7 @@ export default function SegmentResults() {
   const router = useRouter();
   const [filteredSubmissions, setFilteredSubmissions] = useState([]);
   const { submissions, isLoadingSubmissions, isErrorSubmissions } = useSubmissions(
-    router.query.workspaceId?.toString(),
+    router.query.organisationId?.toString(),
     router.query.formId?.toString()
   );
 

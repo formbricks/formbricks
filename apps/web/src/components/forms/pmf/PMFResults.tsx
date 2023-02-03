@@ -12,7 +12,7 @@ import PMFTimeline from "./PMFTimeline";
 export default function PMFResults() {
   const router = useRouter();
   const { submissions, isLoadingSubmissions, isErrorSubmissions } = useSubmissions(
-    router.query.workspaceId?.toString(),
+    router.query.organisationId?.toString(),
     router.query.formId?.toString()
   );
 

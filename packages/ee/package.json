@@ -17,6 +17,7 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
+    "@formbricks/database": "workspace:*",
     "next": "^13.1.6"
   }
 }

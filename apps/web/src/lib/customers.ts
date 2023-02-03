@@ -1,8 +1,8 @@
 import useSWR from "swr";
 import { fetcher } from "./utils";
 
-export const useCustomers = (workspaceId: string) => {
-  const { data, error, mutate } = useSWR(`/api/workspaces/${workspaceId}/customers`, fetcher);
+export const useCustomers = (organisationId: string) => {
+  const { data, error, mutate } = useSWR(`/api/organisations/${organisationId}/customers`, fetcher);
 
   return {
     customers: data,
@@ -12,8 +12,11 @@ export const useCustomers = (workspaceId: string) => {
   };
 };
 
-export const useCustomer = (workspaceId: string, customerId: string) => {
-  const { data, error, mutate } = useSWR(`/api/workspaces/${workspaceId}/customers/${customerId}`, fetcher);
+export const useCustomer = (organisationId: string, customerId: string) => {
+  const { data, error, mutate } = useSWR(
+    `/api/organisations/${organisationId}/customers/${customerId}`,
+    fetcher
+  );
 
   return {
     customer: data,
@@ -23,9 +26,9 @@ export const useCustomer = (workspaceId: string, customerId: string) => {
   };
 };
 
-export const deleteCustomer = async (id: string, workspaceId: string) => {
+export const deleteCustomer = async (id: string, organisationId: string) => {
   try {
-    await fetch(`/api/workspaces/${workspaceId}/customers/${id}`, {
+    await fetch(`/api/organisations/${organisationId}/customers/${id}`, {
       method: "DELETE",
     });
   } catch (error) {

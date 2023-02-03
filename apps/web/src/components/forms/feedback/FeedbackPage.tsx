@@ -21,7 +21,7 @@ export default function FeedbackPage() {
   const [currentTab, setCurrentTab] = useState("Results");
   const { form, isLoadingForm, isErrorForm } = useForm(
     router.query.formId?.toString(),
-    router.query.workspaceId?.toString()
+    router.query.organisationId?.toString()
   );
 
   if (isLoadingForm) {

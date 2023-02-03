@@ -18,12 +18,12 @@ export default function SubmissionsPage() {
   const [finishedOnly, setFinishedOnly] = useState(false);
   const [filteredSubmissions, setFileredSubmission] = useState([]);
   const { submissions, isLoadingSubmissions, mutateSubmissions, isErrorSubmissions } = useSubmissions(
-    router.query.workspaceId?.toString(),
+    router.query.organisationId?.toString(),
     router.query.formId?.toString()
   );
   const { form, isLoadingForm, isErrorForm } = useForm(
     router.query.formId?.toString(),
-    router.query.workspaceId?.toString()
+    router.query.organisationId?.toString()
   );
   const [activeSubmission, setActiveSubmission] = useState<Submission | null>(null);
 
@@ -40,7 +40,7 @@ export default function SubmissionsPage() {
   const handleDelete = async (submission: Submission) => {
     try {
       await deleteSubmission(
-        router.query.workspaceId?.toString(),
+        router.query.organisationId?.toString(),
         router.query.formId?.toString(),
         submission.id
       );

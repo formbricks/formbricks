@@ -12,7 +12,7 @@ export default function FeedbackTimeline({ submissions }) {
   const router = useRouter();
 
   const { submissions: allSubmissions, mutateSubmissions } = useSubmissions(
-    router.query.workspaceId?.toString(),
+    router.query.organisationId?.toString(),
     router.query.formId?.toString()
   );
 
@@ -22,7 +22,7 @@ export default function FeedbackTimeline({ submissions }) {
     // save submission without customer
     const submissionWoCustomer = { ...updatedSubmission };
     delete submissionWoCustomer.customer;
-    persistSubmission(submissionWoCustomer, router.query.workspaceId?.toString());
+    persistSubmission(submissionWoCustomer, router.query.organisationId?.toString());
     // update all submissions
     const submissionIdx = allSubmissions.findIndex((s) => s.id === submission.id);
     const updatedSubmissions = JSON.parse(JSON.stringify(allSubmissions));
@@ -107,7 +107,7 @@ export default function FeedbackTimeline({ submissions }) {
                             {submission.customerEmail ? (
                               <Link
                                 className="text-sm font-medium text-gray-700"
-                                href={`/workspaces/${router.query.workspaceId}/customers/${submission.customerEmail}`}>
+                                href={`/organisations/${router.query.organisationId}/customers/${submission.customerEmail}`}>
                                 {submission.customerEmail}
                               </Link>
                             ) : (

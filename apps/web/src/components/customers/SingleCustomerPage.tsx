@@ -15,7 +15,7 @@ import EmptyPageFiller from "../EmptyPageFiller";
 export default function SingleCustomerPage() {
   const router = useRouter();
   const { customer, isLoadingCustomer, isErrorCustomer } = useCustomer(
-    router.query.workspaceId?.toString(),
+    router.query.organisationId?.toString(),
     router.query.customerId?.toString()
   );
 
@@ -41,7 +41,7 @@ export default function SingleCustomerPage() {
       <main className="mx-auto px-4 sm:px-6 lg:px-8">
         <Link
           className="inline-flex pt-5 text-sm text-gray-500"
-          href={`/workspaces/${router.query.workspaceId}/customers/`}>
+          href={`/organisations/${router.query.organisationId}/customers/`}>
           <BackIcon className="mr-2 h-5 w-5" />
           Back to customers overview
         </Link>

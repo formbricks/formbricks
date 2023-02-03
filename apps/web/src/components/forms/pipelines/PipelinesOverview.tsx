@@ -86,11 +86,11 @@ export default function PipelinesOverview({}) {
   const router = useRouter();
   const { form, isLoadingForm, isErrorForm } = useForm(
     router.query.formId?.toString(),
-    router.query.workspaceId?.toString()
+    router.query.organisationId?.toString()
   );
   const { pipelines, isLoadingPipelines, isErrorPipelines, mutatePipelines } = usePipelines(
     router.query.formId?.toString(),
-    router.query.workspaceId?.toString()
+    router.query.organisationId?.toString()
   );
 
   const [openAddModal, setOpenAddModal] = useState(false);
@@ -100,7 +100,7 @@ export default function PipelinesOverview({}) {
   const toggleEnabled = async (pipeline) => {
     const newPipeline = JSON.parse(JSON.stringify(pipeline));
     newPipeline.enabled = !newPipeline.enabled;
-    await persistPipeline(router.query.formId, router.query.workspaceId, newPipeline);
+    await persistPipeline(router.query.formId, router.query.organisationId, newPipeline);
     const pipelineIdx = pipelines.findIndex((p) => p.id === pipeline.id);
     if (pipelineIdx !== -1) {
       const newPipelines = JSON.parse(JSON.stringify(pipelines));
@@ -115,7 +115,11 @@ export default function PipelinesOverview({}) {
   };
 
   const deletePipelineAction = async (pipelineId) => {
-    await deletePipeline(router.query.formId?.toString(), router.query.workspaceId?.toString(), pipelineId);
+    await deletePipeline(
+      router.query.formId?.toString(),
+      router.query.organisationId?.toString(),
+      pipelineId
+    );
     const newPipelines = JSON.parse(JSON.stringify(pipelines));
     const pipelineIdx = newPipelines.findIndex((p) => p.id === pipelineId);
     if (pipelineIdx > -1) {

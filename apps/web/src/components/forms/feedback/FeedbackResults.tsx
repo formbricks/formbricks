@@ -20,7 +20,7 @@ const subCategories = [
 export default function FeedbackResults() {
   const router = useRouter();
   const { submissions, isLoadingSubmissions, isErrorSubmissions } = useSubmissions(
-    router.query.workspaceId?.toString(),
+    router.query.organisationId?.toString(),
     router.query.formId?.toString()
   );
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);

@@ -3,7 +3,7 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
 import EmptyPageFiller from "@/components/EmptyPageFiller";
 import { useCustomers } from "@/lib/customers";
-import { useWorkspace } from "@/lib/workspaces";
+import { useOrganisation } from "@/lib/organisations";
 import { convertDateTimeString } from "@/lib/utils";
 import { UsersIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -12,13 +12,13 @@ import { useRouter } from "next/router";
 export default function FormsPage() {
   const router = useRouter();
   const { customers, isLoadingCustomers, isErrorCustomers } = useCustomers(
-    router.query.workspaceId?.toString()
+    router.query.organisationId?.toString()
   );
-  const { workspace, isLoadingWorkspace, isErrorWorkspace } = useWorkspace(
-    router.query.workspaceId?.toString()
+  const { organisation, isLoadingOrganisation, isErrorOrganisation } = useOrganisation(
+    router.query.organisationId?.toString()
   );
 
-  if (isLoadingCustomers || isLoadingWorkspace) {
+  if (isLoadingCustomers || isLoadingOrganisation) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <LoadingSpinner />
@@ -26,7 +26,7 @@ export default function FormsPage() {
     );
   }
 
-  if (isErrorCustomers || isErrorWorkspace) {
+  if (isErrorCustomers || isErrorOrganisation) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights.</div>;
   }
   return (
@@ -35,7 +35,7 @@ export default function FormsPage() {
         <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
           Customers
           <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-            {workspace.name}
+            {organisation.name}
           </span>
         </h1>
         <p className="mt-4 text-slate-600">
@@ -78,7 +78,8 @@ export default function FormsPage() {
                     {customers.map((customer, customerIdx) => (
                       <tr key={customer.email} className={customerIdx % 2 === 0 ? undefined : "bg-gray-50"}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          <Link href={`/workspaces/${router.query.workspaceId}/customers/${customer.email}`}>
+                          <Link
+                            href={`/organisations/${router.query.organisationId}/customers/${customer.email}`}>
                             {customer.email}
                           </Link>
                         </td>
@@ -90,7 +91,7 @@ export default function FormsPage() {
                         </td>
                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                           <Link
-                            href={`/workspaces/${router.query.workspaceId}/customers/${customer.id}`}
+                            href={`/organisations/${router.query.organisationId}/customers/${customer.id}`}
                             className="text-brand-dark hover:text-brand-light">
                             View<span className="sr-only">, {customer.name}</span>
                           </Link>
