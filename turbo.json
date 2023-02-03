@@ -41,6 +41,9 @@
     "db:migrate:deploy": {
       "outputs": []
     },
+    "db:migrate:vercel": {
+      "outputs": []
+    },
     "db:push": {
       "outputs": []
     },
