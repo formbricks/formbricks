@@ -48,14 +48,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       event.data.customer = {
         connectOrCreate: {
           where: {
-            email_workspaceId: {
+            email_organisationId: {
               email: submission.customer.email,
-              workspaceId: form.workspaceId,
+              organisationId: form.organisationId,
             },
           },
           create: {
             email: customerEmail,
-            workspace: { connect: { id: form.workspaceId } },
+            organisation: { connect: { id: form.organisationId } },
             data: customerData,
           },
         },
@@ -70,7 +70,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const submissionResult = await prisma.submission.create(event);
     await runPipelines(pipelineEvents, form, submission, submissionResult);
     // tracking
-    capturePosthogEvent(form.workspaceId, "submission received", {
+    capturePosthogEvent(form.organisationId, "submission received", {
       formId,
     });
     captureTelemetry("submission received");

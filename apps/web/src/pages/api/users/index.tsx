@@ -21,14 +21,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const userData = await prisma.user.create({
         data: {
           ...user,
-          workspaces: {
+          organisations: {
             create: [
               {
                 accepted: true,
                 role: "owner",
-                workspace: {
+                organisation: {
                   create: {
-                    name: `${user.name}'s Workspace`,
+                    name: `${user.name}'s Organisation`,
                   },
                 },
               },

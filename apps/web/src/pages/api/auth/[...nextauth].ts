@@ -226,14 +226,14 @@ export const authOptions: NextAuthOptions = {
             accounts: {
               create: [{ ...account }],
             },
-            workspaces: {
+            organisations: {
               create: [
                 {
                   accepted: true,
                   role: "owner",
-                  workspace: {
+                  organisation: {
                     create: {
-                      name: `${user.name}'s Workspace`,
+                      name: `${user.name}'s Organisation`,
                     },
                   },
                 },

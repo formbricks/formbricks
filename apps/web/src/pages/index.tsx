@@ -14,8 +14,8 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     if (session && memberships && memberships.length > 0) {
-      const workspaceId = memberships[0].workspaceId;
-      router.push(`/workspaces/${workspaceId}/forms`);
+      const organisationId = memberships[0].organisationId;
+      router.push(`/organisations/${organisationId}/forms`);
     }
     if (!session) {
       router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`);

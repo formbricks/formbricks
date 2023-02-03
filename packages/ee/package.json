@@ -1,0 +1,23 @@
+{
+  "name": "@formbricks/ee",
+  "sideEffects": false,
+  "description": "Formbricks Enterprise Features",
+  "authors": "Formbricks",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "devDependencies": {
+    "@formbricks/tsconfig": "workspace:*",
+    "@types/react": "^18.0.25",
+    "@types/react-dom": "^18.0.8",
+    "concurrently": "^7.5.0",
+    "eslint": "^8.27.0",
+    "eslint-config-formbricks": "workspace:*",
+    "postcss": "^8.4.19",
+    "react": "^18.2.0",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "@formbricks/database": "workspace:*",
+    "next": "^13.1.6"
+  }
+}

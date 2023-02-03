@@ -45,7 +45,7 @@ export const sendVerificationEmail = async (user) => {
     The link is valid for one day. If it has expired please request a new token here:<br/>
     <a href="${verificationRequestLink}">${verificationRequestLink}</a><br/>
     <br/>
-    Your Formbricks Workspace`,
+    Your Formbricks Organisation`,
   });
 };
 
@@ -66,7 +66,7 @@ export const sendForgotPasswordEmail = async (user) => {
     <br/>
     Your password won't change until you access the link above and create a new one.<br/>
     <br/>
-    Your Formbricks Workspace`,
+    Your Formbricks Organisation`,
   });
 };
 
@@ -76,14 +76,14 @@ export const sendPasswordResetNotifyEmail = async (user) => {
     subject: "Your Formbricks password has been changed",
     html: `We're contacting you to notify you that your password has been changed.<br/>
     <br/>
-    Your Formbricks Workspace`,
+    Your Formbricks Organisation`,
   });
 };
 
 export const sendSubmissionEmail = async (
   email: string,
   event: "created" | "updated" | "finished",
-  workspaceId,
+  organisationId,
   formId,
   formLabel: string,
   schema: any,
@@ -120,7 +120,7 @@ export const sendSubmissionEmail = async (
     
     Click <a href="${
       process.env.NEXTAUTH_URL
-    }/workspaces/${workspaceId}/forms/${formId}/feedback">here</a> to see the submission.
+    }/organisations/${organisationId}/forms/${formId}/feedback">here</a> to see the submission.
     ${submission.customerEmail ? "<hr/>You can reply to this email to contact the user directly." : ""}`,
   });
 };

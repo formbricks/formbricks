@@ -5,6 +5,8 @@
 var path = require("path");
 const { withSentryConfig } = require("@sentry/nextjs");
 
+const withTM = require("next-transpile-modules")(["@formbricks/ee"]);
+
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
@@ -55,6 +57,8 @@ const sentryWebpackPluginOptions = {
   silent: true, // Suppresses all logs
 };
 
+const moduleExports = () => [withTM].reduce((acc, next) => next(acc), nextConfig);
+
 module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
-  : nextConfig;
+  ? withSentryConfig(moduleExports, sentryWebpackPluginOptions)
+  : moduleExports;

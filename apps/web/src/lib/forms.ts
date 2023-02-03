@@ -1,8 +1,8 @@
 import useSWR from "swr";
 import { fetcher } from "./utils";
 
-export const useForms = (workspaceId: string) => {
-  const { data, error, mutate } = useSWR(`/api/workspaces/${workspaceId}/forms`, fetcher);
+export const useForms = (organisationId: string) => {
+  const { data, error, mutate } = useSWR(`/api/organisations/${organisationId}/forms`, fetcher);
 
   return {
     forms: data,
@@ -12,8 +12,8 @@ export const useForms = (workspaceId: string) => {
   };
 };
 
-export const useForm = (id: string, workspaceId: string) => {
-  const { data, error, mutate } = useSWR(`/api/workspaces/${workspaceId}/forms/${id}`, fetcher);
+export const useForm = (id: string, organisationId: string) => {
+  const { data, error, mutate } = useSWR(`/api/organisations/${organisationId}/forms/${id}`, fetcher);
 
   return {
     form: data,
@@ -25,7 +25,7 @@ export const useForm = (id: string, workspaceId: string) => {
 
 export const persistForm = async (form) => {
   try {
-    await fetch(`/api/workspaces/${form.workspaceId}/forms/${form.id}/`, {
+    await fetch(`/api/organisations/${form.organisationId}/forms/${form.id}/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
@@ -35,9 +35,9 @@ export const persistForm = async (form) => {
   }
 };
 
-export const createForm = async (workspaceId: string, form = {}) => {
+export const createForm = async (organisationId: string, form = {}) => {
   try {
-    const res = await fetch(`/api/workspaces/${workspaceId}/forms`, {
+    const res = await fetch(`/api/organisations/${organisationId}/forms`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
@@ -49,9 +49,9 @@ export const createForm = async (workspaceId: string, form = {}) => {
   }
 };
 
-export const deleteForm = async (workspaceId: string, formId: string) => {
+export const deleteForm = async (organisationId: string, formId: string) => {
   try {
-    await fetch(`/api/workspaces/${workspaceId}/forms/${formId}`, {
+    await fetch(`/api/organisations/${organisationId}/forms/${formId}`, {
       method: "DELETE",
     });
   } catch (error) {

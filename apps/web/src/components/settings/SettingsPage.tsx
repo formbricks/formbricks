@@ -1,17 +1,17 @@
 "use client";
 
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { useWorkspace } from "@/lib/workspaces";
+import { useOrganisation } from "@/lib/organisations";
 import { InformationCircleIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/router";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { workspace, isLoadingWorkspace, isErrorWorkspace } = useWorkspace(
-    router.query.workspaceId?.toString()
+  const { organisation, isLoadingOrganisation, isErrorOrganisation } = useOrganisation(
+    router.query.organisationId?.toString()
   );
 
-  if (isLoadingWorkspace) {
+  if (isLoadingOrganisation) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <LoadingSpinner />
@@ -19,7 +19,7 @@ export default function SettingsPage() {
     );
   }
 
-  if (isErrorWorkspace) {
+  if (isErrorOrganisation) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
   return (
@@ -28,7 +28,7 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
           Settings
           <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-            {workspace.name}
+            {organisation.name}
           </span>
         </h1>
       </header>
@@ -39,7 +39,7 @@ export default function SettingsPage() {
           </div>
           <div className="ml-3 flex-1 md:flex md:justify-between">
             <p className="text-sm text-teal-700">
-              Workspace Management Settings coming to Formbricks HQ soon.
+              Organisation Management Settings coming to Formbricks HQ soon.
             </p>
           </div>
         </div>

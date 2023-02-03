@@ -14,22 +14,22 @@ export default function LayoutWrapperCustomForm({ children }) {
     () => [
       {
         name: "Form",
-        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/custom/`,
+        href: `/organisations/${router.query.organisationId}/forms/${router.query.formId}/custom/`,
         current: pathname.endsWith("custom") || pathname.endsWith("custom/"),
       },
       {
         name: "Pipelines",
-        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/custom/pipelines/`,
+        href: `/organisations/${router.query.organisationId}/forms/${router.query.formId}/custom/pipelines/`,
         current: pathname.includes("pipelines"),
       },
       {
         name: "Summary",
-        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/custom/summary/`,
+        href: `/organisations/${router.query.organisationId}/forms/${router.query.formId}/custom/summary/`,
         current: pathname.includes("summary"),
       },
       {
         name: "Submissions",
-        href: `/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/custom/submissions/`,
+        href: `/organisations/${router.query.organisationId}/forms/${router.query.formId}/custom/submissions/`,
         current: pathname.includes("submissions"),
       },
     ],

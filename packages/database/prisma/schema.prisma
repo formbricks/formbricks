@@ -37,15 +37,15 @@ model Pipeline {
 }
 
 model Customer {
-  email       String
-  createdAt   DateTime     @default(now()) @map(name: "created_at")
-  updatedAt   DateTime     @updatedAt @map(name: "updated_at")
-  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  submissions Submission[]
-  data        Json         @default("{}")
+  email          String
+  createdAt      DateTime     @default(now()) @map(name: "created_at")
+  updatedAt      DateTime     @updatedAt @map(name: "updated_at")
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
+  submissions    Submission[]
+  data           Json         @default("{}")
 
-  @@id([email, workspaceId])
+  @@id([email, organisationId])
 }
 
 enum FormType {
@@ -55,41 +55,48 @@ enum FormType {
 }
 
 model Form {
-  id          String       @id @default(cuid())
-  createdAt   DateTime     @default(now()) @map(name: "created_at")
-  updatedAt   DateTime     @updatedAt @map(name: "updated_at")
-  type        FormType
-  label       String
-  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  schema      Json         @default("{}")
-  submissions Submission[]
-  pipelines   Pipeline[]
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now()) @map(name: "created_at")
+  updatedAt      DateTime     @updatedAt @map(name: "updated_at")
+  type           FormType
+  label          String
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
+  schema         Json         @default("{}")
+  submissions    Submission[]
+  pipelines      Pipeline[]
 }
 
 model Submission {
-  id                  String    @id @default(cuid())
-  createdAt           DateTime  @default(now()) @map(name: "created_at")
-  updatedAt           DateTime  @updatedAt @map(name: "updated_at")
-  finished            Boolean   @default(false)
-  archived            Boolean   @default(false)
-  form                Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId              String
-  customer            Customer? @relation(fields: [customerEmail, customerWorkspaceId], references: [email, workspaceId])
-  customerEmail       String?
-  customerWorkspaceId String?
-  data                Json      @default("{}")
-  meta                Json      @default("{}")
+  id                     String    @id @default(cuid())
+  createdAt              DateTime  @default(now()) @map(name: "created_at")
+  updatedAt              DateTime  @updatedAt @map(name: "updated_at")
+  finished               Boolean   @default(false)
+  archived               Boolean   @default(false)
+  form                   Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId                 String
+  customer               Customer? @relation(fields: [customerEmail, customerOrganisationId], references: [email, organisationId])
+  customerEmail          String?
+  customerOrganisationId String?
+  data                   Json      @default("{}")
+  meta                   Json      @default("{}")
 }
 
-model Workspace {
-  id        String       @id @default(cuid())
-  createdAt DateTime     @default(now()) @map(name: "created_at")
-  updatedAt DateTime     @updatedAt @map(name: "updated_at")
-  name      String
-  members   Membership[]
-  forms     Form[]
-  customers Customer[]
+enum Plan {
+  free
+  pro
+}
+
+model Organisation {
+  id               String       @id @default(cuid())
+  createdAt        DateTime     @default(now()) @map(name: "created_at")
+  updatedAt        DateTime     @updatedAt @map(name: "updated_at")
+  name             String
+  members          Membership[]
+  forms            Form[]
+  customers        Customer[]
+  plan             Plan         @default(free)
+  stripeCustomerId String?
 }
 
 enum MembershipRole {
@@ -99,14 +106,14 @@ enum MembershipRole {
 }
 
 model Membership {
-  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  accepted    Boolean        @default(false)
-  role        MembershipRole
+  organisation   Organisation   @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  accepted       Boolean        @default(false)
+  role           MembershipRole
 
-  @@id([userId, workspaceId])
+  @@id([userId, organisationId])
 }
 
 model ApiKey {
@@ -154,7 +161,7 @@ model User {
   password                  String?
   identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
-  workspaces                Membership[]
+  organisations             Membership[]
   accounts                  Account[]
   apiKeys                   ApiKey[]
 }

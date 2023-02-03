@@ -9,15 +9,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(401).json({ message: "Not authenticated" });
   }
 
-  // GET /api/workspaces
-  // Get all of my workspaces
+  // GET /api/organisations
+  // Get all of my organisations
   if (req.method === "GET") {
     const memberships = await prisma.membership.findMany({
       where: {
         user: { email: session.email },
       },
       include: {
-        workspace: true,
+        organisation: true,
       },
     });
     return res.json(memberships);

@@ -11,8 +11,8 @@ import { Fragment, useState } from "react";
 import NewFormModal from "@/components/forms/NewFormModal";
 import LoadingSpinner from "../LoadingSpinner";
 
-export default function FormsList({ workspaceId }) {
-  const { forms, mutateForms, isLoadingForms } = useForms(workspaceId);
+export default function FormsList({ organisationId }) {
+  const { forms, mutateForms, isLoadingForms } = useForms(organisationId);
   const [openNewFormModal, setOpenNewFormModal] = useState(false);
 
   const newForm = async () => {
@@ -21,7 +21,7 @@ export default function FormsList({ workspaceId }) {
 
   const deleteFormAction = async (form, formIdx) => {
     try {
-      await deleteForm(workspaceId, form.id);
+      await deleteForm(organisationId, form.id);
       // remove locally
       const updatedForms = JSON.parse(JSON.stringify(forms));
       updatedForms.splice(formIdx, 1);
@@ -72,7 +72,7 @@ export default function FormsList({ workspaceId }) {
                         <p className="line-clamp-3 text-lg">{form.label}</p>
                       </div>
                       <Link
-                        href={`/workspaces/${workspaceId}/forms/${form.id}/${form.type}/`}
+                        href={`/organisations/${organisationId}/forms/${form.id}/${form.type}/`}
                         className="absolute h-full w-full"></Link>
                       <div className="divide-y divide-slate-100 ">
                         <div className="flex justify-between px-4 py-2 text-right sm:px-6">
@@ -140,7 +140,7 @@ export default function FormsList({ workspaceId }) {
             </ul>
           ))}
       </div>
-      <NewFormModal open={openNewFormModal} setOpen={setOpenNewFormModal} workspaceId={workspaceId} />
+      <NewFormModal open={openNewFormModal} setOpen={setOpenNewFormModal} organisationId={organisationId} />
     </>
   );
 }

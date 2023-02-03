@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { prisma } from "@formbricks/database";
 import { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession } from "next-auth";
+import { getServerSession } from "next-auth";
 
 export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 
@@ -29,7 +29,7 @@ export const hasOwnership = async (model, session, id) => {
 
 export const getSessionOrUser = async (req: NextApiRequest, res: NextApiResponse) => {
   // check for session (browser usage)
-  let session: any = await unstable_getServerSession(req, res, authOptions);
+  let session: any = await getServerSession(req, res, authOptions);
   if (session && "user" in session) return session.user;
   // check for api key
   if (req.headers["x-api-key"]) {

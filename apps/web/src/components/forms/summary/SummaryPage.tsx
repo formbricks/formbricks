@@ -5,7 +5,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { useSubmissions } from "@/lib/submissions";
 import { capitalizeFirstLetter } from "@/lib/utils";
-import { useWorkspace } from "@/lib/workspaces";
+import { useOrganisation } from "@/lib/organisations";
 import { Bar, Nps, Table } from "@formbricks/charts";
 import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
@@ -15,17 +15,17 @@ export default function SummaryPage() {
   const router = useRouter();
   const { form, isLoadingForm, isErrorForm } = useForm(
     router.query.formId?.toString(),
-    router.query.workspaceId?.toString()
+    router.query.organisationId?.toString()
   );
-  const { workspace, isLoadingWorkspace, isErrorWorkspace } = useWorkspace(
-    router.query.workspaceId?.toString()
+  const { organisation, isLoadingOrganisation, isErrorOrganisation } = useOrganisation(
+    router.query.organisationId?.toString()
   );
   const { submissions, isLoadingSubmissions } = useSubmissions(
-    router.query.workspaceId?.toString(),
+    router.query.organisationId?.toString(),
     router.query.formId?.toString()
   );
 
-  if (isLoadingForm || isLoadingWorkspace || isLoadingSubmissions) {
+  if (isLoadingForm || isLoadingOrganisation || isLoadingSubmissions) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <LoadingSpinner />
@@ -33,7 +33,7 @@ export default function SummaryPage() {
     );
   }
 
-  if (isErrorForm || isErrorWorkspace) {
+  if (isErrorForm || isErrorOrganisation) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
 
@@ -43,7 +43,7 @@ export default function SummaryPage() {
         <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
           Summary - {form.label}
           <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-            {workspace.name}
+            {organisation.name}
           </span>
         </h1>
       </header>

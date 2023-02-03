@@ -1,9 +1,9 @@
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 
-export const useSubmissions = (workspaceId: string, formId: string) => {
+export const useSubmissions = (organisationId: string, formId: string) => {
   const { data, error, mutate } = useSWR(
-    `/api/workspaces/${workspaceId}/forms/${formId}/submissions`,
+    `/api/organisations/${organisationId}/forms/${formId}/submissions`,
     fetcher
   );
 
@@ -15,9 +15,9 @@ export const useSubmissions = (workspaceId: string, formId: string) => {
   };
 };
 
-export const deleteSubmission = async (workspaceId: string, formId: string, submissionId: string) => {
+export const deleteSubmission = async (organisationId: string, formId: string, submissionId: string) => {
   try {
-    await fetch(`/api/workspaces/${workspaceId}/forms/${formId}/submissions/${submissionId}`, {
+    await fetch(`/api/organisations/${organisationId}/forms/${formId}/submissions/${submissionId}`, {
       method: "DELETE",
     });
   } catch (error) {
@@ -26,13 +26,16 @@ export const deleteSubmission = async (workspaceId: string, formId: string, subm
   }
 };
 
-export const persistSubmission = async (submission, workspaceId) => {
+export const persistSubmission = async (submission, organisationId) => {
   try {
-    await fetch(`/api/workspaces/${workspaceId}/forms/${submission.formId}/submissions/${submission.id}/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(submission),
-    });
+    await fetch(
+      `/api/organisations/${organisationId}/forms/${submission.formId}/submissions/${submission.id}/`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submission),
+      }
+    );
   } catch (error) {
     console.error(error);
   }

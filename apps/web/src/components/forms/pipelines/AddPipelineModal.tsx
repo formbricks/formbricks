@@ -23,7 +23,7 @@ export default function AddPipelineModal({ open, setOpen }) {
   const [pipeline, setPipeline] = useState(getEmptyPipeline());
   const { pipelines, mutatePipelines } = usePipelines(
     router.query.formId?.toString(),
-    router.query.workspaceId?.toString()
+    router.query.organisationId?.toString()
   );
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function AddPipelineModal({ open, setOpen }) {
     e.preventDefault();
     const newPipeline = await createPipeline(
       router.query.formId?.toString(),
-      router.query.workspaceId?.toString(),
+      router.query.organisationId?.toString(),
       pipeline
     );
     const newPipelines = JSON.parse(JSON.stringify(pipelines));

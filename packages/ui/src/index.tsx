@@ -1,4 +1,5 @@
 export * from "./Button";
+export * from "./Confetti";
 
 /* Icons */
 export * from "./icons/BackIcon";

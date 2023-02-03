@@ -1,32 +1,34 @@
 "use client";
 
+import LoadingSpinner from "@/components/LoadingSpinner";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
+import { useMemberships } from "@/lib/memberships";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { signOut, useSession } from "next-auth/react";
+import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Fragment } from "react";
+import { useRouter } from "next/router";
+import { Fragment, useMemo } from "react";
 import { ToastContainer } from "react-toastify";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import { Logo } from "../Logo";
-import Head from "next/head";
 
 export default function LayoutApp({ children }) {
-  const userNavigation = [
-    {
-      name: "Settings",
-      onClick: () => {
-        router.push("/me/settings");
-      },
-    },
-    { name: "Sign out", onClick: () => signOut() },
-  ];
-
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { memberships, isLoadingMemberships, isErrorMemberships } = useMemberships();
+
+  const userNavigation = useMemo(
+    () => [
+      {
+        name: "Settings",
+        href: "/me/settings",
+      },
+    ],
+    []
+  );
 
   if (status === "loading") {
     return (
@@ -39,6 +41,18 @@ export default function LayoutApp({ children }) {
   if (!session) {
     router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`);
     return <div></div>;
+  }
+
+  if (isLoadingMemberships) {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-8">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (isErrorMemberships) {
+    return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
 
   return (
@@ -90,21 +104,65 @@ export default function LayoutApp({ children }) {
                         leave="transition ease-in duration-75"
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95">
-                        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                          {userNavigation.map((item) => (
-                            <Menu.Item key={item.name}>
+                        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                          <div className="px-4 py-3">
+                            <p className="text-sm">Signed in as</p>
+                            <p className="truncate text-sm font-medium text-gray-900">{session.user.name}</p>
+                          </div>
+                          <div className="py-1">
+                            {userNavigation.map((item) => (
+                              <Menu.Item key={item.name}>
+                                {({ active }) => (
+                                  <Link
+                                    href={item.href}
+                                    className={clsx(
+                                      active ? "bg-gray-100" : "",
+                                      "flex justify-start px-4 py-2 text-sm text-gray-700"
+                                    )}>
+                                    {item.name}
+                                  </Link>
+                                )}
+                              </Menu.Item>
+                            ))}
+                          </div>
+                          {process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1" &&
+                            memberships.map((membership) => (
+                              <>
+                                <div className="px-4 py-3">
+                                  <p className="truncate text-sm font-medium text-gray-900">
+                                    {membership.organisation.name}
+                                  </p>
+                                </div>
+                                <div className="py-1">
+                                  <Menu.Item>
+                                    {({ active }) => (
+                                      <Link
+                                        href={`/organisations/${membership.organisation.id}/settings/billing`}
+                                        className={clsx(
+                                          active ? "bg-gray-100" : "",
+                                          "flex justify-start px-4 py-2 text-sm text-gray-700"
+                                        )}>
+                                        Billing
+                                      </Link>
+                                    )}
+                                  </Menu.Item>
+                                </div>
+                              </>
+                            ))}
+                          <div className="py-1">
+                            <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={item.onClick}
+                                  onClick={() => signOut()}
                                   className={clsx(
                                     active ? "bg-gray-100" : "",
                                     "flex w-full justify-start px-4 py-2 text-sm text-gray-700"
                                   )}>
-                                  {item.name}
+                                  Sign out
                                 </button>
                               )}
                             </Menu.Item>
-                          ))}
+                          </div>
                         </Menu.Items>
                       </Transition>
                     </Menu>
@@ -149,7 +207,7 @@ export default function LayoutApp({ children }) {
                       <Disclosure.Button
                         key={item.name}
                         as="a"
-                        onClick={item.onClick}
+                        href={item.href}
                         className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800">
                         {item.name}
                       </Disclosure.Button>

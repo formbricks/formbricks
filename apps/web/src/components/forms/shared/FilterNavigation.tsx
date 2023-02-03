@@ -18,10 +18,10 @@ interface Filter {
 
 export default function FilterNavigation({ submissions, setFilteredSubmissions }) {
   const router = useRouter();
-  const { formId, workspaceId } = router.query;
+  const { formId, organisationId } = router.query;
   const [filters, setFilters] = useState<Filter[]>([]);
 
-  const { form, isLoadingForm, isErrorForm } = useForm(formId?.toString(), workspaceId?.toString());
+  const { form, isLoadingForm, isErrorForm } = useForm(formId?.toString(), organisationId?.toString());
 
   // filter submissions based on selected filters
   useEffect(() => {

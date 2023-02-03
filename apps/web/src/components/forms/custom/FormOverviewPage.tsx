@@ -2,7 +2,7 @@
 
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
-import { useWorkspace } from "@/lib/workspaces";
+import { useOrganisation } from "@/lib/organisations";
 import { Button } from "@formbricks/ui";
 import { UserIcon } from "@heroicons/react/20/solid";
 import clsx from "clsx";
@@ -24,10 +24,10 @@ export default function FormOverviewPage() {
   const router = useRouter();
   const { form, isLoadingForm, isErrorForm } = useForm(
     router.query.formId?.toString(),
-    router.query.workspaceId?.toString()
+    router.query.organisationId?.toString()
   );
-  const { workspace, isLoadingWorkspace, isErrorWorkspace } = useWorkspace(
-    router.query.workspaceId?.toString()
+  const { organisation, isLoadingOrganisation, isErrorOrganisation } = useOrganisation(
+    router.query.organisationId?.toString()
   );
   const [activeTab, setActiveTab] = useState(tabs[0]);
 
@@ -43,7 +43,7 @@ export default function FormOverviewPage() {
     }
   }, [isLoadingForm]);
 
-  if (isLoadingForm || isLoadingWorkspace) {
+  if (isLoadingForm || isLoadingOrganisation) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <LoadingSpinner />
@@ -51,7 +51,7 @@ export default function FormOverviewPage() {
     );
   }
 
-  if (isErrorForm || isErrorWorkspace) {
+  if (isErrorForm || isErrorOrganisation) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
   return (
@@ -60,7 +60,7 @@ export default function FormOverviewPage() {
         <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
           {form.label}
           <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
-            {workspace.name}
+            {organisation.name}
           </span>
         </h1>
       </header>
@@ -179,7 +179,7 @@ export default function FormOverviewPage() {
                   <li>
                     View submission under{" "}
                     <Link
-                      href={`/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/submissions`}
+                      href={`/organisations/${router.query.organisationId}/forms/${router.query.formId}/submissions`}
                       className="underline">
                       Submissions
                     </Link>{" "}
@@ -188,7 +188,7 @@ export default function FormOverviewPage() {
                   <li>
                     Get notified or pipe submission data to a different tool in the{" "}
                     <Link
-                      href={`/workspaces/${router.query.workspaceId}/forms/${router.query.formId}/pipelines`}
+                      href={`/organisations/${router.query.organisationId}/forms/${router.query.formId}/pipelines`}
                       className="underline">
                       Pipelines
                     </Link>{" "}

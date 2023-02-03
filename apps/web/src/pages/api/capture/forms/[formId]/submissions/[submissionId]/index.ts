@@ -60,14 +60,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       event.data.customer = {
         connectOrCreate: {
           where: {
-            email_workspaceId: {
+            email_organisationId: {
               email: submission.customer.email,
-              workspaceId: form.workspaceId,
+              organisationId: form.organisationId,
             },
           },
           create: {
             email: customerEmail,
-            workspace: { connect: { id: form.workspaceId } },
+            organisation: { connect: { id: form.organisationId } },
             data: customerData,
           },
         },
@@ -86,12 +86,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     await runPipelines(pipelineEvents, form, submission, submissionResult);
     // tracking
     if (submission.finished) {
-      capturePosthogEvent(form.workspaceId, "submission finished", {
+      capturePosthogEvent(form.organisationId, "submission finished", {
         formId,
       });
       captureTelemetry("submission finished");
     } else {
-      capturePosthogEvent(form.workspaceId, "submission updated", {
+      capturePosthogEvent(form.organisationId, "submission updated", {
         formId,
       });
       captureTelemetry("submission updated");
