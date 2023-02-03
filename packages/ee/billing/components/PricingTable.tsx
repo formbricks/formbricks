@@ -13,8 +13,6 @@ export default function BillingPage({ organisationId }: { organisationId: string
     return <div>Stripe environment variables not set</div>;
   }
 
-  console.log(organisationId);
-
   return (
     <>
       <Script async src="https://js.stripe.com/v3/pricing-table.js" />

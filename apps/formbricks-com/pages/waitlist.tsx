@@ -52,7 +52,7 @@ const WaitlistPage = () => (
             process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
           }
           formId={
-            process.env.NODE_ENV === "production" ? "cld37mt2i0000ld08p9q572bc" : "cldd3mrbs0007u0w0g2m6verd"
+            process.env.NODE_ENV === "production" ? "cld37mt2i0000ld08p9q572bc" : "cldonm4ra000019axa4oc440z"
           }
           survey={{
             config: {
@@ -104,6 +104,9 @@ const WaitlistPage = () => (
               },
               {
                 id: "emailPage",
+                config: {
+                  addFieldsToCustomer: ["email"],
+                },
                 elements: [
                   {
                     id: "email",
@@ -224,6 +227,7 @@ const WaitlistPage = () => (
                 id: "wauPage",
                 config: {
                   autoSubmit: true,
+                  addFieldsToCustomer: ["wau"],
                 },
                 elements: [
                   {

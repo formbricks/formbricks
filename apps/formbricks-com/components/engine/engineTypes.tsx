@@ -9,6 +9,7 @@ export interface SurveyPage {
   endScreen?: boolean;
   elements: SurveyElement[];
   config?: {
+    addFieldsToCustomer?: string[];
     autoSubmit?: boolean;
     allowSkip?: boolean;
   };
