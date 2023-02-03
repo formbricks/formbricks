@@ -60,5 +60,5 @@ const sentryWebpackPluginOptions = {
 const moduleExports = () => [withTM].reduce((acc, next) => next(acc), nextConfig);
 
 module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
+  ? withSentryConfig(moduleExports, sentryWebpackPluginOptions)
   : moduleExports;
