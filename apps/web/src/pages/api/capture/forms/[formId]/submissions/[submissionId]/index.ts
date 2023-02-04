@@ -68,7 +68,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           },
           data: { data: customerData },
         });
-        return res.status(200).json({ message: "Submission updated" });
       } else {
         if ("email" in submission.customer) {
           const customerEmail = submission.customer.email;

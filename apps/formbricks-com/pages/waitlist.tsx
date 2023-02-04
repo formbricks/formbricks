@@ -227,7 +227,6 @@ const WaitlistPage = () => (
                 id: "wauPage",
                 config: {
                   autoSubmit: true,
-                  addFieldsToCustomer: ["wau"],
                 },
                 elements: [
                   {
