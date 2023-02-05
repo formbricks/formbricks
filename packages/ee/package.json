@@ -1,5 +1,6 @@
 {
   "name": "@formbricks/ee",
+  "private": true,
   "sideEffects": false,
   "description": "Formbricks Enterprise Features",
   "authors": "Formbricks",
