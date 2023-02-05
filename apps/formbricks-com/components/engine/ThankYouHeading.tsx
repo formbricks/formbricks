@@ -1,8 +1,10 @@
+import { Confetti } from "@formbricks/ui";
 import { SurveyElement } from "./engineTypes";
 
 export default function ThankYouHeading({ element }: { element: SurveyElement }) {
   return (
     <div className="text-center">
+      <Confetti />
       <h2 className="mt-3 text-xl font-bold text-slate-700 dark:text-slate-100 sm:text-2xl ">
         Thank you! We’re onboarding new users <span className="text-brand">regularly.</span>
       </h2>
