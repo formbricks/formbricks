@@ -37,7 +37,6 @@ export default async function handle(
           updatedAt: "desc",
         },
       ],
-      take: 25,
     });
     const users = await prisma.user.findMany({
       where: {

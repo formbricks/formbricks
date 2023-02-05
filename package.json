@@ -21,7 +21,7 @@
     "@emotion/react": "^11.10.5",
     "@headlessui/react": "^1.6.1",
     "@heroicons/react": "^2.0.8",
-    "@mui/material": "^5.11.4",
+    "@mui/material": "^5.11.7",
     "@mui/x-data-grid": "^5.17.18",
     "@prisma/client": "^4.2.1",
     "aws-sdk": "^2.1230.0",
