@@ -48,9 +48,9 @@ export default function BaseLayoutManagement({
         >
           <header className='w-full'>
             <div className='relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-ui-gray-light max-sm:pr-2 max-sm:pl-2 max-md:pr-2 max-md:pl-2'>
-              <div className='grid w-full grid-cols-2 sm:grid-cols-2'>
-                <div className='flex-1  space-x-2 sm:flex '>
-                  <div className='sm:w-fit m-auto flex items-center h-full'>
+              <div className='grid w-full grid-cols-3 sm:grid-cols-3'>
+                <div className='flex-1  space-x-2 sm:flex justify-start '>
+                  <div className='sm:w-fit ml-6 flex items-center h-full'>
                     <Link href='/forms/'>
                       <a className='text-ui-gray-dark hover:text-ui-gray-dark'>
                         <Image
@@ -62,8 +62,40 @@ export default function BaseLayoutManagement({
                       </a>
                     </Link>
                   </div>
-                  <NewFormNavButton />
-                  <MenuBreadcrumbs breadcrumbs={breadcrumbs} />
+
+                  <div className='flex-1  space-x-2 sm:flex items-center '>
+                    <ol className='flex items-center space-x-2'>
+                      {breadcrumbs.map((crumb) => (
+                        <li key={crumb.name}>
+                          <div className='flex items-center'>
+                            <a
+                              href={crumb.href}
+                              className='ml-4 text-sm font-medium truncate text-ui-gray-dark hover:text-ui-gray-dark'
+                            >
+                              {crumb.name}
+                            </a>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                </div>
+
+                <div className='flex-1  space-x-2 sm:flex items-center '>
+                  <ol className='flex items-center space-x-2'>
+                    {breadcrumbs.map((crumb) => (
+                      <li key={crumb.name}>
+                        <div className='flex items-center'>
+                          <a
+                            href={crumb.href}
+                            className='ml-4 text-sm font-medium truncate text-ui-gray-dark hover:text-ui-gray-dark'
+                          >
+                            {crumb.name}
+                          </a>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
                 </div>
 
                 <div className='flex items-center justify-end flex-1 space-x-2 text-right sm:space-x-4'>
