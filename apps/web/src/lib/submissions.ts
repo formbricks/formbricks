@@ -73,7 +73,9 @@ export const MergeWithSchema = (submissionData, schema) => {
       if (elem.name in submissionData) {
         if (["checkbox", "radio"].includes(elem.type)) {
           if (Array.isArray(submissionData[elem.name])) {
-            mergedData[elem.label] = submissionData[elem.name].map((value) => optionLabelMap[value] || value);
+            mergedData[elem.label] = submissionData[elem.name]
+              .map((value) => optionLabelMap[value] || value)
+              .join(", ");
           } else {
             mergedData[elem.label] = optionLabelMap[submissionData[elem.name]] || submissionData[elem.name];
           }

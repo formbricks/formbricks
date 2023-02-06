@@ -134,7 +134,7 @@ const WaitlistPage = () => {
                   elements: [
                     {
                       id: "featureSelection",
-                      type: "radio",
+                      type: "checkbox",
                       label: "Select the Best Practices you need:",
                       name: "featureSelection",
                       options: [

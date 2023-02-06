@@ -42,11 +42,24 @@ export default function FilterNavigation({ submissions, setFilteredSubmissions }
         // no filter is all is selected, if not keep on filtering
         if (!isAllActive) {
           // filter for all other types
-          for (const option of filter.options) {
-            if (option.active) {
-              newFilteredSubmissions = newFilteredSubmissions.filter((submission) => {
-                return submission.data[filter.name] === option.value;
-              });
+          if (filter.type === "radio") {
+            for (const option of filter.options) {
+              if (option.active) {
+                newFilteredSubmissions = newFilteredSubmissions.filter((submission) => {
+                  return submission.data[filter.name] === option.value;
+                });
+              }
+            }
+          } else if (filter.type === "checkbox") {
+            for (const option of filter.options) {
+              if (option.active) {
+                newFilteredSubmissions = newFilteredSubmissions.filter((submission) => {
+                  const value = submission.data[filter.name];
+                  if (value) {
+                    return value.includes(option.value);
+                  }
+                });
+              }
             }
           }
         }
@@ -77,7 +90,7 @@ export default function FilterNavigation({ submissions, setFilteredSubmissions }
       const filters = [];
       for (const page of form.schema.pages) {
         for (const element of page.elements) {
-          if (element.type === "radio") {
+          if (["radio", "checkbox"].includes(element.type)) {
             filters.push({
               name: element.name,
               label: element.label,
