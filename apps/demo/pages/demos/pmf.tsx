@@ -1,5 +1,5 @@
-import AppPage from "../components/AppPage";
-import PmfButton from "../components/PmfButton";
+import AppPage from "../../components/AppPage";
+import PmfButton from "../../components/PmfButton";
 
 export default function Example() {
   return (

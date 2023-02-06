@@ -1,6 +1,6 @@
 import Script from "next/script";
 import { useEffect } from "react";
-import AppPage from "../components/AppPage";
+import AppPage from "../../components/AppPage";
 
 declare global {
   interface Window {
@@ -8,12 +8,12 @@ declare global {
   }
 }
 
-export default function FeedbackWidget() {
+export default function Feedback() {
   useEffect(() => {
     window.formbricks = {
       config: {
-        hqUrl: "http://localhost:3000",
-        formId: "cldohpx4t000019vijzlf8mgn",
+        hqUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
+        formId: process.env.NEXT_PUBLIC_FORMBRICKS_FEEDBACK_FORM_ID,
         contact: {
           name: "Matti Nannt",
           position: "Founder",
@@ -25,6 +25,7 @@ export default function FeedbackWidget() {
         },
       },
     };
+    require("@formbricks/pmf");
   }, []);
   return (
     <>

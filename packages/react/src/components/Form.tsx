@@ -2,7 +2,7 @@ import React, { createContext, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 
 export const SchemaContext = createContext({
-  schema: { pages: [] },
+  schema: {},
   setSchema: (schema: any) => schema,
 });
 
@@ -23,9 +23,9 @@ interface FormProps {
 
 export function Form({ onSubmit, children, formId, customerId, hqUrl }: FormProps) {
   const [schema, setSchema] = useState<any>({
-    type: "form",
+    schemaVersion: 0.5,
     config: { formId, hqUrl },
-    children: [],
+    pages: [{ name: "page1", elements: [] }],
   });
   const methods = useForm({ criteriaMode: "all", mode: "onChange" });
   const onFormSubmit = (data: any, event: React.BaseSyntheticEvent<object, any, any> | undefined) =>

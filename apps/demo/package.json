@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@formbricks/charts": "workspace:*",
+    "@formbricks/feedback": "workspace:*",
     "@formbricks/pmf": "workspace:*",
     "@formbricks/react": "workspace:*",
     "@formbricks/ui": "workspace:*",
