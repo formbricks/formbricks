@@ -12,6 +12,11 @@ const OnboardingSurvey = () => (
       config: {
         progressBar: false,
       },
+      /*       customer: {
+        id: "test@cal.com",
+        name: "Test Customer",
+        email: "test@cal.com",
+      }, */
       pages: [
         {
           id: "rolePage",
