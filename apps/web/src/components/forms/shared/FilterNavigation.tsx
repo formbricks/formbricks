@@ -16,7 +16,17 @@ interface Filter {
   }[];
 }
 
-export default function FilterNavigation({ submissions, setFilteredSubmissions }) {
+interface FilterNavigationProps {
+  submissions: any[];
+  setFilteredSubmissions: (submissions: any[]) => void;
+  limitFields?: string[];
+}
+
+export default function FilterNavigation({
+  submissions,
+  setFilteredSubmissions,
+  limitFields = null,
+}: FilterNavigationProps) {
   const router = useRouter();
   const { formId, organisationId } = router.query;
   const [filters, setFilters] = useState<Filter[]>([]);
@@ -86,11 +96,15 @@ export default function FilterNavigation({ submissions, setFilteredSubmissions }
   };
 
   useEffect(() => {
+    // build filters based on form schema
     if (form && form.schema) {
       const filters = [];
       for (const page of form.schema.pages) {
         for (const element of page.elements) {
-          if (["radio", "checkbox"].includes(element.type)) {
+          if (
+            ["radio", "checkbox"].includes(element.type) &&
+            (!limitFields || limitFields.includes(element.name))
+          ) {
             filters.push({
               name: element.name,
               label: element.label,

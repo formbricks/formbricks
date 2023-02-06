@@ -8,17 +8,20 @@ import {
   InformationCircleIcon,
   RectangleStackIcon,
   ShareIcon,
+  RocketLaunchIcon,
 } from "@heroicons/react/20/solid";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import PipelinesOverview from "../pipelines/PipelinesOverview";
 import PMFResults from "./PMFResults";
-import SegmentResults from "./SegmentResults";
+import OverviewResults from "./OverviewResults";
 import SetupInstructions from "./SetupInstructions";
+import SuperhumanApproach from "./SuperhumanApproach";
 
 const tabs = [
   { name: "Results", icon: RectangleStackIcon },
   { name: "Overview", icon: ChartPieIcon },
+  { name: "Superhuman Approach", icon: RocketLaunchIcon },
   { name: "Data Pipelines", icon: ShareIcon },
   { name: "Setup Instructions", icon: InformationCircleIcon },
 ];
@@ -53,7 +56,9 @@ export default function PMFPage() {
         {currentTab === "Results" ? (
           <PMFResults />
         ) : currentTab === "Overview" ? (
-          <SegmentResults />
+          <OverviewResults />
+        ) : currentTab === "Superhuman Approach" ? (
+          <SuperhumanApproach />
         ) : currentTab === "Data Pipelines" ? (
           <PipelinesOverview />
         ) : currentTab === "Setup Instructions" ? (

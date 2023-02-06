@@ -3,12 +3,15 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
 import PMFThumb2 from "@/images/pmfthumb-2.webp";
 import PMFThumb from "@/images/pmfthumb.webp";
-import { useSubmissions } from "@/lib/submissions";
-import clsx from "clsx";
+import { useForm } from "@/lib/forms";
+import { getOptionLabelMap, useSubmissions } from "@/lib/submissions";
+import { Pie } from "@formbricks/charts";
+import { NotDisappointedIcon, SomewhatDisappointedIcon, VeryDisappointedIcon } from "@formbricks/ui";
+import { InformationCircleIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import FilterNavigation from "../shared/FilterNavigation";
 
 export default function SegmentResults() {
@@ -18,31 +21,33 @@ export default function SegmentResults() {
     router.query.organisationId?.toString(),
     router.query.formId?.toString()
   );
+  const { form, isLoadingForm, isErrorForm } = useForm(
+    router.query.formId?.toString(),
+    router.query.organisationId?.toString()
+  );
+  const lovers = useMemo(
+    () =>
+      filteredSubmissions.filter((s) => s.data.disappointment === "veryDisappointed" && s.data.mainBenefit),
+    [filteredSubmissions]
+  );
 
-  const q1responses = [
-    {
-      response:
-        "A think it would be awesome if your app could do this because I keep having this problem! I would use it everyday and tell all my friends.",
-      feeling: "very disapp.",
-      segment: "Founder",
-    },
-    {
-      response:
-        "B think it would be awesome if your app could do this because I keep having this problem! I would use it everyday and tell all my friends.",
-      feeling: "very disapp.",
-      segment: "Entrepreneur",
-    },
-    {
-      response:
-        "C think it would be awesome if your app could do this because I keep having this problem! I would use it everyday and tell all my friends.",
-      feeling: "very disapp.",
-      segment: "Product Manager",
-    },
-  ];
+  const improvers = useMemo(
+    () =>
+      filteredSubmissions.filter(
+        (s) => s.data.disappointment === "somewhatDisappointed" && s.data.improvement
+      ),
+    [filteredSubmissions]
+  );
 
-  if (isLoadingSubmissions) return <LoadingSpinner />;
+  const labelMap = useMemo(() => {
+    if (form) {
+      return getOptionLabelMap(form.schema);
+    }
+  }, [form]);
 
-  if (isErrorSubmissions)
+  if (isLoadingSubmissions || isLoadingForm) return <LoadingSpinner />;
+
+  if (isErrorSubmissions || isErrorForm)
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
 
   return (
@@ -53,7 +58,11 @@ export default function SegmentResults() {
             <div>
               {/* Segments */}
 
-              <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
+              <FilterNavigation
+                submissions={submissions}
+                setFilteredSubmissions={setFilteredSubmissions}
+                limitFields={["userSegment"]}
+              />
               <div className="mb-2 flex py-2 text-sm font-bold">
                 <h4 className="text-slate-600">Tutorials</h4>
               </div>
@@ -86,81 +95,135 @@ export default function SegmentResults() {
             {/* Double down on what they love*/}
 
             <div className="max-w-3xl lg:col-span-3">
-              <div className="flex w-full space-x-3">
-                <div className="flex h-12 w-1/2 items-center justify-center rounded-lg bg-white">
-                  overall results
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
+                  <h3 className="text-sm font-medium text-slate-800">Overall</h3>
+                  <h3 className="text-xs font-light text-slate-800">({submissions.length} submissions)</h3>
+                  <Pie submissions={submissions} schema={form.schema} fieldName={"disappointment"} />
                 </div>
-                <div className="flex h-12 w-1/2 items-center justify-center rounded-lg bg-white">
-                  max. very d. segment
+                <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
+                  <h3 className="text-sm font-medium text-slate-800">Selected Segment</h3>
+                  <h3 className="text-xs font-light text-slate-800">
+                    ({filteredSubmissions.length} submissions)
+                  </h3>
+                  <Pie submissions={filteredSubmissions} schema={form.schema} fieldName={"disappointment"} />
                 </div>
               </div>
               <h2 className="mt-10 mb-4 text-2xl font-bold text-slate-500">Double down on what they love</h2>
+              <div className="rounded-md bg-teal-50 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <InformationCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
+                  </div>
+                  <div className="ml-3 flex-1 md:flex md:justify-between">
+                    <p className="text-sm text-teal-700">
+                      To protect the PMF score from eroding among already very satisfied users, you deepen the
+                      value they experience. To do so, you build what they request in the following answers.
+                    </p>
+                  </div>
+                </div>
+              </div>
               <div className="my-4 rounded-lg bg-white">
-                <div className="rounded-t-lg bg-slate-100 p-4 text-lg font-bold text-slate-800">
+                <div className="rounded-t-lg bg-slate-100 p-4 text-lg font-bold text-slate-700">
                   What is the main benefit you receive from our service?
                 </div>
                 <div className="grid grid-cols-5 gap-2 bg-slate-100 px-4 pb-2 text-sm font-semibold text-slate-500">
                   <div className="col-span-3">Response</div>
-                  <div>Feeling</div>
+                  <div>Disappointment</div>
                   <div>Segment</div>
                 </div>
-                {q1responses.map((r) => (
-                  <div className="grid grid-cols-5 gap-2 px-4 pt-2 pb-4">
-                    <div className="col-span-3">{r.response}</div>
-                    <div>
-                      <div
-                        className={clsx(
-                          // base styles independent what type of button it is
-                          "inline-grid rounded-full px-2 text-xs",
-                          // different styles depending on size
-                          r.feeling === "very disapp." && "bg-green-100 text-green-700 ",
-                          r.feeling === "somewhat disapp." && "bg-orange-100 text-orange-500 ",
-                          r.feeling === "not disapp." && "bg-red-100 text-red-500"
-                        )}>
-                        {r.feeling}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="inline-grid rounded-full bg-slate-100 px-2 text-xs text-slate-600">
-                        {r.segment}
-                      </div>
-                    </div>
+                {lovers.length === 0 ? (
+                  <div className="p-4">
+                    <h3 className="text-center text-sm font-bold text-slate-400">
+                      You don’t have any submissions that fit this filter
+                    </h3>
+                    <p className="mt-1 text-center text-xs font-light text-slate-400">
+                      Change your filters or come back when you have more submissions.
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  <>
+                    {lovers.map((submission) => (
+                      <div className="grid grid-cols-5 gap-2 px-4 pt-2 pb-4 text-sm">
+                        <div className="col-span-3 text-slate-800">
+                          {submission.data.mainBenefit || <NotProvided />}
+                        </div>
+                        <div>
+                          {submission.data.disappointment === "veryDisappointed" ? (
+                            <VeryDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                          ) : submission.data.disappointment === "notDisappointed" ? (
+                            <NotDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                          ) : submission.data.disappointment === "somewhatDisappointed" ? (
+                            <SomewhatDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                          ) : null}
+                        </div>
+                        <div>
+                          <div className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
+                            {labelMap[submission.data.userSegment] || <NotProvided />}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
               <h2 className="mt-10 mb-4 text-2xl font-bold text-slate-500">Fix what’s holding them back</h2>
+              <div className="rounded-md bg-teal-50 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <InformationCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
+                  </div>
+                  <div className="ml-3 flex-1 md:flex md:justify-between">
+                    <p className="text-sm text-teal-700">
+                      To make more users “very disappointed” when your product were to go away, you build
+                      what’s holding the “somewhat disappointed” users back.
+                    </p>
+                  </div>
+                </div>
+              </div>
               <div className="my-4 rounded-lg bg-white">
-                <div className="rounded-t-lg bg-slate-100 p-4 text-lg font-bold text-slate-800">
+                <div className="rounded-t-lg bg-slate-100 p-4 text-lg font-bold text-slate-700">
                   How can we improve our service for you?
                 </div>
                 <div className="grid grid-cols-5 gap-2 bg-slate-100 px-4 pb-2 text-sm font-semibold text-slate-500">
                   <div className="col-span-3">Response</div>
-                  <div>Feeling</div>
+                  <div>Disappointment</div>
                   <div>Segment</div>
                 </div>
-                {filteredSubmissions.map((r) => (
-                  <div className="grid grid-cols-5 gap-2 px-4 pt-2 pb-4">
-                    <div className="col-span-3">{r.response}</div>
-                    <div>
-                      <div
-                        className={clsx(
-                          // base styles independent what type of button it is
-                          "inline-grid rounded-full px-2 text-xs",
-                          // different styles depending on size
-                          r.feeling === "very disapp." && "bg-green-100 text-green-700 ",
-                          r.feeling === "somewhat disapp." && "bg-orange-100 text-orange-500 ",
-                          r.feeling === "not disapp." && "bg-red-100 text-red-500"
-                        )}>
-                        {r.feeling}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="inline-grid rounded-full bg-slate-100 px-2 text-xs text-slate-600">
-                        {r.segment}
-                      </div>
-                    </div>
+                {improvers.length === 0 ? (
+                  <div className="p-4">
+                    <h3 className="text-center text-sm font-bold text-slate-400">
+                      You don’t have any submissions that fit this filter
+                    </h3>
+                    <p className="mt-1 text-center text-xs font-light text-slate-400">
+                      Change your filters or come back when you have more submissions.
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  <>
+                    {improvers.map((submission) => (
+                      <div className="grid grid-cols-5 gap-2 px-4 pt-2 pb-4 text-sm">
+                        <div className="col-span-3 text-slate-800">
+                          {submission.data.improvement || <NotProvided />}
+                        </div>
+                        <div>
+                          {submission.data.disappointment === "veryDisappointed" ? (
+                            <VeryDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                          ) : submission.data.disappointment === "notDisappointed" ? (
+                            <NotDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                          ) : submission.data.disappointment === "somewhatDisappointed" ? (
+                            <SomewhatDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                          ) : null}
+                        </div>
+                        <div>
+                          <div className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
+                            {labelMap[submission.data.userSegment] || <NotProvided />}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -168,4 +231,8 @@ export default function SegmentResults() {
       </div>
     </div>
   );
+}
+
+function NotProvided() {
+  return <span className="text-slate-500">(not provided)</span>;
 }

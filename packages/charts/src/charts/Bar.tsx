@@ -8,7 +8,7 @@ interface Props {
   fieldName: string;
 }
 
-export function FbBar({ color, submissions, schema, fieldName }: Props) {
+function FbBar({ color, submissions, schema, fieldName }: Props) {
   const data = useMemo(() => {
     if (!fieldName) {
       throw Error("no field name provided");
