@@ -64,6 +64,22 @@ const OnboardingSurvey = () => (
             },
           ],
         },
+        {
+          id: "thankYouPageBetaUser",
+          endScreen: true,
+          elements: [
+            {
+              id: "thankYouBetaUser",
+              type: "html",
+              component: ThankYouHeading,
+            },
+            {
+              id: "thankYouBetaUser",
+              type: "html",
+              component: ThankYouPlans,
+            },
+          ],
+        },
       ],
     }}
   />
