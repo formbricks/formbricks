@@ -67,10 +67,14 @@ export default function SegmentResults() {
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
                   <h3 className="text-sm font-medium text-slate-800">Overall</h3>
+                  <h3 className="text-xs font-light text-slate-800">({submissions.length} submissions)</h3>
                   <Pie submissions={submissions} schema={form.schema} fieldName={"disappointment"} />
                 </div>
                 <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
                   <h3 className="text-sm font-medium text-slate-800">Selected Segment</h3>
+                  <h3 className="text-xs font-light text-slate-800">
+                    ({filteredSubmissions.length} submissions)
+                  </h3>
                   <Pie submissions={filteredSubmissions} schema={form.schema} fieldName={"disappointment"} />
                 </div>
               </div>

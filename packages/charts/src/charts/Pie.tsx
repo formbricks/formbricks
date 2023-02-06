@@ -94,7 +94,7 @@ export function FbPie({ color, submissions, schema, fieldName }: Props) {
                 dominantBaseline="central">
                 {/* 
 // @ts-ignore */}
-                {data[index].name} ({value})
+                {data[index].name} ({Math.round((value / data.length) * 100)}%)
               </text>
             );
           }}
