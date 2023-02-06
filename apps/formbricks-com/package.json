@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@docsearch/react": "^3.3.2",
+    "@formbricks/engine-react": "workspace:*",
     "@formbricks/pmf": "workspace:*",
     "@formbricks/react": "workspace:*",
     "@formbricks/ui": "workspace:*",

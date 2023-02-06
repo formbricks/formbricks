@@ -1,8 +1,8 @@
 {
-  "name": "@formbricks/react",
-  "version": "0.3.1",
+  "name": "@formbricks/engine-react",
+  "version": "0.1.0",
   "author": "Formbricks <hola@formbricks.com>",
-  "description": "Building React forms has never been quicker.",
+  "description": "Headless Form Engine for Formbricks",
   "homepage": "https://formbricks.com",
   "main": "./dist/index.js",
   "module": "dist/index.mjs",
@@ -19,8 +19,8 @@
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsup --dts && tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
-    "dev": "concurrently \"tsup --dts --external react --watch\" \"tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch\"",
+    "build": "tsup --dts",
+    "dev": "tsup --dts --external react --watch",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
@@ -31,33 +31,27 @@
     "eslint": "^8.27.0",
     "eslint-config-formbricks": "workspace:*",
     "react": "^18.2.0",
-    "tailwindcss": "^3.2.2",
     "tsup": "^6.4.0",
     "typescript": "^4.8.4"
   },
-  "dependencies": {
-    "@headlessui/react": "^1.7.4",
-    "@hookform/error-message": "^2.0.1",
-    "clsx": "^1.2.1",
-    "react-hook-form": "^7.39.1"
-  },
   "peerDependencies": {
     "react": "^16.8.0 || ^17 || ^18"
+  },
+  "dependencies": {
+    "react-hook-form": "^7.39.1"
   },
   "publishConfig": {
     "access": "public"
   },
   "keywords": [
+    "formbricks",
     "react",
     "form",
     "forms",
-    "form-validation",
-    "validation",
     "typescript",
-    "formbricks",
     "survey",
     "surveys",
-    "select"
+    "engine"
   ],
   "repository": {
     "type": "git",
