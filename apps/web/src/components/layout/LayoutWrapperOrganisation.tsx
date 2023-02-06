@@ -1,7 +1,7 @@
 "use client";
 
 import { Logo } from "@/components/Logo";
-import { CustomersIcon, FormIcon } from "@formbricks/ui";
+import { CustomersIcon, FormIcon, DashboardIcon } from "@formbricks/ui";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -27,6 +27,12 @@ export default function LayoutWrapperOrganisation({ children }) {
         href: `/organisations/${router.query.organisationId}/customers`,
         icon: CustomersIcon,
         current: pathname.includes("/customers"),
+      },
+      {
+        name: "Integrations",
+        href: `/organisations/${router.query.organisationId}/integrations`,
+        icon: DashboardIcon,
+        current: pathname.includes("/integrations"),
       },
       /*     {
         name: "Settings",
