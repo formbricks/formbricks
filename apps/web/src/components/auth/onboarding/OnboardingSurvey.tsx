@@ -1,5 +1,6 @@
 import IconRadio from "./IconRadio";
 import { Survey } from "./Survey";
+import ForwardToApp from "./ForwardToApp";
 
 const OnboardingSurvey = () => (
   <Survey
@@ -65,18 +66,13 @@ const OnboardingSurvey = () => (
           ],
         },
         {
-          id: "thankYouPageBetaUser",
+          id: "onboardingDone",
           endScreen: true,
           elements: [
             {
-              id: "thankYouBetaUser",
+              id: "forward",
               type: "html",
-              component: ThankYouHeading,
-            },
-            {
-              id: "thankYouBetaUser",
-              type: "html",
-              component: ThankYouPlans,
+              component: ForwardToApp,
             },
           ],
         },
