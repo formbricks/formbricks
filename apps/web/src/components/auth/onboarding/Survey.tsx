@@ -55,7 +55,7 @@ export function Survey({ survey, formbricksUrl, formId }: SurveyProps) {
   };
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex w-full flex-col">
       {!(survey.config?.progressBar === false) && (
         <div className="mb-8 h-3">
           <Progressbar progress={progress} />

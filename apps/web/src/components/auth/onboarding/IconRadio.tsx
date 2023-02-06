@@ -32,24 +32,14 @@ export default function IconRadio({ element, control, onSubmit, disabled }: Icon
       rules={{ required: true }}
       render={({ field }: { field: any }) => (
         <RadioGroup className="flex flex-col justify-center" {...field}>
-          <RadioGroup.Label className="pb-6 text-center text-lg font-bold text-slate-600 dark:text-slate-300 sm:text-xl md:text-2xl">
+          <RadioGroup.Label className="max-w-sm pb-1 text-center font-medium text-slate-600">
             {element.label}
           </RadioGroup.Label>
           <div className="mx-auto -mt-3 mb-3 text-center text-sm text-slate-500 dark:text-slate-300 md:max-w-lg">
             {element.help}
           </div>
 
-          <div
-            className={clsx(
-              element.options && element.options.length >= 4
-                ? "lg:grid-cols-4"
-                : element.options?.length === 3
-                ? "lg:grid-cols-3"
-                : element.options?.length === 2
-                ? "lg:grid-cols-2"
-                : "lg:grid-cols-1",
-              "mt-4 grid w-full gap-y-6 sm:gap-x-4"
-            )}>
+          <div className="mt-4 grid w-full grid-cols-1 gap-y-2 sm:gap-x-4">
             {element.options &&
               element.options.map((option) => (
                 <RadioGroup.Option
@@ -57,14 +47,14 @@ export default function IconRadio({ element, control, onSubmit, disabled }: Icon
                   value={option.value}
                   className={({ checked, active }) =>
                     clsx(
-                      checked ? "border-transparent" : "border-slate-200 dark:border-slate-700",
+                      checked ? "border-transparent" : "border-slate-200 ",
                       active ? "border-brand ring-brand ring-2" : "",
-                      "relative flex cursor-pointer rounded-lg border bg-white py-8 shadow-sm transition-all ease-in-out hover:scale-105 focus:outline-none dark:bg-slate-700"
+                      "relative flex cursor-pointer rounded-lg border bg-slate-50 py-2 shadow-sm transition-all ease-in-out hover:scale-105 focus:outline-none"
                     )
                   }>
                   {({ checked, active }) => (
                     <>
-                      <div className="flex flex-1 flex-col justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 hover:dark:text-slate-200">
+                      <div className="flex flex-1 flex-col justify-center text-slate-500 hover:text-slate-700 ">
                         {option.frontend?.icon && (
                           <option.frontend.icon
                             className="text-brand mx-auto mb-3 h-8 w-8"

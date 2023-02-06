@@ -134,27 +134,6 @@ export function SurveyPage({
           );
         })}
       </div>
-      {!finished && (
-        <div className="mx-auto mt-8 flex w-full max-w-xl justify-end">
-          {page.config?.allowSkip && (
-            <Button
-              variant="secondary"
-              type="button"
-              className="transition-all ease-in-out hover:scale-105"
-              onClick={() => onSkip()}>
-              Skip
-            </Button>
-          )}
-          {!(page.config?.autoSubmit && page.elements.length == 1) && (
-            <Button
-              variant="primary"
-              type="submit"
-              className="ml-2 transition-all ease-in-out hover:scale-105">
-              Next
-            </Button>
-          )}
-        </div>
-      )}
     </form>
   );
 }

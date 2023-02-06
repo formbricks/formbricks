@@ -1,15 +1,15 @@
 import IconRadio from "./IconRadio";
 import { Survey } from "./Survey";
 
-const OnboardingForm = () => (
+const OnboardingSurvey = () => (
   <Survey
     formbricksUrl={
       process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
     }
-    formId={process.env.NODE_ENV === "production" ? "cld37mt2i0000ld08p9q572bc" : "cldd3mrbs0007u0w0g2m6verd"}
+    formId={process.env.NODE_ENV === "production" ? "cld37mt2i0000ld08p9q572bc" : "cldsmi1280000u06wgiuvagpe"}
     survey={{
       config: {
-        progressBar: true,
+        progressBar: false,
       },
       pages: [
         {
@@ -22,7 +22,7 @@ const OnboardingForm = () => (
               id: "role",
               type: "radio",
               label: "The hardest part about user research is...",
-              helptext: "Helps us focus on what you need most.",
+              /*  help: "Helps us focus on what you need most.", */
               name: "role",
               options: [
                 { label: "Not sure where to start", value: "notSureWhereToStart" },
@@ -48,7 +48,7 @@ const OnboardingForm = () => (
               id: "targetGroup",
               type: "radio",
               label: "When was the last time you talked to one of your users?",
-              helptext: "(honest answers only)",
+              /* help: "(honest answers only)", */
               name: "targetGroup",
               options: [
                 { label: "Today", value: "today" },
@@ -69,4 +69,4 @@ const OnboardingForm = () => (
   />
 );
 
-export default OnboardingForm;
+export default OnboardingSurvey;
