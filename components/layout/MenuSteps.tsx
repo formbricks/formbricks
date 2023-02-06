@@ -25,7 +25,7 @@ export default function MenuSteps({ steps, currentStep }: MenuStepsProps) {
           id="steps"
           name="steps"
           className="block w-full py-2 pl-3 pr-10 text-base rounded-md border-ui-gray-medium focus:outline-none focus:ring-red focus:border-red sm:text-sm"
-          defaultValue={steps.find((step) => step.id === currentStep).name}
+          defaultValue={steps.find((step) => step.id === currentStep)?.name}
           onChange={(e) => {
             const stepId = e.target.children[e.target.selectedIndex].id;
             router.push(steps.find((s) => s.id === stepId).href);
