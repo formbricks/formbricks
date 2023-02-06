@@ -1,3 +1,4 @@
+import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,6 +13,7 @@ interface BaseLayoutManagementProps {
   breadcrumbs: any;
   steps?: any;
   currentStep?: string;
+  activeMenu?: string;
   children: React.ReactNode;
   bgClass?: string;
   limitHeightScreen?: boolean;
@@ -19,13 +21,19 @@ interface BaseLayoutManagementProps {
 
 export default function BaseLayoutManagement({
   title,
-  breadcrumbs,
   steps,
   currentStep,
   children,
   bgClass = "bg-ui-gray-lighter",
   limitHeightScreen = false,
+  activeMenu,
 }: BaseLayoutManagementProps) {
+  const session = useSession();
+  const { user } = session.data;
+  const adminMenus = [
+    { id: "forms", name: "Sourcings", href: "/" },
+    { id: "users", name: "Gestion d'utilisateurs", href: "/users" },
+  ];
   return (
     <>
       <Head>
@@ -63,39 +71,22 @@ export default function BaseLayoutManagement({
                     </Link>
                   </div>
 
-                  <div className='flex-1  space-x-2 sm:flex items-center '>
-                    <ol className='flex items-center space-x-2'>
-                      {breadcrumbs.map((crumb) => (
-                        <li key={crumb.name}>
-                          <div className='flex items-center'>
-                            <a
-                              href={crumb.href}
-                              className='ml-4 text-sm font-medium truncate text-ui-gray-dark hover:text-ui-gray-dark'
-                            >
-                              {crumb.name}
-                            </a>
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
+                  {user.role === "ADMIN" && (
+                    <div className='flex-1  space-x-2 sm:flex items-center '>
+                      {adminMenus && (
+                        <MenuSteps
+                          steps={adminMenus}
+                          currentStep={activeMenu}
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                <div className='flex-1  space-x-2 sm:flex items-center '>
-                  <ol className='flex items-center space-x-2'>
-                    {breadcrumbs.map((crumb) => (
-                      <li key={crumb.name}>
-                        <div className='flex items-center'>
-                          <a
-                            href={crumb.href}
-                            className='ml-4 text-sm font-medium truncate text-ui-gray-dark hover:text-ui-gray-dark'
-                          >
-                            {crumb.name}
-                          </a>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
+                <div className='hidden sm:flex sm:flex-1'>
+                  {steps && (
+                    <MenuSteps steps={steps} currentStep={currentStep} />
+                  )}
                 </div>
 
                 <div className='flex items-center justify-end flex-1 space-x-2 text-right sm:space-x-4'>

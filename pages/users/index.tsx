@@ -18,6 +18,7 @@ function UsersPage({}) {
       breadcrumbs={[
         { name: "Gestion des utilisateurs", href: "#", current: true },
       ]}
+      activeMenu='users'
     >
       <LimitedWidth>
         <UserList />
