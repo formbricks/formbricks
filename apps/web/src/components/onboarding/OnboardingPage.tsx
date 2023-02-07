@@ -9,7 +9,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       setLoading(true);
-    }, 10000);
+    }, 5000);
 
     return () => {
       clearTimeout(timeoutId);

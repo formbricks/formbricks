@@ -7,7 +7,7 @@ export function LogoMark(props) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       {...props}>
-      <g clip-path="url(#clip0_2627_5881)">
+      <g clipPath="url(#clip0_2627_5881)">
         <path
           d="M0 101.547H40.4528V122C40.4528 133.046 31.4985 142 20.4528 142H20C8.9543 142 0 133.046 0 122V101.547Z"
           fill="url(#paint0_linear_2627_5881)"
@@ -91,8 +91,8 @@ export function LogoMark(props) {
           width="82.1506"
           height="158"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -113,8 +113,8 @@ export function LogoMark(props) {
           width="115.849"
           height="115.849"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
           <feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur_2627_5881" />
         </filter>
@@ -125,8 +125,8 @@ export function LogoMark(props) {
           width="115.849"
           height="115.849"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
           <feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur_2627_5881" />
         </filter>

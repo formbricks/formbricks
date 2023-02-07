@@ -47,7 +47,7 @@ export default function IconRadio({ element, control, onSubmit, disabled }: Icon
                   className={({ checked, active }) =>
                     clsx(
                       checked ? "border-transparent" : "border-slate-200 ",
-                      active ? "border-brand ring-brand ring-2" : "",
+                      /* active ? "border-brand ring-brand ring-2" : "", */
                       "relative flex cursor-pointer rounded-lg border bg-slate-50 py-2 shadow-sm transition-all ease-in-out hover:scale-105 focus:outline-none"
                     )
                   }>
