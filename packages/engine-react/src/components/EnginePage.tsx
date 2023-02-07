@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FormPage } from "../types";
@@ -14,6 +13,7 @@ interface FormProps {
   formbricksUrl: string;
   formId: string;
   schema: any;
+  customer: any;
 }
 
 export function EnginePage({
@@ -26,6 +26,7 @@ export function EnginePage({
   formbricksUrl,
   formId,
   schema,
+  customer,
 }: FormProps) {
   const [submissionId, setSubmissionId] = useState<string>();
   const {
@@ -54,7 +55,7 @@ export function EnginePage({
   }, [page, formId, formbricksUrl, submissionId]);
 
   const sendToFormbricks = async (partialSubmission: any) => {
-    const submissionBody: any = { data: partialSubmission };
+    const submissionBody: any = { data: partialSubmission, customer };
     if (page.config?.addFieldsToCustomer && Array.isArray(page.config?.addFieldsToCustomer)) {
       for (const field of page.config?.addFieldsToCustomer) {
         if (field in partialSubmission) {

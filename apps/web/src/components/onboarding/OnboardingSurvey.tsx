@@ -2,21 +2,40 @@ import IconRadio from "./IconRadio";
 import { FormbricksEngine } from "@formbricks/engine-react";
 import ForwardToApp from "./ForwardToApp";
 import { useSession } from "next-auth/react";
+import LoadingSpinner from "../LoadingSpinner";
+import { useRouter } from "next/router";
 
 const OnboardingSurvey = () => {
   const { data: session, status } = useSession();
+  const router = useRouter();
+
+  if (status === "loading") return <LoadingSpinner />;
+
   return (
     <FormbricksEngine
       formbricksUrl={
         process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
       }
       formId={
-        process.env.NODE_ENV === "production" ? "cld37mt2i0000ld08p9q572bc" : "cldu2c8810006yz2w3o5ubfrh"
+        process.env.NODE_ENV === "production" ? "cldu60z5d0000mm0hq7k0ducf" : "cldu2c8810006yz2w3o5ubfrh"
       }
       customer={{
         email: session.user.email,
+        name: session.user.name,
       }}
-      survey={{
+      onFinished={async () => {
+        // update user in database
+        await fetch("/api/users/me", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ finishedOnboarding: true }),
+        });
+        // refetch session
+        await fetch("/api/auth/session");
+        // redirect to app
+        setTimeout(() => router.push("/"), 1000);
+      }}
+      schema={{
         config: {
           progressBar: false,
         },

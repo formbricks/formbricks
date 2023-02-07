@@ -4,7 +4,6 @@ import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useState } from "react";
 
 export default function OnboardingPage() {
-  const [open, setOpen] = useState(true);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -17,7 +16,7 @@ export default function OnboardingPage() {
     };
   }, []);
   return (
-    <Transition.Root show={open} as={Fragment}>
+    <Transition.Root show={true} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={() => {}}>
         <Transition.Child
           as={Fragment}

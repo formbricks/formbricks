@@ -6,6 +6,7 @@ interface FormProps {
   schema: Form;
   formbricksUrl: string;
   formId: string;
+  customer?: any;
   onFinished?: ({ submission }: any) => void;
   onPageSubmit?: ({ page }: any) => void;
 }
@@ -14,6 +15,7 @@ export function FormbricksEngine({
   schema,
   formbricksUrl,
   formId,
+  customer = {},
   onFinished = () => {},
   onPageSubmit = () => {},
 }: FormProps) {
@@ -77,6 +79,7 @@ export function FormbricksEngine({
         formbricksUrl={formbricksUrl}
         formId={formId}
         schema={cleanedSchema}
+        customer={customer}
       />
     </div>
   );

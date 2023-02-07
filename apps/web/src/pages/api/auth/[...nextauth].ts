@@ -141,15 +141,17 @@ export const authOptions: NextAuthOptions = {
       }
 
       return {
-        ...existingUser,
         ...token,
+        ...existingUser,
       };
     },
     async session({ session, token }) {
       // @ts-ignore
       session.user.id = token.id;
       session.user.name = token.name;
-      session.user.finishedOnboarding = token.finishedOnboarding;
+      if (typeof token.finishedOnboarding === "boolean") {
+        session.user.finishedOnboarding = token.finishedOnboarding;
+      }
 
       return session;
     },
