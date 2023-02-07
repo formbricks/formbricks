@@ -19,27 +19,25 @@ export default function IconCheckbox({ element, register }: IconCheckboxProps) {
       </label>
       <fieldset className="space-y-5">
         <legend className="sr-only">{element.label}</legend>
-        <div className=" mx-auto grid max-w-5xl grid-cols-1 gap-6 px-2 sm:grid-cols-2">
+        <div className="flex max-w-5xl space-x-3 px-2">
           {element.options &&
             element.options.map((option) => (
               <label htmlFor={`${element.id}-${option.value}`} key={`${element.id}-${option.value}`}>
-                <div className="drop-shadow-card duration-120 relative cursor-default rounded-lg border border-gray-200 bg-white p-6 transition-all ease-in-out hover:scale-105 dark:border-slate-700 dark:bg-slate-700">
-                  <div className="absolute right-10">
+                <div className="drop-shadow-card duration-120 relative w-32 cursor-default rounded-lg border border-gray-200 bg-white p-6 text-center transition-all ease-in-out hover:scale-105">
+                  <div className="absolute right-4 top-3">
                     <input
                       id={`${element.id}-${option.value}`}
                       aria-describedby={`${element.id}-${option.value}-description`}
                       type="checkbox"
                       value={option.value}
-                      className="text-brand focus:ring-brand border-brand h-5 w-5 rounded border-2 bg-slate-50 dark:bg-slate-600"
+                      className="text-brand-dark focus:ring-brand-dark border-brand-dark  h-5 w-5 rounded border-2 bg-slate-100"
                       {...register(element.name!)}
                     />
                   </div>
-                  <div className="h-12 w-12">
-                    {option.frontend?.icon && <option.frontend.icon className="text-brand h-10 w-10" />}
+                  <div className="mx-auto my-4 h-12 w-12">
+                    {option.frontend?.icon && <option.frontend.icon />}
                   </div>
-                  <span className="text-md mt-3 mb-1 font-bold text-slate-700 dark:text-slate-200">
-                    {option.label}
-                  </span>
+                  <span className="mt-3 mb-1 text-sm text-slate-500">{option.label}</span>
                   <p
                     id={`${element.id}-${option.value}-description`}
                     className="mt-1 text-xs text-slate-600 dark:text-slate-400">

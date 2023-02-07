@@ -12,34 +12,34 @@ import HubspotLogo from "@/images/logos/hubspot-logo.png";
 import Image from "next/image";
 
 export function SegmentLogoImage(props: any) {
-  <Image alt="Segment Logo" src={SegmentLogo} {...props} />;
+  return <Image alt="Segment Logo" src={SegmentLogo} {...props} />;
 }
 
 export function MixpanelLogoImage(props: any) {
-  <Image alt="Segment Logo" src={MixpanelLogo} {...props} />;
+  return <Image alt="Segment Logo" src={MixpanelLogo} {...props} />;
 }
 
 export function AmplitudeLogoImage(props: any) {
-  <Image alt="Segment Logo" src={AmplitudeLogo} {...props} />;
+  return <Image alt="Segment Logo" src={AmplitudeLogo} {...props} />;
 }
 export function PosthogLogoImage(props: any) {
-  <Image alt="Segment Logo" src={PosthogLogo} {...props} />;
+  return <Image alt="Segment Logo" src={PosthogLogo} {...props} />;
 }
 export function HeapLogoImage(props: any) {
-  <Image alt="Segment Logo" src={HeapLogo} {...props} />;
+  return <Image alt="Segment Logo" src={HeapLogo} {...props} />;
 }
 export function JuneLogoImage(props: any) {
-  <Image alt="Segment Logo" src={JuneLogo} {...props} />;
+  return <Image alt="Segment Logo" src={JuneLogo} {...props} />;
 }
 export function SalesforceLogoImage(props: any) {
-  <Image alt="Segment Logo" src={SalesforceLogo} {...props} />;
+  return <Image alt="Segment Logo" src={SalesforceLogo} {...props} />;
 }
 export function BrazeLogoImage(props: any) {
-  <Image alt="Segment Logo" src={BrazeLogo} {...props} />;
+  return <Image alt="Segment Logo" src={BrazeLogo} {...props} />;
 }
 export function HubspotLogoImage(props: any) {
-  <Image alt="Segment Logo" src={HubspotLogo} {...props} />;
+  return <Image alt="Segment Logo" src={HubspotLogo} {...props} />;
 }
 export function CustomerIOLogoImage(props: any) {
-  <Image alt="Segment Logo" src={CustomerIOLogo} {...props} />;
+  return <Image alt="Segment Logo" src={CustomerIOLogo} {...props} />;
 }
