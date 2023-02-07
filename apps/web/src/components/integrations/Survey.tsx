@@ -10,7 +10,6 @@ interface SurveyProps {
 
 export function Survey({ survey, formbricksUrl, formId }: SurveyProps) {
   const [currentPage, setCurrentPage] = useState(survey.pages[0]);
-  const [progress, setProgress] = useState(0);
   const [submission, setSubmission] = useState<any>({});
   const [finished, setFinished] = useState(false);
 
@@ -28,10 +27,6 @@ export function Survey({ survey, formbricksUrl, formId }: SurveyProps) {
     setCurrentPage(nextPage);
     if (nextPage.endScreen) {
       setFinished(true);
-      setProgress(1);
-    } else {
-      const nextPageIdx = survey.pages.findIndex((p) => p.id === nextPage.id);
-      setProgress(nextPageIdx / survey.pages.length);
     }
   };
 
