@@ -137,8 +137,8 @@ export function LogoMark(props) {
           x2="-0.003482"
           y2="121.205"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00E6CA" />
-          <stop offset="1" stop-color="#00C4B8" />
+          <stop stopColor="#00E6CA" />
+          <stop offset="1" stopColor="#00C4B8" />
         </linearGradient>
         <linearGradient
           id="paint1_linear_2627_5881"
@@ -147,8 +147,8 @@ export function LogoMark(props) {
           x2="1.27605e-08"
           y2="75.2932"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00E6CA" />
-          <stop offset="1" stop-color="#00C4B8" />
+          <stop stopColor="#00E6CA" />
+          <stop offset="1" stopColor="#00C4B8" />
         </linearGradient>
         <linearGradient
           id="paint2_linear_2627_5881"
@@ -157,8 +157,8 @@ export function LogoMark(props) {
           x2="1.27605e-08"
           y2="28.5195"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00E6CA" />
-          <stop offset="1" stop-color="#00C4B8" />
+          <stop stopColor="#00E6CA" />
+          <stop offset="1" stopColor="#00C4B8" />
         </linearGradient>
         <linearGradient
           id="paint3_linear_2627_5881"
@@ -167,8 +167,8 @@ export function LogoMark(props) {
           x2="-0.003482"
           y2="121.205"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00FFE1" />
-          <stop offset="1" stop-color="#01E0C6" />
+          <stop stopColor="#00FFE1" />
+          <stop offset="1" stopColor="#01E0C6" />
         </linearGradient>
         <linearGradient
           id="paint4_linear_2627_5881"
@@ -177,8 +177,8 @@ export function LogoMark(props) {
           x2="1.27605e-08"
           y2="75.2932"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00FFE1" />
-          <stop offset="1" stop-color="#01E0C6" />
+          <stop stopColor="#00FFE1" />
+          <stop offset="1" stopColor="#01E0C6" />
         </linearGradient>
         <linearGradient
           id="paint5_linear_2627_5881"
@@ -187,8 +187,8 @@ export function LogoMark(props) {
           x2="1.27605e-08"
           y2="28.5195"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00FFE1" />
-          <stop offset="1" stop-color="#01E0C6" />
+          <stop stopColor="#00FFE1" />
+          <stop offset="1" stopColor="#01E0C6" />
         </linearGradient>
         <clipPath id="clip0_2627_5881">
           <rect width="101" height="150" fill="white" />

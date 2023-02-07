@@ -132,6 +132,7 @@ export const authOptions: NextAuthOptions = {
         select: {
           id: true,
           name: true,
+          finishedOnboarding: true,
         },
       });
 
@@ -148,6 +149,7 @@ export const authOptions: NextAuthOptions = {
       // @ts-ignore
       session.user.id = token.id;
       session.user.name = token.name;
+      session.user.finishedOnboarding = token.finishedOnboarding;
 
       return session;
     },

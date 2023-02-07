@@ -40,7 +40,7 @@ export default function LayoutApp({ children }) {
 
   if (!session) {
     router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`);
-    return <div></div>;
+    return <LoadingSpinner />;
   }
 
   if (isLoadingMemberships) {
@@ -53,6 +53,12 @@ export default function LayoutApp({ children }) {
 
   if (isErrorMemberships) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
+  }
+
+  if (session && session.user.finishedOnboarding === false && router.pathname !== "/me/onboarding") {
+    // use timeout to prevent flash of content and resulting errors
+    router.push("/me/onboarding");
+    return <LoadingSpinner />;
   }
 
   return (

@@ -1,35 +1,12 @@
 "use client";
 
+import BasePathPage from "@/components/BasePathPage";
 import LayoutApp from "@/components/layout/LayoutApp";
-import { useMemberships } from "@/lib/memberships";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function ProjectsPage() {
-  const { data: session } = useSession();
-  const { memberships, isErrorMemberships } = useMemberships();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (session && memberships && memberships.length > 0) {
-      const organisationId = memberships[0].organisationId;
-      router.push(`/organisations/${organisationId}/forms`);
-    }
-    if (!session) {
-      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`);
-    }
-  }, [memberships, router, session]);
-
-  if (isErrorMemberships) {
-    return <div>Something went wrong...</div>;
-  }
   return (
     <LayoutApp>
-      <div className="flex h-full w-full items-center justify-center">
-        <LoadingSpinner />
-      </div>
+      <BasePathPage />
     </LayoutApp>
   );
 }
