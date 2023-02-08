@@ -53,6 +53,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       });
       if (existingCustomer) {
+        let newCustomerData = { ...customerData };
+        if (existingCustomer.data && typeof existingCustomer.data === "object") {
+          newCustomerData = { ...existingCustomer.data, ...customerData };
+        }
         // update customer
         await prisma.customer.update({
           where: {
@@ -62,7 +66,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             },
           },
           data: {
-            data: { ...existingCustomer.data, ...customerData },
+            data: newCustomerData,
           },
         });
         event.data.customer = {

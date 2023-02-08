@@ -44,7 +44,7 @@ export default function IconRadio({ element, control, onSubmit, disabled }: Icon
                 <RadioGroup.Option
                   key={option.value}
                   value={option.value}
-                  className={({ checked, active }) =>
+                  className={({ checked }) =>
                     clsx(
                       checked ? "border-transparent" : "border-slate-200 ",
                       /* active ? "border-brand ring-brand ring-2" : "", */

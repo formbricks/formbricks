@@ -1,13 +1,12 @@
-import { IdentityProvider } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { IdentityProvider } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
-import NextAuth from "next-auth";
 import type { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import { verifyPassword } from "../../../lib/auth";
 import { verifyToken } from "../../../lib/jwt";
-import { type } from "os";
 
 export const authOptions: NextAuthOptions = {
   providers: [
