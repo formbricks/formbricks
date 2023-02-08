@@ -46,6 +46,7 @@ export const DataInSurvey = () => {
               {
                 id: "dataIn",
                 type: "radio",
+                label: "Data-Out: User Profiles and CRM",
                 name: "dataIn",
                 options: [
                   { label: "Segment", value: "segmentIn", frontend: { icon: SegmentLogoImage } },
@@ -108,6 +109,7 @@ export const DataOutSurvey = () => {
                 id: "dataIn",
                 type: "checkbox",
                 name: "dataIn",
+                label: "Data-In: Pre-Segmentation",
                 options: [
                   { label: "Segment", value: "segmentOut", frontend: { icon: SegmentLogoImage } },
                   {

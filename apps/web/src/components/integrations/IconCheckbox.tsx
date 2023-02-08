@@ -24,9 +24,9 @@ export default function IconCheckbox({
   return (
     <div className={clsx(loading && "formbricks-pulse-animation")}>
       <div className="flex flex-col justify-center">
-        <label className="pb-6 text-center text-lg font-bold text-slate-600 dark:text-slate-300 sm:text-xl md:text-2xl">
+        {/* <label className="pb-6 text-center text-lg font-bold text-slate-600 dark:text-slate-300 sm:text-xl md:text-2xl">
           {element.label}
-        </label>
+        </label> */}
         <fieldset className="space-y-5">
           <legend className="sr-only">{element.label}</legend>
           <div className="flex max-w-5xl space-x-3 px-2">
