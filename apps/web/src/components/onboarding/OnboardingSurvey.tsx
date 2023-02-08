@@ -41,6 +41,7 @@ const OnboardingSurvey = () => {
               lastUserContact: submission.lastUserContact,
               hardestPartInUserResearch: submission.hardestPartInUserResearch,
             },
+            finished: true,
             data: submission,
           }),
         });
