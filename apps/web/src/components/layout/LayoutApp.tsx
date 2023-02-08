@@ -67,7 +67,7 @@ export default function LayoutApp({ children }) {
         <title>Formbricks</title>
         <meta name="description" content="Build user research into your product" />
       </Head>
-      <div className="min-h-screen">
+      <div className="h-screen">
         <Disclosure as="nav" className="border-b border-gray-200 bg-white">
           {({ open }) => (
             <>
