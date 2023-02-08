@@ -2,6 +2,7 @@ import { CustomersIcon, DashboardIcon, FormIcon } from "@formbricks/ui";
 import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useMemo } from "react";
 
@@ -54,7 +55,7 @@ export default function LayoutWrapperOrganisation({ children }: LayoutWrapperOrg
                 </div>
                 <div className="hidden lg:flex lg:space-x-4">
                   {navigation.map((item) => (
-                    <a
+                    <Link
                       key={item.name}
                       href={item.href}
                       className={clsx(
@@ -66,7 +67,7 @@ export default function LayoutWrapperOrganisation({ children }: LayoutWrapperOrg
                       aria-current={item.current ? "page" : undefined}>
                       <item.icon className="mr-3 h-5 w-5" />
                       {item.name}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </nav>
@@ -77,8 +78,7 @@ export default function LayoutWrapperOrganisation({ children }: LayoutWrapperOrg
                 {navigation.map((item) => (
                   <Disclosure.Button
                     key={item.name}
-                    as="a"
-                    href={item.href}
+                    onClick={() => router.push(item.href)}
                     className={clsx(
                       item.current
                         ? "bg-gray-100 text-gray-900"

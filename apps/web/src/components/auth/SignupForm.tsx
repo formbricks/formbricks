@@ -110,23 +110,23 @@ export const SignupForm = () => {
               By clicking &quot;Sign Up&quot;, you agree to our
               <br />
               {process.env.NEXT_PUBLIC_TERMS_URL && (
-                <a
+                <Link
                   className="text-brand hover:text-brand-light underline"
                   href={process.env.NEXT_PUBLIC_TERMS_URL}
                   rel="noreferrer"
                   target="_blank">
                   terms of service
-                </a>
+                </Link>
               )}
               {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
               {process.env.NEXT_PUBLIC_PRIVACY_URL && (
-                <a
+                <Link
                   className="text-brand hover:text-brand-light underline"
                   href={process.env.NEXT_PUBLIC_PRIVACY_URL}
                   rel="noreferrer"
                   target="_blank">
                   privacy policy
-                </a>
+                </Link>
               )}
               .<br />
               We&apos;ll occasionally send you account related emails.

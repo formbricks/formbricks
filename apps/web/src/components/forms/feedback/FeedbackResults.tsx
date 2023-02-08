@@ -5,6 +5,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useSubmissions } from "@/lib/submissions";
 import { Dialog, Transition } from "@headlessui/react";
 import { InboxIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment, useEffect, useState } from "react";
 import FilterNavigation from "../shared/FilterNavigation";
@@ -86,9 +87,9 @@ export default function FeedbackResults() {
                   <ul role="list" className="px-2 py-3 font-medium text-gray-900">
                     {subCategories.map((category) => (
                       <li key={category.name}>
-                        <a href={category.href} className="block px-2 py-3">
+                        <Link href={category.href} className="block px-2 py-3">
                           {category.name}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
