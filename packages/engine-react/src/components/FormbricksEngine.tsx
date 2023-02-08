@@ -34,9 +34,17 @@ export function FormbricksEngine({
 
   useEffect(() => {
     // warmup request
-    fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions`, {
-      method: "OPTIONS",
-    });
+    if (!offline) {
+      if (!formbricksUrl) {
+        throw new Error("Formbricks URL not provided");
+      }
+      if (!formId) {
+        throw new Error("Form ID not provided");
+      }
+      fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions`, {
+        method: "OPTIONS",
+      });
+    }
   }, []);
 
   const navigateToNextPage = (currentSubmission: any) => {

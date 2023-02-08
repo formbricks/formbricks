@@ -23,12 +23,18 @@ const OnboardingSurvey = () => {
   return (
     <FormbricksEngine
       offline={true}
-      onFinished={async ({ submission }) => {
+      onFinished={async ({ submission, schema }) => {
         console.log({
           email: session.user.email,
           name: session.user.name,
           lastUserContact: submission.lastUserContact,
           hardestPartInUserResearch: submission.hardestPartInUserResearch,
+        });
+        // send schema to formbricks
+        fetch(`https://app.formbricks.com/api/capture/forms/${formId}/schema`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(schema),
         });
         // send submission to formbricks
         const res = await fetch(`https://app.formbricks.com/api/capture/forms/${formId}/submissions`, {
