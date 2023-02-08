@@ -1,4 +1,3 @@
-import Script from "next/script";
 import { useEffect } from "react";
 import AppPage from "../../components/AppPage";
 
@@ -11,8 +10,9 @@ declare global {
 export default function Feedback() {
   useEffect(() => {
     window.formbricks = {
+      ...window.formbricks,
       config: {
-        hqUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
+        formbricksUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
         formId: process.env.NEXT_PUBLIC_FORMBRICKS_FEEDBACK_FORM_ID,
         contact: {
           name: "Matti Nannt",
@@ -25,14 +25,7 @@ export default function Feedback() {
         },
       },
     };
-    require("@formbricks/pmf");
+    require("@formbricks/feedback");
   }, []);
-  return (
-    <>
-      <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2.1/dist/index.umd.js" defer />
-      <>
-        <AppPage onClickFeedback={(event) => window.formbricks.open(event)} />
-      </>
-    </>
-  );
+  return <AppPage onClickFeedback={(event) => window.formbricks.open(event)} />;
 }
