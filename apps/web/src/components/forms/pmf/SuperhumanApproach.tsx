@@ -7,12 +7,13 @@ import { useForm } from "@/lib/forms";
 import { getOptionLabelMap, useSubmissions } from "@/lib/submissions";
 import { Pie } from "@formbricks/charts";
 import { NotDisappointedIcon, SomewhatDisappointedIcon, VeryDisappointedIcon } from "@formbricks/ui";
-import { InformationCircleIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import FilterNavigation from "../shared/FilterNavigation";
+
+const limitFields = ["userSegment"];
 
 export default function SegmentResults() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function SegmentResults() {
               <FilterNavigation
                 submissions={submissions}
                 setFilteredSubmissions={setFilteredSubmissions}
-                limitFields={["userSegment"]}
+                limitFields={limitFields}
               />
               <div className="mb-2 flex py-2 text-sm font-bold">
                 <h4 className="text-slate-600">Tutorials</h4>
@@ -113,7 +114,9 @@ export default function SegmentResults() {
               <div className="rounded-md bg-teal-50 p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <InformationCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
+                    <span className="inline-flex items-center rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-medium text-teal-800">
+                      How it works
+                    </span>
                   </div>
                   <div className="ml-3 flex-1 md:flex md:justify-between">
                     <p className="text-sm text-teal-700">
@@ -171,7 +174,9 @@ export default function SegmentResults() {
               <div className="rounded-md bg-teal-50 p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <InformationCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
+                    <span className="inline-flex items-center rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-medium text-teal-800">
+                      How it works
+                    </span>
                   </div>
                   <div className="ml-3 flex-1 md:flex md:justify-between">
                     <p className="text-sm text-teal-700">

@@ -97,7 +97,7 @@ function FbPie({ color, submissions, schema, fieldName }: Props) {
 // @ts-ignore */}
                   {data[index].name}
                 </tspan>
-                <tspan dy="20" dx="-35">
+                <tspan dy="20" dx="-38">
                   ({Math.round((value / submissions.length) * 100)}%)
                 </tspan>
               </text>

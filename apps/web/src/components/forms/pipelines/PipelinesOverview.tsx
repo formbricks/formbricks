@@ -97,8 +97,6 @@ export default function PipelinesOverview({}) {
   const [updatePipelineId, setUpdatePipelineId] = useState(null);
   const [openUpdateModal, setOpenUpdateModal] = useState(false);
 
-  console.log(pipelines);
-
   const toggleEnabled = async (pipeline) => {
     const newPipeline = JSON.parse(JSON.stringify(pipeline));
     newPipeline.enabled = !newPipeline.enabled;

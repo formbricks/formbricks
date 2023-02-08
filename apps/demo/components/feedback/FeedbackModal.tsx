@@ -140,7 +140,6 @@ export default function FeedbackModal({ show, setShow, formId, customer }: Feedb
                           },
                           body: JSON.stringify(body),
                         });
-                        console.log("submission sent!");
                         e.target.reset();
                         setFeedbackSent(true);
                       }}>

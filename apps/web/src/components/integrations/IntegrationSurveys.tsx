@@ -29,9 +29,6 @@ export const DataInSurvey = () => {
         process.env.NODE_ENV === "production" ? "cldvn1r6x0002s00gnw01lj40" : "cldvkpx11000019a0aoucngcb"
       }
       customer={{ email: session.user.email }}
-      onFinished={({ submission }) => {
-        console.log(submission);
-      }}
       schema={{
         config: {
           progressBar: false,

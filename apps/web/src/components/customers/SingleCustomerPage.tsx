@@ -18,8 +18,6 @@ export default function SingleCustomerPage() {
     router.query.customerId?.toString()
   );
 
-  console.log(customer?.submissions[0]);
-
   const formsParticipated = useMemo(() => {
     if (customer && "submissions" in customer) {
       return customer.submissions.map((s) => s.formId).filter(onlyUnique).length;
