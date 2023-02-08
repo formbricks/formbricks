@@ -44,22 +44,40 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const customerEmail = submission.customer.email;
       const customerData = { ...submission.customer };
       delete customerData.email;
-      // create or link customer
-      event.data.customer = {
-        connectOrCreate: {
+      const existingCustomer = await prisma.customer.findUnique({
+        where: {
+          email_organisationId: {
+            email: submission.customer.email,
+            organisationId: form.organisationId,
+          },
+        },
+      });
+      if (existingCustomer) {
+        // update customer
+        await prisma.customer.update({
           where: {
             email_organisationId: {
               email: submission.customer.email,
               organisationId: form.organisationId,
             },
           },
+          data: {
+            data: { ...existingCustomer.data, ...customerData },
+          },
+        });
+        event.data.customer = {
+          connect: { organisationId_email: { email: customerEmail, organisationId: form.organisationId } },
+        };
+      } else {
+        // create customer
+        event.data.customer = {
           create: {
             email: customerEmail,
             organisation: { connect: { id: form.organisationId } },
             data: customerData,
           },
-        },
-      };
+        };
+      }
     }
 
     // create form in db
@@ -67,7 +85,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (submission.finished) {
       pipelineEvents.push("submissionFinished");
     }
+    // create submission
     const submissionResult = await prisma.submission.create(event);
+    // run pipelines
     await runPipelines(pipelineEvents, form, submission, submissionResult);
     // tracking
     capturePosthogEvent(form.organisationId, "submission received", {

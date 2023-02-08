@@ -1,12 +1,19 @@
 import { capturePosthogEvent } from "@/lib/posthog";
 import { FormbricksEngine } from "@formbricks/engine-react";
 import { useSession } from "next-auth/react";
+import { useEffect } from "react";
 import LoadingSpinner from "../LoadingSpinner";
 import ForwardToApp from "./ForwardToApp";
 import IconRadio from "./IconRadio";
 
 const OnboardingSurvey = () => {
   const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (session.user.finishedOnboarding) {
+      window.location.replace("/");
+    }
+  }, [session]);
 
   if (status === "loading") return <LoadingSpinner />;
 
@@ -19,12 +26,23 @@ const OnboardingSurvey = () => {
     <FormbricksEngine
       offline={true}
       onFinished={async ({ submission }) => {
+        console.log({
+          email: session.user.email,
+          name: session.user.name,
+          lastUserContact: submission.lastUserContact,
+          hardestPartInUserResearch: submission.hardestPartInUserResearch,
+        });
         // send submission to formbricks
         const res = await fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            customer: { email: session.user.email, name: session.user.name },
+            customer: {
+              email: session.user.email,
+              name: session.user.name,
+              lastUserContact: submission.lastUserContact,
+              hardestPartInUserResearch: submission.hardestPartInUserResearch,
+            },
             data: submission,
           }),
         });
@@ -53,11 +71,11 @@ const OnboardingSurvey = () => {
             },
             elements: [
               {
-                id: "role",
+                id: "hardestPartInUserResearch",
                 type: "radio",
                 label: "The hardest part about user research is...",
                 /*  help: "Helps us focus on what you need most.", */
-                name: "role",
+                name: "hardestPartInUserResearch",
                 options: [
                   { label: "Not sure where to start", value: "notSureWhereToStart" },
                   {
@@ -79,11 +97,11 @@ const OnboardingSurvey = () => {
             },
             elements: [
               {
-                id: "targetGroup",
+                id: "lastUserContact",
                 type: "radio",
                 label: "When was the last time you talked to one of your users?",
                 /* help: "(honest answers only)", */
-                name: "targetGroup",
+                name: "lastUserContact",
                 options: [
                   { label: "Today", value: "today" },
                   {
