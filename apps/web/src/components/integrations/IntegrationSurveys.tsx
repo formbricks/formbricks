@@ -26,7 +26,7 @@ export const DataInSurvey = () => {
         process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
       }
       formId={
-        process.env.NODE_ENV === "production" ? "cldudpq050000po0h2mdz0t6d" : "cldvkpx11000019a0aoucngcb"
+        process.env.NODE_ENV === "production" ? "cldvn1r6x0002s00gnw01lj40" : "cldvkpx11000019a0aoucngcb"
       }
       customer={{ email: session.user.email }}
       onFinished={({ submission }) => {
@@ -90,7 +90,7 @@ export const DataOutSurvey = () => {
         process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
       }
       formId={
-        process.env.NODE_ENV === "production" ? "cldudpq050000po0h2mdz0t6d" : "cldvku70u000319a0xokj8cku"
+        process.env.NODE_ENV === "production" ? "cldvn4fk30003s00gum3rkvma" : "cldvku70u000319a0xokj8cku"
       }
       customer={{ email: session.user.email }}
       schema={{
