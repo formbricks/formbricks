@@ -76,7 +76,7 @@ export default function PmfButton() {
           }
           setIsOpen(!isOpen);
         }}>
-        {isOpen ? "Close" : "Feedback"}
+        {isOpen ? "Close" : "Hey 👋"}
       </button>
       <div
         className="xs:px-2 h-full overflow-hidden rounded-l-lg bg-[#f8fafc] shadow-lg"

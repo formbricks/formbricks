@@ -87,7 +87,7 @@ export const sendSubmissionEmail = async (
   formId,
   formLabel: string,
   schema: any,
-  submission
+  submission: any
 ) => {
   await sendEmail({
     to: email,
@@ -99,7 +99,7 @@ export const sendSubmissionEmail = async (
         : event === "finished"
         ? `${formLabel} submission finished`
         : `${formLabel} submission update`,
-    replyTo: submission.customer?.email || process.env.MAIL_FROM,
+    replyTo: submission.customerEmail || process.env.MAIL_FROM,
     html: `${
       event === "created"
         ? `Hey, someone just filled out your form "${formLabel}" in Formbricks.`
