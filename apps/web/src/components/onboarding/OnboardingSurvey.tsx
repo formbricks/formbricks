@@ -17,10 +17,8 @@ const OnboardingSurvey = () => {
 
   if (status === "loading") return <LoadingSpinner />;
 
-  const formbricksUrl =
-    process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000";
   const formId =
-    process.env.NODE_ENV === "production" ? "cldu60z5d0000mm0hq7k0ducf" : "cldufl8uh000019mzr7fdotyu";
+    process.env.NODE_ENV === "production" ? "cldu60z5d0000mm0hq7k0ducf" : "cldvi1rzq0006oy0hg0ahsedi";
 
   return (
     <FormbricksEngine
@@ -33,7 +31,7 @@ const OnboardingSurvey = () => {
           hardestPartInUserResearch: submission.hardestPartInUserResearch,
         });
         // send submission to formbricks
-        const res = await fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions`, {
+        const res = await fetch(`https://app.formbricks.com/api/capture/forms/${formId}/submissions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
