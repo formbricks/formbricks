@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import { useSession } from "next-auth/react";
-import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 
 declare global {
@@ -14,7 +13,6 @@ const feedbackEnabled = !!(
 );
 
 export function FeedbackButton() {
-  const [configLoaded, setConfigLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const feedbackRef = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
@@ -53,7 +51,7 @@ export function FeedbackButton() {
           customer: session.user,
         },
       };
-      setConfigLoaded(true);
+      require("@formbricks/feedback");
     }
   }, [session]);
 
@@ -61,10 +59,6 @@ export function FeedbackButton() {
 
   return (
     <>
-      {configLoaded && (
-        <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2.1/dist/index.umd.js" defer />
-      )}
-
       <div
         className={clsx(
           "xs:flex-row xs:right-0 xs:top-1/2 xs:w-[18rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-fit w-full transition-all duration-500 ease-in-out",

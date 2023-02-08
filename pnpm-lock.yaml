@@ -189,6 +189,7 @@ importers:
       '@formbricks/database': workspace:*
       '@formbricks/ee': workspace:*
       '@formbricks/engine-react': workspace:*
+      '@formbricks/feedback': workspace:*
       '@formbricks/tailwind-config': workspace:*
       '@formbricks/tsconfig': workspace:*
       '@formbricks/ui': workspace:*
@@ -225,6 +226,7 @@ importers:
       '@formbricks/charts': link:../../packages/charts
       '@formbricks/ee': link:../../packages/ee
       '@formbricks/engine-react': link:../../packages/engine-react
+      '@formbricks/feedback': link:../../packages/feedback-widget
       '@formbricks/ui': link:../../packages/ui
       '@headlessui/react': 1.7.8_biqbaboplfbrettd7655fr4n2y
       '@heroicons/react': 2.0.14_react@18.2.0
