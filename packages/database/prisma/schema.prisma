@@ -164,4 +164,5 @@ model User {
   organisations             Membership[]
   accounts                  Account[]
   apiKeys                   ApiKey[]
+  finishedOnboarding        Boolean          @default(false)
 }

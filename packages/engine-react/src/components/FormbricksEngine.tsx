@@ -4,18 +4,22 @@ import { EnginePage } from "./EnginePage";
 
 interface FormProps {
   schema: Form;
-  formbricksUrl: string;
-  formId: string;
+  formbricksUrl?: string;
+  formId?: string;
+  customer?: any;
   onFinished?: ({ submission }: any) => void;
   onPageSubmit?: ({ page }: any) => void;
+  offline?: boolean;
 }
 
 export function FormbricksEngine({
   schema,
   formbricksUrl,
   formId,
+  customer = {},
   onFinished = () => {},
   onPageSubmit = () => {},
+  offline = false,
 }: FormProps) {
   if (!schema) {
     console.error("Formbricks Engine: No form provided");
@@ -77,6 +81,8 @@ export function FormbricksEngine({
         formbricksUrl={formbricksUrl}
         formId={formId}
         schema={cleanedSchema}
+        customer={customer}
+        offline={offline}
       />
     </div>
   );

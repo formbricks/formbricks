@@ -4,7 +4,6 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import Modal from "@/components/Modal";
 import { createApiKey, deleteApiKey, useApiKeys } from "@/lib/apiKeys";
 import { convertDateTimeString } from "@/lib/utils";
-import { Form, Submit, Text } from "@formbricks/react";
 import { Button } from "@formbricks/ui";
 import { useState } from "react";
 
@@ -127,17 +126,27 @@ export default function ProfileSettingsPage() {
             Create a Personal API Key
           </h2>
           <hr className="my-4 w-full text-gray-400" />
-          <Form
-            onSubmit={async ({ submission }) => {
-              const apiKey = await createApiKey(submission.data);
+          <form
+            onSubmit={async (e: any) => {
+              e.preventDefault();
+              const apiKey = await createApiKey({ label: e.target.label.value });
               mutateApiKeys([...JSON.parse(JSON.stringify(apiKeys)), apiKey], false);
               setOpenNewApiKeyModal(false);
             }}>
-            <Text
-              name="label"
-              placeholder="Label, e.g. Github"
-              inputClassName="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
-            />
+            <div>
+              <label htmlFor="label" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <div className="mt-1">
+                <input
+                  type="text"
+                  name="label"
+                  id="label"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="Label, e.g. Github"
+                />
+              </div>
+            </div>
             <p className="mt-3 text-sm text-gray-800">
               Key value will only ever be shown once, immediately after creation. Copy it to your destination
               right away.
@@ -146,13 +155,9 @@ export default function ProfileSettingsPage() {
               <Button variant="secondary" className="mr-2">
                 Cancel
               </Button>
-              <Submit
-                name="submit"
-                label="Create"
-                inputClassName="inline-flex items-center appearance-none px-6 py-2 text-sm font-medium rounded-xl relative text-slate-900 bg-gradient-to-b from-brand-light to-brand-dark  hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900"
-              />
+              <Button type="submit">Create</Button>
             </div>
-          </Form>
+          </form>
         </Modal>
       )}
     </div>

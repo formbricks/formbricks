@@ -34,14 +34,14 @@ export const SignupForm = () => {
   return (
     <>
       {error && (
-        <div className="absolute top-10 rounded-md bg-sky-50 p-4">
+        <div className="absolute top-10 rounded-md bg-teal-50 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <XCircleIcon className="h-5 w-5 text-sky-400" aria-hidden="true" />
+              <XCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-sky-800">An error occurred when logging you in</h3>
-              <div className="mt-2 text-sm text-sky-700">
+              <h3 className="text-sm font-medium text-teal-800">An error occurred when logging you in</h3>
+              <div className="mt-2 text-sm text-teal-700">
                 <p className="space-y-1 whitespace-pre-wrap">{error}</p>
               </div>
             </div>
@@ -101,7 +101,7 @@ export const SignupForm = () => {
 
           <div className="mt-3 text-center text-xs text-gray-600">
             Already have an account?{" "}
-            <Link href="/auth/signin" className="text-sky hover:text-sky-600">
+            <Link href="/auth/signin" className="text-brand hover:text-brand-light">
               Log in.
             </Link>
           </div>
@@ -111,7 +111,7 @@ export const SignupForm = () => {
               <br />
               {process.env.NEXT_PUBLIC_TERMS_URL && (
                 <a
-                  className="text-sky underline hover:text-sky-600"
+                  className="text-brand hover:text-brand-light underline"
                   href={process.env.NEXT_PUBLIC_TERMS_URL}
                   rel="noreferrer"
                   target="_blank">
@@ -121,7 +121,7 @@ export const SignupForm = () => {
               {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
               {process.env.NEXT_PUBLIC_PRIVACY_URL && (
                 <a
-                  className="text-sky underline hover:text-sky-600"
+                  className="text-brand hover:text-brand-light underline"
                   href={process.env.NEXT_PUBLIC_PRIVACY_URL}
                   rel="noreferrer"
                   target="_blank">
