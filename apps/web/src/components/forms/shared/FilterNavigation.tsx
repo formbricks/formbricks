@@ -128,7 +128,7 @@ export default function FilterNavigation({
       });
       setFilters(filters);
     }
-  }, [form]);
+  }, [form, limitFields]);
 
   if (isLoadingForm) {
     return <LoadingSpinner />;
