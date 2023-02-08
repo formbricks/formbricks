@@ -45,6 +45,15 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/demo",
+        destination: "/demo/organisations/demo-organisation/forms/demo-pmf",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
