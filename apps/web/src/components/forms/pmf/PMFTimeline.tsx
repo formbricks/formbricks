@@ -136,7 +136,9 @@ export default function PMFTimeline({ submissions }) {
                             {submission.customerEmail ? (
                               <Link
                                 className="text-sm font-medium text-gray-700"
-                                href={`/organisations/${router.query.organisationId}/customers/${submission.customerEmail}`}>
+                                href={`${form.id.startsWith("demo") ? "/demo" : ""}/organisations/${
+                                  router.query.organisationId
+                                }/customers/${submission.customerEmail}`}>
                                 {submission.customerEmail}
                               </Link>
                             ) : (

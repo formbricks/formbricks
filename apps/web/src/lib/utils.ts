@@ -2,8 +2,14 @@ import crypto from "crypto";
 import intlFormat from "date-fns/intlFormat";
 import { formatDistance } from "date-fns";
 import platform from "platform";
+import { demoEndpoints } from "./demo";
 
 export const fetcher = async (url) => {
+  if (url in demoEndpoints) {
+    const { file } = demoEndpoints[url];
+    const { default: data } = await import(`../demo-data/${file}`);
+    return data;
+  }
   const res = await fetch(url);
 
   // If the status code is not in the range 200-299,
