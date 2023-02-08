@@ -94,7 +94,7 @@ export default function LayoutWrapperOrganisation({ children }: LayoutWrapperOrg
           </>
         )}
       </Disclosure>
-      <div className="px-4 sm:px-6 lg:px-8">{children}</div>
+      {children}
     </div>
   );
 }
