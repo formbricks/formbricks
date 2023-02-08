@@ -148,6 +148,7 @@ export function EnginePage({
             {element.name ? (
               <ElementComponent
                 element={element}
+                page={page}
                 control={control}
                 register={register}
                 onSubmit={() => handleSubmitElement()}

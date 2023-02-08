@@ -1,163 +1,100 @@
-"use client";
-
-import { Logo } from "@/components/Logo";
-import { CustomersIcon, FormIcon } from "@formbricks/ui";
-import { Dialog, Transition } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { CustomersIcon, DashboardIcon, FormIcon } from "@formbricks/ui";
+import { Disclosure } from "@headlessui/react";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useRouter } from "next/router";
-import { Fragment, useMemo, useState } from "react";
+import { useMemo } from "react";
 
-export default function LayoutWrapperOrganisation({ children }) {
+interface LayoutWrapperOrganisationProps {
+  children: React.ReactNode;
+}
+
+export default function LayoutWrapperOrganisation({ children }: LayoutWrapperOrganisationProps) {
   const router = useRouter();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const pathname = usePathname();
-  const sidebarNavigation = useMemo(
+  const navigation = useMemo(
     () => [
       {
         name: "Forms",
         href: `/organisations/${router.query.organisationId}/forms`,
         icon: FormIcon,
-        current: pathname.includes("/form"),
+        current: router.pathname.includes("/form"),
       },
       {
         name: "Customers",
         href: `/organisations/${router.query.organisationId}/customers`,
         icon: CustomersIcon,
-        current: pathname.includes("/customers"),
+        current: router.pathname.includes("/customers"),
       },
-      /*     {
-        name: "Settings",
-        href: `/organisations/${router.query.organisationId}/settings`,
-        icon: Cog8ToothIcon,
-        current: pathname.includes("/settings"),
-      }, */
+      {
+        name: "Integrations",
+        href: `/organisations/${router.query.organisationId}/integrations`,
+        icon: DashboardIcon,
+        current: router.pathname.includes("/integrations"),
+      },
     ],
-    [router.query, pathname]
+    [router]
   );
-
   return (
-    <>
-      <div className="flex h-full">
-        {/* Narrow sidebar */}
-        <div className="hidden overflow-y-auto border-r border-gray-200 bg-white bg-gradient-to-r sm:w-40 md:block xl:w-64">
-          <div className="flex w-full flex-col items-center py-6">
-            <div className="w-full flex-1 space-y-2 px-2">
-              {sidebarNavigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={clsx(
-                    item.current
-                      ? "bg-gray-100 text-gray-900"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
-                    "group flex items-center rounded-md px-2 py-2 text-sm font-medium"
-                  )}>
-                  <item.icon
-                    className={clsx(
-                      item.current ? "text-gray-500" : "text-gray-400 group-hover:text-gray-500",
-                      "mr-3 h-6 w-6 flex-shrink-0"
+    <div>
+      <Disclosure as="header" className="bg-white shadow">
+        {({ open }) => (
+          <>
+            <div className="mx-auto w-full px-2 sm:px-4 lg:divide-y lg:divide-gray-200 lg:px-8">
+              <nav className="py-2" aria-label="Global">
+                <div className="relative z-10 flex items-center lg:hidden">
+                  {/* Mobile menu button */}
+                  <Disclosure.Button className="focus:ring-brand inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset">
+                    <span className="sr-only">Open menu</span>
+                    {open ? (
+                      <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
+                    ) : (
+                      <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
                     )}
-                    aria-hidden="true"
-                  />
-                  {item.name}
-                </Link>
-              ))}
+                  </Disclosure.Button>
+                </div>
+                <div className="hidden lg:flex lg:space-x-4">
+                  {navigation.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className={clsx(
+                        item.current
+                          ? "bg-gray-100 text-gray-900"
+                          : "text-gray-900 hover:bg-gray-50 hover:text-gray-900",
+                        "inline-flex items-center rounded-md py-2 px-3 text-sm font-medium"
+                      )}
+                      aria-current={item.current ? "page" : undefined}>
+                      <item.icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              </nav>
             </div>
-          </div>
-        </div>
 
-        {/* Mobile menu */}
-        <Transition.Root show={mobileMenuOpen} as={Fragment}>
-          <Dialog as="div" className="relative z-20 md:hidden" onClose={setMobileMenuOpen}>
-            <Transition.Child
-              as={Fragment}
-              enter="transition-opacity ease-linear duration-300"
-              enterFrom="opacity-0"
-              enterTo="opacity-100"
-              leave="transition-opacity ease-linear duration-300"
-              leaveFrom="opacity-100"
-              leaveTo="opacity-0">
-              <div className="fixed inset-0 bg-gray-600 bg-opacity-75" />
-            </Transition.Child>
-
-            <div className="fixed inset-0 z-40 flex">
-              <Transition.Child
-                as={Fragment}
-                enter="transition ease-in-out duration-300 transform"
-                enterFrom="-translate-x-full"
-                enterTo="translate-x-0"
-                leave="transition ease-in-out duration-300 transform"
-                leaveFrom="translate-x-0"
-                leaveTo="-translate-x-full">
-                <Dialog.Panel className="bg-brand-light relative flex w-full max-w-xs flex-1 flex-col pt-5 pb-4">
-                  <Transition.Child
-                    as={Fragment}
-                    enter="ease-in-out duration-300"
-                    enterFrom="opacity-0"
-                    enterTo="opacity-100"
-                    leave="ease-in-out duration-300"
-                    leaveFrom="opacity-100"
-                    leaveTo="opacity-0">
-                    <div className="absolute top-1 right-0 -mr-14 p-1">
-                      <button
-                        type="button"
-                        className="flex h-12 w-12 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-white"
-                        onClick={() => setMobileMenuOpen(false)}>
-                        <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                        <span className="sr-only">Close sidebar</span>
-                      </button>
-                    </div>
-                  </Transition.Child>
-                  <div className="flex flex-shrink-0 items-center px-4">
-                    <Logo className="h-8 w-auto" />
-                  </div>
-                  <div className="mt-5 h-0 flex-1 overflow-y-auto px-2">
-                    <nav className="flex h-full flex-col">
-                      <div className="space-y-1">
-                        {sidebarNavigation.map((item) => (
-                          <a
-                            key={item.name}
-                            href={item.href}
-                            className={clsx(
-                              item.current
-                                ? "bg-brand-dark text-white"
-                                : "hover:bg-brand-dark text-teal-100 hover:text-white",
-                              "group flex items-center rounded-md py-2 px-3 text-sm font-medium"
-                            )}
-                            aria-current={item.current ? "page" : undefined}>
-                            <item.icon
-                              className={clsx(
-                                item.current ? "text-white" : "text-teal-300 group-hover:text-white",
-                                "mr-3 h-6 w-6"
-                              )}
-                              aria-hidden="true"
-                            />
-                            <span>{item.name}</span>
-                          </a>
-                        ))}
-                      </div>
-                    </nav>
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
-              <div className="w-14 flex-shrink-0" aria-hidden="true">
-                {/* Dummy element to force sidebar to shrink to fit close icon */}
+            <Disclosure.Panel as="nav" className="lg:hidden" aria-label="Global">
+              <div className="space-y-1 px-2 pt-2 pb-3">
+                {navigation.map((item) => (
+                  <Disclosure.Button
+                    key={item.name}
+                    as="a"
+                    href={item.href}
+                    className={clsx(
+                      item.current
+                        ? "bg-gray-100 text-gray-900"
+                        : "text-gray-900 hover:bg-gray-50 hover:text-gray-900",
+                      "block rounded-md py-2 px-3 text-base font-medium"
+                    )}
+                    aria-current={item.current ? "page" : undefined}>
+                    {item.name}
+                  </Disclosure.Button>
+                ))}
               </div>
-            </div>
-          </Dialog>
-        </Transition.Root>
-
-        {/* Content area */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Main content */}
-          <div className="flex flex-1 items-stretch overflow-hidden">
-            <main className="flex-1 overflow-y-auto">{children}</main>
-          </div>
-        </div>
-      </div>
-    </>
+            </Disclosure.Panel>
+          </>
+        )}
+      </Disclosure>
+      <div className="px-4 sm:px-6 lg:px-8">{children}</div>
+    </div>
   );
 }

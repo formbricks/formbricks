@@ -37,3 +37,4 @@ export * from "./icons/VeryDisappointedIcon";
 export * from "./icons/SomewhatDisappointedIcon";
 export * from "./icons/NotDisappointedIcon";
 export * from "./icons/ArchiveIcon";
+export * from "./icons/DashboardIcon";

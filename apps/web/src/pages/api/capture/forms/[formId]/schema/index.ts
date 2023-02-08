@@ -16,6 +16,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   else if (req.method === "POST") {
     const schema = req.body;
 
+    // find form
+    const form = await prisma.form.findUnique({
+      where: {
+        id: formId,
+      },
+    });
+
+    if (!form) {
+      return res.status(404).json({ error: `Form with id "${formId}" not found` });
+    }
+
     // create form in db
     await prisma.form.update({
       where: {
