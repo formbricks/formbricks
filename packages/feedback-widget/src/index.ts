@@ -13,7 +13,7 @@ export interface FormbricksConfig {
   divId?: string;
   style?: any;
   formId?: string;
-  hqUrl?: string;
+  formbricksUrl?: string;
   customer?: Record<any, any>;
   disableErrorAlert: boolean;
 }
@@ -258,7 +258,7 @@ function submit(e: Event) {
   };
 
   fetch(
-    `${stripLastBackslash(config.hqUrl || "https://xm.formbricks.com")}/api/capture/forms/${
+    `${stripLastBackslash(config.formbricksUrl || "https://app.formbricks.com")}/api/capture/forms/${
       config.formId
     }/submissions`,
     {

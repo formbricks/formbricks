@@ -70,7 +70,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           },
         });
         event.data.customer = {
-          connect: { organisationId_email: { email: customerEmail, organisationId: form.organisationId } },
+          connect: { email_organisationId: { email: customerEmail, organisationId: form.organisationId } },
         };
       } else {
         // create customer
