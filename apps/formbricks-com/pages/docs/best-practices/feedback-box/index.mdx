@@ -5,4 +5,70 @@ export const meta = {
   title: "Feedback Box",
 };
 
+The Feedback Box is an easy way to gather feedback from your users.
+
+## Installation
+
+The easiest way to get the Feedback Box live on your page is via NPM:
+
+```tsx
+npm install XXXX
+```
+
+## Personalizing
+
+Add your name, position and image link to give users the impression that you care about their feedback :)
+
+```tsx
+contact: {
+  name: "Johannes",
+  position: "Co-Founder",
+  imgUrl: "https://avatars.githubusercontent.com/u/72809645?v=4",
+},
+```
+
+## Sending user data with feedback
+
+The feedback box is built for in-app experiences. We assume that you already have user properties stored in a session object.
+
+Here is an example of how to pass it to Formbricks. However, it might differ in your specific case.
+
+```tsx
+customer: {
+  id: "",
+  name: "",
+  email: "",
+},
+```
+
+## Styling
+
+You can style the Feedback Box to match your UI. We recommend to at least replace the brand color with your main color.
+
+```tsx
+style:
+{
+  brandColor: "#00c4b8",
+},
+```
+
+Here are all variables you can set with the current defaults:
+
+```tsx
+style:
+{
+  brandColor: "#00c4b8",
+  borderRadius: "0.4rem",
+  headerBGColor: "#1e293b",
+  headerTitleColor
+  boxBGColor: "#cbd5e1",
+  textColor: "#0f172a",
+  buttonHoverColor: "#e2e8f0",
+},
+
+This is what they style:
+
+
+
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
+```

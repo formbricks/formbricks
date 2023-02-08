@@ -11,19 +11,27 @@ const navigation = [
     links: [
       {
         title: "Feedback Box",
-        href: "/docs/react-form-library/feedback-box",
+        href: "/docs/best-practices/feedback-box",
       },
       {
         title: "Product-Market Fit Survey",
-        href: "/docs/react-form-library/pmf-survey",
+        href: "/docs/best-practices/pmf-survey",
       },
+    ],
+  },
+  {
+    title: "API",
+    links: [
+      { title: "Create submission", href: "/docs/api/create-submission" },
+      { title: "Update submission", href: "/docs/api/submission" },
+      { title: "Update schema", href: "/docs/api/update-schema" },
     ],
   },
   {
     title: "Self-hosting",
     links: [
-      { title: "Quick Start", href: "/docs/formbricks-hq/quick-start" },
-      { title: "Deployment", href: "/docs/formbricks-hq/deployment" },
+      { title: "Quick Start", href: "/docs/self-hosting/quick-start" },
+      { title: "Deployment", href: "/docs/self-hosting/deployment" },
     ],
   },
 ];
