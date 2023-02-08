@@ -51,24 +51,24 @@ export function Logo(props) {
             <path
               d="M21 93.6416H46.3585V106.321C46.3585 113.323 40.6818 119 33.6792 119C26.6767 119 21 113.323 21 106.321V93.6416Z"
               fill="black"
-              fill-opacity="0.1"
+              fillOpacity="0.1"
             />
             <path
               d="M21 55C21 43.9543 29.9543 35 41 35H71.717C78.7195 35 84.3962 40.6767 84.3962 47.6792C84.3962 54.6818 78.7195 60.3585 71.717 60.3585H21V55Z"
               fill="black"
-              fill-opacity="0.1"
+              fillOpacity="0.1"
             />
             <path
               d="M21 64.3208H71.717C78.7195 64.3208 84.3962 69.9975 84.3962 77C84.3962 84.0026 78.7195 89.6793 71.717 89.6793H21V64.3208Z"
               fill="black"
-              fill-opacity="0.1"
+              fillOpacity="0.1"
             />
           </mask>
           <g mask="url(#mask1_2810_6010)">
             <path
               d="M22.3303 13.158C32.2638 3.46307 57.4526 13.158 57.4526 13.158H22.3303C19.8905 15.5391 18.3709 19.09 18.3709 24.2415C18.3709 50.3672 46.6715 59.8676 46.6715 78.0764C46.6715 95.9014 19.5515 106.898 18.4081 131.119H57.4526C57.4526 131.119 18.3709 158.037 18.3709 132.703C18.3709 132.169 18.3835 131.641 18.4081 131.119H1.18848L4.55759 13.158H22.3303Z"
               fill="black"
-              fill-opacity="0.1"
+              fillOpacity="0.1"
             />
           </g>
         </g>
@@ -79,7 +79,7 @@ export function Logo(props) {
           <circle cx="13.0756" cy="47.6793" r="23.7736" fill="#00C4B8" />
         </g>
       </g>
-      <line x1="123.75" y1="33" x2="123.75" y2="120" stroke="#CBD5E1" stroke-width="1.5" />
+      <line x1="123.75" y1="33" x2="123.75" y2="120" stroke="#CBD5E1" strokeWidth="1.5" />
       <defs>
         <filter
           id="filter0_d_2810_6010"
@@ -88,8 +88,8 @@ export function Logo(props) {
           width="60.4526"
           height="108"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feColorMatrix
             in="SourceAlpha"
             type="matrix"
@@ -110,8 +110,8 @@ export function Logo(props) {
           width="87.5471"
           height="87.5471"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
           <feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur_2810_6010" />
         </filter>
@@ -122,8 +122,8 @@ export function Logo(props) {
           width="87.5471"
           height="87.5471"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
           <feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur_2810_6010" />
         </filter>
@@ -134,8 +134,8 @@ export function Logo(props) {
           x2="20.9978"
           y2="105.964"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00E6CA" />
-          <stop offset="1" stop-color="#00C4B8" />
+          <stop stopColor="#00E6CA" />
+          <stop offset="1" stopColor="#00C4B8" />
         </linearGradient>
         <linearGradient
           id="paint1_linear_2810_6010"
@@ -144,8 +144,8 @@ export function Logo(props) {
           x2="21"
           y2="77.1838"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00E6CA" />
-          <stop offset="1" stop-color="#00C4B8" />
+          <stop stopColor="#00E6CA" />
+          <stop offset="1" stopColor="#00C4B8" />
         </linearGradient>
         <linearGradient
           id="paint2_linear_2810_6010"
@@ -154,8 +154,8 @@ export function Logo(props) {
           x2="21"
           y2="47.863"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00E6CA" />
-          <stop offset="1" stop-color="#00C4B8" />
+          <stop stopColor="#00E6CA" />
+          <stop offset="1" stopColor="#00C4B8" />
         </linearGradient>
         <linearGradient
           id="paint3_linear_2810_6010"
@@ -164,8 +164,8 @@ export function Logo(props) {
           x2="20.9978"
           y2="105.964"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00FFE1" />
-          <stop offset="1" stop-color="#01E0C6" />
+          <stop stopColor="#00FFE1" />
+          <stop offset="1" stopColor="#01E0C6" />
         </linearGradient>
         <linearGradient
           id="paint4_linear_2810_6010"
@@ -174,8 +174,8 @@ export function Logo(props) {
           x2="21"
           y2="77.1838"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00FFE1" />
-          <stop offset="1" stop-color="#01E0C6" />
+          <stop stopColor="#00FFE1" />
+          <stop offset="1" stopColor="#01E0C6" />
         </linearGradient>
         <linearGradient
           id="paint5_linear_2810_6010"
@@ -184,8 +184,8 @@ export function Logo(props) {
           x2="21"
           y2="47.863"
           gradientUnits="userSpaceOnUse">
-          <stop stop-color="#00FFE1" />
-          <stop offset="1" stop-color="#01E0C6" />
+          <stop stopColor="#00FFE1" />
+          <stop offset="1" stopColor="#01E0C6" />
         </linearGradient>
       </defs>
     </svg>

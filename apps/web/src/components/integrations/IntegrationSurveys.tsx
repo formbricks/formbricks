@@ -23,12 +23,15 @@ export const DataInSurvey = () => {
   return (
     <FormbricksEngine
       formbricksUrl={
-        process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "https://app.formbricks.com"
+        process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
       }
       formId={
-        process.env.NODE_ENV === "production" ? "cldudpq050000po0h2mdz0t6d" : "cldudpq050000po0h2mdz0t6d"
+        process.env.NODE_ENV === "production" ? "cldudpq050000po0h2mdz0t6d" : "cldvkpx11000019a0aoucngcb"
       }
       customer={{ email: session.user.email }}
+      onFinished={({ submission }) => {
+        console.log(submission);
+      }}
       schema={{
         config: {
           progressBar: false,
@@ -45,7 +48,7 @@ export const DataInSurvey = () => {
                 type: "radio",
                 name: "dataIn",
                 options: [
-                  { label: "Segment", value: "segment", frontend: { icon: SegmentLogoImage } },
+                  { label: "Segment", value: "segmentIn", frontend: { icon: SegmentLogoImage } },
                   {
                     label: "Mixpanel",
                     value: "mixpanel",
@@ -84,10 +87,10 @@ export const DataOutSurvey = () => {
   return (
     <FormbricksEngine
       formbricksUrl={
-        process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "https://app.formbricks.com"
+        process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
       }
       formId={
-        process.env.NODE_ENV === "production" ? "cldudpq050000po0h2mdz0t6d" : "cldudpq050000po0h2mdz0t6d"
+        process.env.NODE_ENV === "production" ? "cldudpq050000po0h2mdz0t6d" : "cldvku70u000319a0xokj8cku"
       }
       customer={{ email: session.user.email }}
       schema={{
@@ -106,7 +109,7 @@ export const DataOutSurvey = () => {
                 type: "checkbox",
                 name: "dataIn",
                 options: [
-                  { label: "Segment", value: "segment", frontend: { icon: SegmentLogoImage } },
+                  { label: "Segment", value: "segmentOut", frontend: { icon: SegmentLogoImage } },
                   {
                     label: "Hubspot",
                     value: "hubspot",
