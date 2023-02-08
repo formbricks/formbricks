@@ -6,7 +6,7 @@ const output = [
     finished: true,
     archived: false,
     formId: "demo-pmf",
-    customerEmail: "user1@example.com",
+    customerEmail: "user@example.com",
     customerOrganisationId: "demo-organisation",
     data: {
       improvement: "Please improve this!",
