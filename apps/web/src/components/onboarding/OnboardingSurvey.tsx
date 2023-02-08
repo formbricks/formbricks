@@ -1,39 +1,45 @@
-import IconRadio from "./IconRadio";
+import { capturePosthogEvent } from "@/lib/posthog";
 import { FormbricksEngine } from "@formbricks/engine-react";
-import ForwardToApp from "./ForwardToApp";
 import { useSession } from "next-auth/react";
 import LoadingSpinner from "../LoadingSpinner";
-import { useRouter } from "next/router";
+import ForwardToApp from "./ForwardToApp";
+import IconRadio from "./IconRadio";
 
 const OnboardingSurvey = () => {
   const { data: session, status } = useSession();
-  const router = useRouter();
 
   if (status === "loading") return <LoadingSpinner />;
 
+  const formbricksUrl =
+    process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000";
+  const formId =
+    process.env.NODE_ENV === "production" ? "cldu60z5d0000mm0hq7k0ducf" : "cldufl8uh000019mzr7fdotyu";
+
   return (
     <FormbricksEngine
-      formbricksUrl={
-        process.env.NODE_ENV === "production" ? "https://app.formbricks.com" : "http://localhost:3000"
-      }
-      formId={
-        process.env.NODE_ENV === "production" ? "cldu60z5d0000mm0hq7k0ducf" : "cldu2c8810006yz2w3o5ubfrh"
-      }
-      customer={{
-        email: session.user.email,
-        name: session.user.name,
-      }}
-      onFinished={async () => {
+      offline={true}
+      onFinished={async ({ submission }) => {
+        // send submission to formbricks
+        const res = await fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customer: { email: session.user.email, name: session.user.name },
+            data: submission,
+          }),
+        });
+        if (!res.ok) {
+          // send event to posthog
+          capturePosthogEvent("system", "onboarding form error occured", { error: await res.text() });
+        }
         // update user in database
         await fetch("/api/users/me", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ finishedOnboarding: true }),
         });
-        // refetch session
-        await fetch("/api/auth/session");
         // redirect to app
-        setTimeout(() => router.push("/"), 1000);
+        window.location.replace("/");
       }}
       schema={{
         config: {

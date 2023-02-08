@@ -6,14 +6,15 @@ interface FormProps {
   page: FormPage;
   onSkip: () => void;
   onPageSubmit: (submission: any) => void;
-  onFinished: ({ submission }: any) => void;
+  onFinished: ({ submission, schema }: any) => void;
   submission: any;
   setSubmission: (v: any) => void;
   finished: boolean;
-  formbricksUrl: string;
-  formId: string;
+  formbricksUrl?: string;
+  formId?: string;
   schema: any;
   customer: any;
+  offline?: boolean;
 }
 
 export function EnginePage({
@@ -27,6 +28,7 @@ export function EnginePage({
   formId,
   schema,
   customer,
+  offline,
 }: FormProps) {
   const [submissionId, setSubmissionId] = useState<string>();
   const {
@@ -45,16 +47,33 @@ export function EnginePage({
 
   useEffect(() => {
     if (page.endScreen) {
-      fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions/${submissionId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ finished: true }),
-      });
-      onFinished({ submission });
+      if (!offline) {
+        if (!formbricksUrl) {
+          throw new Error("Formbricks URL not provided");
+        }
+        if (!formId) {
+          throw new Error("Form ID not provided");
+        }
+        fetch(`${formbricksUrl}/api/capture/forms/${formId}/submissions/${submissionId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ finished: true }),
+        });
+      }
+      onFinished({ submission, schema });
     }
   }, [page, formId, formbricksUrl, submissionId]);
 
   const sendToFormbricks = async (partialSubmission: any) => {
+    if (offline) {
+      return;
+    }
+    if (!formbricksUrl) {
+      throw new Error("Formbricks URL not provided");
+    }
+    if (!formId) {
+      throw new Error("Form ID not provided");
+    }
     const submissionBody: any = { data: partialSubmission, customer };
     if (page.config?.addFieldsToCustomer && Array.isArray(page.config?.addFieldsToCustomer)) {
       for (const field of page.config?.addFieldsToCustomer) {

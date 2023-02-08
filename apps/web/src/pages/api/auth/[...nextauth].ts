@@ -7,6 +7,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import { verifyPassword } from "../../../lib/auth";
 import { verifyToken } from "../../../lib/jwt";
+import { type } from "os";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -149,7 +150,7 @@ export const authOptions: NextAuthOptions = {
       // @ts-ignore
       session.user.id = token.id;
       session.user.name = token.name;
-      if (typeof token.finishedOnboarding === "boolean") {
+      if (typeof token.finishedOnboarding == "boolean") {
         session.user.finishedOnboarding = token.finishedOnboarding;
       }
 
