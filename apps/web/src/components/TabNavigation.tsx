@@ -12,6 +12,7 @@ export default function TabNavigation({ tabs, currentTab, setCurrentTab }) {
           id="tabs"
           name="tabs"
           className="block w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+          onChange={(e) => setCurrentTab(e.target.value)}
           defaultValue={currentTab}>
           {tabs.map((tab) => (
             <option key={tab.name}>{tab.name}</option>
