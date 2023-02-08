@@ -7,7 +7,6 @@ import { convertDateTimeString, onlyUnique, parseUserAgent } from "@/lib/utils";
 import { BackIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { useMemo } from "react";
 import EmptyPageFiller from "../EmptyPageFiller";
