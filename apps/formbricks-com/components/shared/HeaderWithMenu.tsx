@@ -17,7 +17,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment } from "react";
-import Button from "./Button";
+import { Button } from "@formbricks/ui";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
 

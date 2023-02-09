@@ -68,7 +68,7 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
         variant === "highlight" &&
           (disabled
             ? "border border-transparent bg-gray-400 text-white"
-            : "text-slate-900 bg-gradient-to-b from-brand-light to-brand-dark hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 transition ease-in-out delay-50 hover:scale-105"),
+            : "text-white bg-gradient-to-b from-brand-light to-brand-dark hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 transition ease-in-out delay-50 hover:scale-105"),
         variant === "primary" &&
           (disabled
             ? "border border-transparent bg-gray-400 text-white"

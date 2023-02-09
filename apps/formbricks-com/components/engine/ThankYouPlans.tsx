@@ -1,4 +1,4 @@
-import Button from "../shared/Button";
+import { Button } from "@formbricks/ui";
 import { SurveyElement } from "./engineTypes";
 import { useRouter } from "next/router";
 

@@ -26,20 +26,27 @@ export default function Header() {
         </div>
         <Popover.Group as="nav" className="hidden space-x-10 md:flex">
           <Link
-            href="/community"
+            href="#howitworks"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Community
+            How it works
           </Link>
           <Link
-            href="/blog"
+            href="#pricing"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Blog <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
+            Pricing <p className="bg-brand inline rounded-full px-2 text-xs text-white">50%</p>
           </Link>
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
-          <Button variant="highlight" className="ml-2" onClick={() => router.push("/waitlist")}>
-            Get Access
+          <Button variant="secondary" className="ml-2" href="https://app.formbricks.com/demo" target="_blank">
+            Try Demo
+          </Button>
+          <Button
+            variant="highlight"
+            className="ml-2"
+            href="https://app.formbricks.com/auth/signup"
+            target="_blank">
+            Sign Up
           </Button>
         </div>
       </div>
@@ -71,20 +78,21 @@ export default function Header() {
             </div>
             <div className="px-5 py-6">
               <div className="flex flex-col space-y-5 text-center text-sm dark:text-slate-300">
-                <Link href="/community">Community</Link>
-                <Link href="/blog">Blog</Link>
+                <Link href="#howitworks">How it works</Link>
+                <Link href="#pricing">Pricing</Link>
                 <Button
                   variant="secondary"
-                  EndIcon={GitHubIcon}
-                  onClick={() => router.push("https://github.com/formbricks/formbricks")}
+                  target="_blank"
+                  onClick={() => router.push("https://app.formbricks.com/demo")}
                   className="flex w-full justify-center fill-slate-800 dark:fill-slate-200">
-                  View on Github
+                  Try Demo
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={() => router.push("/waitlist")}
+                  target="_blank"
+                  onClick={() => router.push("https://app.formbricks.com/auth/signup")}
                   className="flex w-full justify-center">
-                  Get access
+                  Sign Up
                 </Button>
               </div>
             </div>

@@ -25,6 +25,7 @@ const BestPractices = [
     description: "Find out how disappointed people would be if they could not use your service any more.",
     category: "In-Moment",
     icon: PMFIcon,
+    href: "/pmf",
   },
   {
     title: "Feature Chaser",

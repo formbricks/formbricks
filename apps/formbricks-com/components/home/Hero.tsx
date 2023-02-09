@@ -1,4 +1,4 @@
-import Button from "../shared/Button";
+import { Button } from "@formbricks/ui";
 import HeroAnimation from "../shared/HeroAnimation";
 import { useRouter } from "next/router";
 
@@ -29,7 +29,7 @@ export default function Hero({}: Props) {
           <Button variant="secondary" onClick={() => router.push("#best-practices")}>
             Best practices
           </Button>
-          <Button variant="primary" className="ml-3" onClick={() => router.push("/waitlist")}>
+          <Button variant="highlight" className="ml-3" onClick={() => router.push("/waitlist")}>
             Get Access
           </Button>
         </div>

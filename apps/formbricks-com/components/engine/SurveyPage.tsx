@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { usePlausible } from "next-plausible";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import Button from "../shared/Button";
+import { Button } from "@formbricks/ui";
 import { SurveyPage } from "./engineTypes";
 
 interface SurveyProps {
