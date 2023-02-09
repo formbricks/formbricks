@@ -1,7 +1,6 @@
-import FeedbackButton from "./FeedbackButton";
+import { FeedbackButton } from "@/components/shared/FeedbackButton";
 import Footer from "./Footer";
 import Header from "./Header";
-import Layout from "./Layout";
 import MetaInformation from "./MetaInformation";
 import { Prose } from "./Prose";
 

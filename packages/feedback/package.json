@@ -9,8 +9,10 @@
   "type": "module",
   "license": "Apache-2.0",
   "exports": {
-    ".": "./dist"
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.modern.js"
   },
+  "module": "./dist/index.module.js",
   "scripts": {
     "build": "node ./html-to-ts && microbundle --define process.env.NODE_ENV=production",
     "dev": "node ./html-to-ts && microbundle watch --define process.env.NODE_ENV=production",

@@ -13,9 +13,10 @@ const feedbackEnabled = !!(
 );
 
 export function FeedbackButton() {
+  const [initialized, setInitialized] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const feedbackRef = useRef<HTMLInputElement>(null);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (feedbackEnabled) {
@@ -36,7 +37,7 @@ export function FeedbackButton() {
   }, [feedbackRef, isOpen]);
 
   useEffect(() => {
-    if (session && feedbackEnabled) {
+    if (status !== "loading" && feedbackEnabled && !initialized) {
       window.formbricks = {
         ...window.formbricks,
         config: {
@@ -48,12 +49,13 @@ export function FeedbackButton() {
             position: "Co-Founder",
             imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
           },
-          customer: session.user,
+          customer: session?.user,
         },
       };
-      require("@formbricks/feedback");
+      import("@formbricks/feedback");
+      setInitialized(true);
     }
-  }, [session]);
+  }, [status, session, initialized]);
 
   if (!feedbackEnabled) return null;
 
@@ -61,7 +63,7 @@ export function FeedbackButton() {
     <>
       <div
         className={clsx(
-          "xs:flex-row xs:right-0 xs:top-1/2 xs:w-[18rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-fit w-full transition-all duration-500 ease-in-out",
+          "xs:flex-row xs:right-0 xs:top-1/2 xs:w-[18rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-[22rem] w-full transition-all duration-500 ease-in-out",
           isOpen ? "xs:-translate-x-0 translate-y-0" : "xs:translate-x-full xs:-mr-1 translate-y-full"
         )}>
         <div
@@ -84,7 +86,7 @@ export function FeedbackButton() {
             {isOpen ? "Close" : "Feedback"}
           </button>
           <div
-            className="xs:rounded-bl-lg xs:rounded-tr-none h-full w-full  overflow-hidden rounded-bl-none rounded-tr-lg rounded-tl-lg  bg-slate-50 shadow-lg"
+            className="xs:rounded-bl-lg xs:rounded-tr-none h-full h-full w-full overflow-hidden rounded-bl-none rounded-tr-lg rounded-tl-lg  bg-slate-50 shadow-lg"
             id="formbricks-feedback-wrapper"></div>
         </div>
       </div>
