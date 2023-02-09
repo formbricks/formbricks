@@ -37,9 +37,6 @@ function init() {
   document.querySelectorAll("[data-formbricks-button]").forEach((el) => {
     el.addEventListener("click", open);
   });
-  if (config.divId) {
-    render();
-  }
 }
 window.addEventListener("load", init);
 
@@ -179,6 +176,10 @@ function close() {
   }
   trap.deactivate();
 
+  clean();
+}
+
+function clean() {
   containerElement.innerHTML = "";
 
   containerElement.remove();
@@ -293,7 +294,7 @@ function submit(e: Event) {
   return false;
 }
 
-const formbricks = { init, open, changeType, close, render, submit, resetForm, config };
+const formbricks = { init, open, changeType, close, clean, render, submit, resetForm, config };
 (window as any).formbricks = formbricks;
 
 export default formbricks;

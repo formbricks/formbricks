@@ -17,7 +17,12 @@ export function FeedbackButton() {
     // Close the feedback form if the user clicks outside of it
     function handleClickOutside(event: any) {
       if (feedbackRef.current && !feedbackRef.current.contains(event.target)) {
-        if (isOpen) setIsOpen(false);
+        if (isOpen) {
+          setIsOpen(false);
+          if (window) {
+            window.formbricks.clean();
+          }
+        }
       }
     }
     // Bind the event listener
@@ -67,6 +72,10 @@ export function FeedbackButton() {
                 if (window) {
                   window.formbricks.render();
                   window.formbricks.resetForm();
+                }
+              } else {
+                if (window) {
+                  window.formbricks.clean();
                 }
               }
               setIsOpen(!isOpen);

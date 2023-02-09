@@ -28,7 +28,12 @@ export function FeedbackButton() {
     // Close the feedback form if the user clicks outside of it
     function handleClickOutside(event: any) {
       if (feedbackRef.current && !feedbackRef.current.contains(event.target)) {
-        if (isOpen) setIsOpen(false);
+        if (isOpen) {
+          setIsOpen(false);
+          if (window) {
+            window.formbricks.clean();
+          }
+        }
       }
     }
   }, [feedbackRef, isOpen]);
@@ -74,13 +79,17 @@ export function FeedbackButton() {
                   window.formbricks.render();
                   window.formbricks.resetForm();
                 }
+              } else {
+                if (window) {
+                  window.formbricks.clean();
+                }
               }
               setIsOpen(!isOpen);
             }}>
             {isOpen ? "Close" : "Feedback"}
           </button>
           <div
-            className="xs:rounded-bl-lg xs:rounded-tr-none h-full h-full w-full overflow-hidden rounded-bl-none rounded-tr-lg rounded-tl-lg  bg-slate-50 shadow-lg"
+            className="xs:rounded-bl-lg xs:rounded-tr-none h-full w-full overflow-hidden rounded-bl-none rounded-tr-lg rounded-tl-lg  bg-slate-50 shadow-lg"
             id="formbricks-feedback-wrapper"></div>
         </div>
       </div>
