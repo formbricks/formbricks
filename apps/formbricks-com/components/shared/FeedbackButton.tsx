@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-export default function FeedbackButton() {
+export function FeedbackButton() {
   const plausible = usePlausible();
   const [isOpen, setIsOpen] = useState(false);
   const feedbackRef = useRef<HTMLInputElement>(null);
@@ -29,27 +29,29 @@ export default function FeedbackButton() {
     };
   }, [feedbackRef, isOpen]);
 
+  useEffect(() => {
+    window.formbricks = {
+      ...window.formbricks,
+      config: {
+        hqUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
+        formId: process.env.NEXT_PUBLIC_FORMBRICKS_FORM_ID,
+        divId: "formbricks-feedback-wrapper",
+        contact: {
+          name: "Matti",
+          position: "Co-Founder",
+          imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+        },
+      },
+    };
+    // @ts-ignore
+    import("@formbricks/feedback");
+  }, []);
+
   return (
     <>
-      <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2.1/dist/index.umd.js" defer />
-
-      <Script id="feedback-setup">{`
-      window.formbricks = {
-        ...window.formbricks,
-        config: {
-          hqUrl: "https://app.formbricks.com",
-          formId: "cldipnvz80002le0ha2a3zhgl",
-          divId: "formbricks-feedback-wrapper",
-          contact: {
-            name: "Matti",
-            position: "Co-Founder",
-            imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
-          },
-        },
-    };`}</Script>
       <div
         className={clsx(
-          "xs:flex-row xs:right-0 xs:top-1/2 xs:w-[18rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-fit w-full transition-all duration-500 ease-in-out",
+          "xs:flex-row xs:right-0 xs:top-1/2 xs:w-[18rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-[22rem] w-full flex-1 transition-all duration-500 ease-in-out",
           isOpen ? "xs:-translate-x-0 translate-y-0" : "xs:translate-x-full xs:-mr-1 translate-y-full"
         )}>
         <div
@@ -73,7 +75,7 @@ export default function FeedbackButton() {
             {isOpen ? "Close" : "Feedback"}
           </button>
           <div
-            className="xs:rounded-bl-lg xs:rounded-tr-none h-full w-full  overflow-hidden rounded-bl-none rounded-tr-lg rounded-tl-lg  bg-slate-50 shadow-lg"
+            className="xs:rounded-bl-lg xs:rounded-tr-none h-full w-full overflow-hidden rounded-bl-none rounded-tr-lg rounded-tl-lg bg-slate-50 shadow-lg"
             id="formbricks-feedback-wrapper"></div>
         </div>
       </div>

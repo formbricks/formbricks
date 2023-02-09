@@ -25,7 +25,7 @@ export default function Feedback() {
         },
       },
     };
-    require("@formbricks/feedback");
+    import("@formbricks/feedback");
   }, []);
   return <AppPage onClickFeedback={(event) => window.formbricks.open(event)} />;
 }
