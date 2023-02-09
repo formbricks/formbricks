@@ -38,16 +38,13 @@ export default function GetStartedPage() {
         </p>
 
         <div className="mx-auto mt-5 max-w-md sm:flex sm:justify-center md:mt-8">
-          <Button
-            variant="secondary"
-            onClick={() => router.push("https://app.formbricks.com/demo")}
-            target="_blank">
+          <Button variant="secondary" href="https://app.formbricks.com/demo" target="_blank">
             Try it out
           </Button>
           <Button
             variant="highlight"
             className="ml-3"
-            onClick={() => router.push("https://app.formbricks.com/auth/signup")}
+            href="https://app.formbricks.com/auth/signup"
             target="_blank">
             Sign Up
           </Button>
