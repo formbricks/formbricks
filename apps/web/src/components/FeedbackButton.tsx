@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
 declare global {
@@ -15,7 +14,6 @@ const feedbackEnabled = !!(
 export function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
   const feedbackRef = useRef<HTMLInputElement>(null);
-  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (feedbackEnabled) {
@@ -36,27 +34,22 @@ export function FeedbackButton() {
   }, [feedbackRef, isOpen]);
 
   useEffect(() => {
+    window.formbricks = {
+      ...window.formbricks,
+      config: {
+        hqUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
+        formId: process.env.NEXT_PUBLIC_FORMBRICKS_FORM_ID,
+        divId: "formbricks-feedback-wrapper",
+        contact: {
+          name: "Matti",
+          position: "Co-Founder",
+          imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+        },
+      },
+    };
+    // @ts-ignore
     import("@formbricks/feedback");
   }, []);
-
-  useEffect(() => {
-    if (status !== "loading" && feedbackEnabled) {
-      window.formbricks = {
-        ...window.formbricks,
-        config: {
-          hqUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
-          formId: process.env.NEXT_PUBLIC_FORMBRICKS_FORM_ID,
-          divId: "formbricks-feedback-wrapper",
-          contact: {
-            name: "Matti",
-            position: "Co-Founder",
-            imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
-          },
-          customer: session?.user,
-        },
-      };
-    }
-  }, [status, session]);
 
   if (!feedbackEnabled) return null;
 

@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import { usePlausible } from "next-plausible";
-import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 
 declare global {
