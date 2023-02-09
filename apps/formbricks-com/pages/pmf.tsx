@@ -18,8 +18,8 @@ export default function GetStartedPage() {
   const router = useRouter();
   return (
     <LayoutPMF
-      title="Continuous Product-Market Fit Score"
-      description="Measure the Product-Market Fit continuously. Use the Superhuman Product-Market-Fit to your advantage.">
+      title="Measure Product-Market Fit continuously"
+      description="Gather actionable user insights with highly specific in-app surveys. Always know how your users perceive your product. Find PMF faster.">
       <div className="px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
         <h1 className="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
           <span className="xl:inline">Measure</span>{" "}

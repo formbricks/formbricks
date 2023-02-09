@@ -148,7 +148,7 @@ const WaitlistPage = () => {
                           },
                         },
                         {
-                          label: "Superhuman PMF Engine",
+                          label: "Product-Market Fit Survey",
                           value: "pmf",
                           frontend: {
                             icon: PMFIcon,
