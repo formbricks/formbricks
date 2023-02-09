@@ -28,10 +28,35 @@ const nextConfig = {
         source: "/privacy",
         destination: "/privacy-policy",
         permanent: false,
-      }, 
+      },
       {
         source: "/form-hq",
         destination: "/formbricks-hq",
+        permanent: false,
+      },
+      {
+        source: "/docs/formbricks-hq/self-hosting",
+        destination: "/docs",
+        permanent: false,
+      },
+      {
+        source: "/docs/react-form-library/getting-started",
+        destination: "/docs",
+        permanent: false,
+      },
+      {
+        source: "/docs/react-form-library/work-with-components",
+        destination: "/docs",
+        permanent: false,
+      },
+      {
+        source: "/docs/react-form-library/introduction",
+        destination: "/docs",
+        permanent: false,
+      },
+      {
+        source: "/docs/formbricks-hq/schema",
+        destination: "/docs",
         permanent: false,
       },
     ];
