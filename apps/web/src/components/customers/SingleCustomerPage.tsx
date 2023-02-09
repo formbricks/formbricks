@@ -38,45 +38,45 @@ export default function SingleCustomerPage() {
   return (
     <div>
       <main className="mx-auto px-4 sm:px-6 lg:px-8">
-        <button className="inline-flex pt-5 text-sm text-gray-500" onClick={() => router.back()}>
+        <button className="inline-flex pt-5 text-sm text-slate-500" onClick={() => router.back()}>
           <BackIcon className="mr-2 h-5 w-5" />
           Back
         </button>
-        <div className="flex items-baseline justify-between border-b border-gray-200 pt-4 pb-6">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">{customer.email}</h1>
+        <div className="flex items-baseline justify-between border-b border-slate-200 pt-4 pb-6">
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900">{customer.email}</h1>
         </div>
 
         <section className="pt-6 pb-24">
           <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
             <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-700">Properties</h2>
+              <h2 className="text-lg font-bold text-slate-700">Properties</h2>
               {"name" in customer.data && (
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Name</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{customer.data.name}</dd>
+                  <dt className="text-sm font-medium text-slate-500">Name</dt>
+                  <dd className="mt-1 text-sm text-slate-900">{customer.data.name}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-sm font-medium text-gray-500">Email</dt>
-                <dd className="mt-1 text-sm text-gray-900">{customer.email}</dd>
+                <dt className="text-sm font-medium text-slate-500">Email</dt>
+                <dd className="mt-1 text-sm text-slate-900">{customer.email}</dd>
               </div>
               {Object.entries(customer.data).map(
                 ([key, value]) =>
                   !["name", "email"].includes(key) && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">{key}</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{value.toString()}</dd>
+                      <dt className="text-sm font-medium text-slate-500">{key}</dt>
+                      <dd className="mt-1 text-sm text-slate-900">{value.toString()}</dd>
                     </div>
                   )
               )}
-              <hr className="text-gray-600" />
+              <hr className="text-slate-600" />
               <div>
-                <dt className="text-sm font-medium text-gray-500">Number of forms participated</dt>
-                <dd className="mt-1 text-sm text-gray-900">{formsParticipated}</dd>
+                <dt className="text-sm font-medium text-slate-500">Number of forms participated</dt>
+                <dd className="mt-1 text-sm text-slate-900">{formsParticipated}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-gray-500">Number of form submissions</dt>
-                <dd className="mt-1 text-sm text-gray-900">{customer.submissions.length}</dd>
+                <dt className="text-sm font-medium text-slate-500">Number of form submissions</dt>
+                <dd className="mt-1 text-sm text-slate-900">{customer.submissions.length}</dd>
               </div>
             </div>
 
@@ -96,7 +96,7 @@ export default function SingleCustomerPage() {
                       <div className="relative pb-8">
                         {submissionIdx !== customer.submissions.length - 1 ? (
                           <span
-                            className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                            className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200"
                             aria-hidden="true"
                           />
                         ) : null}
@@ -106,23 +106,23 @@ export default function SingleCustomerPage() {
                               <div className="flex w-full justify-between">
                                 <div></div>
 
-                                <div className="text-sm text-gray-400">
+                                <div className="text-sm text-slate-400">
                                   <time dateTime={convertDateTimeString(submission.createdAt)}>
                                     {convertDateTimeString(submission.createdAt)}
                                   </time>
                                 </div>
                               </div>
                               <div className="mt-3">
-                                <p className="whitespace-pre-wrap text-sm text-gray-500">
+                                <p className="whitespace-pre-wrap text-sm text-slate-500">
                                   {Object.entries(
                                     MergeWithSchema(submission.data, submission.form.schema)
                                   ).map(([key, value]) => (
                                     <li key={key} className="py-5">
-                                      <p className="text-sm font-semibold text-gray-800">{key}</p>
+                                      <p className="text-sm font-semibold text-slate-800">{key}</p>
                                       <p
                                         className={clsx(
-                                          value ? "text-gray-600" : "text-gray-400",
-                                          "whitespace-pre-line pt-1 text-sm text-gray-600"
+                                          value ? "text-slate-600" : "text-slate-400",
+                                          "whitespace-pre-line pt-1 text-sm text-slate-600"
                                         )}>
                                         {value.toString()}
                                       </p>
@@ -131,11 +131,11 @@ export default function SingleCustomerPage() {
                                 </p>
                               </div>
                             </div>
-                            <div className=" bg-gray-50 p-4 sm:p-6">
+                            <div className=" bg-slate-50 p-4 sm:p-6">
                               <div className="flex w-full justify-between gap-4">
                                 <div>
-                                  <p className="text-sm font-thin text-gray-500">Device</p>
-                                  <p className="text-sm text-gray-500">
+                                  <p className="text-sm font-thin text-slate-500">Device</p>
+                                  <p className="text-sm text-slate-500">
                                     {parseUserAgent(submission.meta.userAgent)}
                                   </p>
                                 </div>

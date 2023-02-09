@@ -5,8 +5,8 @@ export default function UpgradeModal({ open, setOpen, organisationId }) {
   return (
     <Modal open={open} setOpen={setOpen}>
       <div className="my-6 sm:flex-auto">
-        <h1 className="text-xl font-semibold text-gray-900">Upgrade to benefit from all features</h1>
-        <p className="mt-2 text-sm text-gray-700">
+        <h1 className="text-xl font-semibold text-slate-900">Upgrade to benefit from all features</h1>
+        <p className="mt-2 text-sm text-slate-700">
           You do not currently have an active subscription. Upgrade to get access to all features and improve
           your user research.
         </p>

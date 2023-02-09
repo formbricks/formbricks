@@ -124,7 +124,7 @@ export default function Demo() {
               </a>
             </div>
             <div className="-my-2 -mr-2 md:hidden">
-              <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+              <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
                 <span className="sr-only">Open menu</span>
                 <Bars3Icon className="h-6 w-6" aria-hidden="true" />
               </Popover.Button>
@@ -142,7 +142,7 @@ export default function Demo() {
             <Popover.Panel
               focus
               className="absolute inset-x-0 top-0 z-30 origin-top-right transform p-2 transition md:hidden">
-              <div className="divide-y-2 divide-gray-50 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+              <div className="divide-y-2 divide-slate-50 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5">
                 <div className="px-5 pt-5 pb-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -153,7 +153,7 @@ export default function Demo() {
                       />
                     </div>
                     <div className="-mr-2">
-                      <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                      <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
                         <span className="sr-only">Close menu</span>
                         <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                       </Popover.Button>
@@ -169,7 +169,7 @@ export default function Demo() {
       <main>
         {/* Hero section */}
         <div className="relative">
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gray-100" />
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-slate-100" />
           <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
             <div className="relative shadow-xl sm:overflow-hidden sm:rounded-2xl">
               <div className="absolute inset-0">
@@ -196,7 +196,7 @@ export default function Demo() {
         {/* Alternating Feature Sections */}
 
         <div className="relative overflow-hidden pl-12 pb-16">
-          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-gray-100" />
+          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-100" />
           <div className="relative">
             <hr className="my-24 px-10" />
             <div className="lg:mx-auto lg:max-w-7xl">
@@ -208,8 +208,8 @@ export default function Demo() {
                     </span>
                   </div>
                   <div className="mt-6">
-                    <h2 className="text-3xl font-bold tracking-tight text-gray-900">The door is open</h2>
-                    <p className="mt-4 text-lg text-gray-500">
+                    <h2 className="text-3xl font-bold tracking-tight text-slate-900">The door is open</h2>
+                    <p className="mt-4 text-lg text-slate-500">
                       Now it&lsquo;s up to you to continue! And we are here to support you.
                       <br />
                       <br />
@@ -219,7 +219,7 @@ export default function Demo() {
                   </div>
                 </div>
                 {/* Feedback Form */}
-                <div className="mt-8 border-l border-gray-200 pl-10">
+                <div className="mt-8 border-l border-slate-200 pl-10">
                   {!answered ? (
                     /* Formbricks Form using React Library */
                     <Form
@@ -229,8 +229,8 @@ export default function Demo() {
                       <Radio
                         name="evaluate"
                         label="Evaluate the online course you just completed"
-                        legendClassName="mb-3 font-bold text-gray-800 text-xl"
-                        labelClassName="font-regular text-gray-500 text-lg"
+                        legendClassName="mb-3 font-bold text-slate-800 text-xl"
+                        labelClassName="font-regular text-slate-500 text-lg"
                         options={[
                           "Perfect",
                           "Very satisfactory",
@@ -243,7 +243,7 @@ export default function Demo() {
                         name="feedback"
                         label="Would you like to send us a comment, an opinion, a correction?"
                         help="Only you and us can see your answer."
-                        labelClassName="font-bold text-gray-800 text-xl"
+                        labelClassName="font-bold text-slate-800 text-xl"
                         innerClassName="mt-3"
                         cols={50}
                         rows={4}
@@ -255,10 +255,10 @@ export default function Demo() {
                     </Form>
                   ) : (
                     <>
-                      <h2 className="mx-auto mb-3 text-lg font-bold text-gray-800">
+                      <h2 className="mx-auto mb-3 text-lg font-bold text-slate-800">
                         Thanks a lot for your feedback
                       </h2>
-                      <p className="mb-5 text-lg text-gray-500">
+                      <p className="mb-5 text-lg text-slate-500">
                         Here you can see what other people answered.
                       </p>
                       {/* Visualize Submission using Formbricks Graphs Library */}
@@ -272,9 +272,9 @@ export default function Demo() {
         </div>
 
         {/* CTA Section */}
-        <div className="bg-gray-50">
+        <div className="bg-slate-50">
           <div className="mx-auto max-w-4xl py-16 px-4 sm:px-6 sm:py-24 lg:flex lg:max-w-7xl lg:items-center lg:justify-between lg:px-8">
-            <h2 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            <h2 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-4xl">
               <span className="block">Ready to get started?</span>
               <span className="-mb-1 block bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text pb-1 text-transparent">
                 Get in touch or create an account.
@@ -296,7 +296,7 @@ export default function Demo() {
         </div>
       </main>
 
-      <footer className="bg-gray-50" aria-labelledby="footer-heading">
+      <footer className="bg-slate-50" aria-labelledby="footer-heading">
         <h2 id="footer-heading" className="sr-only">
           Footer
         </h2>
@@ -305,11 +305,11 @@ export default function Demo() {
             <div className="grid grid-cols-2 gap-8 xl:col-span-2">
               <div className="md:grid md:grid-cols-2 md:gap-8">
                 <div>
-                  <h3 className="text-base font-medium text-gray-900">Solutions</h3>
+                  <h3 className="text-base font-medium text-slate-900">Solutions</h3>
                   <ul role="list" className="mt-4 space-y-4">
                     {footerNavigation.solutions.map((item) => (
                       <li key={item.name}>
-                        <a href={item.href} className="text-base text-gray-500 hover:text-gray-900">
+                        <a href={item.href} className="text-base text-slate-500 hover:text-slate-900">
                           {item.name}
                         </a>
                       </li>
@@ -317,11 +317,11 @@ export default function Demo() {
                   </ul>
                 </div>
                 <div className="mt-12 md:mt-0">
-                  <h3 className="text-base font-medium text-gray-900">Support</h3>
+                  <h3 className="text-base font-medium text-slate-900">Support</h3>
                   <ul role="list" className="mt-4 space-y-4">
                     {footerNavigation.support.map((item) => (
                       <li key={item.name}>
-                        <a href={item.href} className="text-base text-gray-500 hover:text-gray-900">
+                        <a href={item.href} className="text-base text-slate-500 hover:text-slate-900">
                           {item.name}
                         </a>
                       </li>
@@ -331,11 +331,11 @@ export default function Demo() {
               </div>
               <div className="md:grid md:grid-cols-2 md:gap-8">
                 <div>
-                  <h3 className="text-base font-medium text-gray-900">Company</h3>
+                  <h3 className="text-base font-medium text-slate-900">Company</h3>
                   <ul role="list" className="mt-4 space-y-4">
                     {footerNavigation.company.map((item) => (
                       <li key={item.name}>
-                        <a href={item.href} className="text-base text-gray-500 hover:text-gray-900">
+                        <a href={item.href} className="text-base text-slate-500 hover:text-slate-900">
                           {item.name}
                         </a>
                       </li>
@@ -343,11 +343,11 @@ export default function Demo() {
                   </ul>
                 </div>
                 <div className="mt-12 md:mt-0">
-                  <h3 className="text-base font-medium text-gray-900">Legal</h3>
+                  <h3 className="text-base font-medium text-slate-900">Legal</h3>
                   <ul role="list" className="mt-4 space-y-4">
                     {footerNavigation.legal.map((item) => (
                       <li key={item.name}>
-                        <a href={item.href} className="text-base text-gray-500 hover:text-gray-900">
+                        <a href={item.href} className="text-base text-slate-500 hover:text-slate-900">
                           {item.name}
                         </a>
                       </li>
@@ -357,22 +357,22 @@ export default function Demo() {
               </div>
             </div>
             <div className="mt-12 xl:mt-0">
-              <h3 className="text-base font-medium text-gray-900">Subscribe to our newsletter</h3>
-              <p className="mt-4 text-base text-gray-500">
+              <h3 className="text-base font-medium text-slate-900">Subscribe to our newsletter</h3>
+              <p className="mt-4 text-base text-slate-500">
                 The latest news, articles, and resources, sent to your inbox weekly.
               </p>
             </div>
           </div>
-          <div className="mt-12 border-t border-gray-200 pt-8 md:flex md:items-center md:justify-between lg:mt-16">
+          <div className="mt-12 border-t border-slate-200 pt-8 md:flex md:items-center md:justify-between lg:mt-16">
             <div className="flex space-x-6 md:order-2">
               {footerNavigation.social.map((item) => (
-                <a key={item.name} href={item.href} className="text-gray-400 hover:text-gray-500">
+                <a key={item.name} href={item.href} className="text-slate-400 hover:text-slate-500">
                   <span className="sr-only">{item.name}</span>
                   <item.icon className="h-6 w-6" aria-hidden="true" />
                 </a>
               ))}
             </div>
-            <p className="mt-8 text-base text-gray-400 md:order-1 md:mt-0">
+            <p className="mt-8 text-base text-slate-400 md:order-1 md:mt-0">
               &copy; 2020 Your Company, Inc. All rights reserved.
             </p>
           </div>

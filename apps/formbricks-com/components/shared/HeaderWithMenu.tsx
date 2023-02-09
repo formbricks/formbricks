@@ -107,7 +107,7 @@ export default function Header() {
           </Link>
         </div>
         <div className="-my-2 -mr-2 md:hidden">
-          <Popover.Button className="inline-flex items-center justify-center rounded-md bg-gray-100 p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-slate-700 dark:text-slate-200">
+          <Popover.Button className="inline-flex items-center justify-center rounded-md bg-slate-100 p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-slate-700 dark:text-slate-200">
             <span className="sr-only">Open menu</span>
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </Popover.Button>
@@ -294,23 +294,23 @@ export default function Header() {
         <Popover.Panel
           focus
           className="absolute inset-x-0 top-0 z-20 origin-top-right transform p-2 transition md:hidden">
-          <div className="dark:divide-slate divide-y-2 divide-gray-100 rounded-lg bg-gray-200 shadow-lg ring-1 ring-black ring-opacity-5 dark:divide-gray-700 dark:bg-slate-800">
+          <div className="dark:divide-slate divide-y-2 divide-slate-100 rounded-lg bg-slate-200 shadow-lg ring-1 ring-black ring-opacity-5 dark:divide-slate-700 dark:bg-slate-800">
             <div className="px-5 pt-5 pb-6">
               <div className="flex items-center justify-between">
                 <div>
                   <FooterLogo className="h-8 w-auto" />
                 </div>
                 <div className="-mr-2">
-                  <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-slate-700 dark:text-slate-200">
+                  <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-slate-700 dark:text-slate-200">
                     <span className="sr-only">Close menu</span>
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                   </Popover.Button>
                 </div>
               </div>
 
-              <nav className="relative bg-gray-200 px-5 py-6 dark:bg-slate-800">
+              <nav className="relative bg-slate-200 px-5 py-6 dark:bg-slate-800">
                 <div>
-                  <h4 className="mb-3 text-sm text-gray-900 dark:text-gray-300">Survey Creation</h4>
+                  <h4 className="mb-3 text-sm text-slate-900 dark:text-slate-300">Survey Creation</h4>
                   {creation.map((brick) => (
                     <Link
                       key={brick.name}
@@ -330,8 +330,8 @@ export default function Header() {
                         <p
                           className={clsx(
                             brick.status
-                              ? "text-gray-900 dark:text-gray-200"
-                              : "text-gray-400 dark:text-gray-500",
+                              ? "text-slate-900 dark:text-slate-200"
+                              : "text-slate-400 dark:text-slate-500",
                             "text-lg font-semibold"
                           )}>
                           {brick.name}
@@ -339,8 +339,8 @@ export default function Header() {
                         <p
                           className={clsx(
                             brick.status
-                              ? "text-gray-900 dark:text-gray-400"
-                              : "text-gray-400 dark:text-gray-600",
+                              ? "text-slate-900 dark:text-slate-400"
+                              : "text-slate-400 dark:text-slate-600",
                             "text-sm"
                           )}>
                           {brick.description}
@@ -350,7 +350,7 @@ export default function Header() {
                   ))}
                 </div>
                 <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Pipelines</h4>
+                  <h4 className="mt-8 mb-3 text-sm text-slate-900 dark:text-slate-300">Data Pipelines</h4>
                   {pipes.map((brick) => (
                     <Link
                       key={brick.name}
@@ -370,8 +370,8 @@ export default function Header() {
                         <p
                           className={clsx(
                             brick.status
-                              ? "text-gray-900 dark:text-gray-200"
-                              : "text-gray-400 dark:text-gray-500",
+                              ? "text-slate-900 dark:text-slate-200"
+                              : "text-slate-400 dark:text-slate-500",
                             "text-lg font-semibold"
                           )}>
                           {brick.name}
@@ -379,8 +379,8 @@ export default function Header() {
                         <p
                           className={clsx(
                             brick.status
-                              ? "text-gray-900 dark:text-gray-400"
-                              : "text-gray-400 dark:text-gray-600",
+                              ? "text-slate-900 dark:text-slate-400"
+                              : "text-slate-400 dark:text-slate-600",
                             "text-sm"
                           )}>
                           {brick.description}
@@ -390,7 +390,7 @@ export default function Header() {
                   ))}
                 </div>
                 <div>
-                  <h4 className="mt-8 mb-3 text-sm text-gray-900 dark:text-gray-300">Data Insights</h4>
+                  <h4 className="mt-8 mb-3 text-sm text-slate-900 dark:text-slate-300">Data Insights</h4>
                   {insights.map((brick) => (
                     <Link
                       key={brick.name}
@@ -410,8 +410,8 @@ export default function Header() {
                         <p
                           className={clsx(
                             brick.status
-                              ? "text-gray-900 dark:text-gray-200"
-                              : "text-gray-400 dark:text-gray-500",
+                              ? "text-slate-900 dark:text-slate-200"
+                              : "text-slate-400 dark:text-slate-500",
                             "text-lg font-semibold"
                           )}>
                           {brick.name}
@@ -419,8 +419,8 @@ export default function Header() {
                         <p
                           className={clsx(
                             brick.status
-                              ? "text-gray-900 dark:text-gray-400"
-                              : "text-gray-400 dark:text-gray-600",
+                              ? "text-slate-900 dark:text-slate-400"
+                              : "text-slate-400 dark:text-slate-600",
                             "text-sm"
                           )}>
                           {brick.description}
@@ -432,7 +432,7 @@ export default function Header() {
               </nav>
             </div>
             <div className="px-5 py-6">
-              <div className="grid grid-cols-3 text-center text-sm font-medium text-gray-900 hover:text-gray-700 dark:text-slate-200 sm:text-base">
+              <div className="grid grid-cols-3 text-center text-sm font-medium text-slate-900 hover:text-slate-700 dark:text-slate-200 sm:text-base">
                 <Link href="/community">Community</Link>
 
                 <Link href="/blog">Blog</Link>

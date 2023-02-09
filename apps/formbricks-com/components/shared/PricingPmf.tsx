@@ -61,7 +61,9 @@ export default function PricingPmf() {
                 <p
                   className={clsx(
                     "mt-4 whitespace-pre-wrap text-sm",
-                    tier.highlight ? "text-gray-600 dark:text-slate-300" : "text-gray-500 dark:text-slate-300"
+                    tier.highlight
+                      ? "text-slate-600 dark:text-slate-300"
+                      : "text-slate-500 dark:text-slate-300"
                   )}>
                   {tier.description}
                 </p>
@@ -83,8 +85,8 @@ export default function PricingPmf() {
                     className={clsx(
                       "text-base font-medium",
                       tier.highlight
-                        ? "text-gray-500 dark:text-slate-400"
-                        : "text-gray-400 dark:text-slate-500"
+                        ? "text-slate-500 dark:text-slate-400"
+                        : "text-slate-400 dark:text-slate-500"
                     )}>
                     {tier.paymentRythm}
                   </span>

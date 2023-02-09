@@ -85,7 +85,7 @@ export default function Scale({
                   value={num}
                   className={({ checked, active }) =>
                     clsx(
-                      checked ? "border-transparent" : "border-gray-200 dark:border-slate-700",
+                      checked ? "border-transparent" : "border-slate-200 dark:border-slate-700",
                       active ? "border-brand ring-brand ring-2" : "",
                       "xs:rounded-lg relative flex cursor-pointer rounded-md border bg-white py-3 shadow-sm transition-all ease-in-out hover:scale-105 focus:outline-none dark:bg-slate-700 sm:p-4"
                     )
@@ -95,7 +95,7 @@ export default function Scale({
                       <div className="flex flex-1 flex-col justify-center">
                         <RadioGroup.Label
                           as="span"
-                          className="mx-auto text-sm font-medium text-gray-900 dark:text-gray-200">
+                          className="mx-auto text-sm font-medium text-slate-900 dark:text-slate-200">
                           {num}
                         </RadioGroup.Label>
                       </div>
@@ -120,7 +120,7 @@ export default function Scale({
                 </RadioGroup.Option>
               ))}
             </div>
-            <div className="xs:text-sm mt-2 flex justify-between  text-xs text-gray-700 dark:text-slate-400">
+            <div className="xs:text-sm mt-2 flex justify-between  text-xs text-slate-700 dark:text-slate-400">
               <p>{element.frontend.minLabel}</p>
               <p>{element.frontend.maxLabel}</p>
             </div>

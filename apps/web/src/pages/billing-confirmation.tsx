@@ -10,8 +10,8 @@ export default function Billing({}) {
       <Confetti />
       <div className="mx-auto max-w-sm py-8 sm:px-6 lg:px-8">
         <div className="my-6 sm:flex-auto">
-          <h1 className="text-center text-xl font-semibold text-gray-900">Upgrade successful</h1>
-          <p className="mt-2 text-center text-sm text-gray-700">
+          <h1 className="text-center text-xl font-semibold text-slate-900">Upgrade successful</h1>
+          <p className="mt-2 text-center text-sm text-slate-700">
             Thanks a lot for upgrading your formbricks subscription. You can now access all features and
             improve your user research.
           </p>

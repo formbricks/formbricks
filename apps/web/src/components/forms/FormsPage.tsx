@@ -27,7 +27,7 @@ export default function FormsPage({}) {
   return (
     <div className="mx-auto py-8 sm:px-6 lg:px-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-900">
           Forms
           <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
             {organisation.name}

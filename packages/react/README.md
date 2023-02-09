@@ -73,7 +73,7 @@ Simply create a style sheet, import it and add your CSS to these classes:
 We love Tailwind! This is why Formbricks React natively supports Tailwind. All you have to do is target the classes using props. For example, to extend “formbricks-outer” class:
 
 ```jsx
-<Text name="firstname" label="What's your first name?" outerClassName="bg-gray-800 my-5" />
+<Text name="firstname" label="What's your first name?" outerClassName="bg-slate-800 my-5" />
 ```
 
 ## Validation & Error Messages

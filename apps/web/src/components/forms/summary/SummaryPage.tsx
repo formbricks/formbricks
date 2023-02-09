@@ -40,7 +40,7 @@ export default function SummaryPage() {
   return (
     <div className="mx-auto py-8 sm:px-6 lg:px-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-900">
           Summary - {form.label}
           <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
             {organisation.name}
@@ -52,10 +52,10 @@ export default function SummaryPage() {
       </div>
       <div className="relative my-10">
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-full border-t border-gray-300" />
+          <div className="w-full border-t border-slate-300" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-gray-50 px-3 text-lg font-medium text-gray-900">Questions &amp; Answers</span>
+          <span className="bg-slate-50 px-3 text-lg font-medium text-slate-900">Questions &amp; Answers</span>
         </div>
       </div>
       {Object.keys(form.schema).length === 0 ? (
@@ -104,7 +104,7 @@ export default function SummaryPage() {
                 <div className="py-12">
                   {["email", "number", "phone", "search", "text", "textarea", "url"].includes(elem.type) ? (
                     <div>
-                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-slate-900">
                         {elem.label}
                         <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
                           {capitalizeFirstLetter(elem.type)}
@@ -114,7 +114,7 @@ export default function SummaryPage() {
                     </div>
                   ) : ["checkbox", "radio"].includes(elem.type) ? (
                     <div>
-                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-slate-900">
                         {elem.label}
                         <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
                           {capitalizeFirstLetter(elem.type)}
@@ -124,7 +124,7 @@ export default function SummaryPage() {
                     </div>
                   ) : ["nps"].includes(elem.type) ? (
                     <div>
-                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-gray-900">
+                      <h2 className="mb-6 text-xl font-bold leading-tight tracking-tight text-slate-900">
                         {elem.label}
                         <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
                           {capitalizeFirstLetter(elem.type)}

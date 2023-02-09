@@ -17,13 +17,13 @@ const AnalyticsCard: React.FC<Props> = ({ value, label, toolTipText, trend, smal
   return (
     <div className="rounded-md bg-white shadow-md">
       <div key={label} className="px-4 py-5 sm:p-6">
-        <dt className="has-tooltip inline-flex text-base font-normal text-gray-900">
+        <dt className="has-tooltip inline-flex text-base font-normal text-slate-900">
           {label}{" "}
           {toolTipText && (
-            <QuestionMarkCircleIcon className="text-red hover:text-ui-gray-dark ml-1 h-4 w-4" />
+            <QuestionMarkCircleIcon className="text-red hover:text-ui-slate-dark ml-1 h-4 w-4" />
           )}
           {toolTipText && (
-            <span className="tooltip -mt-6 -ml-8 flex grow rounded bg-gray-600 p-1 px-4 text-center text-xs text-white shadow-lg">
+            <span className="tooltip -mt-6 -ml-8 flex grow rounded bg-slate-600 p-1 px-4 text-center text-xs text-white shadow-lg">
               {toolTipText}
             </span>
           )}
@@ -32,7 +32,7 @@ const AnalyticsCard: React.FC<Props> = ({ value, label, toolTipText, trend, smal
           <div
             className={clsx(
               smallerText ? "text-lg" : "text-xl",
-              "flex items-baseline text-xl font-semibold text-gray-800"
+              "flex items-baseline text-xl font-semibold text-slate-800"
             )}>
             {value}
           </div>

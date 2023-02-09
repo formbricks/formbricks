@@ -32,12 +32,12 @@ export default function DemosOverview() {
         {demos.map((demo) => (
           <div
             key={demo.name}
-            className="relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400">
+            className="relative flex items-center space-x-3 rounded-lg border border-slate-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-slate-400">
             <div className="min-w-0 flex-1">
               <Link href={demo.href} className="focus:outline-none" target="_blank">
                 <span className="absolute inset-0" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900">{demo.name}</p>
-                <p className="truncate text-sm text-gray-500">{demo.description}</p>
+                <p className="text-sm font-medium text-slate-900">{demo.name}</p>
+                <p className="truncate text-sm text-slate-500">{demo.description}</p>
               </Link>
             </div>
           </div>

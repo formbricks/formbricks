@@ -43,7 +43,7 @@ export default function FeatureSelection({
           <div className=" mx-auto grid max-w-5xl grid-cols-1 gap-6 px-2 sm:grid-cols-2">
             {shuffledOptions.map((option) => (
               <label htmlFor={`${element.id}-${option.value}`} key={`${element.id}-${option.value}`}>
-                <div className="drop-shadow-card duration-120 relative cursor-default rounded-lg border border-gray-200 bg-white p-6 transition-all ease-in-out hover:scale-105 dark:border-slate-700 dark:bg-slate-700">
+                <div className="drop-shadow-card duration-120 relative cursor-default rounded-lg border border-slate-200 bg-white p-6 transition-all ease-in-out hover:scale-105 dark:border-slate-700 dark:bg-slate-700">
                   <div className="absolute right-10">
                     <input
                       id={`${element.id}-${option.value}`}

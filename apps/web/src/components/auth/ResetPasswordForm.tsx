@@ -49,7 +49,7 @@ export const ResetPasswordForm = ({ token }) => {
               name="password"
               type="password"
               required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+              className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
             />
           </div>
         </div>

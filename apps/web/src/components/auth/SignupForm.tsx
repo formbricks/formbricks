@@ -60,7 +60,7 @@ export const SignupForm = () => {
               type="text"
               autoComplete="given-name"
               required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+              className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
             />
           </div>
         </div>
@@ -75,7 +75,7 @@ export const SignupForm = () => {
               type="email"
               autoComplete="email"
               required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+              className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
             />
           </div>
         </div>
@@ -89,7 +89,7 @@ export const SignupForm = () => {
               name="password"
               type="password"
               required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+              className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
             />
           </div>
         </div>
@@ -99,14 +99,14 @@ export const SignupForm = () => {
             Sign up
           </Button>
 
-          <div className="mt-3 text-center text-xs text-gray-600">
+          <div className="mt-3 text-center text-xs text-slate-600">
             Already have an account?{" "}
             <Link href="/auth/signin" className="text-brand hover:text-brand-light">
               Log in.
             </Link>
           </div>
           {(process.env.NEXT_PUBLIC_TERMS_URL || process.env.NEXT_PUBLIC_PRIVACY_URL) && (
-            <div className="mt-3 text-center text-xs text-gray-400">
+            <div className="mt-3 text-center text-xs text-slate-400">
               By clicking &quot;Sign Up&quot;, you agree to our
               <br />
               {process.env.NEXT_PUBLIC_TERMS_URL && (
@@ -137,10 +137,10 @@ export const SignupForm = () => {
           <>
             <div className="relative">
               <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-slate-300" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white px-2 text-sm text-gray-500">Sign up with</span>
+                <span className="bg-white px-2 text-sm text-slate-500">Sign up with</span>
               </div>
             </div>
             <GithubButton text="Sign up with GitHub" />

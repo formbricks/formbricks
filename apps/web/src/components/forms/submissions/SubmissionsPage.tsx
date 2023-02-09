@@ -75,8 +75,8 @@ export default function SubmissionsPage() {
             {!activeSubmission ? (
               <button
                 type="button"
-                className="relative mx-auto mt-8 block w-96 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
-                <span className="mt-2 block text-sm font-medium text-gray-500">
+                className="relative mx-auto mt-8 block w-96 rounded-lg border-2 border-dashed border-slate-300 p-12 text-center hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
+                <span className="mt-2 block text-sm font-medium text-slate-500">
                   Select a response on the left to see the details here
                 </span>
               </button>
@@ -85,7 +85,7 @@ export default function SubmissionsPage() {
                 <div className="bg-white px-4 py-5 shadow sm:px-12 sm:pb-4 sm:pt-12">
                   <div className="grid grid-cols-2 gap-8 divide-x">
                     <div className="flow-root">
-                      <h1 className="mb-8 text-gray-700">
+                      <h1 className="mb-8 text-slate-700">
                         {convertDateTimeString(activeSubmission.createdAt.toString())}
                       </h1>
                       <SubmissionDisplay submission={activeSubmission} schema={form.schema} />
@@ -94,7 +94,7 @@ export default function SubmissionsPage() {
                 </div>
                 <div className="w-full">
                   <button
-                    className="flex w-full items-center justify-center gap-2 border border-transparent bg-gray-300 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-500 focus:outline-none"
+                    className="flex w-full items-center justify-center gap-2 border border-transparent bg-slate-300 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-500 focus:outline-none"
                     onClick={() => {
                       if (
                         confirm("Are you sure you want to delete this submission? It will be gone forever!")
@@ -110,16 +110,16 @@ export default function SubmissionsPage() {
             )}
           </div>
         </main>
-        <aside className="border-ui-gray-light order-first flex h-full flex-1 flex-shrink-0 flex-col border-r md:w-96 md:flex-none">
+        <aside className="border-ui-slate-light order-first flex h-full flex-1 flex-shrink-0 flex-col border-r md:w-96 md:flex-none">
           {/*  <DownloadResponses formId={params.formId} /> */}
           <div className="flex justify-between pt-4 pb-2">
-            <h2 className="px-5 text-lg font-medium text-gray-900">Responses</h2>
+            <h2 className="px-5 text-lg font-medium text-slate-900">Responses</h2>
             <Switch.Group as="div" className="mr-3 flex items-center">
               <Switch
                 checked={finishedOnly}
                 onChange={setFinishedOnly}
                 className={clsx(
-                  finishedOnly ? "bg-teal-600" : "bg-gray-200",
+                  finishedOnly ? "bg-teal-600" : "bg-slate-200",
                   "relative inline-flex h-5 w-8 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
                 )}>
                 <span
@@ -136,7 +136,7 @@ export default function SubmissionsPage() {
             </Switch.Group>
           </div>
           {filteredSubmissions.length === 0 ? (
-            <p className="mt-3 px-5 text-sm text-gray-500">No responses yet</p>
+            <p className="mt-3 px-5 text-sm text-slate-500">No responses yet</p>
           ) : (
             <RadioGroup
               value={activeSubmission}
@@ -144,13 +144,13 @@ export default function SubmissionsPage() {
               className="mb-32 min-h-0 flex-1 overflow-y-auto shadow-inner"
               as="div">
               <div className="relative">
-                <ul className="divide-ui-gray-light relative z-0 divide-y">
+                <ul className="divide-ui-slate-light relative z-0 divide-y">
                   {filteredSubmissions.map((submission) => (
                     <RadioGroup.Option
                       key={submission.id}
                       value={submission}
                       className={({ checked }) =>
-                        clsx(checked ? "bg-gray-100" : "", "relative flex items-center space-x-3 px-6 py-5 ")
+                        clsx(checked ? "bg-slate-100" : "", "relative flex items-center space-x-3 px-6 py-5 ")
                       }>
                       <div className="min-w-0 flex-1">
                         <button
@@ -158,7 +158,7 @@ export default function SubmissionsPage() {
                           className="w-full text-left focus:outline-none">
                           {/* Extend touch target to entire panel */}
                           <span className="absolute inset-0" aria-hidden="true" />
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-slate-900">
                             {submission.finished ? "✅" : "💬"} {convertDateTimeString(submission.createdAt)}
                           </p>
                         </button>

@@ -39,11 +39,11 @@ export function Table({ submissions, schema, fieldName }: Props) {
   }, [submissions, schema]);
   return (
     <div className="my-4 mt-6 flow-root h-44 max-h-64 overflow-y-scroll px-8 text-center">
-      <ul className="divide-ui-gray-light -my-5 divide-y">
+      <ul className="divide-ui-slate-light -my-5 divide-y">
         {data.map((answer) => (
           <li key={answer} className="py-4">
             <div className="relative focus-within:ring-2 focus-within:ring-slate-500">
-              <h3 className="text-sm text-gray-700">
+              <h3 className="text-sm text-slate-700">
                 <span className="absolute inset-0" aria-hidden="true" />
                 {answer}
               </h3>

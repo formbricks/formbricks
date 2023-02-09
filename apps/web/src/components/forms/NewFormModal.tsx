@@ -232,7 +232,7 @@ export default function NewFormModal({ open, setOpen, organisationId }: FormOnbo
             leave="ease-in duration-200"
             leaveFrom="opacity-100"
             leaveTo="opacity-0">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-30 backdrop-blur-md transition-opacity" />
+            <div className="fixed inset-0 bg-slate-500 bg-opacity-30 backdrop-blur-md transition-opacity" />
           </Transition.Child>
 
           <div className="fixed inset-0 z-10 overflow-y-auto">
@@ -249,7 +249,7 @@ export default function NewFormModal({ open, setOpen, organisationId }: FormOnbo
                   <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
                     <button
                       type="button"
-                      className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-0 focus:ring-offset-2"
+                      className="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 focus:ring-offset-2"
                       onClick={() => setOpen(false)}>
                       <span className="sr-only">Close</span>
                       <XMarkIcon className="h-6 w-6" aria-hidden="true" />
@@ -269,7 +269,7 @@ export default function NewFormModal({ open, setOpen, organisationId }: FormOnbo
                         <input
                           type="text"
                           name="label"
-                          className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
+                          className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                           placeholder="e.g. Feedback Box App"
                           value={label}
                           onChange={(e) => setLabel(e.target.value)}
@@ -278,7 +278,7 @@ export default function NewFormModal({ open, setOpen, organisationId }: FormOnbo
                         />
                       </div>
                     </div>
-                    <hr className="my-6 text-gray-600" />
+                    <hr className="my-6 text-slate-600" />
                     <RadioGroup value={formType} onChange={setFormType}>
                       <RadioGroup.Label className="text-sm font-light text-slate-800">
                         Choose your form type
@@ -297,9 +297,9 @@ export default function NewFormModal({ open, setOpen, organisationId }: FormOnbo
                               value={formType.id}
                               className={({ checked, active, disabled }) =>
                                 clsx(
-                                  checked ? "border-transparent" : "border-gray-300",
+                                  checked ? "border-transparent" : "border-slate-300",
                                   active ? "border-brand ring-brand ring-2" : "",
-                                  disabled ? "bg-gray-100" : "bg-white",
+                                  disabled ? "bg-slate-100" : "bg-white",
                                   "relative block cursor-pointer rounded-lg border bg-white px-6 py-4 shadow-sm focus:outline-none sm:flex"
                                 )
                               }>
@@ -312,7 +312,7 @@ export default function NewFormModal({ open, setOpen, organisationId }: FormOnbo
                                   </RadioGroup.Description>
                                   <span className="flex items-center">
                                     <span className="flex flex-col text-sm">
-                                      <RadioGroup.Label as="span" className="font-medium text-gray-900">
+                                      <RadioGroup.Label as="span" className="font-medium text-slate-900">
                                         {formType.name}
                                         {formType.needsUpgrade && (
                                           <Link href={`/organisations/${organisation.id}/settings/billing`}>
@@ -322,7 +322,7 @@ export default function NewFormModal({ open, setOpen, organisationId }: FormOnbo
                                           </Link>
                                         )}
                                       </RadioGroup.Label>
-                                      <RadioGroup.Description as="span" className="text-gray-500">
+                                      <RadioGroup.Description as="span" className="text-slate-500">
                                         {formType.description}
                                       </RadioGroup.Description>
                                     </span>

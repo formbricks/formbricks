@@ -33,7 +33,7 @@ export default function UpdatePipelineModal({ open, setOpen, pipelineId }) {
       {isLoadingPipeline ? (
         <LoadingSpinner />
       ) : (
-        <form className="w-full space-y-8 divide-y divide-gray-200" onSubmit={handleSubmit}>
+        <form className="w-full space-y-8 divide-y divide-slate-200" onSubmit={handleSubmit}>
           <PipelineSettings
             typeId={pipeline.type}
             pipeline={pipeline}
@@ -44,7 +44,7 @@ export default function UpdatePipelineModal({ open, setOpen, pipelineId }) {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                 Cancel
               </button>
               <button

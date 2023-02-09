@@ -40,7 +40,7 @@ export default function LayoutWrapperCustomForm({ children }) {
       <Disclosure as="header" className="bg-white shadow">
         {({}) => (
           <>
-            <div className="px-2 sm:px-4 lg:divide-y lg:divide-gray-200 lg:px-8">
+            <div className="px-2 sm:px-4 lg:divide-y lg:divide-slate-200 lg:px-8">
               <nav className="hidden lg:flex lg:space-x-8 lg:py-2" aria-label="Global">
                 {navigation.map((item) => (
                   <Link
@@ -48,8 +48,8 @@ export default function LayoutWrapperCustomForm({ children }) {
                     href={item.href}
                     className={clsx(
                       item.current
-                        ? "bg-gray-100 text-gray-900"
-                        : "text-gray-900 hover:bg-gray-50 hover:text-gray-900",
+                        ? "bg-slate-100 text-slate-900"
+                        : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
                       "inline-flex items-center rounded-md py-2 px-3 text-sm font-medium"
                     )}
                     aria-current={item.current ? "page" : undefined}>
@@ -68,8 +68,8 @@ export default function LayoutWrapperCustomForm({ children }) {
                     href={item.href}
                     className={clsx(
                       item.current
-                        ? "bg-gray-100 text-gray-900"
-                        : "text-gray-900 hover:bg-gray-50 hover:text-gray-900",
+                        ? "bg-slate-100 text-slate-900"
+                        : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
                       "block rounded-md py-2 px-3 text-base font-medium"
                     )}
                     aria-current={item.current ? "page" : undefined}>

@@ -51,7 +51,7 @@ export default function FeedbackTimeline({ submissions }) {
                 <div className="relative pb-8">
                   {submissionIdx !== submissions.length - 1 ? (
                     <span
-                      className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                      className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200"
                       aria-hidden="true"
                     />
                   ) : null}
@@ -60,7 +60,7 @@ export default function FeedbackTimeline({ submissions }) {
                       <span
                         className={clsx(
                           "bg-white",
-                          "flex h-8 w-8 items-center justify-center rounded-full ring-8 ring-gray-50"
+                          "flex h-8 w-8 items-center justify-center rounded-full ring-8 ring-slate-50"
                         )}>
                         {submission.data.feedbackType === "compliment" ? (
                           <ComplimentIcon className="h-6 w-6 text-white" aria-hidden="true" />
@@ -88,54 +88,54 @@ export default function FeedbackTimeline({ submissions }) {
                             </span>
                           )}
 
-                          <div className="text-sm text-gray-400">
+                          <div className="text-sm text-slate-400">
                             <time dateTime={convertDateTimeString(submission.createdAt)}>
                               {convertDateTimeString(submission.createdAt)}
                             </time>
                           </div>
                         </div>
                         <div className="mt-3">
-                          <p className="whitespace-pre-wrap text-sm text-gray-500">
+                          <p className="whitespace-pre-wrap text-sm text-slate-500">
                             {submission.data.message}{" "}
                           </p>
                         </div>
                       </div>
-                      <div className=" bg-gray-50 p-4 sm:p-6">
+                      <div className=" bg-slate-50 p-4 sm:p-6">
                         <div className="flex w-full justify-between gap-4">
                           <div>
-                            <p className="text-sm font-thin text-gray-500">User</p>
+                            <p className="text-sm font-thin text-slate-500">User</p>
                             {submission.customerEmail ? (
                               <Link
-                                className="text-sm font-medium text-gray-700"
+                                className="text-sm font-medium text-slate-700"
                                 href={`/organisations/${router.query.organisationId}/customers/${submission.customerEmail}`}>
                                 {submission.customerEmail}
                               </Link>
                             ) : (
-                              <p className="text-sm text-gray-500">Anonymous</p>
+                              <p className="text-sm text-slate-500">Anonymous</p>
                             )}
                           </div>
                           <div>
-                            <p className="text-sm font-thin text-gray-500">Device</p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm font-thin text-slate-500">Device</p>
+                            <p className="text-sm text-slate-500">
                               {parseUserAgent(submission.meta.userAgent)}
                             </p>
                           </div>
                           <div>
-                            <p className="text-sm font-thin text-gray-500">Page</p>
-                            <p className="text-sm text-gray-500">{submission.data.pageUrl}</p>
+                            <p className="text-sm font-thin text-slate-500">Page</p>
+                            <p className="text-sm text-slate-500">{submission.data.pageUrl}</p>
                           </div>
                         </div>
 
                         <div className="mt-8 flex w-full justify-end">
                           {!submission.archived ? (
                             <button
-                              className="text-base text-gray-500 underline"
+                              className="text-base text-slate-500 underline"
                               onClick={() => toggleArchiveSubmission(submission)}>
                               Archive
                             </button>
                           ) : (
                             <button
-                              className="text-base text-gray-500 underline"
+                              className="text-base text-slate-500 underline"
                               onClick={() => toggleArchiveSubmission(submission)}>
                               Restore
                             </button>

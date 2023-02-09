@@ -64,8 +64,8 @@ export default function Footer() {
           <FooterLogo className="mx-auto h-8 w-auto sm:h-10" />
         </Link>
         <p className="text-base text-slate-500 dark:text-slate-400">Experience Management for B2B SaaS</p>
-        <div className="border-gray-500">
-          <p className="text-sm text-slate-400 dark:text-gray-500">
+        <div className="border-slate-500">
+          <p className="text-sm text-slate-400 dark:text-slate-500">
             &copy; 2022. All rights reserved.
             <br />
             <Link href="/imprint">Imprint</Link> | <Link href="/privacy">Privacy Policy</Link> |{" "}
@@ -74,7 +74,7 @@ export default function Footer() {
         </div>
         <div className="flex justify-center space-x-6">
           {navigation.social.map((item) => (
-            <Link key={item.name} href={item.href} className="text-slate-400 hover:text-gray-500">
+            <Link key={item.name} href={item.href} className="text-slate-400 hover:text-slate-500">
               <span className="sr-only">{item.name}</span>
               <item.icon className="h-6 w-6" aria-hidden="true" />
             </Link>

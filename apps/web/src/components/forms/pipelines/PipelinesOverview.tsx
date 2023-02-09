@@ -152,7 +152,7 @@ export default function PipelinesOverview({}) {
       {pipelines.length > 0 ? (
         <>
           <div className="overflow-hidden bg-white shadow sm:rounded-md">
-            <ul role="list" className="divide-y divide-gray-200">
+            <ul role="list" className="divide-y divide-slate-200">
               {pipelines.map((pipeline) => (
                 <li key={pipeline.id}>
                   <div className="block">
@@ -161,9 +161,9 @@ export default function PipelinesOverview({}) {
                         <div className="min-w-0 flex-1 px-4 md:grid md:grid-cols-2 md:gap-4">
                           <div>
                             <p className="truncate text-sm font-medium text-slate-800">{pipeline.label}</p>
-                            <p className="mt-2 flex items-center text-sm text-gray-500">
+                            <p className="mt-2 flex items-center text-sm text-slate-500">
                               <BoltIcon
-                                className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400"
+                                className="mr-1.5 h-5 w-5 flex-shrink-0 text-slate-400"
                                 aria-hidden="true"
                               />
                               <span className="truncate">{pipeline.type}</span>
@@ -176,8 +176,8 @@ export default function PipelinesOverview({}) {
                                 checked={pipeline.enabled}
                                 onChange={() => toggleEnabled(pipeline)}
                                 className={clsx(
-                                  pipeline.enabled ? "bg-brand-dark" : "bg-gray-200",
-                                  "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                                  pipeline.enabled ? "bg-brand-dark" : "bg-slate-200",
+                                  "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
                                 )}>
                                 <span className="sr-only">Use setting</span>
                                 <span
@@ -193,7 +193,7 @@ export default function PipelinesOverview({}) {
                                       "absolute inset-0 flex h-full w-full items-center justify-center transition-opacity"
                                     )}
                                     aria-hidden="true">
-                                    <svg className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 12 12">
+                                    <svg className="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 12 12">
                                       <path
                                         d="M4 8l2-2m0 0l2-2M6 6L4 4m2 2l2 2"
                                         stroke="currentColor"
@@ -226,7 +226,7 @@ export default function PipelinesOverview({}) {
                       </div>
                       <div className="inline-flex">
                         <button onClick={() => openSettings(pipeline)}>
-                          <Cog6ToothIcon className="mx-2 h-4 w-4 text-gray-400" aria-hidden="true" />
+                          <Cog6ToothIcon className="mx-2 h-4 w-4 text-slate-400" aria-hidden="true" />
                         </button>
                         <button
                           onClick={() => {
@@ -234,7 +234,7 @@ export default function PipelinesOverview({}) {
                               deletePipelineAction(pipeline.id);
                             }
                           }}>
-                          <TrashIcon className="mx-2 h-4 w-4 text-gray-400" aria-hidden="true" />
+                          <TrashIcon className="mx-2 h-4 w-4 text-slate-400" aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -251,8 +251,8 @@ export default function PipelinesOverview({}) {
           <div className="mx-10 mb-5 grid grid-cols-3 gap-3">
             {integrations.map((integration) => (
               <div className="col-span-1 my-1 flex" key={integration.id}>
-                <div className="text-ui-gray-medium relative col-span-1 flex w-full">
-                  <integration.icon className="text-ui-gray-medium h-6 w-6" />
+                <div className="text-ui-slate-medium relative col-span-1 flex w-full">
+                  <integration.icon className="text-ui-slate-medium h-6 w-6" />
                   <div className="inline-flex items-center truncate px-4 text-sm">
                     <p className="">{integration.name}</p>
                     {integration.comingSoon && (

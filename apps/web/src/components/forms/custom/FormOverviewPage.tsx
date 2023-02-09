@@ -57,7 +57,7 @@ export default function FormOverviewPage() {
   return (
     <div className="mx-auto py-8 sm:px-6 lg:px-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-900">
           {form.label}
           <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
             {organisation.name}
@@ -74,7 +74,7 @@ export default function FormOverviewPage() {
             <select
               id="tabs"
               name="tabs"
-              className="block w-full rounded-md border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+              className="block w-full rounded-md border-slate-300 focus:border-teal-500 focus:ring-teal-500"
               defaultValue={activeTab.name}>
               {tabs.map((tab) => (
                 <option key={tab.name}>{tab.name}</option>
@@ -82,7 +82,7 @@ export default function FormOverviewPage() {
             </select>
           </div>
           <div className="hidden sm:block">
-            <div className="border-b border-gray-200">
+            <div className="border-b border-slate-200">
               <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                 {tabs.map((tab) => (
                   <button
@@ -91,7 +91,7 @@ export default function FormOverviewPage() {
                     className={clsx(
                       activeTab.name === tab.name
                         ? "border-teal-500 text-teal-600"
-                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
+                        : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700",
                       "group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium"
                     )}
                     aria-current={activeTab.name === tab.name ? "page" : undefined}>
@@ -99,7 +99,7 @@ export default function FormOverviewPage() {
                       className={clsx(
                         activeTab.name === tab.name
                           ? "text-teal-500"
-                          : "text-gray-400 group-hover:text-gray-500",
+                          : "text-slate-400 group-hover:text-slate-500",
                         "-ml-0.5 mr-2 h-5 w-5"
                       )}
                       aria-hidden="true"
@@ -124,7 +124,7 @@ export default function FormOverviewPage() {
                     <input
                       id="formId"
                       type="text"
-                      className="focus:border-brand focus:ring-brand block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100 sm:text-sm"
+                      className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm disabled:bg-slate-100 sm:text-sm"
                       value={form.id}
                       disabled
                     />
@@ -147,13 +147,13 @@ export default function FormOverviewPage() {
                   </label>
                   <div className="mt-3">
                     <div className="mt-1 flex rounded-md shadow-sm">
-                      <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-200 px-3 text-gray-500  sm:text-sm">
+                      <span className="inline-flex items-center rounded-l-md border border-r-0 border-slate-300 bg-slate-200 px-3 text-slate-500  sm:text-sm">
                         POST
                       </span>
                       <input
                         id="captureUrl"
                         type="text"
-                        className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm"
+                        className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-slate-300 bg-slate-100 shadow-sm sm:text-sm"
                         value={capturePostUrl}
                         disabled
                       />
@@ -172,7 +172,7 @@ export default function FormOverviewPage() {
                 </div>
               </div>
 
-              <div className="col-span-2  text-sm text-gray-600">
+              <div className="col-span-2  text-sm text-slate-600">
                 <h3 className="block text-lg font-semibold text-slate-800">How to get started</h3>
                 <ol className="list-decimal leading-8 text-slate-700">
                   <li>POST a submission to the capture endpoint.</li>
@@ -218,13 +218,13 @@ export default function FormOverviewPage() {
                   </label>
                   <div className="mt-3">
                     <div className="mt-1 flex rounded-md shadow-sm">
-                      <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-200 px-3 text-gray-500  sm:text-sm">
+                      <span className="inline-flex items-center rounded-l-md border border-r-0 border-slate-300 bg-slate-200 px-3 text-slate-500  sm:text-sm">
                         POST
                       </span>
                       <input
                         id="captureUrl"
                         type="text"
-                        className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-gray-300 bg-gray-100 shadow-sm sm:text-sm"
+                        className="focus:border-brand focus:ring-brand block w-full rounded-r-md border-slate-300 bg-slate-100 shadow-sm sm:text-sm"
                         value={`${window.location.protocol}//${window.location.host}/api/capture/forms/${form.id}/submissions`}
                         disabled
                       />
@@ -241,7 +241,7 @@ export default function FormOverviewPage() {
                     </Button>
                   </div>
                 </div>
-                <div className="mt-4 rounded-md bg-black p-4 font-light text-gray-200 first-letter:text-sm">
+                <div className="mt-4 rounded-md bg-black p-4 font-light text-slate-200 first-letter:text-sm">
                   <pre>
                     <code className="language-js whitespace-pre-wrap">
                       {`{
@@ -256,15 +256,15 @@ export default function FormOverviewPage() {
                   </pre>
                 </div>
               </div>
-              <div className="col-span-2  text-sm text-gray-600">
+              <div className="col-span-2  text-sm text-slate-600">
                 <h3 className="block pb-4 text-lg font-semibold text-slate-800">Quick Tips</h3>
                 <p className="font-bold">Authentication</p>
-                <p className="my-3 text-sm text-gray-600">
+                <p className="my-3 text-sm text-slate-600">
                   Via the API you can send submissions directly to Formbricks HQ. The API doesn&apos;t need
                   any authentication and can also be called in the users browser.
                 </p>
                 <p className="pt-3 font-bold">CustomerId</p>
-                <p className="my-3 text-sm text-gray-600">
+                <p className="my-3 text-sm text-slate-600">
                   You can pass along a customer ID to identify the respondent. This allows you to attribute
                   submissions of several surveys to the same respondent.
                 </p>

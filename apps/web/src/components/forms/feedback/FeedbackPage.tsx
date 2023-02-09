@@ -39,8 +39,8 @@ export default function FeedbackPage() {
   return (
     <div>
       <main className="mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="border-b border-gray-200 pt-8">
-          <h1 className="pb-6 text-4xl font-bold tracking-tight text-gray-900">{form.label}</h1>
+        <div className="border-b border-slate-200 pt-8">
+          <h1 className="pb-6 text-4xl font-bold tracking-tight text-slate-900">{form.label}</h1>
           <TabNavigation tabs={tabs} currentTab={currentTab} setCurrentTab={setCurrentTab} />
         </div>
         {currentTab === "Results" ? (

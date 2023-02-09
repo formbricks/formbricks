@@ -48,7 +48,7 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto py-8 sm:px-6 lg:px-8">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-900">
           Billing
           <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
             {organisation.name}
@@ -58,8 +58,8 @@ export default function SettingsPage() {
       {organisation.plan === "free" ? (
         <>
           <div className="my-6 sm:flex-auto">
-            <h1 className="text-xl font-semibold text-gray-900">Upgrade to benefit from all features</h1>
-            <p className="mt-2 text-sm text-gray-700">
+            <h1 className="text-xl font-semibold text-slate-900">Upgrade to benefit from all features</h1>
+            <p className="mt-2 text-sm text-slate-700">
               You do not currently have an active subscription. Upgrade to get access to all features and
               improve your user research.
             </p>
@@ -71,8 +71,8 @@ export default function SettingsPage() {
       ) : (
         <>
           <div className="my-6 sm:flex-auto">
-            <h1 className="text-xl font-semibold text-gray-900">View and manage your billing details</h1>
-            <p className="mt-2 text-sm text-gray-700">
+            <h1 className="text-xl font-semibold text-slate-900">View and manage your billing details</h1>
+            <p className="mt-2 text-sm text-slate-700">
               View and edit your billing details, as well as cancel your subscription.
             </p>
           </div>

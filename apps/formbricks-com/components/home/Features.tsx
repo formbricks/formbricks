@@ -49,7 +49,7 @@ export default function Features() {
                 </h3>
                 <dl className="mt-1 flex flex-grow flex-col justify-between">
                   <dt className="sr-only">Description</dt>
-                  <dd className="text-sm text-gray-600 dark:text-slate-400">{feature.description}</dd>
+                  <dd className="text-sm text-slate-600 dark:text-slate-400">{feature.description}</dd>
                 </dl>
               </div>
             </li>

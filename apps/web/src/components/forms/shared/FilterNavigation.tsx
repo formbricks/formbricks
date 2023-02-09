@@ -154,8 +154,8 @@ export default function FilterNavigation({
               }}
               className={clsx(
                 option.active
-                  ? "bg-gray-200 text-gray-900"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                  ? "bg-slate-200 text-slate-900"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
                 "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium"
               )}
               aria-current={option.active ? "page" : undefined}>
@@ -164,7 +164,7 @@ export default function FilterNavigation({
               {/* {item.count ? (
               <span
                 className={clsx(
-                  item.id === currentFilter ? "bg-white" : "bg-gray-100 group-hover:bg-white",
+                  item.id === currentFilter ? "bg-white" : "bg-slate-100 group-hover:bg-white",
                   "ml-auto inline-block rounded-full py-0.5 px-3 text-xs"
                 )}>
                 {item.count}

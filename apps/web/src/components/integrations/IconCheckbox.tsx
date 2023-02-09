@@ -35,7 +35,7 @@ export default function IconCheckbox({
                 <label
                   htmlFor={`${page.id}-${element.id}-${option.value}`}
                   key={`${page.id}-${element.id}-${option.value}`}>
-                  <div className="drop-shadow-card duration-120 relative w-32 cursor-default rounded-lg border border-gray-200 bg-white p-6 text-center transition-all ease-in-out hover:scale-105">
+                  <div className="drop-shadow-card duration-120 relative w-32 cursor-default rounded-lg border border-slate-200 bg-white p-6 text-center transition-all ease-in-out hover:scale-105">
                     <div className="absolute right-4 top-3">
                       <input
                         id={`${page.id}-${element.id}-${option.value}`}

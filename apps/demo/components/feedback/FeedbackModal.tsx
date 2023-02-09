@@ -46,7 +46,7 @@ export default function FeedbackModal({ show, setShow, formId, customer }: Feedb
                 <div className="absolute right-4 top-4 ml-4 flex flex-shrink-0">
                   <button
                     type="button"
-                    className="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                    className="inline-flex rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
                     onClick={() => {
                       setShow(false);
                       setTimeout(() => {
@@ -65,7 +65,7 @@ export default function FeedbackModal({ show, setShow, formId, customer }: Feedb
 
               {typeof feedbackType === "undefined" ? (
                 <div className="p-4">
-                  <div className="w-full text-center text-xs text-gray-700">What&apos;s on your mind?</div>
+                  <div className="w-full text-center text-xs text-slate-700">What&apos;s on your mind?</div>
                   <nav className="mt-3 space-y-1" aria-label="Sidebar">
                     {navigation.map((item) => (
                       <button
@@ -73,10 +73,10 @@ export default function FeedbackModal({ show, setShow, formId, customer }: Feedb
                         onClick={() => {
                           setFeedbackType(item);
                         }}
-                        className="group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                        className="group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900">
                         <item.icon
                           className={clsx(
-                            "text-gray-400 group-hover:text-gray-500",
+                            "text-slate-400 group-hover:text-slate-500",
                             "-ml-1 mr-3 h-7 w-7 flex-shrink-0"
                           )}
                           aria-hidden="true"
@@ -91,13 +91,13 @@ export default function FeedbackModal({ show, setShow, formId, customer }: Feedb
                   <button
                     key={feedbackType.name}
                     onClick={() => setFeedbackType(undefined)}
-                    className="group flex w-full items-center justify-center bg-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                    className="group flex w-full items-center justify-center bg-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">
                     <feedbackType.icon
-                      className="-ml-1 mr-3 h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-gray-500"
+                      className="-ml-1 mr-3 h-6 w-6 flex-shrink-0 text-slate-400 group-hover:text-slate-500"
                       aria-hidden="true"
                     />
                     <span className="truncate">{feedbackType.name}</span>
-                    <ChevronDownIcon className="h-6 w-6 text-gray-500" />
+                    <ChevronDownIcon className="h-6 w-6 text-slate-500" />
                   </button>
 
                   <div className="p-4">
@@ -111,10 +111,10 @@ export default function FeedbackModal({ show, setShow, formId, customer }: Feedb
                           />
                         </div>
                         <div className="ml-3">
-                          <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                          <p className="text-sm font-medium text-slate-700 group-hover:text-slate-900">
                             Thanks for sharing this!
                           </p>
-                          <p className="text-xs font-medium text-gray-500 group-hover:text-gray-700">
+                          <p className="text-xs font-medium text-slate-500 group-hover:text-slate-700">
                             Tom Cook, CEO
                           </p>
                         </div>
@@ -147,7 +147,7 @@ export default function FeedbackModal({ show, setShow, formId, customer }: Feedb
                         rows={5}
                         name="message"
                         id="message"
-                        className="mt-5 block w-full rounded-md border-gray-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
+                        className="mt-5 block w-full rounded-md border-slate-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"
                         placeholder={
                           feedbackType.id === "idea"
                             ? "I would love to..."
@@ -168,14 +168,14 @@ export default function FeedbackModal({ show, setShow, formId, customer }: Feedb
                 </>
               ) : (
                 <div className="p-4">
-                  <div className="w-full text-center font-medium text-gray-600">
+                  <div className="w-full text-center font-medium text-slate-600">
                     {feedbackType.id === "bug"
                       ? "Feedback received."
                       : feedbackType.id === "compliment"
                       ? "Thanks for sharing!"
                       : "Brainstorming in progress..."}
                   </div>
-                  <div className="mt-2 w-full text-center text-sm text-gray-500">
+                  <div className="mt-2 w-full text-center text-sm text-slate-500">
                     {feedbackType.id === "bug"
                       ? "We are doing our best to fix this asap. Thank you!"
                       : feedbackType.id === "compliment"
@@ -192,16 +192,16 @@ export default function FeedbackModal({ show, setShow, formId, customer }: Feedb
                         />
                       </div>
                       <div className="ml-3">
-                        <p className="text-xs font-medium text-gray-700 group-hover:text-gray-900">
+                        <p className="text-xs font-medium text-slate-700 group-hover:text-slate-900">
                           Tom Cook
                         </p>
-                        <p className="text-xs font-medium text-gray-500 group-hover:text-gray-700">CEO</p>
+                        <p className="text-xs font-medium text-slate-500 group-hover:text-slate-700">CEO</p>
                       </div>
                     </div>
                   </div>
                   <div className="mt-5 mb-2">
-                    <div className="text-center text-xs text-gray-600">More to share?</div>
-                    <div className="text-center text-xs font-bold text-gray-600">
+                    <div className="text-center text-xs text-slate-600">More to share?</div>
+                    <div className="text-center text-xs font-bold text-slate-600">
                       <Link href="https://slack.com" target="_blank">
                         Join Slack
                       </Link>

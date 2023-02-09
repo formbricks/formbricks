@@ -7,7 +7,7 @@
 }
 
 .formbricks-label {
-  @apply text-base font-medium text-gray-700 font-sans sm:text-sm;
+  @apply text-base font-medium text-slate-700 font-sans sm:text-sm;
 }
 
 button.formbricks-input {
@@ -21,19 +21,19 @@ input[type="password"].formbricks-input,
 input[type="search"].formbricks-input,
 input[type="tel"].formbricks-input,
 input[type="url"].formbricks-input {
-  @apply form-input text-base block rounded-md border-gray-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm;
+  @apply form-input text-base block rounded-md border-slate-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm;
 }
 
 input[type="radio"].formbricks-input {
-  @apply h-4 w-4 border-gray-300 text-slate-600 focus:ring-slate-500 mr-2;
+  @apply h-4 w-4 border-slate-300 text-slate-600 focus:ring-slate-500 mr-2;
 }
 
 textarea.formbricks-input {
-  @apply form-textarea text-base font-sans block rounded-md border-gray-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm;
+  @apply form-textarea text-base font-sans block rounded-md border-slate-300 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm;
 }
 
 .formbricks-help {
-  @apply font-sans text-base sm:text-sm text-gray-500;
+  @apply font-sans text-base sm:text-sm text-slate-500;
 }
 
 .formbricks-prefix-icon {
@@ -49,11 +49,11 @@ textarea.formbricks-input {
 }
 
 .formbricks-legend {
-  @apply text-base font-medium text-gray-700 font-sans sm:text-sm;
+  @apply text-base font-medium text-slate-700 font-sans sm:text-sm;
 }
 
 .formbricks-fieldset {
-  @apply border-gray-50 rounded-lg  max-w-md;
+  @apply border-slate-50 rounded-lg  max-w-md;
 }
 
 .formbricks-input-nps {
@@ -77,5 +77,5 @@ textarea.formbricks-input {
 }
 
 [data-type="nps"] .formbricks-input-addition-item {
-  @apply text-xs text-gray-500;
+  @apply text-xs text-slate-500;
 }

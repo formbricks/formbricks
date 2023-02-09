@@ -40,11 +40,11 @@ export default function LayoutWrapperOrganisation({ children }: LayoutWrapperOrg
       <Disclosure as="header" className="bg-white shadow">
         {({ open }) => (
           <>
-            <div className="mx-auto w-full px-2 sm:px-4 lg:divide-y lg:divide-gray-200 lg:px-8">
+            <div className="mx-auto w-full px-2 sm:px-4 lg:divide-y lg:divide-slate-200 lg:px-8">
               <nav className="py-2" aria-label="Global">
-                <div className="relative z-10 flex items-center lg:hidden">
+                <div className="relative z-10 flex items-center sm:hidden">
                   {/* Mobile menu button */}
-                  <Disclosure.Button className="focus:ring-brand inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset">
+                  <Disclosure.Button className="focus:ring-brand inline-flex items-center justify-center rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-inset">
                     <span className="sr-only">Open menu</span>
                     {open ? (
                       <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
@@ -53,15 +53,15 @@ export default function LayoutWrapperOrganisation({ children }: LayoutWrapperOrg
                     )}
                   </Disclosure.Button>
                 </div>
-                <div className="hidden lg:flex lg:space-x-4">
+                <div className="hidden sm:flex lg:space-x-4">
                   {navigation.map((item) => (
                     <Link
                       key={item.name}
                       href={item.href}
                       className={clsx(
                         item.current
-                          ? "bg-gray-100 text-gray-900"
-                          : "text-gray-900 hover:bg-gray-50 hover:text-gray-900",
+                          ? "bg-slate-100 text-slate-900"
+                          : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
                         "inline-flex items-center rounded-md py-2 px-3 text-sm font-medium"
                       )}
                       aria-current={item.current ? "page" : undefined}>
@@ -81,8 +81,8 @@ export default function LayoutWrapperOrganisation({ children }: LayoutWrapperOrg
                     onClick={() => router.push(item.href)}
                     className={clsx(
                       item.current
-                        ? "bg-gray-100 text-gray-900"
-                        : "text-gray-900 hover:bg-gray-50 hover:text-gray-900",
+                        ? "bg-slate-100 text-slate-900"
+                        : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
                       "block rounded-md py-2 px-3 text-base font-medium"
                     )}
                     aria-current={item.current ? "page" : undefined}>
