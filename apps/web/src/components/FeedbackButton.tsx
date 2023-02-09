@@ -13,7 +13,6 @@ const feedbackEnabled = !!(
 );
 
 export function FeedbackButton() {
-  const [initialized, setInitialized] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const feedbackRef = useRef<HTMLInputElement>(null);
   const { data: session, status } = useSession();
@@ -37,11 +36,8 @@ export function FeedbackButton() {
   }, [feedbackRef, isOpen]);
 
   useEffect(() => {
-    if (feedbackEnabled && !initialized) {
-      import("@formbricks/feedback");
-      setInitialized(true);
-    }
-  }, [initialized]);
+    import("@formbricks/feedback");
+  }, []);
 
   useEffect(() => {
     if (status !== "loading" && feedbackEnabled) {
@@ -62,7 +58,7 @@ export function FeedbackButton() {
     }
   }, [status, session]);
 
-  if (!feedbackEnabled || !initialized) return null;
+  if (!feedbackEnabled) return null;
 
   return (
     <>
