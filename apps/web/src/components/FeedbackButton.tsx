@@ -37,7 +37,14 @@ export function FeedbackButton() {
   }, [feedbackRef, isOpen]);
 
   useEffect(() => {
-    if (status !== "loading" && feedbackEnabled && !initialized) {
+    if (feedbackEnabled && !initialized) {
+      import("@formbricks/feedback");
+      setInitialized(true);
+    }
+  }, [initialized]);
+
+  useEffect(() => {
+    if (status !== "loading" && feedbackEnabled) {
       window.formbricks = {
         ...window.formbricks,
         config: {
@@ -52,12 +59,10 @@ export function FeedbackButton() {
           customer: session?.user,
         },
       };
-      import("@formbricks/feedback");
-      setInitialized(true);
     }
-  }, [status, session, initialized]);
+  }, [status, session]);
 
-  if (!feedbackEnabled) return null;
+  if (!feedbackEnabled || !initialized) return null;
 
   return (
     <>
