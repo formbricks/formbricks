@@ -479,7 +479,6 @@ importers:
 
   packages/ui:
     specifiers:
-      '@formbricks/feedback': workspace:*
       '@formbricks/tsconfig': workspace:*
       '@types/react': ^18.0.25
       '@types/react-dom': ^18.0.8
@@ -502,7 +501,6 @@ importers:
       react-dom: 18.2.0_react@18.2.0
       react-use: 17.4.0_biqbaboplfbrettd7655fr4n2y
     devDependencies:
-      '@formbricks/feedback': link:../feedback
       '@formbricks/tsconfig': link:../tsconfig
       '@types/react': 18.0.25
       '@types/react-dom': 18.0.9
