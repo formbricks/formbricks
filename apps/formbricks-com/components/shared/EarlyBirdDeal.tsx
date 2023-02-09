@@ -6,7 +6,7 @@ import EarlyBird from "@/images/early bird deal for open source jotform alternat
 export default function EarlyBirdDeal() {
   const router = useRouter();
   return (
-    <div className="bg-brand-dark relative max-w-7xl overflow-hidden rounded-xl p-6 pb-16 sm:p-8 sm:pb-16 md:py-8 md:px-12 lg:flex lg:items-center">
+    <div className="bg-brand-dark relative mx-4 max-w-7xl overflow-hidden rounded-xl p-6 pb-16 sm:p-8 sm:pb-16 md:py-8 md:px-12 lg:flex lg:items-center">
       <div className="lg:w-0 lg:flex-1 ">
         <h2
           className="mb-1 text-2xl font-bold tracking-tight text-white sm:text-2xl"
@@ -19,7 +19,7 @@ export default function EarlyBirdDeal() {
         </h2>
 
         <div className="mt-6">
-          <Button variant="secondary" onClick={() => router.push("https://app.formbricks.com")}>
+          <Button variant="secondary" onClick={() => router.push("https://app.formbricks.com/auth/signup")}>
             Get Early Bird Deal
           </Button>
         </div>

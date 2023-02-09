@@ -38,10 +38,14 @@ export default function Header() {
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
-          <Button variant="secondary" className="ml-2" href="https://demo.formbricks.com" target="_blank">
+          <Button variant="secondary" className="ml-2" href="https://app.formbricks.com/demo" target="_blank">
             Try Demo
           </Button>
-          <Button variant="highlight" className="ml-2" href="https://app.formbricks.com" target="_blank">
+          <Button
+            variant="highlight"
+            className="ml-2"
+            href="https://app.formbricks.com/auth/signup"
+            target="_blank">
             Sign Up
           </Button>
         </div>
@@ -74,20 +78,21 @@ export default function Header() {
             </div>
             <div className="px-5 py-6">
               <div className="flex flex-col space-y-5 text-center text-sm dark:text-slate-300">
-                <Link href="/community">Community</Link>
-                <Link href="/blog">Blog</Link>
+                <Link href="#howitworks">How it works</Link>
+                <Link href="#pricing">Pricing</Link>
                 <Button
                   variant="secondary"
-                  EndIcon={GitHubIcon}
-                  onClick={() => router.push("https://github.com/formbricks/formbricks")}
+                  target="_blank"
+                  onClick={() => router.push("https://app.formbricks.com/demo")}
                   className="flex w-full justify-center fill-slate-800 dark:fill-slate-200">
-                  View on Github
+                  Try Demo
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={() => router.push("/waitlist")}
+                  target="_blank"
+                  onClick={() => router.push("https://app.formbricks.com/auth/signup")}
                   className="flex w-full justify-center">
-                  Get access
+                  Sign Up
                 </Button>
               </div>
             </div>

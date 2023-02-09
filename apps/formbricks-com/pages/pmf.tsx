@@ -3,11 +3,14 @@ import { Button } from "@formbricks/ui";
 import { useRouter } from "next/router";
 import BreakerCTA from "@/components/shared/BreakerCTA";
 import Features from "@/components/home/Features";
-import PmfPricing from "@/components/shared/PmfPricing";
+import PricingPmf from "@/components/shared/PricingPmf";
 import Image from "next/image";
 import DashboardMockup from "@/images/dashboard-mockup.png";
 import Pipelines from "@/images/pipelines.png";
 import PreSegmentation from "@/images/pre-segmentation.png";
+import DashboardMockupDark from "@/images/dashboard-mockup-dark.png";
+import PipelinesDark from "@/images/pipelines-dark.png";
+import PreSegmentationDark from "@/images/pre-segmentation-dark.png";
 import PmfDummy from "@/components/shared/PmfDummy";
 import EarlyBirdDeal from "@/components/shared/EarlyBirdDeal";
 
@@ -37,14 +40,14 @@ export default function GetStartedPage() {
         <div className="mx-auto mt-5 max-w-md sm:flex sm:justify-center md:mt-8">
           <Button
             variant="secondary"
-            onClick={() => router.push("https://demo.formbricks.com")}
+            onClick={() => router.push("https://app.formbricks.com/demo")}
             target="_blank">
             Try it out
           </Button>
           <Button
             variant="highlight"
             className="ml-3"
-            onClick={() => router.push("https://app.formbricks.com")}
+            onClick={() => router.push("https://app.formbricks.com/auth/signup")}
             target="_blank">
             Sign Up
           </Button>
@@ -57,7 +60,7 @@ export default function GetStartedPage() {
         headline="Experience what you're missing"
         subheadline="Play around with out Demo - no sign up needed."
         cta="Try Demo"
-        href="https://demo.formbricks.com"
+        href="https://app.formbricks.com/demo"
         inverted
       />
 
@@ -76,9 +79,19 @@ export default function GetStartedPage() {
               </p>
             </div>
             <div className="rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:p-8">
-              <Image src={PreSegmentation} quality="100" alt="react library" className="block dark:hidden" />
-              {/* 
-              <Image src={ImageDarkAnalytics} alt="react library" className="hidden rounded-lg dark:block" /> */}
+              <Image
+                src={PreSegmentation}
+                quality="100"
+                alt="Pre Segmentation"
+                className="block dark:hidden"
+              />
+
+              <Image
+                src={PreSegmentationDark}
+                quality="100"
+                alt="Pre Segmentation"
+                className="hidden dark:block"
+              />
             </div>
           </div>
         </div>
@@ -121,9 +134,10 @@ export default function GetStartedPage() {
               <Image
                 src={Pipelines}
                 quality="100"
-                alt="react library"
+                alt="Data Pipelines"
                 className="block rounded-lg dark:hidden"
               />
+              <Image src={PipelinesDark} quality="100" alt="Data Pipelines" className="hidden dark:block" />
             </div>
           </div>
         </div>
@@ -131,10 +145,19 @@ export default function GetStartedPage() {
       <div className="mx-auto mt-8 mb-12 max-w-lg md:mt-32 md:mb-32  md:max-w-none">
         <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
-            <div className="order-last scale-125 sm:p-8 md:order-first">
-              <Image src={DashboardMockup} quality="100" alt="react library" className="block dark:hidden" />{" "}
-              {/*
-              <Image src={ImageDarkInsights} alt="react library" className="hidden rounded-lg dark:block" /> */}
+            <div className="order-last sm:scale-125 sm:p-8 md:order-first">
+              <Image
+                src={DashboardMockup}
+                quality="100"
+                alt="PMF Dashboard Mockup"
+                className="block dark:hidden"
+              />
+              <Image
+                src={DashboardMockupDark}
+                quality="100"
+                alt="PMF Dashboard Mockup"
+                className="hidden dark:block"
+              />
             </div>
             <div className="pb-8 pl-4 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 4</h4>
@@ -157,11 +180,11 @@ export default function GetStartedPage() {
         headline="Measure your Product-Market Fit."
         subheadline="Feel the pulse of your user base. Get actionable insights."
         cta="Sign up"
-        href="https://app.formbricks.com"
+        href="https://app.formbricks.com/auth/signup"
       /> */}
       <div id="pricing">
         {" "}
-        <PmfPricing />
+        <PricingPmf />
       </div>
     </LayoutPMF>
   );

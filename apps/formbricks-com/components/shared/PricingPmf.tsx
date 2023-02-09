@@ -27,11 +27,11 @@ const tiers = [
     paymentRythm: "/month",
     description: "Use the managed cloud, gather insights immediately.",
     ctaName: "Sign up now",
-    ctaAction: () => window.open("https://app.formbricks.com"),
+    ctaAction: () => window.open("https://app.formbricks.com/auth/signup"),
   },
 ];
 
-export default function PmfPricing() {
+export default function PricingPmf() {
   const router = useRouter();
   return (
     <div className="-mt-10 pb-20">
@@ -44,20 +44,24 @@ export default function PmfPricing() {
               key={tier.name}
               className={clsx(
                 `rounded-lg shadow-sm`,
-                tier.highlight ? "border-2 border-slate-400 bg-slate-300" : "bg-slate-100"
+                tier.highlight
+                  ? "border border-slate-300 bg-slate-200 dark:border-slate-500 dark:bg-slate-600"
+                  : "bg-slate-100 dark:bg-slate-700"
               )}>
               <div className="p-8">
                 <h2
                   className={clsx(
                     "inline-flex text-3xl font-bold",
-                    tier.highlight ? "text-slate-700" : "text-slate-500"
+                    tier.highlight
+                      ? "text-slate-700 dark:text-slate-200"
+                      : "text-slate-500 dark:text-slate-300"
                   )}>
                   {tier.name}
                 </h2>
                 <p
                   className={clsx(
                     "mt-4 whitespace-pre-wrap text-sm",
-                    tier.highlight ? "text-gray-600" : "text-gray-500"
+                    tier.highlight ? "text-gray-600 dark:text-slate-300" : "text-gray-500 dark:text-slate-300"
                   )}>
                   {tier.description}
                 </p>
@@ -65,16 +69,22 @@ export default function PmfPricing() {
                   <span
                     className={clsx(
                       `text-4xl font-light`,
-                      tier.highlight ? "text-slate-800" : "text-slate-500",
+                      tier.highlight
+                        ? "text-slate-800 dark:text-slate-100"
+                        : "text-slate-500 dark:text-slate-200",
                       tier.discounted ? "decoration-brand line-through" : ""
                     )}>
                     {tier.priceMonthly}
                   </span>{" "}
-                  <span className="text-4xl font-bold text-slate-900">{tier.discounted && "$49"}</span>
+                  <span className="text-4xl font-bold text-slate-900 dark:text-slate-50">
+                    {tier.discounted && "$49"}
+                  </span>
                   <span
                     className={clsx(
                       "text-base font-medium",
-                      tier.highlight ? "text-gray-500" : "text-gray-400"
+                      tier.highlight
+                        ? "text-gray-500 dark:text-slate-400"
+                        : "text-gray-400 dark:text-slate-500"
                     )}>
                     {tier.paymentRythm}
                   </span>
