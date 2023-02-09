@@ -18,16 +18,22 @@ export default function SetupInstructions({}) {
         <div className="col-span-3 text-sm text-gray-600">
           <h3 className="block text-lg font-semibold text-slate-800">How to get started</h3>
           <ol className="mt-2 list-decimal pl-4 leading-8 text-slate-700">
+            <li>Copy the Javascript widget below into your application</li>
             <li>
-              Copy the Javascript widget below into your application and customize the config according to
-              your needs.
+              Customize the config according to your needs.{" "}
+              <a
+                className="text-brand font-bold underline"
+                href="https://formbricks.com/docs/best-practices/pmf-survey">
+                Read the docs
+              </a>{" "}
+              for more info.
             </li>
             <li>
-              Choose a HTML element which you want to replace with the PMF survey. Set a unique ID for this
+              Choose an HTML element which you want to replace with the PMF survey. Set a unique ID for this
               element and configure the script accordingly.
             </li>
             <li>You are ready to receive your first submission and view it in the Results tab.</li>
-            <li>Get notified or pipe submission data to a different tool in the Data Pipelines tab.</li>
+            <li>Get notified or pipe submission data to to Slack or Email in the Data Pipelines tab.</li>
           </ol>
         </div>
         <div className="col-span-2">

@@ -17,17 +17,7 @@ export default function SetupInstructions({}) {
       <div className="grid grid-cols-5 gap-8 py-4">
         <div className="col-span-3 text-sm text-gray-600">
           <h3 className="block text-lg font-semibold text-slate-800">How to get started</h3>
-          <ol className="mt-2 list-decimal pl-4 leading-8 text-slate-700">
-            <li>
-              Copy the Javascript widget below into your application and customize the config according to
-              your needs.
-            </li>
-            <li>
-              Setup the button that opens the widget with the onClick handler let your users open the widget.
-            </li>
-            <li>You are ready to receive your first submission and view it in the Results tab.</li>
-            <li>Get notified or pipe submission data to a different tool in the Data Pipelines tab.</li>
-          </ol>
+          <p>You have to options to embed your Fedback widget: Via JavaScript embed and via NPM.</p>
         </div>
         <div className="col-span-2">
           <div>
@@ -61,6 +51,17 @@ export default function SetupInstructions({}) {
         <label htmlFor="formId" className="block text-lg font-semibold text-slate-800">
           Javascript Snippet
         </label>
+        <ol className="mt-2 list-decimal pl-4 leading-8 text-slate-700">
+          <li>
+            Copy the Javascript widget below into your application and customize the config according to your
+            needs.
+          </li>
+          <li>
+            Setup the button that opens the widget with the onClick handler let your users open the widget.
+          </li>
+          <li>You are ready to receive your feedback and view it in the Results tab.</li>
+          <li>Get notified or pipe submission data to to Slack or Email in the Data Pipelines tab.</li>
+        </ol>
         <p>
           Place this Javascript script tags into the head of your HTML file and include the button into the
           body to start using Formbricks Feedback.
