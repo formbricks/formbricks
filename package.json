@@ -18,7 +18,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
-    "release": "turbo run build --filter=react^... && changeset publish"
+    "release": "turbo run build --filter=react^... && changeset publish",
+    "nuke": "rm -r node_modules; for d in **/node_modules; do echo $d; rm -r $d; done"
   },
   "devDependencies": {
     "@changesets/cli": "^2.22.0",
