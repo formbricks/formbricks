@@ -19,7 +19,10 @@ export default function EarlyBirdDeal() {
         </h2>
 
         <div className="mt-6">
-          <Button variant="secondary" onClick={() => router.push("https://app.formbricks.com/auth/signup")}>
+          <Button
+            variant="secondary"
+            target="_blank"
+            onClick={() => router.push("https://app.formbricks.com/auth/signup")}>
             Get Early Bird Deal
           </Button>
         </div>

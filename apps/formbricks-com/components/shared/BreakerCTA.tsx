@@ -45,7 +45,7 @@ export default function BreakerCTA({ inverted = false, teaser, headline, subhead
           {subheadline}
         </p>
         <div className="xs:hidden mt-4">
-          <Button variant="highlight" onClick={() => router.push(`${href}`)}>
+          <Button variant="highlight" target="_blank" onClick={() => router.push(`${href}`)}>
             {cta}
           </Button>
         </div>
