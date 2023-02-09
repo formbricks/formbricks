@@ -7,15 +7,39 @@ export const meta = {
 
 The Feedback Box is an easy way to gather feedback from your users.
 
+##
+
 ## Installation
+
+### NPM Install
 
 The easiest way to get the Feedback Box live on your page is via NPM:
 
 ```tsx
-npm install XXXX
+npm install formbricks/feedback
 ```
 
-## Personalizing
+### JavaScript Embed
+
+You can also embed the Feedback Box in your HTML `<head>` tag:
+
+```tsx
+<script>
+window.formbricks = {
+  config: {
+    hqUrl: "https://app.formbricks.com",
+    formId: "cldipcgat0000mn0g31a8pdse",
+  },
+  ...window.formbricks,
+};
+</script>
+```
+
+## Setting up the config
+
+You can change the content behaviour of the Feedback Box with the config object.
+
+### Personalizing
 
 Add your name, position and image link to give users the impression that you care about their feedback :)
 
@@ -27,7 +51,7 @@ contact: {
 },
 ```
 
-## Sending user data with feedback
+### Sending user data with feedback
 
 The feedback box is built for in-app experiences. We assume that you already have user properties stored in a session object.
 
@@ -41,7 +65,7 @@ customer: {
 },
 ```
 
-## Styling
+### Styling
 
 You can style the Feedback Box to match your UI. We recommend to at least replace the brand color with your main color.
 
