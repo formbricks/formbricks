@@ -39,7 +39,7 @@ export default function Highlights({}) {
                 <br />
                 <span className="font-light">ask specific user cohorts.</span>
               </h2>
-              <p className="text-md mt-6 max-w-3xl leading-7 text-slate-500 dark:text-slate-400">
+              <p className="text-md mt-6 max-w-lg leading-7 text-slate-500 dark:text-slate-400">
                 Email is spammy and ineffective. Create cohorts based on usage data and reach out to specific
                 cohorts in-app.
               </p>
@@ -64,7 +64,7 @@ export default function Highlights({}) {
                 <br />
                 <span className="font-light">analytics and interviews.</span>
               </h2>
-              <p className="text-md mt-6 max-w-3xl leading-7 text-slate-500 dark:text-slate-400">
+              <p className="text-md mt-6 max-w-md leading-7 text-slate-500 dark:text-slate-400">
                 Product analytics tell you WHAT users do, not WHY. Complement user interviews with a constant
                 flow of qualitative user insights.
               </p>
@@ -81,7 +81,7 @@ export default function Highlights({}) {
                 <br />
                 <span className="font-light">Never ask something twice.</span>
               </h2>
-              <p className="text-md mt-6 max-w-3xl leading-7 text-slate-500 dark:text-slate-400">
+              <p className="text-md mt-6 max-w-md leading-7 text-slate-500 dark:text-slate-400">
                 With Formbricks you build a database of everyone who signs up to your product. Enrich their
                 profile at key moments in the user journey.
               </p>

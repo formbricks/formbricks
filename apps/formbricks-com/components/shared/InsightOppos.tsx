@@ -21,10 +21,11 @@ const BestPractices = [
     icon: OnboardingIcon,
   },
   {
-    title: "Superhuman PMF Survey",
+    title: "Product-Market Fit Survey",
     description: "Find out how disappointed people would be if they could not use your service any more.",
     category: "In-Moment",
     icon: PMFIcon,
+    href: "/pmf",
   },
   {
     title: "Feature Chaser",
