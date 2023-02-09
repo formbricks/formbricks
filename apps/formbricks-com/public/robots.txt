@@ -1,8 +1,6 @@
 # *
 User-agent: *
-Disallow: /pmf
 Allow: /
-
 
 # Host
 Host: https://formbricks.com
