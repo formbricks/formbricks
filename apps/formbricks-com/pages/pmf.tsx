@@ -11,7 +11,7 @@ import PreSegmentation from "@/images/pre-segmentation.png";
 import DashboardMockupDark from "@/images/dashboard-mockup-dark.png";
 import PipelinesDark from "@/images/pipelines-dark.png";
 import PreSegmentationDark from "@/images/pre-segmentation-dark.png";
-import PmfDummy from "@/components/shared/PmfDummy";
+import PmfDummy from "@/components/docs/PmfDummy";
 import EarlyBirdDeal from "@/components/shared/EarlyBirdDeal";
 
 export default function GetStartedPage() {
