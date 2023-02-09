@@ -7,7 +7,6 @@ import { convertDateTimeString, onlyUnique, parseUserAgent } from "@/lib/utils";
 import { BackIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { useMemo } from "react";
 import EmptyPageFiller from "../EmptyPageFiller";
@@ -39,12 +38,10 @@ export default function SingleCustomerPage() {
   return (
     <div>
       <main className="mx-auto px-4 sm:px-6 lg:px-8">
-        <Link
-          className="inline-flex pt-5 text-sm text-gray-500"
-          href={`/organisations/${router.query.organisationId}/customers/`}>
+        <button className="inline-flex pt-5 text-sm text-gray-500" onClick={() => router.back()}>
           <BackIcon className="mr-2 h-5 w-5" />
-          Back to customers overview
-        </Link>
+          Back
+        </button>
         <div className="flex items-baseline justify-between border-b border-gray-200 pt-4 pb-6">
           <h1 className="text-4xl font-bold tracking-tight text-gray-900">{customer.email}</h1>
         </div>

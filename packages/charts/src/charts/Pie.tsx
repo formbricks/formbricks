@@ -70,7 +70,7 @@ function FbPie({ color, submissions, schema, fieldName }: Props) {
 
   return (
     <>
-      <PieChart width={400} height={250}>
+      <PieChart width={500} height={250}>
         {/*  <Pie dataKey="value" fill={color || "#00C4B8"} /> */}
         <Pie
           data={data}
@@ -92,9 +92,14 @@ function FbPie({ color, submissions, schema, fieldName }: Props) {
                 fontSize={12}
                 textAnchor={x > cx ? "start" : "end"}
                 dominantBaseline="central">
-                {/* 
+                <tspan>
+                  {/* 
 // @ts-ignore */}
-                {data[index].name} ({Math.round((value / data.length) * 100)}%)
+                  {data[index].name}
+                </tspan>
+                <tspan dy="20" dx="-38">
+                  ({Math.round((value / submissions.length) * 100)}%)
+                </tspan>
               </text>
             );
           }}
