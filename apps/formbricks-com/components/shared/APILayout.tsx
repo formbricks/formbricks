@@ -27,7 +27,7 @@ interface APICallProps {
 }
 
 export function APILayout({ method, url, description, queries, bodies, responses, example }: APICallProps) {
-  const [switchState, setSwitchState] = useState(false);
+  const [switchState, setSwitchState] = useState(true);
   function handleOnChange() {
     setSwitchState(!switchState);
   }
@@ -50,16 +50,16 @@ export function APILayout({ method, url, description, queries, bodies, responses
       <div
         className={clsx(
           "mr-3 inline rounded-full p-1 px-3 font-semibold text-white",
-          method === "POST" && "bg-red-400",
-          method === "GET" && "bg-green-400"
+          method === "POST" && "bg-red-400 dark:bg-red-800",
+          method === "GET" && "bg-green-400 dark:bg-green-800"
         )}>
         {method}
       </div>
-      <div className="inline text-sm text-slate-500">
-        http://localhost:300/api
-        <span className="font-bold text-black">{url}</span>
+      <div className="inline text-sm text-slate-500 ">
+        http://localhost:300
+        <span className="font-bold text-black dark:text-slate-300">{url}</span>
       </div>
-      <div className="mt-4 ml-8 font-bold">{description}</div>
+      <div className="mt-4 ml-8 font-bold dark:text-slate-400">{description}</div>
       <div>
         <div className={clsx(switchState ? "block" : "hidden", "ml-8")}>
           <p className="mt-6 mb-2 text-lg font-semibold">Parameters</p>
@@ -88,7 +88,11 @@ export function APILayout({ method, url, description, queries, bodies, responses
                 {example && (
                   <div>
                     <p className="not-prose mb-2 pt-2 font-bold">Body Example</p>
-                    <div className="rounded-lg bg-slate-300 p-2 font-mono text-sm">{example}</div>
+                    <div>
+                      <pre>
+                        <code>{example}</code>
+                      </pre>
+                    </div>
                   </div>
                 )}
               </div>
@@ -187,7 +191,9 @@ function Response({ color, statusCode, description, example }: RespProps) {
         </div>
       </div>
       {example && toggleExample && (
-        <div className="col-span-2 my-3 rounded-lg bg-slate-300 p-2 font-mono">{example}</div>
+        <div className="col-span-2 my-3 rounded-lg bg-slate-300 p-2 font-mono dark:bg-slate-600 dark:text-slate-300">
+          {example}
+        </div>
       )}
     </div>
   );

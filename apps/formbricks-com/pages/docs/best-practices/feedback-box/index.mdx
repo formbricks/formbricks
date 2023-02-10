@@ -1,0 +1,182 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import Link from "next/link";
+
+export const meta = {
+  title: "Feedback Box",
+};
+
+The Feedback Box is an easy way to gather feedback from users in your app.
+
+## Purpose
+
+Allow users to share feedback with 2 clicks. A low friction way to gather feedback helps catching even the smallest points of annoyance / frustration in user experiences.
+
+## Formbricks Approach
+
+- Make it **easy**: 2 clicks
+- Keep it **personal**: Founder faces
+- **Pre-sort** feedback:
+  - Bug → Pipe into Bug channel for devs
+  - Feedback → Pipe into Feedback channel for PM’s
+  - Appreciation → Pipe into General channel for team spirit & testimonials
+
+## Preview
+
+## Installation
+
+To add the Feedback Box to your app, you need to perform three steps:
+
+1. Install
+2. Configure
+3. Embed
+
+### 1. Install
+
+There are two ways to install the Feedback Box: npm and JavaScript embed.
+
+**NPM Install**
+
+```tsx
+npm install @formbricks/feedback
+```
+
+**JavaScript Embed**
+
+You can also embed the Feedback Box in your HTML `<head>` tag:
+
+```tsx
+<script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2" defer></script>
+```
+
+### 2. Setting up the config
+
+You can change the content behaviour of the Feedback Box with the config object.
+
+**Basic config**
+
+Add your Formbricks form ID and the formbricks server address to the config object.
+
+```html
+<script>
+  window.formbricks = {
+    ...window.formbricks,
+    config: {
+      formbricksUrl: "https://app.formbricks.com",
+      formId: "cldipnvz80002le0ha2a3zhgl",
+    },
+  };
+</script>
+```
+
+**Personalizing**
+
+Add your name, position and image link to give users the impression that you care about their feedback :)
+
+```javascript
+window.formbricks = {
+  ...window.formbricks,
+  config: {
+    // ...
+    contact: {
+      name: "Johannes",
+      position: "Co-Founder",
+      imgUrl: "https://avatars.githubusercontent.com/u/72809645?v=4",
+    },
+  },
+};
+```
+
+**Sending user data with feedback**
+
+The feedback box is built for in-app experiences. We assume that you already have user properties stored in a session object.
+
+Here is an example of how to pass it to Formbricks. However, it might differ in your specific case.
+
+```javascript
+window.formbricks = {
+  ...window.formbricks,
+  config: {
+    // ...
+    customer: {
+      email: "", // fill dynamically
+      name: "", // fill dynamically
+    },
+  };
+},
+```
+
+Note: the `email` field must be present in the customer object
+
+**Styling**
+
+You can style the Feedback Box to match your UI. We recommend to at least replace the brand color with your main color.
+
+```javascript
+window.formbricks = {
+  ...window.formbricks,
+  config: {
+    // ...
+    style: {
+      brandColor: "#00c4b8",
+    },
+  };
+},
+```
+
+Here are all variables you can set with the current defaults:
+
+```javascript
+style: {
+  brandColor: "#00c4b8",
+  borderRadius: "0.4rem",
+  headerBGColor: "#1e293b",
+  headerTitleColor: "#111111",
+  boxBGColor: "#cbd5e1",
+  textColor: "#0f172a",
+  buttonHoverColor: "#e2e8f0",
+},
+```
+
+### Example config
+
+Here is an example of a full config object:
+
+```javascript
+window.formbricks = {
+  ...window.formbricks,
+  config: {
+    hqUrl: "https://app.formbricks.com",
+    formId: "cldipcgat0000mn0g31a8pdse",
+    containerId: "formbricks-feedback-box", // only needed for modal & inline
+    contact: {
+      name: "Johannes",
+      position: "Co-Founder",
+      imgUrl: "https://avatars.githubusercontent.com/u/72809645?v=4",
+    },
+    customer: {
+      id: "", // fill dynamically
+      name: "", // fill dynamically
+      email: "", // fill dynamically
+    },
+    style: {
+      brandColor: "#0E1420",
+      headerBGColor: "#E5E7EB",
+      headerTitleColor: "#4B5563",
+      boxBGColor: "#F9FAFB",
+      textColor: "#374151",
+      buttonHoverColor: "#F3F4F6",
+    },
+  },
+};
+```
+
+### 3. Embed
+
+To add the Feedback Box to your UI, you can use different wrappers. Please follow the instructions linked below:
+
+1. <Link href="/docs/wrappers/pop-over">In-app Pop-over</Link>
+2. <Link href="/docs/wrappers/modal">Modal</Link>
+3. <Link href="/docs/wrappers/inline">Inline</Link>
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

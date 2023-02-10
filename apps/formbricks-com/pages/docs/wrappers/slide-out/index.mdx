@@ -1,0 +1,127 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import Link from "next/link";
+import ResponsiveEmbed from "react-responsive-embed";
+import { Callout } from "@/components/shared/Callout";
+
+export const meta = {
+  title: "In-app slide-outs",
+};
+
+The slide-out is placed on the side of the page (bottom on mobile) and can be opened by clicking a button. It's a great way to show an always present feedback form or survey to your users.
+
+<Callout title="No UI provided" type="warning">
+  Currently the slide-out wrapper is a custom integration that needs to be implemented by you. We are working
+  on a more convenient way to integrate the slide-out in the near-future.
+</Callout>
+
+## Example
+
+<div className="max-w-md">
+  <ResponsiveEmbed
+    src="/docs/wrappers/slide-out/demo"
+    allowFullScreen
+    className="rounded-lg border-2 border-gray-200"
+    ratio="8:10"
+  />
+</div>
+
+## Preparation
+
+The Best Practices come with a default slide-out in the script. We assume that you have already installed one of the Best Practices and configured it. If not, please proceed here:
+
+- <Link href="/docs/best-practices/feedback-box">Install and configure Feedback Box</Link>
+- <Link href="/docs/best-practices/pmf-survey">Install and configure Product-Market Fit survey</Link>
+
+## Full Example
+
+Here is a full example file for React.js with TailwindCSS:
+
+```tsx
+import clsx from "clsx";
+import { useEffect, useRef, useState } from "react";
+
+declare global {
+  interface Window {
+    formbricks: any;
+  }
+}
+
+export function FeedbackButton() {
+  const [isOpen, setIsOpen] = useState(false);
+  const feedbackRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Close the feedback form if the user clicks outside of it
+    function handleClickOutside(event: any) {
+      if (feedbackRef.current && !feedbackRef.current.contains(event.target)) {
+        if (isOpen) setIsOpen(false);
+      }
+    }
+    // Bind the event listener
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      // Unbind the event listener on clean up
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [feedbackRef, isOpen]);
+
+  useEffect(() => {
+    window.formbricks = {
+      ...window.formbricks,
+      config: {
+        formbricksUrl: https://app.formbricks.com",
+        formId: "abcdefg",
+        divId: "formbricks-feedback-wrapper",
+        contact: {
+          name: "Matti",
+          position: "Co-Founder",
+          imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+        },
+      },
+    };
+    // @ts-ignore
+    import("@formbricks/feedback");
+  }, []);
+
+  return (
+    <>
+      <div
+        className={clsx(
+          "xs:flex-row xs:right-0 xs:top-1/2 xs:w-[18rem] xs:-translate-y-1/2 fixed bottom-0 z-50 h-[22rem] w-full flex-1 transition-all duration-500 ease-in-out",
+          isOpen ? "xs:-translate-x-0 translate-y-0" : "xs:translate-x-full xs:-mr-1 translate-y-full"
+        )}>
+        <div
+          className="xs:flex-row flex h-full flex-col"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          ref={feedbackRef}>
+          <button
+            className="xs:-rotate-90  xs:top-1/2 xs:-left-[5.75rem] xs:-translate-y-1/2 xs:-translate-x-0 xs:w-32 xs:p-4 bg-brand-dark absolute left-1/2 w-28 -translate-x-1/2 -translate-y-full rounded-t-lg p-3 font-medium text-white"
+            onClick={() => {
+              if (!isOpen) {
+                if (window) {
+                  window.formbricks.render();
+                  window.formbricks.resetForm();
+                }
+              }
+              setIsOpen(!isOpen);
+            }}>
+            {isOpen ? "Close" : "Feedback"}
+          </button>
+          <div
+            className="xs:rounded-bl-lg xs:rounded-tr-none h-full w-full overflow-hidden rounded-bl-none rounded-tr-lg rounded-tl-lg bg-slate-50 shadow-lg"
+            id="formbricks-feedback-wrapper"></div>
+        </div>
+      </div>
+    </>
+  );
+}
+```
+
+## That’s it! 🎉
+
+Play around and have fun with your new slide-out wrapper.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

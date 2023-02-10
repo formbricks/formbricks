@@ -1,0 +1,77 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+import Link from "next/link";
+
+export const meta = {
+  title: "Inline surveys",
+};
+
+An inline survey is natively embedded into your user interface.
+
+<Callout title="No UI provided" type="warning">
+  Since this is highly dependent on your frontend stack, we do not yet provide any UI components. We explain how you can fill a `<div>` in your UI with the Best Practice content.
+</Callout>
+
+## Preparation
+
+The Best Practices come with a default pop-over in the script. We assume that you have already installed one of the Best Practices and configured it. If not, please proceed here:
+
+- <Link href="/docs/best-practices/feedback-box">Install and configure Feedback Box</Link>
+- <Link href="/docs/best-practices/pmf-survey">Install and configure Product-Market Fit survey</Link>
+
+## Implementation
+
+1. To inject the Best Practice in your inline div, you have to make sure to have set the `containerID` in the config object:
+
+```json
+config: {
+  formbricksUrl: "https://app.formbricks.com",
+  formId: "cldipcgat0000mn0g31a8pdse",
+  containerId: "formbricks-survey", // needs to be set
+},
+```
+
+2. All you have to do then is to set the `id` of your div accordingly:
+
+```tsx
+<div id="formbricks-survey"></div>
+```
+
+At the moment we only support embedding one survey per page. We are working on a solution to support multiple surveys per page.
+
+## Full Example
+
+Here is a full example file for React.js using NPM:
+
+```tsx
+import { useEffect } from "react";
+
+export function FeedbackButton() {
+  useEffect(() => {
+    window.formbricks = {
+      ...window.formbricks,
+      config: {
+        hqUrl: "https://app.formbricks.com",
+        formId: "abcdefg",
+        containerId: "formbricks-container",
+        contact: {
+          name: "Matti",
+          position: "Co-Founder",
+          imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+        },
+      },
+    };
+    // @ts-ignore
+    import("@formbricks/feedback");
+  }, []);
+
+  return <div id="formbricks-container"></div>;
+}
+```
+
+## That's it 🎉
+
+You’re Best Practice survey will be displayed in your target div when the Best Practice survey is fully loaded.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

@@ -1,0 +1,178 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import Link from "next/link";
+import Image from "next/image";
+import NewPMF from "@/images/docs/new-pmf.png";
+import ID from "@/images/docs/copy-id.png";
+import PmfDummy from "@/components/docs/PmfDummy";
+
+export const meta = {
+  title: "Product-Market Fit Survey",
+};
+
+The Product-Market Fit survey (or Sean Ellis Test) is a method to measure Product-Market Fit.
+
+## Purpose
+
+By assessing how disappointed users would be if they could no longer use your service you get a good idea of how well your current product fits your target market.
+
+Measuring it allows you to optimize it.
+
+## Formbricks Approach
+
+- Higher conversion: In-app surveys **convert significantly better** than email surveys
+
+- **Pre-segment** user base: Only ask users who experienced the value of your product
+
+- **Specific** dashboard: Understand your data right, separate signal from noise by design
+
+- Targeted approach: **Personally address** users with their name (if you have it)
+
+- Measure continuously: Feel the pulse of your user base **consistently**
+
+- No UI clutter: **Natively embed** the survey for best possible UX
+
+- **Never** ask twice: Assure to not survey users twice
+
+## Preview
+
+<div className="max-w-md">
+  <PmfDummy />
+</div>
+
+## Installation
+
+To add the Product-Market Fit Survey to your app, you need to perform these steps:
+
+1. Create new survey at app.formbricks.com
+2. Embed JS snippet in `<head>`
+3. Configure survey
+4. Render in-app
+
+### 1. Create new survey
+
+Create an account at [app.formbricks.com](https://app.formbricks.com/auth/signup)
+
+Then, create a new Product-Market Fit Survey:
+
+<Image src={NewPMF} alt="create pmf survey" quality="100" />
+
+Go to the "Setup instructions" tab and copy the ID:
+
+<Image src={ID} alt="copy survey id" quality="100" />
+
+### 2. Embed Formbricks snippet in `<head>`
+
+Embed the Product-Market Fit Survey script in your HTML `<head>` tag and replace survey ID:
+
+```tsx
+<script src="https://cdn.jsdelivr.net/npm/@formbricks/pmf@0.0.9" defer></script>
+
+<script>
+  window.formbricksPmf = {
+    ...window.formbricksPmf,
+    config: {
+      formbricksUrl: "https://app.formbricks.com",
+      formId: "SURVEY ID HERE", // paste your survey ID here
+      containerId: "formbricks-pmf", // required to render survey in your page
+    },
+  };
+</script>
+```
+
+All you have to do now is assigning the `containerId` to the div where you want to render your survey (detailed instructions at the bottom):
+
+```html
+<div id="formbricks-pmf"></div>
+```
+
+### 4. Configure
+
+**Sending user metadata with submission**
+
+The Product-Market Fit Survey is built for in-app experiences. We assume that you already have user properties stored in a session object. It makes sense to send them to Formbricks to enrich the user profile in the user view. Later on, you will be able to create cohorts to survey based on user properties.
+
+Here is an example of how to take metadata from the next.js Session Object and pass it to Formbricks:
+
+```javascript
+window.formbricksPmf = {
+  ...window.formbricksPmf,
+  config: {
+    // ...
+    customer: {
+      email: "", // fill dynamically
+      name: "", // fill dynamically
+    },
+  };
+},
+```
+
+Note: the `email` field must be present in the customer object
+
+**Styling**
+
+You can style the Product-Market Fit Survey to match your UI. We recommend to at least replace the brand color with your main color.
+
+```javascript
+window.formbricksPmf = {
+  ...window.formbricksPmf,
+  config: {
+    // ...
+    style: {
+      brandColor: "#00c4b8",
+    },
+  };
+},
+```
+
+Here are all variables you can set with the current defaults:
+
+```javascript
+style: {
+  brandColor: "#00c4b8",
+  borderRadius: "0.4rem",
+  containerBGColor: "#f8fafc",
+  containerBGColor: "#f8fafc",
+  textColor: "#0f172a",
+  buttonTextColor: "#ffffff",
+  textareaBorderColor: "#e2e8f0",
+},
+```
+
+### Example config
+
+Here is an example of a full config object:
+
+```javascript
+window.formbricksPmf = {
+  ...window.formbricksPmf,
+  config: {
+    formbricksUrl: "https://app.formbricks.com",
+    formId: "cldetkpre0000nr0hku986hio",
+    containerId: "formbricks-pmf-survey", // always needed
+    customer: {
+      id: "", // fill dynamically
+      name: "", // fill dynamically
+      email: "", // fill dynamically
+    },
+    style: {
+      brandColor: "#00c4b8",
+      borderRadius: "0.4rem",
+      containerBGColor: "#f8fafc",
+      containerBGColor: "#f8fafc",
+      textColor: "#0f172a",
+      buttonTextColor: "#ffffff",
+      textareaBorderColor: "#e2e8f0",
+    },
+  },
+};
+```
+
+### 3. Embed
+
+To add the Product-Market Fit Survey to your UI, you can use different wrappers. Please follow the instructions linked below:
+
+1. <Link href="/docs/wrappers/modal">Modal</Link>
+2. <Link href="/docs/wrappers/inline">Inline</Link>
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

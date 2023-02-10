@@ -1,13 +1,12 @@
 import { Layout } from "@/components/docs/Layout";
-import HeroAnimation from "./open-source-tool-for-form-and-survey-overview.png";
-import Image from "next/image";
+import HeroAnimation from "@/components/shared/HeroAnimation.tsx";
 
 export const meta = {
-  title: "Formbricks – Open-source forms & survey toolbox",
+  title: "Formbricks – Experience Management for B2B SaaS",
 };
 
-Modular, customizable, extendable. We're building all essential form functionality on an open platform.
+Natively embed qualitative user research into your B2B SaaS. Leverage Best Practices for user discovery to increase Product-Market Fit.
 
-<Image src={HeroAnimation} alt="HeroAnimation" />
+<HeroAnimation />
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

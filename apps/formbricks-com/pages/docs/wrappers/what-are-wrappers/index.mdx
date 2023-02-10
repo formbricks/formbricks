@@ -1,0 +1,30 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "What are Wrappers?",
+};
+
+Wrappers are interfaces to bring your Best Practices in front of your users.
+
+You can display all Best Practice surveys in all Wrappers for maximum flexibility.
+
+### In-app
+
+| Wrapper                        | Pros                     | Cons                   | Status      |
+| ------------------------------ | ------------------------ | ---------------------- | ----------- |
+| In-app Pop-Over                | Easy to implement        | Can feel intrusive     | Public beta |
+| Inline survey                  | Native look & feel       | Requires dev attention | Public beta |
+| Modal window                   | Guaranteed attention     | Requires dev attention | Public beta |
+| In user flow (e.g. Onboarding) | 100% conversion rate     | Adds friction to UX    | Closed beta |
+| Chat Bubble Integration        | Use existing Chat Bubble | Can feel intrusive     | -           |
+
+### Other
+
+| Wrapper                  | Pros              | Cons                        | Status  |
+| ------------------------ | ----------------- | --------------------------- | ------- |
+| Link (Standalone survey) | Easy to implement | Low conversion rate         | Q2 2023 |
+| Email                    | Easy to implement | Spammy, low conversion rate | Q2 2023 |
+| WhatsApp Survey          | High attention    | Need phone number           | -       |
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

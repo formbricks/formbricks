@@ -1,0 +1,14 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+
+export const meta = {
+  title: "Email Surveys",
+};
+
+<Callout title="On Roadmap" type="note">
+  As of now, we're focussing on in-app surveying. However, we will build out additional forms of surveying
+  sooner or later.
+</Callout>
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

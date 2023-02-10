@@ -1,0 +1,82 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import Link from "next/link";
+import ResponsiveEmbed from "react-responsive-embed";
+
+export const meta = {
+  title: "In-app Pop-overs",
+};
+
+The pop-over opens a little survey window with the survey content when the user clicks on a button.
+
+## Example
+
+<div className="max-w-md">
+  <ResponsiveEmbed
+    src="/docs/wrappers/pop-over/demo"
+    allowFullScreen
+    className="rounded-lg border-2 border-gray-200"
+    ratio="1:1"
+  />
+</div>
+
+## Preparation
+
+The Best Practices come with a default pop-over in the script. We assume that you have already installed one of the Best Practices and configured it. If not, please proceed here:
+
+- <Link href="/docs/best-practices/feedback-box">Install and configure Feedback Box</Link>
+- <Link href="/docs/best-practices/pmf-survey">Install and configure Product-Market Fit survey</Link>
+
+## Implementation
+
+To implement the pop-over, all you have to do is set up a button with the following onClick handler, like so:
+
+```tsx
+<button onclick={(e) => window.formbricks.open(e)}>Feedback</button>
+```
+
+## Full Example
+
+Here is a full example file for React.js with TailwindCSS:
+
+```tsx
+import { Button } from "@formbricks/ui";
+import { useEffect, useRef, useState } from "react";
+
+declare global {
+  interface Window {
+    formbricks: any;
+  }
+}
+
+export function FeedbackButton() {
+  useEffect(() => {
+    window.formbricks = {
+      ...window.formbricks,
+      config: {
+        formbricksUrl: https://app.formbricks.com",
+        formId: "abcdefg",
+        contact: {
+          name: "Matti",
+          position: "Co-Founder",
+          imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+        },
+      },
+    };
+    // @ts-ignore
+    import("@formbricks/feedback");
+  }, []);
+
+  return (
+    <Button variant="secondary" onClick={(e) => window.formbricks.open(e)}>
+      Open Feedback
+    </Button>
+  );
+}
+```
+
+## That’s it! 🎉
+
+You’re Best Practice survey should open on button click.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

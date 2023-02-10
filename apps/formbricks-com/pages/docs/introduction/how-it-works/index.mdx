@@ -1,0 +1,36 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "How Formbricks works",
+};
+
+Formbricks has two sides: The end-user facing surveys and the analysis dashboards.
+
+## End-user facing surveys
+
+The surveys are also split up in two elements: The content and the wrapper.
+
+While you will be able to freely design your surveys later on, we start with Best Practices of managing user experiences.
+
+### Best Practices
+
+Best Practices are more than mere survey templates. They are end-to-end productized methods for managing product. It’s designed like that to make product-led growth easier.
+
+### Wrappers
+
+Wrappers are different ways to put surveys in front of your users: In-app pop-ups, inline surveys, email surveys, standalone surveys with a link to share, etc.
+
+## Analysis Dashboards
+
+The dashboards are specifically designed for each Best Practice. Instead of a generic visualisation of aggregated data we focus on enabling acting on insights. A few examples:
+
+**Feedback Box dashboard:** Built for a quick and individualized reaction on Feedback
+
+**Product-Market Fit dashboard:** Designed to build conviction for upcoming product decisions.
+
+**Interview Prompt dashboard:** Designed to schedule and manage 1:1 interviews with users
+
+… you get the idea. Let’s have a closer look! |
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

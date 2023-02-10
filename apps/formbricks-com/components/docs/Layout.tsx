@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import clsx from "clsx";
-
 import { Hero } from "@/components/shared/Hero";
 import { FooterLogo, Logomark } from "@/components/shared/Logo";
 import { MobileNavigation } from "@/components/shared/MobileNavigation";
@@ -42,7 +41,7 @@ function Header({ navigation }: any) {
       className={clsx(
         "sticky top-0 z-50 flex flex-wrap items-center justify-between bg-slate-100 px-4 py-5 shadow-md shadow-slate-900/5 transition duration-500 dark:shadow-none sm:px-6 lg:px-8",
         isScrolled
-          ? "bg-slate-100/90 backdrop-blur dark:bg-slate-900/90 [@supports(backdrop-filter:blur(0))]:bg-slate-100/75 dark:[@supports(backdrop-filter:blur(0))]:bg-slate-900/75"
+          ? "[@supports(backdrop-filter:blur(0))]:bg-slate-100/75 dark:[@supports(backdrop-filter:blur(0))]:bg-slate-900/75 bg-slate-100/90 backdrop-blur dark:bg-slate-900/90"
           : "dark:bg-transparent"
       )}>
       <div className="mr-6 flex lg:hidden">
@@ -61,7 +60,7 @@ function Header({ navigation }: any) {
         <Button
           variant="secondary"
           EndIcon={GitHubIcon}
-          endIconClassName="fill-slate-800 dark:fill-slate-200"
+          endIconClassName="fill-slate-800 dark:fill-slate-200 ml-2"
           onClick={() => router.push("https://github.com/formbricks/formbricks")}>
           View on Github
         </Button>
@@ -125,6 +124,15 @@ export function Layout({ children, meta }: LayoutProps) {
               </header>
             )}
             <Prose className="">{children}</Prose>
+            <div className="mt-16 rounded-xl border-2 border-slate-200 bg-slate-300 p-8 dark:border-slate-700/50 dark:bg-slate-800">
+              <h4 className="text-3xl font-semibold text-slate-500 dark:text-slate-50">Need help?</h4>
+              <p className="my-4 text-slate-500 dark:text-slate-400">
+                Join our Discord and ask away. We&apos;re happy to help where we can!
+              </p>
+              <Button variant="highlight" href="/discord" target="_blank">
+                Join Discord
+              </Button>
+            </div>
           </article>
           <dl className="mt-12 flex border-t border-slate-200 pt-6 dark:border-slate-800">
             {previousPage && (
