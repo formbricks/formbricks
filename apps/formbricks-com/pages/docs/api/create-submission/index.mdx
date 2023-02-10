@@ -7,18 +7,52 @@ export const meta = {
 };
 
 <APILayout
-  method="GET"
-  url="/users/me"
-  description="Get the current logged in user."
+  method="POST"
+  url="/api/capture/forms/{formId}/submissions"
+  description="Add a new submission to a form by form ID."
   queries={[{ label: "apiKey", type: "string", description: "Your API key" }]}
   bodies={[
-    { label: "tba", type: "tba", description: "tba" },
-    { label: "tba", type: "tba", description: "tba" },
+    {
+      label: "customer",
+      type: "JSON",
+      description: "The customer and metadata you want to link the submission to.",
+    },
+    {
+      label: "data",
+      type: "JSON",
+      description: "The content of the submission.",
+    },
+    {
+      label: "finished",
+      type: "boolean",
+      description: "Determines if submission is complete.",
+    },
   ]}
+  example={`{
+  "data": {
+  "rating": 10,
+  "message": "I love Formbricks"
+  },
+  "customer": {
+    "email": "hola@formbricks.com",
+    "name": "Johnny"
+  },
+  "finished": true
+}`}
   responses={[
-    { color: "green", statusCode: "tba", description: "tba" },
-    { color: "brown", statusCode: "tba", description: "tba" },
+    {
+      color: "green",
+      statusCode: "200",
+      description: "success",
+      example: "{ // Response }",
+    },
   ]}
 />
+
+| field name | required | default | description                                                                                                                                                    |
+| ---------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| data       | yes      | -       | The submission object (answers to the form/survey)                                                                                                             |
+| customer   | no       | -       | The customer this submission is connected to. The customer object must contain an email field. All other fields are optional and get saved as user properties. |
+| finished   | no       | false   | Mark a submission as complete to be able to filter accordingly                                                                                                 |
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
