@@ -48,6 +48,10 @@ const navigation = [
         href: "/docs/wrappers/pop-over",
       },
       {
+        title: "In-app Slide-out",
+        href: "/docs/wrappers/slide-out",
+      },
+      {
         title: "Modal",
         href: "/docs/wrappers/modal",
       },

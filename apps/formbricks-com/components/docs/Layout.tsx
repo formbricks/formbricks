@@ -42,7 +42,7 @@ function Header({ navigation }: any) {
       className={clsx(
         "sticky top-0 z-50 flex flex-wrap items-center justify-between bg-slate-100 px-4 py-5 shadow-md shadow-slate-900/5 transition duration-500 dark:shadow-none sm:px-6 lg:px-8",
         isScrolled
-          ? "bg-slate-100/90 backdrop-blur dark:bg-slate-900/90 [@supports(backdrop-filter:blur(0))]:bg-slate-100/75 dark:[@supports(backdrop-filter:blur(0))]:bg-slate-900/75"
+          ? "[@supports(backdrop-filter:blur(0))]:bg-slate-100/75 dark:[@supports(backdrop-filter:blur(0))]:bg-slate-900/75 bg-slate-100/90 backdrop-blur dark:bg-slate-900/90"
           : "dark:bg-transparent"
       )}>
       <div className="mr-6 flex lg:hidden">
@@ -61,7 +61,7 @@ function Header({ navigation }: any) {
         <Button
           variant="secondary"
           EndIcon={GitHubIcon}
-          endIconClassName="fill-slate-800 dark:fill-slate-200"
+          endIconClassName="fill-slate-800 dark:fill-slate-200 ml-2"
           onClick={() => router.push("https://github.com/formbricks/formbricks")}>
           View on Github
         </Button>

@@ -1,62 +1,3 @@
-import { Layout } from "@/components/docs/Layout";
-import { Fence } from "@/components/shared/Fence";
-import { Callout } from "@/components/shared/Callout";
-import Link from "next/link";
-import ResponsiveEmbed from "react-responsive-embed";
-
-export const meta = {
-  title: "Modal Surveys",
-};
-
-A modal is a window popping up in the middle of the screen (pop-up). The rest of the user interface is usually greyed out.
-
-<Callout title="No UI provided" type="warning">
-  As of now, we do not provide modal UI. We explain how you can fill a modal of your frontend framework with
-  the Best Practice content.
-</Callout>
-
-## Example
-
-<div className="">
-  <ResponsiveEmbed
-    src="/docs/wrappers/modal/demo"
-    allowFullScreen
-    className="rounded-lg border-2 border-gray-200"
-  />
-</div>
-
-## Preparation
-
-The Best Practices come with a default pop-over in the script. We assume that you have already installed one of the Best Practices and configured it. If not, please proceed here:
-
-- <Link href="/docs/best-practices/feedback-box">Install and configure Feedback Box</Link>
-- <Link href="/docs/best-practices/pmf-survey">Install and configure Product-Market Fit survey</Link>
-
-## Implementation
-
-1. To inject the Best Practice in your Modal window, you have to make sure to have set the `containerID` in the config object:
-
-```json
-config: {
-  hqUrl: "https://app.formbricks.com",
-  formId: "cldipcgat0000mn0g31a8pdse",
-  containerId: "formbricks-survey", // needs to be set
-},
-```
-
-2. All you have to do then is to set the `id` of the inner div of your Modal accordingly:
-
-```tsx
-<div id="formbricks-survey"></div>
-```
-
-3. If you have several Best Practices embedded, you have to **make sure to use unique `id's`.**
-
-## Full Example
-
-Here is a full example file for React.js, TailwindCSS and HeadlessUI:
-
-```tsx
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useState } from "react";
 
@@ -120,10 +61,3 @@ export default function Demo() {
     </Transition.Root>
   );
 }
-```
-
-## That's it 🎉
-
-You’re Best Practice loads whenever the modal is opened. When the content of the Best Practice did not load correctly, the Modal will not open.
-
-export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
