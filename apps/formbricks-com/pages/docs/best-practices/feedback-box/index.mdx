@@ -46,31 +46,45 @@ npm install formbricks/feedback
 You can also embed the Feedback Box in your HTML `<head>` tag:
 
 ```tsx
-<script>
-window.formbricks = {
-  config: {
-    hqUrl: "https://app.formbricks.com",
-    formId: "cldipcgat0000mn0g31a8pdse",
-  },
-  ...window.formbricks,
-};
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2" defer></script>
 ```
 
 ### 2. Setting up the config
 
 You can change the content behaviour of the Feedback Box with the config object.
 
+**Basic config**
+
+Add your Formbricks form ID and the formbricks server address to the config object.
+
+```html
+<script>
+  window.formbricks = {
+    ...window.formbricks,
+    config: {
+      formbricksUrl: "https://app.formbricks.com",
+      formId: "cldipnvz80002le0ha2a3zhgl",
+    },
+  };
+</script>
+```
+
 **Personalizing**
 
 Add your name, position and image link to give users the impression that you care about their feedback :)
 
-```json
-contact: {
-  name: "Johannes",
-  position: "Co-Founder",
-  imgUrl: "https://avatars.githubusercontent.com/u/72809645?v=4",
-},
+```javascript
+window.formbricks = {
+  ...window.formbricks,
+  config: {
+    // ...
+    contact: {
+      name: "Johannes",
+      position: "Co-Founder",
+      imgUrl: "https://avatars.githubusercontent.com/u/72809645?v=4",
+    },
+  },
+};
 ```
 
 **Sending user data with feedback**
@@ -79,11 +93,18 @@ The feedback box is built for in-app experiences. We assume that you already hav
 
 Here is an example of how to pass it to Formbricks. However, it might differ in your specific case.
 
-```json
-customer: {
-  id: "",
-  name: "",
-  email: "",
+**Note**: the `email` field must be present in the customer object
+
+```javascript
+window.formbricks = {
+  ...window.formbricks,
+  config: {
+    // ...
+    customer: {
+      email: "", // fill dynamically
+      name: "", // fill dynamically
+    },
+  };
 },
 ```
 
@@ -91,16 +112,21 @@ customer: {
 
 You can style the Feedback Box to match your UI. We recommend to at least replace the brand color with your main color.
 
-```json
-style:
-{
-  brandColor: "#00c4b8",
+```javascript
+window.formbricks = {
+  ...window.formbricks,
+  config: {
+    // ...
+    style: {
+      brandColor: "#00c4b8",
+    },
+  };
 },
 ```
 
 Here are all variables you can set with the current defaults:
 
-```json
+```javascript
 style:
 {
   brandColor: "#00c4b8",
@@ -117,30 +143,32 @@ style:
 
 Here is an example of a full config object:
 
-```json
-config: {
-  hqUrl: "https://app.formbricks.com",
-  formId: "cldipcgat0000mn0g31a8pdse",
-  containerId: "formbricks-feedback-box", // only needed for modal & inline
-  contact: {
-    name: "Johannes",
-    position: "Co-Founder",
-    imgUrl: "https://avatars.githubusercontent.com/u/72809645?v=4",
-  },
-  customer: {
-      id: "", // fill dynamically
-      name: "", // fill dynamically
-      email: "", // fill dynamically
+```javascript
+window.formbricks = {
+  ...window.formbricks,
+  config: {
+    hqUrl: "https://app.formbricks.com",
+    formId: "cldipcgat0000mn0g31a8pdse",
+    containerId: "formbricks-feedback-box", // only needed for modal & inline
+    contact: {
+      name: "Johannes",
+      position: "Co-Founder",
+      imgUrl: "https://avatars.githubusercontent.com/u/72809645?v=4",
     },
-  style: {
-    brandColor: "#0E1420",
-    headerBGColor: "#E5E7EB",
-    headerTitleColor: "#4B5563",
-    boxBGColor: "#F9FAFB",
-    textColor: "#374151",
-    buttonHoverColor: "#F3F4F6",
+    customer: {
+        id: "", // fill dynamically
+        name: "", // fill dynamically
+        email: "", // fill dynamically
+      },
+    style: {
+      brandColor: "#0E1420",
+      headerBGColor: "#E5E7EB",
+      headerTitleColor: "#4B5563",
+      boxBGColor: "#F9FAFB",
+      textColor: "#374151",
+      buttonHoverColor: "#F3F4F6",
+    },
   },
-},
 ```
 
 ### 3. Embed
