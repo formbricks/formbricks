@@ -10,17 +10,19 @@ export interface FormbricksConfig {
     position: string;
     imgUrl: string;
   };
-  divId?: string;
+  containerId?: string;
   style?: any;
   formId?: string;
   formbricksUrl?: string;
   customer?: Record<any, any>;
   disableErrorAlert: boolean;
+  closeOnOutsideClick: boolean;
 }
 
 let config: FormbricksConfig = {
   customer: {},
   disableErrorAlert: false,
+  closeOnOutsideClick: false,
   // Merge with existing config
   ...(window as any).formbricks?.config,
 };
@@ -121,8 +123,8 @@ function open(e: Event, updatedConfig?: FormbricksConfig) {
   if (updatedConfig) {
     config = { ...config, ...updatedConfig };
   }
-  if (config.divId) {
-    console.error('open() is not supported when using "divId" in config.');
+  if (config.containerId) {
+    console.error('open() is not supported when using "containerId" in config.');
     return;
   }
 
@@ -150,28 +152,32 @@ function open(e: Event, updatedConfig?: FormbricksConfig) {
   // click outside of container closes widget
   e.preventDefault();
   e.stopPropagation();
-  document.addEventListener("click", close);
+  document.addEventListener("click", () => {
+    if (config.closeOnOutsideClick) {
+      close();
+    }
+  });
   document.getElementById("formbricks__container")!.addEventListener("click", (event) => {
     event.stopPropagation();
   });
 }
 
 function render() {
-  if (config.divId) {
-    const div = document.getElementById(config.divId);
+  if (config.containerId) {
+    const div = document.getElementById(config.containerId);
     if (div === null) {
-      throw new Error(`No div with id ${config.divId} found`);
+      throw new Error(`No div with id ${config.containerId} found`);
     }
     div.appendChild(containerElement);
     onDisplay();
   } else {
-    console.error('render() only works when "divId" is present in config.');
+    console.error('render() only works when "containerId" is present in config.');
   }
 }
 
 function close() {
-  if (config.divId) {
-    console.error('close() is not supported when using "divId" in config.');
+  if (config.containerId) {
+    console.error('close() is not supported when using "containerId" in config.');
     return;
   }
   trap.deactivate();
