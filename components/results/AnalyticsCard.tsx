@@ -48,13 +48,20 @@ const AnalyticsCard: React.FC<Props> = ({
   const [isLoadingQuestionStats, setIsLoadingQuestionStats] = useState(true);
   const [isItemOpened, setIsItemOpened] = useState(false);
   const [questionsStats, setQuestionsStats] = useState<QuestionStatType>(null);
+  const [CandidateSubmission, setCandidateSubmission] = useState<
+    QuestionStatType
+  >(null);
 
   useEffect(() => {
     if (isItemOpened) {
       getPageQuestionsStats(formId, pageId)
         .then((res) => res.json())
         .then((data) => {
+          console.log({ stats: data });
           setQuestionsStats(data.qStats);
+          setCandidateSubmission(data.candidates);
+
+          console.log({ candidates: data.candidates });
           setIsLoadingQuestionStats(false);
         });
     }
@@ -73,31 +80,31 @@ const AnalyticsCard: React.FC<Props> = ({
           }
         }}
         key={label}
-        className="px-4 py-5 sm:p-6 w-full"
+        className='px-4 py-5 sm:p-6 w-full'
       >
-        <dt className="inline-flex w-full justify-between text-xl font-semibold text-gray-900 has-tooltip">
+        <dt className='inline-flex w-full justify-between text-xl font-semibold text-gray-900 has-tooltip'>
           {label}{" "}
           {toolTipText && (
-            <QuestionMarkCircleIcon className="w-4 h-4 ml-1 text-red hover:text-ui-gray-dark" />
+            <QuestionMarkCircleIcon className='w-4 h-4 ml-1 text-red hover:text-ui-gray-dark' />
           )}
           {toolTipText && (
-            <span className="flex p-1 px-4 -mt-6 -ml-8 text-xs text-center text-white bg-gray-600 rounded shadow-lg grow tooltip">
+            <span className='flex p-1 px-4 -mt-6 -ml-8 text-xs text-center text-white bg-gray-600 rounded shadow-lg grow tooltip'>
               {toolTipText}
             </span>
           )}
           {!questions?.length ? null : !isItemOpened ? (
             <ChevronDownIcon
-              className="-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 "
-              aria-hidden="true"
+              className='-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 '
+              aria-hidden='true'
             />
           ) : (
             <ChevronUpIcon
-              className="-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 "
-              aria-hidden="true"
+              className='-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 '
+              aria-hidden='true'
             />
           )}
         </dt>
-        <dd className="flex items-baseline justify-between mt-1 md:block lg:flex">
+        <dd className='flex items-baseline justify-between mt-1 md:block lg:flex'>
           <div
             className={classNames(
               smallerText ? "text-lg" : "text-lg",
@@ -118,16 +125,16 @@ const AnalyticsCard: React.FC<Props> = ({
             >
               {trend >= 0 ? (
                 <ArrowUpIcon
-                  className="-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-green-500"
-                  aria-hidden="true"
+                  className='-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-green-500'
+                  aria-hidden='true'
                 />
               ) : (
                 <ArrowDownIcon
-                  className="-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-red-500"
-                  aria-hidden="true"
+                  className='-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 text-red-500'
+                  aria-hidden='true'
                 />
               )}
-              <span className="sr-only">
+              <span className='sr-only'>
                 {trend >= 0 ? "Increased" : "Decreased"} by
               </span>
               {trend} %
@@ -155,13 +162,13 @@ const AnalyticsCard: React.FC<Props> = ({
             const q = questions.find((question) => question.id === qId);
 
             if (q?.type !== "multipleChoiceQuestion") return;
-
+            console.log({ q, qOptions });
             const getNumberOfResponses = () => {
               return qOptions.reduce((a, v) => a + v.candidates, 0);
             };
 
             return (
-              <div key={`qline-${qId}`} className="w-full px-5">
+              <div key={`qline-${qId}`} className='w-full px-5'>
                 <QuestionItem
                   key={`qitem-${qId}`}
                   label={q.data.label}
@@ -175,7 +182,7 @@ const AnalyticsCard: React.FC<Props> = ({
           })}
         </>
       )}
-      <div key={label} className="px-4 py-5 sm:p-6"></div>
+      <div key={label} className='px-4 py-5 sm:p-6'></div>
     </div>
   );
 };
@@ -191,9 +198,9 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
   options,
   respondants,
 }) => (
-  <div className="bg-white rounded-md  w-full ounded-md border-2 mt-3 mb-5 transition-opacity duration-200">
-    <div key={label} className="px-2 py-2 sm:p-6">
-      <dd className="flex items-baseline justify-between mt-1 md:block lg:flex-col">
+  <div className='bg-white rounded-md  w-full ounded-md border-2 mt-3 mb-5 transition-opacity duration-200'>
+    <div key={label} className='px-2 py-2 sm:p-6'>
+      <dd className='flex items-baseline justify-between mt-1 md:block lg:flex-col'>
         <div
           className={classNames(
             smallerText ? "text-lg" : "text-xl",
@@ -218,7 +225,7 @@ const QuestionItem: React.FC<QuestionItemProps> = ({
               >
                 {" "}
                 {label}
-                <span className="sr-only">
+                <span className='sr-only'>
                   {trend >= 0 ? "Increased" : "Decreased"}
                 </span>{" "}
                 {` : ${candidates}/${respondants} `}({trend}%)

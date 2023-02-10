@@ -52,12 +52,33 @@ export default async function handle(
         },
       ],
     });
-    const candidates = pageSubmissions.map((s) => s.data["candidateId"]);
+    const candidates = await Promise.all(pageSubmissions.map(async (s, index) => {
+
+
+    let candidateResponse  = await prisma.user.findUnique({
+        select: {
+          firstname: true,
+          lastname: true,
+          gender: true,
+          email: true,
+          whatsapp: true,
+          id: true
+        },
+        where:  {
+          id: s.data["candidateId"]
+        }
+      })
+     candidateResponse.submission = pageSubmissions[index].data?.submission; 
+     return candidateResponse;
+
+    }));
+    
     const responses = pageSubmissions.map((s) => s.data["submission"]);
+
 
     let qStats = {};
     responses.map((r) => {
-      if (r)
+    if (r)
         Object.keys(r).map((qId) => {
           const addOrIncrementOption = (opt) => {
             if (qStats[qId][opt]) qStats[qId][opt] += 1;
@@ -70,6 +91,7 @@ export default async function handle(
           }
         });
     });
+
     return res.json({ candidates, qStats });
   }
 
