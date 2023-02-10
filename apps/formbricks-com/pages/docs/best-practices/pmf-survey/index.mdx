@@ -1,6 +1,10 @@
 import { Layout } from "@/components/docs/Layout";
 import { Fence } from "@/components/shared/Fence";
 import Link from "next/link";
+import Image from "next/image";
+import NewPMF from "@/images/docs/new-pmf.png";
+import ID from "@/images/docs/copy-id.png";
+import PmfDummy from "@/components/docs/PmfDummy";
 
 export const meta = {
   title: "Product-Market Fit Survey",
@@ -32,53 +36,57 @@ Measuring it allows you to optimize it.
 
 ## Preview
 
-MATTI
+<div className="max-w-md">
+  <PmfDummy />
+</div>
 
 ## Installation
 
-To add the Product-Market Fit Survey to your app, you need to perform three steps:
+To add the Product-Market Fit Survey to your app, you need to perform these steps:
 
-1. Install
-2. Configure
-3. Embed
+1. Create new survey at app.formbricks.com
+2. Embed JS snippet in `<head>`
+3. Configure survey
+4. Render in-app
 
-### 1. Install
+### 1. Create new survey
 
-There are two ways to install the Product-Market Fit Survey: npm and JavaScript embed.
+Create an account at [app.formbricks.com](https://app.formbricks.com/auth/signup)
 
-**NPM Install**
+Then, create a new Product-Market Fit Survey:
 
-```tsx
-npm install formbricks/pmf
-```
+<Image src={NewPMF} alt="create pmf survey" quality="100" />
 
-**JavaScript Embed**
+Go to the "Setup instructions" tab and copy the ID:
 
-You can also embed the Product-Market Fit Survey in your HTML `<head>` tag:
+<Image src={ID} alt="copy survey id" quality="100" />
+
+### 2. Embed Formbricks snippet in `<head>`
+
+Embed the Product-Market Fit Survey script in your HTML `<head>` tag and replace survey ID:
 
 ```tsx
 <script src="https://cdn.jsdelivr.net/npm/@formbricks/pmf@0.0.9" defer></script>
-```
 
-### 2. Setting up the config
-
-You can change the content behaviour of the Product-Market Fit Survey with the config object.
-
-**Basic config**
-
-Add your Formbricks form ID and the formbricks server address to the config object.
-
-```html
 <script>
   window.formbricksPmf = {
     ...window.formbricksPmf,
     config: {
       formbricksUrl: "https://app.formbricks.com",
-      formId: "cldipnvz80002le0ha2a3zhgl",
+      formId: "SURVEY ID HERE", // paste your survey ID here
+      containerId: "formbricks-pmf", // required to render survey in your page
     },
   };
 </script>
 ```
+
+All you have to do now is assigning the `containerId` to the div where you want to render your survey (detailed instructions at the bottom):
+
+```html
+<div id="formbricks-pmf"></div>
+```
+
+### 4. Configure
 
 **Sending user metadata with submission**
 
@@ -164,8 +172,7 @@ window.formbricksPmf = {
 
 To add the Product-Market Fit Survey to your UI, you can use different wrappers. Please follow the instructions linked below:
 
-1. <Link href="/docs/wrappers/pop-over">In-app Pop-over</Link>
-2. <Link href="/docs/wrappers/modal">Modal</Link>
-3. <Link href="/docs/wrappers/inline">Inline</Link>
+1. <Link href="/docs/wrappers/modal">Modal</Link>
+2. <Link href="/docs/wrappers/inline">Inline</Link>
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
