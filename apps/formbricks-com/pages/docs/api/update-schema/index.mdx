@@ -14,18 +14,38 @@ export const meta = {
   bodies={[
     {
       label: "pages",
-      type: "Array of JSON",
+      type: "List of JSON",
       description: "Array of all pages of the form.",
     },
     {
-      label: "pages.id",
+      label: "pages[].id",
       type: "string",
       description: "Unique page ID.",
     },
     {
-      label: "pages.elements",
-      type: "Array of JSON",
+      label: "pages[].elements",
+      type: "List of JSON",
       description: "Array of all input elements of this page.",
+    },
+    {
+      label: "pages[].elements[].id",
+      type: "string",
+      description: "Unique input ID.",
+    },
+    {
+      label: "pages[].elements[].name",
+      type: "string",
+      description: "Field name.",
+    },
+    {
+      label: "pages[].elements[].type",
+      type: "string",
+      description: "Input type.",
+    },
+    {
+      label: "pages[].elements[].label",
+      type: "string",
+      description: "Input label, usually a question.",
     },
   ]}
   example={`{

@@ -18,9 +18,27 @@ export const meta = {
       description: "The customer and metadata you want to link the submission to.",
     },
     {
+      label: "customer.email",
+      type: "email",
+      description: "Customer or user email. This is the primary key to identify users",
+      required: true,
+    },
+    {
+      label: "customer.prop",
+      type: "string",
+      description:
+        "Pass value to create user property. You can filter / create cohorts for future surveys based on props.",
+    },
+    {
       label: "data",
       type: "JSON",
       description: "The content of the submission.",
+    },
+    {
+      label: "data.fieldName",
+      type: "string",
+      description: "Add value to input field by name.",
+      required: true,
     },
     {
       label: "finished",
@@ -34,7 +52,7 @@ export const meta = {
   "message": "I love Formbricks"
   },
   "customer": {
-    "email": "hola@formbricks.com",
+    "email": "hola@formbricks.com", //required
     "name": "Johnny"
   },
   "finished": true

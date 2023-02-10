@@ -82,7 +82,6 @@ const navigation = [
     title: "Self-hosting",
     links: [
       { title: "Quick Start", href: "/docs/self-hosting/quick-start" },
-      { title: "Dev Environment", href: "/docs/self-hosting/dev-environment" },
       { title: "Deployment", href: "/docs/self-hosting/deployment" },
     ],
   },
