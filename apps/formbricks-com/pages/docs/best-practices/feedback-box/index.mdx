@@ -1,25 +1,47 @@
 import { Layout } from "@/components/docs/Layout";
 import { Fence } from "@/components/shared/Fence";
+import Link from "next/link";
 
 export const meta = {
   title: "Feedback Box",
 };
 
-The Feedback Box is an easy way to gather feedback from your users.
+The Feedback Box is an easy way to gather feedback from users in your app.
 
-##
+## Purpose
+
+Allow users to share feedback with 2 clicks. A low friction way to gather feedback helps catching even the smallest points of annoyance / frustration in user experiences.
+
+## Approach
+
+- Make it **easy**: 2 clicks
+- Keep it **personal**: Founder faces
+- **Pre-sort** feedback:
+  - Bug → Pipe into Bug channel for devs
+  - Feedback → Pipe into Feedback channel for PM’s
+  - Appreciation → Pipe into General channel for team spirit & testimonials
+
+## Preview
 
 ## Installation
 
-### NPM Install
+To add the Feedback Box to your app, you need to perform three steps:
 
-The easiest way to get the Feedback Box live on your page is via NPM:
+1. Install
+2. Configure
+3. Embed
+
+### 1. Install
+
+There are two ways to install the Feedback Box: npm and JavaScript embed.
+
+**NPM Install**
 
 ```tsx
 npm install formbricks/feedback
 ```
 
-### JavaScript Embed
+**JavaScript Embed**
 
 You can also embed the Feedback Box in your HTML `<head>` tag:
 
@@ -35,15 +57,15 @@ window.formbricks = {
 </script>
 ```
 
-## Setting up the config
+### 2. Setting up the config
 
 You can change the content behaviour of the Feedback Box with the config object.
 
-### Personalizing
+**Personalizing**
 
 Add your name, position and image link to give users the impression that you care about their feedback :)
 
-```tsx
+```json
 contact: {
   name: "Johannes",
   position: "Co-Founder",
@@ -51,13 +73,13 @@ contact: {
 },
 ```
 
-### Sending user data with feedback
+**Sending user data with feedback**
 
 The feedback box is built for in-app experiences. We assume that you already have user properties stored in a session object.
 
 Here is an example of how to pass it to Formbricks. However, it might differ in your specific case.
 
-```tsx
+```json
 customer: {
   id: "",
   name: "",
@@ -65,11 +87,11 @@ customer: {
 },
 ```
 
-### Styling
+**Styling**
 
 You can style the Feedback Box to match your UI. We recommend to at least replace the brand color with your main color.
 
-```tsx
+```json
 style:
 {
   brandColor: "#00c4b8",
@@ -78,7 +100,7 @@ style:
 
 Here are all variables you can set with the current defaults:
 
-```tsx
+```json
 style:
 {
   brandColor: "#00c4b8",
@@ -90,5 +112,43 @@ style:
   buttonHoverColor: "#e2e8f0",
 },
 ```
+
+### Example config
+
+Here is an example of a full config object
+
+```json
+config: {
+  hqUrl: "https://app.formbricks.com",
+  formId: "cldipcgat0000mn0g31a8pdse",
+  containerId: "formbricks-feedback-box", // only needed for modal & inline
+  contact: {
+    name: "Johannes",
+    position: "Co-Founder",
+    imgUrl: "https://avatars.githubusercontent.com/u/72809645?v=4",
+  },
+  customer: {
+      id: "", // fill dynamically
+      name: "", // fill dynamically
+      email: "", // fill dynamically
+    },
+  style: {
+    brandColor: "#0E1420",
+    headerBGColor: "#E5E7EB",
+    headerTitleColor: "#4B5563",
+    boxBGColor: "#F9FAFB",
+    textColor: "#374151",
+    buttonHoverColor: "#F3F4F6",
+  },
+},
+```
+
+### 3. Embed
+
+To add the Feedback Box to your UI, you can use different wrappers. Please follow the instructions linked below:
+
+1. <Link href="/docs/wrappers/pop-over">In-app Pop-over</Link>
+2. <Link href="/docs/wrappers/modal">Modal</Link>
+3. <Link href="/docs/wrappers/inline">Inline</Link>
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
