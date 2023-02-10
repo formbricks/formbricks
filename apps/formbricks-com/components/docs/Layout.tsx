@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import clsx from "clsx";
-
 import { Hero } from "@/components/shared/Hero";
 import { FooterLogo, Logomark } from "@/components/shared/Logo";
 import { MobileNavigation } from "@/components/shared/MobileNavigation";
@@ -125,9 +124,9 @@ export function Layout({ children, meta }: LayoutProps) {
               </header>
             )}
             <Prose className="">{children}</Prose>
-            <div className="mt-16 rounded-xl border-2 border-slate-700/50 bg-slate-800 p-8">
-              <h4 className="text-3xl text-slate-50">Need help?</h4>
-              <p className="my-4 text-slate-400">
+            <div className="mt-16 rounded-xl border-2 border-slate-200 bg-slate-300 p-8 dark:border-slate-700/50 dark:bg-slate-800">
+              <h4 className="text-3xl font-semibold text-slate-500 dark:text-slate-50">Need help?</h4>
+              <p className="my-4 text-slate-500 dark:text-slate-400">
                 Join our Discord and ask away. We&apos;re happy to help where we can!
               </p>
               <Button variant="highlight" href="/discord" target="_blank">
