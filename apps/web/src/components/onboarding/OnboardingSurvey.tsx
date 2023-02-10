@@ -24,12 +24,6 @@ const OnboardingSurvey = () => {
     <FormbricksEngine
       offline={true}
       onFinished={async ({ submission, schema }) => {
-        console.log({
-          email: session.user.email,
-          name: session.user.name,
-          lastUserContact: submission.lastUserContact,
-          hardestPartInUserResearch: submission.hardestPartInUserResearch,
-        });
         // send schema to formbricks
         fetch(`https://app.formbricks.com/api/capture/forms/${formId}/schema`, {
           method: "POST",
