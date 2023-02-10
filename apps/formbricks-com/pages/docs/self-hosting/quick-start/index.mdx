@@ -1,0 +1,49 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "Quick Start",
+};
+
+## What you need
+
+- Docker
+- Node.JS
+- PostgreSQL
+- Prisma
+
+## How to get started
+
+1. Cloning project
+
+```bash
+git clone https://github.com/formbricks/formbricks.git && cd formbricks
+```
+
+2. Copy .env file
+
+```bash
+cp .env.example .env
+```
+
+3. Copy .env file
+
+```bash
+pnpm install
+```
+
+4. Migrate database model
+
+```bash
+pnpx prisma migrate dev
+```
+
+5. Start dev server
+
+```bash
+pnpm dev
+```
+
+You find Formbricks now at localhost:3000
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

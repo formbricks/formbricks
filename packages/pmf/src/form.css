@@ -5,31 +5,19 @@
   --formbricksPmf-border-radius: 0.4rem;
 
   /* Globals */
-  --formbricksPmf-shadow: rgba(7, 0, 20, 0.06) 0px 0px 0px 1px, rgba(7, 0, 20, 0.1) 0px 10px 15px -3px,
-    rgba(7, 0, 20, 0.05) 0px 4px 6px, rgba(7, 0, 20, 0.05) 0px 30px 40px;
-  --formbricksPmf-focus-shadow: 0 0 0 2px var(--formbricksPmf-bg-color);
   --formbricksPmf-bold: 600;
-
-  /* Header */
-  --formbricksPmf-header-text-color: #1e293b;
-  --formbricksPmf-header-bg-color: #cbd5e1;
 
   /* Box */
   --formbricksPmf-bg-color: #f8fafc;
   --formbricksPmf-text-color: #0f172a;
-  --formbricksPmf-intro-text-color: #64748b;
 
   /* Buttons */
-  --formbricksPmf-button-color: white;
+  --formbricksPmf-button-text-color: white;
   --formbricksPmf-button-bg-color: var(--formbricksPmf-brand-color);
-  --formbricksPmf-button-hover-bg-color: var(--formbricksPmf-brand-color);
   --formbricksPmf-button-border-radius: calc(var(--formbricksPmf-border-radius) / 2);
 
   /* Textarea */
-  --formbricksPmf-message-border-color: #e2e8f0;
-
-  /* Element */
-  --formbricksPmf-bold: 600;
+  --formbricksPmf-textarea-border-color: #e2e8f0;
 }
 
 /* Container */
@@ -90,7 +78,7 @@
   border: 0;
   border-radius: var(--formbricksPmf-button-border-radius);
   background-color: var(--formbricksPmf-button-bg-color);
-  color: var(--formbricksPmf-button-color);
+  color: var(--formbricksPmf-button-text-color);
   cursor: pointer;
   transition: all 0.3s ease-out;
 }
@@ -105,7 +93,7 @@
   width: 100%;
   height: 100px;
   padding: 0.5rem;
-  border: 2.5px solid var(--formbricksPmf-message-border-color);
+  border: 2.5px solid var(--formbricksPmf-textarea-border-color);
   border-radius: var(--formbricksPmf-border-radius);
   resize: none;
   transition: all 0.3s ease-out;

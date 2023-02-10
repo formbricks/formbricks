@@ -1,0 +1,25 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "What are Best Practices?",
+};
+
+Best Practices are end-to-end productized methods for managing product. They are designed to make **product-led growth easier**.
+
+A Best Practice consists of two parts:
+
+- A set of **survey questions** / method to determine questions
+- A **specifically designed dashboard** to interact with the qualitative data
+
+## Current Best Practices
+
+| Name                      | Purpose                                                       | Status      |
+| ------------------------- | ------------------------------------------------------------- | ----------- |
+| Feedback Box              | Gather feedback from users in your app as easily as possible. | Public Beta |
+| Product-Market Fit Survey | Continuously masure PMF score to be able to optimize it       | Public Beta |
+| Onboarding Segmentation   | Segment new users as they onboard your service                | Closed Beta |
+| Waitlist survey           | Gather key information about your user base pre-product       | Closed Beta |
+| In-app Interview Prompt   | Invite selected users in-app to book an interview             | Up next     |
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

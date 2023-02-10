@@ -84,23 +84,20 @@ function applyConfig() {
         root.style.setProperty("--formbricksPmf-brand-color", config.style.brandColor);
         root.style.setProperty("--formbricksPmf-brand-color-transparent", config.style.brandColor + 50);
       }
-      if (config.style.headerBGColor) {
-        root.style.setProperty("--formbricksPmf-header-bg-color", config.style.headerBGColor);
+      if (config.style.borderRadius) {
+        root.style.setProperty("--formbricksPmf-border-radius", config.style.borderRadius);
       }
-      if (config.style.headerTitleColor) {
-        root.style.setProperty("--formbricksPmf-header-text-color", config.style.headerTitleColor);
-      }
-      if (config.style.boxBGColor) {
-        root.style.setProperty("--formbricksPmf-bg-color", config.style.boxBGColor);
+      if (config.style.containerBGColor) {
+        root.style.setProperty("--formbricksPmf-bg-color", config.style.containerBgColor);
       }
       if (config.style.textColor) {
         root.style.setProperty("--formbricksPmf-text-color", config.style.textColor);
       }
-      if (config.style.buttonHoverColor) {
-        root.style.setProperty("--formbricksPmf-button-hover-bg-color", config.style.buttonHoverColor);
+      if (config.style.buttonTextColor) {
+        root.style.setProperty("--formbricksPmf-button-text-color", config.style.buttonTextColor);
       }
-      if (config.style.borderRadius) {
-        root.style.setProperty("--formbricksPmf-border-radius", config.style.borderRadius);
+      if (config.style.textareaBorderColor) {
+        root.style.setProperty("--formbricksPmf-textarea-border-color", config.style.textareaBorderColor);
       }
     }
   }

@@ -1,0 +1,75 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { APILayout } from "@/components/shared/APILayout.tsx";
+
+export const meta = {
+  title: "API: Update schema",
+};
+
+<APILayout
+  method="POST"
+  url="/api/capture/forms/{formId}/submissions/schema"
+  description="Update the schema of a form in Formbricks."
+  queries={[{ label: "apiKey", type: "string", description: "Your API key" }]}
+  bodies={[
+    {
+      label: "pages",
+      type: "List of JSON",
+      description: "Array of all pages of the form.",
+    },
+    {
+      label: "pages[].id",
+      type: "string",
+      description: "Unique page ID.",
+    },
+    {
+      label: "pages[].elements",
+      type: "List of JSON",
+      description: "Array of all input elements of this page.",
+    },
+    {
+      label: "pages[].elements[].id",
+      type: "string",
+      description: "Unique input ID.",
+    },
+    {
+      label: "pages[].elements[].name",
+      type: "string",
+      description: "Field name.",
+    },
+    {
+      label: "pages[].elements[].type",
+      type: "string",
+      description: "Input type.",
+    },
+    {
+      label: "pages[].elements[].label",
+      type: "string",
+      description: "Input label, usually a question.",
+    },
+  ]}
+  example={`{
+  "pages": 
+	[{
+	  "id": "emailPage",
+	  "elements": 
+        [{
+        "id": "email",
+        "name": "email",
+        "type": "text",
+        "label": "What's your email address?",
+		}]
+	}]
+}
+`}
+  responses={[
+    {
+      color: "green",
+      statusCode: "200",
+      description: "success",
+      example: "{ // Response }",
+    },
+  ]}
+/>
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

@@ -1,0 +1,21 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "Why is Formbricks better?",
+};
+
+Formbricks is **not** a generic form builder.
+
+It's designed to **build user research into your product.**
+
+| Form Builders                                                      | **Formbricks**                                                                                |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| _Spray and pray_                                                   | Connect analytics and pre-segment based on usage                                              |
+| _Submission-focussed: Impossible to build on previous submissions_ | User-focussed: Access all responses per user, add user properties, gather full picture.       |
+| _Stiff UI_                                                         | Use your UI or use our highly customizable components                                         |
+| _Built for everyone who needs forms_                               | Built for founders and product managers                                                       |
+| _Generic form templates_                                           | Best Practices for product management: In-app interview prompt, onboarding segmentation, etc. |
+| _No data ownership_                                                | Full data ownership                                                                           |
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

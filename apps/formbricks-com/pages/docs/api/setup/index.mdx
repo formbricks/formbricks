@@ -1,0 +1,32 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { APILayout } from "@/components/shared/APILayout.tsx";
+import { Callout } from "@/components/shared/Callout";
+
+export const meta = {
+  title: "API Setup",
+};
+
+## Auth: Personal API key
+
+The API requests are authorized with a personal API key. This API key gives you the same rights as if you were logged in at formbricks.com - **don't share it around!**
+
+### How to generate an API key
+
+1. Go to your profile at [app.formbricks.com](https://app.formbricks.com/app/me/settings).
+2. Select “Add key”.
+3. Label it (this is just for you).
+4. Copy the key. You won’t be able to see it again.
+
+<Callout title="Store API key safely" type="warning">
+  Anyone who has your API key has full control over your account. For security reasons, you cannot view the
+  API key again.
+</Callout>
+
+### Delete a personal API key
+
+1. Go to your profile at [app.formbricks.com](https://app.formbricks.com/app/me/settings).
+2. Find the key you wish to revoke and select “Delete”.
+3. Your API key will stop working immediately.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
