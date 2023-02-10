@@ -68,6 +68,7 @@ const navigation = [
   {
     title: "API",
     links: [
+      { title: "API Setup", href: "/docs/api/setup" },
       { title: "Create Submission", href: "/docs/api/create-submission" },
       { title: "Update Submission", href: "/docs/api/update-submission" },
       { title: "Update Schema", href: "/docs/api/update-schema" },
