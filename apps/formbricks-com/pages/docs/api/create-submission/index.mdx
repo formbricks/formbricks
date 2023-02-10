@@ -1,8 +1,24 @@
 import { Layout } from "@/components/docs/Layout";
 import { Fence } from "@/components/shared/Fence";
+import { APILayout } from "@/components/shared/APILayout.tsx";
 
 export const meta = {
   title: "API: Create submission",
 };
+
+<APILayout
+  method="GET"
+  url="/users/me"
+  description="Get the current logged in user."
+  queries={[{ label: "apiKey", type: "string", description: "Your API key" }]}
+  bodies={[
+    { label: "tba", type: "tba", description: "tba" },
+    { label: "tba", type: "tba", description: "tba" },
+  ]}
+  responses={[
+    { color: "green", statusCode: "tba", description: "tba" },
+    { color: "brown", statusCode: "tba", description: "tba" },
+  ]}
+/>
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
