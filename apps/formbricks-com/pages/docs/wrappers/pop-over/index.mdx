@@ -1,8 +1,42 @@
 import { Layout } from "@/components/docs/Layout";
 import { Fence } from "@/components/shared/Fence";
+import Link from "next/link";
 
 export const meta = {
   title: "In-app Pop-overs",
 };
+
+The pop-over opens a little survey window with the survey content.
+
+## Example
+
+BUTTON WITH EXAMPLE
+
+## Preparation
+
+The Best Practices come with a default pop-over in the script. We assume that you have already installed one of the Best Practices and configured it. If not, please proceed here:
+
+- <Link href="/docs/best-practices/feedback-box">Install and configure Feedback Box</Link>
+- <Link href="/docs/best-practices/pmf-survey">Install and configure Product-Market Fit survey</Link>
+
+## Implementation
+
+To implement the pop-over, all you have to do is set up a button with the following onClick handler, like so:
+
+```tsx
+<button onclick={(e) => window.formbricks.open(e)}>Feedback</button>
+```
+
+## Full Example
+
+Here is a full example file for React.js using NPM:
+
+```tsx
+MATTI;
+```
+
+## That’s it! 🎉
+
+You’re Best Practice survey should open on button click.
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

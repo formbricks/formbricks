@@ -8,13 +8,13 @@ export const meta = {
 
 The Product-Market Fit survey (or Sean Ellis Test) is a method to measure Product-Market Fit.
 
-### Purpose
+## Purpose
 
 By assessing how disappointed users would be if they could no longer use your service you get a good idea of how well your current product fits your target market.
 
 Measuring it allows you to optimize it.
 
-### Approach
+## Approach
 
 - Higher conversion: In-app surveys **convert significantly better** than email surveys
 
@@ -62,11 +62,11 @@ You can also embed the Product-Market Fit Survey in your HTML `<head>` tag:
 
 You can change the content behaviour of the Product-Market Fit Survey with the config object.
 
-**Sending user data with feedback**
+**Sending user metadata with submission**
 
-The Product-Market Fit Survey is built for in-app experiences. We assume that you already have user properties stored in a session object.
+The Product-Market Fit Survey is built for in-app experiences. We assume that you already have user properties stored in a session object. It makes sense to send them to Formbricks to enrich the user profile in the user view. Later on, you will be able to create cohorts to survey based on user properties.
 
-Here is an example of how to pass it to Formbricks. However, it might differ in your specific case.
+Here is an example of how to take metadata from the next.js Session Object and pass it to Formbricks:
 
 ```json
 customer: {
@@ -92,19 +92,13 @@ Here are all variables you can set with the current defaults:
 ```json
 style:
 {
-  brandColor: "#00c4b8",
-  borderRadius: "0.4rem",
-  headerBGColor: "#1e293b",
-  headerTitleColor
-  boxBGColor: "#cbd5e1",
-  textColor: "#0f172a",
-  buttonHoverColor: "#e2e8f0",
+MATTI
 },
 ```
 
 ### Example config
 
-Here is an example of a full config object
+Here is an example of a full config object:
 
 ```json
 config: {
