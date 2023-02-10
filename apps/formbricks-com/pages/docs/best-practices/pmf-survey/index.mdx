@@ -55,12 +55,28 @@ npm install formbricks/pmf
 You can also embed the Product-Market Fit Survey in your HTML `<head>` tag:
 
 ```tsx
-//
+<script src="https://cdn.jsdelivr.net/npm/@formbricks/pmf@0.0.9" defer></script>
 ```
 
 ### 2. Setting up the config
 
 You can change the content behaviour of the Product-Market Fit Survey with the config object.
+
+**Basic config**
+
+Add your Formbricks form ID and the formbricks server address to the config object.
+
+```html
+<script>
+  window.formbricksPmf = {
+    ...window.formbricksPmf,
+    config: {
+      formbricksUrl: "https://app.formbricks.com",
+      formId: "cldipnvz80002le0ha2a3zhgl",
+    },
+  };
+</script>
+```
 
 **Sending user metadata with submission**
 
@@ -68,31 +84,48 @@ The Product-Market Fit Survey is built for in-app experiences. We assume that yo
 
 Here is an example of how to take metadata from the next.js Session Object and pass it to Formbricks:
 
-```json
-customer: {
-  id: "",
-  name: "",
-  email: "",
+```javascript
+window.formbricksPmf = {
+  ...window.formbricksPmf,
+  config: {
+    // ...
+    customer: {
+      email: "", // fill dynamically
+      name: "", // fill dynamically
+    },
+  };
 },
 ```
+
+Note: the `email` field must be present in the customer object
 
 **Styling**
 
 You can style the Product-Market Fit Survey to match your UI. We recommend to at least replace the brand color with your main color.
 
-```json
-style:
-{
-  brandColor: "#00c4b8",
+```javascript
+window.formbricksPmf = {
+  ...window.formbricksPmf,
+  config: {
+    // ...
+    style: {
+      brandColor: "#00c4b8",
+    },
+  };
 },
 ```
 
 Here are all variables you can set with the current defaults:
 
-```json
-style:
-{
-MATTI
+```javascript
+style: {
+  brandColor: "#00c4b8",
+  borderRadius: "0.4rem",
+  containerBGColor: "#f8fafc",
+  containerBGColor: "#f8fafc",
+  textColor: "#0f172a",
+  buttonTextColor: "#ffffff",
+  textareaBorderColor: "#e2e8f0",
 },
 ```
 
@@ -100,27 +133,29 @@ MATTI
 
 Here is an example of a full config object:
 
-```json
-config: {
-  formbricksUrl: "https://app.formbricks.com",
-  formId: "cldetkpre0000nr0hku986hio",
-  containerId: "formbricks-pmf-survey", // always needed
-  customer: {
-    id: "", // fill dynamically
-    name: "", // fill dynamically
-    email: "", // fill dynamically
-  },
-  style:
-    {
+```javascript
+window.formbricksPmf = {
+  ...window.formbricksPmf,
+  config: {
+    formbricksUrl: "https://app.formbricks.com",
+    formId: "cldetkpre0000nr0hku986hio",
+    containerId: "formbricks-pmf-survey", // always needed
+    customer: {
+      id: "", // fill dynamically
+      name: "", // fill dynamically
+      email: "", // fill dynamically
+    },
+    style: {
       brandColor: "#00c4b8",
       borderRadius: "0.4rem",
-      headerBGColor: "#1e293b",
-      headerTitleColor: "#111111",
-      boxBGColor: "#cbd5e1",
+      containerBGColor: "#f8fafc",
+      containerBGColor: "#f8fafc",
       textColor: "#0f172a",
-      buttonHoverColor: "#e2e8f0",
+      buttonTextColor: "#ffffff",
+      textareaBorderColor: "#e2e8f0",
     },
-},
+  },
+};
 ```
 
 ### 3. Embed
