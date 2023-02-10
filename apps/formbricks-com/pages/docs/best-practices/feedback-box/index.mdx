@@ -93,8 +93,6 @@ The feedback box is built for in-app experiences. We assume that you already hav
 
 Here is an example of how to pass it to Formbricks. However, it might differ in your specific case.
 
-**Note**: the `email` field must be present in the customer object
-
 ```javascript
 window.formbricks = {
   ...window.formbricks,
@@ -107,6 +105,8 @@ window.formbricks = {
   };
 },
 ```
+
+Note: the `email` field must be present in the customer object
 
 **Styling**
 
@@ -127,12 +127,11 @@ window.formbricks = {
 Here are all variables you can set with the current defaults:
 
 ```javascript
-style:
-{
+style: {
   brandColor: "#00c4b8",
   borderRadius: "0.4rem",
   headerBGColor: "#1e293b",
-  headerTitleColor
+  headerTitleColor: "#111111",
   boxBGColor: "#cbd5e1",
   textColor: "#0f172a",
   buttonHoverColor: "#e2e8f0",
@@ -156,10 +155,10 @@ window.formbricks = {
       imgUrl: "https://avatars.githubusercontent.com/u/72809645?v=4",
     },
     customer: {
-        id: "", // fill dynamically
-        name: "", // fill dynamically
-        email: "", // fill dynamically
-      },
+      id: "", // fill dynamically
+      name: "", // fill dynamically
+      email: "", // fill dynamically
+    },
     style: {
       brandColor: "#0E1420",
       headerBGColor: "#E5E7EB",
@@ -169,6 +168,7 @@ window.formbricks = {
       buttonHoverColor: "#F3F4F6",
     },
   },
+};
 ```
 
 ### 3. Embed
