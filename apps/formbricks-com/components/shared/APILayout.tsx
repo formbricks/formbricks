@@ -191,7 +191,9 @@ function Response({ color, statusCode, description, example }: RespProps) {
         </div>
       </div>
       {example && toggleExample && (
-        <div className="col-span-2 my-3 rounded-lg bg-slate-300 p-2 font-mono">{example}</div>
+        <div className="col-span-2 my-3 rounded-lg bg-slate-300 p-2 font-mono dark:bg-slate-600 dark:text-slate-300">
+          {example}
+        </div>
       )}
     </div>
   );
