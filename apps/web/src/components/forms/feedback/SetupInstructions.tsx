@@ -50,7 +50,7 @@ export default function SetupInstructions({}) {
                   <code className="language-html whitespace-pre-wrap">{`config: {
          hqUrl: "${window.location.protocol}//${window.location.host}",
          formId: "${formId}",
-        divId: "test-div",
+        containerId: "test-div",
         contact: {
           name: "Johannes",
           position: "Co-Founder",
