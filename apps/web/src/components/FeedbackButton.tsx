@@ -44,7 +44,7 @@ export function FeedbackButton() {
       config: {
         hqUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
         formId: process.env.NEXT_PUBLIC_FORMBRICKS_FORM_ID,
-        divId: "formbricks-feedback-wrapper",
+        containerId: "formbricks-feedback-wrapper",
         contact: {
           name: "Matti",
           position: "Co-Founder",

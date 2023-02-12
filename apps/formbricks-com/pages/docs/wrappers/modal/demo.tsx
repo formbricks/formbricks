@@ -9,7 +9,7 @@ export default function Demo() {
       config: {
         hqUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
         formId: process.env.NEXT_PUBLIC_FORMBRICKS_FORM_ID,
-        divId: "formbricks-container",
+        containerId: "formbricks-container",
         contact: {
           name: "Matti",
           position: "Co-Founder",
