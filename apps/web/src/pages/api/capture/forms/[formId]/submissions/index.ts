@@ -94,10 +94,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     // run pipelines
     await runPipelines(pipelineEvents, form, submission, submissionResult);
     // tracking
-    capturePosthogEvent(form.organisationId, "submission received", {
+    capturePosthogEvent(form.organisationId, "submission created", {
       formId,
+      formType: form.type,
     });
-    captureTelemetry("submission received");
+    captureTelemetry("submission created", {
+      formType: form.type,
+    });
     res.json(submissionResult);
   }
 

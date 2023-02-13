@@ -109,13 +109,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (submission.finished) {
       capturePosthogEvent(form.organisationId, "submission finished", {
         formId,
+        formType: form.type,
       });
       captureTelemetry("submission finished");
     } else {
       capturePosthogEvent(form.organisationId, "submission updated", {
         formId,
+        formType: form.type,
       });
-      captureTelemetry("submission updated");
+      captureTelemetry("submission updated", {
+        formType: form.type,
+      });
     }
     res.json(submissionResult);
   }
