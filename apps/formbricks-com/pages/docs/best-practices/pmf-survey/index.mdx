@@ -57,13 +57,15 @@ Then, create a new Product-Market Fit Survey:
 
 <Image src={NewPMF} alt="create pmf survey" quality="100" />
 
-Go to the "Setup instructions" tab and copy the ID:
+Go to the "Setup instructions" tab and locate your survey ID. You'll need it in a minute:
 
 <Image src={ID} alt="copy survey id" quality="100" />
 
 ### 2. Embed Formbricks snippet in `<head>`
 
-Embed the Product-Market Fit Survey script in your HTML `<head>` tag and replace survey ID:
+Embed the following Product-Market Fit Survey script in your HTML `<head>` tag.
+
+Replace the `formId` with survey Id from the Formbricks dashboard:
 
 ```tsx
 <script src="https://cdn.jsdelivr.net/npm/@formbricks/pmf@0.0.9" defer></script>
@@ -80,13 +82,13 @@ Embed the Product-Market Fit Survey script in your HTML `<head>` tag and replace
 </script>
 ```
 
-All you have to do now is assigning the `containerId` to the div where you want to render your survey (detailed instructions at the bottom):
+All you have to do now is assigning the `containerId` to the div where you want to render your survey (detailed instructions linked at the bottom):
 
 ```html
 <div id="formbricks-pmf"></div>
 ```
 
-### 4. Configure
+### 3. Configure survey
 
 **Sending user metadata with submission**
 
@@ -168,7 +170,7 @@ window.formbricksPmf = {
 };
 ```
 
-### 3. Embed
+### 4. Render survey in your app
 
 To add the Product-Market Fit Survey to your UI, you can use different wrappers. Please follow the instructions linked below:
 

@@ -1,6 +1,10 @@
 import { Layout } from "@/components/docs/Layout";
 import { Fence } from "@/components/shared/Fence";
 import Link from "next/link";
+import NewFB from "@/images/docs/create-feedback-box.png";
+import FBID from "@/images/docs/fb-id.png";
+import ResponsiveEmbed from "react-responsive-embed";
+import Image from "next/image";
 
 export const meta = {
   title: "Feedback Box",
@@ -14,7 +18,7 @@ Allow users to share feedback with 2 clicks. A low friction way to gather feedba
 
 ## Formbricks Approach
 
-- Make it **easy**: 2 clicks
+- Make it **easy**: 2 clicks to share feedback
 - Keep it **personal**: Founder faces
 - **Pre-sort** feedback:
   - Bug → Pipe into Bug channel for devs
@@ -23,33 +27,60 @@ Allow users to share feedback with 2 clicks. A low friction way to gather feedba
 
 ## Preview
 
+<div className="max-w-md">
+  <ResponsiveEmbed
+    src="/docs/wrappers/slide-out/demo"
+    allowFullScreen
+    className="rounded-lg border-2 border-gray-200"
+    ratio="8:10"
+  />
+</div>
+
 ## Installation
 
-To add the Feedback Box to your app, you need to perform three steps:
+To add the Feedback Box to your app, you need to perform these steps:
 
-1. Install
-2. Configure
-3. Embed
+1. Create new Feedback Box at app.formbricks.com
+2. Embed JS snippet in `<head>`
+3. Configure
+4. Render in-app
 
-### 1. Install
+### 1. Create new Feedback Box
 
-There are two ways to install the Feedback Box: npm and JavaScript embed.
+Create an account at [app.formbricks.com](https://app.formbricks.com/auth/signup)
 
-**NPM Install**
+Then, create a new Feedback Box:
 
-```tsx
-npm install @formbricks/feedback
-```
+<Image src={NewFB} alt="new feedback box" quality="100" />
 
-**JavaScript Embed**
+Go to the "Setup instructions" tab and locate your Feedback Box ID. You'll need it in a minute:
 
-You can also embed the Feedback Box in your HTML `<head>` tag:
+<Image src={FBID} alt="copy feedback box id" quality="100" />
+
+### 2. Embed Formbricks snippet in `<head>`
+
+Embed the following Feedback Box script in your HTML `<head>` tag.
 
 ```tsx
 <script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2" defer></script>
+
+<script>
+  window.formbricks = {
+      ...window.formbricks,
+      config: {
+        hqUrl: "https://app.formbricks.com",
+        formId: "YOUR FEEDBACK BOX ID HERE", // copy from Formbricks dashboard
+        contact: {
+          name: "Matti",
+          position: "Co-Founder",
+          imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+        },
+      },
+    }
+</script>
 ```
 
-### 2. Setting up the config
+### 3. Configure Feedback Box
 
 You can change the content behaviour of the Feedback Box with the config object.
 
@@ -79,9 +110,9 @@ window.formbricks = {
   config: {
     // ...
     contact: {
-      name: "Johannes",
+      name: "Matti",
       position: "Co-Founder",
-      imgUrl: "https://avatars.githubusercontent.com/u/72809645?v=4",
+      imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
     },
   },
 };
@@ -171,7 +202,7 @@ window.formbricks = {
 };
 ```
 
-### 3. Embed
+### 4. Render survey in your app
 
 To add the Feedback Box to your UI, you can use different wrappers. Please follow the instructions linked below:
 
