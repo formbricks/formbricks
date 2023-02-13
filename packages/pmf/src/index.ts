@@ -179,6 +179,10 @@ async function createSubmission(submission: any) {
       }),
     }
   );
+  if (!response.ok) {
+    alert("Something went wrong. Please try again later.");
+    throw Error("Error creating submission");
+  }
   return response.json();
 }
 
@@ -204,6 +208,10 @@ async function updateSubmission(submissionId: string, submission: any, finished:
       body: JSON.stringify(body),
     }
   );
+  if (!response.ok) {
+    alert("Something went wrong. Please try again later.");
+    throw Error("Error updating submission");
+  }
   return response.json();
 }
 
