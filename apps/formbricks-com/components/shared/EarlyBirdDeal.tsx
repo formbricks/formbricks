@@ -2,9 +2,11 @@ import { useRouter } from "next/router";
 import { Button } from "@formbricks/ui";
 import Image from "next/image";
 import EarlyBird from "@/images/early bird deal for open source jotform alternative typeform and surveymonkey_v2.svg";
+import { usePlausible } from "next-plausible";
 
 export default function EarlyBirdDeal() {
   const router = useRouter();
+  const plausible = usePlausible();
   return (
     <div className="bg-brand-dark relative mx-4 max-w-7xl overflow-hidden rounded-xl p-6 pb-16 sm:p-8 sm:pb-16 md:py-8 md:px-12 lg:mx-0 lg:flex lg:items-center">
       <div className="lg:w-0 lg:flex-1 ">
@@ -21,8 +23,10 @@ export default function EarlyBirdDeal() {
         <div className="mt-6">
           <Button
             variant="secondary"
-            target="_blank"
-            onClick={() => router.push("https://app.formbricks.com/auth/signup")}>
+            onClick={() => {
+              plausible("openEarlyBird");
+              window.open("https://app.formbricks.com/auth/signup", "_blank")?.focus();
+            }}>
             Get Early Bird Deal
           </Button>
         </div>
