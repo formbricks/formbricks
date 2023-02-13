@@ -140,7 +140,7 @@ export default function PipelinesOverview({}) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
   return (
-    <div className="mx-auto py-8">
+    <div className="max-w-8xl mx-auto py-8">
       <header className="mb-8">
         <div className="flex justify-between">
           <p className="text-slate-800">
