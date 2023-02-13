@@ -32,7 +32,7 @@ const output = {
         createdAt: "2023-02-03T12:22:03.346Z",
         updatedAt: "2023-02-03T12:22:03.346Z",
         type: "pmf",
-        label: "PMF Demo",
+        label: "Product Market Fit Demo",
         organisationId: "cldoc9md4000119204dn8i5td",
         schema: {
           pages: [
