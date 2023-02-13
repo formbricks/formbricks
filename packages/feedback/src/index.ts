@@ -22,7 +22,7 @@ export interface FormbricksConfig {
 let config: FormbricksConfig = {
   customer: {},
   disableErrorAlert: false,
-  closeOnOutsideClick: false,
+  closeOnOutsideClick: true,
   // Merge with existing config
   ...(window as any).formbricks?.config,
 };
@@ -39,6 +39,9 @@ function init() {
   document.querySelectorAll("[data-formbricks-button]").forEach((el) => {
     el.addEventListener("click", open);
   });
+  if (config.containerId) {
+    render();
+  }
 }
 window.addEventListener("load", init);
 
@@ -279,7 +282,10 @@ function submit(e: Event) {
       body: JSON.stringify(body),
     }
   )
-    .then(() => {
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Unable to send feedback");
+      }
       containerElement.setAttribute("data-success", "");
       const feedbackType = containerElement.getAttribute("data-feedback-type");
       let successTitle = "";
