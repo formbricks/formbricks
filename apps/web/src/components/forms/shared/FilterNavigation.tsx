@@ -4,6 +4,7 @@ import { camelToTitle } from "@/lib/utils";
 import clsx from "clsx";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { BsPin, BsPinFill } from "react-icons/bs";
 
 interface Filter {
   name: string;
@@ -13,6 +14,7 @@ interface Filter {
     value: string;
     label: string;
     active: boolean;
+    pinned: boolean;
   }[];
 }
 
@@ -52,12 +54,20 @@ export default function FilterNavigation({
         // no filter is all is selected, if not keep on filtering
         if (!isAllActive) {
           // filter for all other types
+          let pinnedFilterSubmissions = [];
           if (filter.type === "radio") {
             for (const option of filter.options) {
               if (option.active) {
                 newFilteredSubmissions = newFilteredSubmissions.filter((submission) => {
                   return submission.data[filter.name] === option.value;
                 });
+              }
+              if (option.pinned) {
+                pinnedFilterSubmissions = pinnedFilterSubmissions.concat(
+                  [...newFilteredSubmissions].filter((submission) => {
+                    return submission.data[filter.name] === option.value;
+                  })
+                );
               }
             }
           } else if (filter.type === "checkbox") {
@@ -70,15 +80,27 @@ export default function FilterNavigation({
                   }
                 });
               }
+              if (option.pinned) {
+                pinnedFilterSubmissions = pinnedFilterSubmissions.concat(
+                  [...newFilteredSubmissions].filter((submission) => {
+                    return submission.data[filter.name] === option.value;
+                  })
+                );
+              }
             }
           }
+          // add pinned submissions to the top
+          newFilteredSubmissions = pinnedFilterSubmissions.concat(newFilteredSubmissions).sort((a, b) => {
+            // sort by date descending
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          });
         }
       }
       setFilteredSubmissions(newFilteredSubmissions);
     }
   }, [filters, form, submissions, setFilteredSubmissions]);
 
-  const chosseOptionFilter = (filterName, optionValue) => {
+  const chooseOptionFilter = (filterName, optionValue) => {
     const newFilters = [...filters];
     const filter = newFilters.find((filter) => filter.name === filterName);
 
@@ -90,6 +112,23 @@ export default function FilterNavigation({
         } else {
           option.active = false;
         }
+        // reset all pins when all is selected
+        if (optionValue === "all") {
+          option.pinned = false;
+        }
+      }
+    }
+    setFilters(newFilters);
+  };
+
+  const pinOptionFilter = (filterName, optionValue, pinValue) => {
+    const newFilters = [...filters];
+    const filter = newFilters.find((filter) => filter.name === filterName);
+
+    if (filter) {
+      const option = filter.options.find((option) => option.value === optionValue);
+      if (option) {
+        option.pinned = pinValue;
       }
     }
     setFilters(newFilters);
@@ -109,8 +148,8 @@ export default function FilterNavigation({
               name: element.name,
               label: element.label,
               type: element.type,
-              options: [{ value: "all", label: "All", active: true }].concat([
-                ...element.options.map((option) => ({ ...option, active: false })),
+              options: [{ value: "all", label: "All", active: true, pinned: false }].concat([
+                ...element.options.map((option) => ({ ...option, active: false, pinned: false })),
               ]),
             });
           }
@@ -150,10 +189,10 @@ export default function FilterNavigation({
               key={option.value}
               type="button"
               onClick={() => {
-                chosseOptionFilter(filter.name, option.value);
+                chooseOptionFilter(filter.name, option.value);
               }}
               className={clsx(
-                option.active
+                option.active || option.pinned
                   ? "bg-slate-200 text-slate-900"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
                 "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium"
@@ -161,15 +200,17 @@ export default function FilterNavigation({
               aria-current={option.active ? "page" : undefined}>
               <div className={clsx("-ml-1 mr-3 h-2 w-2 flex-shrink-0 rounded-full")} />
               <span className="truncate">{option.label}</span>
-              {/* {item.count ? (
-              <span
-                className={clsx(
-                  item.id === currentFilter ? "bg-white" : "bg-slate-100 group-hover:bg-white",
-                  "ml-auto inline-block rounded-full py-0.5 px-3 text-xs"
-                )}>
-                {item.count}
-              </span>
-            ) : null} */}
+              {!["all", "inbox", "archived"].includes(option.value) && (option.active || option.pinned) && (
+                <button
+                  className="ml-auto"
+                  onClick={() => pinOptionFilter(filter.name, option.value, !option.pinned)}>
+                  {option.pinned ? (
+                    <BsPinFill className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <BsPin className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
+              )}
             </button>
           ))}
         </div>
