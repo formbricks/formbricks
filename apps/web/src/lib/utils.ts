@@ -94,6 +94,11 @@ export const onlyUnique = (value, index, self) => {
   return self.indexOf(value) === index;
 };
 
+// filter array to eliminate duplicates with the same id
+export const filterUniqueById = (array) => {
+  return array.filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i);
+};
+
 export const parseUserAgent = (userAgent: string) => {
   const info = platform.parse(userAgent);
   return info.description;

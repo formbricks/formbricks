@@ -1,6 +1,6 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
-import { camelToTitle } from "@/lib/utils";
+import { camelToTitle, filterUniqueById, onlyUnique } from "@/lib/utils";
 import clsx from "clsx";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -90,10 +90,12 @@ export default function FilterNavigation({
             }
           }
           // add pinned submissions to the top
-          newFilteredSubmissions = pinnedFilterSubmissions.concat(newFilteredSubmissions).sort((a, b) => {
-            // sort by date descending
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-          });
+          newFilteredSubmissions = filterUniqueById(
+            pinnedFilterSubmissions.concat(newFilteredSubmissions).sort((a, b) => {
+              // sort by date descending
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            })
+          );
         }
       }
       setFilteredSubmissions(newFilteredSubmissions);
