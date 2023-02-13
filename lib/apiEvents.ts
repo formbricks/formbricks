@@ -130,7 +130,6 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
       },
     });
 
-
     if (userOpenFormSession === null) {
       const { id } = await prisma.submissionSession.create({
         data: { form: { connect: { id: formId } } },
@@ -170,7 +169,11 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
     if (pipeline.type === "WEBHOOK") {
       handleWebhook(pipeline, event);
     } else if (pipeline.type === "AIRTABLE") {
-      if (event.type !== "formOpened") {
+      if (event.type === "pageSubmission") {
+        handleAirtable(pipeline, event);
+      } else if (event.type !== "formOpened") {
+        handleAirtable(pipeline, event);
+      } else if (event.type === "formOpened" && userOpenFormSession === null) {
         handleAirtable(pipeline, event);
       } else if (event.type === "formOpened" && userOpenFormSession === null) {
         handleAirtable(pipeline, event);
@@ -178,3 +181,4 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
     }
   }
 };
+//
