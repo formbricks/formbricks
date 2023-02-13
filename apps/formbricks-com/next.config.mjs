@@ -59,6 +59,11 @@ const nextConfig = {
         destination: "/docs",
         permanent: false,
       },
+      {
+        source: "/demo",
+        destination: "https://app.formbricks.com/demo",
+        permanent: false,
+      },
     ];
   },
 };

@@ -50,16 +50,21 @@ export default function GetStartedPage() {
           </Button>
         </div>
       </div>
-      {/* Video */}
-
-      <BreakerCTA
-        teaser="No sign up required"
-        headline="Experience what you're missing"
-        subheadline="Play around with out Demo - no sign up needed."
-        cta="Try Demo"
-        href="https://app.formbricks.com/demo"
-        inverted
-      />
+      <div className="px-32 pb-4">
+        <div className="relative pb-[56.25%]">
+          <iframe
+            className="absolute top-0 left-0 h-full w-full border-0"
+            src="https://www.tella.tv/video/cle2kq9yi00ej0fjse13havy2/embed"></iframe>
+        </div>
+        <BreakerCTA
+          teaser="No sign up required"
+          headline="Experience what you're missing"
+          subheadline="Play around with the demo - no sign up needed."
+          cta="Try Demo"
+          href="https://app.formbricks.com/demo"
+          inverted
+        />{" "}
+      </div>
 
       {/* Steps */}
       <div id="howitworks" className="mx-auto mt-8 mb-12 max-w-lg md:mt-32 md:mb-0 md:max-w-none">
