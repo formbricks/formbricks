@@ -12,8 +12,8 @@ export function FeedbackButton() {
     window.formbricks = {
       ...window.formbricks,
       config: {
-        hqUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
-        formId: process.env.NEXT_PUBLIC_FORMBRICKS_FORM_ID,
+        formbricksUrl: "https://app.formbricks.com",
+        formId: "cle2pg7no0000nu0hjefwy3w7",
         contact: {
           name: "Matti",
           position: "Co-Founder",

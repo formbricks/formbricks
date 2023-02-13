@@ -31,15 +31,15 @@ export default function FeedbackButton() {
 
   return (
     <>
-      <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2.1/dist/index.umd.js" defer />
+      <Script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.3/dist/index.umd.js" defer />
 
       <Script id="feedback-setup">{`
       window.formbricks = {
         ...window.formbricks,
         config: {
-          hqUrl: "https://app.formbricks.com",
-          formId: "cldipnvz80002le0ha2a3zhgl",
-          divId: "formbricks-feedback-wrapper",
+          formbricksUrl: "https://app.formbricks.com",
+          formId: "cle2pg7no0000nu0hjefwy3w7",
+          containerId: "formbricks-feedback-wrapper",
           contact: {
             name: "Matti",
             position: "Co-Founder",

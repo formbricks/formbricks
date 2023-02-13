@@ -149,7 +149,7 @@
 }
 
 .formbricks-radio-input:checked + label {
-  background-color: #58ba83;
+  background-color: var(--formbricksPmf-brand-color-transparent);
 }
 
 /* Thank you slide */

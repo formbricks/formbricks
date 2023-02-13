@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import clsx from "clsx";
+import { useEffect } from "react";
 
 declare global {
   interface Window {
@@ -13,7 +12,7 @@ export default function PmfDummy() {
       ...window.formbricksPmf,
       config: {
         formbricksUrl: "https://app.formbricks.com",
-        formId: "cldetkpre0000nr0hku986hio",
+        formId: "cle2plrty0002nu0hqt83bi8q",
         containerId: "formbricks",
         customer: {
           id: "blog@formbricks.com",
