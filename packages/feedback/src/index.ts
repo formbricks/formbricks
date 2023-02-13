@@ -52,15 +52,19 @@ const trap = createFocusTrap(containerElement, {
 
 function applyConfig() {
   if (config.contact) {
+    //@ts-ignore
     const contactNameElements = document.getElementsByClassName("formbricks__contact-name");
+    //@ts-ignore
     for (const elem of contactNameElements) {
       elem.innerHTML = config.contact.name;
     }
     const contactPositionElements = document.getElementsByClassName("formbricks__contact-position");
+    //@ts-ignore
     for (const elem of contactPositionElements) {
       elem.innerHTML = config.contact.position;
     }
     const contactImageElements = document.getElementsByClassName("formbricks__contact-image");
+    //@ts-ignore
     for (const elem of contactImageElements) {
       (<HTMLImageElement>elem).src = config.contact.imgUrl;
     }
@@ -225,6 +229,7 @@ function changeType(e: Event) {
   if (typeSwitchElem !== null && typeElem !== null) {
     // replace children with feedback type elements (icon & text)
     typeSwitchElem.innerHTML = "";
+    //@ts-ignore
     typeSwitchElem.replaceChildren(...typeElem.cloneNode(true).childNodes);
     // add chevron
     const chevronElem = document.createElement("div");

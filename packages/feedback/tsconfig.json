@@ -1,4 +1,4 @@
 {
-  "extends": "@formbricks/tsconfig/base.json",
+  "extends": "@formbricks/tsconfig/js-library.json",
   "include": ["src", "types"]
 }
