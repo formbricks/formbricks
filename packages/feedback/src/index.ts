@@ -1,6 +1,6 @@
 import { computePosition, flip, shift } from "@floating-ui/dom";
 import { createFocusTrap } from "focus-trap";
-import { FormbricksError, InvalidConfigError } from "./errors";
+import { FormbricksError, InvalidConfigError, NetworkError } from "./errors";
 
 import { formHTML } from "./form-html";
 import formCSS from "./form.css";
@@ -262,9 +262,7 @@ function submit(e: Event) {
   if (!config.formId) {
     const error = new InvalidConfigError("formId");
     console.error(error);
-    config.errorHandler?.(error);
-
-    return;
+    return config.errorHandler?.(error);
   }
 
   const submitElement = document.getElementById("formbricks__submit")!;
@@ -294,9 +292,10 @@ function submit(e: Event) {
       body: JSON.stringify(body),
     }
   )
-    .then((res) => {
+    .then(async (res) => {
       if (!res.ok) {
-        throw new Error("Unable to send feedback");
+        const response = await res.json();
+        throw new NetworkError(res.status, res.url, response.error);
       }
       containerElement.setAttribute("data-success", "");
       const feedbackType = containerElement.getAttribute("data-feedback-type");
@@ -316,10 +315,8 @@ function submit(e: Event) {
       document.getElementById("formbricks__success-subtitle")!.innerText = successSubtitle;
     })
     .catch((e) => {
-      // console.error("Formbricks:", e);
-      console.log("e", e);
-      const error = new FormbricksError(e.message);
-      config.errorHandler?.(error);
+      console.error(e);
+      config.errorHandler?.(e);
     });
 
   return false;

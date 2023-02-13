@@ -16,3 +16,15 @@ export class InvalidConfigError extends FormbricksError {
     this.property = property;
   }
 }
+
+export class NetworkError extends FormbricksError {
+  statusCode: number;
+  url: string;
+
+  constructor(status: number, url: string, message?: string) {
+    super(`Network Error (${status}), ${url}: ${message}`);
+    this.name = "NetworkError";
+    this.statusCode = status;
+    this.url = url;
+  }
+}

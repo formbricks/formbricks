@@ -1,4 +1,3 @@
-import { FormbricksError } from "@formbricks/feedback/dist/src/errors";
 import { useEffect } from "react";
 import AppPage from "../../components/AppPage";
 
@@ -13,8 +12,8 @@ export default function Feedback() {
     window.formbricks = {
       ...window.formbricks,
       config: {
-        formbricksUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL || "https://formbricks.midka.dev",
-        formId: process.env.NEXT_PUBLIC_FORMBRICKS_FEEDBACK_FORM_ID || "dd",
+        formbricksUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
+        formId: process.env.NEXT_PUBLIC_FORMBRICKS_FEEDBACK_FORM_ID,
         contact: {
           name: "Matti Nannt",
           position: "Founder",
@@ -23,9 +22,6 @@ export default function Feedback() {
         customer: {
           name: "Formbricks",
           email: "johannes@formbricks.com",
-        },
-        errorHandler: (error: FormbricksError) => {
-          console.error(error);
         },
       },
     };
