@@ -55,7 +55,7 @@ export default async function handle(
     const candidates = await Promise.all(pageSubmissions.map(async (s, index) => {
 
 
-    let candidateResponse  = await prisma.user.findUnique({
+    const candidateResponse  = await prisma.user.findUnique({
         select: {
           firstname: true,
           lastname: true,
@@ -68,31 +68,44 @@ export default async function handle(
           id: s.data["candidateId"]
         }
       })
-     candidateResponse.submission = pageSubmissions[index].data?.submission; 
-     return candidateResponse;
+      return {...candidateResponse, submission: pageSubmissions[index].data?.submission};
 
     }));
     
-    const responses = pageSubmissions.map((s) => s.data["submission"]);
+      const responses = pageSubmissions.map((s) => s.data["submission"]);
 
 
     let qStats = {};
+    // candidates.map((r) => {
+    // if (r)
+    //     Object.keys(r.submission).map((qId) => {
+    //       const addOrIncrementOption = (opt) => {
+    //         if (qStats[qId][opt]) qStats[qId][opt].push(r);
+    //         else qStats[qId][opt] = [r];
+    //       };
+    //       if (!qStats[qId]) qStats[qId] = {};
+    //       if (typeof r.submission[qId] !== "object") addOrIncrementOption(r.submission[qId]);
+    //       else {
+    //         for (const opt of r.submission[qId]) addOrIncrementOption(opt);
+    //       }
+    //     });
+    // });
     responses.map((r) => {
-    if (r)
-        Object.keys(r).map((qId) => {
-          const addOrIncrementOption = (opt) => {
-            if (qStats[qId][opt]) qStats[qId][opt] += 1;
-            else qStats[qId][opt] = 1;
-          };
-          if (!qStats[qId]) qStats[qId] = {};
-          if (typeof r[qId] !== "object") addOrIncrementOption(r[qId]);
-          else {
-            for (const opt of r[qId]) addOrIncrementOption(opt);
-          }
-        });
-    });
+      if (r)
+          Object.keys(r).map((qId) => {
+            const addOrIncrementOption = (opt) => {
+              if (qStats[qId][opt]) qStats[qId][opt] += 1;
+              else qStats[qId][opt] = 1;
+            };
+            if (!qStats[qId]) qStats[qId] = {};
+            if (typeof r[qId] !== "object") addOrIncrementOption(r[qId]);
+            else {
+              for (const opt of r[qId]) addOrIncrementOption(opt);
+            }
+          });
+      });
 
-    return res.json({ candidates, qStats });
+    return res.json({  qStats });
   }
 
   // Unknown HTTP Method

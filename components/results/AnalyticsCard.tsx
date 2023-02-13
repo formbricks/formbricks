@@ -5,6 +5,7 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/24/solid";
+import { Chip } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { getPageQuestionsStats } from "../../lib/submissionSessions";
 import { classNames } from "../../lib/utils";
@@ -92,17 +93,28 @@ const AnalyticsCard: React.FC<Props> = ({
               {toolTipText}
             </span>
           )}
-          {!questions?.length ? null : !isItemOpened ? (
-            <ChevronDownIcon
-              className='-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 '
-              aria-hidden='true'
-            />
-          ) : (
-            <ChevronUpIcon
-              className='-ml-1 mr-0.5 flex-shrink-0 self-center h-5 w-5 '
-              aria-hidden='true'
-            />
-          )}
+          <div className='flex'>
+            <div className='cursor-pointer '>
+              <Chip
+                label='Exporter'
+                onClick={() => {
+                  console.log("Clicked");
+                }}
+                color='success'
+              />
+            </div>
+            {!questions?.length ? null : !isItemOpened ? (
+              <ChevronDownIcon
+                className='ml-5   mr-0.5 flex-shrink-0 self-center h-5 w-5 '
+                aria-hidden='true'
+              />
+            ) : (
+              <ChevronUpIcon
+                className='ml-5   mr-0.5 flex-shrink-0 self-center h-5 w-5 '
+                aria-hidden='true'
+              />
+            )}
+          </div>
         </dt>
         <dd className='flex items-baseline justify-between mt-1 md:block lg:flex'>
           <div
