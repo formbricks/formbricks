@@ -14,70 +14,16 @@ export default function SetupInstructions({}) {
 
   return (
     <div>
-      <div className="grid max-w-6xl grid-cols-5 gap-16 py-4">
+      <div className="max-w-8xl mx-auto grid grid-cols-5 gap-16 py-8">
         <div className="col-span-3">
           <div>
             <div className="mb-6">
-              <h2 className="mb-3 text-3xl font-bold text-slate-800">Quick Start Guides</h2>
-              <p>You can install the Feedback Box with NPM and with a JavaScript embed:</p>
-            </div>
-            <div>
-              <h3 className="block text-xl font-semibold text-slate-800">NPM Install</h3>
-              <ol className="my-2 list-decimal pl-4 leading-8 text-slate-700">
-                <li>Install Feedback Box with NPM</li>
-                <li>
-                  Set up the config file according to your needs.{" "}
-                  <a
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-brand-dark font-bold underline"
-                    href="https://formbricks.com/docs/best-practices/feedback-box">
-                    Read the docs
-                  </a>{" "}
-                  for more info.
-                </li>
-                <li>You&apos;re done! Your feedback will show up in the Results tab.</li>
-              </ol>
-              <h4 className="my-2 block text-lg font-semibold text-slate-800">NPM Install</h4>
-              <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-slate-200">
-                <pre>
-                  <code className="language-html whitespace-pre-wrap">{`npm install @formbricks/feedback`}</code>
-                </pre>
-              </div>
-              <h4 className="my-2 block text-lg font-semibold text-slate-800">Example config</h4>
-              <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-slate-200">
-                <pre>
-                  <code className="language-html whitespace-pre-wrap">{`config: {
-         hqUrl: "${window.location.protocol}//${window.location.host}",
-         formId: "${formId}",
-        containerId: "test-div",
-        contact: {
-          name: "Johannes",
-          position: "Co-Founder",
-          imgUrl: "https://avatars.githubusercontent.com/u/72809645?v=4",
-        },
-        customer: {
-          id: "uUid", // fill dynamically
-          name: "User", // fill dynamically
-          email: "test@cal.com", // fill dynamically
-        },
-        style: {
-          brandColor: "#0E1420",
-          headerBGColor: "#E5E7EB",
-          headerTitleColor: "#4B5563",
-          boxBGColor: "#F9FAFB",
-          textColor: "#374151",
-          buttonHoverColor: "#F3F4F6",
-        },
-      }`}</code>
-                </pre>
-              </div>
+              <h2 className="mb-3 text-3xl font-bold text-slate-800">Quick Start Guide</h2>
+              <p>You embed the Feedback Box with a JavaScript snippet:</p>
             </div>
 
-            <hr className="my-10 text-slate-800" />
-
             <div>
-              <h3 className="block text-xl font-semibold text-slate-800">Javascript Embed</h3>
+              <h3 className="block text-xl font-semibold text-slate-800">How to</h3>
               <ol className="mt-2 list-decimal pl-4 leading-8 text-slate-700">
                 <li>Copy the Javascript snippet below into the HEAD of your HTML file.</li>
                 <li>Set up a button with the onClick handler below to let your users open the widget.</li>
@@ -102,17 +48,22 @@ export default function SetupInstructions({}) {
                   <pre>
                     <code className="language-html whitespace-pre-wrap">
                       {`<!--HTML header script -->
-<script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.1.5/dist/index.umd.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2" defer></script>
 
 <script>
-window.formbricks = {
-  config: {
-    hqUrl: "${window.location.protocol}//${window.location.host}",
-    formId: "${formId}",
-  },
-  ...window.formbricks,
-};
-</script>
+  window.formbricks = {
+      ...window.formbricks,
+      config: {
+        hqUrl: "https://app.formbricks.com",
+        formId: "YOUR FEEDBACK BOX ID HERE", // copy from Formbricks dashboard
+        contact: {
+          name: "Matti",
+          position: "Co-Founder",
+          imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+        },
+      },
+    }
+    </script>
 `}
                     </code>
                   </pre>
@@ -129,6 +80,17 @@ window.formbricks = {
                     </code>
                   </pre>
                 </div>
+              </div>
+              <div className="mt-3">
+                <h4 className="my-2 block text-lg font-semibold text-slate-800">Read full manual</h4>
+
+                <Button
+                  variant="highlight"
+                  target="_blank"
+                  className="mt-2"
+                  href="https://formbricks.com/docs/best-practices/feedback-box">
+                  Feedback Box Docs
+                </Button>
               </div>
             </div>
           </div>
@@ -148,7 +110,7 @@ window.formbricks = {
               />
 
               <Button
-                variant="primary"
+                variant="highlight"
                 className="mt-2 w-full justify-center"
                 onClick={() => {
                   navigator.clipboard.writeText(formId);
@@ -164,8 +126,8 @@ window.formbricks = {
                 variant="secondary"
                 target="_blank"
                 className="mt-2 w-full justify-center"
-                onClick={() => router.push("https://formbricks.com/docs")}>
-                Docs
+                href="https://formbricks.com/docs/best-practices/feedback-box">
+                Documentation{" "}
               </Button>
             </div>
             <div className="mt-10">
@@ -175,7 +137,7 @@ window.formbricks = {
                 variant="secondary"
                 target="_blank"
                 className="bg-purple mt-2 w-full justify-center"
-                onClick={() => router.push("https://formbricks.com/discord")}>
+                href="https://formbricks.com/discord">
                 Join Discord
               </Button>
             </div>

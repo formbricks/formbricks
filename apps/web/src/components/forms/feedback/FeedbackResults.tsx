@@ -101,7 +101,7 @@ export default function FeedbackResults() {
         </Dialog>
       </Transition.Root>
       <div>
-        <section aria-labelledby="products-heading" className="pt-6 pb-24">
+        <section aria-labelledby="products-heading" className="max-w-8xl mx-auto py-8 pt-6 pb-24">
           <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
             <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
 

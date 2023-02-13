@@ -54,7 +54,7 @@ export default function SegmentResults() {
   return (
     <div>
       <div>
-        <section aria-labelledby="filters" className="pt-6 pb-24">
+        <section aria-labelledby="filters" className="max-w-8xl mx-auto py-8">
           <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-4">
             <div>
               {/* Segments */}
@@ -95,7 +95,7 @@ export default function SegmentResults() {
 
             {/* Double down on what they love*/}
 
-            <div className="max-w-3xl lg:col-span-3">
+            <div className=" lg:col-span-3">
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
                   <h3 className="text-sm font-medium text-slate-800">Overall</h3>
