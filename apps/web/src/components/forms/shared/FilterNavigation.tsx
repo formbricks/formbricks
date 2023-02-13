@@ -1,6 +1,6 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
-import { camelToTitle, filterUniqueById, onlyUnique } from "@/lib/utils";
+import { camelToTitle, filterUniqueById } from "@/lib/utils";
 import clsx from "clsx";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
