@@ -1,6 +1,7 @@
 import { Button } from "@formbricks/ui";
 import { useRouter } from "next/router";
 import clsx from "clsx";
+import { usePlausible } from "next-plausible";
 
 interface Props {
   teaser: string;
@@ -13,6 +14,7 @@ interface Props {
 
 export default function BreakerCTA({ inverted = false, teaser, headline, subheadline, cta, href }: Props) {
   const router = useRouter();
+  const plausible = usePlausible();
   return (
     <div
       className={clsx(
@@ -23,7 +25,12 @@ export default function BreakerCTA({ inverted = false, teaser, headline, subhead
       )}>
       <div className="relative px-4 py-8 sm:px-6 sm:pt-8 sm:pb-12 lg:px-8 lg:pt-12">
         <div className="xs:block xs:absolute xs:right-10 hidden md:top-1/2 md:-translate-y-1/2">
-          <Button variant="highlight" onClick={() => router.push(`${href}`)}>
+          <Button
+            variant="highlight"
+            onClick={() => {
+              plausible("openDemo");
+              router.push(`${href}`);
+            }}>
             {cta}
           </Button>
         </div>

@@ -6,9 +6,11 @@ import { Fragment } from "react";
 import { Button } from "@formbricks/ui";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
+import { usePlausible } from "next-plausible";
 
 export default function Header() {
   const router = useRouter();
+  const plausible = usePlausible();
   return (
     <Popover className="relative" as="header">
       <div className="flex items-center justify-between px-4 py-6 sm:px-6 md:justify-start ">
@@ -43,14 +45,22 @@ export default function Header() {
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
-          <Button variant="secondary" className="ml-2" href="https://app.formbricks.com/demo" target="_blank">
+          <Button
+            variant="secondary"
+            className="ml-2"
+            onClick={() => {
+              plausible("openDemo");
+              window.open("https://app.formbricks.com/demo", "_blank")?.focus();
+            }}>
             Try Demo
           </Button>
           <Button
             variant="highlight"
             className="ml-2"
-            href="https://app.formbricks.com/auth/signup"
-            target="_blank">
+            onClick={() => {
+              plausible("openSignUp");
+              window.open("https://app.formbricks.com/auth/signup", "_blank")?.focus();
+            }}>
             Sign Up
           </Button>
         </div>

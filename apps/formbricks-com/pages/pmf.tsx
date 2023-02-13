@@ -13,9 +13,11 @@ import PipelinesDark from "@/images/pipelines-dark.png";
 import PreSegmentationDark from "@/images/pre-segmentation-dark.png";
 import PmfDummy from "@/components/docs/PmfDummy";
 import EarlyBirdDeal from "@/components/shared/EarlyBirdDeal";
+import { usePlausible } from "next-plausible";
 
 export default function GetStartedPage() {
   const router = useRouter();
+  const plausible = usePlausible();
   return (
     <LayoutPMF
       title="Measure Product-Market Fit continuously"
@@ -38,14 +40,21 @@ export default function GetStartedPage() {
         </p>
 
         <div className="mx-auto mt-5 max-w-md sm:flex sm:justify-center md:mt-8">
-          <Button variant="secondary" href="https://app.formbricks.com/demo" target="_blank">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              plausible("openDemo");
+              window.open("https://app.formbricks.com/demo", "_blank")?.focus();
+            }}>
             Try it out
           </Button>
           <Button
             variant="highlight"
             className="ml-3"
-            href="https://app.formbricks.com/auth/signup"
-            target="_blank">
+            onClick={() => {
+              plausible("openSignUp");
+              window.open("https://app.formbricks.com/auth/signup", "_blank")?.focus();
+            }}>
             Sign Up
           </Button>
         </div>
