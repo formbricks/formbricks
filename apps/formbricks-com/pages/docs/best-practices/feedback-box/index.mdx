@@ -62,13 +62,13 @@ Go to the "Setup instructions" tab and locate your Feedback Box ID. You'll need 
 Embed the following Feedback Box script in your HTML `<head>` tag.
 
 ```tsx
-<script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.3" defer></script>
 
 <script>
   window.formbricks = {
       ...window.formbricks,
       config: {
-        hqUrl: "https://app.formbricks.com",
+        formbricksUrl: "https://app.formbricks.com",
         formId: "YOUR FEEDBACK BOX ID HERE", // copy from Formbricks dashboard
         contact: {
           name: "Matti",
@@ -78,6 +78,14 @@ Embed the following Feedback Box script in your HTML `<head>` tag.
       },
     }
 </script>
+```
+
+Afterwards you need to embed the feedback box into your app. The standard ways are either a <Link href="/docs/wrappers/pop-over">pop-over on button click</Link> or <Link href="/docs/wrappers/inline">inline inserted into a div</Link>.
+
+For example for a pop-over on button click you need to add the following code to your app:
+
+```html
+<button data-formbricks-button>Feedback</button>
 ```
 
 ### 3. Configure Feedback Box
@@ -177,7 +185,7 @@ Here is an example of a full config object:
 window.formbricks = {
   ...window.formbricks,
   config: {
-    hqUrl: "https://app.formbricks.com",
+    formbricksUrl: "https://app.formbricks.com",
     formId: "cldipcgat0000mn0g31a8pdse",
     containerId: "formbricks-feedback-box", // only needed for modal & inline
     contact: {
