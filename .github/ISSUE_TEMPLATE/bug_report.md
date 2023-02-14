@@ -30,7 +30,7 @@ Any other relevant information. For example, why do you consider this a bug and 
 
 ## Environment
 
-- [ ] snoopForms Cloud (app.snoopforms.com)
+- [ ] Formbricks Cloud (app.formbricks.com)
 - [ ] self-hosted snoopForms, version/commit: [please provide]
 
 ### Additional Context
