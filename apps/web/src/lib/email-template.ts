@@ -173,7 +173,7 @@ export const withEmailTemplate = (content: string) =>
           </tr>
         </table>
         <p style="padding-top: 8px; line-height: initial">
-          Formbricks 2022. All rights reserved.<br />
+          Formbricks ${new Date().getFullYear()}. All rights reserved.<br />
           <a
             style="text-decoration: none"
             href="https://formbricks.com/imprint"
