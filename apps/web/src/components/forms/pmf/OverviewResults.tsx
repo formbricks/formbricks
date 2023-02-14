@@ -60,7 +60,7 @@ export default function OverviewResults() {
     <div>
       <div>
         <section aria-labelledby="filters" className="max-w-8xl mx-auto py-8 pt-6 pb-24 ">
-          <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-16 gap-y-10 md:grid-cols-4">
             <div>
               <SubmissionCounter
                 numFilteredSubmissions={filteredSubmissions.length}
@@ -71,7 +71,7 @@ export default function OverviewResults() {
 
             {/* Submission grid */}
 
-            <div className="max-w-7xl lg:col-span-3">
+            <div className="max-w-7xl md:col-span-3">
               {submissions.length === 0 ? (
                 <EmptyPageFiller
                   alertText="You haven't received any submissions yet."
@@ -81,7 +81,7 @@ export default function OverviewResults() {
                 </EmptyPageFiller>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
                       <h3 className="text-sm font-medium text-slate-800">Disappointment Level</h3>
                       <Pie
@@ -105,7 +105,6 @@ export default function OverviewResults() {
                         <div>Disappointment Level</div>
                         <div>Job</div>
                       </div>
-                      {console.log(JSON.stringify(question, null, 2))}
                       {filteredSubmissions
                         .filter((s) => question.name in s.data)
                         .map((submission) => (
