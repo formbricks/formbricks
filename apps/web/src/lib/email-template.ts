@@ -1,153 +1,194 @@
 export const withEmailTemplate = (content: string) =>
-  `<!doctype html>
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Simple Transactional Email</title>
-        <style>
-    @media only screen and (max-width: 620px) {
-      table.body h1 {
-        font-size: 28px !important;
-        margin-bottom: 10px !important;
-      }
-    
-      table.body p,
-    table.body ul,
-    table.body ol,
-    table.body td,
-    table.body span,
-    table.body a {
-        font-size: 16px !important;
-      }
-    
-      table.body .wrapper,
-    table.body .article {
-        padding: 10px !important;
-      }
-    
-      table.body .content {
-        padding: 0 !important;
-      }
-    
-      table.body .container {
-        padding: 0 !important;
-        width: 100% !important;
-      }
-    
-      table.body .main {
-        border-left-width: 0 !important;
-        border-radius: 0 !important;
-        border-right-width: 0 !important;
-      }
-    
-      table.body .btn table {
-        width: 100% !important;
-      }
-    
-      table.body .btn a {
-        width: 100% !important;
-      }
-    
-      table.body .img-responsive {
-        height: auto !important;
-        max-width: 100% !important;
-        width: auto !important;
-      }
-    }
-    @media all {
-      .ExternalClass {
-        width: 100%;
-      }
-    
-      .ExternalClass,
-    .ExternalClass p,
-    .ExternalClass span,
-    .ExternalClass font,
-    .ExternalClass td,
-    .ExternalClass div {
-        line-height: 100%;
-      }
-    
-      .apple-link a {
-        color: inherit !important;
-        font-family: inherit !important;
-        font-size: inherit !important;
-        font-weight: inherit !important;
-        line-height: inherit !important;
-        text-decoration: none !important;
-      }
-    
-      #MessageViewBody a {
-        color: inherit;
-        text-decoration: none;
-        font-size: inherit;
-        font-family: inherit;
-        font-weight: inherit;
-        line-height: inherit;
-      }
-    
-      .btn-primary table td:hover {
-        background-color: #34495e !important;
-      }
-    
-      .btn-primary a:hover {
-        background-color: #34495e !important;
-        border-color: #34495e !important;
-      }
-    }
-    </style>
-      </head>
-      <body style="background-color: #f6f6f6; font-family: sans-serif; -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 1.4; margin: 0; padding: 0; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
-        <span class="preheader" style="color: transparent; display: none; height: 0; max-height: 0; max-width: 0; opacity: 0; overflow: hidden; mso-hide: all; visibility: hidden; width: 0;">This is preheader text. Some clients will show this text as a preview.</span>
-        <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #f6f6f6; width: 100%;" width="100%" bgcolor="#f6f6f6">
+  `<!DOCTYPE html>
+  <html>
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, minimum-scale=1"
+      />
+      <base target="_blank" />
+  
+      <style>
+        body {
+          background-color: #f1f5f9;
+          font-family: "Poppins", "Helvetica Neue", "Segoe UI", Helvetica,
+            sans-serif;
+          font-size: 15px;
+          font-weight: 300;
+          line-height: 26px;
+          margin: 0;
+          color: #1e293b;
+        }
+  
+        pre {
+          background: #f4f4f4;
+          padding: 2px;
+        }
+  
+        table {
+          width: 100%;
+        }
+        table td {
+          padding: 5px;
+        }
+        .socialicons {
+          max-width: 200px;
+          margin-left: auto;
+          margin-right: auto;
+          margin-top: 27px;
+        }
+  
+        .wrap {
+          background-color: #f8fafc;
+          padding: 30px;
+          max-width: 525px;
+          margin: 0 auto;
+          border-radius: 12px;
+        }
+  
+        .button {
+          background: #00c4b8;
+          border-radius: 8px;
+          text-decoration: none !important;
+          color: #fff !important;
+          font-weight: 600;
+          padding: 10px 30px;
+          display: inline-block;
+        }
+        .button:hover {
+          background: #00e6ca;
+        }
+  
+        .footer {
+          text-align: center;
+          font-size: 12px;
+          color: #cbd5e1;
+        }
+        .footer a {
+          color: #cbd5e1;
+          margin-right: 5px;
+        }
+  
+        .gutter {
+          padding: 30px;
+          text-align: center;
+        }
+  
+        img {
+          max-width: 100%;
+          height: auto;
+        }
+  
+        .gutter img {
+          max-width: 280px;
+        }
+  
+        a {
+          color: #00c4b8;
+        }
+        a:hover {
+          color: #00e6ca;
+        }
+        h1,
+        h2,
+        h3,
+        h4 {
+          font-weight: 600;
+        }
+        @media screen and (max-width: 600px) {
+          .wrap {
+            max-width: auto;
+          }
+          .gutter {
+            padding: 10px;
+          }
+        }
+      </style>
+    </head>
+    <body
+      style="
+        background-color: #f1f5f9;
+        font-family: 'Poppins', 'Helvetica Neue', 'Segoe UI', Helvetica,
+          sans-serif;
+        font-size: 15px;
+        line-height: 26px;
+        margin: 0;
+        color: #1e293b;
+      "
+    >
+      <div class="gutter" style="padding: 30px">
+        <a href="https://formbricks.com" target="_blank">
+          <img
+            src="https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png"
+            alt="Formbricks Logo"
+        /></a>
+      </div>
+      <div
+        class="wrap"
+        style="
+          background-color: #f8fafc;
+          padding: 30px;
+          max-width: 525px;
+          margin: 0 auto;
+          border-radius: 12px;
+        "
+      >
+        ${content}
+      </div>
+  
+      <div
+        class="footer"
+        style="text-align: center; font-size: 12px; color: #cbd5e1"
+      >
+        <table class="socialicons">
           <tr>
-            <td style="font-family: sans-serif; font-size: 14px; vertical-align: top;" valign="top">&nbsp;</td>
-            <td class="container" style="font-family: sans-serif; font-size: 14px; vertical-align: top; display: block; max-width: 580px; padding: 10px; width: 580px; margin: 0 auto;" width="580" valign="top">
-              <div class="content" style="box-sizing: border-box; display: block; margin: 0 auto; max-width: 580px; padding: 10px;">
-    
-                <!-- START CENTERED WHITE CONTAINER -->
-                <table role="presentation" class="main" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background: #ffffff; border-radius: 3px; width: 100%;" width="100%">
-    
-                  <!-- START MAIN CONTENT AREA -->
-                  <tr>
-                    <td class="wrapper" style="font-family: sans-serif; font-size: 14px; vertical-align: top; box-sizing: border-box; padding: 20px;" valign="top">
-                      <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;" width="100%">
-                        <tr>
-                          <td style="font-family: sans-serif; font-size: 14px; vertical-align: top;" valign="top">
-                            <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;">${content}</p>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-    
-                <!-- END MAIN CONTENT AREA -->
-                </table>
-                <!-- END CENTERED WHITE CONTAINER -->
-    
-                <!-- START FOOTER -->
-                <div class="footer" style="clear: both; margin-top: 10px; text-align: center; width: 100%;">
-                  <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;" width="100%">
-                    <tr>
-                      <td class="content-block" style="font-family: sans-serif; vertical-align: top; padding-bottom: 10px; padding-top: 10px; color: #999999; font-size: 12px; text-align: center;" valign="top" align="center">
-                        <span class="apple-link" style="color: #999999; font-size: 12px; text-align: center;">Company Inc, 3 Abbey Road, San Francisco CA 94102</span>
-                        <br> Don't like these emails? <a href="http://i.imgur.com/CScmqnj.gif" style="text-decoration: underline; color: #999999; font-size: 12px; text-align: center;">Unsubscribe</a>.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="content-block powered-by" style="font-family: sans-serif; vertical-align: top; padding-bottom: 10px; padding-top: 10px; color: #999999; font-size: 12px; text-align: center;" valign="top" align="center">
-                        Powered by <a href="http://htmlemail.io" style="color: #999999; font-size: 12px; text-align: center; text-decoration: none;">HTMLemail</a>.
-                      </td>
-                    </tr>
-                  </table>
-                </div>
-                <!-- END FOOTER -->
-    
-              </div>
+            <td>
+              <a target="_blank" href="https://twitter.com/formbricks"
+                ><img
+                  title="Twitter"
+                  src="https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Twitter-transp.png"
+                  alt="Tw"
+                  width="32"
+              /></a>
             </td>
-            <td style="font-family: sans-serif; font-size: 14px; vertical-align: top;" valign="top">&nbsp;</td>
+            <td>
+              <a target="_blank" href="https://formbricks.com/github"
+                ><img
+                  title="GitHub"
+                  src="https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Github-transp.png"
+                  alt="GitHub"
+                  width="32"
+              /></a>
+            </td>
+            <td>
+              <a target="_blank" href="https://formbricks.com/discord"
+                ><img
+                  title="Discord"
+                  src="https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Discord-transp.png"
+                  alt="Discord"
+                  width="32"
+              /></a>
+            </td>
           </tr>
         </table>
-      </body>
-    </html>`;
+        <p style="padding-top: 8px; line-height: initial">
+          Formbricks 2022. All rights reserved.<br />
+          <a
+            style="text-decoration: none"
+            href="https://formbricks.com/imprint"
+            target="_blank"
+            >Imprint</a
+          >
+          |
+          <a
+            style="text-decoration: none"
+            href="https://formbricks.com/privacy-policy"
+            target="_blank"
+            >Privacy Policy</a
+          >
+        </p>
+      </div>
+    </body>
+  </html>
+  `;
