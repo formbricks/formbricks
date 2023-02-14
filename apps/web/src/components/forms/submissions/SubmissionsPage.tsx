@@ -83,7 +83,7 @@ export default function SubmissionsPage() {
             ) : (
               <>
                 <div className="bg-white px-4 py-5 shadow sm:px-12 sm:pb-4 sm:pt-12">
-                  <div className="grid grid-cols-2 gap-8 divide-x">
+                  <div className="grid gap-8 divide-x">
                     <div className="flow-root">
                       <h1 className="mb-8 text-slate-700">
                         {convertDateTimeString(activeSubmission.createdAt.toString())}
@@ -143,7 +143,7 @@ export default function SubmissionsPage() {
               onChange={setActiveSubmission}
               className="mb-32 min-h-0 flex-1 overflow-y-auto shadow-inner"
               as="div">
-              <div className="relative">
+              <div className="relative h-screen overflow-y-scroll">
                 <ul className="divide-ui-slate-light relative z-0 divide-y">
                   {filteredSubmissions.map((submission) => (
                     <RadioGroup.Option
