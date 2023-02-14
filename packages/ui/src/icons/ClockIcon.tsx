@@ -10,10 +10,10 @@ export function ClockIcon(props: any) {
         r="{11.5}"
         fill="none"
         stroke="#0f172a"
-        strokelinecap="round"
-        strokelinejoin="round"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
-      <polyline points="12 6.501 12 12.001 18 17.501" fill="none" stroke="#0f172a" strokelinejoin="round" />
+      <polyline points="12 6.501 12 12.001 18 17.501" fill="none" stroke="#0f172a" strokeLinejoin="round" />
     </svg>
   );
 }

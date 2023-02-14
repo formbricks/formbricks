@@ -1,13 +1,16 @@
 "use client";
 
+import EmptyPageFiller from "@/components/EmptyPageFiller";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
-import { getOptionLabelMap, useSubmissions } from "@/lib/submissions";
-import { Pie } from "@formbricks/charts";
-import { NotDisappointedIcon, SomewhatDisappointedIcon, VeryDisappointedIcon } from "@formbricks/ui";
+import { useSubmissions } from "@/lib/submissions";
+import { capitalizeFirstLetter } from "@/lib/utils";
+import { Bar, Nps, Table } from "@formbricks/charts";
+import { RectangleGroupIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import FilterNavigation from "../shared/FilterNavigation";
+import { SubmissionCounter } from "../shared/SubmissionCounter";
 
 export default function OverviewResults() {
   const router = useRouter();
@@ -21,12 +24,6 @@ export default function OverviewResults() {
   );
   const [filteredSubmissions, setFilteredSubmissions] = useState([]);
 
-  const labelMap = useMemo(() => {
-    if (form) {
-      return getOptionLabelMap(form.schema);
-    }
-  }, [form]);
-
   if (isLoadingSubmissions || isLoadingForm) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -39,80 +36,99 @@ export default function OverviewResults() {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
 
-  const questions = [
-    {
-      label: "What is the main benefit you receive from our service?",
-      name: "mainBenefit",
-    },
-    {
-      label: "How can we improve our service for you?",
-      name: "improvement",
-    },
-    {
-      label: "What type of people would benefit most from using our service?",
-      name: "selfSegmentation",
-    },
-  ];
-
   return (
     <div>
       <div>
         <section aria-labelledby="filters" className="pt-6 pb-24">
           <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-4">
-            <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
+            <div>
+              <SubmissionCounter
+                numFilteredSubmissions={filteredSubmissions.length}
+                numTotalSubmissions={submissions.length}
+              />
+              <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
+            </div>
 
             {/* Submission grid */}
 
             <div className="max-w-7xl lg:col-span-3">
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
-                  <h3 className="text-sm font-medium text-slate-800">Overall</h3>
-                  <h3 className="text-xs font-light text-slate-800">({submissions.length} submissions)</h3>
-                  <Pie submissions={submissions} schema={form.schema} fieldName={"disappointment"} />
-                </div>
-                <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
-                  <h3 className="text-sm font-medium text-slate-800">Selected Segment</h3>
-                  <h3 className="text-xs font-light text-slate-800">
-                    ({filteredSubmissions.length} submissions)
-                  </h3>
-                  <Pie submissions={filteredSubmissions} schema={form.schema} fieldName={"disappointment"} />
-                </div>
-              </div>
-              {questions.map((question) => (
-                <div key={question.name} className="my-4 rounded-lg bg-white">
-                  <div className="rounded-t-lg bg-slate-100 p-4 text-lg font-bold text-slate-800">
-                    {question.label}
-                  </div>
-                  <div className="grid grid-cols-5 gap-2 border-t border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500">
-                    <div className="col-span-3">Response</div>
-                    <div>Feeling</div>
-                    <div>Segment</div>
-                  </div>
-                  {filteredSubmissions
-                    .filter((s) => question.name in s.data)
-                    .map((submission) => (
-                      <div
-                        key={submission.id}
-                        className="grid grid-cols-5 gap-2 border-t border-slate-100 px-4 pt-2 pb-4 text-sm">
-                        <div className="col-span-3">{submission.data[question.name]}</div>
-                        <div>
-                          {submission.data.disappointment === "veryDisappointed" ? (
-                            <VeryDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                          ) : submission.data.disappointment === "notDisappointed" ? (
-                            <NotDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                          ) : submission.data.disappointment === "somewhatDisappointed" ? (
-                            <SomewhatDisappointedIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                          ) : null}
-                        </div>
-                        <div>
-                          <div className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
-                            {labelMap[submission.data.userSegment]}
+              {form && form.schema && Object.keys(form.schema).length > 0 ? (
+                <>
+                  <div className="4xl:grid-cols-2 grid grid-cols-1 gap-6">
+                    {form.schema.pages.map((page) =>
+                      page.elements
+                        .filter((e) =>
+                          [
+                            "checkbox",
+                            "email",
+                            "number",
+                            "nps",
+                            "phone",
+                            "radio",
+                            "search",
+                            "text",
+                            "textarea",
+                            "url",
+                          ].includes(e.type)
+                        )
+                        .map((elem) => (
+                          <div className="rounded-lg bg-white px-4 py-5 shadow-lg sm:p-6">
+                            <h2 className="mb-6 text-lg font-bold text-slate-800">
+                              {elem.label}
+                              <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">
+                                {capitalizeFirstLetter(elem.type)}
+                              </span>
+                            </h2>
+                            {filteredSubmissions.filter((s) => elem.name in s.data).length === 0 ? (
+                              <EmptyPageFiller
+                                alertText="No responses for that question yet"
+                                hintText="Share your form to get more responses"
+                                borderStyles="border-4 border-dotted border-red"></EmptyPageFiller>
+                            ) : (
+                              <>
+                                {["email", "number", "phone", "search", "text", "textarea", "url"].includes(
+                                  elem.type
+                                ) ? (
+                                  <div>
+                                    <Table
+                                      submissions={filteredSubmissions}
+                                      schema={form.schema}
+                                      fieldName={elem.name}
+                                    />
+                                  </div>
+                                ) : ["checkbox", "radio"].includes(elem.type) ? (
+                                  <div>
+                                    <Bar
+                                      submissions={filteredSubmissions}
+                                      schema={form.schema}
+                                      fieldName={elem.name}
+                                    />
+                                  </div>
+                                ) : ["nps"].includes(elem.type) ? (
+                                  <div>
+                                    <Nps
+                                      submissions={filteredSubmissions}
+                                      schema={form.schema}
+                                      fieldName={elem.name}
+                                    />
+                                  </div>
+                                ) : null}
+                              </>
+                            )}
                           </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              ))}
+                        ))
+                    )}
+                    {}
+                  </div>
+                </>
+              ) : (
+                <EmptyPageFiller
+                  alertText="No schema found"
+                  hintText="Please add a schema to your form to use the overview page"
+                  borderStyles="border-4 border-dotted border-red">
+                  <RectangleGroupIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
+                </EmptyPageFiller>
+              )}
             </div>
           </div>
         </section>

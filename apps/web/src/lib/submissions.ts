@@ -91,6 +91,9 @@ export const MergeWithSchema = (submissionData, schema) => {
 };
 
 export const getOptionLabelMap = (schema) => {
+  if (!schema || !schema.pages) {
+    return {};
+  }
   const optionLabelMap = {};
   for (const page of schema.pages) {
     for (const elem of page.elements) {

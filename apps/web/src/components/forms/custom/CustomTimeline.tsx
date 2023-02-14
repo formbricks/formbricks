@@ -3,16 +3,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { MergeWithSchema, persistSubmission, useSubmissions } from "@/lib/submissions";
 import { convertDateTimeString, parseUserAgent } from "@/lib/utils";
-import {
-  Button,
-  CheckMarkIcon,
-  ClockIcon,
-  CrossMarkIcon,
-  FormIcon,
-  NotDisappointedIcon,
-  SomewhatDisappointedIcon,
-  VeryDisappointedIcon,
-} from "@formbricks/ui";
+import { Button, CheckMarkIcon, ClockIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
@@ -157,10 +148,6 @@ export default function PMFTimeline({ submissions }) {
                             <p className="text-sm text-gray-500">
                               {parseUserAgent(submission.meta.userAgent)}
                             </p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-thin text-gray-500">Page</p>
-                            <p className="text-sm text-gray-500">{submission.data.pageUrl}</p>
                           </div>
                         </div>
 
