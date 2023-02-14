@@ -34,7 +34,7 @@ export default function PMFResults() {
     <div>
       <div>
         <section aria-labelledby="filters" className="max-w-8xl mx-auto py-8 pt-6 pb-24">
-          <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-16 gap-y-10 md:grid-cols-4">
             <div>
               <SubmissionCounter
                 numFilteredSubmissions={filteredSubmissions.length}

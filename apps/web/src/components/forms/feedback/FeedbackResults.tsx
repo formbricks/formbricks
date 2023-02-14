@@ -102,11 +102,11 @@ export default function FeedbackResults() {
       </Transition.Root>
       <div>
         <section aria-labelledby="products-heading" className="max-w-8xl mx-auto py-8 pt-6 pb-24">
-          <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-4">
             <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
 
             {/* Product grid */}
-            <div className="lg:col-span-3">
+            <div className="md:col-span-3">
               {submissions.length === 0 ? (
                 <EmptyPageFiller
                   alertText="You haven't received any submissions yet."
