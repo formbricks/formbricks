@@ -1,3 +1,4 @@
+import { withEmailTemplate } from "./email-template";
 import { createToken } from "./jwt";
 import { MergeWithSchema } from "./submissions";
 const nodemailer = require("nodemailer");
@@ -39,13 +40,13 @@ export const sendVerificationEmail = async (user) => {
   await sendEmail({
     to: user.email,
     subject: "Welcome to Formbricks",
-    html: `Welcome to Formbricks!<br/><br/>To verify your email address and start using Formbricks please click this link:<br/>
+    html: withEmailTemplate(`Welcome to Formbricks!<br/><br/>To verify your email address and start using Formbricks please click this link:<br/>
     <a href="${verifyLink}">${verifyLink}</a><br/>
     <br/>
     The link is valid for one day. If it has expired please request a new token here:<br/>
     <a href="${verificationRequestLink}">${verificationRequestLink}</a><br/>
     <br/>
-    Your Formbricks Organisation`,
+    Your Formbricks Organisation`),
   });
 };
 
@@ -59,14 +60,14 @@ export const sendForgotPasswordEmail = async (user) => {
   await sendEmail({
     to: user.email,
     subject: "Reset your Formbricks password",
-    html: `You have requested a link to change your password. You can do this through the link below:<br/>
+    html: withEmailTemplate(`You have requested a link to change your password. You can do this through the link below:<br/>
     <a href="${verifyLink}">${verifyLink}</a><br/>
     <br/>
     The link is valid for 24 hours. If you didn't request this, please ignore this email.<br/>
     <br/>
     Your password won't change until you access the link above and create a new one.<br/>
     <br/>
-    Your Formbricks Organisation`,
+    Your Formbricks Organisation`),
   });
 };
 
@@ -74,9 +75,9 @@ export const sendPasswordResetNotifyEmail = async (user) => {
   await sendEmail({
     to: user.email,
     subject: "Your Formbricks password has been changed",
-    html: `We're contacting you to notify you that your password has been changed.<br/>
+    html: withEmailTemplate(`We're contacting you to notify you that your password has been changed.<br/>
     <br/>
-    Your Formbricks Organisation`,
+    Your Formbricks Organisation`),
   });
 };
 
@@ -100,7 +101,7 @@ export const sendSubmissionEmail = async (
         ? `${formLabel} submission finished`
         : `${formLabel} submission update`,
     replyTo: submission.customerEmail || process.env.MAIL_FROM,
-    html: `${
+    html: withEmailTemplate(`${
       event === "created"
         ? `Hey, someone just filled out your form "${formLabel}" in Formbricks.`
         : event === "updated"
@@ -121,6 +122,6 @@ export const sendSubmissionEmail = async (
     Click <a href="${
       process.env.NEXTAUTH_URL
     }/organisations/${organisationId}/forms/${formId}/feedback">here</a> to see the submission.
-    ${submission.customerEmail ? "<hr/>You can reply to this email to contact the user directly." : ""}`,
+    ${submission.customerEmail ? "<hr/>You can reply to this email to contact the user directly." : ""}`),
   });
 };
