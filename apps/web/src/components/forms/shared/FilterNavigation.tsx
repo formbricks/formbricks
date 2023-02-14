@@ -1,6 +1,8 @@
+import EmptyPageFiller from "@/components/EmptyPageFiller";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { camelToTitle, filterUniqueById } from "@/lib/utils";
+import { RectangleGroupIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -156,7 +158,7 @@ export default function FilterNavigation({
 
   useEffect(() => {
     // build filters based on form schema
-    if (form && form.schema) {
+    if (form && form.schema && Object.keys(form.schema).length > 0) {
       const filters = [];
       for (const page of form.schema.pages) {
         for (const element of page.elements) {
@@ -197,7 +199,7 @@ export default function FilterNavigation({
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
 
-  return (
+  return form.schema && Object.keys(form.schema).length > 0 ? (
     <div className="space-y-4">
       {filters.map((filter) => (
         <div key={filter.name}>
@@ -239,5 +241,12 @@ export default function FilterNavigation({
         </div>
       ))}
     </div>
+  ) : (
+    <EmptyPageFiller
+      alertText="No schema found"
+      hintText="Please add a schema to your form to use the filter navigation."
+      borderStyles="border-4 border-dotted border-red">
+      <RectangleGroupIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
+    </EmptyPageFiller>
   );
 }
