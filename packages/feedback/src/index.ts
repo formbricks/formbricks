@@ -1,5 +1,6 @@
 import { computePosition, flip, shift } from "@floating-ui/dom";
 import { createFocusTrap } from "focus-trap";
+import { FormbricksError, InvalidConfigError, NetworkError } from "./errors";
 
 import { formHTML } from "./form-html";
 import formCSS from "./form.css";
@@ -15,14 +16,23 @@ export interface FormbricksConfig {
   formId?: string;
   formbricksUrl?: string;
   customer?: Record<any, any>;
-  disableErrorAlert: boolean;
+  disableErrorHandler: boolean;
   closeOnOutsideClick: boolean;
+  errorHandler?: (err: FormbricksError) => void;
 }
 
 let config: FormbricksConfig = {
   customer: {},
-  disableErrorAlert: false,
+  disableErrorHandler: false,
   closeOnOutsideClick: true,
+  errorHandler(err) {
+    // If the user has disabled the error handler, do nothing
+    if (config.disableErrorHandler) return;
+
+    if (err instanceof InvalidConfigError && err.property === "formId")
+      alert("Unable to send feedback: No formId provided");
+    else alert("Unable to send feedback: " + err.message);
+  },
   // Merge with existing config
   ...(window as any).formbricks?.config,
 };
@@ -250,9 +260,9 @@ function submit(e: Event) {
   const target = e.target as HTMLFormElement;
 
   if (!config.formId) {
-    console.error("Formbricks: No formId provided");
-    if (!config.disableErrorAlert) alert("Unable to send feedback: No formId provided");
-    return;
+    const error = new InvalidConfigError("formId");
+    console.error(error);
+    return config.errorHandler?.(error);
   }
 
   const submitElement = document.getElementById("formbricks__submit")!;
@@ -282,9 +292,10 @@ function submit(e: Event) {
       body: JSON.stringify(body),
     }
   )
-    .then((res) => {
+    .then(async (res) => {
       if (!res.ok) {
-        throw new Error("Unable to send feedback");
+        const response = await res.json();
+        throw new NetworkError(res.status, res.url, response.error);
       }
       containerElement.setAttribute("data-success", "");
       const feedbackType = containerElement.getAttribute("data-feedback-type");
@@ -304,8 +315,8 @@ function submit(e: Event) {
       document.getElementById("formbricks__success-subtitle")!.innerText = successSubtitle;
     })
     .catch((e) => {
-      console.error("Formbricks:", e);
-      if (!config.disableErrorAlert) alert(`Could not send feedback: ${e.message}`);
+      console.error(e);
+      config.errorHandler?.(e);
     });
 
   return false;
