@@ -157,16 +157,16 @@ export default function NewFormModal({ open, setOpen, organisationId }: FormOnbo
               ],
             },
             {
-              id: "userSegmentPage",
+              id: "rolePage",
               config: {
                 autoSubmit: true,
               },
               elements: [
                 {
-                  id: "userSegment",
+                  id: "role",
                   type: "radio",
-                  name: "userSegment",
-                  label: "What is your job title?",
+                  name: "role",
+                  label: "What is your role?",
                   options: [
                     { label: "Founder", value: "founder" },
                     { label: "Executive", value: "executive" },
@@ -189,12 +189,12 @@ export default function NewFormModal({ open, setOpen, organisationId }: FormOnbo
               ],
             },
             {
-              id: "selfSegmentationPage",
+              id: "benefitingUsers",
               elements: [
                 {
-                  id: "selfSegmentation",
+                  id: "benefitingUsers",
                   type: "text",
-                  name: "selfSegmentation",
+                  name: "benefitingUsers",
                   label: "What type of people would benefit most from using our service?",
                 },
               ],

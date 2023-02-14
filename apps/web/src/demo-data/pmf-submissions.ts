@@ -20,7 +20,7 @@ const mainBenefits = [
   "The notifications when I receive money are great",
 ];
 
-const userSegments = ["founder", "executive", "productManager", "productOwner", "softwareEngineer"];
+const roles = ["founder", "executive", "productManager", "productOwner", "softwareEngineer"];
 
 const disappointments = [
   "veryDisappointed",
@@ -31,7 +31,7 @@ const disappointments = [
   "notDisappointed",
 ];
 
-const selfSegmentations = [
+const benefitingUserss = [
   "Founders",
   "Executives",
   "Product Managers",
@@ -65,9 +65,9 @@ export const getPmfSubmissions = () => {
       data: {
         improvement: getRandomItem(improvements),
         mainBenefit: getRandomItem(mainBenefits),
-        userSegment: getRandomItem(userSegments),
+        role: getRandomItem(roles),
         disappointment: getRandomItem(disappointments),
-        selfSegmentation: getRandomItem(selfSegmentations),
+        benefitingUsers: getRandomItem(benefitingUserss),
       },
       meta: {
         userAgent:

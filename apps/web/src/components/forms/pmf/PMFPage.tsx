@@ -19,8 +19,8 @@ import SetupInstructions from "./SetupInstructions";
 import SuperhumanApproach from "./SuperhumanApproach";
 
 const tabs = [
-  { name: "Results", icon: RectangleStackIcon },
   { name: "Overview", icon: ChartPieIcon },
+  { name: "Results", icon: RectangleStackIcon },
   { name: "Superhuman Approach", icon: RocketLaunchIcon },
   { name: "Data Pipelines", icon: ShareIcon },
   { name: "Setup Instructions", icon: InformationCircleIcon },
@@ -28,7 +28,7 @@ const tabs = [
 
 export default function PMFPage() {
   const router = useRouter();
-  const [currentTab, setCurrentTab] = useState("Results");
+  const [currentTab, setCurrentTab] = useState("Overview");
   const { form, isLoadingForm, isErrorForm } = useForm(
     router.query.formId?.toString(),
     router.query.organisationId?.toString()

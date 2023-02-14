@@ -71,7 +71,6 @@ function FbPie({ color, submissions, schema, fieldName }: Props) {
   return (
     <>
       <PieChart width={500} height={250}>
-        {/*  <Pie dataKey="value" fill={color || "#00C4B8"} /> */}
         <Pie
           data={data}
           dataKey="value"
@@ -84,7 +83,7 @@ function FbPie({ color, submissions, schema, fieldName }: Props) {
             const x = cx + radius * Math.cos(-midAngle * RADIAN);
             const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-            return (
+            return value === 0 ? null : (
               <text
                 x={x}
                 y={y}

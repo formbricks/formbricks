@@ -132,7 +132,7 @@ async function submitElement(name?: string, value?: string) {
     const response = await createSubmission(submission);
     submissionId = response.id;
   } else {
-    const finished = !!("selfSegmentation" in submission);
+    const finished = !!("benefitingUsers" in submission);
     await updateSubmission(submissionId, submission, finished);
     if (finished) {
       config.onFinished();

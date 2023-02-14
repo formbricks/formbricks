@@ -47,14 +47,14 @@ const output = {
         ],
       },
       {
-        id: "userSegmentPage",
+        id: "rolePage",
         config: {
           autoSubmit: true,
         },
         elements: [
           {
-            id: "userSegment",
-            name: "userSegment",
+            id: "role",
+            name: "role",
             type: "radio",
             label: "What is your job title?",
             options: [
@@ -94,11 +94,11 @@ const output = {
         ],
       },
       {
-        id: "selfSegmentationPage",
+        id: "benefitingUsersPage",
         elements: [
           {
-            id: "selfSegmentation",
-            name: "selfSegmentation",
+            id: "benefitingUsers",
+            name: "benefitingUsers",
             type: "text",
             label: "What type of people would benefit most from using our service?",
           },

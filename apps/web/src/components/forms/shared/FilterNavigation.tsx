@@ -102,21 +102,39 @@ export default function FilterNavigation({
     }
   }, [filters, form, submissions, setFilteredSubmissions]);
 
-  const chooseOptionFilter = (filterName, optionValue) => {
+  const chooseOptionFilter = (filterName, optionValue, optionActive) => {
     const newFilters = [...filters];
     const filter = newFilters.find((filter) => filter.name === filterName);
 
     if (filter) {
-      // reset all previous filter options
-      for (const option of filter.options) {
-        if (option.value === optionValue) {
-          option.active = true;
-        } else {
+      // activate option & deactivate all others
+      if (!optionActive) {
+        // reset all previous filter options
+        for (const option of filter.options) {
+          if (option.value === optionValue) {
+            option.active = true;
+          } else {
+            option.active = false;
+          }
+          // reset all pins when all is selected
+          if (optionValue === "all") {
+            option.pinned = false;
+          }
+        }
+      } else {
+        // deactivate option if already active
+        const option = filter.options.find((option) => option.value === optionValue);
+        if (option) {
           option.active = false;
         }
-        // reset all pins when all is selected
-        if (optionValue === "all") {
-          option.pinned = false;
+        // check if something is pinned
+        const pinnedOption = filter.options.find((option) => option.pinned);
+        if (!pinnedOption) {
+          // activate all option if noting is pinned
+          const option = filter.options.find((option) => option.value === "all");
+          if (option) {
+            option.active = true;
+          }
         }
       }
     }
@@ -191,7 +209,7 @@ export default function FilterNavigation({
               key={option.value}
               type="button"
               onClick={() => {
-                chooseOptionFilter(filter.name, option.value);
+                chooseOptionFilter(filter.name, option.value, option.active);
               }}
               className={clsx(
                 option.active || option.pinned
@@ -205,7 +223,10 @@ export default function FilterNavigation({
               {!["all", "inbox", "archived"].includes(option.value) && (option.active || option.pinned) && (
                 <button
                   className="ml-auto"
-                  onClick={() => pinOptionFilter(filter.name, option.value, !option.pinned)}>
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    pinOptionFilter(filter.name, option.value, !option.pinned);
+                  }}>
                   {option.pinned ? (
                     <BsPinFill className="h-4 w-4 text-gray-400" />
                   ) : (

@@ -7,6 +7,7 @@ import { InboxIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import FilterNavigation from "../shared/FilterNavigation";
+import { SubmissionCounter } from "../shared/SubmissionCounter";
 import PMFTimeline from "./PMFTimeline";
 
 export default function PMFResults() {
@@ -34,7 +35,13 @@ export default function PMFResults() {
       <div>
         <section aria-labelledby="filters" className="max-w-8xl mx-auto py-8 pt-6 pb-24">
           <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-4">
-            <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
+            <div>
+              <SubmissionCounter
+                numFilteredSubmissions={filteredSubmissions.length}
+                numTotalSubmissions={submissions.length}
+              />
+              <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
+            </div>
 
             {/* Submission grid */}
 
