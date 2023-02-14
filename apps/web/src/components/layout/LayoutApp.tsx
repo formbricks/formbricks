@@ -159,7 +159,11 @@ export default function LayoutApp({ children }) {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => signOut()}
+                                  onClick={() =>
+                                    signOut({
+                                      callbackUrl: `${window.location.protocol}//${window.location.host}/`,
+                                    })
+                                  }
                                   className={clsx(
                                     active ? "bg-slate-100" : "",
                                     "flex w-full justify-start px-4 py-2 text-sm text-slate-700"

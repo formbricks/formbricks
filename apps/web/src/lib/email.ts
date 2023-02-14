@@ -1,3 +1,4 @@
+import { withEmailTemplate } from "./email-template";
 import { createToken } from "./jwt";
 import { MergeWithSchema } from "./submissions";
 const nodemailer = require("nodemailer");
@@ -38,14 +39,15 @@ export const sendVerificationEmail = async (user) => {
   }/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
   await sendEmail({
     to: user.email,
-    subject: "Welcome to Formbricks",
-    html: `Welcome to Formbricks!<br/><br/>To verify your email address and start using Formbricks please click this link:<br/>
-    <a href="${verifyLink}">${verifyLink}</a><br/>
+    subject: "Welcome to Formbricks 🤍",
+    html: withEmailTemplate(`<h1>Welcome!</h1>
+    To start using Formbricks please verify your email by clicking the button below:<br/><br/>
+    <a class="button" href="${verifyLink}">Verify email</a><br/>
     <br/>
-    The link is valid for one day. If it has expired please request a new token here:<br/>
-    <a href="${verificationRequestLink}">${verificationRequestLink}</a><br/>
+    <strong>The link is valid for 24h.</strong><br/><br/>If it has expired please request a new token here:
+    <a href="${verificationRequestLink}">Request new verification</a><br/>
     <br/>
-    Your Formbricks Organisation`,
+    Your Formbricks Team`),
   });
 };
 
@@ -59,14 +61,12 @@ export const sendForgotPasswordEmail = async (user) => {
   await sendEmail({
     to: user.email,
     subject: "Reset your Formbricks password",
-    html: `You have requested a link to change your password. You can do this through the link below:<br/>
-    <a href="${verifyLink}">${verifyLink}</a><br/>
+    html: withEmailTemplate(`<h1>Change password</h1>
+    You have requested a link to change your password. You can do this by clicking the link below:<br/><br/>
+    <a class="button" href="${verifyLink}">Change password</a><br/>
     <br/>
-    The link is valid for 24 hours. If you didn't request this, please ignore this email.<br/>
-    <br/>
-    Your password won't change until you access the link above and create a new one.<br/>
-    <br/>
-    Your Formbricks Organisation`,
+    <strong>The link is valid for 24 hours.</strong><br/><br/>If you didn't request this, please ignore this email.<br/>
+    Your Formbricks Team`),
   });
 };
 
@@ -74,9 +74,10 @@ export const sendPasswordResetNotifyEmail = async (user) => {
   await sendEmail({
     to: user.email,
     subject: "Your Formbricks password has been changed",
-    html: `We're contacting you to notify you that your password has been changed.<br/>
+    html: withEmailTemplate(`<h1>Password changed</h1>
+    Your password has been changed successfully.<br/>
     <br/>
-    Your Formbricks Organisation`,
+    Your Formbricks Team`),
   });
 };
 
@@ -93,20 +94,20 @@ export const sendSubmissionEmail = async (
     to: email,
     subject:
       event === "created"
-        ? `${formLabel} new submission created`
+        ? `You got a new submission for ${formLabel} 🎉`
         : event === "updated"
-        ? `${formLabel} submission updated`
+        ? `Someone update a submission for ${formLabel}`
         : event === "finished"
-        ? `${formLabel} submission finished`
-        : `${formLabel} submission update`,
+        ? `A submission for ${formLabel} was completed ✅`
+        : `A submission for ${formLabel} was updated.`,
     replyTo: submission.customerEmail || process.env.MAIL_FROM,
-    html: `${
+    html: withEmailTemplate(`${
       event === "created"
-        ? `Hey, someone just filled out your form "${formLabel}" in Formbricks.`
+        ? `<h1>New submission</h1>Someone just started filling out your form "${formLabel}":`
         : event === "updated"
-        ? `Hey, a submission in "${formLabel}" in Formbricks just received an update.`
+        ? `<h1>Submission Update</h1>A submission in "${formLabel}" just received an update.`
         : event === "finished"
-        ? `Hey, someone just finished your form "${formLabel}" in Formbricks.`
+        ? `<h1>Form completed</h1>Someone just completed your form "${formLabel}":`
         : ""
     }<br/>
 
@@ -121,6 +122,10 @@ export const sendSubmissionEmail = async (
     Click <a href="${
       process.env.NEXTAUTH_URL
     }/organisations/${organisationId}/forms/${formId}/feedback">here</a> to see the submission.
-    ${submission.customerEmail ? "<hr/>You can reply to this email to contact the user directly." : ""}`,
+    ${
+      submission.customerEmail
+        ? "<hr/><strong>You can reply to this email to contact the user directly.</strong>"
+        : ""
+    }`),
   });
 };
