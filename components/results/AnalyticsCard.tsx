@@ -7,7 +7,11 @@ import {
 } from "@heroicons/react/24/solid";
 import { Chip } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import { getPageQuestionsStats } from "../../lib/submissionSessions";
+import {
+  getPageQuestionsDatas,
+  getPageQuestionsStats,
+} from "../../lib/submissionSessions";
+import { CSVLink } from "react-csv";
 import { classNames } from "../../lib/utils";
 import Loading from "../Loading";
 
@@ -25,6 +29,7 @@ interface Props {
   questions: { id: string; data: any; type: string }[];
   formId?: string;
   pageId?: string;
+  formName: string;
 }
 
 interface QuestionItemProps {
@@ -45,25 +50,39 @@ const AnalyticsCard: React.FC<Props> = ({
   questions,
   formId,
   pageId,
+  formName,
 }) => {
   const [isLoadingQuestionStats, setIsLoadingQuestionStats] = useState(true);
   const [isItemOpened, setIsItemOpened] = useState(false);
+  const [stepStats, setstepStats] = useState();
   const [questionsStats, setQuestionsStats] = useState<QuestionStatType>(null);
-  const [CandidateSubmission, setCandidateSubmission] = useState<
-    QuestionStatType
-  >(null);
+  const isLabelContainsNumber = /\d/.test(label.charAt(0));
+  const fileTitle = `${formName} - ${
+    isLabelContainsNumber ? label.substring(2) : label
+  }`;
+  const headers = [
+    { label: "Prénom", key: "firstname" },
+    { label: "Nom", key: "lastname" },
+    { label: "Genre", key: "gender" },
+    { label: "Email", key: "email" },
+    { label: "Whatsapp", key: "whatsapp" },
+    { label: "Soumissions", key: "Soumissions" },
+  ];
 
   useEffect(() => {
     if (isItemOpened) {
       getPageQuestionsStats(formId, pageId)
         .then((res) => res.json())
         .then((data) => {
-          console.log({ stats: data });
           setQuestionsStats(data.qStats);
-          setCandidateSubmission(data.candidates);
 
-          console.log({ candidates: data.candidates });
           setIsLoadingQuestionStats(false);
+        });
+
+      getPageQuestionsDatas(formId, pageId, label)
+        .then((res) => res.json())
+        .then((stepStats) => {
+          setstepStats(stepStats);
         });
     }
   }, [isItemOpened]);
@@ -94,25 +113,40 @@ const AnalyticsCard: React.FC<Props> = ({
             </span>
           )}
           <div className='flex'>
-            <div className='cursor-pointer '>
-              <Chip
-                label='Exporter'
-                onClick={() => {
-                  console.log("Clicked");
-                }}
-                color='success'
-              />
-            </div>
             {!questions?.length ? null : !isItemOpened ? (
-              <ChevronDownIcon
-                className='ml-5   mr-0.5 flex-shrink-0 self-center h-5 w-5 '
-                aria-hidden='true'
-              />
+              <>
+                <ChevronDownIcon
+                  className='ml-5   mr-0.5 flex-shrink-0 self-center h-5 w-5 '
+                  aria-hidden='true'
+                />
+              </>
             ) : (
-              <ChevronUpIcon
-                className='ml-5   mr-0.5 flex-shrink-0 self-center h-5 w-5 '
-                aria-hidden='true'
-              />
+              <>
+                {stepStats && (
+                  <div className='cursor-pointer '>
+                    <CSVLink
+                      filename={fileTitle}
+                      headers={headers}
+                      data={stepStats}
+                    >
+                      <div className='cursor-pointer '>
+                        <Chip
+                          label='Exporter'
+                          onClick={() => {
+                            console.log("Clicked");
+                          }}
+                          color='success'
+                        />
+                      </div>
+                    </CSVLink>
+                  </div>
+                )}
+
+                <ChevronUpIcon
+                  className='ml-5   mr-0.5 flex-shrink-0 self-center h-5 w-5 '
+                  aria-hidden='true'
+                />
+              </>
             )}
           </div>
         </dt>
@@ -123,7 +157,7 @@ const AnalyticsCard: React.FC<Props> = ({
               "flex items-baseline text-md font-semibold text-gray-300 mt-3"
             )}
           >
-            {value}
+            {value || 0}
           </div>
 
           {trend && (
@@ -174,7 +208,6 @@ const AnalyticsCard: React.FC<Props> = ({
             const q = questions.find((question) => question.id === qId);
 
             if (q?.type !== "multipleChoiceQuestion") return;
-            console.log({ q, qOptions });
             const getNumberOfResponses = () => {
               return qOptions.reduce((a, v) => a + v.candidates, 0);
             };

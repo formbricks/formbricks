@@ -28,7 +28,6 @@ export async function handleAirtable(pipeline: Pipeline, event: ApiEvent) {
       event.type === "formOpened" &&
       pipeline.events.includes("FORM_OPENED")
     ) {
-      console.log(event);
 
       await sendData(pipeline, event);
     }

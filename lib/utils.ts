@@ -271,3 +271,4 @@ export const getFormState = (pages, candidateSubmissions, user) => {
   });
   return formProgress;
 };
+
