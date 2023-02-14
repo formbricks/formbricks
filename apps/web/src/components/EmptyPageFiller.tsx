@@ -4,7 +4,7 @@ import { Button } from "@formbricks/ui";
 import React from "react";
 
 interface Props {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onClick?: () => void;
   alertText: string;
   hintText: string;

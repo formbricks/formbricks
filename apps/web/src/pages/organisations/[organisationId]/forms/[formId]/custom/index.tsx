@@ -1,15 +1,14 @@
-import FormOverviewPage from "@/components/forms/custom/FormOverviewPage";
+"use client";
+
+import CustomPage from "@/components/forms/custom/CustomPage";
 import LayoutApp from "@/components/layout/LayoutApp";
-import LayoutWrapperForm from "@/components/layout/LayoutWrapperCustomForm";
 import LayoutWrapperOrganisation from "@/components/layout/LayoutWrapperOrganisation";
 
-export default function FormOverview({}) {
+export default function OrganisationFormsPage({}) {
   return (
     <LayoutApp>
       <LayoutWrapperOrganisation>
-        <LayoutWrapperForm>
-          <FormOverviewPage />
-        </LayoutWrapperForm>
+        <CustomPage />
       </LayoutWrapperOrganisation>
     </LayoutApp>
   );

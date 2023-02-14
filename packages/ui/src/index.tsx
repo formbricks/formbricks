@@ -11,6 +11,7 @@ export * from "./icons/FormIcon";
 export * from "./icons/CodeFileIcon";
 export * from "./icons/TabletTouchIcon";
 export * from "./icons/PMFIcon";
+export * from "./icons/ClockIcon";
 export * from "./icons/IdeaIcon";
 export * from "./icons/AngryBirdRageIcon";
 export * from "./icons/AngryBirdRage2Icon";

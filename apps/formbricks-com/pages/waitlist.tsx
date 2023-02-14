@@ -57,7 +57,7 @@ const WaitlistPage = () => {
             formId={
               process.env.NODE_ENV === "production"
                 ? "cld37mt2i0000ld08p9q572bc"
-                : "cldonm4ra000019axa4oc440z"
+                : "cldufl8uh000019mzr7fdotyu"
             }
             onPageSubmit={({ page }) => plausible(`waitlistSubmitPage-${page.id}`)}
             onFinished={() => plausible("waitlistFinished")}
