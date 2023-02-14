@@ -118,11 +118,14 @@ export default async function handle(
 
     const Data = []
     candidates.map((r) => {
-        if(r){
+        if(r.submission){
           Object.keys(r.submission).map((submissionId) => {
             const submissionFind = pageQuestions.find(({id}) => id === submissionId)
-            r.submission[submissionFind.data.label] =  r.submission[submissionId];
+            if(submissionFind) {
+              r.submission[submissionFind.data.label] =  r.submission[submissionId];
             delete  r.submission[submissionId];
+            }
+            
           })
           r["Soumissions"] = JSON.stringify(r.submission);
           delete r.submission

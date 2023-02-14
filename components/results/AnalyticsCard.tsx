@@ -82,6 +82,7 @@ const AnalyticsCard: React.FC<Props> = ({
       getPageQuestionsDatas(formId, pageId, label)
         .then((res) => res.json())
         .then((stepStats) => {
+          console.log({ stepStats });
           setstepStats(stepStats);
         });
     }
@@ -122,26 +123,6 @@ const AnalyticsCard: React.FC<Props> = ({
               </>
             ) : (
               <>
-                {stepStats && (
-                  <div className='cursor-pointer '>
-                    <CSVLink
-                      filename={fileTitle}
-                      headers={headers}
-                      data={stepStats}
-                    >
-                      <div className='cursor-pointer '>
-                        <Chip
-                          label='Exporter'
-                          onClick={() => {
-                            console.log("Clicked");
-                          }}
-                          color='success'
-                        />
-                      </div>
-                    </CSVLink>
-                  </div>
-                )}
-
                 <ChevronUpIcon
                   className='ml-5   mr-0.5 flex-shrink-0 self-center h-5 w-5 '
                   aria-hidden='true'
@@ -192,6 +173,32 @@ const AnalyticsCard: React.FC<Props> = ({
         <Loading />
       ) : (
         <>
+          <div
+            className={
+              "flex items-baseline text-lg font-normal text-gray-800 w-full px-5 mb-5 "
+            }
+          >
+            {stepStats && (
+              <div className='cursor-pointer '>
+                <CSVLink
+                  filename={fileTitle}
+                  headers={headers}
+                  data={stepStats}
+                >
+                  <div className='cursor-pointer '>
+                    <Chip
+                      label='Exporter'
+                      onClick={() => {
+                        console.log("Clicked");
+                      }}
+                      color='success'
+                    />
+                  </div>
+                </CSVLink>
+              </div>
+            )}
+          </div>
+
           <div
             className={
               "flex items-baseline text-lg font-normal text-gray-800 w-full px-5 "
