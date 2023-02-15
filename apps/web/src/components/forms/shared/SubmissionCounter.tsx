@@ -1,6 +1,6 @@
 export function SubmissionCounter({ numFilteredSubmissions, numTotalSubmissions }) {
   return (
-    <div className="mb-4 rounded bg-white p-3 shadow-md">
+    <div className="mb-4 rounded-lg bg-white p-3 shadow-md">
       <div className="inline-block text-base font-bold text-slate-600">
         {numFilteredSubmissions} responses
       </div>

@@ -16,6 +16,7 @@ export default function PMFResults() {
     router.query.organisationId?.toString(),
     router.query.formId?.toString()
   );
+  const [numTotalSubmissions, setNumTotalSubmissions] = useState(0);
 
   const [filteredSubmissions, setFilteredSubmissions] = useState([]);
 
@@ -38,9 +39,13 @@ export default function PMFResults() {
             <div>
               <SubmissionCounter
                 numFilteredSubmissions={filteredSubmissions.length}
-                numTotalSubmissions={submissions.length}
+                numTotalSubmissions={numTotalSubmissions}
               />
-              <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
+              <FilterNavigation
+                submissions={submissions}
+                setFilteredSubmissions={setFilteredSubmissions}
+                setNumTotalSubmissions={setNumTotalSubmissions}
+              />
             </div>
 
             {/* Submission grid */}
