@@ -135,7 +135,7 @@ export default function PMFTimeline({ submissions }) {
                             <p className="text-sm font-thin text-slate-500">User</p>
                             {submission.customerEmail ? (
                               <Link
-                                className="text-sm font-medium text-slate-700"
+                                className="text-brand-dark text-sm font-medium"
                                 href={`${form.id.startsWith("demo") ? "/demo" : ""}/organisations/${
                                   router.query.organisationId
                                 }/customers/${submission.customerEmail}`}>

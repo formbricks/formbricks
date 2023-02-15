@@ -10,6 +10,7 @@ import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import FilterNavigation from "../shared/FilterNavigation";
 import { SubmissionCounter } from "../shared/SubmissionCounter";
+import Link from "next/link";
 
 export default function OverviewResults() {
   const router = useRouter();
@@ -91,7 +92,7 @@ export default function OverviewResults() {
                       />
                     </div>
                     <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
-                      <h3 className="text-sm font-medium text-slate-800">Role</h3>
+                      <h3 className="text-sm font-medium text-slate-800">Selected Segment</h3>
                       <Pie submissions={filteredSubmissions} schema={form.schema} fieldName={"role"} />
                     </div>
                   </div>
@@ -105,35 +106,43 @@ export default function OverviewResults() {
                         <div>Disappointment Level</div>
                         <div>Job</div>
                       </div>
-                      {filteredSubmissions
-                        .filter((s) => question.name in s.data)
-                        .map((submission) => (
-                          <div
-                            key={submission.id}
-                            className="grid grid-cols-5 gap-2 border-t border-slate-100 px-4 pt-2 pb-4 text-sm">
-                            <div className="col-span-3">{submission.data[question.name]}</div>
-                            <div>
-                              {submission.data.disappointment === "veryDisappointed" ? (
-                                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                  very disappointed
-                                </span>
-                              ) : submission.data.disappointment === "notDisappointed" ? (
-                                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                                  not disappointed
-                                </span>
-                              ) : submission.data.disappointment === "somewhatDisappointed" ? (
-                                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                                  somewhat disappointed
-                                </span>
-                              ) : null}
-                            </div>
-                            <div>
-                              <div className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
-                                {labelMap[submission.data.role] || <NotProvided />}
+                      <div className="max-h-96 overflow-auto">
+                        {filteredSubmissions
+                          .filter((s) => question.name in s.data)
+                          .map((submission) => (
+                            <Link
+                              className="bg-slate-100"
+                              href={`${form.id.startsWith("demo") ? "/demo" : ""}/organisations/${
+                                router.query.organisationId
+                              }/customers/${submission.customerEmail}`}>
+                              <div
+                                key={submission.id}
+                                className="grid grid-cols-5 gap-2 border-t  border-slate-100 p-4 text-sm hover:bg-slate-100/75">
+                                <div className="col-span-3">{submission.data[question.name]}</div>
+                                <div>
+                                  {submission.data.disappointment === "veryDisappointed" ? (
+                                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                      very disappointed
+                                    </span>
+                                  ) : submission.data.disappointment === "notDisappointed" ? (
+                                    <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                      not disappointed
+                                    </span>
+                                  ) : submission.data.disappointment === "somewhatDisappointed" ? (
+                                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                                      somewhat disappointed
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <div>
+                                  <div className="inline-flex items-center rounded-full bg-slate-200 px-2.5 py-0.5 text-xs text-slate-600">
+                                    {labelMap[submission.data.role] || <NotProvided />}
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        ))}
+                            </Link>
+                          ))}
+                      </div>
                     </div>
                   ))}
                 </>

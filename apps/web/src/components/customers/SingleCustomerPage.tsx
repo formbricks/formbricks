@@ -4,7 +4,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useCustomer } from "@/lib/customers";
 import { MergeWithSchema } from "@/lib/submissions";
 import { convertDateTimeString, onlyUnique, parseUserAgent } from "@/lib/utils";
-import { BackIcon } from "@formbricks/ui";
+import { BackIcon, FeedbackIcon, PMFIcon, FormIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/router";
@@ -47,7 +47,7 @@ export default function SingleCustomerPage() {
         </div>
 
         <section className="pt-6 pb-24">
-          <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-4">
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-slate-700">Properties</h2>
               {"name" in customer.data && (
@@ -81,7 +81,7 @@ export default function SingleCustomerPage() {
             </div>
 
             {/* Product grid */}
-            <div className="lg:col-span-3">
+            <div className="md:col-span-3">
               {customer.submissions.length === 0 ? (
                 <EmptyPageFiller
                   alertText="You haven't received any submissions yet."
@@ -104,7 +104,24 @@ export default function SingleCustomerPage() {
                           <div className="w-full overflow-hidden rounded-lg bg-white shadow">
                             <div className="px-4 py-5 sm:p-6">
                               <div className="flex w-full justify-between">
-                                <div></div>
+                                {submission.form.type === "pmf" && (
+                                  <div className="mr-4 flex items-center text-lg font-bold text-slate-700">
+                                    <PMFIcon className="mr-4 h-8 w-8" />
+                                    Product-Market Fit Survey
+                                  </div>
+                                )}
+                                {submission.form.type === "feedback" && (
+                                  <div className="mr-4 flex items-center text-lg font-bold text-slate-700">
+                                    <FeedbackIcon className="mr-4 h-8 w-8" />
+                                    Feedback Box
+                                  </div>
+                                )}
+                                {submission.form.type === "custom" && (
+                                  <div className="mr-4 flex items-center text-lg font-bold text-slate-700">
+                                    <FormIcon className="mr-4 h-8 w-8" />
+                                    Custom Survey
+                                  </div>
+                                )}
 
                                 <div className="text-sm text-slate-400">
                                   <time dateTime={convertDateTimeString(submission.createdAt)}>

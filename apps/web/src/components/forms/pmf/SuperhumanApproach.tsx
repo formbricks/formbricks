@@ -122,7 +122,7 @@ export default function SegmentResults() {
                       <Pie submissions={submissions} schema={form.schema} fieldName={"disappointment"} />
                     </div>
                     <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
-                      <h3 className="text-sm font-medium text-slate-800">Selected Role</h3>
+                      <h3 className="text-sm font-medium text-slate-800">Most disappointed segment</h3>
                       <h3 className="text-xs font-light text-slate-800">
                         ({filteredSubmissions.length} submissions)
                       </h3>
@@ -145,9 +145,8 @@ export default function SegmentResults() {
                       </div>
                       <div className="ml-3 flex-1 md:flex md:justify-between">
                         <p className="text-sm text-teal-700">
-                          To protect the PMF score from eroding among already very satisfied users, you deepen
-                          the value they experience. To do so, you build what they request in the following
-                          answers.
+                          Also referred to as &apos;deepening the value&apos;. Build what you&apos;re already
+                          very happy users demand below:
                         </p>
                       </div>
                     </div>
@@ -171,35 +170,41 @@ export default function SegmentResults() {
                         </p>
                       </div>
                     ) : (
-                      <>
+                      <div className="max-h-96 overflow-auto">
                         {lovers.map((submission) => (
-                          <div className="grid grid-cols-5 gap-2 px-4 pt-2 pb-4 text-sm">
-                            <div className="col-span-3 text-slate-800">
-                              {submission.data.mainBenefit || <NotProvided />}
-                            </div>
-                            <div>
-                              {submission.data.disappointment === "veryDisappointed" ? (
-                                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                  very disappointed
-                                </span>
-                              ) : submission.data.disappointment === "notDisappointed" ? (
-                                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                                  not disappointed
-                                </span>
-                              ) : submission.data.disappointment === "somewhatDisappointed" ? (
-                                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                                  somewhat disappointed
-                                </span>
-                              ) : null}
-                            </div>
-                            <div>
-                              <div className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
-                                {labelMap[submission.data.role] || <NotProvided />}
+                          <Link
+                            className="bg-slate-100"
+                            href={`${form.id.startsWith("demo") ? "/demo" : ""}/organisations/${
+                              router.query.organisationId
+                            }/customers/${submission.customerEmail}`}>
+                            <div className="grid grid-cols-5 gap-2 p-4 text-sm hover:bg-slate-100/75">
+                              <div className="col-span-3 text-slate-800">
+                                {submission.data.mainBenefit || <NotProvided />}
+                              </div>
+                              <div>
+                                {submission.data.disappointment === "veryDisappointed" ? (
+                                  <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                    very disappointed
+                                  </span>
+                                ) : submission.data.disappointment === "notDisappointed" ? (
+                                  <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                    not disappointed
+                                  </span>
+                                ) : submission.data.disappointment === "somewhatDisappointed" ? (
+                                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                                    somewhat disappointed
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div>
+                                <div className="inline-flex items-center rounded-full bg-slate-200 px-2.5 py-0.5 text-xs text-slate-600">
+                                  {labelMap[submission.data.role] || <NotProvided />}
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          </Link>
                         ))}
-                      </>
+                      </div>
                     )}
                   </div>
                   <h2 className="mt-10 mb-4 text-2xl font-bold text-slate-500">
@@ -239,35 +244,40 @@ export default function SegmentResults() {
                         </p>
                       </div>
                     ) : (
-                      <>
+                      <div className="max-h-96 overflow-auto">
                         {improvers.map((submission) => (
-                          <div className="grid grid-cols-5 gap-2 px-4 pt-2 pb-4 text-sm">
-                            <div className="col-span-3 text-slate-800">
-                              {submission.data.improvement || <NotProvided />}
-                            </div>
-                            <div>
-                              {submission.data.disappointment === "veryDisappointed" ? (
-                                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                  very disappointed
-                                </span>
-                              ) : submission.data.disappointment === "notDisappointed" ? (
-                                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                                  not disappointed
-                                </span>
-                              ) : submission.data.disappointment === "somewhatDisappointed" ? (
-                                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                                  somewhat disappointed
-                                </span>
-                              ) : null}
-                            </div>
-                            <div>
-                              <div className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
-                                {labelMap[submission.data.role] || <NotProvided />}
+                          <Link
+                            href={`${form.id.startsWith("demo") ? "/demo" : ""}/organisations/${
+                              router.query.organisationId
+                            }/customers/${submission.customerEmail}`}>
+                            <div className="grid grid-cols-5 gap-2 p-4 text-sm hover:bg-slate-100/75">
+                              <div className="col-span-3 text-slate-800">
+                                {submission.data.improvement || <NotProvided />}
+                              </div>
+                              <div>
+                                {submission.data.disappointment === "veryDisappointed" ? (
+                                  <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                    very disappointed
+                                  </span>
+                                ) : submission.data.disappointment === "notDisappointed" ? (
+                                  <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                    not disappointed
+                                  </span>
+                                ) : submission.data.disappointment === "somewhatDisappointed" ? (
+                                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                                    somewhat disappointed
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div>
+                                <div className="inline-flex items-center rounded-full bg-slate-200 px-2.5 py-0.5 text-xs text-slate-600">
+                                  {labelMap[submission.data.role] || <NotProvided />}
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          </Link>
                         ))}
-                      </>
+                      </div>
                     )}
                   </div>
                 </>
