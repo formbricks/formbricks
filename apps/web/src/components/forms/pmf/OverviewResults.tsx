@@ -66,7 +66,7 @@ export default function OverviewResults() {
             <div>
               <SubmissionCounter
                 numFilteredSubmissions={filteredSubmissions.length}
-                numTotalSubmissions={submissions.length}
+                numTotalSubmissions={numTotalSubmissions}
               />
               <FilterNavigation
                 submissions={submissions}
