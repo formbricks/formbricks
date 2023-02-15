@@ -25,6 +25,12 @@ export const withEmailTemplate = (content: string) =>
           background: #f4f4f4;
           padding: 2px;
         }
+
+        hr {
+          border-top: 1px dashed #94a3b8;
+          margin-top: 1rem;
+          margin-bottom: 1rem;
+        }
   
         table {
           width: 100%;
@@ -45,6 +51,23 @@ export const withEmailTemplate = (content: string) =>
           max-width: 525px;
           margin: 0 auto;
           border-radius: 12px;
+        }
+        
+        .brandcolor {
+          color: #00c4b8;
+        }
+
+        .tooltip {
+          background-color: #f1f5f9;
+          padding: 1rem;
+          border-radius: 1rem;
+          color: #475569;
+          margin-top: 15px;
+          margin-bottom: 15px;
+        }
+
+        .tooltip a {
+          color: #1e293b;
         }
   
         .button {

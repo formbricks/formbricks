@@ -117,15 +117,21 @@ export const sendSubmissionEmail = async (
       .map(([key, value]) => `<p><strong>${key}</strong></p><p>${value}</p>`)
       .join("")}
 
+   
     <hr/>
-    
-    Click <a href="${
-      process.env.NEXTAUTH_URL
-    }/organisations/${organisationId}/forms/${formId}/feedback">here</a> to see the submission.
+
+    <div class="tooltip">
+    <p class='brandcolor'><strong>Did you know? 💡</strong></p>
     ${
       submission.customerEmail
-        ? "<hr/><strong>You can reply to this email to contact the user directly.</strong>"
-        : ""
-    }`),
+        ? "<p>You can reply to this email to start a conversation with this user.</p>"
+        : "<p>You can add the user email to the submission and then simply hit 'Reply to' to start a conversation with your user. <a href='https://formbricks.com/docs/best-practices/feedback-box#add-user-email'>Here's how.</a></p>"
+    }
+    </div>
+    
+    <a class="button" href="${
+      process.env.NEXTAUTH_URL
+    }/organisations/${organisationId}/forms/${formId}/feedback">View submission</a>
+    `),
   });
 };
