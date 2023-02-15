@@ -194,7 +194,7 @@ export default function FilterNavigation({
     <div className="space-y-4">
       {filters.map((filter) => (
         <div key={filter.name}>
-          <div className="flex py-2 text-sm font-bold">
+          <div className="flex space-x-10 py-2 text-sm font-bold">
             <h4 className="text-slate-600">{camelToTitle(filter.name)}</h4>
           </div>
           {filter.options.map((option) => (
@@ -208,7 +208,7 @@ export default function FilterNavigation({
                 option.active || option.pinned
                   ? "bg-slate-200 text-slate-900"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium"
+                "group my-1 flex w-full items-center rounded-md px-3 py-1.5 text-sm font-medium"
               )}
               aria-current={option.active ? "page" : undefined}>
               <div className={clsx("-ml-1 mr-3 h-2 w-2 flex-shrink-0 rounded-full")} />

@@ -63,7 +63,7 @@ export default function OverviewResults() {
       <div>
         <section aria-labelledby="filters" className="max-w-8xl mx-auto py-8 pt-6 pb-24 ">
           <div className="grid grid-cols-1 gap-x-16 gap-y-10 md:grid-cols-4">
-            <div>
+            <div className="">
               <SubmissionCounter
                 numFilteredSubmissions={filteredSubmissions.length}
                 numTotalSubmissions={numTotalSubmissions}
@@ -88,7 +88,7 @@ export default function OverviewResults() {
               ) : (
                 <>
                   <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
+                    <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2 shadow-sm">
                       <h3 className="text-sm font-medium text-slate-800">Disappointment Level</h3>
                       <Pie
                         submissions={filteredSubmissions}
@@ -96,7 +96,7 @@ export default function OverviewResults() {
                         fieldName={"disappointment"}
                       />
                     </div>
-                    <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2">
+                    <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2 shadow-sm">
                       <h3 className="text-sm font-medium text-slate-800">Selected Segment</h3>
                       <Pie submissions={filteredSubmissions} schema={form.schema} fieldName={"role"} />
                     </div>
