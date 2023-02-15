@@ -110,6 +110,7 @@ export const capitalizeFirstLetter = (string) => {
 
 // camel case to title case
 export const camelToTitle = (string) => {
+  if (!string) return "";
   return string
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, function (str) {

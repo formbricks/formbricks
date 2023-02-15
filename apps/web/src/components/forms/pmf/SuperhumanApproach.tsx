@@ -15,12 +15,16 @@ import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import FilterNavigation from "../shared/FilterNavigation";
 import { BrainIcon, Button } from "@formbricks/ui";
+import { findRolesWithHighestVeryDisappointedPercentage } from "@/lib/superhumanPmf";
+import { camelToTitle } from "@/lib/utils";
 
 const limitFields = ["role"];
 
 export default function SegmentResults() {
   const router = useRouter();
   const [filteredSubmissions, setFilteredSubmissions] = useState([]);
+  const [loadingMainBenefit, setLoadingMainBenefit] = useState(false);
+  const [loadingNextSteps, setLoadingNextSteps] = useState(false);
   const { submissions, isLoadingSubmissions, isErrorSubmissions } = useSubmissions(
     router.query.organisationId?.toString(),
     router.query.formId?.toString()
@@ -34,7 +38,6 @@ export default function SegmentResults() {
       filteredSubmissions.filter((s) => s.data.disappointment === "veryDisappointed" && s.data.mainBenefit),
     [filteredSubmissions]
   );
-
   const improvers = useMemo(
     () =>
       filteredSubmissions.filter(
@@ -48,6 +51,19 @@ export default function SegmentResults() {
       return getOptionLabelMap(form.schema);
     }
   }, [form]);
+
+  const mostDisappointedSegment = useMemo(
+    () => submissions && findRolesWithHighestVeryDisappointedPercentage(submissions, 1),
+    [submissions]
+  );
+
+  const mostDisappointedSegmentSubmissions = useMemo(
+    () =>
+      submissions && mostDisappointedSegment
+        ? submissions.filter((s) => s.data.role === mostDisappointedSegment.bestRoleCombination[0])
+        : [],
+    [submissions, mostDisappointedSegment]
+  );
 
   if (isLoadingSubmissions || isLoadingForm) return <LoadingSpinner />;
 
@@ -107,23 +123,46 @@ export default function SegmentResults() {
                       happiest users are most likely to be long-term customers:
                     </p>
 
+                    {mostDisappointedSegment && mostDisappointedSegment.bestPercentage > 0 && (
+                      <div className="mb-4 rounded-lg bg-slate-200 p-4 font-mono shadow-sm">
+                        <div className="mb-2 flex">
+                          <BrainIcon className="mr-2 h-6 w-6" />
+                          <p className="">Most disappointed segment (AI-powered)</p>
+                        </div>
+                        <p className="my-4 text-sm">
+                          The most disappointed segment is &quot;
+                          {camelToTitle(mostDisappointedSegment.bestRoleCombination[0])}&quot; with{" "}
+                          {Math.round(mostDisappointedSegment.bestPercentage * 100)}% of users answering
+                          &quot;very disappointed&quot;.
+                        </p>
+                      </div>
+                    )}
+
                     <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
                       <div className="flex flex-col items-center justify-center rounded-lg bg-slate-50 p-2 shadow-sm">
-                        <h3 className="text-sm font-medium text-slate-800">All</h3>
-                        <h3 className="text-xs font-light text-slate-800">
-                          ({submissions.length} submissions)
-                        </h3>
-                        <Pie submissions={submissions} schema={form.schema} fieldName={"disappointment"} />
-                      </div>
-                      <div className="flex flex-col items-center justify-center rounded-lg bg-slate-50 p-2 shadow-sm">
-                        <h3 className="text-sm font-medium text-slate-800">Most disappointed segment</h3>
+                        <h3 className="text-sm font-medium text-slate-800">Current Selection</h3>
                         <h3 className="text-xs font-light text-slate-800">
                           ({filteredSubmissions.length} submissions)
                         </h3>
                         <Pie
-                          submissions={filteredSubmissions}
+                          submissions={submissions}
                           schema={form.schema}
                           fieldName={"disappointment"}
+                          color="#64748b"
+                        />
+                      </div>
+                      <div className="flex flex-col items-center justify-center rounded-lg bg-slate-50 p-2 shadow-sm">
+                        <h3 className="text-sm font-medium text-slate-800">
+                          {camelToTitle(mostDisappointedSegment.bestRoleCombination[0])}
+                        </h3>
+                        <h3 className="text-xs font-light text-slate-800">
+                          ({mostDisappointedSegmentSubmissions.length} submissions)
+                        </h3>
+                        <Pie
+                          submissions={mostDisappointedSegmentSubmissions}
+                          schema={form.schema}
+                          fieldName={"disappointment"}
+                          color="#64748b"
                         />
                       </div>
                     </div>
@@ -143,22 +182,36 @@ export default function SegmentResults() {
                         (like it happened to Mixpanel).
                       </a>
                     </p>
-                    <div className="rounded-lg bg-slate-200 p-4 font-mono shadow-sm">
-                      <div className="mb-2 flex">
-                        <BrainIcon className="mr-2 h-6 w-6" />
-                        <p className="">Main Benefit Summary (AI-powered)</p>
+
+                    {form.id === "demo-pmf" && (
+                      <div className="rounded-lg bg-slate-200 p-4 font-mono shadow-sm">
+                        {loadingMainBenefit ? (
+                          <LoadingSpinner />
+                        ) : (
+                          <>
+                            <div className="mb-2 flex">
+                              <BrainIcon className="mr-2 h-6 w-6" />
+                              <p className="">Main Benefit Summary (AI-powered)</p>
+                            </div>
+                            <p className="my-4 text-sm">
+                              The main benefit that can be extracted from the list is &quot;Efficiently track
+                              and manage expenses in one place for better financial control.&quot;
+                            </p>
+                            <div className="text-right">
+                              <Button
+                                variant="primary"
+                                className=""
+                                onClick={() => {
+                                  setLoadingMainBenefit(true),
+                                    setTimeout(() => setLoadingMainBenefit(false), 1000);
+                                }}>
+                                Regenerate
+                              </Button>
+                            </div>
+                          </>
+                        )}
                       </div>
-                      <p className="my-4 text-sm">
-                        The best is that I can get a quick overview of all my transactions. The best is that I
-                        can get a quick overview of all my transactions. The best is that I can get a quick
-                        overview of all my transactions.
-                      </p>
-                      <div className="text-right">
-                        <Button variant="primary" className="">
-                          Regenerate
-                        </Button>
-                      </div>
-                    </div>
+                    )}
 
                     <div className="my-4 rounded-lg bg-white">
                       <div className="text-md rounded-t-lg bg-slate-100 p-4 font-bold  text-slate-600">
@@ -226,25 +279,40 @@ export default function SegmentResults() {
                       disappointed&apos; when they could no longer use your product. This helps you craft a
                       product for a wider audience.
                     </p>
-                    <div className="rounded-lg bg-slate-200 p-4 font-mono shadow-sm">
-                      <div className="mb-2 flex">
-                        <BrainIcon className="mr-2 h-6 w-6" />
-                        <p className="">Next Action Steps (AI-powered)</p>
+
+                    {form.id === "demo-pmf" && (
+                      <div className="rounded-lg bg-slate-200 p-4 font-mono shadow-sm">
+                        {loadingNextSteps ? (
+                          <LoadingSpinner />
+                        ) : (
+                          <>
+                            <div className="mb-2 flex">
+                              <BrainIcon className="mr-2 h-6 w-6" />
+                              <p className="">Next Action Steps (AI-powered)</p>
+                            </div>
+                            <p className="my-4 text-sm">
+                              The top three improvements requested are to provide a mobile app, enable
+                              archiving of old transactions, and allow notes to be added to transactions.
+                              Other requested improvements include customization options, dark mode, credit
+                              score tracking, analytics, educational resources, performance optimization, and
+                              improved security and accessibility features.
+                            </p>
+                            <div className="text-right">
+                              <Button
+                                variant="primary"
+                                className=""
+                                onClick={() => {
+                                  setLoadingNextSteps(true),
+                                    setTimeout(() => setLoadingNextSteps(false), 1000);
+                                }}>
+                                Regenerate
+                              </Button>
+                            </div>
+                          </>
+                        )}
                       </div>
-                      <p className="my-4 text-sm">
-                        Based on the submissions below, we suggest targeting these three aspects first:
-                        <ul className="my-2 ml-5 list-disc">
-                          <li>Fix this quick and easy</li>
-                          <li>Fix this quick and easy</li>
-                          <li>Fix this quick and easy</li>
-                        </ul>
-                      </p>
-                      <div className="text-right">
-                        <Button variant="primary" className="">
-                          Regenerate
-                        </Button>
-                      </div>
-                    </div>
+                    )}
+
                     <div className="my-4 rounded-lg bg-white">
                       <div className="text-md rounded-t-lg bg-slate-100 p-4 font-bold  text-slate-600">
                         How can we improve our service for you?

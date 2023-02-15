@@ -10,10 +10,7 @@ interface RoleCounts {
   [role: string]: number;
 }
 
-export function findRolesWithHighestVeryDisappointedPercentage(
-  submissions: FormSubmission[],
-  n: number
-): string[] {
+export function findRolesWithHighestVeryDisappointedPercentage(submissions: FormSubmission[], n: number) {
   const roleCounts: RoleCounts = {};
   const submissionCounts: RoleCounts = {};
 
@@ -57,7 +54,7 @@ export function findRolesWithHighestVeryDisappointedPercentage(
     });
   }
 
-  return bestRoleCombination;
+  return { bestRoleCombination, bestPercentage };
 }
 
 function generateCombinations<T>(elements: T[], combinationLength: number): T[][] {
