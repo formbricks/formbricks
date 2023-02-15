@@ -51,8 +51,6 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
       },
     });
 
-   
-
     if (sessionEvent) {
       sessionEvent.data = data;
       await prisma.sessionEvent.update({
@@ -167,7 +165,6 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
     ],
   });
 
-  
   for (const pipeline of pipelines) {
     if (pipeline.type === "WEBHOOK") {
       handleWebhook(pipeline, event);
