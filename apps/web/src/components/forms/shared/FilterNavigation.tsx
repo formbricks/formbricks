@@ -24,14 +24,14 @@ interface FilterNavigationProps {
   submissions: any[];
   setFilteredSubmissions: (submissions: any[]) => void;
   limitFields?: string[];
-  setNumTotalSubmissions?: (any) => void;
+  setNumTotalSubmissions?: (any?) => void;
 }
 
 export default function FilterNavigation({
   submissions,
   setFilteredSubmissions,
   limitFields = null,
-  setNumTotalSubmissions = ([]) => {},
+  setNumTotalSubmissions = () => {},
 }: FilterNavigationProps) {
   const router = useRouter();
   const { formId, organisationId } = router.query;
