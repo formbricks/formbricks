@@ -24,12 +24,14 @@ interface FilterNavigationProps {
   submissions: any[];
   setFilteredSubmissions: (submissions: any[]) => void;
   limitFields?: string[];
+  setNumTotalSubmissions?: (any?) => void;
 }
 
 export default function FilterNavigation({
   submissions,
   setFilteredSubmissions,
   limitFields = null,
+  setNumTotalSubmissions = () => {},
 }: FilterNavigationProps) {
   const router = useRouter();
   const { formId, organisationId } = router.query;
@@ -47,25 +49,23 @@ export default function FilterNavigation({
           const archivedSelected = filter.options.find((option) => option.value === "archived")?.active;
           if (archivedSelected) {
             newFilteredSubmissions = newFilteredSubmissions.filter((submission) => submission.archived);
+            setNumTotalSubmissions([...submissions].filter((s) => s.archived).length);
           } else {
             newFilteredSubmissions = newFilteredSubmissions.filter((submission) => !submission.archived);
+            setNumTotalSubmissions([...submissions].filter((s) => !s.archived).length);
           }
+
           continue;
         }
         const isAllActive = filter.options.find((option) => option.value === "all")?.active;
         // no filter is all is selected, if not keep on filtering
         if (!isAllActive) {
           // filter for all other types
-          let pinnedFilterSubmissions = [];
+          let listOfValidFilteredSubmissions = [];
           if (filter.type === "radio") {
             for (const option of filter.options) {
-              if (option.active) {
-                newFilteredSubmissions = newFilteredSubmissions.filter((submission) => {
-                  return submission.data[filter.name] === option.value;
-                });
-              }
-              if (option.pinned) {
-                pinnedFilterSubmissions = pinnedFilterSubmissions.concat(
+              if (option.active || option.pinned) {
+                listOfValidFilteredSubmissions.push(
                   [...newFilteredSubmissions].filter((submission) => {
                     return submission.data[filter.name] === option.value;
                   })
@@ -74,30 +74,21 @@ export default function FilterNavigation({
             }
           } else if (filter.type === "checkbox") {
             for (const option of filter.options) {
-              if (option.active) {
-                newFilteredSubmissions = newFilteredSubmissions.filter((submission) => {
-                  const value = submission.data[filter.name];
-                  if (value) {
-                    return value.includes(option.value);
-                  }
-                });
-              }
-              if (option.pinned) {
-                pinnedFilterSubmissions = pinnedFilterSubmissions.concat(
-                  [...newFilteredSubmissions].filter((submission) => {
-                    return submission.data[filter.name] === option.value;
+              if (option.active || option.pinned) {
+                listOfValidFilteredSubmissions.push(
+                  newFilteredSubmissions.filter((submission) => {
+                    const value = submission.data[filter.name];
+                    if (value) {
+                      return value.includes(option.value);
+                    }
                   })
                 );
               }
             }
           }
           // add pinned submissions to the top
-          newFilteredSubmissions = filterUniqueById(
-            pinnedFilterSubmissions.concat(newFilteredSubmissions).sort((a, b) => {
-              // sort by date descending
-              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-            })
-          );
+          const flattenedListOfValidFilteredSubmissions = listOfValidFilteredSubmissions.flat();
+          newFilteredSubmissions = filterUniqueById(flattenedListOfValidFilteredSubmissions);
         }
       }
       setFilteredSubmissions(newFilteredSubmissions);

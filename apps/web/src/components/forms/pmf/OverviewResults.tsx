@@ -22,6 +22,7 @@ export default function OverviewResults() {
     router.query.organisationId?.toString(),
     router.query.formId?.toString()
   );
+  const [numTotalSubmissions, setNumTotalSubmissions] = useState(0);
   const [filteredSubmissions, setFilteredSubmissions] = useState([]);
 
   const labelMap = useMemo(() => {
@@ -67,7 +68,11 @@ export default function OverviewResults() {
                 numFilteredSubmissions={filteredSubmissions.length}
                 numTotalSubmissions={submissions.length}
               />
-              <FilterNavigation submissions={submissions} setFilteredSubmissions={setFilteredSubmissions} />
+              <FilterNavigation
+                submissions={submissions}
+                setFilteredSubmissions={setFilteredSubmissions}
+                setNumTotalSubmissions={setNumTotalSubmissions}
+              />
             </div>
 
             {/* Submission grid */}
