@@ -127,11 +127,11 @@ export default function SegmentResults() {
                       <div className="mb-4 rounded-lg bg-slate-200 p-4 font-mono shadow-sm">
                         <div className="mb-2 flex">
                           <BrainIcon className="mr-2 h-6 w-6" />
-                          <p className="">Most disappointed segment (AI-powered)</p>
+                          <p className="">Most happiest segment (AI-powered)</p>
                         </div>
                         <p className="my-4 text-sm">
-                          The most disappointed segment is &quot;
-                          {camelToTitle(mostDisappointedSegment.bestRoleCombination[0])}&quot; with{" "}
+                          The happiest users are &quot;
+                          {camelToTitle(mostDisappointedSegment.bestRoleCombination[0])}s&quot; with{" "}
                           {Math.round(mostDisappointedSegment.bestPercentage * 100)}% of users answering
                           &quot;very disappointed&quot;.
                         </p>
