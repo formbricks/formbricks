@@ -4,6 +4,7 @@ export * from "./Confetti";
 /* Icons */
 export * from "./icons/BackIcon";
 export * from "./icons/BugIcon";
+export * from "./icons/BrainIcon";
 export * from "./icons/BugBlueIcon";
 export * from "./icons/ComplimentIcon";
 export * from "./icons/CustomersIcon";

@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import FilterNavigation from "../shared/FilterNavigation";
+import { BrainIcon, Button } from "@formbricks/ui";
 
 const limitFields = ["role"];
 
@@ -98,29 +99,38 @@ export default function SegmentResults() {
                 </EmptyPageFiller>
               ) : (
                 <>
-                  <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2 shadow-sm">
-                      <h3 className="text-sm font-medium text-slate-800">All</h3>
-                      <h3 className="text-xs font-light text-slate-800">
-                        ({submissions.length} submissions)
-                      </h3>
-                      <Pie submissions={submissions} schema={form.schema} fieldName={"disappointment"} />
-                    </div>
-                    <div className="flex flex-col items-center justify-center rounded-lg bg-white p-2 shadow-sm">
-                      <h3 className="text-sm font-medium text-slate-800">Most disappointed segment</h3>
-                      <h3 className="text-xs font-light text-slate-800">
-                        ({filteredSubmissions.length} submissions)
-                      </h3>
-                      <Pie
-                        submissions={filteredSubmissions}
-                        schema={form.schema}
-                        fieldName={"disappointment"}
-                      />
+                  <div className="mb-4 rounded-lg bg-white p-6 shadow-sm">
+                    <h2 className="my-4 text-xl font-bold text-slate-600">Step 1: Find happiest users</h2>
+                    <p className="mb-6 pr-3 text-slate-800">
+                      To separate signal from noise, you only look at the feedback from the segment with the
+                      highest &apos;very disappointed&apos; score. These are your happiest users. Your
+                      happiest users are most likely to be long-term customers:
+                    </p>
+
+                    <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                      <div className="flex flex-col items-center justify-center rounded-lg bg-slate-50 p-2 shadow-sm">
+                        <h3 className="text-sm font-medium text-slate-800">All</h3>
+                        <h3 className="text-xs font-light text-slate-800">
+                          ({submissions.length} submissions)
+                        </h3>
+                        <Pie submissions={submissions} schema={form.schema} fieldName={"disappointment"} />
+                      </div>
+                      <div className="flex flex-col items-center justify-center rounded-lg bg-slate-50 p-2 shadow-sm">
+                        <h3 className="text-sm font-medium text-slate-800">Most disappointed segment</h3>
+                        <h3 className="text-xs font-light text-slate-800">
+                          ({filteredSubmissions.length} submissions)
+                        </h3>
+                        <Pie
+                          submissions={filteredSubmissions}
+                          schema={form.schema}
+                          fieldName={"disappointment"}
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="mb-4 rounded-lg bg-white p-6 shadow-sm">
                     <h2 className="my-4 text-xl font-bold text-slate-600">
-                      Step 1: Double down on what they love
+                      Step 2: Double down on what they love
                     </h2>
                     <p className="mb-6 pr-3 text-slate-800">
                       Your first priority is making your happiest users happier. By deepening the value they
@@ -133,6 +143,22 @@ export default function SegmentResults() {
                         (like it happened to Mixpanel).
                       </a>
                     </p>
+                    <div className="rounded-lg bg-slate-200 p-4 font-mono shadow-sm">
+                      <div className="mb-2 flex">
+                        <BrainIcon className="mr-2 h-6 w-6" />
+                        <p className="">Main Benefit Summary (AI-powered)</p>
+                      </div>
+                      <p className="my-4 text-sm">
+                        The best is that I can get a quick overview of all my transactions. The best is that I
+                        can get a quick overview of all my transactions. The best is that I can get a quick
+                        overview of all my transactions.
+                      </p>
+                      <div className="text-right">
+                        <Button variant="primary" className="">
+                          Regenerate
+                        </Button>
+                      </div>
+                    </div>
 
                     <div className="my-4 rounded-lg bg-white">
                       <div className="text-md rounded-t-lg bg-slate-100 p-4 font-bold  text-slate-600">
@@ -193,14 +219,32 @@ export default function SegmentResults() {
 
                   <div className="mb-4 rounded-lg bg-white p-6 shadow-sm">
                     <h2 className="my-4 text-xl font-bold text-slate-600">
-                      Step 2: Fix what&apos;s holding them back
+                      Step 3: Fix what&apos;s holding them back
                     </h2>
                     <p className="mb-6 pr-3 text-slate-800">
                       Your second priority is to increase the amount of people who would be &apos;very
                       disappointed&apos; when they could no longer use your product. This helps you craft a
                       product for a wider audience.
                     </p>
-
+                    <div className="rounded-lg bg-slate-200 p-4 font-mono shadow-sm">
+                      <div className="mb-2 flex">
+                        <BrainIcon className="mr-2 h-6 w-6" />
+                        <p className="">Next Action Steps (AI-powered)</p>
+                      </div>
+                      <p className="my-4 text-sm">
+                        Based on the submissions below, we suggest targeting these three aspects first:
+                        <ul className="my-2 ml-5 list-disc">
+                          <li>Fix this quick and easy</li>
+                          <li>Fix this quick and easy</li>
+                          <li>Fix this quick and easy</li>
+                        </ul>
+                      </p>
+                      <div className="text-right">
+                        <Button variant="primary" className="">
+                          Regenerate
+                        </Button>
+                      </div>
+                    </div>
                     <div className="my-4 rounded-lg bg-white">
                       <div className="text-md rounded-t-lg bg-slate-100 p-4 font-bold  text-slate-600">
                         How can we improve our service for you?
