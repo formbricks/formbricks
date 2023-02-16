@@ -94,7 +94,7 @@ export default function OverviewResults() {
                                 {["email", "number", "phone", "search", "text", "textarea", "url"].includes(
                                   elem.type
                                 ) ? (
-                                  <div>
+                                  <div className="max-h-96 overflow-auto">
                                     <Table
                                       submissions={filteredSubmissions}
                                       schema={form.schema}
