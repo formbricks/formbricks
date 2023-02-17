@@ -7,22 +7,18 @@ import PMFThumb from "@/images/pmfthumb.webp";
 import Rahul from "@/images/rahulvohra.jpg";
 import { useForm } from "@/lib/forms";
 import { getOptionLabelMap, useSubmissions } from "@/lib/submissions";
+import { findRolesWithHighestVeryDisappointedPercentage } from "@/lib/superhumanPmf";
+import { camelToTitle } from "@/lib/utils";
 import { Pie } from "@formbricks/charts";
+import { BrainIcon, Button } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
-import FilterNavigation from "../shared/FilterNavigation";
-import { BrainIcon, Button } from "@formbricks/ui";
-import { findRolesWithHighestVeryDisappointedPercentage } from "@/lib/superhumanPmf";
-import { camelToTitle } from "@/lib/utils";
-
-const limitFields = ["role"];
 
 export default function SegmentResults() {
   const router = useRouter();
-  const [filteredSubmissions, setFilteredSubmissions] = useState([]);
   const [loadingMainBenefit, setLoadingMainBenefit] = useState(false);
   const [loadingNextSteps, setLoadingNextSteps] = useState(false);
   const { submissions, isLoadingSubmissions, isErrorSubmissions } = useSubmissions(
@@ -34,16 +30,12 @@ export default function SegmentResults() {
     router.query.organisationId?.toString()
   );
   const lovers = useMemo(
-    () =>
-      filteredSubmissions.filter((s) => s.data.disappointment === "veryDisappointed" && s.data.mainBenefit),
-    [filteredSubmissions]
+    () => submissions.filter((s) => s.data.disappointment === "veryDisappointed" && s.data.mainBenefit),
+    [submissions]
   );
   const improvers = useMemo(
-    () =>
-      filteredSubmissions.filter(
-        (s) => s.data.disappointment === "somewhatDisappointed" && s.data.improvement
-      ),
-    [filteredSubmissions]
+    () => submissions.filter((s) => s.data.disappointment === "somewhatDisappointed" && s.data.improvement),
+    [submissions]
   );
 
   const labelMap = useMemo(() => {
@@ -140,9 +132,9 @@ export default function SegmentResults() {
 
                     <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
                       <div className="flex flex-col items-center justify-center rounded-lg bg-slate-50 p-2 shadow-sm">
-                        <h3 className="text-sm font-medium text-slate-800">Current Selection</h3>
+                        <h3 className="text-sm font-medium text-slate-800">All responses</h3>
                         <h3 className="text-xs font-light text-slate-800">
-                          ({filteredSubmissions.length} submissions)
+                          ({submissions.length} submissions)
                         </h3>
                         <Pie
                           submissions={submissions}
