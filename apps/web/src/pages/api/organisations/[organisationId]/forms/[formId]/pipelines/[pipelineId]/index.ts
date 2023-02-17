@@ -59,7 +59,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const prismaRes = await prisma.pipeline.delete({
       where: { id: pipelineId },
     });
-    capturePosthogEvent(organisationId, "pipeline deleted", {
+    capturePosthogEvent(user.id, "pipeline deleted", {
       formId,
       pipelineId,
     });

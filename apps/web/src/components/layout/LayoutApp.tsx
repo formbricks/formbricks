@@ -3,6 +3,7 @@
 import LoadingSpinner from "@/components/LoadingSpinner";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { useMemberships } from "@/lib/memberships";
+import { identifyPosthogUser } from "@/lib/posthog";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -42,6 +43,8 @@ export default function LayoutApp({ children }) {
     router.push(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`);
     return <LoadingSpinner />;
   }
+
+  identifyPosthogUser(session.user);
 
   if (isLoadingMemberships) {
     return (

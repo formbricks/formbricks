@@ -35,13 +35,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             ],
           },
         },
-        include: {
-          organisations: true,
-        },
       });
       if (process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") await sendVerificationEmail(userData);
       // tracking
-      capturePosthogEvent(userData.organisations[0].organisationId, "user created");
+      capturePosthogEvent(userData.id, "user created");
       res.json(userData);
     } catch (e) {
       if (e.code === "P2002") {

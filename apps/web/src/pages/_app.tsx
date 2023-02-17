@@ -1,14 +1,19 @@
+import { FeedbackButton } from "@/components/FeedbackButton";
+import { initPosthog, usePosthog } from "@/lib/posthog";
+import "@/styles/globals.css";
+import "@/styles/prism.css";
+import "@/styles/toastify.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SessionProvider } from "next-auth/react";
-import { ToastContainer } from "react-toastify";
-import { FeedbackButton } from "@/components/FeedbackButton";
 import { useEffect, useState } from "react";
-import "@/styles/globals.css";
-import "@/styles/toastify.css";
-import "@/styles/prism.css";
+import { ToastContainer } from "react-toastify";
+
+initPosthog();
 
 function FormbricksApp({ Component, pageProps: { session, ...pageProps } }) {
   const [isMobile, setIsMobile] = useState(false);
+
+  usePosthog();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);

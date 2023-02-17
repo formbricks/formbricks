@@ -1,3 +1,4 @@
+import { capturePosthogEvent } from "@/lib/posthog";
 import { prisma } from "@formbricks/database";
 import { IdentityProvider } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -220,7 +221,7 @@ export const authOptions: NextAuthOptions = {
           return "/auth/error?error=use-email-login";
         }
 
-        await prisma.user.create({
+        const userData = await prisma.user.create({
           data: {
             name: user.name,
             email: user.email,
@@ -245,6 +246,8 @@ export const authOptions: NextAuthOptions = {
             },
           },
         });
+
+        capturePosthogEvent(userData.id, "user created");
 
         return true;
       }

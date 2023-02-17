@@ -60,7 +60,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         organisation: { connect: { id: organisationId } },
       },
     });
-    capturePosthogEvent(organisationId, "form created", {
+    capturePosthogEvent(user.id, "form created", {
       formId: result.id,
     });
     res.json(result);
