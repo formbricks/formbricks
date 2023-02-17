@@ -1,0 +1,72 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import NewsletterSignup from "@/components/shared/NewsletterSignup";
+import HeaderImage from "../weekly-update-181122/weeklyupdate.png";
+import HeroAnimation from "@/components/shared/HeroAnimation";
+
+import { Callout } from "@/components/shared/Callout";
+
+import AI1 from "./ai-1.jpg";
+import AI2 from "./ai-2.jpg";
+import PH from "./ph.jpg";
+import Superhuman from "./superhuman.jpg";
+
+export const meta = {
+  title: "Weekly Summary - 17th Feb 2023",
+  description:
+    "ProductHunt launch of the Product-Market Fit survey, UI improvements, Superhuman Report, AI considerations. Let’s have a closer look:",
+  date: "2023-02-17",
+};
+
+_ProductHunt launch of the Product-Market Fit survey, UI improvements, Superhuman Report, AI considerations. Let’s have a closer look:_
+
+<Image src={HeaderImage} alt="Weekly Update" className="rounded-lg" />
+
+## TLDR:
+
+- Launched on ProductHunt with PMF survey, ranked #6
+- User tests and UI improvements
+- Superhuman reshaped as report
+- AI considerations
+
+## Product-Hunt launch of PMF survey
+
+Yesterday, we launched the [PMF survey on ProductHunt.](https://www.producthunt.com/posts/product-market-fit-survey-by-formbricks) We ended up 6th for the day with 145 upvotes - an alright result:
+
+<Image src={PH} alt="Product Hunt Launch" className="rounded-lg" />
+
+We got some inbound from VC and 35 sign ups testing out the product. We added artificial friction by requesting people to add their creditcards to be able to test the Product-Market Fit survey.
+
+Here is the [Landing Page](https://formbricks.com/pmf) and the [Demo dashboard](https://formbricks.com/demo) we used to convert users.
+
+## User tests, UI improvements, Superhuman as a Report
+
+We performed a few user tests with the PMF dashboard and imrpoved the UI. We also reworked the Superhuman Dashboard to be understood more as a report. We auto-select the segment with the largest share of “very disappointed” users and display the insights accordingly to seperate the signal from the noise.
+
+<Image src={Superhuman} alt="Superhuman PMF Report" className="rounded-lg" />
+
+_This is a riff of how we understand the difference between Qualtrics (experience management) and Typeform (form generation): We guide our users to get the insights they need to make a business decision vs. allowing them to make pretty forms. [See it live here.](https://formbricks.com/demo)_
+
+## AI-cing on the cake
+
+(excuse the pun).
+
+We tinkered a bit on how AI can make our dashboard more informative. Sooner or later we want to leverage Matti's extensive background in machine learning.
+
+It’s a bit of a slippery slope as most product teams want full control over the data they gather. This forbids letting AI take over core tasks product managers and founders want to do themselves.
+
+But it can support the process, especially with large amounts of qualitative data:
+
+**Summarize the main benefit users derive from a product:**
+
+<Image src={AI1} alt="How AI can make Formbricks better" className="rounded-lg" />
+
+**Identify top improvements to work on:**
+
+<Image src={AI2} alt="How AI can make Formbricks better 2" className="rounded-lg" />
+
+## Enjoy your weekends! 🤸‍♀️
+
+<NewsletterSignup />
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
