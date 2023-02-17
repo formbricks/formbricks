@@ -127,7 +127,7 @@ export default function SegmentResults() {
                       <div className="mb-4 rounded-lg bg-slate-200 p-4 font-mono shadow-sm">
                         <div className="mb-2 flex">
                           <BrainIcon className="mr-2 h-6 w-6" />
-                          <p className="">Most happiest segment (AI-powered)</p>
+                          <p className="">Happiest segment</p>
                         </div>
                         <p className="my-4 text-sm">
                           The happiest users are &quot;
@@ -404,12 +404,6 @@ export default function SegmentResults() {
                   </div>
                 </div>
               </Link>
-
-              <FilterNavigation
-                submissions={submissions}
-                setFilteredSubmissions={setFilteredSubmissions}
-                limitFields={limitFields}
-              />
             </div>
           </div>
         </section>

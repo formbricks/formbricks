@@ -59,7 +59,7 @@ export default function GetStartedPage() {
           </Button>
         </div>
       </div>
-      <div className="px-32 pb-4">
+      <div className="px-4 pb-4 md:px-32">
         <div className="relative pb-[56.25%]">
           <iframe
             className="absolute top-0 left-0 h-full w-full border-0"
