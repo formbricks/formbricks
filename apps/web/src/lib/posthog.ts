@@ -35,7 +35,8 @@ export const usePosthog = () => {
 
 export const identifyPosthogUser = (user) => {
   if (enabled) {
-    posthog.identify(user.id, { email: user.email, name: user.name });
+    //posthog.identify(user.id, { email: user.email, name: user.name });
+    posthog.identify(user.id);
   }
 };
 
