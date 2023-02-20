@@ -130,7 +130,6 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
       },
     });
 
-
     if (userOpenFormSession === null) {
       const { id } = await prisma.submissionSession.create({
         data: { form: { connect: { id: formId } } },
@@ -178,3 +177,4 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
     }
   }
 };
+//
