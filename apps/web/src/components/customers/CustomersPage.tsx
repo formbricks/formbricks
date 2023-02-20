@@ -8,6 +8,7 @@ import { convertDateTimeString } from "@/lib/utils";
 import { UsersIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { Button } from "@formbricks/ui";
 
 export default function FormsPage() {
   const router = useRouter();
@@ -77,24 +78,25 @@ export default function FormsPage() {
                   <tbody className="bg-white">
                     {customers.map((customer, customerIdx) => (
                       <tr key={customer.email} className={customerIdx % 2 === 0 ? undefined : "bg-slate-50"}>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-6">
+                        <td className="hover:text-brand-dark min-w-full whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-6">
                           <Link
                             href={`/organisations/${router.query.organisationId}/customers/${customer.email}`}>
                             {customer.email}
                           </Link>
                         </td>
+
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
                           {convertDateTimeString(customer.createdAt)}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
                           {customer._count?.submissions}
                         </td>
-                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                          <Link
-                            href={`/organisations/${router.query.organisationId}/customers/${customer.id}`}
-                            className="text-brand-dark hover:text-brand-light">
-                            View<span className="sr-only">, {customer.name}</span>
-                          </Link>
+                        <td className="relative whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                          <Button
+                            size="sm"
+                            href={`/organisations/${router.query.organisationId}/customers/${customer.email}`}>
+                            View
+                          </Button>
                         </td>
                       </tr>
                     ))}
