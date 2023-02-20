@@ -61,6 +61,7 @@ export default async function handle(
           lastname: true,
           gender: true,
           email: true,
+          phone:  true,
           whatsapp: true,
           id: true
         },
