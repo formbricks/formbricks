@@ -55,19 +55,12 @@ const AnalyticsCard: React.FC<Props> = ({
   const [isLoadingQuestionStats, setIsLoadingQuestionStats] = useState(true);
   const [isItemOpened, setIsItemOpened] = useState(false);
   const [stepStats, setstepStats] = useState();
+  const [headers, setHeaders] = useState([]);
   const [questionsStats, setQuestionsStats] = useState<QuestionStatType>(null);
   const isLabelContainsNumber = /\d/.test(label.charAt(0));
   const fileTitle = `${formName} - ${
     isLabelContainsNumber ? label.substring(2) : label
   }`;
-  const headers = [
-    { label: "Prénom", key: "firstname" },
-    { label: "Nom", key: "lastname" },
-    { label: "Genre", key: "gender" },
-    { label: "Email", key: "email" },
-    { label: "Whatsapp", key: "whatsapp" },
-    { label: "Soumissions", key: "Soumissions" },
-  ];
 
   useEffect(() => {
     if (isItemOpened) {
@@ -81,9 +74,9 @@ const AnalyticsCard: React.FC<Props> = ({
 
       getPageQuestionsDatas(formId, pageId, label)
         .then((res) => res.json())
-        .then((stepStats) => {
-          console.log({ stepStats });
-          setstepStats(stepStats);
+        .then(({ Data, headerConfig }) => {
+          setHeaders(headerConfig);
+          setstepStats(Data);
         });
     }
   }, [isItemOpened]);

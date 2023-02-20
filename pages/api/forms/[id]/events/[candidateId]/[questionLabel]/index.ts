@@ -84,6 +84,13 @@ export default async function handle(
       }
     })
 
+    const headerConfig = [
+      { label: "Prénom", key: "firstname" },
+      { label: "Nom", key: "lastname" },
+      { label: "Genre", key: "gender" },
+      { label: "Email", key: "email" },
+      { label: "Whatsapp", key: "whatsapp" },
+    ];
   const formPages = [];
   const {blocks} = pages;
     let currentPage = {
@@ -112,7 +119,17 @@ export default async function handle(
     }
     const page = formPages.filter(({id}) => id === pageId)
 
-    const pageQuestions = page[0].blocks.filter((b) => isBlockAQuestion(b));
+    const pageQuestions = page[0].blocks.filter((b) => {
+      const isLabelInHeaders = headerConfig.findIndex(({label}) => label === b.data.label);
+      
+      if(isBlockAQuestion(b)){
+        if(isLabelInHeaders === -1) {
+          headerConfig.push({label: b.data.label, key: b.data.label})
+        }
+        return true;
+      }
+    });
+    
     
 
 
@@ -122,20 +139,19 @@ export default async function handle(
           Object.keys(r.submission).map((submissionId) => {
             const submissionFind = pageQuestions.find(({id}) => id === submissionId)
             if(submissionFind) {
-              r.submission[submissionFind.data.label] =  r.submission[submissionId];
+              r[submissionFind.data.label] =  r.submission[submissionId];
             delete  r.submission[submissionId];
             }
             
           })
-          r["Soumissions"] = JSON.stringify(r.submission);
           delete r.submission
         }
         
-        Data.push(r)
+    Data.push(r)
     });
    
 
-    return res.json(Data);
+    return res.json({Data, headerConfig});
   }
 
   // Unknown HTTP Method
