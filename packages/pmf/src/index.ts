@@ -87,7 +87,7 @@ function applyConfig() {
       if (config.style.borderRadius) {
         root.style.setProperty("--formbricksPmf-border-radius", config.style.borderRadius);
       }
-      if (config.style.containerBGColor) {
+      if (config.style.containerBgColor) {
         root.style.setProperty("--formbricksPmf-bg-color", config.style.containerBgColor);
       }
       if (config.style.textColor) {
