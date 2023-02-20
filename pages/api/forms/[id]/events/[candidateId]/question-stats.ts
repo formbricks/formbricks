@@ -17,10 +17,8 @@ export default async function handle(
   const pageId = req.query.candidateId.toString();
   const session = await getSession({ req: req });
 
-  // GET /api/forms/[id]/events/[pageId]/question-stats
-  // Gets all page submission statistics for a specific form
+
   if (req.method === "GET") {
-    // check if session exist
     if (!session) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -52,45 +50,11 @@ export default async function handle(
         },
       ],
     });
-    const candidates = await Promise.all(pageSubmissions.map(async (s, index) => {
-
-
-    const candidateResponse  = await prisma.user.findUnique({
-        select: {
-          firstname: true,
-          lastname: true,
-          gender: true,
-          email: true,
-          phone:  true,
-          whatsapp: true,
-          id: true
-        },
-        where:  {
-          id: s.data["candidateId"]
-        }
-      })
-      return {...candidateResponse, submission: pageSubmissions[index].data?.submission};
-
-    }));
     
-      const responses = pageSubmissions.map((s) => s.data["submission"]);
-
+    const responses = pageSubmissions.map((s) => s.data["submission"]);
 
     let qStats = {};
-    // candidates.map((r) => {
-    // if (r)
-    //     Object.keys(r.submission).map((qId) => {
-    //       const addOrIncrementOption = (opt) => {
-    //         if (qStats[qId][opt]) qStats[qId][opt].push(r);
-    //         else qStats[qId][opt] = [r];
-    //       };
-    //       if (!qStats[qId]) qStats[qId] = {};
-    //       if (typeof r.submission[qId] !== "object") addOrIncrementOption(r.submission[qId]);
-    //       else {
-    //         for (const opt of r.submission[qId]) addOrIncrementOption(opt);
-    //       }
-    //     });
-    // });
+
     responses.map((r) => {
       if (r)
           Object.keys(r).map((qId) => {
@@ -109,7 +73,6 @@ export default async function handle(
     return res.json({  qStats });
   }
 
-  // Unknown HTTP Method
   else {
     throw new Error(
       `The HTTP ${req.method} method is not supported by this route.`

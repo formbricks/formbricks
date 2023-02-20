@@ -84,13 +84,13 @@ export default function ResultsSummary({ formId }) {
 
   return (
     <>
-     <h1 className='mt-8 text-2xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4'>
+      <h1 className="mt-8 text-2xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4">
         {form.name}
       </h1>
-      <h2 className='mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4'>
+      <h2 className="mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4">
         General report
       </h2>
-      <dl className='grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2'>
+      <dl className="grid grid-cols-1 gap-5 mt-8 sm:grid-cols-2">
         {defaultInsights.map((item) => (
           <AnalyticsCard
             key={item.id}
@@ -104,15 +104,15 @@ export default function ResultsSummary({ formId }) {
             trend={item.trend}
             smallerText={item.smallerText}
             questions={item.questions}
-            formName= {form.name}
+            formName={form.name}
           />
         ))}
       </dl>
 
-      <h2 className='mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4'>
+      <h2 className="mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4">
         Diférentes étapes
       </h2>
-      <dl className='grid  gap-5 mt-8 mb-12 '>
+      <dl className="grid  gap-5 mt-8 mb-12 ">
         {pages.slice(0, pages.length - 1).map((page) => (
           <AnalyticsCard
             key={page.id}
@@ -125,7 +125,7 @@ export default function ResultsSummary({ formId }) {
             questions={getFormQuestions(page)}
             formId={formId}
             pageId={page.id}
-            formName= {form.name}
+            formName={form.name}
           />
         ))}
       </dl>
