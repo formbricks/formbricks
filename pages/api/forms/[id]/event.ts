@@ -32,7 +32,7 @@ export default async function handle(
   const pages= getFormPages(noCodeForm.blocks, formId)
   const blocksFormated = reformatBlocks(noCodeForm.blocks)
   const pagesFormated = formatPages(pages)
-  const candidateSubmissions = []
+  const candidateSubmissions = {}
 
 const candidateEvents = await prisma.sessionEvent.findMany({
   where: {
@@ -63,17 +63,17 @@ const candidateEvents = await prisma.sessionEvent.findMany({
 candidateEvents.map((event) => {
   if(pagesFormated[event.data["pageName"]]) {
     const pageTitle = pagesFormated[event.data["pageName"]].title;
-    const responses = []
+    const responses = {}
     if(event.data["submission"]) {
       Object.keys(event.data["submission"]).map((key) => {
         const submission = {}
         const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
         const response = event.data["submission"][key];
          submission[question] = response
-        responses.push(submission)
+        responses[question] = response
       })
     }
-    candidateSubmissions.push({responses, pageTitle})
+    candidateSubmissions[pageTitle] = responses
   }
   
 })
