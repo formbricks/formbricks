@@ -2,7 +2,8 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
 import NextCors from "nextjs-cors";
 import { processApiEvent, validateEvents } from "../../../../lib/apiEvents";
-import { formatPages, getFormPages, reformatBlocks } from "../../../../lib/utils";
+import { formatPages, getFormPages } from "../../../../lib/utils";
+import { prisma } from "../../../../lib/prisma";
 
 ///api/submissionSession
 export default async function handle(
@@ -30,7 +31,6 @@ export default async function handle(
 
 
   const pages= getFormPages(noCodeForm.blocks, formId)
-  const blocksFormated = reformatBlocks(noCodeForm.blocks)
   const pagesFormated = formatPages(pages)
   const candidateSubmissions = {}
 
@@ -78,10 +78,6 @@ candidateEvents.map((event) => {
   
 })
 
-  // POST /api/forms/:id/schema
-  // Updates a form schema
-  // Required fields in body: schema
-  // Optional fields in body: -
   if (req.method === "POST") {
     const { events } = req.body;
     const error = validateEvents(events);
