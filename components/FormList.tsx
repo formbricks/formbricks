@@ -155,6 +155,7 @@ export default function FormList() {
                   </option>
                 ))}
               </select>
+
               <select
                 className='flex justify-center text-sm font-medium text-black py-1 px-6 md:py-2 md:px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black mx-1'
                 value={selectedFormation}

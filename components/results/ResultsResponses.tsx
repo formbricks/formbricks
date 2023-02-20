@@ -183,7 +183,7 @@ export default function ResultsResponses({
           </div>
         </main>
         <aside className='flex flex-col flex-1 flex-shrink-0 order-first h-full border-r border-ui-gray-light md:flex-none md:w-1/3'>
-          <DownloadResponses formId={formId} />
+          <DownloadResponses formId={formId} candidates={candidates} />
           <div className='pt-4 pb-2'>
             <h2 className='px-5 text-lg font-medium text-gray-900'>Réponses</h2>
           </div>

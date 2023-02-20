@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
 import NextCors from "nextjs-cors";
 import { processApiEvent, validateEvents } from "../../../../lib/apiEvents";
+import { formatPages, getFormPages, reformatBlocks } from "../../../../lib/utils";
 
 ///api/submissionSession
 export default async function handle(
@@ -18,6 +19,65 @@ export default async function handle(
 
   const formId = req.query.id.toString();
 
+  const noCodeForm = await prisma.noCodeForm.findUnique({
+    where: {
+       formId,
+    },
+    select: {
+      blocks: true
+    }
+  })
+
+
+  const pages= getFormPages(noCodeForm.blocks, formId)
+  const blocksFormated = reformatBlocks(noCodeForm.blocks)
+  const pagesFormated = formatPages(pages)
+  const candidateSubmissions = {}
+
+const candidateEvents = await prisma.sessionEvent.findMany({
+  where: {
+    AND: [
+      { type: "pageSubmission" },
+      {
+        data: {
+          path: ["candidateId"],
+          equals: session.user.id,
+        },
+      },
+      {
+        data: {
+          path: ["formId"],
+          equals: formId,
+        },
+      },
+    ],
+  },
+  orderBy: [
+    {
+      createdAt: "asc",
+    },
+  ],
+});
+
+
+candidateEvents.map((event) => {
+  if(pagesFormated[event.data["pageName"]]) {
+    const pageTitle = pagesFormated[event.data["pageName"]].title;
+    const responses = {}
+    if(event.data["submission"]) {
+      Object.keys(event.data["submission"]).map((key) => {
+        const submission = {}
+        const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
+        const response = event.data["submission"][key];
+         submission[question] = response
+        responses[question] = response
+      })
+    }
+    candidateSubmissions[pageTitle] = responses
+  }
+  
+})
+
   // POST /api/forms/:id/schema
   // Updates a form schema
   // Required fields in body: schema
@@ -30,8 +90,9 @@ export default async function handle(
       return res.status(status).json({ error: message });
     }
     res.json({ success: true });
-    for (const event of events) {
-      processApiEvent(event, formId, session.user.id);
+      for (const event of events) {
+      const candidateEvent = {candidate: session.user, ...event, formSubmissions: candidateSubmissions}
+      processApiEvent(candidateEvent, formId, session.user.id);
     }
   }
   // Unknown HTTP Method

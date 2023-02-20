@@ -132,6 +132,7 @@ export type pageSubmissionEvent = {
     submissionSessionId: string;
     pageName: string;
     submission: { [key: string]: string };
+    
   };
 };
 

@@ -3,7 +3,6 @@ import { fetcher } from "./utils";
 
 export const useForms = () => {
   const { data, error, mutate } = useSWR(`/api/forms/`, fetcher);
-
   return {
     forms: data,
     isLoadingForms: !error && !data,
@@ -86,8 +85,9 @@ export const setFormElementField = (
     );
   }
   if (parentField !== "") {
-    getFormPage(updatedForm, pageId).elements[elementIdx][parentField][field] =
-      input;
+    getFormPage(updatedForm, pageId).elements[elementIdx][parentField][
+      field
+    ] = input;
   } else {
     getFormPage(updatedForm, pageId).elements[elementIdx][field] = input;
   }
