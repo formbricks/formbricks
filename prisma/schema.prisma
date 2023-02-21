@@ -17,12 +17,43 @@ enum FormOrder {
   SEQUENTIAL
   ABTEST
 }
+
 enum Location {
   Goma
   Lubumbashi
   Kinshasa
   Autre
 }
+
+enum Province {
+  Bas_Uele
+  Equateur
+  Haut_Katanga
+  Haut_Lomami
+  Haut_Uele
+  Ituri
+  Kasai
+  Kasai_Central
+  Kasai_Oriental
+  Kinshasa
+  Kongo_Central
+  Kwango
+  Kwilu
+  Lomami
+  Lualaba
+  Mai_Ndombe
+  Maniema
+  Mongala
+  Nord_Kivu
+  Nord_Ubangi
+  Sankuru
+  Sud_Kivu
+  Sud_Ubangi
+  Tanganyika
+  Tshopo
+  Tshuapa
+}
+
 enum Formation {
   DEV
   SMD
@@ -107,11 +138,26 @@ model SessionEvent {
   data                Json
 }
 
+model Address {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  line1     String
+  line2     String?
+  commune   String
+  ville     String
+  province  Province
+  User      User[]
+}
+
 model User {
   id            Int       @id @default(autoincrement())
   firstname     String?
   lastname      String?
   gender        String
+  dob           DateTime  @db.Date @map(name: "date_of_birth") 
+  address       Address   @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  addressId     String
   phone         String    @unique
   whatsapp      String?
   email         String    @unique

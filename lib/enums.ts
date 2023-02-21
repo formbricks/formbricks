@@ -1,19 +1,13 @@
-import { FormOrder, Location, Formation } from "@prisma/client";
+import { FormOrder, Location, Formation, Province } from "@prisma/client";
 
-export const SourcingAnsweringOrderOptions = [
-  FormOrder.RANDOM,
-  FormOrder.SEQUENTIAL,
-  FormOrder.ABTEST,
-];
+export const SourcingAnsweringOrderOptions = Object.values(FormOrder);
 
-export const SourcingLocations = [
-  Location.Kinshasa,
-  Location.Goma,
-  Location.Lubumbashi,
-  Location.Autre,
-];
-export const SourcingFormations = [
-  Formation.DEV,
-  Formation.SMD,
-  Formation.AUTRE,
-];
+export const SourcingLocations = Object.values(Location);
+
+export const SourcingFormations = Object.values(Formation);
+
+let prov= Province;
+Object.keys(Province).forEach(p=>{
+  prov[p]=Province[p].replace('_', '-').replace(/Kasai/, 'Kasaï');
+});
+export const DRCProvinces=prov;
