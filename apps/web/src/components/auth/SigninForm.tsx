@@ -4,10 +4,12 @@ import { Button } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/20/solid";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
+import { useState } from "react";
 import { GithubButton } from "./GithubButton";
 
 export const SigninForm = ({ callbackUrl, error }) => {
   const handleSubmit = async (e) => {
+    setLoggingIn(true);
     e.preventDefault();
     await signIn("credentials", {
       callbackUrl: callbackUrl || "/",
@@ -15,6 +17,8 @@ export const SigninForm = ({ callbackUrl, error }) => {
       password: e.target.elements.password.value,
     });
   };
+
+  const [loggingIn, setLoggingIn] = useState(false);
 
   return (
     <>
@@ -66,7 +70,7 @@ export const SigninForm = ({ callbackUrl, error }) => {
         </div>
 
         <div>
-          <Button type="submit" className="w-full justify-center">
+          <Button type="submit" className="w-full justify-center" loading={loggingIn}>
             Sign in
           </Button>
         </div>

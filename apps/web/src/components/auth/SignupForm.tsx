@@ -11,8 +11,10 @@ import { GithubButton } from "./GithubButton";
 export const SignupForm = () => {
   const router = useRouter();
   const [error, setError] = useState<string>("");
+  const [signingUp, setSigningUp] = useState(false);
 
   const handleSubmit = async (e) => {
+    setSigningUp(true);
     e.preventDefault();
     try {
       await createUser(
@@ -95,7 +97,7 @@ export const SignupForm = () => {
         </div>
 
         <div>
-          <Button type="submit" className="w-full justify-center">
+          <Button type="submit" className="w-full justify-center" loading={signingUp}>
             Sign up
           </Button>
 
