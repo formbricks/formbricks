@@ -64,6 +64,7 @@ export default async function handle(
           lastname: true,
           gender: true,
           email: true,
+          phone: true,
           whatsapp: true,
         },
         where:  {
@@ -89,6 +90,7 @@ export default async function handle(
       { label: "Nom", key: "lastname" },
       { label: "Genre", key: "gender" },
       { label: "Email", key: "email" },
+      { label: "Phone", key: "phone" },
       { label: "Whatsapp", key: "whatsapp" },
     ];
   const formPages = [];
