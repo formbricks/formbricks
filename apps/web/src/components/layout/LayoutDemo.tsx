@@ -17,7 +17,7 @@ export default function LayoutDemo({ children }) {
         <title>Formbricks</title>
         <meta name="description" content="Build user research into your product" />
       </Head>
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-slate-50">
         <Disclosure as="nav" className="border-b border-slate-200 bg-white">
           {({ open }) => (
             <>

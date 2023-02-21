@@ -116,6 +116,7 @@ export default function OverviewResults() {
                           .filter((s) => question.name in s.data)
                           .map((submission) => (
                             <Link
+                              key={submission.id}
                               className="bg-slate-100"
                               href={`${form.id.startsWith("demo") ? "/demo" : ""}/organisations/${
                                 router.query.organisationId

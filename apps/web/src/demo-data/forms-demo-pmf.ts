@@ -1,4 +1,4 @@
-const output = {
+export const getData = () => ({
   id: "demo-pmf",
   createdAt: "2023-02-03T12:22:03.346Z",
   updatedAt: "2023-02-03T12:22:03.346Z",
@@ -119,6 +119,4 @@ const output = {
     config: {},
     schemaVersion: 1,
   },
-};
-
-export default output;
+});

@@ -1,4 +1,4 @@
-const output = [
+export const getData = () => [
   {
     email: "user@example.com",
     createdAt: "2023-02-03T12:20:58.516Z",
@@ -12,5 +12,3 @@ const output = [
     },
   },
 ];
-
-export default output;

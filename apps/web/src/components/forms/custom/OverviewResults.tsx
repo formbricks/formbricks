@@ -77,7 +77,7 @@ export default function OverviewResults() {
                           ].includes(e.type)
                         )
                         .map((elem) => (
-                          <div className="rounded-lg bg-white px-4 py-5 shadow-lg sm:p-6">
+                          <div key={elem.id} className="rounded-lg bg-white px-4 py-5 shadow-lg sm:p-6">
                             <h2 className="mb-6 text-lg font-bold text-slate-800">
                               {elem.label}
                               <span className="text-brand-dark ml-4 inline-flex items-center rounded-md border border-teal-100 bg-teal-50 px-2.5 py-0.5 text-sm font-medium">

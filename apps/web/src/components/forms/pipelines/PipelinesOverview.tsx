@@ -4,6 +4,7 @@ import EmptyPageFiller from "@/components/EmptyPageFiller";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { deletePipeline, persistPipeline, usePipelines } from "@/lib/pipelines";
+import { camelToTitle } from "@/lib/utils";
 import { Button } from "@formbricks/ui";
 import { Switch } from "@headlessui/react";
 import { BoltIcon, Cog6ToothIcon, TrashIcon } from "@heroicons/react/20/solid";
@@ -166,7 +167,7 @@ export default function PipelinesOverview({}) {
                                 className="mr-1.5 h-5 w-5 flex-shrink-0 text-slate-400"
                                 aria-hidden="true"
                               />
-                              <span className="truncate">{pipeline.type}</span>
+                              <span className="truncate">{camelToTitle(pipeline.type)}</span>
                             </p>
                           </div>
                           <div className="hidden md:block">

@@ -8,8 +8,14 @@ export const demoEndpoints = {
   "/api/organisations/demo-organisation/forms/demo-pmf/pipelines": {
     file: "pipelines.ts",
   },
-  "/api/organisations/demo-organisation/forms/demo-pmf/pipelines/demo-pipeline": {
-    file: "pipelines-demo-pipeline.ts",
+  "/api/organisations/demo-organisation/forms/demo-pmf/pipelines/demo-pipeline-email": {
+    file: "pipelines-single.ts",
+  },
+  "/api/organisations/demo-organisation/forms/demo-pmf/pipelines/demo-pipeline-slack": {
+    file: "pipelines-single.ts",
+  },
+  "/api/organisations/demo-organisation/forms/demo-pmf/pipelines/demo-pipeline-webhook": {
+    file: "pipelines-single.ts",
   },
   "/api/organisations/demo-organisation/customers": {
     file: "customers.ts",
