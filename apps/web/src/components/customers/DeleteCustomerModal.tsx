@@ -5,7 +5,7 @@ import { Button } from "@formbricks/ui";
 import { Dialog, Transition } from "@headlessui/react";
 import { TrashIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { toast } from "react-toastify";
 
 type DeleteCustomerModalProps = {
@@ -23,7 +23,10 @@ export default function DeleteCustomerModal({
 }: DeleteCustomerModalProps) {
   const router = useRouter();
 
+  const [deletingCustomer, setDeletingCustomer] = useState(false);
+
   const deleteCustomerAction = async (e) => {
+    setDeletingCustomer(true);
     e.preventDefault();
     await deleteCustomer(customerId, organisationId);
     toast("User successfully deleted.");
@@ -81,6 +84,7 @@ export default function DeleteCustomerModal({
                     </Button>
                     <Button
                       variant="warn"
+                      loading={deletingCustomer}
                       onClick={(e) => deleteCustomerAction(e)}
                       className="w-full justify-center">
                       Delete

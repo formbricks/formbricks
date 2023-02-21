@@ -75,7 +75,7 @@ model Submission {
   archived               Boolean   @default(false)
   form                   Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
   formId                 String
-  customer               Customer? @relation(fields: [customerEmail, customerOrganisationId], references: [email, organisationId])
+  customer               Customer? @relation(fields: [customerEmail, customerOrganisationId], references: [email, organisationId], onDelete: Cascade)
   customerEmail          String?
   customerOrganisationId String?
   data                   Json      @default("{}")

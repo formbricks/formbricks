@@ -4,13 +4,13 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useCustomer } from "@/lib/customers";
 import { MergeWithSchema } from "@/lib/submissions";
 import { convertDateTimeString, onlyUnique, parseUserAgent } from "@/lib/utils";
-import { BackIcon, FeedbackIcon, PMFIcon, FormIcon } from "@formbricks/ui";
+import { BackIcon, Button, FeedbackIcon, FormIcon, PMFIcon } from "@formbricks/ui";
 import { InboxIcon, TrashIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import EmptyPageFiller from "../EmptyPageFiller";
-import { Button } from "@formbricks/ui";
+import { Tooltip } from "../Tooltip";
 import DeleteCustomerModal from "./DeleteCustomerModal";
 
 export default function SingleCustomerPage() {
@@ -53,9 +53,12 @@ export default function SingleCustomerPage() {
         <div className="flex items-baseline justify-between border-b border-slate-200 pt-4 pb-6">
           <h1 className="text-4xl font-bold tracking-tight text-slate-900">{customer.email}</h1>
           <div className="flex items-center space-x-3">
-            <Button variant="secondary" disabled>
-              Invite to interview
-            </Button>
+            <Tooltip text="coming soon">
+              <Button variant="secondary" disabled>
+                Invite to interview
+              </Button>
+            </Tooltip>
+
             <Button variant="primary" href={`mailto:${customer.email}`}>
               Send email
             </Button>
