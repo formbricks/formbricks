@@ -39,21 +39,23 @@ export function FeedbackButton() {
   }, [feedbackRef, isOpen]);
 
   useEffect(() => {
-    window.formbricks = {
-      ...window.formbricks,
-      config: {
-        hqUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
-        formId: process.env.NEXT_PUBLIC_FORMBRICKS_FORM_ID,
-        containerId: "formbricks-feedback-wrapper",
-        contact: {
-          name: "Matti",
-          position: "Co-Founder",
-          imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+    if (feedbackEnabled) {
+      window.formbricks = {
+        ...window.formbricks,
+        config: {
+          hqUrl: process.env.NEXT_PUBLIC_FORMBRICKS_URL,
+          formId: process.env.NEXT_PUBLIC_FORMBRICKS_FORM_ID,
+          containerId: "formbricks-feedback-wrapper",
+          contact: {
+            name: "Matti",
+            position: "Co-Founder",
+            imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+          },
         },
-      },
-    };
-    // @ts-ignore
-    import("@formbricks/feedback");
+      };
+      // @ts-ignore
+      import("@formbricks/feedback");
+    }
   }, []);
 
   if (!feedbackEnabled) return null;

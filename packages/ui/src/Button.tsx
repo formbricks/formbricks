@@ -55,9 +55,9 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
         // base styles independent what type of button it is
         "inline-flex items-center appearance-none",
         // different styles depending on size
-        size === "sm" && "px-3 py-2 text-sm leading-4 font-medium rounded-lg",
+        size === "sm" && "px-3 py-2 text-sm leading-4 font-medium rounded-md",
         size === "base" && "px-6 py-2 text-sm font-medium rounded-xl",
-        size === "lg" && "px-4 py-2 text-base font-medium rounded-lg",
+        size === "lg" && "px-4 py-2 text-base font-medium rounded-md",
         size === "icon" &&
           "w-10 h-10 justify-center group p-2 border rounded-lg border-transparent text-neutral-400 hover:border-slate-200 transition",
         // turn button into a floating action button (fab)
@@ -85,11 +85,11 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
         variant === "minimal" &&
           (disabled
             ? "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800"
-            : "text-slate-600 hover:text-slate-500 bg-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-slate-400 dark:hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:bg-slate-900 focus:bg-slate-700 focus:ring-neutral-500 transition ease-in-out delay-50 hover:scale-105"),
+            : "text-slate-600 hover:text-slate-500 bg-slate-200 hover:bg-slate-100  focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),
         variant === "warn" &&
           (disabled
             ? "text-slate-400 bg-transparent"
-            : "text-slate-700 bg-transparent hover:text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:bg-red-50 focus:ring-red-500"),
+            : "hover:bg-red-200 text-red-700 bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:bg-red-50 focus:ring-red-500"),
 
         // set not-allowed cursor if disabled
         loading ? "cursor-wait" : disabled ? "cursor-not-allowed" : "",

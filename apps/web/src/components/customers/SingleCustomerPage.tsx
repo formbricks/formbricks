@@ -4,12 +4,14 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useCustomer } from "@/lib/customers";
 import { MergeWithSchema } from "@/lib/submissions";
 import { convertDateTimeString, onlyUnique, parseUserAgent } from "@/lib/utils";
-import { BackIcon, FeedbackIcon, PMFIcon, FormIcon } from "@formbricks/ui";
-import { InboxIcon } from "@heroicons/react/24/outline";
+import { BackIcon, Button, FeedbackIcon, FormIcon, PMFIcon } from "@formbricks/ui";
+import { InboxIcon, TrashIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import EmptyPageFiller from "../EmptyPageFiller";
+import { Tooltip } from "../Tooltip";
+import DeleteCustomerModal from "./DeleteCustomerModal";
 
 export default function SingleCustomerPage() {
   const router = useRouter();
@@ -23,6 +25,12 @@ export default function SingleCustomerPage() {
       return customer.submissions.map((s) => s.formId).filter(onlyUnique).length;
     }
   }, [customer]);
+
+  const [openDeleteCustomerModal, setOpenDeleteCustomerModal] = useState(false);
+
+  const deleteUser = async () => {
+    setOpenDeleteCustomerModal(true);
+  };
 
   if (isLoadingCustomer) {
     return (
@@ -44,6 +52,20 @@ export default function SingleCustomerPage() {
         </button>
         <div className="flex items-baseline justify-between border-b border-slate-200 pt-4 pb-6">
           <h1 className="text-4xl font-bold tracking-tight text-slate-900">{customer.email}</h1>
+          <div className="flex items-center space-x-3">
+            <Tooltip text="coming soon">
+              <Button variant="secondary" disabled>
+                Invite to interview
+              </Button>
+            </Tooltip>
+
+            <Button variant="primary" href={`mailto:${customer.email}`}>
+              Send email
+            </Button>
+            <button onClick={deleteUser}>
+              <TrashIcon className="h-5 w-5 text-slate-500 hover:text-red-500" />
+            </button>
+          </div>
         </div>
 
         <section className="pt-6 pb-24">
@@ -169,6 +191,12 @@ export default function SingleCustomerPage() {
           </div>
         </section>
       </main>
+      <DeleteCustomerModal
+        open={openDeleteCustomerModal}
+        setOpen={setOpenDeleteCustomerModal}
+        organisationId={customer.organisationId}
+        customerId={customer.email}
+      />
     </div>
   );
 }

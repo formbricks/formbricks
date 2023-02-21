@@ -26,9 +26,9 @@ export const useCustomer = (organisationId: string, customerId: string) => {
   };
 };
 
-export const deleteCustomer = async (id: string, organisationId: string) => {
+export const deleteCustomer = async (email: string, organisationId: string) => {
   try {
-    await fetch(`/api/organisations/${organisationId}/customers/${id}`, {
+    await fetch(`/api/organisations/${organisationId}/customers/${email}`, {
       method: "DELETE",
     });
   } catch (error) {
