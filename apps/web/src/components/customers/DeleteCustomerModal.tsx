@@ -1,14 +1,12 @@
 "use client";
 
 import { deleteCustomer } from "@/lib/customers";
-import { useOrganisation } from "@/lib/organisations";
 import { Button } from "@formbricks/ui";
 import { Dialog, Transition } from "@headlessui/react";
 import { TrashIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { Fragment } from "react";
 import { toast } from "react-toastify";
-import LoadingSpinner from "../LoadingSpinner";
 
 type DeleteCustomerModalProps = {
   open: boolean;
@@ -24,19 +22,6 @@ export default function DeleteCustomerModal({
   customerId,
 }: DeleteCustomerModalProps) {
   const router = useRouter();
-  const { organisation, isLoadingOrganisation, isErrorOrganisation } = useOrganisation(organisationId);
-
-  if (isLoadingOrganisation) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (isErrorOrganisation) {
-    return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
-  }
 
   const deleteCustomerAction = async (e) => {
     e.preventDefault();
