@@ -21,22 +21,16 @@ Build custom forms without the backend: Use Formbricks to gather and analyze for
 - Use Formbricks backend as endpoint
 - Use Formbricks Data Pipelines to forward data where you need it.
 
-## Creating and updating a submission via HTML form
+## Creating and updating a submission via our API
 
-This is an example on how to create a new submission with an HTML form:
+Create your frontend the way you want it and send the data to our API. For this we provide two endpoints, one for creating a new submission and one for updating an existing submission.
 
-```jsx
-<form action="https://app.formbricks.com/api/capture/forms/{formId}/submissions" method="post">
-```
+You can send all the data at once to our endpoint to create a submission or if you want to build a multipage survey you can send the data for each page separately. Then you use the first API call to create a new submission and the second API call to update the submission with the data from the next page.
 
-If you want to update a submission, you can also do that:
-
-```jsx
-<form action="https://app.formbricks.com/api/capture/forms/{formId}/submissions/{submissionId}" method="post">
-```
+Please refer to [Create Submission](/docs/api/create-submission) and [Update Submission](/docs/api/update-submission) for more information.
 
 ## API docs
 
-To change a submission or schema, you'll need an API key. Please refer to our [API documentation](/docs/api/setup).
+To fetch data from the API (e.g. submissions or forms) your need an API key. Please refer to our [API documentation](/docs/api/setup).
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
