@@ -84,6 +84,9 @@ export default function ResultsSummary({ formId }) {
 
   return (
     <>
+      <h1 className="mt-8 text-2xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4">
+        {form.name}
+      </h1>
       <h2 className="mt-8 text-xl font-bold text-ui-gray-dark max-sm:pl-4 max-md:pl-4">
         General report
       </h2>
@@ -101,6 +104,7 @@ export default function ResultsSummary({ formId }) {
             trend={item.trend}
             smallerText={item.smallerText}
             questions={item.questions}
+            formName={form.name}
           />
         ))}
       </dl>
@@ -109,10 +113,11 @@ export default function ResultsSummary({ formId }) {
         Diférentes étapes
       </h2>
       <dl className="grid  gap-5 mt-8 mb-12 ">
-        {pages.slice(0, pages.length-1).map((page) => (
+        {pages.slice(0, pages.length - 1).map((page) => (
           <AnalyticsCard
             key={page.id}
-            value={`${summaryStats?.pages[page.id]} candidats ont répondus`}
+            value={`${summaryStats?.pages[page.id] ||
+              0} candidats ont répondus`}
             label={page.blocks[0].data.text}
             toolTipText={page.toolTipText}
             trend={page.trend}
@@ -120,6 +125,7 @@ export default function ResultsSummary({ formId }) {
             questions={getFormQuestions(page)}
             formId={formId}
             pageId={page.id}
+            formName={form.name}
           />
         ))}
       </dl>

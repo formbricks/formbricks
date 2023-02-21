@@ -46,6 +46,17 @@ export const getPageQuestionsStats = async (formId: string, pageId: string) => {
   }
 };
 
+export const getPageQuestionsDatas = async (formId: string, pageId: string, questionLabel: string) => {
+  try {
+    const stats = await fetch(`/api/forms/${formId}/events/${pageId}/${questionLabel}`, {
+      method: "GET",
+    });
+    return stats;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 // fill the schema with the values provided by the user
 export const getSubmission = (submissionSession, schema) => {
   if (!schema) return {};
