@@ -28,7 +28,12 @@ export default function DeleteCustomerModal({
   const deleteCustomerAction = async (e) => {
     setDeletingCustomer(true);
     e.preventDefault();
-    await deleteCustomer(customerId, organisationId);
+    const res = await deleteCustomer(customerId, organisationId);
+    if (!res.ok) {
+      toast.error("Something went wrong while deleting the user.");
+      setOpen(false);
+      return;
+    }
     toast("User successfully deleted.");
     router.push(`/organisations/${organisationId}/customers`);
   };
