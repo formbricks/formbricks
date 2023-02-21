@@ -48,15 +48,15 @@ export default function SetupInstructions({}) {
                   <pre>
                     <code className="language-html whitespace-pre-wrap">
                       {`<!-- HTML header script -->
-<script src="https://cdn.jsdelivr.net/npm/@formbricks/pmf@0.1.0/dist/index.umd.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@formbricks/pmf@0.1" defer></script>
 
 <script>
-window.formbricks = {
-  ...window.formbricks,
+window.formbricksPmf = {
+  ...window.formbricksPmf,
   config: {
     formbricksUrl: "${window.location.protocol}//${window.location.host}",
     formId: "${formId}",
-    containerId: "formbricks-container",
+    containerId: "formbricks-pmf",
   },
 };
 </script>`}
@@ -66,13 +66,15 @@ window.formbricks = {
               </div>
 
               <div className="mt-3">
-                <h4 className="my-2 block text-lg font-semibold text-slate-800">Setup Button onClick</h4>
+                <h4 className="my-2 block text-lg font-semibold text-slate-800">
+                  Add div with corresponding id
+                </h4>
                 <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-slate-200">
                   <pre>
                     <code className="language-html whitespace-pre-wrap">
                       {`
 <!-- Element to hold the survey -->
-<div id="formbricks-container"></div>`}
+<div id="formbricks-pmf"></div>`}
                     </code>
                   </pre>
                 </div>
