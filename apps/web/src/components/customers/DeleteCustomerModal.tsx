@@ -1,17 +1,14 @@
 "use client";
 
 import { deleteCustomer } from "@/lib/customers";
-import { Button } from "@formbricks/ui";
-import { Dialog, RadioGroup, Transition } from "@headlessui/react";
-import { XMarkIcon, TrashIcon } from "@heroicons/react/24/solid";
-import clsx from "clsx";
-import { useRouter } from "next/navigation";
-import { Fragment, useState } from "react";
-import { BsPlus } from "react-icons/bs";
-import Link from "next/link";
-import LoadingSpinner from "../LoadingSpinner";
 import { useOrganisation } from "@/lib/organisations";
-import UpgradeModal from "../UpgradeModal";
+import { Button } from "@formbricks/ui";
+import { Dialog, Transition } from "@headlessui/react";
+import { TrashIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
+import { Fragment } from "react";
+import { toast } from "react-toastify";
+import LoadingSpinner from "../LoadingSpinner";
 
 type DeleteCustomerModalProps = {
   open: boolean;
@@ -44,6 +41,7 @@ export default function DeleteCustomerModal({
   const deleteCustomerAction = async (e) => {
     e.preventDefault();
     await deleteCustomer(customerId, organisationId);
+    toast("User successfully deleted.");
     router.push(`/organisations/${organisationId}/customers`);
   };
 
