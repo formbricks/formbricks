@@ -34,6 +34,10 @@ const navigation = [
         title: "Interview Prompt",
         href: "/docs/best-practices/interview-prompt",
       },
+      {
+        title: "Custom Survey",
+        href: "/docs/best-practices/custom-survey",
+      },
     ],
   },
   {

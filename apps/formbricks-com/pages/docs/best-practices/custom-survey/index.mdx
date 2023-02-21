@@ -1,0 +1,36 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+
+export const meta = {
+  title: "Custom Survey",
+};
+
+<Callout title="Visual Form Builder in progress" type="note">
+  We're working on a visual form builder so that you can create custom forms within Formbricks. Sign up now to
+  stay in the loop!
+</Callout>
+
+## Purpose
+
+Build custom forms without the backend: Use Formbricks to gather and analyze form submissions. Pipe the data where you need it.
+
+## Formbricks Approach
+
+- Custom forms allow 100% customizability (duh!)
+- Use Formbricks backend as endpoint
+- Use Formbricks Data Pipelines to forward data where you need it.
+
+## Getting started
+
+This is an example on how to create a new submission with an HTML form:
+
+```jsx
+<form action="https://app.formbricks.com/api/capture/forms/{formId}/submissions" method="post">
+```
+
+## API docs
+
+Please refer to our [API documentation](/docs/api/setup) to learn how to create and update a submission or form schema.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
