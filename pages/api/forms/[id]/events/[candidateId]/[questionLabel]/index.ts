@@ -66,6 +66,7 @@ export default async function handle(
           gender: true,
           phone: true,
           email: true,
+          phone: true,
           whatsapp: true,
         },
         where:  {
