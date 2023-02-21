@@ -38,7 +38,7 @@ export default function SetupInstructions({}) {
                   </a>{" "}
                   for more info.
                 </li>
-                <li>You&apos;re done! Your submissions will show up in the Results tab.</li>
+                <li>You&apos;re done! Your submissions will show up in the Responses tab.</li>
               </ol>
               <div className="mt-6">
                 <h4 className="mb-2 block text-lg font-semibold text-slate-800">
@@ -166,7 +166,7 @@ window.formbricksPmf = {
               Choose an HTML element which you want to replace with the PMF survey. Set a unique ID for this
               element and configure the script accordingly.
             </li>
-            <li>You are ready to receive your first submission and view it in the Results tab.</li>
+            <li>You are ready to receive your first submission and view it in the Responses tab.</li>
             <li>Get notified or pipe submission data to to Slack or Email in the Data Pipelines tab.</li>
           </ol>
         </div>

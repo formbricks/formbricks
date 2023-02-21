@@ -17,7 +17,7 @@ import CustomResults from "./CustomResults";
 import SetupInstructions from "./SetupInstructions";
 
 const tabs = [
-  { name: "Results", icon: RectangleStackIcon },
+  { name: "Responses", icon: RectangleStackIcon },
   { name: "Overview", icon: ChartPieIcon },
   { name: "Data Pipelines", icon: ShareIcon },
   { name: "Setup Instructions", icon: InformationCircleIcon },
@@ -25,7 +25,7 @@ const tabs = [
 
 export default function CustomPage() {
   const router = useRouter();
-  const [currentTab, setCurrentTab] = useState("Results");
+  const [currentTab, setCurrentTab] = useState("Responses");
   const { form, isLoadingForm, isErrorForm } = useForm(
     router.query.formId?.toString(),
     router.query.organisationId?.toString()
@@ -50,7 +50,7 @@ export default function CustomPage() {
           <h1 className="pb-6 text-4xl font-bold tracking-tight text-gray-900">{form.label}</h1>
           <TabNavigation tabs={tabs} currentTab={currentTab} setCurrentTab={setCurrentTab} />
         </div>
-        {currentTab === "Results" ? (
+        {currentTab === "Responses" ? (
           <CustomResults />
         ) : currentTab === "Overview" ? (
           <OverviewResults />

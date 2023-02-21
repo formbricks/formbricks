@@ -11,14 +11,14 @@ import { useForm } from "@/lib/forms";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const tabs = [
-  { name: "Results", icon: RectangleStackIcon },
+  { name: "Responses", icon: RectangleStackIcon },
   { name: "Data Pipelines", icon: ShareIcon },
   { name: "Setup Instructions", icon: InformationCircleIcon },
 ];
 
 export default function FeedbackPage() {
   const router = useRouter();
-  const [currentTab, setCurrentTab] = useState("Results");
+  const [currentTab, setCurrentTab] = useState("Responses");
   const { form, isLoadingForm, isErrorForm } = useForm(
     router.query.formId?.toString(),
     router.query.organisationId?.toString()
@@ -43,7 +43,7 @@ export default function FeedbackPage() {
           <h1 className="pb-6 text-4xl font-bold tracking-tight text-slate-900">{form.label}</h1>
           <TabNavigation tabs={tabs} currentTab={currentTab} setCurrentTab={setCurrentTab} />
         </div>
-        {currentTab === "Results" ? (
+        {currentTab === "Responses" ? (
           <FeedbackResults />
         ) : currentTab === "Data Pipelines" ? (
           <PipelinesOverview />

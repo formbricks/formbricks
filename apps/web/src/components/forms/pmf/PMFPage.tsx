@@ -20,7 +20,7 @@ import SuperhumanApproach from "./SuperhumanApproach";
 
 const tabs = [
   { name: "Overview", icon: ChartPieIcon },
-  { name: "Results", icon: RectangleStackIcon },
+  { name: "Responses", icon: RectangleStackIcon },
   { name: "Superhuman Approach", icon: RocketLaunchIcon },
   { name: "Data Pipelines", icon: ShareIcon },
   { name: "Setup Instructions", icon: InformationCircleIcon },
@@ -53,7 +53,7 @@ export default function PMFPage() {
           <h1 className="pb-6 text-4xl font-bold tracking-tight text-slate-900">{form.label}</h1>
           <TabNavigation tabs={tabs} currentTab={currentTab} setCurrentTab={setCurrentTab} />
         </div>
-        {currentTab === "Results" ? (
+        {currentTab === "Responses" ? (
           <PMFResults />
         ) : currentTab === "Overview" ? (
           <OverviewResults />
