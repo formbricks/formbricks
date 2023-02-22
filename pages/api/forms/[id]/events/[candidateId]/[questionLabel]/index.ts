@@ -124,7 +124,8 @@ export default async function handle(
 
       if(isBlockAQuestion(b)){
         if(isLabelInHeaders === -1) {
-          headerConfig.push({label: b.data.label || b.id, key: b.data.label || b.id})
+          const label = b.data.label.trim() || b.id;
+          headerConfig.push({label ,  key: label})
         }
         return true;
       }
@@ -139,7 +140,7 @@ export default async function handle(
           Object.keys(r.submission).map((submissionId) => {
             const submissionFind = pageQuestions.find(({id}) => id === submissionId)
             if(submissionFind) {
-              const label = submissionFind.data.label || submissionFind.id
+              const label = submissionFind.data.label.trim() || submissionFind.id
               r[label] =  r.submission[submissionId];
             delete  r.submission[submissionId];
             }
