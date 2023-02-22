@@ -5,7 +5,7 @@ import { processApiEvent, validateEvents } from "../../../../lib/apiEvents";
 import { formatPages, getFormPages } from "../../../../lib/utils";
 import { prisma } from "../../../../lib/prisma";
 
-///api/submissionSession
+///api/submissionsession
 export default async function handle(
   req: NextApiRequest,
   res: NextApiResponse
@@ -33,16 +33,13 @@ export default async function handle(
     where: {
        id:formId,
     },
-    select: {
-      name: true
-    }
   })
 
 
 
   const pages= getFormPages(noCodeForm.blocks, formId)
   const pagesFormated = formatPages(pages)
-  const candidateSubmissions = {}
+  const submissions = {}
 
 let candidateEvents = await prisma.sessionEvent.findMany({
   where: {
@@ -90,7 +87,7 @@ let candidateEvents = await prisma.sessionEvent.findMany({
             responses[question] = response
           })
         }
-        candidateSubmissions[pageTitle] = responses
+        submissions[pageTitle] = responses
       }
       
     })
@@ -101,7 +98,8 @@ let candidateEvents = await prisma.sessionEvent.findMany({
     }
     res.json({ success: true });
       for (const event of events) {
-  const candidateEvent = {candidate: session.user , formTitle: form.name,  formSubmissions: candidateSubmissions, ...event}
+        event.data =  {...event.data, ...form, submissions}
+        const candidateEvent = {user: session.user ,  ...event}
       processApiEvent(candidateEvent, formId, session.user.id);
     }
   }
