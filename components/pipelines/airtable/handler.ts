@@ -18,7 +18,7 @@ const sendData = async (pipeline: Pipeline, event: ApiEvent) => {
 };
 
 export async function handleAirtable(pipeline: Pipeline, event: ApiEvent) {
-  if (pipeline.data.hasOwnProperty("endpointUrl")) {
+    if (pipeline.data.hasOwnProperty("endpointUrl")) {
     if (
       event.type === "pageSubmission" &&
       pipeline.events.includes("PAGE_SUBMISSION")
