@@ -5,7 +5,7 @@ import { processApiEvent, validateEvents } from "../../../../lib/apiEvents";
 import { formatPages, getFormPages } from "../../../../lib/utils";
 import { prisma } from "../../../../lib/prisma";
 
-///api/submissionSession
+///api/submissionsession
 export default async function handle(
   req: NextApiRequest,
   res: NextApiResponse
@@ -29,12 +29,19 @@ export default async function handle(
     }
   })
 
+  const form = await prisma.form.findUnique({
+    where: {
+       id:formId,
+    },
+  })
+
+
 
   const pages= getFormPages(noCodeForm.blocks, formId)
   const pagesFormated = formatPages(pages)
-  const candidateSubmissions = {}
+  const submissions = {}
 
-const candidateEvents = await prisma.sessionEvent.findMany({
+let candidateEvents = await prisma.sessionEvent.findMany({
   where: {
     AND: [
       { type: "pageSubmission" },
@@ -60,26 +67,30 @@ const candidateEvents = await prisma.sessionEvent.findMany({
 });
 
 
-candidateEvents.map((event) => {
-  if(pagesFormated[event.data["pageName"]]) {
-    const pageTitle = pagesFormated[event.data["pageName"]].title;
-    const responses = {}
-    if(event.data["submission"]) {
-      Object.keys(event.data["submission"]).map((key) => {
-        const submission = {}
-        const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
-        const response = event.data["submission"][key];
-         submission[question] = response
-        responses[question] = response
-      })
-    }
-    candidateSubmissions[pageTitle] = responses
-  }
-  
-})
+
 
   if (req.method === "POST") {
     const { events } = req.body;
+
+    candidateEvents = [...events, ...candidateEvents];
+    
+    candidateEvents.map((event) => {
+      if(pagesFormated[event.data["pageName"]]) {
+        const pageTitle = pagesFormated[event.data["pageName"]].title;
+        const responses = {}
+        if(event.data["submission"]) {
+          Object.keys(event.data["submission"]).map((key) => {
+            const submission = {}
+            const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
+            const response = event.data["submission"][key];
+             submission[question] = response
+            responses[question] = response
+          })
+        }
+        submissions[pageTitle] = responses
+      }
+      
+    })
     const error = validateEvents(events);
     if (error) {
       const { status, message } = error;
@@ -87,7 +98,8 @@ candidateEvents.map((event) => {
     }
     res.json({ success: true });
       for (const event of events) {
-      const candidateEvent = {candidate: session.user, ...event, formSubmissions: candidateSubmissions}
+        event.data =  {...event.data, ...form, submissions}
+        const candidateEvent = {user: session.user ,  ...event}
       processApiEvent(candidateEvent, formId, session.user.id);
     }
   }
