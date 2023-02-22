@@ -1,12 +1,13 @@
 import EmptyPageFiller from "@/components/EmptyPageFiller";
 import { persistSubmission, useSubmissions } from "@/lib/submissions";
-import { convertDateTimeString, parseUserAgent } from "@/lib/utils";
+import { convertDateTimeString, parseUserAgent, timeSince } from "@/lib/utils";
 import { BugIcon, Button, ComplimentIcon, IdeaIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
+import Tagging from "../Tagging";
 
 export default function FeedbackTimeline({ submissions }) {
   const router = useRouter();
@@ -90,7 +91,10 @@ export default function FeedbackTimeline({ submissions }) {
 
                           <div className="text-sm text-slate-400">
                             <time dateTime={convertDateTimeString(submission.createdAt)}>
-                              {convertDateTimeString(submission.createdAt)}
+                              {new Date().getTime() - new Date(submission.createdAt).getTime() >
+                              7 * 24 * 60 * 60 * 1000
+                                ? convertDateTimeString(submission.createdAt)
+                                : timeSince(submission.createdAt)}
                             </time>
                           </div>
                         </div>
@@ -99,6 +103,9 @@ export default function FeedbackTimeline({ submissions }) {
                             {submission.data.message}{" "}
                           </p>
                         </div>
+                      </div>
+                      <div className="border-t border-slate-100 p-6">
+                        <Tagging submission={submission} />
                       </div>
                       <div className=" bg-slate-50 p-4 sm:p-6">
                         <div className="flex w-full justify-between gap-4">

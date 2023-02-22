@@ -182,6 +182,8 @@ const benefitingUsers = [
   "People who want to protect their finances and personal information from fraud and theft",
 ];
 
+const tags = ["helpful", "useful", "interesting", "funny", "inspiring", "motivating", "thought-provoking"];
+
 export const getPmfSubmissions = () => {
   const submissions = [];
   for (let i = 0; i < 142; i++) {
@@ -205,6 +207,7 @@ export const getPmfSubmissions = () => {
         userAgent:
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
       },
+      tags: [getRandomItem(tags)],
     });
   }
   return submissions;

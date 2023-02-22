@@ -40,7 +40,7 @@ export default function FilterNavigation({
   const { form, isLoadingForm, isErrorForm } = useForm(formId?.toString(), organisationId?.toString());
 
   // get all the tags from the submissions
-  /*   const tags = useMemo(() => {
+  const tags = useMemo(() => {
     const tags = [];
     for (const submission of submissions) {
       for (const tag of submission.tags) {
@@ -50,7 +50,7 @@ export default function FilterNavigation({
       }
     }
     return tags;
-  }, [submissions]); */
+  }, [submissions]);
 
   // filter submissions based on selected filters
   useEffect(() => {
@@ -69,7 +69,31 @@ export default function FilterNavigation({
           }
 
           continue;
+        } else if (filter.type === "tags") {
+          const isAllActive = filter.options.find((option) => option.value === "all")?.active;
+          // no filter is all is selected, if not keep on filtering
+          if (!isAllActive) {
+            // filter for all other types
+            let listOfValidFilteredSubmissions = [];
+
+            for (const option of filter.options) {
+              if (option.active || option.pinned) {
+                listOfValidFilteredSubmissions.push(
+                  newFilteredSubmissions.filter((submission) => {
+                    if (submission.tags) {
+                      return submission.tags.includes(option.value);
+                    }
+                  })
+                );
+              }
+            }
+            // add pinned submissions to the top
+            const flattenedListOfValidFilteredSubmissions = listOfValidFilteredSubmissions.flat();
+            newFilteredSubmissions = filterUniqueById(flattenedListOfValidFilteredSubmissions);
+          }
+          continue;
         }
+
         const isAllActive = filter.options.find((option) => option.value === "all")?.active;
         // no filter is all is selected, if not keep on filtering
         if (!isAllActive) {
@@ -192,12 +216,14 @@ export default function FilterNavigation({
         ],
       });
       // add tag selection to filters
-      /* filters.push({
+      filters.push({
         name: "tags",
         label: "Tags",
         type: "tags",
-        options: tags.map((tag) => ({ value: tag, label: tag, active: false, pinned: false })),
-      });*/
+        options: [{ value: "all", label: "All", active: true, pinned: false }].concat([
+          ...tags.map((tag) => ({ value: tag, label: tag, active: false, pinned: false })),
+        ]),
+      });
       setFilters(filters);
     }
   }, [form, limitFields]);

@@ -2,13 +2,14 @@ import EmptyPageFiller from "@/components/EmptyPageFiller";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useForm } from "@/lib/forms";
 import { MergeWithSchema, persistSubmission, useSubmissions } from "@/lib/submissions";
-import { convertDateTimeString, parseUserAgent } from "@/lib/utils";
+import { convertDateTimeString, parseUserAgent, timeSince } from "@/lib/utils";
 import { Button, NotDisappointedIcon, SomewhatDisappointedIcon, VeryDisappointedIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
+import Tagging from "../Tagging";
 
 export default function PMFTimeline({ submissions }) {
   const router = useRouter();
@@ -105,7 +106,10 @@ export default function PMFTimeline({ submissions }) {
                           ) : null}
                           <div className="text-sm text-slate-400">
                             <time dateTime={convertDateTimeString(submission.createdAt)}>
-                              {convertDateTimeString(submission.createdAt)}
+                              {new Date().getTime() - new Date(submission.createdAt).getTime() >
+                              7 * 24 * 60 * 60 * 1000
+                                ? convertDateTimeString(submission.createdAt)
+                                : timeSince(submission.createdAt)}
                             </time>
                           </div>
                         </div>
@@ -127,6 +131,9 @@ export default function PMFTimeline({ submissions }) {
                             )}
                           </ul>
                         </div>
+                      </div>
+                      <div className="border-t border-slate-100 p-6">
+                        <Tagging submission={submission} />
                       </div>
                       <div className=" bg-slate-50 p-4 sm:p-6">
                         <div className="flex w-full justify-between gap-4">
