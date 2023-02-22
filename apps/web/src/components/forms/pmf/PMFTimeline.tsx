@@ -103,7 +103,6 @@ export default function PMFTimeline({ submissions }) {
                               Somewhat disappointed
                             </span>
                           ) : null}
-
                           <div className="text-sm text-slate-400">
                             <time dateTime={convertDateTimeString(submission.createdAt)}>
                               {convertDateTimeString(submission.createdAt)}
@@ -151,10 +150,12 @@ export default function PMFTimeline({ submissions }) {
                               {parseUserAgent(submission.meta.userAgent)}
                             </p>
                           </div>
-                          <div>
-                            <p className="text-sm font-thin text-slate-500">Page</p>
-                            <p className="text-sm text-slate-500">{submission.data.pageUrl}</p>
-                          </div>
+                          {submission.data.pageUrl && (
+                            <div>
+                              <p className="text-sm font-thin text-slate-500">Page</p>
+                              <p className="text-sm text-slate-500">{submission.data.pageUrl}</p>
+                            </div>
+                          )}
                         </div>
 
                         <div className="mt-8 flex w-full justify-end">

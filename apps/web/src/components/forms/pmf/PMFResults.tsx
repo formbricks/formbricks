@@ -29,7 +29,7 @@ export default function PMFResults() {
   }
 
   // get all the tags from the submissions
-  const tags = useMemo(() => {
+  /*   const tags = useMemo(() => {
     const tags = [];
     for (const submission of submissions) {
       for (const tag of submission.tags) {
@@ -39,7 +39,7 @@ export default function PMFResults() {
       }
     }
     return tags;
-  }, [submissions]);
+  }, [submissions]); */
 
   if (isErrorSubmissions) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;

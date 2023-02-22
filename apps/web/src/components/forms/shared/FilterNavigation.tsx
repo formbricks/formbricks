@@ -40,7 +40,7 @@ export default function FilterNavigation({
   const { form, isLoadingForm, isErrorForm } = useForm(formId?.toString(), organisationId?.toString());
 
   // get all the tags from the submissions
-  const tags = useMemo(() => {
+  /*   const tags = useMemo(() => {
     const tags = [];
     for (const submission of submissions) {
       for (const tag of submission.tags) {
@@ -50,7 +50,7 @@ export default function FilterNavigation({
       }
     }
     return tags;
-  }, [submissions]);
+  }, [submissions]); */
 
   // filter submissions based on selected filters
   useEffect(() => {
@@ -192,12 +192,12 @@ export default function FilterNavigation({
         ],
       });
       // add tag selection to filters
-      filters.push({
+      /* filters.push({
         name: "tags",
         label: "Tags",
         type: "tags",
         options: tags.map((tag) => ({ value: tag, label: tag, active: false, pinned: false })),
-      });
+      });*/
       setFilters(filters);
     }
   }, [form, limitFields]);
