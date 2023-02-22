@@ -136,3 +136,24 @@ export const updateUserRole = async ({ id, role }) => {
     console.error(error);
   }
 };
+
+export const updateUserProfile = async ({ id, pictureProfile="", password="", phone="", whatsapp=""}) => {
+  const hashedPassword = await hashPassword(password);
+  const obj = {};
+
+  if(id)obj["id"] = id;
+  if(pictureProfile!="")obj["pictureProfile"] = pictureProfile;
+  if(phone!="")obj["phone"] = phone;
+  if(whatsapp!="")obj["whatsapp"] = whatsapp;
+  if (password!="") obj["password"] = hashedPassword
+
+  try {
+    await fetch(`/api/users/update`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(obj),
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
