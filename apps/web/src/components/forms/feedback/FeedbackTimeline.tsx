@@ -1,6 +1,6 @@
 import EmptyPageFiller from "@/components/EmptyPageFiller";
 import { persistSubmission, useSubmissions } from "@/lib/submissions";
-import { convertDateTimeString, parseUserAgent } from "@/lib/utils";
+import { convertDateTimeString, parseUserAgent, timeSince } from "@/lib/utils";
 import { BugIcon, Button, ComplimentIcon, IdeaIcon } from "@formbricks/ui";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -90,7 +90,13 @@ export default function FeedbackTimeline({ submissions }) {
 
                           <div className="text-sm text-slate-400">
                             <time dateTime={convertDateTimeString(submission.createdAt)}>
-                              {convertDateTimeString(submission.createdAt)}
+                              {
+                                //check if date is older than 14 days, if so show convertDateTimeString if not use timeSince
+                                new Date().getTime() - new Date(submission.createdAt).getTime() >
+                                7 * 24 * 60 * 60 * 1000
+                                  ? convertDateTimeString(submission.createdAt)
+                                  : timeSince(submission.createdAt)
+                              }
                             </time>
                           </div>
                         </div>
