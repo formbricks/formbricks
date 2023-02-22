@@ -5,7 +5,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useSubmissions } from "@/lib/submissions";
 import { InboxIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import FilterNavigation from "../shared/FilterNavigation";
 import { SubmissionCounter } from "../shared/SubmissionCounter";
 import PMFTimeline from "./PMFTimeline";
@@ -27,6 +27,19 @@ export default function PMFResults() {
       </div>
     );
   }
+
+  // get all the tags from the submissions
+  const tags = useMemo(() => {
+    const tags = [];
+    for (const submission of submissions) {
+      for (const tag of submission.tags) {
+        if (!tags.includes(tag)) {
+          tags.push(tag);
+        }
+      }
+    }
+    return tags;
+  }, [submissions]);
 
   if (isErrorSubmissions) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;

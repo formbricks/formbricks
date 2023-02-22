@@ -5,7 +5,7 @@ import { camelToTitle, filterUniqueById } from "@/lib/utils";
 import { RectangleGroupIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BsPin, BsPinFill } from "react-icons/bs";
 
 interface Filter {
@@ -38,6 +38,19 @@ export default function FilterNavigation({
   const [filters, setFilters] = useState<Filter[]>([]);
 
   const { form, isLoadingForm, isErrorForm } = useForm(formId?.toString(), organisationId?.toString());
+
+  // get all the tags from the submissions
+  const tags = useMemo(() => {
+    const tags = [];
+    for (const submission of submissions) {
+      for (const tag of submission.tags) {
+        if (!tags.includes(tag)) {
+          tags.push(tag);
+        }
+      }
+    }
+    return tags;
+  }, [submissions]);
 
   // filter submissions based on selected filters
   useEffect(() => {
@@ -177,6 +190,13 @@ export default function FilterNavigation({
           { value: "inbox", label: "Inbox", active: true },
           { value: "archived", label: "Archived", active: false },
         ],
+      });
+      // add tag selection to filters
+      filters.push({
+        name: "tags",
+        label: "Tags",
+        type: "tags",
+        options: tags.map((tag) => ({ value: tag, label: tag, active: false, pinned: false })),
       });
       setFilters(filters);
     }

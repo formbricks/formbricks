@@ -80,6 +80,7 @@ model Submission {
   customerOrganisationId String?
   data                   Json      @default("{}")
   meta                   Json      @default("{}")
+  tags                   String[]
 }
 
 enum Plan {
