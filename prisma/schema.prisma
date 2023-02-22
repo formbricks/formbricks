@@ -155,9 +155,9 @@ model User {
   firstname     String?
   lastname      String?
   gender        String
-  dob           DateTime  @db.Date @map(name: "date_of_birth") 
-  address       Address   @relation(fields: [addressId], references: [id], onDelete: Cascade)
-  addressId     String
+  dob           DateTime?  @db.Date @map(name: "date_of_birth") 
+  address       Address?   @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  addressId     String?
   phone         String    @unique
   whatsapp      String?
   email         String    @unique
