@@ -31,6 +31,7 @@ export default async function handle(
     const pageSubmissions = await prisma.sessionEvent.findMany({
       select: {
         data: true,
+        createdAt: true,
       },
       where: {
         AND: [
@@ -55,7 +56,7 @@ export default async function handle(
         },
       ],
     });
-    const candidates = await Promise.all(pageSubmissions.map(async (s, index) => {
+    let candidates = await Promise.all(pageSubmissions.map(async (s, index) => {
 
 
     const candidateResponse  = await prisma.user.findUnique({
@@ -63,6 +64,7 @@ export default async function handle(
           firstname: true,
           lastname: true,
           gender: true,
+          phone: true,
           email: true,
           whatsapp: true,
         },
@@ -70,10 +72,17 @@ export default async function handle(
           id: s.data["candidateId"]
         }
       })
-      return {...candidateResponse, submission: pageSubmissions[index].data?.submission};
+      return {...candidateResponse, submission: pageSubmissions[index].data?.submission, createdAt: pageSubmissions[index].createdAt};
 
     }));
-    
+
+    candidates = candidates.sort((candidateA, candidateB) => {
+      if(candidateA.email > candidateB.email) {
+        return 1;
+      } 
+      return -1;
+    });
+
     const pages = await prisma.noCodeForm.findUnique({
       where: {
         formId,
@@ -85,10 +94,12 @@ export default async function handle(
     })
 
     const headerConfig = [
+      { label: "createdAt", key: "createdAt" },
+      { label: "Email", key: "email" },
       { label: "Prénom", key: "firstname" },
       { label: "Nom", key: "lastname" },
       { label: "Genre", key: "gender" },
-      { label: "Email", key: "email" },
+      { label: "Phone", key: "phone" },
       { label: "Whatsapp", key: "whatsapp" },
     ];
   const formPages = [];
@@ -124,7 +135,8 @@ export default async function handle(
 
       if(isBlockAQuestion(b)){
         if(isLabelInHeaders === -1) {
-          headerConfig.push({label: b.data.label || b.id, key: b.data.label || b.id})
+          const label = b.data.label.trim() || b.id;
+          headerConfig.push({label ,  key: label})
         }
         return true;
       }
@@ -139,7 +151,7 @@ export default async function handle(
           Object.keys(r.submission).map((submissionId) => {
             const submissionFind = pageQuestions.find(({id}) => id === submissionId)
             if(submissionFind) {
-              const label = submissionFind.data.label || submissionFind.id
+              const label = submissionFind.data.label.trim() || submissionFind.id
               r[label] =  r.submission[submissionId];
             delete  r.submission[submissionId];
             }
