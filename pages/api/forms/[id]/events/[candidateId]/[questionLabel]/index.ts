@@ -121,10 +121,10 @@ export default async function handle(
 
     const pageQuestions = page[0].blocks.filter((b) => {
       const isLabelInHeaders = headerConfig.findIndex(({label}) => label === b.data.label);
-      
+
       if(isBlockAQuestion(b)){
         if(isLabelInHeaders === -1) {
-          headerConfig.push({label: b.data.label, key: b.data.label})
+          headerConfig.push({label: b.data.label || b.id, key: b.data.label || b.id})
         }
         return true;
       }
@@ -139,7 +139,8 @@ export default async function handle(
           Object.keys(r.submission).map((submissionId) => {
             const submissionFind = pageQuestions.find(({id}) => id === submissionId)
             if(submissionFind) {
-              r[submissionFind.data.label] =  r.submission[submissionId];
+              const label = submissionFind.data.label || submissionFind.id
+              r[label] =  r.submission[submissionId];
             delete  r.submission[submissionId];
             }
             
