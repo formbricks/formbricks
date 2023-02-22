@@ -4,8 +4,6 @@ import { fr } from "date-fns/locale";
 import crypto from "crypto";
 import { UserRole } from "@prisma/client";
 import AWS from "aws-sdk";
-import Switch from "@mui/material/Switch";
-import { SwitchButton } from "../components/usersDataGridSchemaColumn";
 
 export const fetcher = async (url) => {
   const res = await fetch(url);
@@ -272,7 +270,6 @@ export const getFormState = (pages, candidateSubmissions, user) => {
   return formProgress;
 };
 
-
 export const getFormPages = ( blocks, formId ) => {
   const pages = [];
   let currentPage = {
@@ -299,8 +296,8 @@ export const getFormPages = ( blocks, formId ) => {
       }
     }
   }
-
   pages.push(currentPage);
+
   return pages;
 }
 
