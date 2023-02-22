@@ -29,12 +29,22 @@ export default async function handle(
     }
   })
 
+  const form = await prisma.form.findUnique({
+    where: {
+       id:formId,
+    },
+    select: {
+      name: true
+    }
+  })
+
+
 
   const pages= getFormPages(noCodeForm.blocks, formId)
   const pagesFormated = formatPages(pages)
   const candidateSubmissions = {}
 
-const candidateEvents = await prisma.sessionEvent.findMany({
+let candidateEvents = await prisma.sessionEvent.findMany({
   where: {
     AND: [
       { type: "pageSubmission" },
@@ -60,26 +70,30 @@ const candidateEvents = await prisma.sessionEvent.findMany({
 });
 
 
-candidateEvents.map((event) => {
-  if(pagesFormated[event.data["pageName"]]) {
-    const pageTitle = pagesFormated[event.data["pageName"]].title;
-    const responses = {}
-    if(event.data["submission"]) {
-      Object.keys(event.data["submission"]).map((key) => {
-        const submission = {}
-        const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
-        const response = event.data["submission"][key];
-         submission[question] = response
-        responses[question] = response
-      })
-    }
-    candidateSubmissions[pageTitle] = responses
-  }
-  
-})
+
 
   if (req.method === "POST") {
     const { events } = req.body;
+
+    candidateEvents = [...events, ...candidateEvents];
+    
+    candidateEvents.map((event) => {
+      if(pagesFormated[event.data["pageName"]]) {
+        const pageTitle = pagesFormated[event.data["pageName"]].title;
+        const responses = {}
+        if(event.data["submission"]) {
+          Object.keys(event.data["submission"]).map((key) => {
+            const submission = {}
+            const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
+            const response = event.data["submission"][key];
+             submission[question] = response
+            responses[question] = response
+          })
+        }
+        candidateSubmissions[pageTitle] = responses
+      }
+      
+    })
     const error = validateEvents(events);
     if (error) {
       const { status, message } = error;
@@ -87,7 +101,7 @@ candidateEvents.map((event) => {
     }
     res.json({ success: true });
       for (const event of events) {
-      const candidateEvent = {candidate: session.user, ...event, formSubmissions: candidateSubmissions}
+  const candidateEvent = {candidate: session.user , formTitle: form.name,  formSubmissions: candidateSubmissions, ...event}
       processApiEvent(candidateEvent, formId, session.user.id);
     }
   }
