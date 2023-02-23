@@ -188,7 +188,7 @@ export default function SignUpPage() {
                         id="line1"
                         name="line1"
                         type="text"
-                        placeholder="Adresse principale: 12, Ave du Livre, Indus"
+                        placeholder="Adresse principale: Numéro, Avenue, Quartier"
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
@@ -199,7 +199,7 @@ export default function SignUpPage() {
                         id="line2"
                         name="line2"
                         type="text"
-                        placeholder="Adresse secondaire: 12, Ave du Livre, Indus"
+                        placeholder="Adresse 2: Numéro, Avenue, Quartier"
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>

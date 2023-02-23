@@ -11,7 +11,6 @@ import { DRCProvinces } from "../../lib/enums";
 import Modal from "../Modal";
 import {
   updateUserProfile,
-  getUserAddress,
   updateAddress,
 } from "../../lib/users";
 import { toast } from "react-toastify";
@@ -25,11 +24,6 @@ export default function MenuProfile({}) {
   const onClickSettings = () => {
     setOpen(true);
   };
-
-  let userAddress;
-  (async () => {
-    userAddress = await getUserAddress({ id: user.addressId });
-  })();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -228,7 +222,7 @@ export default function MenuProfile({}) {
                   id="line1"
                   name="line1"
                   type="text"
-                  placeholder="Adresse 1: Num, Avenue, Quartier"
+                  placeholder={user.address.line1? user.address.line1 : "Addresse 1"}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
               </div>
@@ -238,7 +232,7 @@ export default function MenuProfile({}) {
                   id="line2"
                   name="line2"
                   type="text"
-                  placeholder="Adresse 2: Num, Avenue, Quartier"
+                  placeholder={user.address.line2? user.address.line2 : "Addresse 2"}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
               </div>
@@ -248,7 +242,7 @@ export default function MenuProfile({}) {
                   id="commune"
                   name="commune"
                   type="text"
-                  placeholder="Commune ou Territoire"
+                  placeholder={user.address.commune? user.address.commune : "Commune"}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
               </div>
@@ -258,7 +252,8 @@ export default function MenuProfile({}) {
                   id="ville"
                   name="ville"
                   type="text"
-                  placeholder="Ville"
+                  placeholder={user.address.ville? user.address.ville : "Ville"}
+
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
               </div>

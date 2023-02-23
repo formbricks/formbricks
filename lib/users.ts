@@ -158,15 +158,6 @@ export const updateUserProfile = async ({ id, pictureProfile="", password="", ph
   }
 };
 
-export const getUserAddress = async ({ id }) => {
-    try {
-    const res = await fetch(`/api/address/${id}`, {method: "GET",});
-    return res.json();
-  } catch (error) {
-    console.error(error);
-  }
-};
-
 export const updateAddress = async ({ id, line1="", line2="", commune="", ville="", province=""}) => {
   
   const obj = {};

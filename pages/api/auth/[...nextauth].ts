@@ -133,18 +133,22 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
           const user = await prisma.user.findUnique({
             where: { email: session.user.email },
           });
+          const address = await prisma.address.findUnique({
+            where: { id: user.addressId },
+          });
           session.user = {
-            addressId: user.addressId,
-            dob : user.dob,
-            email: user.email,
-            firstname: user.firstname,
-            gender: user.gender,
-            id: user.id,
-            lastname: user.lastname,
-            phone: user.phone,
-            photo:user.pictureProfile,
-            role: user.role,
-            whatsapp: user.whatsapp,
+            addressId : user.addressId,
+            dob       : user.dob,
+            email     : user.email,
+            firstname : user.firstname,
+            gender    : user.gender,
+            address   : address,
+            id        : user.id,
+            lastname  : user.lastname,
+            phone     : user.phone,
+            photo     : user.pictureProfile,
+            role      : user.role,
+            whatsapp  : user.whatsapp,
           };
         }
         return session;
