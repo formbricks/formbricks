@@ -29,8 +29,8 @@ export default function SimpleFeedbackModal({ show, setShow }) {
                     <p className="text-sm font-medium text-slate-900">We would like to hear your feedback</p>
                     <div className="mt-3 flex space-x-7">
                       <Form
-                        hqUrl={process.env.NEXT_PUBLIC_FORMBRICKS_URL}
-                        formId={process.env.NEXT_PUBLIC_FORMBRICKS_FEEDBACK_CUSTOM_FORM_ID}
+                        hqUrl="https://localhost:3000"
+                        formId="clegy3lf40004u0koeh6ukj10"
                         customerId="johannes@formbricks.com"
                         onSubmit={({ submission, schema, event }) => {
                           sendToHq({ submission, schema, event });

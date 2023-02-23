@@ -1,8 +1,12 @@
 import { persistSubmission, useSubmissions } from "@/lib/submissions";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
+import { Combobox } from "@headlessui/react";
+import clsx from "clsx";
+import { onlyUnique } from "@/lib/utils";
 
 // add interface props for tags
 interface TaggingProps {
@@ -13,7 +17,6 @@ export default function Tagging({ submission }: TaggingProps) {
   const router = useRouter();
   const [isEditingTag, setIsEditingTag] = useState("");
 
-  const [tagInput, setTagInput] = useState("");
   const { submissions, mutateSubmissions } = useSubmissions(
     router.query.organisationId?.toString(),
     router.query.formId?.toString()
@@ -31,13 +34,16 @@ export default function Tagging({ submission }: TaggingProps) {
   const addTag = async (submission, tag) => {
     if (!tag) return;
     if (submission.tags.includes(tag)) {
-      toast.error("This submission is already tagged with this tag.");
+      setIsEditingTag("");
+      setSelectedTag("");
       return;
     }
     const updatedSubmission = JSON.parse(JSON.stringify(submission));
     updatedSubmission.tags = [...updatedSubmission.tags, tag];
     updateSubmissionsLocally(updatedSubmission);
     await persistSubmission(updatedSubmission, router.query.organisationId?.toString());
+    setIsEditingTag("");
+    setSelectedTag("");
   };
 
   //remove tag from submission
@@ -47,6 +53,34 @@ export default function Tagging({ submission }: TaggingProps) {
     updateSubmissionsLocally(updatedSubmission);
     await persistSubmission(updatedSubmission, router.query.organisationId?.toString());
   };
+
+  // preview tags in input field
+
+  // get all the tags from the submissions
+  const existingTags = useMemo(() => {
+    const tags = [];
+    for (const submission of submissions) {
+      for (const tag of submission.tags) {
+        if (!tags.includes(tag)) {
+          tags.push(tag);
+        }
+      }
+    }
+    return tags;
+  }, [submissions]);
+
+  const assignedTags = [...submission.tags];
+
+  const notYetAssignedTags = existingTags.filter((tag) => !assignedTags.includes(tag));
+
+  const [selectedTag, setSelectedTag] = useState("");
+
+  const filteredTags =
+    selectedTag === ""
+      ? notYetAssignedTags
+      : notYetAssignedTags.filter((notYetAssignedTag) => {
+          return notYetAssignedTag.toLowerCase().includes(selectedTag.toLowerCase());
+        });
 
   return (
     <div className="border-t border-slate-100 px-6 py-4">
@@ -70,24 +104,55 @@ export default function Tagging({ submission }: TaggingProps) {
 
         <li>
           {isEditingTag && submission.id === isEditingTag ? (
-            <input
-              autoFocus={true}
-              type="text"
-              className="h-8 w-32 rounded-full border border-slate-300 bg-slate-50 text-sm text-slate-400 outline-none hover:text-slate-600 focus:border-2 focus:border-slate-300"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === "Tab") {
-                  e.preventDefault();
-                  addTag(submission, tagInput);
-                  setIsEditingTag("");
-                  setTagInput("");
-                }
-              }}
-              onBlur={() => {
-                setIsEditingTag("");
-              }}
-            />
+            <Combobox
+              as="div"
+              value={filteredTags.length > 0 && selectedTag ? filteredTags[0] : selectedTag}
+              onChange={(value) => {
+                addTag(submission, value);
+              }}>
+              <div className="relative">
+                <div className="relative">
+                  <Combobox.Input
+                    className="h-8 w-40 rounded-full border border-slate-300 bg-slate-50 text-sm text-slate-400 outline-none hover:text-slate-600 focus:border-2 focus:border-slate-300 focus:text-slate-600"
+                    autoFocus={true}
+                    value={selectedTag}
+                    onChange={(event) => {
+                      setSelectedTag(event.target.value);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingTag("");
+                      setSelectedTag("");
+                    }}
+                    className="absolute top-1/2 right-1.5 inline-flex h-4 w-4 -translate-y-1/2 items-center  justify-center rounded-full text-slate-400 hover:bg-slate-200  focus:bg-slate-500 focus:text-white focus:outline-none">
+                    <span className="sr-only">Remove large option</span>
+                    <svg className="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                      <path strokeLinecap="round" strokeWidth="1.5" d="M1 1l6 6m0-6L1 7" />
+                    </svg>
+                  </button>
+                </div>
+
+                <Combobox.Options className="absolute z-10 mt-1 max-h-28 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                  {[...filteredTags, selectedTag].filter(onlyUnique).map((tag) => (
+                    <Combobox.Option
+                      key={tag}
+                      value={tag}
+                      className={({ active }) =>
+                        clsx(
+                          "relative cursor-default select-none py-2 pl-3 pr-9",
+                          active ? "bg-slate-500 text-white" : "text-gray-900"
+                        )
+                      }>
+                      {({ selected }) => (
+                        <span className={clsx("block truncate", selected && "font-semibold")}>{tag}</span>
+                      )}
+                    </Combobox.Option>
+                  ))}
+                </Combobox.Options>
+              </div>
+            </Combobox>
           ) : (
             <button
               type="button"
