@@ -9,7 +9,11 @@ import { Fragment, useState } from "react";
 import { classNames, upload } from "../../lib/utils";
 import { DRCProvinces } from "../../lib/enums";
 import Modal from "../Modal";
-import { updateUserProfile } from "../../lib/users";
+import {
+  updateUserProfile,
+  getUserAddress,
+  updateAddress,
+} from "../../lib/users";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
 
@@ -22,6 +26,11 @@ export default function MenuProfile({}) {
     setOpen(true);
   };
 
+  let userAddress;
+  (async () => {
+    userAddress = await getUserAddress({ id: user.addressId });
+  })();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const file = e.target.elements.profilPic.files[0];
@@ -29,6 +38,14 @@ export default function MenuProfile({}) {
     file ? (pictureProfile = (await upload(file)).Location) : "";
 
     try {
+      await updateAddress({
+        id: user.addressId,
+        line1: e.target.elements.line1.value,
+        line2: e.target.elements.line2.value,
+        ville: e.target.elements.ville.value,
+        province: e.target.elements.province.value,
+        commune: e.target.elements.commune.value,
+      });
       await updateUserProfile({
         id: user.id,
         pictureProfile: pictureProfile,
@@ -135,13 +152,13 @@ export default function MenuProfile({}) {
           <figure>
             <img className="w-24 h-24 rounded-full mx-auto" src={user.photo} />
             <figcaption className="font-medium">
-              <div className="text-2xl font-bold mb-2">{user.firstname} {user.lastname}</div>
+              <div className="text-2xl font-bold mb-2">{user.firstname}{" "}{user.lastname}</div>
             </figcaption>
           </figure>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="">
-          <hr />
+            <hr />
             <h1 className="mt-2 mb-2 font-bold text-center text-ui-gray-dark max-sm:ml-6 max-md:ml-6 max-sm:mt-8 max-md:mb-8 ">
               Modifiez vos informations
             </h1>
@@ -211,7 +228,7 @@ export default function MenuProfile({}) {
                   id="line1"
                   name="line1"
                   type="text"
-                  placeholder="Adresse principale: 12, Ave du Livre, Indus"
+                  placeholder="Adresse 1: Num, Avenue, Quartier"
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
               </div>
@@ -221,7 +238,7 @@ export default function MenuProfile({}) {
                   id="line2"
                   name="line2"
                   type="text"
-                  placeholder="Adresse secondaire: 12, Ave du Livre, Indus"
+                  placeholder="Adresse 2: Num, Avenue, Quartier"
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
               </div>

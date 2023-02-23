@@ -23,21 +23,20 @@ export default async function handle(
     const updtDate = req.body
     delete updtDate.id
 
-    let updateUser;
-
-    const user = await prisma.user.findUnique({
+    let updateAddress;
+    const address = await prisma.address.findUnique({
       where: {
         id,
       },
     });
-    if (user) {
-      updateUser = await prisma.user.update({
+    if (address) {
+      updateAddress = await prisma.address.update({
         where: {
           id,
         },
         data: updtDate,
       });
     }
-    return res.json(updateUser);
+    return res.json(updateAddress);
   }
 }

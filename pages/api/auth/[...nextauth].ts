@@ -134,6 +134,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             where: { email: session.user.email },
           });
           session.user = {
+            addressId: user.addressId,
             dob : user.dob,
             email: user.email,
             firstname: user.firstname,
