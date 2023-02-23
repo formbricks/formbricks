@@ -1,6 +1,6 @@
 import crypto from "crypto";
-import intlFormat from "date-fns/intlFormat";
 import { formatDistance } from "date-fns";
+import intlFormat from "date-fns/intlFormat";
 import platform from "platform";
 import { demoEndpoints } from "./demo";
 

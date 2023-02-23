@@ -106,10 +106,13 @@ export default function PMFTimeline({ submissions }) {
                           ) : null}
                           <div className="text-sm text-slate-400">
                             <time dateTime={convertDateTimeString(submission.createdAt)}>
-                              {new Date().getTime() - new Date(submission.createdAt).getTime() >
-                              7 * 24 * 60 * 60 * 1000
-                                ? convertDateTimeString(submission.createdAt)
-                                : timeSince(submission.createdAt)}
+                              {
+                                //check if date is older than 14 days, if so show convertDateTimeString if not use timeSince
+                                new Date().getTime() - new Date(submission.createdAt).getTime() >
+                                14 * 24 * 60 * 60 * 1000
+                                  ? convertDateTimeString(submission.createdAt)
+                                  : timeSince(submission.createdAt)
+                              }
                             </time>
                           </div>
                         </div>
