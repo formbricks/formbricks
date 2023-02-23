@@ -14,6 +14,7 @@ interface TaggingProps {
 export default function Tagging({ submission }: TaggingProps) {
   const router = useRouter();
   const [isEditingTag, setIsEditingTag] = useState("");
+  const [currentTag, setCurrentTag] = useState("");
 
   const { submissions, mutateSubmissions } = useSubmissions(
     router.query.organisationId?.toString(),
@@ -33,7 +34,7 @@ export default function Tagging({ submission }: TaggingProps) {
     if (!tag) return;
     if (submission.tags.includes(tag)) {
       setIsEditingTag("");
-      setSelectedTag("");
+      setCurrentTag("");
       return;
     }
     const updatedSubmission = JSON.parse(JSON.stringify(submission));
@@ -41,7 +42,7 @@ export default function Tagging({ submission }: TaggingProps) {
     updateSubmissionsLocally(updatedSubmission);
     await persistSubmission(updatedSubmission, router.query.organisationId?.toString());
     setIsEditingTag("");
-    setSelectedTag("");
+    setCurrentTag("");
   };
 
   //remove tag from submission
@@ -51,8 +52,6 @@ export default function Tagging({ submission }: TaggingProps) {
     updateSubmissionsLocally(updatedSubmission);
     await persistSubmission(updatedSubmission, router.query.organisationId?.toString());
   };
-
-  // preview tags in input field
 
   // get all the tags from the submissions
   const existingTags = useMemo(() => {
@@ -67,18 +66,20 @@ export default function Tagging({ submission }: TaggingProps) {
     return tags;
   }, [submissions]);
 
-  const assignedTags = [...submission.tags];
+  const notYetAssignedTags = useMemo(
+    () => existingTags.filter((tag) => !submission.tags.includes(tag)),
+    [existingTags, submission.tags]
+  );
 
-  const notYetAssignedTags = existingTags.filter((tag) => !assignedTags.includes(tag));
-
-  const [selectedTag, setSelectedTag] = useState("");
-
-  const filteredTags =
-    selectedTag === ""
-      ? notYetAssignedTags
-      : notYetAssignedTags.filter((notYetAssignedTag) => {
-          return notYetAssignedTag.toLowerCase().includes(selectedTag.toLowerCase());
-        });
+  const filteredTags = useMemo(
+    () =>
+      currentTag === ""
+        ? notYetAssignedTags
+        : notYetAssignedTags.filter((notYetAssignedTag) => {
+            return notYetAssignedTag.toLowerCase().includes(currentTag.toLowerCase());
+          }),
+    [currentTag, notYetAssignedTags]
+  );
 
   return (
     <div className="border-t border-slate-100 px-6 py-4">
@@ -104,7 +105,7 @@ export default function Tagging({ submission }: TaggingProps) {
           {isEditingTag && submission.id === isEditingTag ? (
             <Combobox
               as="div"
-              value={filteredTags.length > 0 && selectedTag ? filteredTags[0] : selectedTag}
+              value={filteredTags.length > 0 && currentTag ? filteredTags[0] : currentTag}
               onChange={(value) => {
                 addTag(submission, value);
               }}>
@@ -113,16 +114,16 @@ export default function Tagging({ submission }: TaggingProps) {
                   <Combobox.Input
                     className="h-8 w-40 rounded-full border border-slate-300 bg-slate-50 text-sm text-slate-400 outline-none hover:text-slate-600 focus:border-2 focus:border-slate-300 focus:text-slate-600"
                     autoFocus={true}
-                    value={selectedTag}
+                    value={currentTag}
                     onChange={(event) => {
-                      setSelectedTag(event.target.value);
+                      setCurrentTag(event.target.value);
                     }}
                   />
                   <button
                     type="button"
                     onClick={() => {
                       setIsEditingTag("");
-                      setSelectedTag("");
+                      setCurrentTag("");
                     }}
                     className="absolute top-1/2 right-1.5 inline-flex h-4 w-4 -translate-y-1/2 items-center  justify-center rounded-full text-slate-400 hover:bg-slate-200  focus:bg-slate-500 focus:text-white focus:outline-none">
                     <span className="sr-only">Remove large option</span>
@@ -133,7 +134,7 @@ export default function Tagging({ submission }: TaggingProps) {
                 </div>
 
                 <Combobox.Options className="absolute z-10 mt-1 max-h-28 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                  {[...filteredTags, selectedTag].filter(onlyUnique).map((tag) => (
+                  {[...filteredTags, currentTag].filter(onlyUnique).map((tag) => (
                     <Combobox.Option
                       key={tag}
                       value={tag}

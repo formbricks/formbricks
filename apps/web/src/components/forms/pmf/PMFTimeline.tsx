@@ -9,7 +9,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
-import Tagging from "../Tagging";
+import Tagging from "../shared/Tagging";
 
 export default function PMFTimeline({ submissions }) {
   const router = useRouter();
