@@ -27,3 +27,9 @@
   background-color: #cbd5e1;
   border: 3px solid #cbd5e1;
 }
+
+[type="text"]:focus {
+  --tw-ring-color: none;
+  --tw-ring-offset-color: none;
+  box-shadow: none;
+}

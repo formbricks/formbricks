@@ -8,7 +8,6 @@ export const fetcher = async (url) => {
   if (url in demoEndpoints) {
     const { file } = demoEndpoints[url];
     const { getData } = await import(`../demo-data/${file}`);
-    console.log(url, getData);
     return getData(url);
   }
   const res = await fetch(url);

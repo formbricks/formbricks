@@ -226,7 +226,7 @@ export default function FilterNavigation({
       });
       setFilters(filters);
     }
-  }, [form, limitFields]);
+  }, [form, limitFields, tags]);
 
   if (isLoadingForm) {
     return <LoadingSpinner />;
@@ -244,24 +244,24 @@ export default function FilterNavigation({
             <h4 className="text-slate-600">{camelToTitle(filter.name)}</h4>
           </div>
           {filter.options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => {
-                chooseOptionFilter(filter.name, option.value, option.active);
-              }}
-              className={clsx(
-                option.active || option.pinned
-                  ? "bg-slate-200 text-slate-900"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                "group my-1 flex w-full items-center rounded-md px-3 py-1.5 text-sm font-medium"
-              )}
-              aria-current={option.active ? "page" : undefined}>
-              <div className={clsx("-ml-1 mr-3 h-2 w-2 flex-shrink-0 rounded-full")} />
-              <span className="truncate">{option.label}</span>
+            <div key={option.value} className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  chooseOptionFilter(filter.name, option.value, option.active);
+                }}
+                className={clsx(
+                  option.active || option.pinned
+                    ? "bg-slate-200 text-slate-900"
+                    : "text-slate-600  hover:bg-slate-100 hover:text-slate-900",
+                  "group my-1 flex w-full items-center rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200"
+                )}
+                aria-current={option.active ? "page" : undefined}>
+                <span className="truncate">{option.label}</span>
+              </button>
               {!["all", "inbox", "archived"].includes(option.value) && (option.active || option.pinned) && (
                 <button
-                  className="ml-auto"
+                  className="absolute right-2 top-1 rounded px-2 py-1 transition-all duration-100 hover:bg-slate-100"
                   onClick={(e) => {
                     e.stopPropagation();
                     pinOptionFilter(filter.name, option.value, !option.pinned);
@@ -273,7 +273,7 @@ export default function FilterNavigation({
                   )}
                 </button>
               )}
-            </button>
+            </div>
           ))}
         </div>
       ))}

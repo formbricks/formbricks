@@ -104,9 +104,8 @@ export default function FeedbackTimeline({ submissions }) {
                           </p>
                         </div>
                       </div>
-                      <div className="border-t border-slate-100 p-6">
-                        <Tagging submission={submission} />
-                      </div>
+                      <Tagging submission={submission} />
+
                       <div className=" bg-slate-50 p-4 sm:p-6">
                         <div className="flex w-full justify-between gap-4">
                           <div>
