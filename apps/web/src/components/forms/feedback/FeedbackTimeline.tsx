@@ -7,6 +7,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
+import Tagging from "../shared/Tagging";
 
 export default function FeedbackTimeline({ submissions }) {
   const router = useRouter();
@@ -106,6 +107,8 @@ export default function FeedbackTimeline({ submissions }) {
                           </p>
                         </div>
                       </div>
+                      <Tagging submission={submission} />
+
                       <div className=" bg-slate-50 p-4 sm:p-6">
                         <div className="flex w-full justify-between gap-4">
                           <div>

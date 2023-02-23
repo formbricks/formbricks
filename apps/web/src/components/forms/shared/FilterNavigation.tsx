@@ -5,7 +5,7 @@ import { camelToTitle, filterUniqueById } from "@/lib/utils";
 import { RectangleGroupIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BsPin, BsPinFill } from "react-icons/bs";
 
 interface Filter {
@@ -39,6 +39,19 @@ export default function FilterNavigation({
 
   const { form, isLoadingForm, isErrorForm } = useForm(formId?.toString(), organisationId?.toString());
 
+  // get all the tags from the submissions
+  const tags = useMemo(() => {
+    const tags = [];
+    for (const submission of submissions) {
+      for (const tag of submission.tags) {
+        if (!tags.includes(tag)) {
+          tags.push(tag);
+        }
+      }
+    }
+    return tags;
+  }, [submissions]);
+
   // filter submissions based on selected filters
   useEffect(() => {
     if (form) {
@@ -56,7 +69,31 @@ export default function FilterNavigation({
           }
 
           continue;
+        } else if (filter.type === "tags") {
+          const isAllActive = filter.options.find((option) => option.value === "all")?.active;
+          // no filter is all is selected, if not keep on filtering
+          if (!isAllActive) {
+            // filter for all other types
+            let listOfValidFilteredSubmissions = [];
+
+            for (const option of filter.options) {
+              if (option.active || option.pinned) {
+                listOfValidFilteredSubmissions.push(
+                  newFilteredSubmissions.filter((submission) => {
+                    if (submission.tags) {
+                      return submission.tags.includes(option.value);
+                    }
+                  })
+                );
+              }
+            }
+            // add pinned submissions to the top
+            const flattenedListOfValidFilteredSubmissions = listOfValidFilteredSubmissions.flat();
+            newFilteredSubmissions = filterUniqueById(flattenedListOfValidFilteredSubmissions);
+          }
+          continue;
         }
+
         const isAllActive = filter.options.find((option) => option.value === "all")?.active;
         // no filter is all is selected, if not keep on filtering
         if (!isAllActive) {
@@ -178,9 +215,18 @@ export default function FilterNavigation({
           { value: "archived", label: "Archived", active: false },
         ],
       });
+      // add tag selection to filters
+      filters.push({
+        name: "tags",
+        label: "Tags",
+        type: "tags",
+        options: [{ value: "all", label: "All", active: true, pinned: false }].concat([
+          ...tags.map((tag) => ({ value: tag, label: tag, active: false, pinned: false })),
+        ]),
+      });
       setFilters(filters);
     }
-  }, [form, limitFields]);
+  }, [form, limitFields, tags]);
 
   if (isLoadingForm) {
     return <LoadingSpinner />;
@@ -198,24 +244,24 @@ export default function FilterNavigation({
             <h4 className="text-slate-600">{camelToTitle(filter.name)}</h4>
           </div>
           {filter.options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => {
-                chooseOptionFilter(filter.name, option.value, option.active);
-              }}
-              className={clsx(
-                option.active || option.pinned
-                  ? "bg-slate-200 text-slate-900"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-                "group my-1 flex w-full items-center rounded-md px-3 py-1.5 text-sm font-medium"
-              )}
-              aria-current={option.active ? "page" : undefined}>
-              <div className={clsx("-ml-1 mr-3 h-2 w-2 flex-shrink-0 rounded-full")} />
-              <span className="truncate">{option.label}</span>
+            <div key={option.value} className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  chooseOptionFilter(filter.name, option.value, option.active);
+                }}
+                className={clsx(
+                  option.active || option.pinned
+                    ? "bg-slate-200 text-slate-900"
+                    : "text-slate-600  hover:bg-slate-100 hover:text-slate-900",
+                  "group my-1 flex w-full items-center rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200"
+                )}
+                aria-current={option.active ? "page" : undefined}>
+                <span className="truncate">{option.label}</span>
+              </button>
               {!["all", "inbox", "archived"].includes(option.value) && (option.active || option.pinned) && (
                 <button
-                  className="ml-auto"
+                  className="absolute right-2 top-1 rounded px-2 py-1 transition-all duration-100 hover:bg-slate-100"
                   onClick={(e) => {
                     e.stopPropagation();
                     pinOptionFilter(filter.name, option.value, !option.pinned);
@@ -227,7 +273,7 @@ export default function FilterNavigation({
                   )}
                 </button>
               )}
-            </button>
+            </div>
           ))}
         </div>
       ))}
