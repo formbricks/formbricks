@@ -1,12 +1,10 @@
 import { persistSubmission, useSubmissions } from "@/lib/submissions";
+import { onlyUnique } from "@/lib/utils";
+import { Combobox } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
-import { toast } from "react-toastify";
-import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
-import { Combobox } from "@headlessui/react";
-import clsx from "clsx";
-import { onlyUnique } from "@/lib/utils";
 
 // add interface props for tags
 interface TaggingProps {
