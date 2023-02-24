@@ -1,0 +1,50 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import NewsletterSignup from "@/components/shared/NewsletterSignup";
+import HeaderImage from "../weekly-update-181122/weeklyupdate.png";
+import HeroAnimation from "@/components/shared/HeroAnimation";
+
+import { Callout } from "@/components/shared/Callout";
+
+import Tagging from "./tagging.png";
+import UserActions from "./useractions.png";
+
+export const meta = {
+  title: "Weekly Summary - 24th Feb 2023",
+  description: "Submission tagging, user actions and bug fixes. Let's have a closer look:",
+  date: "2023-02-24",
+};
+
+_Submission tagging, user actions and work on universal widget. Let's have a closer look:_
+
+<Image src={HeaderImage} alt="Weekly Update" className="rounded-lg" />
+
+## TLDR:
+
+- Submission tagging
+- User actions
+- Universal widget
+
+## Submission tagging
+
+Early user requested a better way to organize submissions. You can now tag submissions and filter accordingly. This is useful if you want to group submissions by a certain attribute:
+
+<Image src={Tagging} quality={100} alt="Submission Tagging" className="rounded-lg" />
+
+## User actions
+
+To keep your user base tidy, you can now delete users. Additionally, you can send them an email with the click of a button.
+
+As soon as we have built the in-app interview prompt, you can invitie single users to take part in a 1:1 interview via an in-app prompt.
+
+<Image src={UserActions} quality={100} alt="User Actions" className="rounded-lg" />
+
+We're currently working on a universal widget to create any kind of in-app survey. This allows us to cater to more use cases and provide a more flexible solution.
+
+We'll keep you posted ✌️
+
+## Enjoy your weekends! 🤸‍♀️
+
+<NewsletterSignup />
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
