@@ -1,5 +1,4 @@
 import { Switch } from "@mui/material";
-import { UserRole } from "@prisma/client";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { updateUserRole } from "../lib/users";
@@ -19,8 +18,8 @@ export const SwitchButton = ({ role, id }) => {
   const [isAdmin, setIsAdmin] = useState(role === "ADMIN");
   return (
     <Switch
-      size='medium'
-      color='primary'
+      size="medium"
+      color="primary"
       onClick={() => {
         toggleRole(id, role, setIsAdmin);
       }}
@@ -30,6 +29,10 @@ export const SwitchButton = ({ role, id }) => {
 };
 
 export const usersDataGridSchemaColumn = [
+  {
+    field: "createdAt",
+    hide: true,
+  },
   {
     field: "Noms",
     width: 230,
