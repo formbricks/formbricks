@@ -1,14 +1,14 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import LayoutAuth from "@/components/layout/LayoutAuth";
+import { useRouter } from "next/router";
 
 export default function ResetPasswordPage() {
-  const searchParams = useSearchParams();
+  const router = useRouter();
   return (
     <LayoutAuth title="Reset password">
-      <ResetPasswordForm token={searchParams.get("token")} />
+      <ResetPasswordForm token={router.query.token} />
     </LayoutAuth>
   );
 }

@@ -2,14 +2,14 @@
 
 import LayoutAuth from "@/components/layout/LayoutAuth";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { SigninForm } from "@/components/auth/SigninForm";
+import { useRouter } from "next/router";
 
 export default function SignInPage() {
-  const searchParams = useSearchParams();
+  const router = useRouter();
   return (
     <LayoutAuth title="Sign in">
-      <SigninForm callbackUrl={searchParams.get("callbackUrl")} error={searchParams.get("error")} />
+      <SigninForm callbackUrl={router.query.callbackUr} error={router.query.error} />
       {process.env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
         <div>
           <Link
