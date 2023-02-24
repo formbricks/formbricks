@@ -3,13 +3,12 @@
 import { Disclosure } from "@headlessui/react";
 import clsx from "clsx";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useRouter } from "next/router";
 import { useMemo } from "react";
 
 export default function LayoutWrapperCustomForm({ children }) {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = router.pathname;
   const navigation = useMemo(
     () => [
       {

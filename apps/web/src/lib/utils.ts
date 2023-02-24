@@ -1,6 +1,6 @@
 import crypto from "crypto";
+import { formatDistance } from "date-fns";
 import intlFormat from "date-fns/intlFormat";
-import { formatDistance, formatDistanceStrict, formatDistanceToNow } from "date-fns";
 import platform from "platform";
 import { demoEndpoints } from "./demo";
 
@@ -8,7 +8,6 @@ export const fetcher = async (url) => {
   if (url in demoEndpoints) {
     const { file } = demoEndpoints[url];
     const { getData } = await import(`../demo-data/${file}`);
-    console.log(url, getData);
     return getData(url);
   }
   const res = await fetch(url);

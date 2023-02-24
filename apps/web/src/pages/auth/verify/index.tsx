@@ -1,15 +1,15 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { SignIn } from "@/components/auth/SignIn";
 import LayoutAuth from "@/components/layout/LayoutAuth";
+import { useRouter } from "next/router";
 
 export default function Verify() {
-  const searchParams = useSearchParams();
+  const router = useRouter();
   return (
     <LayoutAuth title="Verify">
-      <p className="text-center">{!searchParams.get("token") ? "No Token provided" : "Verifying..."}</p>
-      <SignIn token={searchParams.get("token")} />
+      <p className="text-center">{!router.query.token ? "No Token provided" : "Verifying..."}</p>
+      <SignIn token={router.query.token} />
     </LayoutAuth>
   );
 }

@@ -9,6 +9,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
+import Tagging from "../shared/Tagging";
 
 export default function PMFTimeline({ submissions }) {
   const router = useRouter();
@@ -103,7 +104,6 @@ export default function PMFTimeline({ submissions }) {
                               Somewhat disappointed
                             </span>
                           ) : null}
-
                           <div className="text-sm text-slate-400">
                             <time dateTime={convertDateTimeString(submission.createdAt)}>
                               {new Date().getTime() - new Date(submission.createdAt).getTime() >
@@ -132,6 +132,8 @@ export default function PMFTimeline({ submissions }) {
                           </ul>
                         </div>
                       </div>
+                      <Tagging submission={submission} />
+
                       <div className=" bg-slate-50 p-4 sm:p-6">
                         <div className="flex w-full justify-between gap-4">
                           <div>
@@ -154,10 +156,12 @@ export default function PMFTimeline({ submissions }) {
                               {parseUserAgent(submission.meta.userAgent)}
                             </p>
                           </div>
-                          <div>
-                            <p className="text-sm font-thin text-slate-500">Page</p>
-                            <p className="text-sm text-slate-500">{submission.data.pageUrl}</p>
-                          </div>
+                          {submission.data.pageUrl && (
+                            <div>
+                              <p className="text-sm font-thin text-slate-500">Page</p>
+                              <p className="text-sm text-slate-500">{submission.data.pageUrl}</p>
+                            </div>
+                          )}
                         </div>
 
                         <div className="mt-8 flex w-full justify-end">

@@ -46,7 +46,7 @@ export default function NewFormModal({ open, setOpen, organisationId }: FormOnbo
         name: "Product-Market Fit Survey",
         description: "Leverage the Superhuman PMF engine.",
         icon: PMFIcon,
-        needsUpgrade: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD && organisation?.plan === "free",
+        needsUpgrade: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1" && organisation?.plan === "free",
       },
     ],
     [organisation]
