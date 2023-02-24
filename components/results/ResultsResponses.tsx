@@ -93,38 +93,38 @@ export default function ResultsResponses({
   }
 
   return (
-    <div className='flex flex-col flex-1 w-full h-full mx-auto overflow-visible max-w-screen'>
-      <div className='relative z-0 flex flex-1 h-full overflow-visible'>
-        <main className='relative z-0 flex-1 mb-32 overflow-y-auto focus:outline-none xl:order-last'>
-          <div className='overflow-visible sm:rounded-lg'>
+    <div className="flex flex-col flex-1 w-full h-full mx-auto overflow-visible max-w-screen">
+      <div className="relative z-0 flex flex-1 h-full overflow-visible">
+        <main className="relative z-0 flex-1 mb-32 overflow-y-auto focus:outline-none xl:order-last">
+          <div className="overflow-visible sm:rounded-lg">
             {!activeCandidate ? (
               <button
-                type='button'
-                className='relative block p-12 mx-auto mt-8 text-center border-2 border-gray-300 border-dashed rounded-lg w-96 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+                type="button"
+                className="relative block p-12 mx-auto mt-8 text-center border-2 border-gray-300 border-dashed rounded-lg w-96 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                <span className='block mt-2 text-sm font-medium text-gray-500'>
+                <span className="block mt-2 text-sm font-medium text-gray-500">
                   Choisis un candidat à gauche pour voir sa soumission ici
                 </span>
               </button>
             ) : (
-              <div className='py-5 bg-white shadow'>
-                <div className='grid gap-8 divide-x'>
-                  <div className='hidden pl-10 md:flow-root'>
-                    <h1 className='mb-8 text-gray-700'>
+              <div className="py-5 bg-white shadow">
+                <div className="grid gap-8 divide-x">
+                  <div className="hidden pl-10 md:flow-root">
+                    <h1 className="mb-8 text-gray-700">
                       Soumissions du candidat
                     </h1>
-                    <ul role='list' className='-mb-8'>
+                    <ul role="list" className="-mb-8">
                       {isLoadingCandidateSubmission ? (
                         <Loading />
                       ) : (
                         userSubmissions?.map((event) => (
                           <li key={event.id}>
-                            <div className='relative pb-8'>
+                            <div className="relative pb-8">
                               <span
-                                className='absolute top-4 left-4 -ml-px h-full w-0.5 bg-ui-gray-light'
-                                aria-hidden='true'
+                                className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-ui-gray-light"
+                                aria-hidden="true"
                               />
-                              <div className='relative flex space-x-3'>
+                              <div className="relative flex space-x-3">
                                 <span
                                   className={classNames(
                                     "bg-red-200",
@@ -132,16 +132,16 @@ export default function ResultsResponses({
                                   )}
                                 >
                                   <CheckIcon
-                                    className='w-5 h-5 text-white'
-                                    aria-hidden='true'
+                                    className="w-5 h-5 text-white"
+                                    aria-hidden="true"
                                   />
                                 </span>
-                                <div className='min-w-0 flex-1 pt-1.5 flex justify-between flex-wrap gap-4'>
+                                <div className="min-w-0 flex-1 pt-1.5 flex justify-between flex-wrap gap-4">
                                   <div>
                                     <h3>
                                       {formPages[event.data["pageName"]].title}
                                     </h3>
-                                    <ul className='text-sm text-gray-500'>
+                                    <ul className="text-sm text-gray-500">
                                       {event.data["submission"] &&
                                         Object.keys(
                                           event.data["submission"]
@@ -152,7 +152,7 @@ export default function ResultsResponses({
                                           return (
                                             <li key={key}>
                                               <hr />
-                                              <p className='py-3'>
+                                              <p className="py-3">
                                                 <b>{`${question}`}</b>
                                                 &nbsp;
                                                 <span>{`=> ${event.data["submission"][key]}`}</span>
@@ -170,8 +170,8 @@ export default function ResultsResponses({
                       )}
                     </ul>
                     {!userSubmissions.length && (
-                      <div className='relative block p-12 mx-auto mt-8 text-center border-2 border-gray-300 border-dashed rounded-lg w-96 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'>
-                        <span className='block mt-2 text-sm font-medium text-gray-500'>
+                      <div className="relative block p-12 mx-auto mt-8 text-center border-2 border-gray-300 border-dashed rounded-lg w-96 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <span className="block mt-2 text-sm font-medium text-gray-500">
                           Aucune reponse jusque là
                         </span>
                       </div>
@@ -182,28 +182,36 @@ export default function ResultsResponses({
             )}
           </div>
         </main>
-        <aside className='flex flex-col flex-1 flex-shrink-0 order-first h-full border-r border-ui-gray-light md:flex-none md:w-1/3'>
+        <aside className="flex flex-col flex-1 flex-shrink-0 order-first h-full border-r border-ui-gray-light md:flex-none md:w-1/3">
           <DownloadResponses formId={formId} candidates={candidates} />
-          <div className='pt-4 pb-2'>
-            <h2 className='px-5 text-lg font-medium text-gray-900'>Réponses</h2>
+          <div className="pt-4 pb-2">
+            <h2 className="px-5 text-lg font-medium text-gray-900">Réponses</h2>
           </div>
           {candidates.length === 0 ? (
-            <p className='px-5 mt-3 text-sm text-gray-500'>
+            <p className="px-5 mt-3 text-sm text-gray-500">
               Aucun candidat n&apos;a répondu jusque là
             </p>
           ) : (
             <RadioGroup
               value={activeCandidate}
               onChange={setActiveCandidate}
-              className='flex- min-h-0 mb-32 overflow-y-auto shadow-inner'
-              as='div'
+              className="flex- min-h-0 mb-32 overflow-y-auto shadow-inner"
+              as="div"
             >
-              <div className='relative'>
+              <div className="relative">
                 <div style={{ width: "100%" }}>
                   <DataGrid
                     columns={candidateDataGridSchemaColumn}
                     rows={candidates.map(
-                      ({ id, firstname, lastname, gender, email }) => ({
+                      ({
+                        id,
+                        firstname,
+                        lastname,
+                        gender,
+                        email,
+                        createdAt,
+                      }) => ({
+                        createdAt,
                         id,
                         Noms: `${firstname} ${lastname}`,
                         Genre: gender,

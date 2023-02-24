@@ -71,6 +71,10 @@ export const usersDataGridSchemaColumn = [
 
 export const candidateDataGridSchemaColumn = [
   {
+    field: "createdAt",
+    hide: true,
+  },
+  {
     field: "Noms",
     width: 130,
   },
