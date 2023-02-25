@@ -39,8 +39,8 @@ export default function Tagging({ submission }: TaggingProps) {
     }
     const updatedSubmission = JSON.parse(JSON.stringify(submission));
     updatedSubmission.tags = [...updatedSubmission.tags, tag];
-    updateSubmissionsLocally(updatedSubmission);
     await persistSubmission(updatedSubmission, router.query.organisationId?.toString());
+    updateSubmissionsLocally(updatedSubmission);
     setIsEditingTag("");
     setCurrentTag("");
   };
@@ -49,8 +49,8 @@ export default function Tagging({ submission }: TaggingProps) {
   const removeTag = async (submission, tag) => {
     const updatedSubmission = JSON.parse(JSON.stringify(submission));
     updatedSubmission.tags = updatedSubmission.tags.filter((t) => t !== tag);
-    updateSubmissionsLocally(updatedSubmission);
     await persistSubmission(updatedSubmission, router.query.organisationId?.toString());
+    updateSubmissionsLocally(updatedSubmission);
   };
 
   // get all the tags from the submissions

@@ -36,6 +36,7 @@ export default function FilterNavigation({
   const router = useRouter();
   const { formId, organisationId } = router.query;
   const [filters, setFilters] = useState<Filter[]>([]);
+  const [prevFilters, setPrevFilters] = useState<Filter[]>([]);
 
   const { form, isLoadingForm, isErrorForm } = useForm(formId?.toString(), organisationId?.toString());
 
@@ -185,6 +186,7 @@ export default function FilterNavigation({
   };
 
   useEffect(() => {
+    const prevFilters = [...filters];
     // build filters based on form schema
     if (form && form.schema && Object.keys(form.schema).length > 0) {
       const filters = [];
@@ -194,34 +196,76 @@ export default function FilterNavigation({
             ["radio", "checkbox"].includes(element.type) &&
             (!limitFields || limitFields.includes(element.name))
           ) {
+            const prevFilter = prevFilters.find((filter) => filter.name === element.name);
             filters.push({
               name: element.name,
               label: element.label,
               type: element.type,
-              options: [{ value: "all", label: "All", active: true, pinned: false }].concat([
-                ...element.options.map((option) => ({ ...option, active: false, pinned: false })),
+              options: [
+                {
+                  value: "all",
+                  label: "All",
+                  active: !prevFilter
+                    ? true
+                    : prevFilter?.options?.find((o) => o.value === "all")?.active
+                    ? true
+                    : false,
+                  pinned: prevFilter?.options?.find((o) => o.value === "all")?.pinned ? true : false,
+                },
+              ].concat([
+                ...element.options.map((option) => ({
+                  ...option,
+                  active: prevFilter?.options?.find((o) => o.value === option.value)?.active ? true : false,
+                  pinned: prevFilter?.options?.find((o) => o.value === option.value)?.pinned ? true : false,
+                })),
               ]),
             });
           }
         }
       }
       // add archived filter at the end
+      let prevFilter = prevFilters.find((filter) => filter.name === "archive");
       filters.push({
         name: "archive",
         label: "Archive",
         type: "archive",
         options: [
-          { value: "inbox", label: "Inbox", active: true },
-          { value: "archived", label: "Archived", active: false },
+          {
+            value: "inbox",
+            label: "Inbox",
+            active: !prevFilter ? true : prevFilter?.options[0]?.active ? true : false,
+          },
+          {
+            value: "archived",
+            label: "Archived",
+            active: !prevFilter ? false : prevFilter?.options[1]?.active ? true : false,
+          },
         ],
       });
       // add tag selection to filters
+      prevFilter = prevFilters.find((filter) => filter.name === "tags");
       filters.push({
         name: "tags",
         label: "Tags",
         type: "tags",
-        options: [{ value: "all", label: "All", active: true, pinned: false }].concat([
-          ...tags.map((tag) => ({ value: tag, label: tag, active: false, pinned: false })),
+        options: [
+          {
+            value: "all",
+            label: "All",
+            active: !prevFilter
+              ? true
+              : prevFilter?.options?.find((o) => o.value === "all")?.active
+              ? true
+              : false,
+            pinned: prevFilter?.options?.find((o) => o.value === "all")?.pinned ? true : false,
+          },
+        ].concat([
+          ...tags.sort().map((tag) => ({
+            value: tag,
+            label: tag,
+            active: prevFilter?.options?.find((o) => o.value === tag)?.active ? true : false,
+            pinned: prevFilter?.options?.find((o) => o.value === tag)?.pinned ? true : false,
+          })),
         ]),
       });
       setFilters(filters);
