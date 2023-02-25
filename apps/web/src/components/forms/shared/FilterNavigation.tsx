@@ -36,7 +36,6 @@ export default function FilterNavigation({
   const router = useRouter();
   const { formId, organisationId } = router.query;
   const [filters, setFilters] = useState<Filter[]>([]);
-  const [prevFilters, setPrevFilters] = useState<Filter[]>([]);
 
   const { form, isLoadingForm, isErrorForm } = useForm(formId?.toString(), organisationId?.toString());
 
