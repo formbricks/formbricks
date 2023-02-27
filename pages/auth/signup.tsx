@@ -234,7 +234,7 @@ export default function SignUpPage() {
                         id="province"
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture">
-                        <option value="null" className="placeholder-ui-gray-medium" disabled>Sélectionnez votre province</option>
+                        <option value="null" className="placeholder-ui-gray-medium" >Sélectionnez votre province</option>
                         {Object.keys(DRCProvinces).map((province)=>(<option value={province}>{DRCProvinces[province]}</option>))}
                       </select>
                     </div>
