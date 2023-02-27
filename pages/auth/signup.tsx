@@ -188,7 +188,7 @@ export default function SignUpPage() {
                         id="line1"
                         name="line1"
                         type="text"
-                        placeholder="Adresse principale: 12, Ave du Livre, Indus"
+                        placeholder="Adresse 1: Numéro, Avenue, Quartier"
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
@@ -199,7 +199,7 @@ export default function SignUpPage() {
                         id="line2"
                         name="line2"
                         type="text"
-                        placeholder="Adresse secondaire: 12, Ave du Livre, Indus"
+                        placeholder="Adresse 2: Numéro, Avenue, Quartier"
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>
@@ -230,12 +230,11 @@ export default function SignUpPage() {
                     <div className="mt-1">
                       <select 
                         name="province"
-                        // placeholder="Select your province"
                         id="province"
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture">
-                        <option value="null" className="placeholder-ui-gray-medium" disabled>Sélectionnez votre province</option>
-                        {Object.keys(DRCProvinces).map((province)=>(<option value={province}>{DRCProvinces[province]}</option>))}
+                        <option value="null" className="block text-sm font-medium text-ui-gray-dark">Sélectionnez votre province</option>
+                        {Object.keys(DRCProvinces).map((province)=>(<option className="block text-sm font-medium text-ui-gray-dark" value={province}>{DRCProvinces[province]}</option>))}
                       </select>
                     </div>
                   </div>

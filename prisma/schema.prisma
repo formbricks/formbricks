@@ -26,32 +26,32 @@ enum Location {
 }
 
 enum Province {
-  Bas_Uele
-  Equateur
-  Haut_Katanga
-  Haut_Lomami
-  Haut_Uele
-  Ituri
-  Kasai
-  Kasai_Central
-  Kasai_Oriental
-  Kinshasa
-  Kongo_Central
-  Kwango
-  Kwilu
-  Lomami
-  Lualaba
-  Mai_Ndombe
-  Maniema
-  Mongala
-  Nord_Kivu
-  Nord_Ubangi
-  Sankuru
-  Sud_Kivu
-  Sud_Ubangi
-  Tanganyika
-  Tshopo
-  Tshuapa
+  BU
+  EQ
+  HK
+  HL
+  HU
+  IT
+  KS
+  KC
+  KE
+  KN
+  BC
+  KG
+  KL
+  LO
+  LU
+  MN
+  MA
+  MO
+  NK
+  NU
+  SA
+  SK
+  SU
+  TA
+  TO
+  TU
 }
 
 enum Formation {
@@ -139,14 +139,14 @@ model SessionEvent {
 }
 
 model Address {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @updatedAt @map(name: "updated_at")
-  line1     String
+  id        String      @id @default(uuid())
+  createdAt DateTime    @default(now()) @map(name: "created_at")
+  updatedAt DateTime    @updatedAt @map(name: "updated_at")
+  line1     String      @default("")
   line2     String?
-  commune   String
-  ville     String
-  province  Province
+  commune   String      @default("")
+  ville     String      @default("")
+  province  Province    @default(KN)
   User      User[]
 }
 
