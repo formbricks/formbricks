@@ -3,16 +3,14 @@ import {
   ArrowLeftOnRectangleIcon,
   UserIcon,
   CogIcon,
+  PencilIcon,
 } from "@heroicons/react/24/solid";
 import { signOut, useSession } from "next-auth/react";
-import { Fragment, useState } from "react";
+import { Fragment, useState, useRef } from "react";
 import { classNames, upload } from "../../lib/utils";
 import { DRCProvinces } from "../../lib/enums";
 import Modal from "../Modal";
-import {
-  updateUserProfile,
-  updateAddress,
-} from "../../lib/users";
+import { updateUserProfile, updateAddress } from "../../lib/users";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
 
@@ -21,15 +19,57 @@ export default function MenuProfile({}) {
   const session = useSession();
   const { user } = session.data;
   const [open, setOpen] = useState(false);
+  const [fileName, setFileName] = useState("");
+  const inputFileRef = useRef(null);
+
+  const initValues = {
+    firstName : user.firstname,
+    lastName  : user.lastname,
+    phone     : user.phone,
+    whatsapp  : user.whatsapp,
+    line1     : user.address.line1,
+    line2     : user.address.line2,
+    commune   : user.address.commune,
+    ville     : user.address.ville,
+  }
+  const [values, setValues] = useState(initValues);
+
+
+  const handleInputFileClick = () => {
+    inputFileRef.current.click();
+  };
+
   const onClickSettings = () => {
     setOpen(true);
   };
 
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setFileName(e.target.files[0].name);
+
+      const fileSize = e.target.files[0].size / 1024;
+
+      if (fileSize > 1024) {
+        toast("Le fichier ne doit pas depasser 1MB");
+        inputFileRef.current.value = null;
+      }
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setValues({
+      ...values,
+      [name]: value,
+    });
+   
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const file = e.target.elements.profilPic.files[0];
-    let pictureProfile;
-    file ? (pictureProfile = (await upload(file)).Location) : "";
+    let photo;
+    file ? (photo = (await upload(file)).Location) : "";
 
     try {
       await updateAddress({
@@ -42,13 +82,14 @@ export default function MenuProfile({}) {
       });
       await updateUserProfile({
         id: user.id,
-        pictureProfile: pictureProfile,
-        password: e.target.elements.password.value,
+        firstname: e.target.elements.firstname.value,
+        lastname: e.target.elements.lastname.value,
+        photo: photo,
         phone: e.target.elements.phone.value,
         whatsapp: e.target.elements.whatsapp.value,
       });
-      const url = `/`;
-      router.push(url);
+
+      router.reload();
     } catch (e) {
       toast(e.message);
     }
@@ -65,7 +106,9 @@ export default function MenuProfile({}) {
                 <div className="w-8 h-8">
                   <img
                     className="rounded-full"
-                    src={user.photo}
+                    src={
+                      user.photo ? user.photo : "/img/avatar-placeholder.png"
+                    }
                     alt="user avatar"
                     width={50}
                     height={50}
@@ -85,7 +128,7 @@ export default function MenuProfile({}) {
             >
               <Menu.Items
                 static
-                className="absolute right-0 w-48 p-1 mt-2 origin-top-right bg-white rounded-sm shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none break-words"
+                className="absolute right-0 w-max	 p-1 mt-2 origin-top-right bg-white rounded-sm shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none break-words"
               >
                 <Menu.Item>
                   {({ active }) => (
@@ -99,7 +142,7 @@ export default function MenuProfile({}) {
                           className="w-5 h-5 mr-3 text-ui-gray-dark"
                           aria-hidden="true"
                         />
-                        {user.firstname}{" "}{user.lastname}
+                        {user.firstname} {user.lastname}
                       </label>
                       <hr />
                       <button
@@ -142,13 +185,25 @@ export default function MenuProfile({}) {
       </Menu>
 
       <Modal open={open} setOpen={setOpen}>
-        <div>
+        <div className="relative cursor-pointer" onClick={handleInputFileClick}>
           <figure>
-            <img className="w-24 h-24 rounded-full mx-auto" src={user.photo} />
-            <figcaption className="font-medium">
-              <div className="text-2xl font-bold mb-2">{user.firstname}{" "}{user.lastname}</div>
+            <img
+              className="w-24 h-24 rounded-full mx-auto"
+              src={user.photo ? user.photo : "/img/avatar-placeholder.png"}
+            />
+            <figcaption
+              className="absolute bottom-0 right-0 px-1 py-1 font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              style={{ fontSize: 10 }}
+            >
+              <PencilIcon className="w-4 h-4" aria-hidden="true" />
             </figcaption>
           </figure>
+        </div>
+        <div>
+          <code className="text-xs	">{fileName}</code>
+        </div>
+        <div className="text-2xl font-bold mb-2 mt-3 text-ui-gray-dark">
+          {user.firstname} {user.lastname}
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="">
@@ -158,12 +213,12 @@ export default function MenuProfile({}) {
             </h1>
             <hr />
             <div className="mt-3 mb-2">
-              <label className="block text-sm font-medium text-ui-gray-dark">
-                Photo de profil
-              </label>
               <input
                 name="profilPic"
                 id="profilPic"
+                ref={inputFileRef}
+                onChange={handleFileChange}
+                style={{ display: "none" }}
                 accept="image/x-png,image/jpg,image/jpeg"
                 className=" m-0 block w-full min-w-0 flex-auto cursor-pointer rounded border border-solid border-neutral-300 bg-white bg-clip-padding px-3 py-1.5 text-base font-normal text-neutral-700 outline-none transition duration-300 ease-in-out file:-mx-3 file:-my-1.5 file:cursor-pointer file:overflow-hidden file:rounded-none file:border-0 file:border-solid file:border-inherit file:px-3 file:py-1.5 file:text-neutral-700 file:transition file:duration-150 file:ease-in-out file:[margin-inline-end:0.75rem] file:[border-inline-end-width:1px] hover:file:bg-neutral-200 focus:border-primary focus:bg-white focus:text-neutral-700 focus:shadow-[0_0_0_1px] focus:shadow-primary focus:outline-none dark:bg-transparent dark:text-neutral-200 dark:focus:bg-transparent"
                 type="file"
@@ -172,44 +227,60 @@ export default function MenuProfile({}) {
 
             <div className="mt-1">
               <label className="block text-sm font-medium text-ui-gray-dark">
-                Nouveau numéro de téléphone
+                Nom
               </label>
               <input
-                id="phone"
-                name="phone"
+                id="firstname"
+                name="firstname"
                 type="text"
-                placeholder={user.phone}
+                value={initValues.firstName}
+                onChange={handleInputChange}
                 className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
               />
             </div>
 
             <div className="mt-1">
               <label className="block text-sm font-medium text-ui-gray-dark">
-                Nouveau numéro whatsapp
+                Post-Nom
+              </label>
+              <input
+                id="lastname"
+                name="lastname"
+                value={initValues.lastName}
+                onChange={handleInputChange}
+                type="text"
+                className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+              />
+            </div>
+
+            <div className="mt-1">
+              <label className="block text-sm font-medium text-ui-gray-dark">
+                Numéro de téléphone
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="text"
+                value={initValues.phone}
+                onChange={handleInputChange}
+                className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+              />
+            </div>
+
+            <div className="mt-1">
+              <label className="block text-sm font-medium text-ui-gray-dark">
+                Numéro whatsapp
               </label>
               <input
                 id="whatsapp"
                 name="whatsapp"
                 type="text"
-                placeholder={user.whatsapp}
+                value={initValues.whatsapp}
+                onChange={handleInputChange}
                 className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
               />
             </div>
 
-            <div className="mt-3">
-              <label className="block text-sm font-medium text-ui-gray-dark">
-                Mot de passe
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="••••••••••"
-                  className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
-                />
-              </div>
-            </div>
             <div className="mt-3">
               <label
                 htmlFor="address"
@@ -222,7 +293,8 @@ export default function MenuProfile({}) {
                   id="line1"
                   name="line1"
                   type="text"
-                  placeholder={user.address.line1? user.address.line1 : "Addresse 1"}
+                  value={initValues.line1}
+                  onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
               </div>
@@ -232,7 +304,8 @@ export default function MenuProfile({}) {
                   id="line2"
                   name="line2"
                   type="text"
-                  placeholder={user.address.line2? user.address.line2 : "Addresse 2"}
+                  value={initValues.line2}
+                  onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
               </div>
@@ -242,7 +315,8 @@ export default function MenuProfile({}) {
                   id="commune"
                   name="commune"
                   type="text"
-                  placeholder={user.address.commune? user.address.commune : "Commune"}
+                  value={initValues.commune}
+                  onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
               </div>
@@ -252,8 +326,8 @@ export default function MenuProfile({}) {
                   id="ville"
                   name="ville"
                   type="text"
-                  placeholder={user.address.ville? user.address.ville : "Ville"}
-
+                  value={initValues.ville}
+                  onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
               </div>

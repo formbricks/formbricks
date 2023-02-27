@@ -146,7 +146,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             id        : user.id,
             lastname  : user.lastname,
             phone     : user.phone,
-            photo     : user.pictureProfile,
+            photo     : user.photo,
             role      : user.role,
             whatsapp  : user.whatsapp,
           };

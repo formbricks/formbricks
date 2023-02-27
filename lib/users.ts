@@ -137,15 +137,15 @@ export const updateUserRole = async ({ id, role }) => {
   }
 };
 
-export const updateUserProfile = async ({ id, pictureProfile="", password="", phone="", whatsapp=""}) => {
-  const hashedPassword = await hashPassword(password);
+export const updateUserProfile = async ({ id, firstname, lastname, photo="", phone="", whatsapp=""}) => {
   const obj = {};
 
   if(id)obj["id"] = id;
-  if(pictureProfile!="")obj["pictureProfile"] = pictureProfile;
+  if(firstname!="")obj["firstname"] = firstname;
+  if(lastname!="")obj["lastname"] = lastname;
+  if(photo!="")obj["photo"] = photo;
   if(phone!="")obj["phone"] = phone;
   if(whatsapp!="")obj["whatsapp"] = whatsapp;
-  if (password!="") obj["password"] = hashedPassword
 
   try {
     await fetch(`/api/users/update`, {
