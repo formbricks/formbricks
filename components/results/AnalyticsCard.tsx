@@ -182,7 +182,9 @@ const AnalyticsCard: React.FC<Props> = ({
                   <Chip
                     disabled={stepStats ? false : true}
                     label="Exporter"
-                    onClick={() => console.log("exported")}
+                    onClick={() => {
+                      return;
+                    }}
                     color="success"
                   />
                 </div>
