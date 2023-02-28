@@ -92,6 +92,7 @@ export default async function handle(
       { label: "Email", key: "email" },
       { label: "Phone", key: "phone" },
       { label: "Whatsapp", key: "whatsapp" },
+      { label: "Score", key: "" },
     ];
   const formPages = [];
   const {blocks} = pages;
