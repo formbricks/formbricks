@@ -63,6 +63,7 @@ export default async function handle(
         phone: true,
         whatsapp: true,
         role: true,
+        createdAt: true,
       }
     })
     if (!usersData.length) return res.status(204);

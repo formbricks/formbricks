@@ -102,7 +102,7 @@ export const resetPassword = async (token, password) => {
 
 export const useUsers = () => {
   const { data, error, mutate } = useSWR(`/api/public/users`, fetcher);
-
+  
   return {
     users: data,
     isLoadingUsers: !error && !data,

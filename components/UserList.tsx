@@ -1,14 +1,6 @@
 import { Switch } from "@headlessui/react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { UserCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
-import { TailSpin } from "react-loader-spinner";
-import { toast } from "react-toastify";
-import Link from "next/link";
-import { isAdmin } from "../lib/utils";
-import { useState } from "react";
-import { useUsers, persistUserRole } from "../lib/users";
-import { UserRole } from "@prisma/client";
-import { classNames } from "../lib/utils";
+import { useUsers,  } from "../lib/users";
 import { usersDataGridSchemaColumn } from "./usersDataGridSchemaColumn";
 
 export default function UserList() {
@@ -31,7 +23,9 @@ export default function UserList() {
                   whatsapp,
                   role,
                   email,
+                  createdAt,
                 }) => ({
+                  createdAt,
                   id,
                   Noms: `${firstname} ${lastname}`,
                   Genre: gender,
