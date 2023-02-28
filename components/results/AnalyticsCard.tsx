@@ -172,25 +172,22 @@ const AnalyticsCard: React.FC<Props> = ({
               "flex items-baseline text-lg font-normal text-gray-800 w-full px-5 mb-5 "
             }
           >
-            {!stepStats ? (
-              <Chip label="Exporter" color="default" />
-            ) : (
-              <div className="cursor-pointer ">
-                <CSVLink
-                  filename={fileTitle}
-                  headers={headers}
-                  data={stepStats}
-                >
-                  <div className="cursor-pointer ">
-                    <Chip
-                      label="Exporter"
-                      onClick={() => console.log("exported")}
-                      color="success"
-                    />
-                  </div>
-                </CSVLink>
-              </div>
-            )}
+            <div className={`${!stepStats ? "pointer-events-none" : ""}`}>
+              <CSVLink
+                filename={fileTitle}
+                headers={headers}
+                data={stepStats || []}
+              >
+                <div className="cursor-pointer ">
+                  <Chip
+                    disabled={stepStats ? false : true}
+                    label="Exporter"
+                    onClick={() => console.log("exported")}
+                    color="success"
+                  />
+                </div>
+              </CSVLink>
+            </div>
           </div>
 
           <div
