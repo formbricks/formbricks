@@ -22,18 +22,45 @@ export default function MenuProfile({}) {
   const [fileName, setFileName] = useState("");
   const inputFileRef = useRef(null);
 
-  const initValues = {
-    firstName : user.firstname,
-    lastName  : user.lastname,
-    phone     : user.phone,
-    whatsapp  : user.whatsapp,
-    line1     : user.address.line1,
-    line2     : user.address.line2,
-    commune   : user.address.commune,
-    ville     : user.address.ville,
-  }
-  const [values, setValues] = useState(initValues);
+  const [firstName, setFirstName] = useState(user.firstname)
+  const [lastName, setLastName]  = useState(user.lastname)
+  const [phone, setPhone]     = useState(user.phone)
+  const [whatsapp, setWhatsapp]  = useState(user.whatsapp)
+  const [line1, setLine1]     = useState(user.address.line1)
+  const [line2, setLine2]     = useState(user.address.line2)
+  const [commune, setCommune]  = useState(user.address.commune)
+  const [ville, setVille]     = useState(user.address.ville)
+  
+  const handleInputChange = (e) => {
+    const name = e.target.name;
 
+    switch (name) {
+      case 'firstname':
+        setFirstName(e.target.value);
+        break;
+      case 'lastname':
+        setLastName(e.target.value);
+        break;
+      case 'phone':
+        setPhone(e.target.value);
+        break;
+      case 'whatsapp':
+        setWhatsapp(e.target.value);
+        break;
+      case 'line1':
+        setLine1(e.target.value);
+        break;
+      case 'line2':
+        setLine2(e.target.value);
+        break;
+      case 'commune':
+        setCommune(e.target.value);
+        break;
+      case 'ville':
+        setVille(e.target.value);
+        break;
+    }
+  }
 
   const handleInputFileClick = () => {
     inputFileRef.current.click();
@@ -52,19 +79,11 @@ export default function MenuProfile({}) {
       if (fileSize > 1024) {
         toast("Le fichier ne doit pas depasser 1MB");
         inputFileRef.current.value = null;
+        setFileName("")
       }
     }
   };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setValues({
-      ...values,
-      [name]: value,
-    });
-   
-  }
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     const file = e.target.elements.profilPic.files[0];
@@ -233,7 +252,7 @@ export default function MenuProfile({}) {
                 id="firstname"
                 name="firstname"
                 type="text"
-                value={initValues.firstName}
+                value={firstName}
                 onChange={handleInputChange}
                 className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
               />
@@ -246,7 +265,7 @@ export default function MenuProfile({}) {
               <input
                 id="lastname"
                 name="lastname"
-                value={initValues.lastName}
+                value={lastName}
                 onChange={handleInputChange}
                 type="text"
                 className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -261,7 +280,7 @@ export default function MenuProfile({}) {
                 id="phone"
                 name="phone"
                 type="text"
-                value={initValues.phone}
+                value={phone}
                 onChange={handleInputChange}
                 className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
               />
@@ -275,7 +294,7 @@ export default function MenuProfile({}) {
                 id="whatsapp"
                 name="whatsapp"
                 type="text"
-                value={initValues.whatsapp}
+                value={whatsapp}
                 onChange={handleInputChange}
                 className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
               />
@@ -293,7 +312,7 @@ export default function MenuProfile({}) {
                   id="line1"
                   name="line1"
                   type="text"
-                  value={initValues.line1}
+                  value={line1}
                   onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
@@ -304,7 +323,7 @@ export default function MenuProfile({}) {
                   id="line2"
                   name="line2"
                   type="text"
-                  value={initValues.line2}
+                  value={line2}
                   onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
@@ -315,7 +334,7 @@ export default function MenuProfile({}) {
                   id="commune"
                   name="commune"
                   type="text"
-                  value={initValues.commune}
+                  value={commune}
                   onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
@@ -326,7 +345,7 @@ export default function MenuProfile({}) {
                   id="ville"
                   name="ville"
                   type="text"
-                  value={initValues.ville}
+                  value={ville}
                   onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
