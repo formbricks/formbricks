@@ -14,12 +14,11 @@ import { Fragment, useState, useEffect } from "react";
 import { useForms } from "../lib/forms";
 import { UserRole } from "@prisma/client";
 import { useSession, signIn } from "next-auth/react";
-import { classNames } from "../lib/utils";
+import { classNames, timeSince } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
 import EmptyPageFiller from "./layout/EmptyPageFiller";
 import { format } from "date-fns";
 import CandidateProgress from "./form/CandidateProgress";
-import { timeSince } from "../lib/utils";
 import SearchBar from "./form/SearchBar";
 
 import { fr } from "date-fns/locale";
@@ -254,7 +253,7 @@ export default function FormList() {
                           />
                           {format(new Date(form.dueDate), "yyyy-MM-dd") ===
                           format(new Date(), "yyyy-MM-dd") ? (
-                            <span className='text-base font-normal text-red-800 font-normal line-clamp-3'>
+                            <span className='text-base font-normal text-red-800 line-clamp-3'>
                               Ferme aujourd&apos;hui
                             </span>
                           ) : dateDayDiff(form.dueDate) > 7 ? (
