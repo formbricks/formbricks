@@ -139,14 +139,14 @@ model SessionEvent {
 }
 
 model Address {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @updatedAt @map(name: "updated_at")
-  line1     String
+  id        String      @id @default(uuid())
+  createdAt DateTime    @default(now()) @map(name: "created_at")
+  updatedAt DateTime    @updatedAt @map(name: "updated_at")
+  line1     String      @default("")
   line2     String?
-  commune   String
-  ville     String
-  province  Province
+  commune   String      @default("")
+  ville     String      @default("")
+  province  Province    @default(KN)
   User      User[]
 }
 

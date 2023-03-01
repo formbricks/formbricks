@@ -39,7 +39,6 @@ export default function SignUpPage() {
                 ville:e.target.elements.ville.value,
                 province :e.target.elements.province.value
               },
-
           },
           whatsapp: e.target.elements.whatsapp.value,
           email: e.target.elements.email.value,
@@ -113,8 +112,7 @@ export default function SignUpPage() {
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>
-                  </div>
-                  
+                  </div>                  
                   <div>
                     <label
                       htmlFor="gender"
@@ -157,7 +155,6 @@ export default function SignUpPage() {
                       </div>
                     </div>
                   </div>
-
                   <div>
                     <label
                       htmlFor="dateOfBirth"
@@ -175,7 +172,6 @@ export default function SignUpPage() {
                       />
                     </div>
                   </div>
-
                   <div>
                     <label
                       htmlFor="address"
@@ -188,7 +184,7 @@ export default function SignUpPage() {
                         id="line1"
                         name="line1"
                         type="text"
-                        placeholder="Adresse principale: Numéro, Avenue, Quartier"
+                        placeholder="N° 63, Ave Colonel Mondjiba, Q. Basoko,"
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
@@ -199,7 +195,7 @@ export default function SignUpPage() {
                         id="line2"
                         name="line2"
                         type="text"
-                        placeholder="Adresse 2: Numéro, Avenue, Quartier"
+                        placeholder="Réf. Silikin Village, Concession COTEX"
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>
@@ -230,16 +226,15 @@ export default function SignUpPage() {
                     <div className="mt-1">
                       <select 
                         name="province"
-                        // placeholder="Select your province"
                         id="province"
                         required
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture">
-                        <option value="null" className="placeholder-ui-gray-medium" >Sélectionnez votre province</option>
-                        {Object.keys(DRCProvinces).map((province)=>(<option value={province}>{DRCProvinces[province]}</option>))}
+                        
+                        <option value="" selected disabled hidden className="block text-sm font-medium text-ui-gray-dark">Sélectionnez votre province</option>
+                        {Object.keys(DRCProvinces).map((province)=>(<option className="block text-sm font-medium text-ui-gray-dark" value={province}>{DRCProvinces[province]}</option>))}
                       </select>
                     </div>
                   </div>
-
                   <div>
                     <label
                       htmlFor="phone"
@@ -258,7 +253,6 @@ export default function SignUpPage() {
                       />
                     </div>
                   </div>
-
                   <div>
                     <label
                       htmlFor="whatsapp"
@@ -314,7 +308,6 @@ export default function SignUpPage() {
                       />
                     </div>
                   </div>
-
                   <div>
                     <button
                       type="submit"
