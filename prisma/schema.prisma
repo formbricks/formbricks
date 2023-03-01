@@ -139,35 +139,35 @@ model SessionEvent {
 }
 
 model Address {
-  id        String      @id @default(uuid())
-  createdAt DateTime    @default(now()) @map(name: "created_at")
-  updatedAt DateTime    @updatedAt @map(name: "updated_at")
-  line1     String      @default("")
+  id        String          @id @default(uuid())
+  createdAt DateTime        @default(now()) @map(name: "created_at")
+  updatedAt DateTime        @updatedAt @map(name: "updated_at")
+  line1     String
   line2     String?
-  commune   String      @default("")
-  ville     String      @default("")
-  province  Province    @default(KN)
+  commune   String
+  ville     String
+  province  Province
   User      User[]
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  firstname       String?
-  lastname        String?
-  gender          String
-  dob             DateTime?  @db.Date @map(name: "date_of_birth") 
-  address         Address?   @relation(fields: [addressId], references: [id], onDelete: Cascade)
-  addressId       String?
-  phone           String    @unique
-  photo           String?
-  whatsapp        String?
-  email           String    @unique
-  emailVerified   DateTime? @map(name: "email_verified")
-  password        String
-  role            UserRole  @default(PUBLIC)
-  createdAt       DateTime  @default(now()) @map(name: "created_at")
-  updatedAt       DateTime  @updatedAt @map(name: "updated_at")
-  forms           Form[]
+  id            Int           @id @default(autoincrement())
+  firstname     String
+  lastname      String
+  gender        String
+  dob           DateTime      @db.Date @map(name: "date_of_birth") @default(now())
+  address       Address?       @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  addressId     String?
+  photo         String        @default("")
+  phone         String        @unique
+  whatsapp      String?
+  email         String        @unique
+  emailVerified DateTime?     @map(name: "email_verified")
+  password      String
+  role          UserRole      @default(PUBLIC)
+  createdAt     DateTime      @default(now()) @map(name: "created_at")
+  updatedAt     DateTime      @updatedAt @map(name: "updated_at")
+  forms         Form[]
 
   @@map(name: "users")
 }
