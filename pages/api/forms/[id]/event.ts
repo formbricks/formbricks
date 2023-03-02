@@ -41,6 +41,7 @@ export default async function handle(
   const pagesFormated = formatPages(pages)
   const submissions = {}
 
+
 let candidateEvents = await prisma.sessionEvent.findMany({
   where: {
     AND: [
@@ -77,17 +78,30 @@ let candidateEvents = await prisma.sessionEvent.findMany({
     candidateEvents.map((event) => {
       if(pagesFormated[event.data["pageName"]]) {
         const pageTitle = pagesFormated[event.data["pageName"]].title;
-        const responses = {}
+        let total= null;
+        let goodAnswers=null;
+        let score = null;
+        const candidateResponse = {}
         if(event.data["submission"]) {
           Object.keys(event.data["submission"]).map((key) => {
             const submission = {}
-            const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
+        const goodAnswer = pagesFormated[event.data["pageName"]].blocks[key]?.data?.response;
             const response = event.data["submission"][key];
+            if(goodAnswer && goodAnswer.trim() === response) {
+              total = total === null ? 1: total + 1;
+              goodAnswers = goodAnswers === null ? 1: goodAnswers + 1;
+      } else if(goodAnswer) {
+        total = total === null ? 1 : total + 1;
+      }
+        const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
              submission[question] = response
-            responses[question] = response
+            candidateResponse[question] = response
           })
         }
-        submissions[pageTitle] = responses
+        if(total) {
+        score = !goodAnswers ? 0 : ((goodAnswers / total) * 100).toFixed(2);
+        }
+        score ? submissions[pageTitle] = {candidateResponse, score} : {candidateResponse};
       }
       
     })
