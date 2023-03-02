@@ -78,33 +78,33 @@ let candidateEvents = await prisma.sessionEvent.findMany({
     candidateEvents.map((event) => {
       if(pagesFormated[event.data["pageName"]]) {
         const pageTitle = pagesFormated[event.data["pageName"]].title;
-        let total= null;
-        let goodAnswers=null;
-        let score = null;
+        
         const candidateResponse = {}
+        const length = Object.keys(event.data["submission"]).length;
+        let goodAnswer = 0;
         if(event.data["submission"]) {
           Object.keys(event.data["submission"]).map((key) => {
             const submission = {}
-        const goodAnswer = pagesFormated[event.data["pageName"]].blocks[key]?.data?.response;
+           
             const response = event.data["submission"][key];
-            if(goodAnswer && goodAnswer.trim() === response) {
-              total = total === null ? 1: total + 1;
-              goodAnswers = goodAnswers === null ? 1: goodAnswers + 1;
-      } else if(goodAnswer) {
-        total = total === null ? 1 : total + 1;
-      }
+            goodAnswer =  
+            pagesFormated[event.data["pageName"]].blocks[key]?.data?.response === response ? goodAnswer + 1 
+            : goodAnswer;
+            
         const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
              submission[question] = response
             candidateResponse[question] = response
           })
+          event.data["submission"]["score"] = goodAnswer  / length;
+
         }
-        if(total) {
-        score = !goodAnswers ? 0 : ((goodAnswers / total) * 100).toFixed(2);
-        }
-        score ? submissions[pageTitle] = {candidateResponse, score} : {candidateResponse};
+        
+            submissions[pageTitle] =  (goodAnswer  / length) * 100
       }
       
     })
+
+   
     const error = validateEvents(events);
     if (error) {
       const { status, message } = error;
@@ -112,7 +112,16 @@ let candidateEvents = await prisma.sessionEvent.findMany({
     }
     res.json({ success: true });
       for (const event of events) {
-        event.data =  {...event.data, ...form, submissions}
+        // event.data =  {...event.data, ...form, submissions}
+        event.data =  {...event.data, submissions}
+        delete event.data.createdAt;
+        delete event.data.updatedAt;
+        delete event.data.ownerId;
+        delete event.data.formType;
+        delete event.data.answeringOrder;
+        delete event.data.description;
+        delete event.data.dueDate;
+        delete event.data.schema;
         const candidateEvent = {user: session.user ,  ...event}
       processApiEvent(candidateEvent, formId, session.user.id);
     }
