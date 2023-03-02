@@ -1,11 +1,109 @@
 import React from 'react'
-import Modal from "../Modal";
+import { updateUserProfile, updateAddress } from "../../lib/users";
+import { toast } from "react-toastify";
+import { useRouter } from "next/router";
+import {  PencilIcon } from "@heroicons/react/24/solid";
+import { useSession } from "next-auth/react";
+import { useState, useRef } from "react";
+import { upload } from "../../lib/utils";
+import { DRCProvinces } from "../../lib/enums";
 
 export default function FormUpdateUser() {
+  const router = useRouter();
+  const session = useSession();
+  const { user } = session.data;
+  const [fileName, setFileName] = useState("");
+  const inputFileRef = useRef(null);
+
+  const [firstName, setFirstName] = useState(user.firstname)
+  const [lastName, setLastName]  = useState(user.lastname)
+  const [phone, setPhone]     = useState(user.phone)
+  const [whatsapp, setWhatsapp]  = useState(user.whatsapp)
+  const [line1, setLine1]     = useState(user.address.line1)
+  const [line2, setLine2]     = useState(user.address.line2)
+  const [commune, setCommune]  = useState(user.address.commune)
+  const [ville, setVille]     = useState(user.address.ville)
+
+  const handleInputChange = (e) => {
+    const name = e.target.name;
+    switch (name) {
+      case 'firstname':
+        setFirstName(e.target.value);
+        break;
+      case 'lastname':
+        setLastName(e.target.value);
+        break;
+      case 'phone':
+        setPhone(e.target.value);
+        break;
+      case 'whatsapp':
+        setWhatsapp(e.target.value);
+        break;
+      case 'line1':
+        setLine1(e.target.value);
+        break;
+      case 'line2':
+        setLine2(e.target.value);
+        break;
+      case 'commune':
+        setCommune(e.target.value);
+        break;
+      case 'ville':
+        setVille(e.target.value);
+        break;
+    }
+  }
+
+  const handleInputFileClick = () => {
+    inputFileRef.current.click();
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setFileName(e.target.files[0].name);
+
+      const fileSize = e.target.files[0].size / 1024;
+
+      if (fileSize > 1024) {
+        toast("Le fichier ne doit pas depasser 1MB");
+        inputFileRef.current.value = null;
+        setFileName("")
+      }
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const file = e.target.elements.profilPic.files[0];
+    let photo;
+    file ? (photo = (await upload(file)).Location) : "";
+
+    try {
+      await updateAddress({
+        id: user.addressId,
+        line1: e.target.elements.line1.value,
+        line2: e.target.elements.line2.value,
+        ville: e.target.elements.ville.value,
+        province: e.target.elements.province.value,
+        commune: e.target.elements.commune.value,
+      });
+      await updateUserProfile({
+        id: user.id,
+        firstname: e.target.elements.firstname.value,
+        lastname: e.target.elements.lastname.value,
+        photo: photo,
+        phone: e.target.elements.phone.value,
+        whatsapp: e.target.elements.whatsapp.value,
+      });
+
+      router.reload();
+    } catch (e) {
+      toast(e.message);
+    }
+  };
   return (
     <>
-    <Modal open={open} setOpen={setOpen}>
-        <div className="relative cursor-pointer" onClick={handleInputFileClick}>
+    <div className="relative cursor-pointer" onClick={handleInputFileClick}>
           <figure>
             <img
               className="w-24 h-24 rounded-full mx-auto"
@@ -25,7 +123,7 @@ export default function FormUpdateUser() {
         <div className="text-2xl font-bold mb-2 mt-3 text-ui-gray-dark">
           {user.firstname} {user.lastname}
         </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
           <div className="">
             <hr />
             <h1 className="mt-2 mb-2 font-bold text-center text-ui-gray-dark max-sm:ml-6 max-md:ml-6 max-sm:mt-8 max-md:mb-8 ">
@@ -53,6 +151,7 @@ export default function FormUpdateUser() {
                 id="firstname"
                 name="firstname"
                 type="text"
+                required
                 value={firstName}
                 onChange={handleInputChange}
                 className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -67,6 +166,7 @@ export default function FormUpdateUser() {
                 id="lastname"
                 name="lastname"
                 value={lastName}
+                required
                 onChange={handleInputChange}
                 type="text"
                 className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -82,6 +182,7 @@ export default function FormUpdateUser() {
                 name="phone"
                 type="text"
                 value={phone}
+                required
                 onChange={handleInputChange}
                 className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
               />
@@ -95,6 +196,7 @@ export default function FormUpdateUser() {
                 id="whatsapp"
                 name="whatsapp"
                 type="text"
+                required
                 value={whatsapp}
                 onChange={handleInputChange}
                 className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -113,6 +215,7 @@ export default function FormUpdateUser() {
                   id="line1"
                   name="line1"
                   type="text"
+                  required
                   value={line1}
                   onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -125,6 +228,7 @@ export default function FormUpdateUser() {
                   name="line2"
                   type="text"
                   value={line2}
+                  required
                   onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
@@ -136,6 +240,7 @@ export default function FormUpdateUser() {
                   name="commune"
                   type="text"
                   value={commune}
+                  required
                   onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
@@ -147,6 +252,7 @@ export default function FormUpdateUser() {
                   name="ville"
                   type="text"
                   value={ville}
+                  required
                   onChange={handleInputChange}
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 />
@@ -158,7 +264,7 @@ export default function FormUpdateUser() {
                   id="province"
                   className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                 >
-                  <option value="">Province</option>
+                  <option selected disabled hidden className="block text-sm font-medium text-ui-gray-dark">{DRCProvinces[user.address.province]}</option>
                   {Object.keys(DRCProvinces).map((province) => (
                     <option value={province}>{DRCProvinces[province]}</option>
                   ))}
@@ -176,7 +282,6 @@ export default function FormUpdateUser() {
             </div>
           </div>
         </form>
-      </Modal>
     </>
   )
 }
