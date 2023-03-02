@@ -10,6 +10,7 @@ const DEFAULT_INITIAL_DATA = () => {
   return {
     label: "",
     help: "",
+    response: "",
     required: false,
     multipleChoice: false,
     options: [
@@ -197,6 +198,22 @@ const MultipleChoiceQuestion = (props) => {
             </span>
           </Switch.Label>
         </Switch.Group>
+      </div>
+      <div className="relative z-0 flex mt-2  ">
+        <label
+          className="block mr-2  p-0 mt-2 text-md font-semi-bold text-gray-800 border-0 border-transparent ring-0 "
+          htmlFor="response"
+        >
+          Bonne réponse :
+        </label>
+        <input
+          type="text"
+          id="response"
+          defaultValue={choiceData.response}
+          onBlur={onInputChange("response")}
+          className="block w-full max-w-sm p-0 pl-2 mt-2 text-sm font-light text-green-600 border-0 border-transparent ring-0 focus:ring-0 placeholder:text-gray-300"
+          placeholder="Réponse"
+        />
       </div>
     </div>
   );
