@@ -41,33 +41,42 @@ export default async function handle(
   const pagesFormated = formatPages(pages)
   const submissions = {}
 
+  const candidates = await prisma.user.findMany({
+    skip: 0,
+    take: 200
+  })
 
-let candidateEvents = await prisma.sessionEvent.findMany({
-  where: {
-    AND: [
-      { type: "pageSubmission" },
-      {
-        data: {
-          path: ["candidateId"],
-          equals: session.user.id,
-        },
+  console.log({candidatesLength: candidates.length})
+
+  const updateCandidatesEvents = [];
+
+
+  Promise.all( candidates.map(async(candidate, i)=> {
+    let candidateEvents = await prisma.sessionEvent.findMany({
+      where: {
+        AND: [
+          { type: "pageSubmission" },
+          {
+            data: {
+              path: ["candidateId"],
+              equals: candidate.id,
+            },
+          },
+          {
+            data: {
+              path: ["formId"],
+              equals: formId,
+            },
+          },
+        ],
       },
-      {
-        data: {
-          path: ["formId"],
-          equals: formId,
+      orderBy: [
+        {
+          createdAt: "asc",
         },
-      },
-    ],
-  },
-  orderBy: [
-    {
-      createdAt: "asc",
-    },
-  ],
-});
-
-
+      ],
+    });
+    
 
 
   if (req.method === "POST") {
@@ -86,7 +95,7 @@ let candidateEvents = await prisma.sessionEvent.findMany({
             const submission = {}
         if(event.data["submission"]) {
           Object.keys(event.data["submission"]).map((key) => {
-           pageHasResponsesQuestions =  pagesFormated[event.data["pageName"]].blocks[key]?.data?.response ? true : false ;
+           pageHasResponsesQuestions =  pagesFormated[event.data["pageName"]]?.blocks[key]?.data?.response ? true : false ;
             const response = event.data["submission"][key];
             goodAnswer =  
             pagesFormated[event.data["pageName"]].blocks[key]?.data?.response === response ? goodAnswer + 1 
@@ -105,7 +114,6 @@ let candidateEvents = await prisma.sessionEvent.findMany({
           
           submissions[pageTitle] = submission}
       }
-      
     })
 
    
@@ -114,7 +122,7 @@ let candidateEvents = await prisma.sessionEvent.findMany({
       const { status, message } = error;
       return res.status(status).json({ error: message });
     }
-    res.json({ success: true });
+      
       for (const event of events) {
         // event.data =  {...event.data, ...form, submissions}
         event.data =  {...event.data, submissions}
@@ -126,14 +134,53 @@ let candidateEvents = await prisma.sessionEvent.findMany({
         delete event.data.description;
         delete event.data.dueDate;
         delete event.data.schema;
-        const candidateEvent = {user: session.user ,  ...event}
-      processApiEvent(candidateEvent, formId, session.user.id);
+        const candidateEvent = {user: candidate ,  ...event}
+
+        // console.log({candidateEvent})
+      
+        updateCandidatesEvents.push({
+          candidateEvent,
+          formId,
+          candidateId : candidate.id
+        });
+
+        // await  processApiEvent(candidateEvent, formId, candidate.id);
     }
   }
   // Unknown HTTP Method
   else {
-    throw new Error(
+    throw new Error( 
       `The HTTP ${req.method} method is not supported by this route.`
     );
   }
+  })).then(() => {
+    syncCandidatesEvents(updateCandidatesEvents)
+  })
+
+  let flag = 0;
+  const NB_QUERIES = 10
+  const syncCandidatesEvents = (updateCandidatesEvents) => {
+    Promise.all(updateCandidatesEvents
+        .slice(flag, flag + NB_QUERIES)
+        .map(updateCandidateEvent => {
+          return processApiEvent(
+            updateCandidateEvent.candidateEvent,
+            updateCandidateEvent.formId,
+            updateCandidateEvent.candidateId
+          )
+        })
+    ).then(() => {
+      console.log('status', flag + '-' + (flag + NB_QUERIES))
+      flag += NB_QUERIES;
+      if (flag < updateCandidatesEvents.length) {
+          setTimeout(() => {
+            syncCandidatesEvents(updateCandidatesEvents)
+          }, 2000)
+      }
+    });
+  }
+
+  // await  processApiEvent(candidateEvent, formId, candidate.id);
+
+  res.json({ success: true });
 }
