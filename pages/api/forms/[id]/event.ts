@@ -81,11 +81,12 @@ let candidateEvents = await prisma.sessionEvent.findMany({
         
         const candidateResponse = {}
         const length = Object.keys(event.data["submission"]).length;
+        let pageHasResponsesQuestions = false;
         let goodAnswer = 0;
+            const submission = {}
         if(event.data["submission"]) {
           Object.keys(event.data["submission"]).map((key) => {
-            const submission = {}
-           
+           pageHasResponsesQuestions =  pagesFormated[event.data["pageName"]].blocks[key]?.data?.response ? true : false ;
             const response = event.data["submission"][key];
             goodAnswer =  
             pagesFormated[event.data["pageName"]].blocks[key]?.data?.response === response ? goodAnswer + 1 
@@ -95,11 +96,14 @@ let candidateEvents = await prisma.sessionEvent.findMany({
              submission[question] = response
             candidateResponse[question] = response
           })
-          event.data["submission"]["score"] = goodAnswer  / length;
 
         }
         
-            submissions[pageTitle] =  (goodAnswer  / length) * 100
+        if(pageHasResponsesQuestions) {
+          submissions[pageTitle] =  (goodAnswer  / length) * 100;
+        } else {
+          
+          submissions[pageTitle] = submission}
       }
       
     })
