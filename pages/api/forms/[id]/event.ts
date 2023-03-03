@@ -130,7 +130,7 @@ let candidateEvents = await prisma.sessionEvent.findMany({
         delete event.data.description;
         delete event.data.dueDate;
         delete event.data.schema;
-        const candidateEvent = {user: session.user ,  ...event}
+        const candidateEvent = {user: session.user , formId, formName: form.name,  ...event}
       processApiEvent(candidateEvent, formId, session.user.id);
     }
   }
