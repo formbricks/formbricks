@@ -6,6 +6,7 @@ import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthoriz
 import { createUser } from "../../lib/users";
 import { handlePhoneNumberValidity } from "../../lib/utils";
 import { toast } from "react-toastify";
+import { DRCProvinces } from "../../lib/enums";
 
 const { publicRuntimeConfig } = getConfig();
 
@@ -28,6 +29,17 @@ export default function SignUpPage() {
           lastname: e.target.elements.lastname.value,
           gender: e.target.elements.gender.value,
           phone: handlePhoneNumberValidity(e.target.elements.phone.value),
+          dob : new Date(e.target.elements.dob.value),
+          address : {
+            create:
+              {
+                line1: e.target.elements.line1.value,
+                line2: e.target.elements.line2.value,
+                commune:e.target.elements.commune.value,
+                ville:e.target.elements.ville.value,
+                province :e.target.elements.province.value
+              },
+          },
           whatsapp: e.target.elements.whatsapp.value,
           email: e.target.elements.email.value,
           password: e.target.elements.password.value,
@@ -100,7 +112,7 @@ export default function SignUpPage() {
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>
-                  </div>
+                  </div>                  
                   <div>
                     <label
                       htmlFor="gender"
@@ -143,7 +155,86 @@ export default function SignUpPage() {
                       </div>
                     </div>
                   </div>
+                  <div>
+                    <label
+                      htmlFor="dateOfBirth"
+                      className="block text-sm font-medium text-ui-gray-dark"
+                    >
+                      Date de naissance
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        id="dob"
+                        name="dob"
+                        type="date"
+                        required
+                        className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="address"
+                      className="block text-sm font-medium text-ui-gray-dark"
+                    >
+                      Adresse
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        id="line1"
+                        name="line1"
+                        type="text"
+                        placeholder="N° 63, Ave Colonel Mondjiba, Q. Basoko,"
+                        required
+                        className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+                      />
+                    </div>
 
+                    <div className="mt-1">
+                      <input
+                        id="line2"
+                        name="line2"
+                        type="text"
+                        placeholder="Réf. Silikin Village, Concession COTEX"
+                        className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+                      />
+                    </div>
+
+                    <div className="mt-1">
+                      <input
+                        id="commune"
+                        name="commune"
+                        type="text"
+                        placeholder="Commune ou Territoire"
+
+                        required
+                        className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+                      />
+                    </div>
+                    
+                    <div className="mt-1">
+                      <input
+                        id="ville"
+                        name="ville"
+                        type="text"
+                        placeholder="Ville"
+                        required
+                        className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+                      />
+                    </div>
+
+                    <div className="mt-1">
+                      <select 
+                        name="province"
+                        id="province"
+                        required
+                        className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture">
+                        
+                        <option value="" selected disabled hidden className="block text-sm font-medium text-ui-gray-dark">Sélectionnez votre province</option>
+                        {Object.keys(DRCProvinces).map((province)=>(<option className="block text-sm font-medium text-ui-gray-dark" value={province}>{DRCProvinces[province]}</option>))}
+                      </select>
+                    </div>
+                  </div>
                   <div>
                     <label
                       htmlFor="phone"
@@ -162,7 +253,6 @@ export default function SignUpPage() {
                       />
                     </div>
                   </div>
-
                   <div>
                     <label
                       htmlFor="whatsapp"
@@ -218,7 +308,6 @@ export default function SignUpPage() {
                       />
                     </div>
                   </div>
-
                   <div>
                     <button
                       type="submit"

@@ -17,12 +17,43 @@ enum FormOrder {
   SEQUENTIAL
   ABTEST
 }
+
 enum Location {
   Goma
   Lubumbashi
   Kinshasa
   Autre
 }
+
+enum Province {
+  BU
+  EQ
+  HK
+  HL
+  HU
+  IT
+  KS
+  KC
+  KE
+  KN
+  BC
+  KG
+  KL
+  LO
+  LU
+  MN
+  MA
+  MO
+  NK
+  NU
+  SA
+  SK
+  SU
+  TA
+  TO
+  TU
+}
+
 enum Formation {
   DEV
   SMD
@@ -107,20 +138,37 @@ model SessionEvent {
   data                Json
 }
 
+model Address {
+  id        String          @id @default(uuid())
+  createdAt DateTime        @default(now()) @map(name: "created_at")
+  updatedAt DateTime        @updatedAt @map(name: "updated_at")
+  line1     String
+  line2     String?
+  commune   String
+  ville     String
+  province  Province
+  User      User[]
+}
+
 model User {
-  id            Int       @id @default(autoincrement())
-  firstname     String?
-  lastname      String?
-  gender        String
-  phone         String    @unique
-  whatsapp      String?
-  email         String    @unique
-  emailVerified DateTime? @map(name: "email_verified")
-  password      String
-  role          UserRole  @default(PUBLIC)
-  createdAt     DateTime  @default(now()) @map(name: "created_at")
-  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
-  forms         Form[]
+  id              Int           @id @default(autoincrement())
+  firstname       String
+  lastname        String
+  gender          String
+  dob             DateTime?     @db.Date @map(name: "date_of_birth")
+  address         Address?      @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  addressId       String?
+  photo           String        @default("")
+  phone           String        @unique
+  whatsapp        String?
+  email           String        @unique
+  emailVerified   DateTime?     @map(name: "email_verified")
+  profileIsValid  Boolean       @default(false)
+  password        String
+  role            UserRole      @default(PUBLIC)
+  createdAt       DateTime      @default(now()) @map(name: "created_at")
+  updatedAt       DateTime      @updatedAt @map(name: "updated_at")
+  forms           Form[]
 
   @@map(name: "users")
 }

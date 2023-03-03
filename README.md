@@ -74,11 +74,7 @@ yarn install
 docker run --name snoopformsDB -p 5432:5432 -e POSTGRES_USER=snoopforms -e POSTGRES_PASSWORD=password -e POSTGRES_DB=snoopforms -d postgres
 ```
 
-<<<<<<< HEAD
 1. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database.
-=======
-4. Create a `.env` file based on `.env.example` and change it according to your setup. Make sure the `DATABASE_URL` variable is set correctly according to your local database. For the signup process, an email server with valid SMTP data is necessary.
->>>>>>> 61dc008 (building webhook)
 
 ```
 cp .env.example .env
