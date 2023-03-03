@@ -39,7 +39,6 @@ export default async function handle(
 
   const pages= getFormPages(noCodeForm.blocks, formId)
   const pagesFormated = formatPages(pages)
-  const submissions = {}
 
   const candidates = await prisma.user.findMany({
     where: {
@@ -76,6 +75,7 @@ export default async function handle(
   Promise.all( candidates.map(async(candidate, )=> {
     
     
+    const submissions = {}
 
 
   if (req.method === "POST") {
@@ -191,12 +191,12 @@ export default async function handle(
         .slice(flag, flag + NB_QUERIES)
         .map(updateCandidateEvent => {
 
-          // console.log({updateCandidateEvent: updateCandidateEvent.candidateEvent.data, name: updateCandidateEvent.candidateName, cId: updateCandidateEvent.candidateId})
-    // return processApiEvent(
-          //   updateCandidateEvent.candidateEvent,
-          //   updateCandidateEvent.formId,
-          //   updateCandidateEvent.candidateId
-          // )
+          console.log({updateCandidateEvent: updateCandidateEvent.candidateEvent.data, name: updateCandidateEvent.candidateName, cId: updateCandidateEvent.candidateId})
+    return processApiEvent(
+            updateCandidateEvent.candidateEvent,
+            updateCandidateEvent.formId,
+            updateCandidateEvent.candidateId
+          )
         })
     ).then(() => {
       flag += NB_QUERIES;
