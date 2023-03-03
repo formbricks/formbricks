@@ -49,9 +49,6 @@ function init() {
   document.querySelectorAll("[data-formbricks-button]").forEach((el) => {
     el.addEventListener("click", open);
   });
-  if (config.containerId) {
-    render();
-  }
 }
 window.addEventListener("load", init);
 
@@ -208,6 +205,7 @@ function clean() {
   containerElement.remove();
   containerElement.removeAttribute("data-feedback-type");
   containerElement.removeAttribute("data-success");
+  trap.deactivate();
 }
 
 function resetForm() {
