@@ -174,7 +174,7 @@ export default async function handle(
       if (flag < updateCandidatesEvents.length) {
           setTimeout(() => {
             syncCandidatesEvents(updateCandidatesEvents)
-          }, 2000)
+          }, 1000)
       }
     });
   }
