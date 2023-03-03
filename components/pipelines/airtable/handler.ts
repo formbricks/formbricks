@@ -11,7 +11,7 @@ const sendData = async (pipeline: Pipeline, event: ApiEvent) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-    });
+    }).then(result => console.log(result));
   } catch (error) {
     console.log(error);
   }

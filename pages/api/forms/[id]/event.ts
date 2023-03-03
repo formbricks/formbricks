@@ -4,6 +4,7 @@ import NextCors from "nextjs-cors";
 import { processApiEvent, validateEvents } from "../../../../lib/apiEvents";
 import { formatPages, getFormPages } from "../../../../lib/utils";
 import { prisma } from "../../../../lib/prisma";
+import { computeScore } from "../../../../lib/computeScore";
 
 ///api/submissionsession
 export default async function handle(
@@ -75,42 +76,7 @@ let candidateEvents = await prisma.sessionEvent.findMany({
 
     candidateEvents = [...events, ...candidateEvents];
     
-    candidateEvents.map((event) => {
-      if(pagesFormated[event.data["pageName"]]) {
-        const pageTitle = pagesFormated[event.data["pageName"]].title;
-        
-        const candidateResponse = {}
-        const length = event.data["submission"] ? Object.keys(event.data["submission"]).length : 0;
-        let stepQuestionsHasResponseField = pagesFormated[event.data["pageName"]].title.toLowerCase().includes('finance');
-        let goodAnswer = 0;
-        if(event.data["submission"]) {
-          Object.keys(event.data["submission"]).map((key) => {
-            const submission = {}
-            const response = event.data["submission"][key];
-            goodAnswer =  
-            pagesFormated[event.data["pageName"]].blocks[key]?.data?.response === response ? goodAnswer + 1 
-            : goodAnswer;
-            
-        const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
-             submission[question] = response
-            candidateResponse[question] = response
-          })
-          event.data["submission"]["score"] = goodAnswer  / length;
-
-        }
-        if(!stepQuestionsHasResponseField) {
-          submissions[pageTitle] =  (goodAnswer  / length) * 100;
-        } else {
-          if( Object.values(candidateResponse)[Object.values(candidateResponse).length -1].split(' ')[1].replace('*', "").includes('pr')){
-            submissions[pageTitle] = "p"
-          } else {
-
-          submissions[pageTitle] = parseInt(Object.values(candidateResponse)[Object.values(candidateResponse).length -1].split(' ')[1].replace('*', ""), 10) ;
-        }
-        }
-      }
-      
-    })
+    computeScore(candidateEvents, pagesFormated, submissions);
 
    
     const error = validateEvents(events);
