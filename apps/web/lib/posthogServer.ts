@@ -1,0 +1,27 @@
+const enabled =
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXT_PUBLIC_POSTHOG_API_HOST &&
+  process.env.NEXT_PUBLIC_POSTHOG_API_KEY;
+
+export const capturePosthogEvent = async (userId, eventName, properties = {}) => {
+  if (!enabled) {
+    return;
+  }
+  try {
+    await fetch(`${process.env.NEXT_PUBLIC_POSTHOG_API_HOST}/capture/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: process.env.NEXT_PUBLIC_POSTHOG_API_KEY,
+        event: eventName,
+        properties: {
+          distinct_id: userId.toString(),
+          ...properties,
+        },
+        timestamp: new Date().toISOString(),
+      }),
+    });
+  } catch (error) {
+    console.error("error sending posthog event:", error);
+  }
+};

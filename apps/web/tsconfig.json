@@ -6,12 +6,13 @@
     "baseUrl": ".",
     "paths": {
       /* "@ui/*": ["../../packages/ui/src/*"], */
-      "@/*": ["./src/*"]
+      "@/*": ["./*"]
     },
     "plugins": [
       {
         "name": "next"
       }
-    ]
+    ],
+    "strictNullChecks": true
   }
 }

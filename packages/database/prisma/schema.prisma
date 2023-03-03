@@ -11,76 +11,101 @@ generator client {
   //provider = "prisma-dbml-generator"
 }
 
-enum PipelineType {
-  webhook
-  emailNotification
-  slackNotification
+model SurveyUser {
+  id            String      @id @default(cuid())
+  userId        String
+  email         String
+  createdAt     DateTime    @default(now()) @map(name: "created_at")
+  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId String
+  responses     Response[]
+  attributes    Json        @default("{}")
+  Event         Event[]
 }
 
-enum PipelineEvent {
-  submissionCreated
-  submissionUpdated
-  submissionFinished
+model Response {
+  id             String     @id @default(cuid())
+  createdAt      DateTime   @default(now()) @map(name: "created_at")
+  updatedAt      DateTime   @updatedAt @map(name: "updated_at")
+  finished       Boolean    @default(false)
+  survey         Survey     @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId       String
+  surveyUser     SurveyUser @relation(fields: [surveyUserId], references: [id], onDelete: Cascade)
+  surveyUserId   String
+  data           Json       @default("{}")
+  meta           Json       @default("{}")
+  userAttributes Json       @default("{}")
+  tags           String[]
 }
 
-model Pipeline {
-  id        String          @id @default(cuid())
-  createdAt DateTime        @default(now()) @map(name: "created_at")
-  updatedAt DateTime        @updatedAt @map(name: "updated_at")
-  label     String
-  type      PipelineType
-  events    PipelineEvent[]
-  form      Form            @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId    String
-  enabled   Boolean         @default(true)
-  config    Json            @default("{}")
+model Survey {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now()) @map(name: "created_at")
+  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
+  name          String
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId String
+  questions     Json        @default("[]")
+  audience      Json        @default("{}")
+  responses     Response[]
 }
 
-model Customer {
-  email          String
-  createdAt      DateTime     @default(now()) @map(name: "created_at")
-  updatedAt      DateTime     @updatedAt @map(name: "updated_at")
-  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  organisationId String
-  submissions    Submission[]
-  data           Json         @default("{}")
-
-  @@id([email, organisationId])
+model Event {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now()) @map(name: "created_at")
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId String
+  surveyUser    SurveyUser  @relation(fields: [surveyUserId], references: [id], onDelete: Cascade)
+  surveyUserId  String
+  EventType     EventType?  @relation(fields: [eventTypeId], references: [id])
+  eventTypeId   String?
+  properties    Json        @default("{}")
 }
 
-enum FormType {
-  custom
-  feedback
-  pmf
+enum EventTypeType {
+  code
+  noCode
 }
 
-model Form {
-  id             String       @id @default(cuid())
-  createdAt      DateTime     @default(now()) @map(name: "created_at")
-  updatedAt      DateTime     @updatedAt @map(name: "updated_at")
-  type           FormType
-  label          String
-  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  organisationId String
-  schema         Json         @default("{}")
-  submissions    Submission[]
-  pipelines      Pipeline[]
+model EventType {
+  id           String        @id @default(cuid())
+  createdAt    DateTime      @default(now()) @map(name: "created_at")
+  updatedAt    DateTime      @updatedAt @map(name: "updated_at")
+  name         String
+  type         EventTypeType
+  events       Event[]
+  noCodeConfig Json?
 }
 
-model Submission {
-  id                     String    @id @default(cuid())
-  createdAt              DateTime  @default(now()) @map(name: "created_at")
-  updatedAt              DateTime  @updatedAt @map(name: "updated_at")
-  finished               Boolean   @default(false)
-  archived               Boolean   @default(false)
-  form                   Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
-  formId                 String
-  customer               Customer? @relation(fields: [customerEmail, customerOrganisationId], references: [email, organisationId], onDelete: Cascade)
-  customerEmail          String?
-  customerOrganisationId String?
-  data                   Json      @default("{}")
-  meta                   Json      @default("{}")
-  tags                   String[]
+enum EnvironmentType {
+  production
+  development
+}
+
+model Environment {
+  id         String          @id @default(cuid())
+  createdAt  DateTime        @default(now()) @map(name: "created_at")
+  updatedAt  DateTime        @updatedAt @map(name: "updated_at")
+  type       EnvironmentType
+  product    Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String
+  surveys    Survey[]
+  SurveyUser SurveyUser[]
+  Team       Team?           @relation(fields: [teamId], references: [id])
+  teamId     String?
+  Event      Event[]
+}
+
+model Product {
+  id           String        @id @default(cuid())
+  createdAt    DateTime      @default(now()) @map(name: "created_at")
+  updatedAt    DateTime      @updatedAt @map(name: "updated_at")
+  name         String
+  team         Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId       String
+  environments Environment[]
+  brandColor   String        @default("#000000")
 }
 
 enum Plan {
@@ -88,33 +113,35 @@ enum Plan {
   pro
 }
 
-model Organisation {
-  id               String       @id @default(cuid())
-  createdAt        DateTime     @default(now()) @map(name: "created_at")
-  updatedAt        DateTime     @updatedAt @map(name: "updated_at")
+model Team {
+  id               String        @id @default(cuid())
+  createdAt        DateTime      @default(now()) @map(name: "created_at")
+  updatedAt        DateTime      @updatedAt @map(name: "updated_at")
   name             String
   members          Membership[]
-  forms            Form[]
-  customers        Customer[]
-  plan             Plan         @default(free)
+  products         Product[]
+  plan             Plan          @default(free)
   stripeCustomerId String?
+  Environment      Environment[]
 }
 
 enum MembershipRole {
-  member
-  admin
   owner
+  admin
+  editor
+  developer
+  viewer
 }
 
 model Membership {
-  organisation   Organisation   @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  organisationId String
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String
-  accepted       Boolean        @default(false)
-  role           MembershipRole
+  team     Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId   String
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  accepted Boolean        @default(false)
+  role     MembershipRole
 
-  @@id([userId, organisationId])
+  @@id([userId, teamId])
 }
 
 model ApiKey {
@@ -162,8 +189,8 @@ model User {
   password                  String?
   identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
-  organisations             Membership[]
+  memberships               Membership[]
   accounts                  Account[]
   apiKeys                   ApiKey[]
-  finishedOnboarding        Boolean          @default(false)
+  groupId                   String?
 }
