@@ -25,7 +25,7 @@ export default async function handle(
        formId,
     },
     select: {
-      blocks: true
+      blocks: true,
     }
   })
 
@@ -81,15 +81,11 @@ let candidateEvents = await prisma.sessionEvent.findMany({
         
         const candidateResponse = {}
         const length = Object.keys(event.data["submission"]).length;
-        let stepQuestionsHasResponseField = false;
+        let stepQuestionsHasResponseField = pagesFormated[event.data["pageName"]].title.toLowerCase().includes('test');
         let goodAnswer = 0;
         if(event.data["submission"]) {
           Object.keys(event.data["submission"]).map((key) => {
             const submission = {}
-            
-            if(pagesFormated[event.data["pageName"]].blocks[key]?.data?.response?.length > 0 ) {
-              stepQuestionsHasResponseField = true;
-            }
             const response = event.data["submission"][key];
             goodAnswer =  
             pagesFormated[event.data["pageName"]].blocks[key]?.data?.response === response ? goodAnswer + 1 
@@ -104,7 +100,7 @@ let candidateEvents = await prisma.sessionEvent.findMany({
         }
         if(stepQuestionsHasResponseField) {
 
-          submissions[pageTitle] =  (goodAnswer  / length) * 100
+          submissions[pageTitle] =  (goodAnswer  / length) * 100;
         } else {
           submissions[pageTitle] = Object.values(candidateResponse)[0]
         }
