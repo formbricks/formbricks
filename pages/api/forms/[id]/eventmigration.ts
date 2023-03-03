@@ -44,16 +44,13 @@ export default async function handle(
     where: {
       role: "PUBLIC"
     },
-    skip: 0,
-    take: 4000
   })
 
-  console.log({candidatesLength: candidates.length})
 
   const updateCandidatesEvents = [];
 
 
-  Promise.all( candidates.map(async(candidate, i)=> {
+  Promise.all( candidates.map(async(candidate, )=> {
     let candidateEvents = await prisma.sessionEvent.findMany({
       where: {
         AND: [
@@ -131,7 +128,7 @@ export default async function handle(
       
       for (const event of events) {
         // event.data =  {...event.data, ...form, submissions}
-        event.data =  {...event.data, submissions}
+        event.data =  {...event.data, formId, formName: form.name ,submissions}
         delete event.data.createdAt;
         delete event.data.updatedAt;
         delete event.data.ownerId;
@@ -142,7 +139,6 @@ export default async function handle(
         delete event.data.schema;
         const candidateEvent = {user: candidate ,  ...event}
 
-        // console.log({candidateEvent})
       
         updateCandidatesEvents.push({
           candidateEvent,
@@ -150,10 +146,8 @@ export default async function handle(
           candidateId : candidate.id
         });
 
-        // await  processApiEvent(candidateEvent, formId, candidate.id);
     }
   }
-  // Unknown HTTP Method
   else {
     throw new Error( 
       `The HTTP ${req.method} method is not supported by this route.`
@@ -164,7 +158,7 @@ export default async function handle(
   })
 
   let flag = 0;
-  const NB_QUERIES = 10
+  const NB_QUERIES = 3
   const syncCandidatesEvents = (updateCandidatesEvents) => {
     Promise.all(updateCandidatesEvents
         .slice(flag, flag + NB_QUERIES)
@@ -176,7 +170,6 @@ export default async function handle(
           )
         })
     ).then(() => {
-      console.log('status', flag + '-' + (flag + NB_QUERIES))
       flag += NB_QUERIES;
       if (flag < updateCandidatesEvents.length) {
           setTimeout(() => {
