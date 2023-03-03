@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/feedback",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "source": "src/index.ts",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
