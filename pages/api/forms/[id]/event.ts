@@ -80,7 +80,7 @@ let candidateEvents = await prisma.sessionEvent.findMany({
         const pageTitle = pagesFormated[event.data["pageName"]].title;
         
         const candidateResponse = {}
-        const length = Object.keys(event.data["submission"]).length;
+        const length = event.data["submission"] ? Object.keys(event.data["submission"]).length : 0;
         let stepQuestionsHasResponseField = pagesFormated[event.data["pageName"]].title.toLowerCase().includes('finance');
         let goodAnswer = 0;
         if(event.data["submission"]) {
@@ -101,7 +101,12 @@ let candidateEvents = await prisma.sessionEvent.findMany({
         if(!stepQuestionsHasResponseField) {
           submissions[pageTitle] =  (goodAnswer  / length) * 100;
         } else {
-          submissions[pageTitle] = Object.values(candidateResponse)[Object.values(candidateResponse).length -1].split(' ')[1];
+          if( Object.values(candidateResponse)[Object.values(candidateResponse).length -1].split(' ')[1].replace('*', "").includes('pr')){
+            submissions[pageTitle] = "p"
+          } else {
+
+          submissions[pageTitle] = parseInt(Object.values(candidateResponse)[Object.values(candidateResponse).length -1].split(' ')[1].replace('*', ""), 10) ;
+        }
         }
       }
       
