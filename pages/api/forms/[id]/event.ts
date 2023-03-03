@@ -87,7 +87,7 @@ let candidateEvents = await prisma.sessionEvent.findMany({
           Object.keys(event.data["submission"]).map((key) => {
             const submission = {}
             
-            if(pagesFormated[event.data["pageName"]].blocks[key]?.data?.response ) {
+            if(pagesFormated[event.data["pageName"]].blocks[key]?.data?.response?.length > 0 ) {
               stepQuestionsHasResponseField = true;
             }
             const response = event.data["submission"][key];
