@@ -89,15 +89,11 @@ export default async function handle(
         
         const candidateResponse = {}
         const length = event.data["submission"] ? Object.keys(event.data["submission"]).length : 0;
-        let stepQuestionsHasResponseField = false;
+        let stepQuestionsHasResponseField = pagesFormated[event.data["pageName"]].title.toLowerCase().includes('finance');
         let goodAnswer = 0;
         if(event.data["submission"]) {
           Object.keys(event.data["submission"]).map((key) => {
             const submission = {}
-            
-            if(pagesFormated[event?.data["pageName"]]?.blocks[key]?.data?.response ) {
-              stepQuestionsHasResponseField = true;
-            }
             const response = event.data["submission"][key];
             goodAnswer =  
             pagesFormated[event.data["pageName"]].blocks[key]?.data?.response === response ? goodAnswer + 1 
@@ -110,11 +106,15 @@ export default async function handle(
           event.data["submission"]["score"] = goodAnswer  / length;
 
         }
-        if(stepQuestionsHasResponseField) {
-
-          submissions[pageTitle] =  (goodAnswer  / length) * 100
+        if(!stepQuestionsHasResponseField) {
+          submissions[pageTitle] =  (goodAnswer  / length) * 100;
         } else {
-          submissions[pageTitle] = Object.values(candidateResponse)[0]
+          if( Object.values(candidateResponse)[Object.values(candidateResponse).length -1].split(' ')[1].replace('*', "").includes('pr')){
+            submissions[pageTitle] = "p"
+          } else {
+
+          submissions[pageTitle] = parseInt(Object.values(candidateResponse)[Object.values(candidateResponse).length -1].split(' ')[1].replace('*', ""), 10) ;
+        }
         }
       }
     })
