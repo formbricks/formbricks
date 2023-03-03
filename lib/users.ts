@@ -8,7 +8,7 @@ export enum UserRoles {
 }
 
 export const createUser = async (
-  { firstname, lastname, gender, phone, whatsapp, email, password },
+  { firstname, lastname, gender, dob, address, phone, whatsapp, email, password },
   callbackUrl = ""
 ) => {
   const hashedPassword = await hashPassword(password);
@@ -22,6 +22,8 @@ export const createUser = async (
           firstname,
           lastname,
           gender,
+          dob,
+          address,
           phone,
           whatsapp,
           email,
