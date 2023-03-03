@@ -8,6 +8,7 @@ interface MultipleChoiceQuestionData extends BlockToolData {
   help: string;
   options: string[];
   required: boolean;
+  response: string;
 }
 
 export default class MultipleChoiceQuestion implements BlockTool {
@@ -54,6 +55,7 @@ export default class MultipleChoiceQuestion implements BlockTool {
       options: data.options || [],
       required: data.required || false,
       multipleChoice: data.multipleChoice || false,
+      response: data.response || "",
     };
     this.settings = [
       {

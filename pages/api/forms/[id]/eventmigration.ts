@@ -10,7 +10,6 @@ export default async function handle(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({req});
   await NextCors(req, res, {
     // Options
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
@@ -41,33 +40,42 @@ export default async function handle(
   const pagesFormated = formatPages(pages)
   const submissions = {}
 
-
-let candidateEvents = await prisma.sessionEvent.findMany({
-  where: {
-    AND: [
-      { type: "pageSubmission" },
-      {
-        data: {
-          path: ["candidateId"],
-          equals: session.user.id,
-        },
-      },
-      {
-        data: {
-          path: ["formId"],
-          equals: formId,
-        },
-      },
-    ],
-  },
-  orderBy: [
-    {
-      createdAt: "asc",
+  const candidates = await prisma.user.findMany({
+    where: {
+      role: "PUBLIC"
     },
-  ],
-});
+  })
 
 
+  const updateCandidatesEvents = [];
+
+
+  Promise.all( candidates.map(async(candidate, )=> {
+    let candidateEvents = await prisma.sessionEvent.findMany({
+      where: {
+        AND: [
+          { type: "pageSubmission" },
+          {
+            data: {
+              path: ["candidateId"],
+              equals: candidate.id,
+            },
+          },
+          {
+            data: {
+              path: ["formId"],
+              equals: formId,
+            },
+          },
+        ],
+      },
+      orderBy: [
+        {
+          createdAt: "asc",
+        },
+      ],
+    });
+    
 
 
   if (req.method === "POST") {
@@ -80,14 +88,14 @@ let candidateEvents = await prisma.sessionEvent.findMany({
         const pageTitle = pagesFormated[event.data["pageName"]].title;
         
         const candidateResponse = {}
-        const length = Object.keys(event.data["submission"]).length;
+        const length = event.data["submission"] ? Object.keys(event.data["submission"]).length : 0;
         let stepQuestionsHasResponseField = false;
         let goodAnswer = 0;
         if(event.data["submission"]) {
           Object.keys(event.data["submission"]).map((key) => {
             const submission = {}
             
-            if(pagesFormated[event.data["pageName"]].blocks[key]?.data?.response ) {
+            if(pagesFormated[event?.data["pageName"]]?.blocks[key]?.data?.response ) {
               stepQuestionsHasResponseField = true;
             }
             const response = event.data["submission"][key];
@@ -109,7 +117,6 @@ let candidateEvents = await prisma.sessionEvent.findMany({
           submissions[pageTitle] = Object.values(candidateResponse)[0]
         }
       }
-      
     })
 
    
@@ -118,10 +125,10 @@ let candidateEvents = await prisma.sessionEvent.findMany({
       const { status, message } = error;
       return res.status(status).json({ error: message });
     }
-    res.json({ success: true });
+      
       for (const event of events) {
         // event.data =  {...event.data, ...form, submissions}
-        event.data =  {...event.data, submissions}
+        event.data =  {...event.data, formId, formName: form.name ,submissions}
         delete event.data.createdAt;
         delete event.data.updatedAt;
         delete event.data.ownerId;
@@ -130,14 +137,49 @@ let candidateEvents = await prisma.sessionEvent.findMany({
         delete event.data.description;
         delete event.data.dueDate;
         delete event.data.schema;
-        const candidateEvent = {user: session.user , formId, formName: form.name,  ...event}
-      processApiEvent(candidateEvent, formId, session.user.id);
+        const candidateEvent = {user: candidate ,  ...event}
+
+      
+        updateCandidatesEvents.push({
+          candidateEvent,
+          formId,
+          candidateId : candidate.id
+        });
+
     }
   }
-  // Unknown HTTP Method
   else {
-    throw new Error(
+    throw new Error( 
       `The HTTP ${req.method} method is not supported by this route.`
     );
   }
+  })).then(() => {
+    syncCandidatesEvents(updateCandidatesEvents)
+  })
+
+  let flag = 0;
+  const NB_QUERIES = 3
+  const syncCandidatesEvents = (updateCandidatesEvents) => {
+    Promise.all(updateCandidatesEvents
+        .slice(flag, flag + NB_QUERIES)
+        .map(updateCandidateEvent => {
+          return processApiEvent(
+            updateCandidateEvent.candidateEvent,
+            updateCandidateEvent.formId,
+            updateCandidateEvent.candidateId
+          )
+        })
+    ).then(() => {
+      flag += NB_QUERIES;
+      if (flag < updateCandidatesEvents.length) {
+          setTimeout(() => {
+            syncCandidatesEvents(updateCandidatesEvents)
+          }, 1000)
+      }
+    });
+  }
+
+  // await  processApiEvent(candidateEvent, formId, candidate.id);
+
+  res.json({ success: true });
 }
