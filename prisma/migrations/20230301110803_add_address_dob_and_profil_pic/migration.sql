@@ -8,12 +8,6 @@
 -- CreateEnum
 CREATE TYPE "Province" AS ENUM ('BU', 'EQ', 'HK', 'HL', 'HU', 'IT', 'KS', 'KC', 'KE', 'KN', 'BC', 'KG', 'KL', 'LO', 'LU', 'MN', 'MA', 'MO', 'NK', 'NU', 'SA', 'SK', 'SU', 'TA', 'TO', 'TU');
 
--- AlterEnum
-ALTER TYPE "PipelineEvent" ADD VALUE 'FORM_OPENED';
-
--- AlterEnum
-ALTER TYPE "PipelineType" ADD VALUE 'AIRTABLE';
-
 -- AlterTable
 ALTER TABLE "users" ADD COLUMN     "addressId" TEXT,
 ADD COLUMN     "date_of_birth" DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
