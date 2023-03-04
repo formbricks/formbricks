@@ -319,3 +319,4 @@ export const formatPages = (pages: any[]) => {
   });
   return tempPages;
 }
+

@@ -75,42 +75,58 @@ let candidateEvents = await prisma.sessionEvent.findMany({
 
     candidateEvents = [...events, ...candidateEvents];
     
-    candidateEvents.map((event) => {
-      if(pagesFormated[event.data["pageName"]]) {
-        const pageTitle = pagesFormated[event.data["pageName"]].title;
-        
-        const candidateResponse = {}
-        const length = event.data["submission"] ? Object.keys(event.data["submission"]).length : 0;
-        let stepQuestionsHasResponseField = pagesFormated[event.data["pageName"]].title.toLowerCase().includes('finance');
-        let goodAnswer = 0;
-        if(event.data["submission"]) {
+    candidateEvents.map(event => {
+      const pageTitle = pagesFormated[event.data["pageName"]]?.title
+      let goodAnswer = 0;
+      const length = event.data["submission"]
+      ? Object.keys(event.data["submission"]).length
+      : 0;
+      const isFinanceStep = pageTitle?.toLowerCase().includes('finance')
+      let candidateResponse = {};
+
+      if(pageTitle?.toLowerCase().includes('test') || isFinanceStep) {
+        if (event.data["submission"]) {
           Object.keys(event.data["submission"]).map((key) => {
-            const submission = {}
+            const submission = {};
             const response = event.data["submission"][key];
-            goodAnswer =  
-            pagesFormated[event.data["pageName"]].blocks[key]?.data?.response === response ? goodAnswer + 1 
-            : goodAnswer;
-            
-        const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
-             submission[question] = response
-            candidateResponse[question] = response
-          })
-          event.data["submission"]["score"] = goodAnswer  / length;
+            goodAnswer =
+              pagesFormated[event.data["pageName"]].blocks[key]?.data
+                ?.response === response
+                ? goodAnswer + 1
+                : goodAnswer;
 
-        }
-        if(!stepQuestionsHasResponseField) {
-          submissions[pageTitle] =  (goodAnswer  / length) * 100;
-        } else {
-          if( Object.values(candidateResponse)[Object.values(candidateResponse).length -1].split(' ')[1].replace('*', "").includes('pr')){
-            submissions[pageTitle] = "p"
+            const question =
+              pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
+            submission[question] = response;
+            candidateResponse[question] = response;
+          });
+          // event.data["submission"]["score"] = goodAnswer / length;
+          if(isFinanceStep) {
+            if (
+                    Object.values(candidateResponse)
+                      [Object.values(candidateResponse).length - 1]?.split(" ")[1]
+                      ?.replace("*", "")
+                      ?.includes("pr")
+                  ) {
+                    submissions[pageTitle] = "p";
+                  } else {
+                    submissions[pageTitle] = parseInt(
+                      Object.values(candidateResponse)
+                        [Object.values(candidateResponse).length - 1]?.split(" ")[1]
+                        ?.replace("*", ""),
+                      10
+                    );
+
+
+                  }
           } else {
-
-          submissions[pageTitle] = parseInt(Object.values(candidateResponse)[Object.values(candidateResponse).length -1].split(' ')[1].replace('*', ""), 10) ;
-        }
-        }
+            submissions[pageTitle] =  (goodAnswer / length) * 100;
+          }
+          
+        } 
       }
-      
-    })
+          
+       })
 
    
     const error = validateEvents(events);
