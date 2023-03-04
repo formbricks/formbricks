@@ -44,8 +44,6 @@ export default async function handle(
     where: {
       role: "PUBLIC",
     },
-    skip: 0,
-    take: 20
   })
 
 
@@ -71,7 +69,6 @@ export default async function handle(
     ],
   });
 
-// console.log({candidates})
   Promise.all( candidates.map(async(candidate, )=> {
     
     
@@ -86,9 +83,7 @@ export default async function handle(
        
        return data?.candidateId === candidate.id}
     );
-            console.log('_______________________________________________________________________________')
-              console.log({candidate: `${candidate.firstname} ${candidate.lastname}`})
-
+            
               const candidateLastEvent = candidateEvents;
            candidateLastEvent.map(event => {
           const pageTitle = pagesFormated[event.data["pageName"]]?.title
@@ -124,7 +119,6 @@ export default async function handle(
                           ?.includes("pr")
                       ) {
                         submissions[pageTitle] = "p";
-                        console.log(pageTitle,  "p")
                       } else {
                         submissions[pageTitle] = parseInt(
                           Object.values(candidateResponse)
@@ -133,12 +127,10 @@ export default async function handle(
                           10
                         );
 
-                        console.log(pageTitle, submissions[pageTitle])
 
                       }
               } else {
                 submissions[pageTitle] =  (goodAnswer / length) * 100;
-                console.log(pageTitle,  (goodAnswer / length) * 100)
               }
               
             }
@@ -191,7 +183,6 @@ export default async function handle(
         .slice(flag, flag + NB_QUERIES)
         .map(updateCandidateEvent => {
 
-          console.log({updateCandidateEvent: updateCandidateEvent.candidateEvent.data, name: updateCandidateEvent.candidateName, cId: updateCandidateEvent.candidateId})
     return processApiEvent(
             updateCandidateEvent.candidateEvent,
             updateCandidateEvent.formId,

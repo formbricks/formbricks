@@ -109,7 +109,6 @@ let candidateEvents = await prisma.sessionEvent.findMany({
                       ?.includes("pr")
                   ) {
                     submissions[pageTitle] = "p";
-                    console.log(pageTitle,  "p")
                   } else {
                     submissions[pageTitle] = parseInt(
                       Object.values(candidateResponse)
@@ -118,12 +117,10 @@ let candidateEvents = await prisma.sessionEvent.findMany({
                       10
                     );
 
-                    console.log(pageTitle, submissions[pageTitle])
 
                   }
           } else {
             submissions[pageTitle] =  (goodAnswer / length) * 100;
-            console.log(pageTitle,  (goodAnswer / length) * 100)
           }
           
         } 
