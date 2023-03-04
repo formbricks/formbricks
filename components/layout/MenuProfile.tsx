@@ -9,14 +9,17 @@ import { Fragment, useState } from "react";
 import { classNames } from "../../lib/utils";
 import Modal from "../Modal";
 import FormUpdateUser from "./FormUpdateUser";
+import { useRouter } from "next/router";
 
 export default function MenuProfile({}) {
+  const router = useRouter();
   const session = useSession();
   const { user } = session.data;
   const [open, setOpen] = useState(false);
 
   const onClickSettings = () => {
-    setOpen(true);
+    const url=`/users/update-profile`
+    router.push(url);
   };
 
   return (
