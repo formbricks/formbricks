@@ -7,8 +7,6 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import { Fragment, useState } from "react";
 import { classNames } from "../../lib/utils";
-import Modal from "../Modal";
-import FormUpdateUser from "./FormUpdateUser";
 import { useRouter } from "next/router";
 
 export default function MenuProfile({}) {
@@ -19,7 +17,9 @@ export default function MenuProfile({}) {
 
   const onClickSettings = () => {
     const url=`/users/update-profile`
-    router.push(url);
+    router.push({
+      pathname: url,
+      query : { next : `${router.pathname}`} });
   };
 
   return (
@@ -110,9 +110,6 @@ export default function MenuProfile({}) {
           </>
         )}
       </Menu>
-      <Modal open={open} setOpen={setOpen}>
-        <FormUpdateUser />
-      </Modal>
     </>
   );
 }
