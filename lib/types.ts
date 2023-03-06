@@ -132,7 +132,6 @@ export type pageSubmissionEvent = {
     submissionSessionId: string;
     pageName: string;
     submission: { [key: string]: string };
-    
   };
 };
 
@@ -155,6 +154,14 @@ export type openFormEvent = {
   };
 };
 
+export type scoreSummary = {
+  id?: string;
+  type: "scoreSummary";
+  createdAt?: Date;
+  updatedAt?: Date;
+  data: { [key: string]: string };
+};
+
 export type updateSchemaEvent = {
   id: string;
   createdAt: string;
@@ -167,7 +174,8 @@ export type ApiEvent =
   | pageSubmissionEvent
   | submissionCompletedEvent
   | updateSchemaEvent
-  | openFormEvent;
+  | openFormEvent
+  | scoreSummary;
 
 export type WebhookEvent = Event & { formId: string; timestamp: string };
 

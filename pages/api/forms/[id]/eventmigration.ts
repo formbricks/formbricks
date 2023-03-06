@@ -41,6 +41,7 @@ export default async function handle(
   const candidates = await prisma.user.findMany({
     where: {
       role: "PUBLIC",
+      email: "chadrackmbala20@gmail.com"
     },
   });
 
@@ -155,6 +156,7 @@ export default async function handle(
             formName: form.name,
             submissions,
           };
+          
           delete event.data.createdAt;
           delete event.data.updatedAt;
           delete event.data.ownerId;
@@ -163,6 +165,7 @@ export default async function handle(
           delete event.data.description;
           delete event.data.dueDate;
           delete event.data.schema;
+          event.type = "scoreSummary"
           const candidateEvent = { user: candidate, ...event };
 
           updateCandidatesEvents.push({

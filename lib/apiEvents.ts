@@ -154,6 +154,8 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
         },
       });
     }
+  } else if (event.type === "scoreSummary"){
+    //
   } else {
     throw Error(
       `apiEvents: unsupported event type in event ${JSON.stringify(event)}`
