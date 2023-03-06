@@ -23,6 +23,7 @@ export const validateEvents = (
         "pageSubmission",
         "submissionCompleted",
         "formOpened",
+        "scoreSummary",
         "updateSchema",
       ].includes(event.type)
     ) {
