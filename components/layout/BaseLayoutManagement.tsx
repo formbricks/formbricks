@@ -3,10 +3,9 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { classNames } from "../../lib/utils";
-import MenuBreadcrumbs from "./MenuBreadcrumbs";
 import MenuProfile from "./MenuProfile";
 import MenuSteps from "./MenuSteps";
-import NewFormNavButton from "./NewFormNavButton";
+import { useRouter } from "next/router";
 
 interface BaseLayoutManagementProps {
   title: string;
@@ -34,6 +33,12 @@ export default function BaseLayoutManagement({
     { id: "forms", name: "Sourcings", href: "/" },
     { id: "users", name: "Gestion d'utilisateurs", href: "/users" },
   ];
+  const router = useRouter();
+  if(!user.profileIsValid){
+    const url=`/users/update-profile`
+    router.push(url);
+  }
+
   return (
     <>
       <Head>

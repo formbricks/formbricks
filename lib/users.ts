@@ -146,6 +146,7 @@ export const updateUserProfile = async ({ id, firstname, lastname, photo="", pho
   if(photo!="")obj["photo"] = photo;
   if(phone!="")obj["phone"] = phone;
   if(whatsapp!="")obj["whatsapp"] = whatsapp;
+  obj["profileIsValid"] = true;
 
   try {
     await fetch(`/api/users/update`, {

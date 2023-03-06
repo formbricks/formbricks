@@ -13,13 +13,10 @@ export default function MenuProfile({}) {
   const router = useRouter();
   const session = useSession();
   const { user } = session.data;
-  const [open, setOpen] = useState(false);
 
   const onClickSettings = () => {
     const url=`/users/update-profile`
-    router.push({
-      pathname: url,
-      query : { next : `${router.pathname}`} });
+    router.push(url);
   };
 
   return (

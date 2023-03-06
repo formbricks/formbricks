@@ -93,9 +93,7 @@ export default function UpdateProfile() {
         phone: e.target.elements.phone.value,
         whatsapp: e.target.elements.whatsapp.value,
       });
-      const next = router.query.next
-      router.push(`${next}`);
-    
+      router.push(`/`);
     } catch (e) {
       toast(e.message);
     }
@@ -105,35 +103,29 @@ export default function UpdateProfile() {
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
-            <div className="mt-8 flex-col flex items-center">
-              
-                <div
-                  className="relative cursor-pointer "
-                  onClick={handleInputFileClick}
+            <div className="w-fit m-auto relative cursor-pointer">
+              <figure>
+                <img
+                  className="w-24 h-24 rounded-full mx-auto"
+                  src={user.photo ? user.photo : "/img/avatar-placeholder.png"}
+                />
+                <figcaption
+                  className="absolute bottom-0 right-0 px-1 py-1 font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  style={{ fontSize: 10 }}
                 >
-                  <figure>
-                    <img
-                      className="w-24 h-24 rounded-full mx-auto"
-                      src={
-                        user.photo ? user.photo : "/img/avatar-placeholder.png"
-                      }
-                    />
-                    <figcaption
-                      className="absolute bottom-0 right-0 px-1 py-1 font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                      style={{ fontSize: 10 }}
-                    >
-                      <PencilIcon className="w-4 h-4" aria-hidden="true" />
-                    </figcaption>
-                  </figure>
-                </div>
-                <div className="text-center">
-                  <code className="text-xs ">{fileName}</code>
-                </div>
-                <div className="text-2xl font-bold text-center mb-2 mt-3 text-ui-gray-dark">
-                  {user.firstname} {user.lastname}
-                </div>
-              
+                  <PencilIcon className="w-4 h-4" aria-hidden="true" />
+                </figcaption>
+              </figure>
+            </div>
 
+            <div className="text-center">
+              <code className="text-xs ">{fileName}</code>
+            </div>
+            <div className="text-2xl font-bold text-center mb-2 mt-3 text-ui-gray-dark">
+              {user.firstname} {user.lastname}
+            </div>
+
+            <div className="mt-4">
               <div className="mt-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="">
@@ -164,6 +156,7 @@ export default function UpdateProfile() {
                         name="firstname"
                         type="text"
                         required
+                        placeholder="Jean"
                         value={firstName}
                         onChange={handleInputChange}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -179,6 +172,7 @@ export default function UpdateProfile() {
                         name="lastname"
                         value={lastName}
                         required
+                        placeholder="Kingandi"
                         onChange={handleInputChange}
                         type="text"
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -195,6 +189,7 @@ export default function UpdateProfile() {
                         type="text"
                         value={phone}
                         required
+                        placeholder="+243 820 000 000"
                         onChange={handleInputChange}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
@@ -210,6 +205,7 @@ export default function UpdateProfile() {
                         type="text"
                         required
                         value={whatsapp}
+                        placeholder="+243 810 000 000"
                         onChange={handleInputChange}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
@@ -229,6 +225,7 @@ export default function UpdateProfile() {
                           type="text"
                           required
                           value={line1}
+                          placeholder="N° 63, Ave Colonel Mondjiba, Q. Basoko"
                           onChange={handleInputChange}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
@@ -240,8 +237,8 @@ export default function UpdateProfile() {
                           name="line2"
                           type="text"
                           value={line2}
-                          required
                           onChange={handleInputChange}
+                          placeholder="Réf. Silikin Village, Concession COTEX"
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
                       </div>
@@ -253,6 +250,7 @@ export default function UpdateProfile() {
                           type="text"
                           value={commune}
                           required
+                          placeholder="Commune ou Territoire"
                           onChange={handleInputChange}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
@@ -265,6 +263,7 @@ export default function UpdateProfile() {
                           type="text"
                           value={ville}
                           required
+                          placeholder="Ville"
                           onChange={handleInputChange}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />

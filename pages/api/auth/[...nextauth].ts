@@ -137,18 +137,19 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
             where: { id: user.addressId },
           });
           session.user = {
-            addressId : user.addressId,
-            dob       : user.dob,
-            email     : user.email,
-            firstname : user.firstname,
-            gender    : user.gender,
-            address   : address,
-            id        : user.id,
-            lastname  : user.lastname,
-            phone     : user.phone,
-            photo     : user.photo,
-            role      : user.role,
-            whatsapp  : user.whatsapp,
+            addressId       : user.addressId,
+            dob             : user.dob,
+            email           : user.email,
+            firstname       : user.firstname,
+            gender          : user.gender,
+            address         : address,
+            id              : user.id,
+            lastname        : user.lastname,
+            phone           : user.phone,
+            photo           : user.photo,
+            profileIsValid  : user.profileIsValid,
+            role            : user.role,
+            whatsapp        : user.whatsapp,
           };
         }
         return session;
