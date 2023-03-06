@@ -137,8 +137,8 @@ export default async function handle(
 
       if(isBlockAQuestion(b)){
         if(isLabelInHeaders === -1) {
-          const label = b.data.label.trim() || b.id;
-          headerConfig.push({label ,  key: label})
+          const label = `${b.data.label.trim()} ${b.id}`  || b.id;
+          headerConfig.push({label ,  key: b.id})
         }
         return true;
       }
