@@ -100,10 +100,15 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
 
     const schema = form.schema as SchemaPage[];
 
-    const data = {
-      schema: [...event.data.pages, ...schema],
+    let data = {
+      schema: [],
       updatedAt: new Date(),
     };
+    if (schema.length) {
+      data.schema = [...event.data.pages, ...schema];
+    } else {
+      data.schema = [...event.data.pages];
+    }
 
     await prisma.form.update({
       where: { id: formId },

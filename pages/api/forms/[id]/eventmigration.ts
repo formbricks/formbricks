@@ -44,6 +44,8 @@ export default async function handle(
     where: {
       role: "PUBLIC",
     },
+    skip: 0,
+    take: 2
   })
 
 
@@ -137,6 +139,18 @@ export default async function handle(
           }
               
            })
+
+           Object.values(pagesFormated).map(({title}) => {
+            if(title && !submissions[title] && title.toLowerCase().includes('test')) {
+              submissions[title] = 0;
+              console.log('__in', title)
+            } else if(title && !submissions[title]) {
+              submissions[title] = 'p';
+
+            }
+           })
+           
+           console.log({submissions})
     
     const error = validateEvents(events);
     if (error) {
@@ -155,11 +169,13 @@ export default async function handle(
       delete event.data.description;
       delete event.data.dueDate;
       delete event.data.schema;
-      const candidateEvent = { user: candidate, formId, formName: form.name,  ...event };
+      const candidateEvent = { user: candidate, ...event };
     
       updateCandidatesEvents.push({
         candidateEvent,
         formId,
+        candidateId: candidate.id,
+        candidateName: `${candidate.firstname} - ${candidate.lastname}`,
       });
     }
     

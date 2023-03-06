@@ -128,6 +128,18 @@ let candidateEvents = await prisma.sessionEvent.findMany({
           
        })
 
+       Object.values(pagesFormated).map(({title}) => {
+        if(title && !submissions[title] && title.toLowerCase().includes('test')) {
+          submissions[title] = 0;
+          console.log('__in', title)
+        } else if(title && !submissions[title]) {
+          submissions[title] = 'p';
+
+        }
+       })
+       
+       console.log({submissions})
+
    
     const error = validateEvents(events);
     if (error) {
@@ -137,7 +149,7 @@ let candidateEvents = await prisma.sessionEvent.findMany({
     res.json({ success: true });
       for (const event of events) {
         // event.data =  {...event.data, ...form, submissions}
-        event.data =  {...event.data, submissions}
+        event.data =  {...event.data, submissions, formId, formName: form.name,}
         delete event.data.createdAt;
         delete event.data.updatedAt;
         delete event.data.ownerId;
@@ -146,7 +158,7 @@ let candidateEvents = await prisma.sessionEvent.findMany({
         delete event.data.description;
         delete event.data.dueDate;
         delete event.data.schema;
-        const candidateEvent = {user: session.user , formId, formName: form.name,  ...event}
+        const candidateEvent = {user: session.user ,  ...event}
       processApiEvent(candidateEvent, formId, session.user.id);
     }
   }
