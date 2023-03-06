@@ -1,19 +1,43 @@
 "use client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/DropdownMenu";
 import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
 import { DashboardIcon } from "@/components/ui/icons/DashboardIcon";
 import { FilterIcon } from "@/components/ui/icons/FilterIcon";
-import { SettingsIcon } from "@/components/ui/icons/SettingsIcon";
 import { FormIcon } from "@/components/ui/icons/FormIcon";
+import { SettingsIcon } from "@/components/ui/icons/SettingsIcon";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  Bars3Icon,
+  XMarkIcon,
+  CreditCardIcon,
+  HeartIcon,
+  ArrowRightOnRectangleIcon,
+  PlusIcon,
+  CogIcon,
+  UserCircleIcon,
+  UsersIcon,
+  RocketLaunchIcon,
+  DocumentMagnifyingGlassIcon,
+} from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useMemo } from "react";
-import { Logo } from "../Logo";
 
 export default function EnvironmentsNavbar({ environmentId }) {
   const pathname = usePathname();
@@ -69,14 +93,12 @@ export default function EnvironmentsNavbar({ environmentId }) {
         <>
           <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 justify-between">
-              <div className="flex">
-                <div className="flex flex-shrink-0 items-center">
-                  <Link href="/">
-                    <Logo className="block h-8 w-auto" />
-                  </Link>
-                </div>
-              </div>
               <div className="hidden py-2 sm:flex lg:space-x-4">
+                <Link
+                  href=""
+                  className="from-brand-light to-brand-dark flex items-center justify-center rounded-md bg-gradient-to-b px-1.5 text-white transition-all ease-in-out hover:scale-105">
+                  <PlusIcon className="h-8 w-8" />
+                </Link>
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
@@ -99,9 +121,115 @@ export default function EnvironmentsNavbar({ environmentId }) {
                       className="rounded-full bg-white p-1 text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                       <span className="sr-only">View notifications</span>
                       <BellIcon className="h-6 w-6" aria-hidden="true" />
-                    </button> */}
+                    </button> 
 
                 {/* Profile dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Image
+                      src={AvatarPlaceholder}
+                      width="100"
+                      height="100"
+                      className="h-8 w-8 rounded-full"
+                      alt="Avatar placeholder"
+                    />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    <DropdownMenuLabel>
+                      <span className="font-normal">Signed in as</span> Johannes
+                    </DropdownMenuLabel>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <div>
+                          <p>Productname</p>
+                          <p className=" block text-xs text-slate-500">Product</p>
+                        </div>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuItem>
+                            <span>Formbricks</span>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>
+                            <PlusIcon className="mr-2 h-4 w-4" />
+                            <span>Add product</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <div>
+                          <p>Production</p>
+                          <p className=" block text-xs text-slate-500">Environment</p>
+                        </div>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuItem>
+                            <span>Production</span>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem>
+                            <span>Development</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem>
+                        <UserCircleIcon className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <UsersIcon className="mr-2 h-4 w-4" />
+                        <span>Team</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <CreditCardIcon className="mr-2 h-4 w-4" />
+                        <span>Billing & Plans</span>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem>
+                        <CogIcon className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem>
+                        <DocumentMagnifyingGlassIcon className="mr-2 h-4 w-4" />
+                        <span>Documentation</span>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem>
+                        <RocketLaunchIcon className="mr-2 h-4 w-4" />
+                        <span>Upgrade account</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem>
+                      <HeartIcon className="text-red mr-2 h-4 w-4" />
+                      <span>Contribute to Formbricks</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem>
+                      <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Menu as="div" className="relative ml-3">
                   <div>
                     <Menu.Button className="focus:ring-brand flex max-w-xs items-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
