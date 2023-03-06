@@ -6,6 +6,8 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -20,17 +22,17 @@ import { SettingsIcon } from "@/components/ui/icons/SettingsIcon";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import {
-  Bars3Icon,
-  XMarkIcon,
-  CreditCardIcon,
-  HeartIcon,
   ArrowRightOnRectangleIcon,
-  PlusIcon,
+  Bars3Icon,
   CogIcon,
+  CreditCardIcon,
+  DocumentMagnifyingGlassIcon,
+  HeartIcon,
+  PlusIcon,
+  RocketLaunchIcon,
   UserCircleIcon,
   UsersIcon,
-  RocketLaunchIcon,
-  DocumentMagnifyingGlassIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { signOut } from "next-auth/react";
@@ -38,6 +40,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useMemo } from "react";
+import { useState } from "react";
 
 export default function EnvironmentsNavbar({ environmentId }) {
   const pathname = usePathname();
@@ -86,6 +89,17 @@ export default function EnvironmentsNavbar({ environmentId }) {
     ],
     [pathname]
   );
+
+  let EnvironmentDescription = "Production";
+  const [environment, setEnvironment] = useState("prod");
+
+  //write a function which changes the text of "Environment" to the name of the environment
+
+  if (environment === "prod") {
+    EnvironmentDescription = "Production";
+  } else if (environment === "dev") {
+    EnvironmentDescription = "Development";
+  }
 
   return (
     <Disclosure as="nav" className="border-b border-slate-200 bg-white">
@@ -166,19 +180,16 @@ export default function EnvironmentsNavbar({ environmentId }) {
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
                         <div>
-                          <p>Production</p>
+                          <p>{EnvironmentDescription}</p>
                           <p className=" block text-xs text-slate-500">Environment</p>
                         </div>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
                         <DropdownMenuSubContent>
-                          <DropdownMenuItem>
-                            <span>Production</span>
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem>
-                            <span>Development</span>
-                          </DropdownMenuItem>
+                          <DropdownMenuRadioGroup value={environment} onValueChange={setEnvironment}>
+                            <DropdownMenuRadioItem value="prod">Production</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="dev">Development</DropdownMenuRadioItem>
+                          </DropdownMenuRadioGroup>
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
