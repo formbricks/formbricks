@@ -3,17 +3,27 @@ import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
 import { DashboardIcon } from "@/components/ui/icons/DashboardIcon";
 import { FormIcon } from "@/components/ui/icons/FormIcon";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
+import { useEnvironment } from "@/lib/environments";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useMemo } from "react";
 import { Logo } from "../Logo";
+import LoadingSpinner from "../shared/LoadingSpinner";
 
-export default function EnvironmentsNavbar({ environmentId }) {
+interface EnvironmentsNavbarProps {
+  environmentId: string;
+  session: Session;
+  environment?: any;
+}
+
+export default function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
+  const { environment, isLoadingEnvironment } = useEnvironment(environmentId);
   const pathname = usePathname();
   const userNavigation = useMemo(
     () => [
@@ -105,12 +115,20 @@ export default function EnvironmentsNavbar({ environmentId }) {
                     <Menu.Button className="focus:ring-brand flex max-w-xs items-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
                       <span className="sr-only">Open user menu</span>
                       <Image
-                        src={AvatarPlaceholder}
+                        src={session.user.image || AvatarPlaceholder}
                         width="100"
                         height="100"
                         className="h-8 w-8 rounded-full"
                         alt="Avatar placeholder"
                       />
+                      {isLoadingEnvironment ? (
+                        <LoadingSpinner />
+                      ) : (
+                        <span>
+                          {console.log(environment)}
+                          {environment?.product?.name} | {environment?.type}
+                        </span>
+                      )}
                     </Menu.Button>
                   </div>
                   <Transition
@@ -124,7 +142,7 @@ export default function EnvironmentsNavbar({ environmentId }) {
                     <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right divide-y divide-slate-100 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <div className="px-4 py-3">
                         <p className="text-sm">Signed in as</p>
-                        <p className="truncate text-sm font-medium text-slate-900">Username Placeholder</p>
+                        <p className="truncate text-sm font-medium text-slate-900">{session.user.name}</p>
                       </div>
                       <div className="py-1">
                         {userNavigation.map((item) => (
@@ -206,18 +224,16 @@ export default function EnvironmentsNavbar({ environmentId }) {
             <div className="border-t border-slate-200 pt-4 pb-3">
               <div className="flex items-center px-4">
                 <div className="flex-shrink-0">
-                  <Image className="h-10 w-10 rounded-full" src={AvatarPlaceholder} alt="profile picture" />
+                  <Image
+                    className="h-10 w-10 rounded-full"
+                    src={session.user.image || AvatarPlaceholder}
+                    alt="profile picture"
+                  />
                 </div>
                 <div className="ml-3">
-                  <div className="text-base font-medium text-slate-800">Username Placeholder</div>
-                  <div className="text-sm font-medium text-slate-500">Email Placeholder</div>
+                  <div className="text-base font-medium text-slate-800">{session.user.name}</div>
+                  <div className="text-sm font-medium text-slate-500">{session.user.email}</div>
                 </div>
-                {/*  <button
-                      type="button"
-                      className="ml-auto flex-shrink-0 rounded-full bg-white p-1 text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                      <span className="sr-only">View notifications</span>
-                      <BellIcon className="h-6 w-6" aria-hidden="true" />
-                    </button> */}
               </div>
               <div className="mt-3 space-y-1">
                 {userNavigation.map((item) => (

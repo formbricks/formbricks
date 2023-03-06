@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@formbricks/database";
 import { sendVerificationEmail } from "@/lib/email";
 import { capturePosthogEvent } from "@/lib/posthogServer";
+import { prisma } from "@formbricks/database";
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   if (process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1") {
@@ -23,6 +23,23 @@ export async function POST(request: Request) {
               team: {
                 create: {
                   name: `${user.name}'s Team`,
+                  products: {
+                    create: [
+                      {
+                        name: "My Product",
+                        environments: {
+                          create: [
+                            {
+                              type: "production",
+                            },
+                            {
+                              type: "development",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
                 },
               },
             },

@@ -86,7 +86,6 @@ CREATE TABLE "Environment" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "type" "EnvironmentType" NOT NULL,
     "productId" TEXT NOT NULL,
-    "teamId" TEXT,
 
     CONSTRAINT "Environment_pkey" PRIMARY KEY ("id")
 );
@@ -208,9 +207,6 @@ ALTER TABLE "Event" ADD CONSTRAINT "Event_eventClassId_fkey" FOREIGN KEY ("event
 
 -- AddForeignKey
 ALTER TABLE "Environment" ADD CONSTRAINT "Environment_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Environment" ADD CONSTRAINT "Environment_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;

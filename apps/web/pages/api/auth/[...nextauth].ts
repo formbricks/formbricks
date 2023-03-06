@@ -235,6 +235,23 @@ export const authOptions: NextAuthOptions = {
                   team: {
                     create: {
                       name: `${user.name}'s Team`,
+                      products: {
+                        create: [
+                          {
+                            name: "My Product",
+                            environments: {
+                              create: [
+                                {
+                                  type: "production",
+                                },
+                                {
+                                  type: "development",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
                     },
                   },
                 },

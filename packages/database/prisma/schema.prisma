@@ -92,8 +92,6 @@ model Environment {
   productId String
   surveys   Survey[]
   people    Person[]
-  team      Team?           @relation(fields: [teamId], references: [id])
-  teamId    String?
   event     Event[]
 }
 
@@ -114,15 +112,14 @@ enum Plan {
 }
 
 model Team {
-  id               String        @id @default(cuid())
-  createdAt        DateTime      @default(now()) @map(name: "created_at")
-  updatedAt        DateTime      @updatedAt @map(name: "updated_at")
+  id               String       @id @default(cuid())
+  createdAt        DateTime     @default(now()) @map(name: "created_at")
+  updatedAt        DateTime     @updatedAt @map(name: "updated_at")
   name             String
   members          Membership[]
   products         Product[]
-  plan             Plan          @default(free)
+  plan             Plan         @default(free)
   stripeCustomerId String?
-  environments     Environment[]
 }
 
 enum MembershipRole {

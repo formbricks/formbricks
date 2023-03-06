@@ -8,9 +8,10 @@ export default async function EnvironmentLayout({ children, params }) {
   if (!session) {
     return redirect(`/auth/login`);
   }
+
   return (
     <div>
-      <EnvironmentsNavbar environmentId={params.environmentId} />
+      <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
       <main className="min-h-screen bg-slate-50">
         {children}
         <main />
