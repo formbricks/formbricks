@@ -31,7 +31,6 @@ export async function handleAirtable(pipeline: Pipeline, event: ApiEvent) {
     ) {
       await sendData(pipeline, event);
     } else if ((event.type = "scoreSummary")) {
-      console.log("scoreSummary");
       pipeline.events.includes("PAGE_SUBMISSION");
       await sendData(pipeline, event);
     }

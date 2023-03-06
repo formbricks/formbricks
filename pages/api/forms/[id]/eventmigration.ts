@@ -142,7 +142,6 @@ export default async function handle(
           }
         });
 
-        console.log("israelmateta685@gmail.com",{submissions})
 
         const error = validateEvents(events);
         if (error) {
