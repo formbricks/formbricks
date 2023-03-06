@@ -10,7 +10,7 @@ export default async function handle(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({req});
+  const session = await getSession({ req });
   await NextCors(req, res, {
     // Options
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
@@ -22,69 +22,63 @@ export default async function handle(
 
   const noCodeForm = await prisma.noCodeForm.findUnique({
     where: {
-       formId,
+      formId,
     },
     select: {
       blocks: true,
-    }
-  })
+    },
+  });
 
   const form = await prisma.form.findUnique({
     where: {
-       id:formId,
+      id: formId,
     },
-  })
+  });
 
+  const pages = getFormPages(noCodeForm.blocks, formId);
+  const pagesFormated = formatPages(pages);
+  const submissions = {};
 
-
-  const pages= getFormPages(noCodeForm.blocks, formId)
-  const pagesFormated = formatPages(pages)
-  const submissions = {}
-
-
-let candidateEvents = await prisma.sessionEvent.findMany({
-  where: {
-    AND: [
-      { type: "pageSubmission" },
-      {
-        data: {
-          path: ["candidateId"],
-          equals: session.user.id,
+  let candidateEvents = await prisma.sessionEvent.findMany({
+    where: {
+      AND: [
+        { type: "pageSubmission" },
+        {
+          data: {
+            path: ["candidateId"],
+            equals: session.user.id,
+          },
         },
-      },
-      {
-        data: {
-          path: ["formId"],
-          equals: formId,
+        {
+          data: {
+            path: ["formId"],
+            equals: formId,
+          },
         },
+      ],
+    },
+    orderBy: [
+      {
+        createdAt: "asc",
       },
     ],
-  },
-  orderBy: [
-    {
-      createdAt: "asc",
-    },
-  ],
-});
-
-
-
+  });
 
   if (req.method === "POST") {
     const { events } = req.body;
 
     candidateEvents = [...events, ...candidateEvents];
-    
-    candidateEvents.map(event => {
-      const pageTitle = pagesFormated[event.data["pageName"]]?.title
+
+    candidateEvents.map((event) => {
+      const pageTitle = pagesFormated[event.data["pageName"]]?.title;
       let goodAnswer = 0;
       const length = event.data["submission"]
-      ? Object.keys(event.data["submission"]).length
-      : 0;
-      const isFinanceStep = pageTitle?.toLowerCase().includes('finance')
+        ? Object.keys(event.data["submission"]).length
+        : 0;
+      const isFinanceStep = pageTitle?.toLowerCase().includes("finance");
       let candidateResponse = {};
 
-      if(pageTitle?.toLowerCase().includes('test') || isFinanceStep) {
+      if (pageTitle?.toLowerCase().includes("test") || isFinanceStep) {
         if (event.data["submission"]) {
           Object.keys(event.data["submission"]).map((key) => {
             const submission = {};
@@ -101,64 +95,59 @@ let candidateEvents = await prisma.sessionEvent.findMany({
             candidateResponse[question] = response;
           });
           // event.data["submission"]["score"] = goodAnswer / length;
-          if(isFinanceStep) {
+          if (isFinanceStep) {
             if (
-                    Object.values(candidateResponse)
-                      [Object.values(candidateResponse).length - 1]?.split(" ")[1]
-                      ?.replace("*", "")
-                      ?.includes("pr")
-                  ) {
-                    submissions[pageTitle] = "p";
-                  } else {
-                    submissions[pageTitle] = parseInt(
-                      Object.values(candidateResponse)
-                        [Object.values(candidateResponse).length - 1]?.split(" ")[1]
-                        ?.replace("*", ""),
-                      10
-                    );
-
-
-                  }
+              Object.values(candidateResponse)
+                [Object.values(candidateResponse).length - 1]?.split(" ")[1]
+                ?.replace("*", "")
+                ?.includes("pr")
+            ) {
+              submissions[pageTitle] = "p";
+            } else {
+              submissions[pageTitle] = parseInt(
+                Object.values(candidateResponse)
+                  [Object.values(candidateResponse).length - 1]?.split(" ")[1]
+                  ?.replace("*", ""),
+                10
+              );
+            }
           } else {
-            submissions[pageTitle] =  (goodAnswer / length) * 100;
+            submissions[pageTitle] = (goodAnswer / length) * 100;
           }
-          
-        } 
-      }
-          
-       })
-
-       Object.values(pagesFormated).map(({title}) => {
-        if(title && !submissions[title] && title.toLowerCase().includes('test')) {
-          submissions[title] = 0;
-          console.log('__in', title)
-        } else if(title && !submissions[title]) {
-          submissions[title] = 'p';
-
         }
-       })
-       
-       console.log({submissions})
+      }
+    });
 
-   
+    Object.values(pagesFormated).map(({ title }) => {
+      if (
+        title &&
+        !submissions[title] &&
+        title.toLowerCase().includes("test")
+      ) {
+        submissions[title] = 0;
+      } else if (title && !submissions[title]) {
+        submissions[title] = "p";
+      }
+    });
+
     const error = validateEvents(events);
     if (error) {
       const { status, message } = error;
       return res.status(status).json({ error: message });
     }
     res.json({ success: true });
-      for (const event of events) {
-        // event.data =  {...event.data, ...form, submissions}
-        event.data =  {...event.data, submissions, formId, formName: form.name,}
-        delete event.data.createdAt;
-        delete event.data.updatedAt;
-        delete event.data.ownerId;
-        delete event.data.formType;
-        delete event.data.answeringOrder;
-        delete event.data.description;
-        delete event.data.dueDate;
-        delete event.data.schema;
-        const candidateEvent = {user: session.user ,  ...event}
+    for (const event of events) {
+      // event.data =  {...event.data, ...form, submissions}
+      event.data = { ...event.data, submissions, formId, formName: form.name };
+      delete event.data.createdAt;
+      delete event.data.updatedAt;
+      delete event.data.ownerId;
+      delete event.data.formType;
+      delete event.data.answeringOrder;
+      delete event.data.description;
+      delete event.data.dueDate;
+      delete event.data.schema;
+      const candidateEvent = { user: session.user, ...event };
       processApiEvent(candidateEvent, formId, session.user.id);
     }
   }

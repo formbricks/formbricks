@@ -22,32 +22,27 @@ export default async function handle(
 
   const noCodeForm = await prisma.noCodeForm.findUnique({
     where: {
-       formId,
+      formId,
     },
     select: {
-      blocks: true
-    }
-  })
+      blocks: true,
+    },
+  });
 
   const form = await prisma.form.findUnique({
     where: {
-       id:formId,
+      id: formId,
     },
-  })
+  });
 
-
-
-  const pages= getFormPages(noCodeForm.blocks, formId)
-  const pagesFormated = formatPages(pages)
+  const pages = getFormPages(noCodeForm.blocks, formId);
+  const pagesFormated = formatPages(pages);
 
   const candidates = await prisma.user.findMany({
     where: {
       role: "PUBLIC",
     },
-    skip: 0,
-    take: 2
-  })
-
+  });
 
   const updateCandidatesEvents = [];
 
@@ -55,7 +50,7 @@ export default async function handle(
     where: {
       AND: [
         { type: "pageSubmission" },
-       
+
         {
           data: {
             path: ["formId"],
@@ -71,32 +66,28 @@ export default async function handle(
     ],
   });
 
-  Promise.all( candidates.map(async(candidate, )=> {
-    
-    
-    const submissions = {}
+  Promise.all(
+    candidates.map(async (candidate) => {
+      const submissions = {};
 
+      if (req.method === "POST") {
+        const { events } = req.body;
 
-  if (req.method === "POST") {
-    const { events } = req.body;
+        const candidateEvents = allEvents.filter(({ data }) => {
+          return data?.candidateId === candidate.id;
+        });
 
-    const candidateEvents = allEvents.filter(
-      ({ data }) => {
-       
-       return data?.candidateId === candidate.id}
-    );
-            
-              const candidateLastEvent = candidateEvents;
-           candidateLastEvent.map(event => {
-          const pageTitle = pagesFormated[event.data["pageName"]]?.title
+        const candidateLastEvent = candidateEvents;
+        candidateLastEvent.map((event) => {
+          const pageTitle = pagesFormated[event.data["pageName"]]?.title;
           let goodAnswer = 0;
           const length = event.data["submission"]
-          ? Object.keys(event.data["submission"]).length
-          : 0;
-          const isFinanceStep = pageTitle?.toLowerCase().includes('finance')
+            ? Object.keys(event.data["submission"]).length
+            : 0;
+          const isFinanceStep = pageTitle?.toLowerCase().includes("finance");
           let candidateResponse = {};
 
-          if(pageTitle?.toLowerCase().includes('test') || isFinanceStep) {
+          if (pageTitle?.toLowerCase().includes("test") || isFinanceStep) {
             if (event.data["submission"]) {
               Object.keys(event.data["submission"]).map((key) => {
                 const submission = {};
@@ -106,112 +97,113 @@ export default async function handle(
                     ?.response === response
                     ? goodAnswer + 1
                     : goodAnswer;
-    
+
                 const question =
                   pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
                 submission[question] = response;
                 candidateResponse[question] = response;
               });
               // event.data["submission"]["score"] = goodAnswer / length;
-              if(isFinanceStep) {
+              if (isFinanceStep) {
                 if (
-                        Object.values(candidateResponse)
-                          [Object.values(candidateResponse).length - 1]?.split(" ")[1]
-                          ?.replace("*", "")
-                          ?.includes("pr")
-                      ) {
-                        submissions[pageTitle] = "p";
-                      } else {
-                        submissions[pageTitle] = parseInt(
-                          Object.values(candidateResponse)
-                            [Object.values(candidateResponse).length - 1]?.split(" ")[1]
-                            ?.replace("*", ""),
-                          10
-                        );
-
-
-                      }
+                  Object.values(candidateResponse)
+                    [Object.values(candidateResponse).length - 1]?.split(" ")[1]
+                    ?.replace("*", "")
+                    ?.includes("pr")
+                ) {
+                  submissions[pageTitle] = "p";
+                } else {
+                  submissions[pageTitle] = parseInt(
+                    Object.values(candidateResponse)
+                      [Object.values(candidateResponse).length - 1]?.split(
+                        " "
+                      )[1]
+                      ?.replace("*", ""),
+                    10
+                  );
+                }
               } else {
-                submissions[pageTitle] =  (goodAnswer / length) * 100;
+                submissions[pageTitle] = (goodAnswer / length) * 100;
               }
-              
             }
           }
-              
-           })
+        });
 
-           Object.values(pagesFormated).map(({title}) => {
-            if(title && !submissions[title] && title.toLowerCase().includes('test')) {
-              submissions[title] = 0;
-              console.log('__in', title)
-            } else if(title && !submissions[title]) {
-              submissions[title] = 'p';
+        Object.values(pagesFormated).map(({ title }) => {
+          if (
+            title &&
+            !submissions[title] &&
+            title.toLowerCase().includes("test")
+          ) {
+            submissions[title] = 0;
+          } else if (title && !submissions[title]) {
+            submissions[title] = "p";
+          }
+        });
 
-            }
-           })
-           
-           console.log({submissions})
-    
-    const error = validateEvents(events);
-    if (error) {
-      const { status, message } = error;
-      return res.status(status).json({ error: message });
-    }
-    
-    for (const event of events) {
-      // event.data =  {...event.data, ...form, submissions}
-      event.data = { ...event.data, formId, formName: form.name, submissions };
-      delete event.data.createdAt;
-      delete event.data.updatedAt;
-      delete event.data.ownerId;
-      delete event.data.formType;
-      delete event.data.answeringOrder;
-      delete event.data.description;
-      delete event.data.dueDate;
-      delete event.data.schema;
-      const candidateEvent = { user: candidate, ...event };
-    
-      updateCandidatesEvents.push({
-        candidateEvent,
-        formId,
-        candidateId: candidate.id,
-        candidateName: `${candidate.firstname} - ${candidate.lastname}`,
-      });
-    }
-    
-     
-  }
-  else {
-    throw new Error( 
-      `The HTTP ${req.method} method is not supported by this route.`
-    );
-  }
-  })).then(() => {
-    syncCandidatesEvents(updateCandidatesEvents)
-  })
+        const error = validateEvents(events);
+        if (error) {
+          const { status, message } = error;
+          return res.status(status).json({ error: message });
+        }
+
+        for (const event of events) {
+          // event.data =  {...event.data, ...form, submissions}
+          event.data = {
+            ...event.data,
+            formId,
+            formName: form.name,
+            submissions,
+          };
+          delete event.data.createdAt;
+          delete event.data.updatedAt;
+          delete event.data.ownerId;
+          delete event.data.formType;
+          delete event.data.answeringOrder;
+          delete event.data.description;
+          delete event.data.dueDate;
+          delete event.data.schema;
+          const candidateEvent = { user: candidate, ...event };
+
+          updateCandidatesEvents.push({
+            candidateEvent,
+            formId,
+            candidateId: candidate.id,
+            candidateName: `${candidate.firstname} - ${candidate.lastname}`,
+          });
+        }
+      } else {
+        throw new Error(
+          `The HTTP ${req.method} method is not supported by this route.`
+        );
+      }
+    })
+  ).then(() => {
+    syncCandidatesEvents(updateCandidatesEvents);
+  });
 
   let flag = 0;
-  const NB_QUERIES = 1
+  const NB_QUERIES = 1;
   const syncCandidatesEvents = (updateCandidatesEvents) => {
-    Promise.all(updateCandidatesEvents
+    Promise.all(
+      updateCandidatesEvents
         .slice(flag, flag + NB_QUERIES)
-        .map(updateCandidateEvent => {
-
-    return processApiEvent(
+        .map((updateCandidateEvent) => {
+          return processApiEvent(
             updateCandidateEvent.candidateEvent,
             updateCandidateEvent.formId,
             updateCandidateEvent.candidateId
-          )
+          );
         })
     ).then(() => {
       flag += NB_QUERIES;
       if (flag < updateCandidatesEvents.length) {
-          setTimeout(() => {
-            syncCandidatesEvents(updateCandidatesEvents)
-          }, 1000)
+        setTimeout(() => {
+          syncCandidatesEvents(updateCandidatesEvents);
+        }, 1000);
       }
     });
-  }
+  };
 
   // await  processApiEvent(candidateEvent, formId, candidate.id);
 
