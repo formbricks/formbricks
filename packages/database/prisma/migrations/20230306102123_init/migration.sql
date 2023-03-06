@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "EventTypeType" AS ENUM ('code', 'noCode');
+CREATE TYPE "EventType" AS ENUM ('code', 'noCode');
 
 -- CreateEnum
 CREATE TYPE "EnvironmentType" AS ENUM ('production', 'development');
@@ -14,7 +14,7 @@ CREATE TYPE "MembershipRole" AS ENUM ('owner', 'admin', 'editor', 'developer', '
 CREATE TYPE "IdentityProvider" AS ENUM ('email', 'github');
 
 -- CreateTable
-CREATE TABLE "SurveyUser" (
+CREATE TABLE "Person" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE "SurveyUser" (
     "environmentId" TEXT NOT NULL,
     "attributes" JSONB NOT NULL DEFAULT '{}',
 
-    CONSTRAINT "SurveyUser_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Person_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -33,7 +33,7 @@ CREATE TABLE "Response" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "finished" BOOLEAN NOT NULL DEFAULT false,
     "surveyId" TEXT NOT NULL,
-    "surveyUserId" TEXT NOT NULL,
+    "personId" TEXT NOT NULL,
     "data" JSONB NOT NULL DEFAULT '{}',
     "meta" JSONB NOT NULL DEFAULT '{}',
     "userAttributes" JSONB NOT NULL DEFAULT '{}',
@@ -60,23 +60,23 @@ CREATE TABLE "Event" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "environmentId" TEXT NOT NULL,
-    "surveyUserId" TEXT NOT NULL,
-    "eventTypeId" TEXT,
+    "personId" TEXT NOT NULL,
+    "eventClassId" TEXT,
     "properties" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Event_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "EventType" (
+CREATE TABLE "EventClass" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
-    "type" "EventTypeType" NOT NULL,
+    "type" "EventType" NOT NULL,
     "noCodeConfig" JSONB,
 
-    CONSTRAINT "EventType_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "EventClass_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -186,13 +186,13 @@ CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provi
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- AddForeignKey
-ALTER TABLE "SurveyUser" ADD CONSTRAINT "SurveyUser_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Person" ADD CONSTRAINT "Person_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Response" ADD CONSTRAINT "Response_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Response" ADD CONSTRAINT "Response_surveyUserId_fkey" FOREIGN KEY ("surveyUserId") REFERENCES "SurveyUser"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Response" ADD CONSTRAINT "Response_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Survey" ADD CONSTRAINT "Survey_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -201,10 +201,10 @@ ALTER TABLE "Survey" ADD CONSTRAINT "Survey_environmentId_fkey" FOREIGN KEY ("en
 ALTER TABLE "Event" ADD CONSTRAINT "Event_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Event" ADD CONSTRAINT "Event_surveyUserId_fkey" FOREIGN KEY ("surveyUserId") REFERENCES "SurveyUser"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Event" ADD CONSTRAINT "Event_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Event" ADD CONSTRAINT "Event_eventTypeId_fkey" FOREIGN KEY ("eventTypeId") REFERENCES "EventType"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Event" ADD CONSTRAINT "Event_eventClassId_fkey" FOREIGN KEY ("eventClassId") REFERENCES "EventClass"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Environment" ADD CONSTRAINT "Environment_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
