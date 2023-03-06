@@ -41,6 +41,7 @@ export default async function handle(
   const candidates = await prisma.user.findMany({
     where: {
       role: "PUBLIC",
+      email: "israelmateta685@gmail.com"
     },
   });
 
@@ -137,9 +138,11 @@ export default async function handle(
           ) {
             submissions[title] = 0;
           } else if (title && !submissions[title]) {
-            submissions[title] = "p";
+            submissions[title] = "";
           }
         });
+
+        console.log("israelmateta685@gmail.com",{submissions})
 
         const error = validateEvents(events);
         if (error) {
@@ -155,7 +158,7 @@ export default async function handle(
             formName: form.name,
             submissions,
           };
-
+          
           delete event.data.createdAt;
           delete event.data.updatedAt;
           delete event.data.ownerId;
