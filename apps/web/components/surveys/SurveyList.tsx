@@ -12,7 +12,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { Fragment } from "react";
 
-export default function surveysList({ environmentId }) {
+export default function SurveysList({ environmentId }) {
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
 
   const newsurvey = async () => {

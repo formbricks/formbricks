@@ -4,7 +4,8 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "/Users/matthiasnannt/Developer/formbricks/apps/demo/.next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

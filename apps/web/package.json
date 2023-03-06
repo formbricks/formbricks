@@ -32,6 +32,7 @@
     "@tailwindcss/forms": "^0.5.3",
     "@types/bcryptjs": "^2.4.2",
     "autoprefixer": "^10.4.13",
+    "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.21",
     "tailwindcss": "^3.2.7",
     "tailwind-merge": "^1.10.0",
