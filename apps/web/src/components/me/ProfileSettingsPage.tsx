@@ -122,42 +122,43 @@ export default function ProfileSettingsPage() {
       </div>
       {openNewApiKeyModal && (
         <Modal open={openNewApiKeyModal} setOpen={setOpenNewApiKeyModal}>
-          <h2 className="text-2xl font-bold leading-tight tracking-tight text-slate-900">
-            Create a Personal API Key
-          </h2>
-          <hr className="my-4 w-full text-slate-400" />
-          <form
-            onSubmit={async (e: any) => {
-              e.preventDefault();
-              const apiKey = await createApiKey({ label: e.target.label.value });
-              mutateApiKeys([...JSON.parse(JSON.stringify(apiKeys)), apiKey], false);
-              setOpenNewApiKeyModal(false);
-            }}>
-            <div>
-              <label htmlFor="label" className="block text-sm font-medium text-slate-700">
-                Email
-              </label>
-              <div className="mt-1">
-                <input
-                  type="text"
-                  name="label"
-                  id="label"
-                  className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="Label, e.g. Github"
-                />
+          <div className="w-full">
+            <h2 className="text-2xl font-bold leading-tight tracking-tight text-slate-900">
+              Create new Personal API Key
+            </h2>
+            <hr className="my-4 w-full text-slate-400" />
+            <form
+              onSubmit={async (e: any) => {
+                e.preventDefault();
+                const apiKey = await createApiKey({ label: e.target.label.value });
+                mutateApiKeys([...JSON.parse(JSON.stringify(apiKeys)), apiKey], false);
+                setOpenNewApiKeyModal(false);
+              }}>
+              <div>
+                <label htmlFor="label" className="block text-sm font-medium text-slate-700">
+                  Label
+                </label>
+                <div className="mt-1">
+                  <input
+                    type="text"
+                    name="label"
+                    id="label"
+                    className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="e.g. Github"
+                  />
+                </div>
               </div>
-            </div>
-            <p className="mt-3 text-sm text-slate-800">
-              Key value will only ever be shown once, immediately after creation. Copy it to your destination
-              right away.
-            </p>
-            <div className="mt-4 flex w-full justify-end">
-              <Button variant="secondary" className="mr-2">
-                Cancel
-              </Button>
-              <Button type="submit">Create</Button>
-            </div>
-          </form>
+              <p className="mt-3 text-sm text-slate-800">
+                The API key will only be shown once. Copy it to your destination right away.
+              </p>
+              <div className="mt-4 flex w-full justify-end">
+                <Button variant="secondary" className="mr-2">
+                  Cancel
+                </Button>
+                <Button type="submit">Create</Button>
+              </div>
+            </form>
+          </div>
         </Modal>
       )}
     </div>
