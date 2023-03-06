@@ -15,7 +15,6 @@ export default async function handle(
     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
   });
   const formId = req.query.id.toString();
-  const questionLabel = req.query.questionLabel.toString();
   const pageId = req.query.candidateId.toString();
   const session = await getSession({ req: req });
 
@@ -133,11 +132,11 @@ export default async function handle(
     const page = formPages.filter(({id}) => id === pageId)
 
     const pageQuestions = page[0].blocks.filter((b) => {
-      const isLabelInHeaders = headerConfig.findIndex(({label}) => label === b.data.label);
+      const isLabelInHeaders = headerConfig.findIndex(({label}) => label === b.id);
 
       if(isBlockAQuestion(b)){
         if(isLabelInHeaders === -1) {
-          const label = b.data.label.trim() || b.id;
+          const label =  b.id;
           headerConfig.push({label ,  key: label})
         }
         return true;
@@ -153,7 +152,7 @@ export default async function handle(
           Object.keys(r.submission).map((submissionId) => {
             const submissionFind = pageQuestions.find(({id}) => id === submissionId)
             if(submissionFind) {
-              const label = submissionFind.data.label.trim() || submissionFind.id
+              const label =submissionFind.id
               r[label] =  r.submission[submissionId];
             delete  r.submission[submissionId];
             }

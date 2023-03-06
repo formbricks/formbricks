@@ -58,10 +58,10 @@ const AnalyticsCard: React.FC<Props> = ({
   const [headers, setHeaders] = useState([]);
   const [questionsStats, setQuestionsStats] = useState<QuestionStatType>(null);
   const regexPattern = /[^A-Za-z0-9]/g;
-  const fileTitle = `${formName} _ ${label.replace(
+  const fileTitle = `${formName} _ ${label ? label.replace(
     regexPattern,
     "_"
-  )}_${new Date()}`;
+  ) : ""}_${new Date()}`;
 
   useEffect(() => {
     if (isItemOpened) {
