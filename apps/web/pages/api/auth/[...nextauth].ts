@@ -269,9 +269,9 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/auth/signin",
+    signIn: "/auth/login",
     signOut: "/auth/logout",
-    error: "/auth/signin", // Error code passed in query string as ?error=
+    error: "/auth/login", // Error code passed in query string as ?error=
   },
 };
 

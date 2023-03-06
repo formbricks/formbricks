@@ -103,7 +103,7 @@ export const SignupForm = () => {
 
           <div className="mt-3 text-center text-xs text-slate-600">
             Already have an account?{" "}
-            <Link href="/auth/signin" className="text-brand hover:text-brand-light">
+            <Link href="/auth/login" className="text-brand hover:text-brand-light">
               Log in.
             </Link>
           </div>
