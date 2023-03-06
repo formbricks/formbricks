@@ -30,6 +30,9 @@ export async function handleAirtable(pipeline: Pipeline, event: ApiEvent) {
       pipeline.events.includes("FORM_OPENED")
     ) {
       await sendData(pipeline, event);
+    } else if ((event.type = "scoreSummary")) {
+      pipeline.events.includes("PAGE_SUBMISSION");
+      await sendData(pipeline, event);
     }
   }
 }
