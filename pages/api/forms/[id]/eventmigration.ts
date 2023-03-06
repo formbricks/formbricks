@@ -38,9 +38,25 @@ export default async function handle(
   const pages = getFormPages(noCodeForm.blocks, formId);
   const pagesFormated = formatPages(pages);
 
+  const sessionEventsData = await prisma.sessionEvent.findMany({
+    where: {
+      type: "formOpened",
+      data: {
+        path: ["formId"],
+        equals: formId,
+      },
+    },
+    orderBy: [
+      {
+        updatedAt: "desc",
+      },
+    ],
+  });
   const candidates = await prisma.user.findMany({
     where: {
-      role: "PUBLIC",
+      id: {
+        in: sessionEventsData.map((event) => event.data["candidateId"]),
+      },
     },
   });
 
