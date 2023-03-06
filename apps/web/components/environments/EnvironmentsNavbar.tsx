@@ -1,6 +1,8 @@
 "use client";
 import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
 import { DashboardIcon } from "@/components/ui/icons/DashboardIcon";
+import { FilterIcon } from "@/components/ui/icons/FilterIcon";
+import { SettingsIcon } from "@/components/ui/icons/SettingsIcon";
 import { FormIcon } from "@/components/ui/icons/FormIcon";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
@@ -42,7 +44,7 @@ export default function EnvironmentsNavbar({ environmentId }) {
       {
         name: "Events & Attributes",
         href: `/environments/${environmentId}/events-attributes`,
-        icon: CustomersIcon,
+        icon: FilterIcon,
         current: pathname?.includes("/events-attributes"),
       },
       {
@@ -54,7 +56,7 @@ export default function EnvironmentsNavbar({ environmentId }) {
       {
         name: "Settings",
         href: `/environments/${environmentId}/settings`,
-        icon: DashboardIcon,
+        icon: SettingsIcon,
         current: pathname?.includes("/settings"),
       },
     ],
@@ -74,7 +76,7 @@ export default function EnvironmentsNavbar({ environmentId }) {
                   </Link>
                 </div>
               </div>
-              <div className="hidden sm:flex lg:space-x-4">
+              <div className="hidden py-2 sm:flex lg:space-x-4">
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
