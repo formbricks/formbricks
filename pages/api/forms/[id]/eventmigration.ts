@@ -155,13 +155,11 @@ export default async function handle(
       delete event.data.description;
       delete event.data.dueDate;
       delete event.data.schema;
-      const candidateEvent = { user: candidate, ...event };
+      const candidateEvent = { user: candidate, formId, formName: form.name,  ...event };
     
       updateCandidatesEvents.push({
         candidateEvent,
         formId,
-        candidateId: candidate.id,
-        candidateName: `${candidate.firstname} - ${candidate.lastname}`,
       });
     }
     
