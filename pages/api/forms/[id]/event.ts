@@ -126,7 +126,7 @@ export default async function handle(
       ) {
         submissions[title] = 0;
       } else if (title && !submissions[title]) {
-        submissions[title] = "p";
+        submissions[title] = "";
       }
     });
 

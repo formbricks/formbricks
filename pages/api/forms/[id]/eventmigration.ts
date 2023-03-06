@@ -69,7 +69,6 @@ export default async function handle(
   Promise.all(
     candidates.map(async (candidate) => {
       const submissions = {};
-
       if (req.method === "POST") {
         const { events } = req.body;
 
@@ -137,7 +136,7 @@ export default async function handle(
           ) {
             submissions[title] = 0;
           } else if (title && !submissions[title]) {
-            submissions[title] = "p";
+            submissions[title] = "";
           }
         });
 
