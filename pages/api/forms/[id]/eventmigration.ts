@@ -38,9 +38,25 @@ export default async function handle(
   const pages = getFormPages(noCodeForm.blocks, formId);
   const pagesFormated = formatPages(pages);
 
+  const sessionEventsData = await prisma.sessionEvent.findMany({
+    where: {
+      type: "formOpened",
+      data: {
+        path: ["formId"],
+        equals: formId,
+      },
+    },
+    orderBy: [
+      {
+        updatedAt: "desc",
+      },
+    ],
+  });
   const candidates = await prisma.user.findMany({
     where: {
-      role: "PUBLIC",
+      id: {
+        in: sessionEventsData.map((event) => event.data["candidateId"]),
+      },
     },
   });
 
@@ -149,6 +165,7 @@ export default async function handle(
 
         for (const event of events) {
           // event.data =  {...event.data, ...form, submissions}
+          event.data.type = "scoreSummary";
           event.data = {
             ...event.data,
             formId,

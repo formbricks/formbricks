@@ -138,7 +138,7 @@ export default async function handle(
     res.json({ success: true });
     for (const event of events) {
       // event.data =  {...event.data, ...form, submissions}
-      event.data = { ...event.data, submissions, formId, formName: form.name };
+      event.data = { ...event.data, formId, formName: form.name, submissions };
       delete event.data.createdAt;
       delete event.data.updatedAt;
       delete event.data.ownerId;
