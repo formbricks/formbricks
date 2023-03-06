@@ -17,7 +17,7 @@ export function requireAuthentication(gssp: any) {
     if (!token) {
       return {
         redirect: {
-          destination: `/auth/signin?callbackUrl=${encodeURIComponent(resolvedUrl)}`,
+          destination: `/auth/login?callbackUrl=${encodeURIComponent(resolvedUrl)}`,
           statusCode: 302,
         },
       };
