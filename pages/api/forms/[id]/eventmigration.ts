@@ -69,7 +69,6 @@ export default async function handle(
   Promise.all(
     candidates.map(async (candidate) => {
       const submissions = {};
-
       if (req.method === "POST") {
         const { events } = req.body;
 

@@ -161,7 +161,7 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
       `apiEvents: unsupported event type in event ${JSON.stringify(event)}`
     );
   }
-  // handle integrations
+  // handle integrationsforms
   const pipelines = await prisma.pipeline.findMany({
     where: {
       form: { id: formId },
