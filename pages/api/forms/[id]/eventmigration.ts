@@ -164,6 +164,7 @@ export default async function handle(
 
         for (const event of events) {
           // event.data =  {...event.data, ...form, submissions}
+          event.data.type = "scoreSummary";
           event.data = {
             ...event.data,
             formId,
