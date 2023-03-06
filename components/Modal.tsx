@@ -41,7 +41,7 @@ export default function Modal({ open, setOpen, children }) {
                     <XMarkIcon className="w-6 h-6" aria-hidden="true" />
                   </button>
                 </div>
-                <div className="flex-col sm:flex sm:items-center">
+                <div className="flex-col sm:flex sm:items-start">
                   {children}
                 </div>
               </Dialog.Panel>

@@ -254,7 +254,7 @@ export default function FormList() {
                           />
                           {format(new Date(form.dueDate), "yyyy-MM-dd") ===
                           format(new Date(), "yyyy-MM-dd") ? (
-                            <span className='text-base font-normal text-red-800 line-clamp-3'>
+                            <span className='text-base text-red-800 line-clamp-3'>
                               Ferme aujourd&apos;hui
                             </span>
                           ) : dateDayDiff(form.dueDate) > 7 ? (
