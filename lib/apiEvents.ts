@@ -39,7 +39,7 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
   let userOpenFormSession = null;
   // save submission
   if (event.type === "pageSubmission") {
-    const data = event.data;
+    const pageSubmited = event.data;
 
     const sessionEvent = await prisma.sessionEvent.findFirst({
       where: {
@@ -52,7 +52,7 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
     });
 
     if (sessionEvent) {
-      sessionEvent.data = data;
+      sessionEvent.data = pageSubmited;
       await prisma.sessionEvent.update({
         where: {
           id: sessionEvent.id,
@@ -68,9 +68,11 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
           data: {
             formId,
             candidateId,
-            ...data,
+            ...pageSubmited,
           },
-          submissionSession: { connect: { id: data.submissionSessionId } },
+          submissionSession: {
+            connect: { id: pageSubmited.submissionSessionId },
+          },
         },
       });
     }
@@ -130,7 +132,6 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
       },
     });
 
-
     if (userOpenFormSession === null) {
       const { id } = await prisma.submissionSession.create({
         data: { form: { connect: { id: formId } } },
@@ -178,3 +179,4 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
     }
   }
 };
+//

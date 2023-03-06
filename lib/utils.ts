@@ -4,8 +4,6 @@ import { fr } from "date-fns/locale";
 import crypto from "crypto";
 import { UserRole } from "@prisma/client";
 import AWS from "aws-sdk";
-import Switch from "@mui/material/Switch";
-import { SwitchButton } from "../components/usersDataGridSchemaColumn";
 
 export const fetcher = async (url) => {
   const res = await fetch(url);
@@ -271,3 +269,53 @@ export const getFormState = (pages, candidateSubmissions, user) => {
   });
   return formProgress;
 };
+
+export const getFormPages = ( blocks, formId ) => {
+  const pages = [];
+  let currentPage = {
+    id: formId, // give the first page the formId as id by default
+    blocks: [],
+  };
+  if (blocks) {
+    for (const block of blocks) {
+      if (block.type !== "pageTransition") {
+        currentPage.blocks.push(block);
+      } else {
+        currentPage.blocks.push({
+          id: generateId(10),
+          data: {
+            label: block.data.submitLabel,
+          },
+          type: "submitButton",
+        });
+        pages.push(currentPage);
+        currentPage = {
+          id: block.id,
+          blocks: [],
+        };
+      }
+    }
+  }
+  pages.push(currentPage);
+
+  return pages;
+}
+
+export const reformatBlocks = (blocks) => {
+  let tempBlocks = {};
+  blocks.forEach((block) => {
+    tempBlocks[block.id] = { type: block.type, data: block.data };
+  });
+  return tempBlocks;
+}
+
+export const formatPages = (pages: any[]) => {
+  let tempPages = {};
+  pages.forEach((page) => {
+    tempPages[page.id] = {
+      title: page.blocks[0].data.text,
+      blocks: reformatBlocks(page.blocks),
+    };
+  });
+  return tempPages;
+}

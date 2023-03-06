@@ -17,10 +17,8 @@ export default async function handle(
   const pageId = req.query.candidateId.toString();
   const session = await getSession({ req: req });
 
-  // GET /api/forms/[id]/events/[pageId]/question-stats
-  // Gets all page submission statistics for a specific form
+
   if (req.method === "GET") {
-    // check if session exist
     if (!session) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -52,28 +50,29 @@ export default async function handle(
         },
       ],
     });
-    const candidates = pageSubmissions.map((s) => s.data["candidateId"]);
+    
     const responses = pageSubmissions.map((s) => s.data["submission"]);
 
     let qStats = {};
+
     responses.map((r) => {
       if (r)
-        Object.keys(r).map((qId) => {
-          const addOrIncrementOption = (opt) => {
-            if (qStats[qId][opt]) qStats[qId][opt] += 1;
-            else qStats[qId][opt] = 1;
-          };
-          if (!qStats[qId]) qStats[qId] = {};
-          if (typeof r[qId] !== "object") addOrIncrementOption(r[qId]);
-          else {
-            for (const opt of r[qId]) addOrIncrementOption(opt);
-          }
-        });
-    });
-    return res.json({ candidates, qStats });
+          Object.keys(r).map((qId) => {
+            const addOrIncrementOption = (opt) => {
+              if (qStats[qId][opt]) qStats[qId][opt] += 1;
+              else qStats[qId][opt] = 1;
+            };
+            if (!qStats[qId]) qStats[qId] = {};
+            if (typeof r[qId] !== "object") addOrIncrementOption(r[qId]);
+            else {
+              for (const opt of r[qId]) addOrIncrementOption(opt);
+            }
+          });
+      });
+
+    return res.json({  qStats });
   }
 
-  // Unknown HTTP Method
   else {
     throw new Error(
       `The HTTP ${req.method} method is not supported by this route.`

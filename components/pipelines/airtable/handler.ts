@@ -23,13 +23,12 @@ export async function handleAirtable(pipeline: Pipeline, event: ApiEvent) {
       event.type === "pageSubmission" &&
       pipeline.events.includes("PAGE_SUBMISSION")
     ) {
+      delete event.data.submission;
       await sendData(pipeline, event);
     } else if (
       event.type === "formOpened" &&
       pipeline.events.includes("FORM_OPENED")
     ) {
-      console.log(event);
-
       await sendData(pipeline, event);
     }
   }
