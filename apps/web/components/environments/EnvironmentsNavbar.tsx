@@ -38,7 +38,7 @@ import type { Session } from "next-auth";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -46,7 +46,7 @@ interface EnvironmentsNavbarProps {
 }
 
 export default function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
-  const { environment: env, isLoadingEnvironment } = useEnvironment(environmentId);
+  const { environment } = useEnvironment(environmentId);
   const pathname = usePathname();
 
   const navigation = useMemo(
@@ -85,17 +85,9 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     [pathname]
   );
 
-  const [environment, setEnvironment] = useState("prod");
-  let EnvironmentDescription = "Production";
-  if (environment === "prod") {
-    EnvironmentDescription = "Production";
-  } else if (environment === "dev") {
-    EnvironmentDescription = "Development";
-  }
-
   return (
     <Disclosure as="nav" className="border-b border-slate-200 bg-white">
-      {({ open }) => (
+      {({}) => (
         <>
           <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 justify-between">
@@ -125,7 +117,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Image
-                      src={AvatarPlaceholder}
+                      src={session.user.image || AvatarPlaceholder}
                       width="100"
                       height="100"
                       className="h-8 w-8 rounded-full"
@@ -134,7 +126,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56">
                     <DropdownMenuLabel>
-                      <span className="font-normal">Signed in as</span> Johannes
+                      <span className="font-normal">Signed in as</span> {session.user.name}
                     </DropdownMenuLabel>
 
                     <DropdownMenuSeparator />
@@ -142,7 +134,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
                         <div>
-                          <p>{env?.product?.name}</p>
+                          <p>{environment?.product?.name}</p>
                           <p className=" block text-xs text-slate-500">Product</p>
                         </div>
                       </DropdownMenuSubTrigger>
@@ -164,13 +156,13 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
                         <div>
-                          <p>{env?.type}</p>
+                          <p>{environment?.type}</p>
                           <p className=" block text-xs text-slate-500">Environment</p>
                         </div>
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
                         <DropdownMenuSubContent>
-                          <DropdownMenuRadioGroup value={environment} onValueChange={setEnvironment}>
+                          <DropdownMenuRadioGroup value={environment} onValueChange={() => {}}>
                             <DropdownMenuRadioItem value="prod">Production</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="dev">Development</DropdownMenuRadioItem>
                           </DropdownMenuRadioGroup>
