@@ -184,6 +184,7 @@ importers:
       '@formbricks/database': workspace:*
       '@formbricks/tsconfig': workspace:*
       '@radix-ui/react-dropdown-menu': ^2.0.3
+      '@radix-ui/react-label': ^2.0.0
       '@tailwindcss/forms': ^0.5.3
       '@types/bcryptjs': ^2.4.2
       '@types/node': 18.14.5
@@ -209,6 +210,7 @@ importers:
       typescript: 4.9.5
     dependencies:
       '@radix-ui/react-dropdown-menu': 2.0.3_zula6vjvt3wdocc4mwcxqa6nzi
+      '@radix-ui/react-label': 2.0.0_biqbaboplfbrettd7655fr4n2y
       '@types/node': 18.14.5
       '@types/react': 18.0.28
       '@types/react-dom': 18.0.11
@@ -4112,6 +4114,18 @@ packages:
       '@babel/runtime': 7.21.0
       '@radix-ui/react-use-layout-effect': 1.0.0_react@18.2.0
       react: 18.2.0
+    dev: false
+
+  /@radix-ui/react-label/2.0.0_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-7qCcZ3j2VQspWjy+gKR4W+V/z0XueQjeiZnlPOtsyiP9HaS8bfSU7ECoI3bvvdYntQj7NElW7OAYsYRW4MQvCg==}
+    peerDependencies:
+      react: ^16.8 || ^17.0 || ^18.0
+      react-dom: ^16.8 || ^17.0 || ^18.0
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@radix-ui/react-primitive': 1.0.1_biqbaboplfbrettd7655fr4n2y
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
     dev: false
 
   /@radix-ui/react-menu/2.0.3_zula6vjvt3wdocc4mwcxqa6nzi:
