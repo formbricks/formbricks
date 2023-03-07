@@ -12,8 +12,8 @@ export default function SettingsCard({
   soon?: boolean;
 }) {
   return (
-    <div className="my-4 w-full bg-white px-4 py-5 shadow sm:rounded-lg">
-      <div className="">
+    <div className="my-4 w-full bg-white shadow sm:rounded-lg">
+      <div className="rounded-t-lg border-b border-slate-200 bg-slate-100 px-6 py-5">
         <div className="flex">
           <h3 className="text-lg font-medium leading-6 text-gray-900">{title}</h3>
           {soon && (
@@ -22,9 +22,9 @@ export default function SettingsCard({
             </span>
           )}
         </div>
-        <p className="mt-1 mb-8 text-sm text-gray-500">{description}</p>
+        <p className="mt-1 text-sm text-gray-500">{description}</p>
       </div>
-      <div className="">{children} </div>
+      <div className=" px-6 py-5">{children} </div>
     </div>
   );
 }
