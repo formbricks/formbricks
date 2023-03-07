@@ -3,14 +3,16 @@ import habitat from "preact-habitat";
 import css from "./style.css";
 
 import App from "./App";
-import { getNewPerson } from "./lib/person";
+import { createPerson, getLocalPerson } from "./lib/person";
 import type { Config } from "./types/types";
+import { createSession, getLocalSession } from "./lib/session";
 
 const _habitat = habitat(App);
 
-let globalConfig: Config = { environmentId: null, apiHost: null };
+let config: Config = { environmentId: null, apiHost: null };
 
-const init = async (config: Config) => {
+const init = async (c: Config) => {
+  config = c;
   // add styles
   if (document.getElementById("formbricks__css") === null) {
     const styleElement = document.createElement("style");
@@ -24,19 +26,23 @@ const init = async (config: Config) => {
     containerElement.id = "formbricks__container";
     document.body.appendChild(containerElement);
   }
-  // set config
-  globalConfig = config;
-  // check local storage for user
-  const person = localStorage.getItem("formbricks__person");
-  if (person) {
-    config.person = JSON.parse(person);
-  } else {
-    // create new person
-    const person = await getNewPerson(config);
-    console.log(JSON.stringify(person));
-    config.person = { id: person.id };
-    localStorage.setItem("formbricks__person", JSON.stringify(config.person));
+  // get or create person
+  config.person = getLocalPerson();
+  if (!config.person) {
+    config.person = await createPerson(config);
+    if (!config.person) {
+      return;
+    }
   }
+  // get or create session
+  config.session = getLocalSession();
+  if (!config.session) {
+    config.session = await createSession(config);
+    if (!config.session) {
+      return;
+    }
+  }
+  config.initialized = true;
   // register widget session
   console.log("formbricks initialized");
   console.log(config);
@@ -53,7 +59,7 @@ const init = async (config: Config) => {
 }; */
 
 const reset = () => {
-  delete globalConfig.person;
+  delete config.person;
   localStorage.removeItem("formbricks__customer");
 };
 
@@ -61,12 +67,12 @@ const renderForm = (formId, schema) => {
   _habitat.render({
     selector: "#formbricks__container",
     clean: true,
-    defaultProps: { globalConfig, schema, formId },
+    defaultProps: { config, schema, formId },
   });
 };
 
 const getForms = async () => {
-  const formRes = await fetch(`${globalConfig.apiHost}/api/public/${globalConfig.environmentId}/forms`, {
+  const formRes = await fetch(`${config.apiHost}/api/public/${config.environmentId}/forms`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -80,7 +86,7 @@ const getForms = async () => {
   return forms;
 };
 
-const formbricks = { init, reset, globalConfig };
+const formbricks = { init, reset, config };
 
 // (window as any).formbricks = formbricks;
 

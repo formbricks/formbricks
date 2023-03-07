@@ -8,56 +8,56 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(400).json({ message: "Missing environmentId" });
   }
 
+  // CORS
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+  }
   // GET
-  if (req.method === "POST") {
-    const { person } = req.body;
-    // register new event
-    await prisma.event.create({
+  else if (req.method === "POST") {
+    const { personId } = req.body;
+
+    // create new session
+    const session = await prisma.session.create({
       data: {
-        environment: {
-          connect: {
-            id: environmentId,
-          },
-        },
-        eventClass: {
-          connectOrCreate: {
-            where: {
-              name_environmentId: {
-                name: "New Session",
-                environmentId,
-              },
-            },
-            create: {
-              name: "New Session",
-              type: "automatic",
-              environment: {
-                connect: {
-                  id: environmentId,
-                },
-              },
-            },
-          },
-        },
         person: {
-          connectOrCreate: {
-            where: {
-              id: person.uuid,
-            },
-            create: {
-              id: person.id,
+          connect: {
+            id: personId,
+          },
+        },
+        events: {
+          create: [
+            {
               environment: {
                 connect: {
                   id: environmentId,
                 },
               },
-              ...person,
+              eventClass: {
+                connectOrCreate: {
+                  where: {
+                    name_environmentId: {
+                      name: "New Session",
+                      environmentId,
+                    },
+                  },
+                  create: {
+                    name: "New Session",
+                    type: "automatic",
+                    environment: {
+                      connect: {
+                        id: environmentId,
+                      },
+                    },
+                  },
+                },
+              },
             },
-          },
+          ],
         },
       },
     });
 
-    return res.json({});
+    return res.json(session);
   }
 
   // Unknown HTTP Method

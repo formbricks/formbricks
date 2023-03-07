@@ -21,7 +21,9 @@ model Person {
   environmentId String
   responses     Response[]
   attributes    Json        @default("{}")
-  events        Event[]
+  Session       Session[]
+
+  @@unique([userId, environmentId])
 }
 
 model Response {
@@ -56,10 +58,10 @@ model Event {
   createdAt     DateTime    @default(now()) @map(name: "created_at")
   environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
-  person        Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId      String
   eventClass    EventClass? @relation(fields: [eventClassId], references: [id])
   eventClassId  String?
+  session       Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId     String
   properties    Json        @default("{}")
 }
 
@@ -82,6 +84,15 @@ model EventClass {
   environmentId String
 
   @@unique([name, environmentId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId  String
+  events    Event[]
 }
 
 enum EnvironmentType {

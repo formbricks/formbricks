@@ -23,10 +23,19 @@ export interface Submission {
 export interface Config {
   environmentId: string;
   apiHost: string;
-  person?: {
-    id: string;
-    userId?: string;
-    email?: string;
-    attributes?: any;
-  };
+  person?: Person;
+  session?: Session;
+  initialized?: boolean;
+}
+
+export interface Session {
+  id: string;
+  expiresAt: number;
+}
+
+export interface Person {
+  id: string;
+  userId?: string;
+  email?: string;
+  attributes?: any;
 }
