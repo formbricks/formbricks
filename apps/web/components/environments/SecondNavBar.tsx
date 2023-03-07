@@ -1,38 +1,6 @@
 "use client";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/DropdownMenu";
-import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
-import { DashboardIcon } from "@/components/ui/icons/DashboardIcon";
-import { FilterIcon } from "@/components/ui/icons/FilterIcon";
-import { FormIcon } from "@/components/ui/icons/FormIcon";
-import { SettingsIcon } from "@/components/ui/icons/SettingsIcon";
-import AvatarPlaceholder from "@/images/avatar-placeholder.png";
+
 import { useEnvironment } from "@/lib/environments";
-import { Disclosure } from "@headlessui/react";
-import {
-  ArrowRightOnRectangleIcon,
-  CogIcon,
-  CreditCardIcon,
-  DocumentMagnifyingGlassIcon,
-  HeartIcon,
-  PlusIcon,
-  RocketLaunchIcon,
-  UserCircleIcon,
-  UsersIcon,
-} from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import type { Session } from "next-auth";
 import Image from "next/image";
@@ -40,51 +8,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 
-interface EnvironmentsNavbarProps {
-  environmentId: string;
-  session: Session;
+interface SecondNavbarProps {
+  tabs: [];
 }
 
-export default function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
-  const { environment } = useEnvironment(environmentId);
-  const pathname = usePathname();
-
-  const navigation = useMemo(
-    () => [
-      {
-        name: "Surveys",
-        href: `/environments/${environmentId}/surveys`,
-        icon: FormIcon,
-        current: pathname?.includes("/surveys"),
-      },
-      {
-        name: "People",
-        href: `/environments/${environmentId}/people`,
-        icon: CustomersIcon,
-        current: pathname?.includes("/people"),
-      },
-      {
-        name: "Events & Attributes",
-        href: `/environments/${environmentId}/events`,
-        icon: FilterIcon,
-        current: pathname?.includes("/events-attributes"),
-      },
-      {
-        name: "Integrations",
-        href: `/environments/${environmentId}/integrations`,
-        icon: DashboardIcon,
-        current: pathname?.includes("/integrations"),
-      },
-      {
-        name: "Settings",
-        href: `/environments/${environmentId}/settings/profile`,
-        icon: SettingsIcon,
-        current: pathname?.includes("/settings"),
-      },
-    ],
-    [pathname]
-  );
-
+export default function SecondNavbar({ tabs }: SecondNavbarProps) {
   return (
     <Disclosure as="nav" className="fixed top-0 z-50 w-full border-b border-slate-200 bg-white">
       {({}) => (
