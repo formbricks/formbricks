@@ -19,3 +19,14 @@ export interface Submission {
     [name: string]: string | number | string[] | number[] | undefined;
   };
 }
+
+export interface Config {
+  environmentId: string;
+  apiHost: string;
+  person?: {
+    id: string;
+    userId?: string;
+    email?: string;
+    attributes?: any;
+  };
+}
