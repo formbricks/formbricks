@@ -99,7 +99,7 @@ export default function UpdateProfile() {
     }
   };
   return (
-    <BaseLayoutUnauthorized title="Update Profile">
+    <BaseLayoutUnauthorized title="Mise à jour profil">
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
@@ -131,7 +131,7 @@ export default function UpdateProfile() {
                   <div className="">
                     <hr />
                     <h1 className="mt-2 mb-2 font-bold text-center text-ui-gray-dark max-sm:ml-6 max-md:ml-6 max-sm:mt-8 max-md:mb-8 ">
-                      Complétez votre profil
+                      Complétez votre profil pour continuer
                     </h1>
                     <hr />
                     <div className="mt-3 mb-2">
@@ -203,7 +203,6 @@ export default function UpdateProfile() {
                         id="whatsapp"
                         name="whatsapp"
                         type="text"
-                        required
                         value={whatsapp}
                         placeholder="+243 810 000 000"
                         onChange={handleInputChange}

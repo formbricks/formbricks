@@ -28,6 +28,7 @@ export const createUser = async (
           whatsapp,
           email,
           password: hashedPassword,
+          profileIsValid: true,
         },
       }),
     });

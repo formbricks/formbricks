@@ -6,6 +6,7 @@ import { classNames } from "../../lib/utils";
 import MenuProfile from "./MenuProfile";
 import MenuSteps from "./MenuSteps";
 import { useRouter } from "next/router";
+import Loading from "../Loading";
 
 interface BaseLayoutManagementProps {
   title: string;
@@ -34,9 +35,10 @@ export default function BaseLayoutManagement({
     { id: "users", name: "Gestion d'utilisateurs", href: "/users" },
   ];
   const router = useRouter();
-  if(!user.profileIsValid){
-    const url=`/users/update-profile`
+  if (!user.profileIsValid) {
+    const url = `/users/update-profile`;
     router.push(url);
+    return <Loading />;
   }
 
   return (
@@ -59,16 +61,16 @@ export default function BaseLayoutManagement({
             "flex flex-col flex-1 w-full"
           )}
         >
-          <header className='w-full'>
-            <div className='relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-ui-gray-light max-sm:pr-2 max-sm:pl-2 max-md:pr-2 max-md:pl-2'>
-              <div className='grid w-full grid-cols-3 '>
-                <div className='flex-1  space-x-2 sm:flex justify-start '>
-                  <div className='sm:w-fit ml-6 flex items-center h-full'>
-                    <Link href='/forms/'>
-                      <a className='text-ui-gray-dark hover:text-ui-gray-dark'>
+          <header className="w-full">
+            <div className="relative z-10 flex flex-shrink-0 h-16 bg-white border-b shadow-sm border-ui-gray-light max-sm:pr-2 max-sm:pl-2 max-md:pr-2 max-md:pl-2">
+              <div className="grid w-full grid-cols-3 ">
+                <div className="flex-1  space-x-2 sm:flex justify-start ">
+                  <div className="sm:w-fit ml-6 flex items-center h-full">
+                    <Link href="/forms/">
+                      <a className="text-ui-gray-dark hover:text-ui-gray-dark">
                         <Image
-                          src='/img/kda_logo.png'
-                          alt='kinshasa digital academy logo'
+                          src="/img/kda_logo.png"
+                          alt="kinshasa digital academy logo"
                           width={100}
                           height={40}
                         />
@@ -77,7 +79,7 @@ export default function BaseLayoutManagement({
                   </div>
 
                   {user.role === "ADMIN" && (
-                    <div className='flex-1 hidden  space-x-2 lg:flex items-center '>
+                    <div className="flex-1 hidden  space-x-2 lg:flex items-center ">
                       {adminMenus && (
                         <MenuSteps
                           steps={adminMenus}
@@ -88,14 +90,14 @@ export default function BaseLayoutManagement({
                   )}
                 </div>
 
-                <div className=' flex sm:flex-1 items-center justify-center'>
+                <div className=" flex sm:flex-1 items-center justify-center">
                   {steps && (
                     <MenuSteps steps={steps} currentStep={currentStep} />
                   )}
                 </div>
 
-                <div className='flex items-center justify-end flex-1 space-x-2 text-right sm:space-x-4'>
-                  <div className='mr-6'>
+                <div className="flex items-center justify-end flex-1 space-x-2 text-right sm:space-x-4">
+                  <div className="mr-6">
                     <MenuProfile />
                   </div>
                 </div>
