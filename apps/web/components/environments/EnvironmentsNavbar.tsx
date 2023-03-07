@@ -77,7 +77,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
       },
       {
         name: "Settings",
-        href: `/environments/${environmentId}/settings`,
+        href: `/environments/${environmentId}/settings/profile`,
         icon: SettingsIcon,
         current: pathname?.includes("/settings"),
       },
@@ -141,7 +141,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       <DropdownMenuPortal>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem>
-                            <span>Formbricks</span>
+                            <span>{environment?.product?.name}</span>
                           </DropdownMenuItem>
 
                           <DropdownMenuSeparator />
@@ -163,8 +163,8 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       <DropdownMenuPortal>
                         <DropdownMenuSubContent>
                           <DropdownMenuRadioGroup value={environment} onValueChange={() => {}}>
-                            <DropdownMenuRadioItem value="prod">Production</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="dev">Development</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="production">Production</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="development">Development</DropdownMenuRadioItem>
                           </DropdownMenuRadioGroup>
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>

@@ -1,3 +1,3 @@
-export default function SettingsPage() {
-  return <div>Settings</div>;
+export default function ProfileSettingsPage() {
+  return <div>Settings Main</div>;
 }
