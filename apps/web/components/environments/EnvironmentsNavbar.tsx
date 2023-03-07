@@ -77,7 +77,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
       },
       {
         name: "Settings",
-        href: `/environments/${environmentId}/settings`,
+        href: `/environments/${environmentId}/settings/profile`,
         icon: SettingsIcon,
         current: pathname?.includes("/settings"),
       },

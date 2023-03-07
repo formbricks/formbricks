@@ -1,51 +1,101 @@
 "use client";
 
+import { ColorPicker } from "@/components/settings/ColorPicker";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProfile, updateProfile } from "@/lib/profile";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
 import Button from "@/components/ui/Button";
-import Image from "next/image";
-import AvatarPlaceholder from "@/images/avatar-placeholder.png";
+import { Label } from "@/components/ui/Label";
+import { useEnvironment } from "@/lib/environments";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
+import { Switch } from "@/components/ui/Switch";
 
-export function EditBrandColor() {
-  const { profile, isLoadingProfile, isErrorProfile } = useProfile();
+export function EditBrandColor({ environmentId }) {
+  const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
 
-  if (isLoadingProfile) {
+  if (isLoadingEnvironment) {
     return <LoadingSpinner />;
   }
-  if (isErrorProfile) {
+  if (isErrorEnvironment) {
     return <div>Error</div>;
   }
 
   return (
     <div className="w-full max-w-sm items-center">
-      <Label htmlFor="fullname">Full Name</Label>
-      <Input type="text" id="fullname" defaultValue={profile.name} />
-
-      <div className="mt-4">
-        <Label htmlFor="email">Email</Label>
-        <Input type="email" id="fullname" defaultValue={profile.email} />
-      </div>
-      <Button type="submit" className="mt-4" onClick={(e) => console.log(e)}>
-        Update
+      <Label htmlFor="brandcolor">Color (HEX)</Label>
+      <ColorPicker attribute="colorButtonText" />
+      <Button type="submit" className="mt-4">
+        Save
       </Button>
+      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
     </div>
   );
 }
 
-export function EditAvatar() {
+export function EditPlacement({ environmentId }) {
+  const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
+
+  if (isLoadingEnvironment) {
+    return <LoadingSpinner />;
+  }
+  if (isErrorEnvironment) {
+    return <div>Error</div>;
+  }
+
+  const placements = [
+    { name: "Bottom Right", value: "bottomRight", default: true, disabled: false },
+    { name: "Top Right", value: "bottomRight", default: false, disabled: true },
+    { name: "Top Left", value: "bottomRight", default: false, disabled: true },
+    { name: "Bottom Leftt", value: "bottomRight", default: false, disabled: true },
+    { name: "Centered Modal", value: "bottomRight", default: false, disabled: true },
+  ];
+
   return (
-    <div>
-      <Image
-        src={AvatarPlaceholder}
-        width="100"
-        height="100"
-        className="h-24 w-24 rounded-full"
-        alt="Avatar placeholder"
-      />
-      <Button className="mt-4">Upload Image</Button>
+    <div className="w-full items-center">
+      <div className="flex">
+        <RadioGroup>
+          {placements.map((placement) => (
+            <div className="flex items-center space-x-2 whitespace-nowrap">
+              <RadioGroupItem
+                id={placement.value}
+                value={placement.value}
+                checked={placement.default}
+                disabled={placement.disabled}
+              />
+              <Label htmlFor={placement.value}>{placement.name}</Label>
+            </div>
+          ))}
+        </RadioGroup>
+        <div className="relative ml-8 h-40 w-full rounded bg-slate-200">
+          <div className="absolute top-3 right-3 h-16 w-16 rounded bg-slate-700"></div>
+        </div>
+      </div>
+      <Button type="submit" className="mt-4" disabled>
+        Save
+      </Button>
+      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
     </div>
   );
-  /*   return <div className="whitespace-pre-wrap">{JSON.stringify(profile, null, 2)}</div>; */
+}
+
+export function EditFormbricksSignature({ environmentId }) {
+  const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
+
+  if (isLoadingEnvironment) {
+    return <LoadingSpinner />;
+  }
+  if (isErrorEnvironment) {
+    return <div>Error</div>;
+  }
+
+  return (
+    <div className="w-full items-center">
+      <div className="flex items-center space-x-2">
+        <Switch disabled id="signature" />
+        <Label htmlFor="signature">Show Formbricks Signature</Label>
+      </div>
+      <Button type="submit" className="mt-4" disabled>
+        Save
+      </Button>
+      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
+    </div>
+  );
 }

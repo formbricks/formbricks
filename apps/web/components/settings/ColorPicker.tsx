@@ -2,10 +2,10 @@
 import { useRouter } from "next/router";
 import React, { useCallback, useRef, useState } from "react";
 import { HexColorPicker, HexColorInput } from "react-colorful";
-import useClickOutside from "./useClickOutside";
+import useClickOutside from "@/lib/useClickOutside";
 
 export const PopoverPicker = ({ color, onChange }) => {
-  const popover = useRef();
+  const popover = useRef(null);
   const [isOpen, toggle] = useState(false);
 
   const close = useCallback(() => toggle(false), []);
@@ -28,8 +28,8 @@ export const PopoverPicker = ({ color, onChange }) => {
   );
 };
 
-export const ColorPicker = ({ name, attribute }) => {
-  const router = useRouter();
+export const ColorPicker = ({ attribute }) => {
+  /*   const router = useRouter();
   const { formId, organisationId } = router.query;
   const { form, isLoadingForm, isErrorForm, mutateForm } = useForm(
     formId?.toString(),
@@ -45,18 +45,17 @@ export const ColorPicker = ({ name, attribute }) => {
     mutateForm(updatedForm, false);
     persistForm(updatedForm);
     console.log(updatedForm);
-  };
+  }; */
 
-  const [color, setColor] = useState(form.schemaDraft?.config?.[attribute]);
+  const [color, setColor] = useState("#123123");
 
   const handleColorChange = (newColor) => {
     setColor(newColor);
-    setSurveyAttribute(attribute, newColor);
+    /* setSurveyAttribute(attribute, newColor); */
   };
 
   return (
-    <div className="my-6">
-      <label className="mb-2 block text-sm font-medium text-slate-700">{name}</label>
+    <div className="my-2">
       <div className="flex w-fit items-center space-x-1 rounded border px-2 text-slate-400">
         #
         <HexColorInput

@@ -24,30 +24,27 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           name: "Profile",
           href: `/environments/${environmentId}/settings/profile`,
           icon: UserCircleIcon,
-          current: true,
         },
         /*         {
           name: "Notifications",
           href: `/environments/${environmentId}/settings/notifications`,
           icon: MegaphoneIcon,
-          current: false,
+           
         }, */
       ],
     },
     {
-      title: "Surveys",
+      title: "Product",
       links: [
+        {
+          name: "Settings",
+          href: `/environments/${environmentId}/settings/product`,
+          icon: AdjustmentsVerticalIcon,
+        },
         {
           name: "Look & Feel",
           href: `/environments/${environmentId}/settings/lookandfeel`,
           icon: PaintBrushIcon,
-          current: false,
-        },
-        {
-          name: "Settings",
-          href: `/environments/${environmentId}/settings/configure`,
-          icon: AdjustmentsVerticalIcon,
-          current: false,
         },
       ],
     },
@@ -58,25 +55,21 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           name: "Members",
           href: `/environments/${environmentId}/settings/members`,
           icon: UsersIcon,
-          current: false,
         },
         {
           name: "Tags",
           href: `/environments/${environmentId}/settings/tags`,
           icon: PlusCircleIcon,
-          current: false,
         },
         {
           name: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
           icon: CreditCardIcon,
-          current: false,
         },
         {
           name: "Legal",
           href: "/settings/legal",
           icon: ScaleIcon,
-          current: false,
         },
       ],
     },
@@ -87,22 +80,23 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
         { name: "Web Client", href: "/settings/webclient", icon: CodeBracketIcon, current: false },
         {
           name: "Documentation",
-          href: "/settings/documentation",
+          href: "https://formbricks.com/docs",
           icon: DocumentMagnifyingGlassIcon,
-          current: false,
+
+          target: "_blank",
         },
         {
           name: "Join Discord",
           href: "https://formbricks.com/discord",
           icon: ChatBubbleLeftEllipsisIcon,
-          current: false,
+
           target: "_blank",
         },
         {
           name: "Star us on GitHub",
           href: "https://formbricks.com/github",
           icon: StarIcon,
-          current: false,
+
           target: "_blank",
         },
       ],
@@ -124,7 +118,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
                   href={link.href}
                   target={link.target}
                   className={clsx(
-                    link.current ? " text-slate-700" : "text-slate-600 hover:text-slate-900",
+                    link.current ? " bg-slate-200 text-slate-700" : "text-slate-600 hover:text-slate-900",
                     "group flex items-center whitespace-nowrap rounded-md px-1 py-1 text-sm font-medium"
                   )}>
                   <link.icon
