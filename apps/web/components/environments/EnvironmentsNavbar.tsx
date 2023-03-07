@@ -71,7 +71,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
       },
       {
         name: "Integrations",
-        href: `/environments/${environmentId}/integrations`,
+        href: `/environments/${environmentId}/integrations/installation`,
         icon: DashboardIcon,
         current: pathname?.includes("/integrations"),
       },
