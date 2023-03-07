@@ -7,8 +7,8 @@ interface PeopleGroupTabs {
 
 export default function PeopleGroupsTabs({ activeId, environmentId }: PeopleGroupTabs) {
   const tabs = [
-    { id: "events", name: "Events", href: `/environments/${environmentId}/events` },
-    { id: "attributes", name: "Attributes", href: `/environments/${environmentId}/attributes` },
+    { id: "people", name: "People", href: `/environments/${environmentId}/people` },
+    { id: "groups", name: "Groups", href: `/environments/${environmentId}/groups` },
   ];
 
   return <SecondNavbar tabs={tabs} activeId={activeId} environmentId={environmentId} />;
