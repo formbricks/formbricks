@@ -9,7 +9,7 @@ export default async function handle(
 ) {
   await NextCors(req, res, {
     // Options
-    methods: ["PUT"],
+    methods: ["POST"],
     origin: "*",
     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
   });
@@ -18,25 +18,11 @@ export default async function handle(
   if (!session) {
     return res.status(401).json({ message: "Not authenticated" });
   }
-  if (req.method === "PUT") {
-    const { id } = req.body;
-    const userReq = req.body
-    delete userReq.id
-
-    let updateUser;
-    const user = await prisma.user.findUnique({
-      where: {
-        id,
-      },
-    });
-    if (user) {
-      updateUser = await prisma.user.update({
-        where: {
-          id,
-        },
-        data: userReq,
+  if (req.method === "POST") {
+    const dataAddress = req.body
+    const newAddress = await prisma.address.create({
+        data: dataAddress,
       });
-    }
-    return res.json(updateUser);
+    return res.json(newAddress);
   }
 }

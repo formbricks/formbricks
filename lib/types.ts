@@ -1,6 +1,6 @@
 import { JSXElementConstructor, ReactElement, ReactFragment } from "react";
 import { User } from "next-auth";
-import { Form as PrismaForm } from "@prisma/client";
+import { Form as PrismaForm, Province } from "@prisma/client";
 
 export type Form = {
   id: string;
@@ -198,3 +198,12 @@ type SubmissionPage = {
 };
 
 type SubmissionPageElement = SchemaElement & { value: string };
+
+export type Address = {
+  id: string;
+  line1: string;
+  line2: string;
+  commune: string;
+  ville: string;
+  province: Province;
+};

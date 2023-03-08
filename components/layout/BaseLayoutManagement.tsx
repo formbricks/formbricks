@@ -36,8 +36,7 @@ export default function BaseLayoutManagement({
   ];
   const router = useRouter();
   if (!user.profileIsValid) {
-    const url = `/users/update-profile`;
-    router.push(url);
+    router.push(`/users/update-profile`);
     return <Loading />;
   }
 

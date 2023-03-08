@@ -1,10 +1,9 @@
-import React from "react";
-import { updateUserProfile, updateAddress } from "../../lib/users";
+import React, { useState, useRef } from "react";
+import { createAddress, updateAddress } from "../../lib/users";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
 import { PencilIcon } from "@heroicons/react/24/solid";
 import { useSession } from "next-auth/react";
-import { useState, useRef } from "react";
 import { upload } from "../../lib/utils";
 import { DRCProvinces } from "../../lib/enums";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
@@ -12,45 +11,30 @@ import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthoriz
 export default function UpdateProfile() {
   const router = useRouter();
   const session = useSession();
-  const { user } = session.data;
   const [fileName, setFileName] = useState("");
   const inputFileRef = useRef(null);
-  const [firstName, setFirstName] = useState(user.firstname);
-  const [lastName, setLastName] = useState(user.lastname);
-  const [phone, setPhone] = useState(user.phone);
-  const [whatsapp, setWhatsapp] = useState(user.whatsapp);
-  const [line1, setLine1] = useState(user.address.line1);
-  const [line2, setLine2] = useState(user.address.line2);
-  const [commune, setCommune] = useState(user.address.commune);
-  const [ville, setVille] = useState(user.address.ville);
+  const [user, setUser] = useState<User>(session.data.user);
+  const [address, setAddress] = useState<Address>(session.data.user.address);
 
   const handleInputChange = (e) => {
+    const value = e.target.value;
     const name = e.target.name;
-    switch (name) {
-      case "firstname":
-        setFirstName(e.target.value);
-        break;
-      case "lastname":
-        setLastName(e.target.value);
-        break;
-      case "phone":
-        setPhone(e.target.value);
-        break;
-      case "whatsapp":
-        setWhatsapp(e.target.value);
-        break;
-      case "line1":
-        setLine1(e.target.value);
-        break;
-      case "line2":
-        setLine2(e.target.value);
-        break;
-      case "commune":
-        setCommune(e.target.value);
-        break;
-      case "ville":
-        setVille(e.target.value);
-        break;
+    if (
+      name === "line1" ||
+      name === "line2" ||
+      name === "commune" ||
+      name === "ville" ||
+      name === "province"
+    ) {
+      setAddress({
+        ...address,
+        [name]: value,
+      });
+    } else {
+      setUser({
+        ...user,
+        [e.target.name]: value,
+      });
     }
   };
 
@@ -77,22 +61,41 @@ export default function UpdateProfile() {
     file ? (photo = (await upload(file)).Location) : "";
 
     try {
-      await updateAddress({
-        id: user.addressId,
-        line1: e.target.elements.line1.value,
-        line2: e.target.elements.line2.value,
-        ville: e.target.elements.ville.value,
-        province: e.target.elements.province.value,
-        commune: e.target.elements.commune.value,
-      });
-      await updateUserProfile({
-        id: user.id,
-        firstname: e.target.elements.firstname.value,
-        lastname: e.target.elements.lastname.value,
-        photo: photo,
-        phone: e.target.elements.phone.value,
-        whatsapp: e.target.elements.whatsapp.value,
-      });
+      if (address.id) {
+        await updateAddress({
+          id: user.address.id,
+          line1: e.target.elements.line1.value,
+          line2: e.target.elements.line2.value,
+          ville: e.target.elements.ville.value,
+          province: e.target.elements.province.value,
+          commune: e.target.elements.commune.value,
+          User: {
+            update: {
+              where: { id: user.id },
+              data: {
+                firstname: e.target.elements.firstname.value,
+                lastname: e.target.elements.lastname.value,
+                photo: photo,
+                dob: new Date(e.target.elements.dob.value),
+                phone: e.target.elements.phone.value,
+                whatsapp: e.target.elements.whatsapp.value,
+                profileIsValid: true,
+              },
+            },
+          },
+        });
+      } else {
+        await createAddress({
+          line1: e.target.elements.line1.value,
+          line2: e.target.elements.line2.value,
+          ville: e.target.elements.ville.value,
+          province: e.target.elements.province.value,
+          commune: e.target.elements.commune.value,
+          User : {
+            connect : {id: user.id}
+          }
+        })
+      }
       router.push(`/`);
     } catch (e) {
       toast(e.message);
@@ -157,7 +160,7 @@ export default function UpdateProfile() {
                         type="text"
                         required
                         placeholder="Jean"
-                        value={firstName}
+                        value={user.firstname}
                         onChange={handleInputChange}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
@@ -170,13 +173,33 @@ export default function UpdateProfile() {
                       <input
                         id="lastname"
                         name="lastname"
-                        value={lastName}
+                        value={user.lastname}
                         required
                         placeholder="Kingandi"
                         onChange={handleInputChange}
                         type="text"
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="dateOfBirth"
+                        className="block text-sm font-medium text-ui-gray-dark"
+                      >
+                        Date de naissance
+                      </label>
+                      <div className="mt-1">
+                        <input
+                          id="dob"
+                          name="dob"
+                          value={user.dob}
+                          onChange={handleInputChange}
+                          type="date"
+                          required
+                          className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+                        />
+                      </div>
                     </div>
 
                     <div className="mt-1">
@@ -187,7 +210,7 @@ export default function UpdateProfile() {
                         id="phone"
                         name="phone"
                         type="text"
-                        value={phone}
+                        value={user.phone}
                         required
                         placeholder="+243 820 000 000"
                         onChange={handleInputChange}
@@ -203,7 +226,7 @@ export default function UpdateProfile() {
                         id="whatsapp"
                         name="whatsapp"
                         type="text"
-                        value={whatsapp}
+                        value={user.whatsapp}
                         placeholder="+243 810 000 000"
                         onChange={handleInputChange}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -223,7 +246,7 @@ export default function UpdateProfile() {
                           name="line1"
                           type="text"
                           required
-                          value={line1}
+                          value={address ? address.line1 : ""}
                           placeholder="N° 63, Ave Colonel Mondjiba, Q. Basoko"
                           onChange={handleInputChange}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -235,7 +258,7 @@ export default function UpdateProfile() {
                           id="line2"
                           name="line2"
                           type="text"
-                          value={line2}
+                          value={address ? address.line2 : ""}
                           onChange={handleInputChange}
                           placeholder="Réf. Silikin Village, Concession COTEX"
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -247,7 +270,7 @@ export default function UpdateProfile() {
                           id="commune"
                           name="commune"
                           type="text"
-                          value={commune}
+                          value={address ? address.commune : ""}
                           required
                           placeholder="Commune ou Territoire"
                           onChange={handleInputChange}
@@ -260,7 +283,7 @@ export default function UpdateProfile() {
                           id="ville"
                           name="ville"
                           type="text"
-                          value={ville}
+                          value={address ? address.ville : ""}
                           required
                           placeholder="Ville"
                           onChange={handleInputChange}
@@ -274,16 +297,13 @@ export default function UpdateProfile() {
                           id="province"
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         >
-                          <option
-                            selected
-                            disabled
-                            hidden
-                            className="block text-sm font-medium text-ui-gray-dark"
-                          >
-                            {DRCProvinces[user.address.province]}
-                          </option>
                           {Object.keys(DRCProvinces).map((province) => (
-                            <option value={province}>
+                            <option
+                              value={province}
+                              selected={
+                                address ? address.province === province : "KN"
+                              }
+                            >
                               {DRCProvinces[province]}
                             </option>
                           ))}

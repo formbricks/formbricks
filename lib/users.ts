@@ -138,38 +138,7 @@ export const updateUserRole = async ({ id, role }) => {
   }
 };
 
-export const updateUserProfile = async ({ id, firstname, lastname, photo="", phone="", whatsapp=""}) => {
-  const obj = {};
-
-  if(id)obj["id"] = id;
-  if(firstname!="")obj["firstname"] = firstname;
-  if(lastname!="")obj["lastname"] = lastname;
-  if(photo!="")obj["photo"] = photo;
-  if(phone!="")obj["phone"] = phone;
-  if(whatsapp!="")obj["whatsapp"] = whatsapp;
-  obj["profileIsValid"] = true;
-
-  try {
-    await fetch(`/api/users/update`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(obj),
-    });
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-export const updateAddress = async ({ id, line1="", line2="", commune="", ville="", province=""}) => {
-  
-  const obj = {};
-  obj["id"] = id;
-
-  if(line1!="")obj["line1"] = line1;
-  if(line2!="")obj["line2"] = line2;
-  if(commune!="")obj["commune"] = commune;
-  if(ville!="") obj["ville"] = ville
-  if(province!="")obj["province"] = province;
+export const updateAddress = async (obj) => {
 
   try {
     await fetch(`/api/address/update`, {
@@ -181,4 +150,16 @@ export const updateAddress = async ({ id, line1="", line2="", commune="", ville=
     console.error(error);
   }
 };
+
+export const createAddress = async (obj) => {
+  try {
+    await fetch(`/api/address/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(obj),
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
 
