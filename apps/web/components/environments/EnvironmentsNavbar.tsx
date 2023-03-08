@@ -32,6 +32,7 @@ import {
   RocketLaunchIcon,
   UserCircleIcon,
   UsersIcon,
+  ChevronDownIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import type { Session } from "next-auth";
@@ -39,6 +40,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
+import { capitalizeFirstLetter } from "@/lib/utils";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -116,13 +118,20 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Image
-                      src={session.user.image || AvatarPlaceholder}
-                      width="100"
-                      height="100"
-                      className="h-8 w-8 rounded-full"
-                      alt="Avatar placeholder"
-                    />
+                    <div className="flex cursor-pointer flex-row items-center space-x-5">
+                      <Image
+                        src={session.user.image || AvatarPlaceholder}
+                        width="100"
+                        height="100"
+                        className="h-9 w-9 rounded-full"
+                        alt="Avatar placeholder"
+                      />
+                      <div>
+                        <p className="-mb-1 text-sm font-bold text-slate-700">{environment?.product?.name}</p>
+                        <p className="text-sm text-slate-500">{environment?.type}</p>
+                      </div>
+                      <ChevronDownIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
+                    </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56">
                     <DropdownMenuLabel>
@@ -156,7 +165,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
                         <div>
-                          <p>{environment?.type}</p>
+                          <p>{capitalizeFirstLetter(environment?.type)}</p>
                           <p className=" block text-xs text-slate-500">Environment</p>
                         </div>
                       </DropdownMenuSubTrigger>
