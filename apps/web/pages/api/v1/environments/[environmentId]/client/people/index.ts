@@ -24,6 +24,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           ...person,
         },
       },
+      select: {
+        id: true,
+        userId: true,
+        attributes: true,
+      },
     });
     return res.json(personData);
   }

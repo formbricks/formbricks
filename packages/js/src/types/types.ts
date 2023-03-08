@@ -25,7 +25,6 @@ export interface Config {
   apiHost: string;
   person?: Person;
   session?: Session;
-  initialized?: boolean;
 }
 
 export interface Session {

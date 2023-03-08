@@ -16,6 +16,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   else if (req.method === "POST") {
     const { personId } = req.body;
 
+    if (!personId) {
+      return res.status(400).json({ message: "Missing personId" });
+    }
+
     // create new session
     const session = await prisma.session.create({
       data: {

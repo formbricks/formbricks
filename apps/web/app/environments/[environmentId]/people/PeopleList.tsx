@@ -2,8 +2,7 @@
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { usePeople } from "@/lib/people";
-import AvatarPlaceholder from "@/images/avatar-placeholder.png";
-import Image from "next/image";
+import Avatar from "boring-avatars";
 
 export default function PeopleList({ environmentId }: { environmentId: string }) {
   const { people, isLoadingPeople, isErrorPeople } = usePeople(environmentId);
@@ -34,15 +33,23 @@ export default function PeopleList({ environmentId }: { environmentId: string })
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     Email
                   </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Sessions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {people.map((person) => (
-                  <tr key={person.email}>
+                  <tr key={person.id}>
                     <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-0">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
-                          <Image src={AvatarPlaceholder} alt="Avatar Placeholder" className="rounded-full" />
+                          <Avatar
+                            size={40}
+                            name={person.id}
+                            variant="beam"
+                            colors={["#00e6ca", "#c4f0eb", "#334155"]}
+                          />
                         </div>
                         <div className="ml-4">
                           <div className="font-medium text-gray-900">{person.id}</div>
@@ -54,6 +61,9 @@ export default function PeopleList({ environmentId }: { environmentId: string })
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                       <div className="text-gray-900">{person.email}</div>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <div className="text-gray-900">{person._count?.sessions}</div>
                     </td>
                   </tr>
                 ))}

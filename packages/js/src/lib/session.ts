@@ -2,7 +2,7 @@ import type { Config, Session } from "../types/types";
 
 export const createSession = async (config: Config): Promise<Session> => {
   if (!config.person) {
-    console.error("Unable to create session. No person found");
+    console.error("Formbricks: Unable to create session. No person found");
     return;
   }
   const response = await fetch(
@@ -19,8 +19,8 @@ export const createSession = async (config: Config): Promise<Session> => {
     console.error("Error creating session");
     return;
   }
-  const session = await response.json();
-  localStorage.setItem("formbricks__session", JSON.stringify(session));
+  let session = await response.json();
+  session = extendSession(session);
   return session;
 };
 

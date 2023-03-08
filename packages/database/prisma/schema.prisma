@@ -21,9 +21,7 @@ model Person {
   environmentId String
   responses     Response[]
   attributes    Json        @default("{}")
-  Session       Session[]
-
-  @@unique([userId, environmentId])
+  sessions      Session[]
 }
 
 model Response {
