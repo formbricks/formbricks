@@ -13,7 +13,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/DropdownMenu";
+} from "@/components/shared/DropdownMenu";
 import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
 import { DashboardIcon } from "@/components/ui/icons/DashboardIcon";
 import { FilterIcon } from "@/components/ui/icons/FilterIcon";

@@ -3,7 +3,7 @@ import PageTitle from "@/components/ui/PageTitle";
 import JSLogo from "@/images/jslogo.png";
 import NPMLogo from "@/images/npmlogo.png";
 import Image from "next/image";
-
+/*  */
 export default function EventsAttributesPage({ params }) {
   return (
     <div>

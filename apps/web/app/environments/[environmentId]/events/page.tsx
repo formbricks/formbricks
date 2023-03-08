@@ -1,10 +1,10 @@
 import EventsList from "./EventsList";
 import EventsAttributesTabs from "@/components/events_attributes/EventsAttributesTabs";
-import ContentWrapper from "@/components/ui/ContentWrapper";
+import ContentWrapper from "@/components/shared/ContentWrapper";
 
 export default function EventsAttributesPage({ params }) {
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="">
       <EventsAttributesTabs activeId="events" environmentId={params.environmentId} />
       <ContentWrapper>
         <EventsList />

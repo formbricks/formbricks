@@ -1,6 +1,6 @@
 import SettingsNavbar from "@/components/settings/SettingsNavbar";
 
-export default async function SettingsLayout({ children, title, params }) {
+export default function SettingsLayout({ children, title, params }) {
   return (
     <>
       <div className="flex">
