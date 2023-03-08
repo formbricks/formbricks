@@ -1,10 +1,8 @@
-import NPMLogo from "@/images/npmlogo.png";
-import Image from "next/image";
 import DocsSidebar from "@/components/integrations/DocsSidebar";
 import IntegrationPageTitle from "@/components/integrations/IntegrationsPageTitle";
 import { Input } from "@/components/ui/Input";
-import Prism from "prismjs";
-import { useEffect } from "react";
+import NPMLogo from "@/images/npmlogo.png";
+import Image from "next/image";
 
 export default function NPMPage({ params }) {
   /*   useEffect(() => {
