@@ -1,50 +1,26 @@
-import { cn } from "@/lib/utils";
-import Link from "next/link";
+import SecondNavbar from "../environments/SecondNavBar";
+import { CursorArrowRaysIcon, TagIcon } from "@heroicons/react/20/solid";
 
-interface EventsAttributesTabsProps {
+interface PeopleGroupTabs {
   activeId: string;
   environmentId: string;
 }
 
-export default function EventsAttributesTabs({ activeId, environmentId }: EventsAttributesTabsProps) {
+export default function PeopleGroupsTabs({ activeId, environmentId }: PeopleGroupTabs) {
   const tabs = [
-    { id: "events", name: "Events", href: `/environments/${environmentId}/events` },
-    { id: "attributes", name: "Attributes", href: `/environments/${environmentId}/attributes` },
+    {
+      id: "events",
+      label: "Events",
+      icon: <CursorArrowRaysIcon />,
+      href: `/environments/${environmentId}/events`,
+    },
+    {
+      id: "attributes",
+      label: "Attributes",
+      icon: <TagIcon />,
+      href: `/environments/${environmentId}/attributes`,
+    },
   ];
 
-  return (
-    <div>
-      <div className="sm:hidden">
-        <label htmlFor="tabs" className="sr-only">
-          Select a tab
-        </label>
-        {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
-        <select
-          id="tabs"
-          name="tabs"
-          className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-          defaultValue={tabs.find((tab) => tab.id === activeId)?.name}>
-          {tabs.map((tab) => (
-            <option key={tab.id}>{tab.name}</option>
-          ))}
-        </select>
-      </div>
-      <div className="hidden sm:block">
-        <nav className="flex space-x-4" aria-label="Tabs">
-          {tabs.map((tab) => (
-            <Link
-              key={tab.id}
-              href={tab.href}
-              className={cn(
-                tab.id === activeId ? "bg-slate-200 text-gray-700" : "text-gray-500 hover:text-gray-700",
-                "rounded-md px-3 py-2 text-sm font-medium"
-              )}
-              aria-current={tab.id === activeId ? "page" : undefined}>
-              {tab.name}
-            </Link>
-          ))}
-        </nav>
-      </div>
-    </div>
-  );
+  return <SecondNavbar tabs={tabs} activeId={activeId} />;
 }

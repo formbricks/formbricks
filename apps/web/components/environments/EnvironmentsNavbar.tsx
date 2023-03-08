@@ -13,7 +13,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/DropdownMenu";
+} from "@/components/shared/DropdownMenu";
 import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
 import { DashboardIcon } from "@/components/ui/icons/DashboardIcon";
 import { FilterIcon } from "@/components/ui/icons/FilterIcon";
@@ -67,11 +67,11 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         name: "Events & Attributes",
         href: `/environments/${environmentId}/events`,
         icon: FilterIcon,
-        current: pathname?.includes("/events-attributes"),
+        current: pathname?.includes("/events" || "/attributes"),
       },
       {
         name: "Integrations",
-        href: `/environments/${environmentId}/integrations`,
+        href: `/environments/${environmentId}/integrations/installation`,
         icon: DashboardIcon,
         current: pathname?.includes("/integrations"),
       },
@@ -86,16 +86,16 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
   );
 
   return (
-    <Disclosure as="nav" className="border-b border-slate-200 bg-white">
+    <Disclosure as="nav" className="fixed top-0 z-50 w-full border-b border-slate-200 bg-white">
       {({}) => (
         <>
-          <div className="mx-auto w-full px-4 sm:px-6 lg:px-8">
-            <div className="flex h-16 justify-between">
+          <div className="w-full px-4 sm:px-6">
+            <div className="flex h-14 justify-between">
               <div className="hidden py-2 sm:flex lg:space-x-4">
                 <Link
                   href=""
-                  className="from-brand-light to-brand-dark flex items-center justify-center rounded-md bg-gradient-to-b px-1.5 text-white transition-all ease-in-out hover:scale-105">
-                  <PlusIcon className="h-8 w-8" />
+                  className="from-brand-light to-brand-dark my-1 flex items-center justify-center rounded-md bg-gradient-to-b px-1 text-white transition-all ease-in-out hover:scale-105">
+                  <PlusIcon className="h-6 w-6" />
                 </Link>
                 {navigation.map((item) => (
                   <Link
@@ -105,7 +105,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       item.current
                         ? "bg-slate-100 text-slate-900"
                         : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
-                      "inline-flex items-center rounded-md py-2 px-3 text-sm font-medium"
+                      "inline-flex items-center rounded-md py-1 px-2 text-sm font-medium"
                     )}
                     aria-current={item.current ? "page" : undefined}>
                     <item.icon className="mr-3 h-5 w-5" />

@@ -103,8 +103,8 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
   ];
 
   return (
-    <div className="flex h-screen flex-col bg-white pl-4 pr-10 pt-4">
-      <nav className="flex-1  space-y-1 bg-white px-2">
+    <div className=" flex h-screen flex-col bg-white pl-4 pr-10 pt-4">
+      <nav className="flex-1 space-y-1 bg-white px-2">
         {navigation.map((item) => (
           <div key={item.title}>
             <p className="mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -117,7 +117,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
                   href={link.href}
                   target={link.target}
                   className={clsx(
-                    link.current ? " bg-slate-200 text-slate-700" : "text-slate-600 hover:text-slate-900",
+                    link.current ? " bg-slate-200 text-slate-900" : "text-slate-900 hover:text-slate-700",
                     "group flex items-center whitespace-nowrap rounded-md px-1 py-1 text-sm font-medium"
                   )}>
                   <link.icon
