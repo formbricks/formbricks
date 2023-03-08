@@ -11,7 +11,7 @@ import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthoriz
 export default function UpdateProfile() {
   const router = useRouter();
   const session = useSession();
-  const [fileName, setFileName] = useState("");
+  const [profilePictureFileName, setProfilePictureFileName] = useState("");
   const inputFileRef = useRef(null);
   const [user, setUser] = useState<User>(session.data.user);
   const [address, setAddress] = useState<Address>(session.data.user.address);
@@ -44,12 +44,12 @@ export default function UpdateProfile() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setFileName(e.target.files[0].name);
+      setProfilePictureFileName(e.target.files[0].name);
       const fileSize = e.target.files[0].size / 1024;
       if (fileSize > 1024) {
         toast("Le fichier ne doit pas depasser 1MB");
         inputFileRef.current.value = null;
-        setFileName("");
+        setProfilePictureFileName("");
       }
     }
   };
@@ -106,7 +106,7 @@ export default function UpdateProfile() {
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
-            <div className="w-fit m-auto relative cursor-pointer">
+            <div className="w-fit m-auto relative cursor-pointer" onClick={handleInputFileClick}>
               <figure>
                 <img
                   className="w-24 h-24 rounded-full mx-auto"
@@ -122,7 +122,7 @@ export default function UpdateProfile() {
             </div>
 
             <div className="text-center">
-              <code className="text-xs ">{fileName}</code>
+              <code className="text-xs ">{profilePictureFileName}</code>
             </div>
             <div className="text-2xl font-bold text-center mb-2 mt-3 text-ui-gray-dark">
               {user.firstname} {user.lastname}
