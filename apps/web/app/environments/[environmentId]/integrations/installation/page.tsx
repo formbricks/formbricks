@@ -4,7 +4,7 @@ import JSLogo from "@/images/jslogo.png";
 import NPMLogo from "@/images/npmlogo.png";
 import Image from "next/image";
 
-export default function EventsAttributesPage({ params }) {
+export default function InstallationsPage({ params }) {
   return (
     <div>
       <PageTitle>Installation</PageTitle>
@@ -14,14 +14,12 @@ export default function EventsAttributesPage({ params }) {
           title="JavaScript"
           description="Copy the Formbricks snippet into your HTML <head>."
           icon={<Image src={JSLogo} alt="JavaScript Logo" />}
-          className="my-card"
         />
         <Card
           href={`/environments/${params.environmentId}/integrations/installation/npm`}
           title="NPM"
           description="Use NPM or yarn to install the Formbricks SDK."
           icon={<Image src={NPMLogo} alt="NPM Logo" />}
-          className="my-card"
         />
       </div>
     </div>

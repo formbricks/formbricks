@@ -3,14 +3,21 @@ import Image from "next/image";
 import DocsSidebar from "@/components/integrations/DocsSidebar";
 import IntegrationPageTitle from "@/components/integrations/IntegrationsPageTitle";
 import { Input } from "@/components/ui/Input";
+import Prism from "prismjs";
+import { useEffect } from "react";
 
-export default function JavaScriptPage({}) {
+export default function JavaScriptPage({ params }) {
+  /*   useEffect(() => {
+    Prism.highlightAll();
+  }, []); */
+
   return (
     <div>
       <IntegrationPageTitle
+        environmentId={params.environmentId}
         title="JavaScript Snippet"
         icon={<Image src={JSLogo} alt="JavaScript Logo" />}
-        environmentId="my-environment-id"
+        goBackTo="installation"
       />
 
       <div className="grid grid-cols-3 gap-6">
@@ -35,6 +42,30 @@ export default function JavaScriptPage({}) {
           </div>
           <div>
             <h3 className="mt-12 text-xl font-bold text-slate-800">JavaScript Snippet</h3>
+            <div className="col-span-3 rounded-md bg-black p-4 text-sm font-light text-slate-200">
+              <pre>
+                <code className="language-html whitespace-pre-wrap">
+                  {`<!--HTML header script -->
+<script src="https://cdn.jsdelivr.net/npm/@formbricks/feedback@0.2" defer></script>
+
+<script>
+  window.formbricks = {
+      ...window.formbricks,
+      config: {
+        hqUrl: "https://app.formbricks.com",
+        formId: "YOUR FEEDBACK BOX ID HERE", // copy from Formbricks dashboard
+        contact: {
+          name: "Matti",
+          position: "Co-Founder",
+          imgUrl: "https://avatars.githubusercontent.com/u/675065?s=128&v=4",
+        },
+      },
+    }
+    </script>
+`}
+                </code>
+              </pre>
+            </div>
           </div>
         </div>
         <div className="col-span-1">

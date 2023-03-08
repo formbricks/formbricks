@@ -4,14 +4,20 @@ import Link from "next/link";
 interface IntegrationPageTitleProps {
   title: string;
   icon?: React.ReactNode;
+  goBackTo: string;
   environmentId: string;
 }
 
-const IntegrationPageTitle: React.FC<IntegrationPageTitleProps> = ({ title, icon, environmentId }) => {
+const IntegrationPageTitle: React.FC<IntegrationPageTitleProps> = ({
+  title,
+  icon,
+  goBackTo,
+  environmentId,
+}) => {
   return (
     <div className="mb-8">
-      <Link className="inline-block" href={`/environments/${environmentId}/integrations`}>
-        <BackIcon className="mb-2 h-8 w-8" />
+      <Link className="inline-block" href={`/environments/${environmentId}/integrations/${goBackTo}`}>
+        <BackIcon className="mb-2 h-6 w-6" />
       </Link>
 
       <div className="my-4 flex items-baseline">

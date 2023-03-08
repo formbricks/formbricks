@@ -4,7 +4,7 @@ import IntegrationsTabs from "@/components/integrations/IntegrationsTabs";
 export default function SettingsLayout({ children, params }) {
   return (
     <>
-      <IntegrationsTabs activeId="installation" environmentId={params.environmentId} />
+      <IntegrationsTabs activeId="alerts" environmentId={params.environmentId} />
       <ContentWrapper>{children}</ContentWrapper>
     </>
   );
