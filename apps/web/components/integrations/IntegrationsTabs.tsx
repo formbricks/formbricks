@@ -1,4 +1,5 @@
 import SecondNavbar from "../environments/SecondNavBar";
+import { CodeBracketSquareIcon, MegaphoneIcon, ArrowPathIcon } from "@heroicons/react/20/solid";
 
 interface IntegrationsTabs {
   activeId: string;
@@ -9,12 +10,23 @@ export default function PeopleGroupsTabs({ activeId, environmentId }: Integratio
   const tabs = [
     {
       id: "installation",
-      name: "Installation",
+      label: "Installation",
+      icon: <CodeBracketSquareIcon />,
       href: `/environments/${environmentId}/integrations/installation`,
     },
-    { id: "alerts", name: "Team Alerts", href: `/environments/${environmentId}/integrations/alerts` },
-    { id: "data", name: "Data Sync", href: `/environments/${environmentId}/integrations/data` },
+    {
+      id: "alerts",
+      label: "Team Alerts",
+      icon: <MegaphoneIcon />,
+      href: `/environments/${environmentId}/integrations/alerts`,
+    },
+    {
+      id: "data",
+      label: "Data Sync",
+      icon: <ArrowPathIcon />,
+      href: `/environments/${environmentId}/integrations/data`,
+    },
   ];
 
-  return <SecondNavbar tabs={tabs} activeId={activeId} environmentId={environmentId} />;
+  return <SecondNavbar tabs={tabs} activeId={activeId} />;
 }

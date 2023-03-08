@@ -2,13 +2,11 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 interface SecondNavbarProps {
-  tabs: { id: string; name: string; href: string }[];
+  tabs: { id: string; label: string; href: string; icon?: React.ReactNode }[];
   activeId: string;
-  environmentId: string;
-  disabled?: boolean;
 }
 
-export default function SecondNavbar({ tabs, activeId, disabled }: SecondNavbarProps) {
+export default function SecondNavbar({ tabs, activeId }: SecondNavbarProps) {
   return (
     <div>
       <div className="flex h-14 w-full items-center justify-center border bg-white">
@@ -24,7 +22,8 @@ export default function SecondNavbar({ tabs, activeId, disabled }: SecondNavbarP
                 "flex h-full items-center px-3 text-sm font-medium"
               )}
               aria-current={tab.id === activeId ? "page" : undefined}>
-              {tab.name}
+              {tab.icon && <div className="mr-2 h-5 w-5">{tab.icon}</div>}
+              {tab.label}
             </Link>
           ))}
         </nav>
