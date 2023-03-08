@@ -4,7 +4,6 @@ import { AddAlertButton } from "@/components/integrations/AddAlertButton";
 import AlertCard from "@/components/integrations/AlertCard";
 import IntegrationPageTitle from "@/components/integrations/IntegrationsPageTitle";
 import { EmailIcon } from "@/components/ui/icons/EmailIcon";
-import Image from "next/image";
 
 export default function SlackAlertPage({ params }) {
   const exampleAlert = {

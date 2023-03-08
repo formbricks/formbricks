@@ -3,14 +3,22 @@ import habitat from "preact-habitat";
 import css from "./style.css";
 
 import App from "./App";
-import { getNewPerson } from "./lib/person";
+import { createPerson, getLocalPerson, updatePersonUserId } from "./lib/person";
 import type { Config } from "./types/types";
+import { createSession, getLocalSession } from "./lib/session";
 
 const _habitat = habitat(App);
 
-let globalConfig: Config = { environmentId: null, apiHost: null };
+let config: Config = { environmentId: null, apiHost: null };
+let initFunction;
+let currentlyExecuting = Promise.resolve();
+let currentlyExecutingLock = false;
 
-const init = async (config: Config) => {
+const init = async (c: Config) => {
+  if (!initFunction) {
+    initFunction = populateConfig(c);
+  }
+
   // add styles
   if (document.getElementById("formbricks__css") === null) {
     const styleElement = document.createElement("style");
@@ -24,63 +32,97 @@ const init = async (config: Config) => {
     containerElement.id = "formbricks__container";
     document.body.appendChild(containerElement);
   }
-  // set config
-  globalConfig = config;
-  // check local storage for user
-  const person = localStorage.getItem("formbricks__person");
-  if (person) {
-    config.person = JSON.parse(person);
-  } else {
-    // create new person
-    const person = await getNewPerson(config);
-    console.log(JSON.stringify(person));
-    config.person = { id: person.id };
-    localStorage.setItem("formbricks__person", JSON.stringify(config.person));
+};
+
+const populateConfig = async (c: Config) => {
+  config = c;
+  // get or create person
+  let newPerson;
+  config.person = getLocalPerson();
+  if (!config.person) {
+    config.person = await createPerson(config);
+    newPerson = true;
+    if (!config.person) {
+      return;
+    }
   }
-  // register widget session
-  console.log("formbricks initialized");
+  // get or create session
+  if (!newPerson) {
+    // if new person, we need a new session and skip this step
+    config.session = getLocalSession();
+  }
+  if (!config.session) {
+    config.session = await createSession(config);
+    if (!config.session) {
+      return;
+    }
+  }
   console.log(config);
 };
 
-/* const identify = (userEmail, userProperties) => {
-  const customer = {
-    email: userEmail,
-    data: userProperties,
-  };
-  globalConfig.person = customer;
-  // save to local storage
-  localStorage.setItem("formbricks__customer", JSON.stringify(customer));
-}; */
+const setUserId = async (userId) => {
+  if (!initFunction) {
+    console.error("Formbricks: Error setting userId, init function not yet called");
+    return;
+  }
+  const randomNumber = Math.floor(Math.random() * 100);
+  await initFunction;
+  await currentlyExecuting;
+  if (currentlyExecutingLock) {
+    console.error('multiple calls to "setUserId" are not allowed');
+    return;
+  }
+  currentlyExecutingLock = true;
+  currentlyExecuting = (async function () {
+    if (userId === config.person.userId) {
+      return;
+    }
+    if (!userId) {
+      console.error("Formbricks: Error setting userId, userId is null or undefined");
+      return;
+    }
+    const updatedPerson = await updatePersonUserId(config, userId);
+    if (!updatedPerson) {
+      console.error('Formbricks: Error updating "userId"');
+      return;
+    }
+    config.person = updatedPerson;
+    currentlyExecutingLock = false;
+    return;
+  })();
+};
 
 const reset = () => {
-  delete globalConfig.person;
-  localStorage.removeItem("formbricks__customer");
+  delete config.person;
+  delete config.session;
+  localStorage.removeItem("formbricks__person");
+  localStorage.removeItem("formbricks__session");
 };
 
 const renderForm = (formId, schema) => {
   _habitat.render({
     selector: "#formbricks__container",
     clean: true,
-    defaultProps: { globalConfig, schema, formId },
+    defaultProps: { config, schema, formId },
   });
 };
 
 const getForms = async () => {
-  const formRes = await fetch(`${globalConfig.apiHost}/api/public/${globalConfig.environmentId}/forms`, {
+  const formRes = await fetch(`${config.apiHost}/api/public/${config.environmentId}/forms`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
   });
   if (!formRes.ok) {
-    console.error("Error fetching forms");
+    console.error("Formbricks: Error fetching forms");
     return;
   }
   const forms = formRes.json();
   return forms;
 };
 
-const formbricks = { init, reset, globalConfig };
+const formbricks = { init, setUserId, reset, config };
 
 // (window as any).formbricks = formbricks;
 
