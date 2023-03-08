@@ -203,11 +203,13 @@ export default function ResultsResponses({
                   <DataGrid
                     columns={candidateDataGridSchemaColumn}
                     rows={candidates.map(
-                      ({ id, firstname, lastname, gender, email }) => ({
+                      ({ id, firstname, lastname, gender, email, phone, whatsapp }) => ({
                         id,
                         Noms: `${firstname} ${lastname}`,
                         Genre: gender,
                         Email: email,
+                        Phone: phone,
+                        Whatsapp: whatsapp
                       })
                     )}
                     components={{ Toolbar: GridToolbar }}
