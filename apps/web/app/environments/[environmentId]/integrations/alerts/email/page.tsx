@@ -6,6 +6,7 @@ import IntegrationPageTitle from "@/components/integrations/IntegrationsPageTitl
 import { EmailIcon } from "@/components/ui/icons/EmailIcon";
 import { useState } from "react";
 import AddEmailAlertModal from "./AddEmailAlertModal";
+import DeleteDialog from "@/components/shared/DeleteDialog";
 
 export default function SlackAlertPage({ params }) {
   const exampleAlert = {
@@ -14,15 +15,19 @@ export default function SlackAlertPage({ params }) {
     description: "This is an example alert",
   };
 
-  function myFunction() {
-    console.log();
-  }
-
-  const [isOpen, setModalOpen] = useState(true);
+  const [isAlertModalOpen, setAlertModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleAddAlertClick = async () => {
-    console.log("Add alert button clicked!");
-    setModalOpen(true);
+    setAlertModalOpen(true);
+  };
+
+  const handleDeleteAlertClick = async () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const deleteEmailAlert = async () => {
+    console.log("Delete email alert");
   };
 
   return (
@@ -30,16 +35,22 @@ export default function SlackAlertPage({ params }) {
       <IntegrationPageTitle environmentId={params.environmentId} title="Email Alerts" goBackTo="alerts" />
       <div className="grid grid-cols-3 gap-6">
         <AlertCard
-          onDelete={myFunction}
-          onEdit={myFunction}
           href={exampleAlert.href}
+          onDelete={handleDeleteAlertClick}
+          onEdit={handleAddAlertClick}
           title={exampleAlert.title}
           description={exampleAlert.description}
           icon={<EmailIcon />}
         />
         <AddAlertButton channel="Email" onClick={() => handleAddAlertClick()} />
       </div>
-      <AddEmailAlertModal open={isOpen} setOpen={setModalOpen} />
+      <AddEmailAlertModal open={isAlertModalOpen} setOpen={setAlertModalOpen} />
+      <DeleteDialog
+        deleteWhat="Email Alert"
+        open={isDeleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        onDelete={deleteEmailAlert}
+      />
     </div>
   );
 }
