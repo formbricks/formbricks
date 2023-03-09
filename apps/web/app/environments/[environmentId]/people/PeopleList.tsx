@@ -25,7 +25,7 @@ export default function PeopleList({ environmentId }: { environmentId: string })
       </div>
       <div className="grid-cols-7">
         {people.map((person) => (
-          <Link href="/" className="w-full">
+          <Link href={`/environments/${environmentId}/people/${person.id}`} className="w-full">
             <div
               key={person.id}
               className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
