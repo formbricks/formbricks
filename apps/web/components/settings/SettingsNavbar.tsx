@@ -11,8 +11,8 @@ import {
   StarIcon,
   UserCircleIcon,
   UsersIcon,
+  LinkIcon,
 } from "@heroicons/react/24/solid";
-import clsx from "clsx";
 
 export default function SettingsNavbar({ environmentId }: { environmentId: string }) {
   const navigation = [
@@ -50,7 +50,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
     {
       title: "Team",
       links: [
-        {
+        /*         {
           name: "Members",
           href: `/environments/${environmentId}/settings/members`,
           icon: UsersIcon,
@@ -59,43 +59,66 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           name: "Tags",
           href: `/environments/${environmentId}/settings/tags`,
           icon: PlusCircleIcon,
-        },
+        }, */
         {
           name: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
           icon: CreditCardIcon,
-        },
-        {
-          name: "Legal",
-          href: "/settings/legal",
-          icon: ScaleIcon,
         },
       ],
     },
     {
       title: "Setup",
       links: [
-        { name: "Setup Checklist", href: "/settings/setup", icon: DocumentCheckIcon, current: false },
-        { name: "Web Client", href: "/settings/webclient", icon: CodeBracketIcon, current: false },
+        {
+          name: "Setup Checklist",
+          href: `/environments/${environmentId}/settings/setup`,
+          icon: DocumentCheckIcon,
+        },
+        {
+          name: "Web Client",
+          href: `/environments/${environmentId}/settings/webclient`,
+          icon: CodeBracketIcon,
+        },
         {
           name: "Documentation",
           href: "https://formbricks.com/docs",
           icon: DocumentMagnifyingGlassIcon,
-
           target: "_blank",
         },
         {
           name: "Join Discord",
           href: "https://formbricks.com/discord",
           icon: ChatBubbleLeftEllipsisIcon,
-
           target: "_blank",
         },
         {
           name: "Star us on GitHub",
           href: "https://formbricks.com/github",
           icon: StarIcon,
-
+          target: "_blank",
+        },
+      ],
+    },
+    {
+      title: "Compliance",
+      links: [
+        {
+          name: "GDPR & CCPA",
+          href: "https://formbricks.com/gdpr",
+          icon: LinkIcon,
+          target: "_blank",
+        },
+        {
+          name: "Privacy Policy",
+          href: "https://formbricks.com/privacy",
+          icon: LinkIcon,
+          target: "_blank",
+        },
+        {
+          name: "Terms of Service",
+          href: "https://formbricks.com/terms",
+          icon: LinkIcon,
           target: "_blank",
         },
       ],
@@ -116,15 +139,9 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
                   key={link.name}
                   href={link.href}
                   target={link.target}
-                  className={clsx(
-                    link.current ? " bg-slate-200 text-slate-900" : "text-slate-900 hover:text-slate-700",
-                    "group flex items-center whitespace-nowrap rounded-md px-1 py-1 text-sm font-medium"
-                  )}>
+                  className="group flex items-center whitespace-nowrap rounded-md px-1 py-1 text-sm font-medium text-slate-900 hover:text-slate-700">
                   <link.icon
-                    className={clsx(
-                      link.current ? "text-slate-500" : "text-slate-400 group-hover:text-slate-500",
-                      "mr-3 h-4 w-4 flex-shrink-0"
-                    )}
+                    className="mr-3 h-4 w-4 flex-shrink-0 text-slate-400 group-hover:text-slate-500"
                     aria-hidden="true"
                   />
                   {link.name}
