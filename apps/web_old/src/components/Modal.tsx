@@ -2,11 +2,14 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Fragment } from "react";
+import { useState } from "react";
 
-export default function Modal({ open, setOpen, children }) {
+export default function Modal({ isOpen, setOpen, children }) {
+  const [open, setOpenModal] = useState(isOpen);
+
   return (
     <Transition.Root show={open} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={setOpen}>
+      <Dialog as="div" className="relative z-10" onClose={setOpenModal}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"

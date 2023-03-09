@@ -4,13 +4,13 @@ import { PlusCircleIcon } from "@heroicons/react/20/solid";
 
 interface AddAlertButtonProps {
   channel: string;
-  onclick: () => void;
+  onClick?: () => void;
 }
 
-export const AddAlertButton: React.FC<AddAlertButtonProps> = ({ channel, onclick }) => {
+export const AddAlertButton: React.FC<AddAlertButtonProps> = ({ channel, onClick = () => {} }) => {
   return (
     <button
-      onClick={onclick}
+      onClick={onClick}
       className="hover:border-brand-dark cursor-pointer rounded-lg border-2 border-dashed border-slate-300 p-8 transition-all duration-150 ease-in-out">
       <div className="flex w-full justify-center">
         <div className="mb-4 h-10 w-10 text-center">
