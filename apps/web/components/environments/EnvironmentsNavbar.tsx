@@ -25,16 +25,17 @@ import { useEnvironment } from "@/lib/environments";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { Disclosure } from "@headlessui/react";
 import {
+  AdjustmentsVerticalIcon,
   ArrowRightOnRectangleIcon,
   ChevronDownIcon,
   CodeBracketIcon,
-  CogIcon,
+  CreditCardIcon,
   DocumentCheckIcon,
   HeartIcon,
+  PaintBrushIcon,
   PlusIcon,
   RocketLaunchIcon,
   UserCircleIcon,
-  UsersIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import type { Session } from "next-auth";
@@ -90,11 +91,34 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
 
   const dropdownnavigation = [
     {
+      title: "Survey",
+      links: [
+        {
+          icon: AdjustmentsVerticalIcon,
+          label: "Survey Settings",
+          href: `/environments/${environmentId}/settings/product`,
+        },
+        {
+          icon: PaintBrushIcon,
+          label: "Look & Feel",
+          href: `/environments/${environmentId}/settings/billing`,
+        },
+      ],
+    },
+    {
       title: "Account",
       links: [
-        { icon: UserCircleIcon, label: "Profile", href: `/environments/${environmentId}/settings/profile` },
-        { icon: UsersIcon, label: "Team", href: `/environments/${environmentId}/settings/team` },
-        { icon: CogIcon, label: "Settings", href: `/environments/${environmentId}/settings` },
+        {
+          icon: UserCircleIcon,
+          label: "Profile",
+          href: `/environments/${environmentId}/settings/profile`,
+        } /* 
+        { icon: UsersIcon, label: "Team", href: `/environments/${environmentId}/settings/team` }, */,
+        {
+          icon: CreditCardIcon,
+          label: "Billing & Plan",
+          href: `/environments/${environmentId}/settings/billing`,
+        },
         {
           icon: RocketLaunchIcon,
           label: "Upgrade account",
@@ -220,7 +244,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       </DropdownMenuSubTrigger>
                       <DropdownMenuPortal>
                         <DropdownMenuSubContent>
-                          <DropdownMenuRadioGroup value={environment} onValueChange={() => {}}>
+                          <DropdownMenuRadioGroup value={environment?.type} onValueChange={() => {}}>
                             <DropdownMenuRadioItem value="production">Production</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="development">Development</DropdownMenuRadioItem>
                           </DropdownMenuRadioGroup>

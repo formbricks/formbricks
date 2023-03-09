@@ -68,21 +68,21 @@ export const Button = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonPr
         variant === "highlight" &&
           (disabled
             ? "border border-transparent bg-slate-400 text-white"
-            : "text-white bg-brand-dark hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 transition ease-in-out delay-50 hover:scale-105"),
+            : "text-white bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 transition ease-in-out delay-50 hover:scale-105"),
         variant === "primary" &&
           (disabled
             ? "border border-transparent bg-slate-400 text-white"
-            : "text-white bg-brand-dark  hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900"),
+            : "text-white bg-brand-dark hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900"),
 
-        variant === "secondary" &&
+        variant === "minimal" &&
           (disabled
-            ? "border border-slate-200 text-slate-400 bg-white"
-            : "hover:text-slate-600 hover:bg-slate-300 bg-slate-200 text-slate-700 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-neutral-900 dark:text-slate-400 dark:hover:text-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 transition ease-in-out delay-50 hover:scale-105"),
+            ? "border border-slate-200 text-slate-400"
+            : "hover:text-slate-600 text-slate-700  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-neutral-900 dark:text-slate-700 dark:hover:text-slate-500"),
         variant === "alert" &&
           (disabled
             ? "border border-transparent bg-slate-400 text-white"
             : "border border-transparent dark:text-darkmodebrandcontrast text-brandcontrast bg-red-600 dark:bg-darkmodebrand hover:bg-opacity-90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-neutral-900"),
-        variant === "minimal" &&
+        variant === "secondary" &&
           (disabled
             ? "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800"
             : "text-slate-600 hover:text-slate-500 bg-slate-200 hover:bg-slate-100  focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),

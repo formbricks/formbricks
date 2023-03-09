@@ -29,7 +29,7 @@ export default function SlackAlertPage({ params }) {
           description={exampleAlert.description}
           icon={<Image src={SlackLogo} alt="Slack Logo" />}
         />
-        <AddAlertButton channel="Slack" onclick={myFunction} />
+        <AddAlertButton channel="Slack" onClick={myFunction} />
       </div>
     </div>
   );
