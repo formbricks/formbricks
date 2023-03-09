@@ -12,7 +12,7 @@ export default async function EnvironmentLayout({ children, params }) {
   return (
     <div>
       <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
-      <main className="mt-14 min-h-screen bg-slate-50">
+      <main className="mt-14 min-h-fit bg-slate-50">
         {children}
         <main />
       </main>
