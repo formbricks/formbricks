@@ -21,12 +21,14 @@ import { FormIcon } from "@/components/ui/icons/FormIcon";
 import { SettingsIcon } from "@/components/ui/icons/SettingsIcon";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { useEnvironment } from "@/lib/environments";
+import { capitalizeFirstLetter } from "@/lib/utils";
 import { Disclosure } from "@headlessui/react";
 import {
   ArrowRightOnRectangleIcon,
+  ChevronDownIcon,
+  CodeBracketIcon,
   CogIcon,
-  CreditCardIcon,
-  DocumentMagnifyingGlassIcon,
+  DocumentCheckIcon,
   HeartIcon,
   PlusIcon,
   RocketLaunchIcon,
@@ -85,6 +87,54 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     [pathname]
   );
 
+  const dropdownnavigation = [
+    {
+      title: "Account",
+      links: [
+        { icon: UserCircleIcon, label: "Profile", href: `/environments/${environmentId}/settings/profile` },
+        { icon: UsersIcon, label: "Team", href: `/environments/${environmentId}/settings/team` },
+        { icon: CogIcon, label: "Settings", href: `/environments/${environmentId}/settings` },
+        {
+          icon: RocketLaunchIcon,
+          label: "Upgrade account",
+          href: `/environments/${environmentId}/settings/billing`,
+        },
+      ],
+    },
+    {
+      title: "Setup",
+      links: [
+        {
+          icon: DocumentCheckIcon,
+          label: "Setup checklist",
+          href: `/environments/${environmentId}/settings/setup`,
+        },
+        {
+          icon: CodeBracketIcon,
+          label: "Developer Docs",
+          href: "https://formbricks.com/docs",
+          target: "_blank",
+        },
+        {
+          icon: HeartIcon,
+          label: "Contribute to Formbricks",
+          href: "https://formbricks.com/discord",
+          target: "_blank",
+        },
+      ],
+    },
+    {
+      title: "Logout",
+      links: [
+        {
+          icon: ArrowRightOnRectangleIcon,
+          label: "Logout",
+          href: `/api/auth/signout?redirect=${encodeURIComponent("/")}`,
+        },
+      ],
+    },
+  ];
+
   return (
     <Disclosure as="nav" className="fixed top-0 z-50 w-full border-b border-slate-200 bg-white">
       {({}) => (
@@ -116,13 +166,20 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Image
-                      src={session.user.image || AvatarPlaceholder}
-                      width="100"
-                      height="100"
-                      className="h-8 w-8 rounded-full"
-                      alt="Avatar placeholder"
-                    />
+                    <div className="flex cursor-pointer flex-row items-center space-x-5">
+                      <Image
+                        src={session.user.image || AvatarPlaceholder}
+                        width="100"
+                        height="100"
+                        className="h-9 w-9 rounded-full"
+                        alt="Avatar placeholder"
+                      />
+                      <div>
+                        <p className="-mb-1 text-sm font-bold text-slate-700">{environment?.product?.name}</p>
+                        <p className="text-sm text-slate-500">{environment?.type}</p>
+                      </div>
+                      <ChevronDownIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
+                    </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56">
                     <DropdownMenuLabel>
@@ -156,7 +213,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger>
                         <div>
-                          <p>{environment?.type}</p>
+                          <p>{capitalizeFirstLetter(environment?.type)}</p>
                           <p className=" block text-xs text-slate-500">Environment</p>
                         </div>
                       </DropdownMenuSubTrigger>
@@ -170,51 +227,21 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
 
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem>
-                        <UserCircleIcon className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <UsersIcon className="mr-2 h-4 w-4" />
-                        <span>Team</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <CreditCardIcon className="mr-2 h-4 w-4" />
-                        <span>Billing & Plans</span>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem>
-                        <CogIcon className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-
-                    <DropdownMenuSeparator />
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem>
-                        <DocumentMagnifyingGlassIcon className="mr-2 h-4 w-4" />
-                        <span>Documentation</span>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem>
-                        <RocketLaunchIcon className="mr-2 h-4 w-4" />
-                        <span>Upgrade account</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuItem>
-                      <HeartIcon className="text-red mr-2 h-4 w-4" />
-                      <span>Contribute to Formbricks</span>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem>
-                      <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
+                    {dropdownnavigation.map((item) => (
+                      <DropdownMenuGroup key={item.title}>
+                        <DropdownMenuSeparator />
+                        {item.links.map((link) => (
+                          <Link href={link.href} target={link.target}>
+                            <DropdownMenuItem key={link.label}>
+                              <div className="flex items-center">
+                                <link.icon className="mr-2 h-4 w-4" />
+                                <span>{link.label}</span>
+                              </div>
+                            </DropdownMenuItem>
+                          </Link>
+                        ))}
+                      </DropdownMenuGroup>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
