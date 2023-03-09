@@ -12,6 +12,7 @@ import {
 } from "./lib/person";
 import type { Config } from "./types/types";
 import { createSession, getLocalSession } from "./lib/session";
+import { trackEvent } from "./lib/event";
 
 const _habitat = habitat(App);
 
@@ -151,6 +152,27 @@ const reset = () => {
   initFunction = populateConfig({ environmentId: config.environmentId, apiHost: config.apiHost });
 };
 
+const track = async (eventName: string, properties: any = {}) => {
+  if (!initFunction) {
+    console.error("Formbricks: Error setting attribute, init function not yet called");
+    return;
+  }
+  await initFunction;
+  await currentlyExecuting;
+  currentlyExecuting = currentlyExecuting.then(async () => {
+    if (!eventName) {
+      console.error("Formbricks: Error tracking event, please provide an eventName");
+      return;
+    }
+    const event = await trackEvent(config, eventName, properties);
+    if (!event) {
+      console.error("Formbricks: Error sending event");
+      return;
+    }
+    return;
+  });
+};
+
 const renderForm = (formId, schema) => {
   _habitat.render({
     selector: "#formbricks__container",
@@ -174,7 +196,7 @@ const getForms = async () => {
   return forms;
 };
 
-const formbricks = { init, setUserId, setEmail, setAttribute, reset, config };
+const formbricks = { init, setUserId, setEmail, setAttribute, track, reset, config };
 
 // (window as any).formbricks = formbricks;
 

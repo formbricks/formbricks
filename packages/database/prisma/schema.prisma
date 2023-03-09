@@ -52,15 +52,13 @@ model Survey {
 }
 
 model Event {
-  id            String      @id @default(cuid())
-  createdAt     DateTime    @default(now()) @map(name: "created_at")
-  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  environmentId String
-  eventClass    EventClass? @relation(fields: [eventClassId], references: [id])
-  eventClassId  String?
-  session       Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  sessionId     String
-  properties    Json        @default("{}")
+  id           String      @id @default(cuid())
+  createdAt    DateTime    @default(now()) @map(name: "created_at")
+  eventClass   EventClass? @relation(fields: [eventClassId], references: [id])
+  eventClassId String?
+  session      Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId    String
+  properties   Json        @default("{}")
 }
 
 enum EventType {
@@ -107,7 +105,6 @@ model Environment {
   productId    String
   surveys      Survey[]
   people       Person[]
-  event        Event[]
   eventClasses EventClass[]
 }
 

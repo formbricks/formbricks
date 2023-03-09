@@ -1,6 +1,4 @@
-import SettingsCard from "@/components/settings/SettingsCard";
 import SettingsTitle from "@/components/settings/SettingsTitle";
-import { Button } from "@/components/ui/Button";
 
 export default function ProfileSettingsPage() {
   return (

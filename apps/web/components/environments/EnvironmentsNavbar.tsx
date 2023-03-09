@@ -1,4 +1,5 @@
 "use client";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,14 +29,13 @@ import {
   ArrowRightOnRectangleIcon,
   ChevronDownIcon,
   CodeBracketIcon,
+  CreditCardIcon,
   DocumentCheckIcon,
   HeartIcon,
   PaintBrushIcon,
   PlusIcon,
   RocketLaunchIcon,
   UserCircleIcon,
-  UsersIcon,
-  CreditCardIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import type { Session } from "next-auth";
@@ -86,7 +86,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         current: pathname?.includes("/settings"),
       },
     ],
-    [pathname]
+    [environmentId, pathname]
   );
 
   const dropdownnavigation = [

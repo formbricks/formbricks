@@ -23,6 +23,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           id: environmentId,
         },
       },
+      include: {
+        _count: {
+          select: {
+            events: true,
+          },
+        },
+      },
     });
 
     return res.json(eventClasses);

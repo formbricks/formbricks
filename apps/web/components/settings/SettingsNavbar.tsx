@@ -5,13 +5,10 @@ import {
   CreditCardIcon,
   DocumentCheckIcon,
   DocumentMagnifyingGlassIcon,
+  LinkIcon,
   PaintBrushIcon,
-  PlusCircleIcon,
-  ScaleIcon,
   StarIcon,
   UserCircleIcon,
-  UsersIcon,
-  LinkIcon,
 } from "@heroicons/react/24/solid";
 
 export default function SettingsNavbar({ environmentId }: { environmentId: string }) {
