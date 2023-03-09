@@ -80,4 +80,14 @@ export const candidateDataGridSchemaColumn = [
     field: "Email",
     width: 200,
   },
+  {
+    field: "Phone",
+    width: 80,
+    hide: true
+  },
+  {
+    field: "Whatsapp",
+    width: 80,
+    hide: true
+  },
 ];
