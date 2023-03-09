@@ -1,8 +1,12 @@
 "use client";
 
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Button from "@/components/ui/Button";
+import { useEventClasses } from "@/lib/eventClasses";
+import { timeSinceConditionally } from "@/lib/time";
+import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/20/solid";
 
-const people = [
+const eventClasses = [
   {
     name: "Lindsay Walton",
     title: "Front-end Developer",
@@ -23,7 +27,16 @@ const people = [
   },
 ];
 
-export default function EventsList() {
+export default function EventClassesList({ environmentId }) {
+  const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
+
+  if (isLoadingEventClasses) {
+    return <LoadingSpinner />;
+  }
+
+  if (isErrorEventClasses) {
+    return <div>Error</div>;
+  }
   return (
     <div className="">
       <div className="sm:flex sm:items-center">
@@ -44,13 +57,10 @@ export default function EventsList() {
                     Name
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Title
+                    # events
                   </th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Status
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Role
+                    Created
                   </th>
                   <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0">
                     <span className="sr-only">Edit</span>
@@ -58,33 +68,37 @@ export default function EventsList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {people.map((person) => (
-                  <tr key={person.email}>
+                {eventClasses.map((eventClass) => (
+                  <tr key={eventClass.id}>
                     <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-0">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          <img className="h-10 w-10 rounded-full" src={person.image} alt="" />
+                        <div className="h-5 w-5 flex-shrink-0 text-slate-300">
+                          {eventClass.type === "code" ? (
+                            <CodeBracketIcon />
+                          ) : eventClass.type === "noCode" ? (
+                            <CursorArrowRaysIcon />
+                          ) : eventClass.type === "automatic" ? (
+                            <SparklesIcon />
+                          ) : null}
                         </div>
                         <div className="ml-4">
-                          <div className="font-medium text-gray-900">{person.name}</div>
-                          <div className="text-gray-500">{person.email}</div>
+                          <div className="font-medium text-gray-900">{eventClass.name}</div>
+                          <div className="text-gray-500">{eventClass.description}</div>
                         </div>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <div className="text-gray-900">{person.title}</div>
-                      <div className="text-gray-500">{person.department}</div>
+                      <div className="text-gray-900">{eventClass._count?.events}</div>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
-                        Active
-                      </span>
+                      <div className="text-gray-900">{timeSinceConditionally(eventClass.createdAt)}</div>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{person.role}</td>
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                      <a href="#" className="text-indigo-600 hover:text-indigo-900">
-                        Edit<span className="sr-only">, {person.name}</span>
-                      </a>
+                      {eventClass.type !== "automatic" && (
+                        <a href="#" className="text-indigo-600 hover:text-indigo-900">
+                          Edit<span className="sr-only">, {eventClass.name}</span>
+                        </a>
+                      )}
                     </td>
                   </tr>
                 ))}

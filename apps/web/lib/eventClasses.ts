@@ -3,15 +3,15 @@ import { fetcher } from "./fetcher";
 
 export const useEventClasses = (environmentId) => {
   const { data, isLoading, error, mutate, isValidating } = useSWR(
-    `/api/v1/environments/${environmentId}/eventClasses`,
+    `/api/v1/environments/${environmentId}/event-classes`,
     fetcher
   );
 
   return {
-    memberships: data,
-    isLoadingMemberships: isLoading,
-    isErrorMemberships: error,
-    isValidatingMemberships: isValidating,
-    mutateMemberships: mutate,
+    eventClasses: data,
+    isLoadingEventClasses: isLoading,
+    isErrorEventClasses: error,
+    isValidatingEventClasses: isValidating,
+    mutateEventClasses: mutate,
   };
 };

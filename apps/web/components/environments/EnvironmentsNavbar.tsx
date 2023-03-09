@@ -1,4 +1,5 @@
 "use client";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,7 +85,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         current: pathname?.includes("/settings"),
       },
     ],
-    [pathname]
+    [environmentId, pathname]
   );
 
   const dropdownnavigation = [

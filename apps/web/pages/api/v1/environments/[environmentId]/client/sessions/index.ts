@@ -31,11 +31,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         events: {
           create: [
             {
-              environment: {
-                connect: {
-                  id: environmentId,
-                },
-              },
               eventClass: {
                 connectOrCreate: {
                   where: {
@@ -46,6 +41,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                   },
                   create: {
                     name: "New Session",
+                    description: "Gets fired when a new session is created",
                     type: "automatic",
                     environment: {
                       connect: {
