@@ -3,6 +3,7 @@
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { usePeople } from "@/lib/people";
 import Avatar from "boring-avatars";
+import Link from "next/link";
 
 export default function PeopleList({ environmentId }: { environmentId: string }) {
   const { people, isLoadingPeople, isErrorPeople } = usePeople(environmentId);
@@ -15,62 +16,46 @@ export default function PeopleList({ environmentId }: { environmentId: string })
   }
 
   return (
-    <div>
-      <div className="mt-8 flow-root rounded border border-slate-300 bg-white p-2">
-        <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <table className="min-w-full divide-y divide-gray-300">
-              <thead>
-                <tr>
-                  <th
-                    scope="col"
-                    className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
-                    User
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    User ID
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Email
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Sessions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {people.map((person) => (
-                  <tr key={person.id}>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-0">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          <Avatar
-                            size={40}
-                            name={person.id}
-                            variant="beam"
-                            colors={["#00e6ca", "#c4f0eb", "#334155"]}
-                          />
-                        </div>
-                        <div className="ml-4">
-                          <div className="font-medium text-gray-900">{person.id}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <div className="text-gray-900">{person.userId}</div>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <div className="text-gray-900">{person.email}</div>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <div className="text-gray-900">{person._count?.sessions}</div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <div className="rounded-lg border border-slate-200">
+      <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-gray-900">
+        <div className="col-span-4 pl-6 ">User</div>
+        <div className="text-center">User ID</div>
+        <div className="text-center">Email</div>
+        <div className="text-center">Sessions</div>
+      </div>
+      <div className="grid-cols-7">
+        {people.map((person) => (
+          <Link href="/" className="w-full">
+            <div
+              key={person.id}
+              className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
+              <div className="col-span-4 flex items-center pl-6 text-sm">
+                <div className="flex items-center">
+                  <div className="h-10 w-10 flex-shrink-0">
+                    <Avatar
+                      size={40}
+                      name={person.id}
+                      variant="beam"
+                      colors={["#00e6ca", "#c4f0eb", "#334155"]}
+                    />
+                  </div>
+                  <div className="ml-4">
+                    <div className="font-medium text-gray-900">{person.id}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
+                <div className="text-gray-900">{person.userId}</div>
+              </div>
+              <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
+                <div className="text-gray-900">{person.email}</div>
+              </div>
+              <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
+                <div className="text-gray-900">{person._count?.sessions}</div>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );
