@@ -12,32 +12,32 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   const environmentId = req.query.environmentId?.toString();
 
-  const surveyId = req.query.surveyId?.toString();
+  const personId = req.query.personId?.toString();
 
   if (environmentId === undefined) {
     return res.status(400).json({ message: "Missing environmentId" });
   }
-  if (surveyId === undefined) {
-    return res.status(400).json({ message: "Missing surveyId" });
+  if (personId === undefined) {
+    return res.status(400).json({ message: "Missing personId" });
   }
 
   // GET
   if (req.method === "GET") {
-    const surveys = await prisma.survey.findFirst({
+    const persons = await prisma.person.findFirst({
       where: {
-        id: surveyId,
+        id: personId,
         environmentId,
       },
     });
 
-    return res.json(surveys);
+    return res.json(persons);
   }
 
   // POST
   else if (req.method === "PUT") {
     const data = { ...req.body, updatedAt: new Date() };
-    const prismaRes = await prisma.survey.update({
-      where: { id: surveyId },
+    const prismaRes = await prisma.person.update({
+      where: { id: personId },
       data,
     });
     return res.json(prismaRes);
@@ -45,11 +45,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // Delete
   else if (req.method === "DELETE") {
-    const prismaRes = await prisma.survey.delete({
-      where: { id: surveyId },
+    const prismaRes = await prisma.person.delete({
+      where: { id: personId },
     });
-    capturePosthogEvent(user.id, "survey deleted", {
-      surveyId,
+    capturePosthogEvent(user.id, "person deleted", {
+      personId,
     });
     return res.json(prismaRes);
   }

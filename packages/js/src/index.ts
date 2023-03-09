@@ -3,7 +3,13 @@ import habitat from "preact-habitat";
 import css from "./style.css";
 
 import App from "./App";
-import { createPerson, getLocalPerson, updatePersonUserId } from "./lib/person";
+import {
+  createPerson,
+  getLocalPerson,
+  updatePersonAttribute,
+  updatePersonEmail,
+  updatePersonUserId,
+} from "./lib/person";
 import type { Config } from "./types/types";
 import { createSession, getLocalSession } from "./lib/session";
 
@@ -12,7 +18,6 @@ const _habitat = habitat(App);
 let config: Config = { environmentId: null, apiHost: null };
 let initFunction;
 let currentlyExecuting = Promise.resolve();
-let currentlyExecutingLock = false;
 
 const init = async (c: Config) => {
   if (!initFunction) {
@@ -60,25 +65,22 @@ const populateConfig = async (c: Config) => {
   console.log(config);
 };
 
-const setUserId = async (userId) => {
+const setUserId = async (userId: string): Promise<void> => {
   if (!initFunction) {
     console.error("Formbricks: Error setting userId, init function not yet called");
     return;
   }
-  const randomNumber = Math.floor(Math.random() * 100);
   await initFunction;
   await currentlyExecuting;
-  if (currentlyExecutingLock) {
-    console.error('multiple calls to "setUserId" are not allowed');
-    return;
-  }
-  currentlyExecutingLock = true;
-  currentlyExecuting = (async function () {
-    if (userId === config.person.userId) {
-      return;
-    }
+  currentlyExecuting = currentlyExecuting.then(async () => {
     if (!userId) {
       console.error("Formbricks: Error setting userId, userId is null or undefined");
+      return;
+    }
+    if (userId === config.person.userId) {
+      return;
+    } else if (config.person.userId) {
+      console.error("Formbricks: userId cannot be changed after it has been set. You need to reset first");
       return;
     }
     const updatedPerson = await updatePersonUserId(config, userId);
@@ -86,10 +88,59 @@ const setUserId = async (userId) => {
       console.error('Formbricks: Error updating "userId"');
       return;
     }
-    config.person = updatedPerson;
-    currentlyExecutingLock = false;
+    config.person = { ...config.person, ...updatedPerson };
     return;
-  })();
+  });
+};
+
+const setEmail = async (email: string): Promise<void> => {
+  if (!initFunction) {
+    console.error("Formbricks: Error setting email, init function not yet called");
+    return;
+  }
+  await initFunction;
+  await currentlyExecuting;
+  currentlyExecuting = currentlyExecuting.then(async () => {
+    if (!email) {
+      console.error("Formbricks: Error setting userId, userId is null or undefined");
+      return;
+    }
+    if (email === config.person.email) {
+      return;
+    }
+    const updatedPerson = await updatePersonEmail(config, email);
+    if (!updatedPerson) {
+      console.error('Formbricks: Error updating "email"');
+      return;
+    }
+    config.person = { ...config.person, ...updatedPerson };
+    return;
+  });
+};
+
+const setAttribute = async (key: string, value: string): Promise<void> => {
+  if (!initFunction) {
+    console.error("Formbricks: Error setting attribute, init function not yet called");
+    return;
+  }
+  await initFunction;
+  await currentlyExecuting;
+  currentlyExecuting = currentlyExecuting.then(async () => {
+    if (!key || !value) {
+      console.error("Formbricks: Error setting attribute, please provide key and value");
+      return;
+    }
+    if (value === config.person.attributes[key]) {
+      return;
+    }
+    const updatedPerson = await updatePersonAttribute(config, key, value);
+    if (!updatedPerson) {
+      console.error("Formbricks: Error updating attribute");
+      return;
+    }
+    config.person = { ...config.person, ...updatedPerson };
+    return;
+  });
 };
 
 const reset = () => {
@@ -97,6 +148,7 @@ const reset = () => {
   delete config.session;
   localStorage.removeItem("formbricks__person");
   localStorage.removeItem("formbricks__session");
+  initFunction = populateConfig({ environmentId: config.environmentId, apiHost: config.apiHost });
 };
 
 const renderForm = (formId, schema) => {
@@ -122,7 +174,7 @@ const getForms = async () => {
   return forms;
 };
 
-const formbricks = { init, setUserId, reset, config };
+const formbricks = { init, setUserId, setEmail, setAttribute, reset, config };
 
 // (window as any).formbricks = formbricks;
 

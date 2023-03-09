@@ -26,7 +26,7 @@ export const useSurvey = (id: string, environmentId: string) => {
 export const persistSurvey = async (survey) => {
   try {
     await fetch(`/api/v1/environments/${survey.environmentId}/surveys/${survey.id}/`, {
-      method: "POST",
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(survey),
     });

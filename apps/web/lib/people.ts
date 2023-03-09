@@ -15,3 +15,18 @@ export const usePeople = (environmentId) => {
     mutatePeople: mutate,
   };
 };
+
+export const usePerson = (environmentId, personId) => {
+  const { data, isLoading, error, mutate, isValidating } = useSWR(
+    `/api/v1/environments/${environmentId}/people/${personId}`,
+    fetcher
+  );
+
+  return {
+    person: data,
+    isLoadingPerson: isLoading,
+    isErrorPerson: error,
+    isValidatingPerson: isValidating,
+    mutatePerson: mutate,
+  };
+};

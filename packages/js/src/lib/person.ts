@@ -24,7 +24,7 @@ export const getLocalPerson = () => {
   return null;
 };
 
-export const updatePersonUserId = async (config, userId) => {
+export const updatePersonUserId = async (config: Config, userId: string) => {
   if (!config.person || !config.person.id) {
     console.error("Formbricks: Unable to update userId. No person set.");
     return;
@@ -37,6 +37,56 @@ export const updatePersonUserId = async (config, userId) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ userId, sessionId: config.session.id }),
+    }
+  );
+  const updatedPerson = await res.json();
+  if (!res.ok) {
+    console.error("Formbricks: Error updating person");
+    return;
+  }
+  // save to local storage
+  localStorage.setItem("formbricks__person", JSON.stringify(updatedPerson));
+  return updatedPerson;
+};
+
+export const updatePersonEmail = async (config: Config, email: string) => {
+  if (!config.person || !config.person.id) {
+    console.error("Formbricks: Unable to update userId. No person set.");
+    return;
+  }
+  const res = await fetch(
+    `${config.apiHost}/api/v1/environments/${config.environmentId}/client/people/${config.person.id}/email`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    }
+  );
+  const updatedPerson = await res.json();
+  if (!res.ok) {
+    console.error("Formbricks: Error updating person");
+    return;
+  }
+  // save to local storage
+  localStorage.setItem("formbricks__person", JSON.stringify(updatedPerson));
+  return updatedPerson;
+};
+
+export const updatePersonAttribute = async (config: Config, key: string, value: string) => {
+  if (!config.person || !config.person.id) {
+    console.error("Formbricks: Unable to update userId. No person set.");
+    return;
+  }
+  const res = await fetch(
+    `${config.apiHost}/api/v1/environments/${config.environmentId}/client/people/${config.person.id}/attribute`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ key, value }),
     }
   );
   const updatedPerson = await res.json();

@@ -36,6 +36,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       select: {
         id: true,
         userId: true,
+        email: true,
         attributes: true,
       },
     });
@@ -74,6 +75,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         select: {
           id: true,
           userId: true,
+          email: true,
           attributes: true,
         },
       });
