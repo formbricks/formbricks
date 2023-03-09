@@ -16,6 +16,7 @@ export default function Widget() {
     formbricks.setEmail("user@example.com");
     formbricks.setAttribute("name", "Jane Doe");
     formbricks.setAttribute("plan", "free");
+    formbricks.setAttribute("name", "Pete Doe");
     formbricks.track("View Home Page");
     setTimeout(() => {
       console.log("trackingEvent");

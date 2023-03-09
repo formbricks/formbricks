@@ -131,7 +131,8 @@ const setAttribute = async (key: string, value: string): Promise<void> => {
       console.error("Formbricks: Error setting attribute, please provide key and value");
       return;
     }
-    if (value === config.person.attributes[key]) {
+    // check if attribute already exists
+    if (typeof config.person.attributes.find((a) => a.attributeClass?.name === key) !== "undefined") {
       return;
     }
     const updatedPerson = await updatePersonAttribute(config, key, value);

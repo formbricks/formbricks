@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "EventType" AS ENUM ('code', 'noCode');
+CREATE TYPE "EventType" AS ENUM ('code', 'noCode', 'automatic');
 
 -- CreateEnum
 CREATE TYPE "EnvironmentType" AS ENUM ('production', 'development');
@@ -14,14 +14,37 @@ CREATE TYPE "MembershipRole" AS ENUM ('owner', 'admin', 'editor', 'developer', '
 CREATE TYPE "IdentityProvider" AS ENUM ('email', 'github');
 
 -- CreateTable
+CREATE TABLE "Attribute" (
+    "id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "attributeClassId" TEXT NOT NULL,
+    "personId" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+
+    CONSTRAINT "Attribute_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AttributeClass" (
+    "id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "environmentId" TEXT NOT NULL,
+
+    CONSTRAINT "AttributeClass_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Person" (
     "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
+    "userId" TEXT,
+    "email" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "environmentId" TEXT NOT NULL,
-    "attributes" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Person_pkey" PRIMARY KEY ("id")
 );
@@ -36,7 +59,7 @@ CREATE TABLE "Response" (
     "personId" TEXT NOT NULL,
     "data" JSONB NOT NULL DEFAULT '{}',
     "meta" JSONB NOT NULL DEFAULT '{}',
-    "userAttributes" JSONB NOT NULL DEFAULT '{}',
+    "userAttributes" JSONB NOT NULL DEFAULT '[]',
     "tags" TEXT[],
 
     CONSTRAINT "Response_pkey" PRIMARY KEY ("id")
@@ -59,9 +82,8 @@ CREATE TABLE "Survey" (
 CREATE TABLE "Event" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "environmentId" TEXT NOT NULL,
-    "personId" TEXT NOT NULL,
     "eventClassId" TEXT,
+    "sessionId" TEXT NOT NULL,
     "properties" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Event_pkey" PRIMARY KEY ("id")
@@ -73,10 +95,22 @@ CREATE TABLE "EventClass" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
+    "description" TEXT,
     "type" "EventType" NOT NULL,
     "noCodeConfig" JSONB,
+    "environmentId" TEXT NOT NULL,
 
     CONSTRAINT "EventClass_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Session" (
+    "id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "personId" TEXT NOT NULL,
+
+    CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -173,6 +207,15 @@ CREATE TABLE "User" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Attribute_attributeClassId_personId_key" ON "Attribute"("attributeClassId", "personId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AttributeClass_name_environmentId_key" ON "AttributeClass"("name", "environmentId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "EventClass_name_environmentId_key" ON "EventClass"("name", "environmentId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "ApiKey_id_key" ON "ApiKey"("id");
 
 -- CreateIndex
@@ -183,6 +226,15 @@ CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provi
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- AddForeignKey
+ALTER TABLE "Attribute" ADD CONSTRAINT "Attribute_attributeClassId_fkey" FOREIGN KEY ("attributeClassId") REFERENCES "AttributeClass"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Attribute" ADD CONSTRAINT "Attribute_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AttributeClass" ADD CONSTRAINT "AttributeClass_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Person" ADD CONSTRAINT "Person_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -197,13 +249,16 @@ ALTER TABLE "Response" ADD CONSTRAINT "Response_personId_fkey" FOREIGN KEY ("per
 ALTER TABLE "Survey" ADD CONSTRAINT "Survey_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Event" ADD CONSTRAINT "Event_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Event" ADD CONSTRAINT "Event_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Event" ADD CONSTRAINT "Event_eventClassId_fkey" FOREIGN KEY ("eventClassId") REFERENCES "EventClass"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Event" ADD CONSTRAINT "Event_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "EventClass" ADD CONSTRAINT "EventClass_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Session" ADD CONSTRAINT "Session_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Environment" ADD CONSTRAINT "Environment_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;

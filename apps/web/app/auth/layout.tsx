@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession();
   if (session) {
-    redirect(`/app`);
+    redirect(`/`);
   }
   return (
     <div className="min-h-screen bg-slate-50">

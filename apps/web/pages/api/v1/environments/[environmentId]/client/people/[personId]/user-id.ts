@@ -37,7 +37,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: true,
         userId: true,
         email: true,
-        attributes: true,
+        attributes: {
+          select: {
+            id: true,
+            value: true,
+            attributeClass: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
     // if person exists, reconnect ression and delete old user
@@ -76,7 +87,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           id: true,
           userId: true,
           email: true,
-          attributes: true,
+          attributes: {
+            select: {
+              id: true,
+              value: true,
+              attributeClass: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
         },
       });
     }

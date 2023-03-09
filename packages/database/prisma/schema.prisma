@@ -11,6 +11,32 @@ generator client {
   //provider = "prisma-dbml-generator"
 }
 
+model Attribute {
+  id               String         @id @default(cuid())
+  createdAt        DateTime       @default(now()) @map(name: "created_at")
+  updatedAt        DateTime       @updatedAt @map(name: "updated_at")
+  attributeClass   AttributeClass @relation(fields: [attributeClassId], references: [id], onDelete: Cascade)
+  attributeClassId String
+  person           Person         @relation(fields: [personId], references: [id])
+  personId         String
+  value            String
+
+  @@unique([attributeClassId, personId])
+}
+
+model AttributeClass {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now()) @map(name: "created_at")
+  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
+  name          String
+  description   String?
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId String
+  attributes    Attribute[]
+
+  @@unique([name, environmentId])
+}
+
 model Person {
   id            String      @id @default(cuid())
   userId        String?
@@ -20,8 +46,8 @@ model Person {
   environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
   responses     Response[]
-  attributes    Json        @default("{}")
   sessions      Session[]
+  attributes    Attribute[]
 }
 
 model Response {
@@ -35,7 +61,7 @@ model Response {
   personId       String
   data           Json     @default("{}")
   meta           Json     @default("{}")
-  userAttributes Json     @default("{}")
+  userAttributes Json     @default("[]")
   tags           String[]
 }
 
@@ -97,15 +123,16 @@ enum EnvironmentType {
 }
 
 model Environment {
-  id           String          @id @default(cuid())
-  createdAt    DateTime        @default(now()) @map(name: "created_at")
-  updatedAt    DateTime        @updatedAt @map(name: "updated_at")
-  type         EnvironmentType
-  product      Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId    String
-  surveys      Survey[]
-  people       Person[]
-  eventClasses EventClass[]
+  id             String           @id @default(cuid())
+  createdAt      DateTime         @default(now()) @map(name: "created_at")
+  updatedAt      DateTime         @updatedAt @map(name: "updated_at")
+  type           EnvironmentType
+  product        Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId      String
+  surveys        Survey[]
+  people         Person[]
+  eventClasses   EventClass[]
+  AttributeClass AttributeClass[]
 }
 
 model Product {

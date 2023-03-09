@@ -30,7 +30,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
       select: {
         id: true,
-        attributes: true,
+        attributes: {
+          select: {
+            id: true,
+            attributeClass: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -38,9 +47,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(400).json({ message: "Person not found" });
     }
 
-    const currentAttributes = currentPerson.attributes
-      ? JSON.parse(JSON.stringify(currentPerson.attributes))
-      : {};
+    // delete old attribute
+    let deleteAttributes: any[] = [];
+    const oldAttribute = currentPerson.attributes.find((attribute) => attribute.attributeClass.name === key);
+    if (oldAttribute) {
+      deleteAttributes = [{ id: oldAttribute.id }];
+    }
 
     // update person
     const updatedPerson = await prisma.person.update({
@@ -48,13 +60,49 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: personId,
       },
       data: {
-        attributes: { ...currentAttributes, [key]: value },
+        attributes: {
+          deleteMany: [...deleteAttributes],
+          create: [
+            {
+              value: value,
+              attributeClass: {
+                connectOrCreate: {
+                  where: {
+                    name_environmentId: {
+                      name: key,
+                      environmentId,
+                    },
+                  },
+                  create: {
+                    name: key,
+                    environment: {
+                      connect: {
+                        id: environmentId,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
       },
       select: {
         id: true,
         userId: true,
         email: true,
-        attributes: true,
+        attributes: {
+          select: {
+            id: true,
+            value: true,
+            attributeClass: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
