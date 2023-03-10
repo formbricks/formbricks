@@ -13,6 +13,8 @@ export default function EventClassesList({ environmentId }) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [activeEventClass, setActiveEventClass] = useState("");
+
   if (isLoadingEventClasses) {
     return <LoadingSpinner />;
   }
@@ -42,6 +44,7 @@ export default function EventClassesList({ environmentId }) {
             <button
               onClick={(e) => {
                 e.preventDefault();
+                setActiveEventClass(eventClass);
                 setIsModalOpen(true);
               }}
               className="w-full">
@@ -84,11 +87,11 @@ export default function EventClassesList({ environmentId }) {
                   )}
                 </div>
               </div>
-              <EventDetailModal open={isModalOpen} setOpen={setIsModalOpen} eventClass={eventClass} />
             </button>
           ))}
         </div>
       </div>
+      <EventDetailModal open={isModalOpen} setOpen={setIsModalOpen} eventClass={activeEventClass} />
     </>
   );
 }

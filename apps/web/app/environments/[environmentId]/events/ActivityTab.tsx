@@ -1,13 +1,10 @@
 import { Label } from "@/components/ui/Label";
 import { convertDateTimeStringShort } from "@/lib/time";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import type { EventClass } from "@prisma/client";
 
 interface ActivityTabProps {
-  eventClass: {
-    createdAt: string;
-    updatedAt: string;
-    type: string;
-  };
+  eventClass: EventClass;
 }
 
 export default function ActivityTab({ eventClass }: ActivityTabProps) {
@@ -43,11 +40,15 @@ export default function ActivityTab({ eventClass }: ActivityTabProps) {
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
         <div>
           <Label className="text-xs font-normal text-slate-500">Created on</Label>
-          <p className=" text-sm text-slate-700">{convertDateTimeStringShort(eventClass.createdAt)}</p>
+          <p className=" text-sm text-slate-700">
+            {convertDateTimeStringShort(eventClass.createdAt.toString())}
+          </p>
         </div>{" "}
         <div>
           <Label className=" text-xs font-normal text-slate-500">Last updated</Label>
-          <p className=" text-sm text-slate-700">{convertDateTimeStringShort(eventClass.updatedAt)}</p>
+          <p className=" text-sm text-slate-700">
+            {convertDateTimeStringShort(eventClass.updatedAt.toString())}
+          </p>
         </div>{" "}
         <div>
           <Label className="text-xs font-normal text-slate-500">Type</Label>

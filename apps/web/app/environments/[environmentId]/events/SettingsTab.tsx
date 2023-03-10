@@ -1,16 +1,10 @@
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@radix-ui/react-radio-group";
+import type { EventClass } from "@prisma/client";
 
 interface SettingsTabProps {
-  eventClass: {
-    id: string;
-    name: string;
-    description: string;
-    createdAt: string;
-    updatedAt: string;
-    type: string;
-  };
+  eventClass: EventClass;
 }
 
 export default function SettingsTab({ eventClass }: SettingsTabProps) {
@@ -26,7 +20,7 @@ export default function SettingsTab({ eventClass }: SettingsTabProps) {
           <Input
             type="text"
             placeholder="e.g. Triggers when user changed subscription"
-            defaultValue={eventClass.description}
+            defaultValue={eventClass.description || ""}
           />
         </div>
         <div className="my-6">
