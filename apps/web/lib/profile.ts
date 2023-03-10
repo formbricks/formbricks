@@ -1,5 +1,6 @@
 import useSWR from "swr";
 import { fetcher } from "./fetcher";
+import useSWRMutation from "swr/mutation";
 
 export const useProfile = () => {
   const { data, isLoading, error, mutate, isValidating } = useSWR(`/api/v1/users/me/`, fetcher);
@@ -10,6 +11,15 @@ export const useProfile = () => {
     isErrorProfile: error,
     isValidatingProfile: isValidating,
     mutateProfile: mutate,
+  };
+};
+
+export const useProfileMutation = () => {
+  const { trigger, isMutating } = useSWRMutation("/api/user", sendRequest);
+
+  return {
+    triggerProfileMutation: trigger,
+    isMutatingProfile: isMutating,
   };
 };
 
