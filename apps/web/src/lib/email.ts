@@ -125,7 +125,7 @@ export const sendSubmissionEmail = async (
     ${
       submission.customerEmail
         ? "<p>You can reply to this email to start a conversation with this user.</p>"
-        : "<p>You can add the user email to the submission and then simply hit 'Reply to' to start a conversation with your user. <a href='https://formbricks.com/docs/best-practices/feedback-box#add-user-email'>Here's how.</a></p>"
+        : "<p>You can add the respondents email to the submission and then simply hit 'Reply to' to start a conversation with your respondent. <a href='https://formbricks.com/docs/best-practices/feedback-box#add-user-email'>Here's how.</a></p>"
     }
     </div>
     
