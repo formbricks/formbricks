@@ -200,8 +200,10 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                         alt="Avatar placeholder"
                       />
                       <div>
-                        <p className="-mb-1 text-sm font-bold text-slate-700">{environment?.product?.name}</p>
-                        <p className="text-sm text-slate-500">{environment?.type}</p>
+                        <p className="-mb-0.5 text-sm font-bold text-slate-700">
+                          {environment?.product?.name}
+                        </p>
+                        <p className="text-sm text-slate-500">{capitalizeFirstLetter(environment?.type)}</p>
                       </div>
                       <ChevronDownIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
                     </div>
@@ -256,7 +258,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       <DropdownMenuGroup key={item.title}>
                         <DropdownMenuSeparator />
                         {item.links.map((link) => (
-                          <Link href={link.href} target={link.target}>
+                          <Link href={link.href} target={link.target} key={link.label}>
                             <DropdownMenuItem key={link.label}>
                               <div className="flex items-center">
                                 <link.icon className="mr-2 h-4 w-4" />

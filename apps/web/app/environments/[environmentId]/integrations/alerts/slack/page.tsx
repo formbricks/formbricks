@@ -14,7 +14,7 @@ export default function SlackAlertPage({ params }) {
   };
 
   function myFunction() {
-    console.log();
+    console.log("TEST");
   }
 
   return (

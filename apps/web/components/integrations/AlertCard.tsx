@@ -20,7 +20,12 @@ const AlertCard: React.FC<AlertCardProps> = ({
   <Card href={href} title={title} description={description} icon={icon} className={className}>
     <div className="flex justify-end">
       {onDelete && (
-        <button type="button" onClick={onDelete}>
+        <button
+          type="button"
+          onClick={(e) => {
+            onDelete();
+            e.stopPropagation();
+          }}>
           <TrashIcon className="mr-2 h-7 w-7 p-1 text-slate-500 hover:text-slate-800" />
         </button>
       )}

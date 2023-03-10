@@ -9,6 +9,8 @@ import {
   PaintBrushIcon,
   StarIcon,
   UserCircleIcon,
+  UsersIcon,
+  MegaphoneIcon,
 } from "@heroicons/react/24/solid";
 
 export default function SettingsNavbar({ environmentId }: { environmentId: string }) {
@@ -21,12 +23,11 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           href: `/environments/${environmentId}/settings/profile`,
           icon: UserCircleIcon,
         },
-        /*         {
+        {
           name: "Notifications",
           href: `/environments/${environmentId}/settings/notifications`,
           icon: MegaphoneIcon,
-           
-        }, */
+        },
       ],
     },
     {
@@ -47,16 +48,16 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
     {
       title: "Team",
       links: [
-        /*         {
+        {
           name: "Members",
           href: `/environments/${environmentId}/settings/members`,
           icon: UsersIcon,
-        },
+        } /* 
         {
           name: "Tags",
           href: `/environments/${environmentId}/settings/tags`,
           icon: PlusCircleIcon,
-        }, */
+        }, */,
         {
           name: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,

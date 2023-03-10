@@ -13,7 +13,7 @@ export default function EventClassesList({ environmentId }) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [activeEventClass, setActiveEventClass] = useState("");
+  const [activeEventClass, setActiveEventClass] = useState("" as any);
 
   if (isLoadingEventClasses) {
     return <LoadingSpinner />;
@@ -23,7 +23,11 @@ export default function EventClassesList({ environmentId }) {
     return <div>Error</div>;
   }
 
-  console.log(eventClasses);
+  const handleOpenModalClick = (e, eventClass) => {
+    e.preventDefault();
+    setActiveEventClass(eventClass);
+    setIsModalOpen(true);
+  };
 
   return (
     <>
@@ -43,11 +47,10 @@ export default function EventClassesList({ environmentId }) {
           {eventClasses.map((eventClass) => (
             <button
               onClick={(e) => {
-                e.preventDefault();
-                setActiveEventClass(eventClass);
-                setIsModalOpen(true);
+                handleOpenModalClick(e, eventClass);
               }}
-              className="w-full">
+              className="w-full"
+              key={eventClass.id}>
               <div
                 key={eventClass.id}
                 className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
@@ -75,16 +78,15 @@ export default function EventClassesList({ environmentId }) {
                   {timeSinceConditionally(eventClass.createdAt)}
                 </div>
                 <div className="text-center">
-                  {eventClass.type !== "automatic" && (
+                  {/*                   {eventClass.type !== "automatic" && (
                     <button
                       onClick={(e) => {
-                        e.preventDefault();
-                        setIsModalOpen(true);
+                        handleOpenModalClick(e, eventClass);
                       }}
                       className="text-brand-dark hover:text-brand">
                       Edit<span className="sr-only">, {eventClass.name}</span>
                     </button>
-                  )}
+                  )} */}
                 </div>
               </div>
             </button>

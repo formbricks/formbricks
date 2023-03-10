@@ -24,10 +24,8 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
       </div>
       <div className="grid-cols-7">
         {attributeClasses.map((attributeClass) => (
-          <Link href="/" className="w-full">
-            <div
-              key={attributeClass.id}
-              className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
+          <Link href="/" className="w-full" key={attributeClass.id}>
+            <div className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
               <div className="col-span-4 flex items-center pl-6 text-sm">
                 <div className="flex items-center">
                   <div className="h-10 w-10 flex-shrink-0">

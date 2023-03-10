@@ -9,12 +9,12 @@ export default function EventsAttributesPage({ params }) {
     <div>
       <PageTitle>Team Alerts</PageTitle>
       <div className="grid grid-cols-3 gap-6">
-        <Card
+        {/*         <Card
           href={`/environments/${params.environmentId}/integrations/alerts/email`}
           title="Email Notifications"
           description="Keep your team in the loop with email notifications."
           icon={<EmailIcon />}
-        />
+        /> */}
         <Card
           href={`/environments/${params.environmentId}/integrations/alerts/slack`}
           title="Slack"

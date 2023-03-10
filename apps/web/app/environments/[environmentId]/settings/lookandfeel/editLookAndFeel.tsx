@@ -53,7 +53,7 @@ export function EditPlacement({ environmentId }) {
       <div className="flex">
         <RadioGroup>
           {placements.map((placement) => (
-            <div className="flex items-center space-x-2 whitespace-nowrap">
+            <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
               <RadioGroupItem
                 id={placement.value}
                 value={placement.value}

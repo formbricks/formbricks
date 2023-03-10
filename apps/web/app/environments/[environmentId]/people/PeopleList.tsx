@@ -25,10 +25,11 @@ export default function PeopleList({ environmentId }: { environmentId: string })
       </div>
       <div className="grid-cols-7">
         {people.map((person) => (
-          <Link href={`/environments/${environmentId}/people/${person.id}`} className="w-full">
-            <div
-              key={person.id}
-              className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
+          <Link
+            href={`/environments/${environmentId}/people/${person.id}`}
+            key={person.id}
+            className="w-full">
+            <div className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
               <div className="col-span-4 flex items-center pl-6 text-sm">
                 <div className="flex items-center">
                   <div className="h-10 w-10 flex-shrink-0">
