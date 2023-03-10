@@ -3,15 +3,17 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { Fragment } from "react";
+import clsx from "clsx";
 
 type Modal = {
   open: boolean;
   setOpen: (v: boolean) => void;
   children: React.ReactNode;
   title?: string;
+  noPadding?: boolean;
 };
 
-const Modal: React.FC<Modal> = ({ open, setOpen, children, title }) => {
+const Modal: React.FC<Modal> = ({ open, setOpen, children, title, noPadding }) => {
   return (
     <>
       <Transition.Root show={open} as={Fragment}>
@@ -37,7 +39,11 @@ const Modal: React.FC<Modal> = ({ open, setOpen, children, title }) => {
                 leave="ease-in duration-200"
                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-                <Dialog.Panel className="relative transform rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                <Dialog.Panel
+                  className={clsx(
+                    "relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg ",
+                    `${noPadding ? "" : "px-4 pt-5 pb-4 sm:p-6"}`
+                  )}>
                   <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
                     <button
                       type="button"
