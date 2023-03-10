@@ -5,11 +5,25 @@ import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
-import { useProfile } from "@/lib/profile";
+import { PROFILE_API_ENDPOINT } from "@/lib/constants";
+import { fetchRessource, updateRessource } from "@/lib/fetcher";
 import Image from "next/image";
+import { useForm } from "react-hook-form";
+import useSWR from "swr";
+import useSWRMutation from "swr/mutation";
 
 export function EditName() {
-  const { profile, isLoadingProfile, isErrorProfile } = useProfile();
+  const { register, handleSubmit } = useForm();
+  const {
+    data: profile,
+    isLoading: isLoadingProfile,
+    error: isErrorProfile,
+  } = useSWR(PROFILE_API_ENDPOINT, fetchRessource);
+
+  const { trigger: triggerProfileMutate, isMutating: isMutatingProfile } = useSWRMutation(
+    PROFILE_API_ENDPOINT,
+    updateRessource
+  );
 
   if (isLoadingProfile) {
     return <LoadingSpinner />;
@@ -19,18 +33,22 @@ export function EditName() {
   }
 
   return (
-    <div className="w-full max-w-sm items-center">
+    <form
+      className="w-full max-w-sm items-center"
+      onSubmit={handleSubmit((data) => {
+        triggerProfileMutate(data);
+      })}>
       <Label htmlFor="fullname">Full Name</Label>
-      <Input type="text" id="fullname" defaultValue={profile.name} />
+      <Input type="text" id="fullname" defaultValue={profile.name} {...register("name")} />
 
       <div className="mt-4">
         <Label htmlFor="email">Email</Label>
         <Input type="email" id="fullname" defaultValue={profile.email} />
       </div>
-      <Button type="submit" className="mt-4" onClick={(e) => console.log(e)}>
+      <Button type="submit" className="mt-4" loading={isMutatingProfile}>
         Update
       </Button>
-    </div>
+    </form>
   );
 }
 
