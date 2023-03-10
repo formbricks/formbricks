@@ -1,0 +1,34 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import NewsletterSignup from "@/components/shared/NewsletterSignup";
+import HeaderImage from "../weekly-update-181122/weeklyupdate.png";
+import HeroAnimation from "@/components/shared/HeroAnimation";
+
+import { Callout } from "@/components/shared/Callout";
+import Ship from "./ship.gif";
+
+export const meta = {
+  title: "Weekly Summary - 10th March 2023",
+  description: "🚢🚢🚢",
+  date: "2023-03-10",
+};
+
+_🚢🚢🚢_
+
+<Image src={HeaderImage} alt="Weekly Update" className="rounded-lg" />
+
+## TLDR
+
+- 🚢
+- 🚢🚢
+- 🚢🚢🚢
+
+## We're making good progress on all parts, stay tuned!
+
+<Image src={Ship} alt="Weekly Update" className="rounded-lg" />
+
+## Enjoy your weekends 🎉
+
+<NewsletterSignup />
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
