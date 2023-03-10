@@ -19,24 +19,21 @@ export default async function handle(
     return res.status(401).json({ message: "Not authenticated" });
   }
   if (req.method === "PUT") {
-    const { id } = req.body;
-    const userReq = req.body
-    delete userReq.id
-
-    let updateUser;
-    const user = await prisma.user.findUnique({
+    const { user, address } = req.body;
+    const updatedUser = await prisma.user.update({
       where: {
-        id,
+        id: user.id,
       },
+      data: {
+        ...user,
+        address: {
+          upsert: {
+            create: address,
+            update: address
+          }
+        }
+      }
     });
-    if (user) {
-      updateUser = await prisma.user.update({
-        where: {
-          id,
-        },
-        data: userReq,
-      });
-    }
-    return res.json(updateUser);
+    return res.json(updatedUser);
   }
 }

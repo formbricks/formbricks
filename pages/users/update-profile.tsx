@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import { createAddress, updateAddress } from "../../lib/users";
+import React, { useState, useRef, useEffect } from "react";
+import { updateUser } from "../../lib/users";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
 import { PencilIcon } from "@heroicons/react/24/solid";
@@ -7,25 +7,30 @@ import { useSession } from "next-auth/react";
 import { upload } from "../../lib/utils";
 import { DRCProvinces } from "../../lib/enums";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
+import { Address } from "@prisma/client";
+import Loading from "../../components/Loading";
 
 export default function UpdateProfile() {
   const router = useRouter();
   const session = useSession();
   const [profilePictureFileName, setProfilePictureFileName] = useState("");
   const inputFileRef = useRef(null);
-  const [user, setUser] = useState<User>(session.data.user);
-  const [address, setAddress] = useState<Address>(session.data.user.address);
+  const [user, setUser] = useState(null);
+  const [address, setAddress] = useState<Address>(null);
 
+  useEffect(() => {
+    if (session.data) {
+      setUser(session.data.user);
+      let add=session.data.user.address;
+      delete add.userId;
+      setAddress(add);
+    }
+  }, [session]);
+  
   const handleInputChange = (e) => {
     const value = e.target.value;
     const name = e.target.name;
-    if (
-      name === "line1" ||
-      name === "line2" ||
-      name === "commune" ||
-      name === "ville" ||
-      name === "province"
-    ) {
+    if (["line1", "line2", "commune", "ville", "province"].includes(name)) {
       setAddress({
         ...address,
         [name]: value,
@@ -61,52 +66,26 @@ export default function UpdateProfile() {
     file ? (photo = (await upload(file)).Location) : "";
 
     try {
-      if (address.id) {
-        await updateAddress({
-          id: user.address.id,
-          line1: e.target.elements.line1.value,
-          line2: e.target.elements.line2.value,
-          ville: e.target.elements.ville.value,
-          province: e.target.elements.province.value,
-          commune: e.target.elements.commune.value,
-          User: {
-            update: {
-              where: { id: user.id },
-              data: {
-                firstname: e.target.elements.firstname.value,
-                lastname: e.target.elements.lastname.value,
-                photo: photo,
-                dob: new Date(e.target.elements.dob.value),
-                phone: e.target.elements.phone.value,
-                whatsapp: e.target.elements.whatsapp.value,
-                profileIsValid: true,
-              },
-            },
-          },
-        });
-      } else {
-        await createAddress({
-          line1: e.target.elements.line1.value,
-          line2: e.target.elements.line2.value,
-          ville: e.target.elements.ville.value,
-          province: e.target.elements.province.value,
-          commune: e.target.elements.commune.value,
-          User : {
-            connect : {id: user.id}
-          }
-        })
-      }
-      router.push(`/`);
+      let userUpdateData = user;
+      delete userUpdateData.address;
+      await updateUser(userUpdateData, address);
+      // router.push(`/`);
     } catch (e) {
       toast(e.message);
     }
   };
+
+  if (!user) return <Loading />;
+
   return (
     <BaseLayoutUnauthorized title="Mise à jour profil">
       <div className="flex min-h-screen bg-ui-gray-light">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
-            <div className="w-fit m-auto relative cursor-pointer" onClick={handleInputFileClick}>
+            <div
+              className="w-fit m-auto relative cursor-pointer"
+              onClick={handleInputFileClick}
+            >
               <figure>
                 <img
                   className="w-24 h-24 rounded-full mx-auto"
@@ -193,7 +172,7 @@ export default function UpdateProfile() {
                         <input
                           id="dob"
                           name="dob"
-                          value={user.dob}
+                          value={user.dob.toString().substring(0, 10)}
                           onChange={handleInputChange}
                           type="date"
                           required
@@ -295,15 +274,12 @@ export default function UpdateProfile() {
                         <select
                           name="province"
                           id="province"
+                          value={address.province}
+                          onChange={handleInputChange}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         >
-                          {Object.keys(DRCProvinces).map((province) => (
-                            <option
-                              value={province}
-                              selected={
-                                address ? address.province === province : "KN"
-                              }
-                            >
+                          {Object.keys(DRCProvinces).map((province, key) => (
+                            <option key={key} value={province}>
                               {DRCProvinces[province]}
                             </option>
                           ))}

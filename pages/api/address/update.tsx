@@ -24,19 +24,13 @@ export default async function handle(
     delete updtDate.id
 
     let updateAddress;
-    const address = await prisma.address.findUnique({
+    const address = await prisma.address.upsert({
       where: {
         id,
       },
+      create: req.body,
+      update: req.body
     });
-    if (address) {
-      updateAddress = await prisma.address.update({
-        where: {
-          id,
-        },
-        data: updtDate,
-      });
-    }
     return res.json(updateAddress);
   }
 }

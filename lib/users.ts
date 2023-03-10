@@ -138,28 +138,15 @@ export const updateUserRole = async ({ id, role }) => {
   }
 };
 
-export const updateAddress = async (obj) => {
-
+export const updateUser = async (user, address) => {
   try {
-    await fetch(`/api/address/update`, {
+    const data = await fetch(`/api/users/update`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(obj),
+      body: JSON.stringify({user, address}),
     });
+    return data;
   } catch (error) {
     console.error(error);
   }
 };
-
-export const createAddress = async (obj) => {
-  try {
-    await fetch(`/api/address/create`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(obj),
-    });
-  } catch (error) {
-    console.error(error);
-  }
-}
-

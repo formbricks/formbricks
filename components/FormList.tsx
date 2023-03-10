@@ -299,7 +299,7 @@ export default function FormList() {
                           <div className='flex justify-between px-6 py-2 text-right sm:px-6'>
                             <p className='flex gap-1 items-center text-xs text-ui-gray-medium '>
                               <EyeIcon className='w-3 h-3' />
-                              <p>{form._count?.submissionSessions}</p>
+                              <span>{form._count?.submissionSessions}</span>
                             </p>
                             <Menu
                               as='div'

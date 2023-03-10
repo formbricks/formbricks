@@ -1,5 +1,5 @@
 import NextAuth from "next-auth";
-import Address from "../lib/types"
+import { Address } from "@prisma/client";
 
 declare module "next-auth" {
   /**

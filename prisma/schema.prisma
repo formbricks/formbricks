@@ -147,7 +147,8 @@ model Address {
   commune   String
   ville     String
   province  Province
-  User      User[]
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int             @unique
 }
 
 model User {
@@ -156,8 +157,7 @@ model User {
   lastname        String
   gender          String
   dob             DateTime?     @db.Date @map(name: "date_of_birth")
-  address         Address?      @relation(fields: [addressId], references: [id], onDelete: Cascade)
-  addressId       String?
+  address         Address?
   photo           String        @default("")
   phone           String        @unique
   whatsapp        String?
