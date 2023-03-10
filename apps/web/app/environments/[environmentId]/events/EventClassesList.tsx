@@ -21,6 +21,8 @@ export default function EventClassesList({ environmentId }) {
     return <div>Error</div>;
   }
 
+  console.log(eventClasses);
+
   return (
     <>
       <div className="mb-6 text-right">
@@ -82,11 +84,11 @@ export default function EventClassesList({ environmentId }) {
                   )}
                 </div>
               </div>
+              <EventDetailModal open={isModalOpen} setOpen={setIsModalOpen} eventClass={eventClass} />
             </button>
           ))}
         </div>
       </div>
-      <EventDetailModal open={isModalOpen} setOpen={setIsModalOpen} eventId="1" />
     </>
   );
 }

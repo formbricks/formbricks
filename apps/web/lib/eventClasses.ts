@@ -15,3 +15,18 @@ export const useEventClasses = (environmentId) => {
     mutateEventClasses: mutate,
   };
 };
+
+/* export const useEventClass = (environmentId, eventClassId) => {
+  const { data, isLoading, error, mutate, isValidating } = useSWR(
+    `/api/v1/environments/${environmentId}/event-classes/${eventClassId}`,
+    fetcher
+  );
+
+  return {
+    eventClass: data,
+    isLoadingEventClass: isLoading,
+    isErrorEventClass: error,
+    isValidatingEventClass: isValidating,
+    mutateEventClass: mutate,
+  };
+}; */

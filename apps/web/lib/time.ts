@@ -40,6 +40,26 @@ export const convertDateTimeString = (dateString: string) => {
   );
 };
 
+export const convertDateTimeStringShort = (dateString: string) => {
+  if (!dateString) {
+    return dateString;
+  }
+  const date = new Date(dateString);
+  return intlFormat(
+    date,
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    },
+    {
+      locale: "en",
+    }
+  );
+};
+
 export const convertTimeString = (dateString: string) => {
   const date = new Date(dateString);
   return intlFormat(

@@ -7,6 +7,7 @@ interface ModalWithTabsProps {
   setOpen: (v: boolean) => void;
   icon: React.ReactNode;
   label: string;
+  description?: string;
   onSave?: () => void;
   onArchive?: () => void;
   hrefDocs: string;
@@ -24,6 +25,7 @@ export default function ModalWithTabs({
   tabs,
   icon,
   label,
+  description,
   onSave,
   onArchive,
   hrefDocs,
@@ -41,7 +43,10 @@ export default function ModalWithTabs({
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="h-6 w-6 text-slate-500">{icon}</div>
-              <div className="text-xl font-medium text-slate-700">{label}</div>
+              <div>
+                <div className="text-xl font-medium text-slate-700">{label}</div>
+                {description && <div className="text-sm text-slate-500">{description}</div>}
+              </div>
             </div>
           </div>
         </div>

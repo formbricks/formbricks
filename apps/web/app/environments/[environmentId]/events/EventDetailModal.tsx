@@ -1,53 +1,57 @@
-import { useState } from "react";
 import ModalWithTabs from "@/components/shared/ModalWithTabs";
-import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import ActivityTab from "./ActivityTab";
+import SettingsTab from "./SettingsTab";
 
 interface EventDetailModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
-  eventId?: string;
+  eventClass: {
+    type: string;
+    name: string;
+    description: string;
+  };
 }
 
-export default function EventDetailModal({ open, setOpen, eventId }: EventDetailModalProps) {
-  /*   const [isModalOpen, setIsModalOpen] = useState(false);   */
-
+export default function EventDetailModal({ open, setOpen, eventClass }: EventDetailModalProps) {
   const tabs = [
     {
       title: "Activity",
-      children: <p>This is the content of Tab 1</p>,
+      children: <ActivityTab eventClass={eventClass} />,
     },
     {
       title: "Settings",
-      children: <p>This is the content of Tab 2</p>,
+      children: <SettingsTab eventClass={eventClass} />,
     },
   ];
 
-  const eventObject = {
-    id: "1",
-    label: "Event 1",
-    icon: <CursorArrowRaysIcon />,
-  };
-
   const saveChanges = () => {
-    console.log("Save changes"); /* 
-    setIsModalOpen(false); */
+    console.log("Save changes");
+    setOpen(false);
   };
 
   const handleArchive = () => {
-    console.log("Archive"); /* 
-    setIsModalOpen(false); */
+    console.log("Archive");
+    setOpen(false);
   };
 
   return (
     <>
-      {/* 
-      <button onClick={() => setIsModalOpen(true)}>Open Modal</button> */}
       <ModalWithTabs
         open={open}
         setOpen={setOpen}
         tabs={tabs}
-        icon={eventObject.icon}
-        label={eventObject.label}
+        icon={
+          eventClass.type === "code" ? (
+            <CodeBracketIcon />
+          ) : eventClass.type === "noCode" ? (
+            <CursorArrowRaysIcon />
+          ) : eventClass.type === "automatic" ? (
+            <SparklesIcon />
+          ) : null
+        }
+        label={eventClass.name}
+        description={eventClass.description}
         onSave={saveChanges}
         onArchive={handleArchive}
         hrefDocs="https://formbricks.com/docs"
