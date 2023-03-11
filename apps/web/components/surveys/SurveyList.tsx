@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 import EmptyPageFiller from "@/components/shared/EmptyPageFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { deleteSurvey, useSurveys } from "@/lib/surveys";
@@ -10,13 +8,15 @@ import { DocumentPlusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Fragment } from "react";
 
 export default function SurveysList({ environmentId }) {
+  const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
 
-  const newsurvey = async () => {
-    alert("Not implemented yet.");
+  const newSurvey = async () => {
+    router.push(`/environments/${environmentId}/surveys/templates`);
   };
 
   const deleteSurveyAction = async (survey, surveyIdx) => {
@@ -46,7 +46,7 @@ export default function SurveysList({ environmentId }) {
           (surveys.length === 0 ? (
             <div className="mt-5 text-center">
               <EmptyPageFiller
-                onClick={() => newsurvey()}
+                onClick={() => newSurvey()}
                 alertText="You don't have any surveys yet."
                 hintText="Start by creating a survey."
                 buttonText="create survey"
@@ -57,7 +57,7 @@ export default function SurveysList({ environmentId }) {
             </div>
           ) : (
             <ul className="grid grid-cols-2 place-content-stretch gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-6 ">
-              <button onClick={() => newsurvey()}>
+              <button onClick={() => newSurvey()}>
                 <li className="col-span-1 h-56">
                   <div className="from-brand-light to-brand-dark delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-b font-light text-white shadow transition ease-in-out hover:scale-105">
                     <div className="px-4 py-8 sm:p-14 xl:p-10">
