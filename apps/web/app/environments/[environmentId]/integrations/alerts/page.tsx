@@ -1,6 +1,5 @@
 import Card from "@/components/ui/Card";
 import PageTitle from "@/components/ui/PageTitle";
-import { EmailIcon } from "@/components/ui/icons/EmailIcon";
 import SlackLogo from "@/images/slacklogo.png";
 import Image from "next/image";
 

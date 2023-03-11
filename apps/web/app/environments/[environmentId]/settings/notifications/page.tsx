@@ -1,6 +1,4 @@
-import SettingsCard from "@/components/settings/SettingsCard";
 import SettingsTitle from "@/components/settings/SettingsTitle";
-import { EditName, EditAvatar } from "./editProfile";
 
 export default function ProfileSettingsPage() {
   return (

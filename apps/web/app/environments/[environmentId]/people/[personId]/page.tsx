@@ -1,22 +1,13 @@
 "use client";
 
-import ContentWrapper from "@/components/shared/ContentWrapper";
-import EmptyPageFiller from "@/components/shared/EmptyPageFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { Button } from "@/components/ui/Button";
 import { BackIcon } from "@/components/ui/icons/BackIcon";
-import { FeedbackIcon } from "@/components/ui/icons/FeedbackIcon";
-import { FormIcon } from "@/components/ui/icons/FormIcon";
-import { PMFIcon } from "@/components/ui/icons/PMFIcon";
-import { MergeWithSchema } from "@/lib/mergeWithSchema";
 import { usePerson } from "@/lib/people";
-import { convertDateTimeString } from "@/lib/time";
-import { onlyUnique, parseUserAgent } from "@/lib/utils";
-import { InboxIcon } from "@heroicons/react/24/solid";
-import clsx from "clsx";
+import { onlyUnique } from "@/lib/utils";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
-import { Button } from "@/components/ui/Button";
-import { TrashIcon } from "@heroicons/react/24/outline";
 
 export default function PersonPage({ params }) {
   const router = useRouter();
