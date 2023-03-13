@@ -12,21 +12,25 @@ import Loading from "../../components/Loading";
 
 export default function UpdateProfile() {
   const router = useRouter();
+  const { next } = router.query;
   const session = useSession();
   const [profilePictureFileName, setProfilePictureFileName] = useState("");
   const inputFileRef = useRef(null);
   const [user, setUser] = useState(null);
   const [address, setAddress] = useState<Address>(null);
 
+  console.log(next)
   useEffect(() => {
     if (session.data) {
       setUser(session.data.user);
-      let add=session.data.user.address;
-      delete add.userId;
-      setAddress(add);
+      if (session.data.user.address) {
+        let add = session.data.user.address;
+        delete add.userId;
+        setAddress(add);
+      }
     }
   }, [session]);
-  
+
   const handleInputChange = (e) => {
     const value = e.target.value;
     const name = e.target.name;
@@ -52,7 +56,7 @@ export default function UpdateProfile() {
       setProfilePictureFileName(e.target.files[0].name);
       const fileSize = e.target.files[0].size / 1024;
       if (fileSize > 1024) {
-        toast("Le fichier ne doit pas depasser 1MB");
+        toast.warn("Le fichier ne doit pas depasser 1MB");
         inputFileRef.current.value = null;
         setProfilePictureFileName("");
       }
@@ -67,9 +71,11 @@ export default function UpdateProfile() {
 
     try {
       let userUpdateData = user;
+      userUpdateData.dob = new Date(userUpdateData.dob);
+      userUpdateData.profileIsValid = true;
       delete userUpdateData.address;
       await updateUser(userUpdateData, address);
-      // router.push(`/`);
+      router.push(`${next}`);
     } catch (e) {
       toast(e.message);
     }
@@ -172,7 +178,7 @@ export default function UpdateProfile() {
                         <input
                           id="dob"
                           name="dob"
-                          value={user.dob.toString().substring(0, 10)}
+                          value={user.dob ? user.dob.toString().substring(0, 10) : new Date().toISOString().substring(0, 10)}
                           onChange={handleInputChange}
                           type="date"
                           required
@@ -274,7 +280,7 @@ export default function UpdateProfile() {
                         <select
                           name="province"
                           id="province"
-                          value={address.province}
+                          value={address ? address.province : ""}
                           onChange={handleInputChange}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         >

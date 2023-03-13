@@ -35,8 +35,12 @@ export default function BaseLayoutManagement({
     { id: "users", name: "Gestion d'utilisateurs", href: "/users" },
   ];
   const router = useRouter();
+  const { asPath } = router;
   if (!user.profileIsValid) {
-    router.push(`/users/update-profile`);
+    router.push({
+      pathname: `/users/update-profile`,
+      query: {next : asPath} 
+    });
     return <Loading />;
   }
 
