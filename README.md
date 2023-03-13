@@ -27,7 +27,8 @@
 
 ![formbricks-twitter-header-open source forms and survey tools_smaller](https://user-images.githubusercontent.com/72809645/201055057-0883bbcf-86f2-4ea1-83f0-3a190a12f6cd.png)
 
-Formbricks productizes best practices for qualitative in-app user discovery. Feedback Management, Onboarding-Segmentation, Product-Market-Fit surveys and much more...
+Formbricks productizes best practices for qualitative in-app user discovery.
+Feedback Management, Onboarding-Segmentation, Product-Market-Fit surveys and much more...
 
 ### Mission: Base your decisions on qualitative data.
 
