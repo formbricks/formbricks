@@ -43,6 +43,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { ProfileAvatar } from "../ui/Avatars";
+import { signOut } from "next-auth/react";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -148,16 +149,22 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         },
       ],
     },
-    {
+    /*  {
       title: "Logout",
       links: [
         {
           icon: ArrowRightOnRectangleIcon,
           label: "Logout",
-          href: `/api/auth/signout?redirect=${encodeURIComponent("/")}`,
+          onClick: async () => {
+            try {
+              await signOut({ callbackUrl: "http://app.formbricks.com/auth/login" });
+            } catch (error) {
+              console.error("Failed to sign out:", error);
+            }
+          },
         },
       ],
-    },
+    }, */
   ];
 
   return (
@@ -274,6 +281,24 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                         ))}
                       </DropdownMenuGroup>
                     ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem>
+                        <div className="flex items-center">
+                          <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
+                          <button
+                            onClick={async () => {
+                              try {
+                                await signOut();
+                              } catch (error) {
+                                console.error("Failed to sign out:", error);
+                              }
+                            }}>
+                            Logout
+                          </button>
+                        </div>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
