@@ -140,7 +140,7 @@ function NoCodeFormPublic() {
       ]}
     >
       <LimitedWidth>
-        <div className='flex flex-col justify-between h-screen bg-white'>
+        <div className='flex flex-col justify-between h-full bg-white'>
           {noCodeForm.closed ? (
             <div className='flex min-h-screen bg-ui-gray-light'>
               <div className='flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24'>
