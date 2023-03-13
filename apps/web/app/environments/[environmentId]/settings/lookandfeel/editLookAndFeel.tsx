@@ -4,25 +4,42 @@ import { ColorPicker } from "@/components/settings/ColorPicker";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Button from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
-import { useEnvironment } from "@/lib/environments";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { Switch } from "@/components/ui/Switch";
+import { useEnvironment } from "@/lib/environments";
+import { useProduct } from "@/lib/products/products";
+import { useProductMutation } from "@/lib/products/mutateProducts";
+import { useEffect, useState } from "react";
 
 export function EditBrandColor({ environmentId }) {
-  const { isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
 
-  if (isLoadingEnvironment) {
+  const { triggerProfileMutate, isMutatingProfile } = useProductMutation(environmentId);
+
+  const [color, setColor] = useState("");
+
+  useEffect(() => {
+    if (product) setColor(product.brandColor);
+  }, [product]);
+
+  if (isLoadingProduct) {
     return <LoadingSpinner />;
   }
-  if (isErrorEnvironment) {
+  if (isErrorProduct) {
     return <div>Error</div>;
   }
 
   return (
     <div className="w-full max-w-sm items-center">
       <Label htmlFor="brandcolor">Color (HEX)</Label>
-      <ColorPicker attribute="colorButtonText" />
-      <Button type="submit" className="mt-4">
+      <ColorPicker color={color} onChange={setColor} />
+      <Button
+        type="submit"
+        className="mt-4"
+        loading={isMutatingProfile}
+        onClick={() => {
+          triggerProfileMutate({ brandColor: color });
+        }}>
         Save
       </Button>
       {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
@@ -42,10 +59,10 @@ export function EditPlacement({ environmentId }) {
 
   const placements = [
     { name: "Bottom Right", value: "bottomRight", default: true, disabled: false },
-    { name: "Top Right", value: "bottomRight", default: false, disabled: true },
-    { name: "Top Left", value: "bottomRight", default: false, disabled: true },
-    { name: "Bottom Leftt", value: "bottomRight", default: false, disabled: true },
-    { name: "Centered Modal", value: "bottomRight", default: false, disabled: true },
+    { name: "Top Right", value: "topRight", default: false, disabled: true },
+    { name: "Top Left", value: "topLeft", default: false, disabled: true },
+    { name: "Bottom Leftt", value: "bottomLeft", default: false, disabled: true },
+    { name: "Centered Modal", value: "centered", default: false, disabled: true },
   ];
 
   return (
