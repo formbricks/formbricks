@@ -10,7 +10,7 @@ export default async function handle(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({req});
+  const session = await getSession({ req });
   await NextCors(req, res, {
     // Options
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
@@ -22,84 +22,132 @@ export default async function handle(
 
   const noCodeForm = await prisma.noCodeForm.findUnique({
     where: {
-       formId,
+      formId,
     },
     select: {
-      blocks: true
-    }
-  })
+      blocks: true,
+    },
+  });
 
   const form = await prisma.form.findUnique({
     where: {
-       id:formId,
+      id: formId,
     },
-  })
+  });
 
+  const pages = getFormPages(noCodeForm.blocks, formId);
+  const pagesFormated = formatPages(pages);
+  const submissions = {};
 
-
-  const pages= getFormPages(noCodeForm.blocks, formId)
-  const pagesFormated = formatPages(pages)
-  const submissions = {}
-
-let candidateEvents = await prisma.sessionEvent.findMany({
-  where: {
-    AND: [
-      { type: "pageSubmission" },
-      {
-        data: {
-          path: ["candidateId"],
-          equals: session.user.id,
+  let candidateEvents = await prisma.sessionEvent.findMany({
+    where: {
+      AND: [
+        { type: "pageSubmission" },
+        {
+          data: {
+            path: ["candidateId"],
+            equals: session.user.id,
+          },
         },
-      },
-      {
-        data: {
-          path: ["formId"],
-          equals: formId,
+        {
+          data: {
+            path: ["formId"],
+            equals: formId,
+          },
         },
+      ],
+    },
+    orderBy: [
+      {
+        createdAt: "asc",
       },
     ],
-  },
-  orderBy: [
-    {
-      createdAt: "asc",
-    },
-  ],
-});
-
-
-
+  });
 
   if (req.method === "POST") {
     const { events } = req.body;
 
     candidateEvents = [...events, ...candidateEvents];
-    
+
     candidateEvents.map((event) => {
-      if(pagesFormated[event.data["pageName"]]) {
-        const pageTitle = pagesFormated[event.data["pageName"]].title;
-        const responses = {}
-        if(event.data["submission"]) {
+      const pageTitle = pagesFormated[event.data["pageName"]]?.title;
+      let goodAnswer = 0;
+      const length = event.data["submission"]
+        ? Object.keys(event.data["submission"]).length
+        : 0;
+      const isFinanceStep = pageTitle?.toLowerCase().includes("finance");
+      let candidateResponse = {};
+
+      if (pageTitle?.toLowerCase().includes("test") || isFinanceStep) {
+        if (event.data["submission"]) {
           Object.keys(event.data["submission"]).map((key) => {
-            const submission = {}
-            const question = pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
+            const submission = {};
             const response = event.data["submission"][key];
-             submission[question] = response
-            responses[question] = response
-          })
+            goodAnswer =
+              pagesFormated[event.data["pageName"]].blocks[key]?.data
+                ?.response === response
+                ? goodAnswer + 1
+                : goodAnswer;
+
+            const question =
+              pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
+            submission[question] = response;
+            candidateResponse[question] = response;
+          });
+          // event.data["submission"]["score"] = goodAnswer / length;
+          if (isFinanceStep) {
+            if (
+              Object.values(candidateResponse)
+                [Object.values(candidateResponse).length - 1]?.split(" ")[1]
+                ?.replace("*", "")
+                ?.includes("pr")
+            ) {
+              submissions[pageTitle] = "p";
+            } else {
+              submissions[pageTitle] = parseInt(
+                Object.values(candidateResponse)
+                  [Object.values(candidateResponse).length - 1]?.split(" ")[1]
+                  ?.replace("*", ""),
+                10
+              );
+            }
+          } else {
+            submissions[pageTitle] = (goodAnswer / length) * 100;
+          }
         }
-        submissions[pageTitle] = responses
       }
-      
-    })
+    });
+
+    Object.values(pagesFormated).map(({ title }) => {
+      if (
+        title &&
+        !submissions[title] &&
+        title.toLowerCase().includes("test")
+      ) {
+        submissions[title] = 0;
+      } else if (title && !submissions[title]) {
+        submissions[title] = "";
+      }
+    });
+
     const error = validateEvents(events);
     if (error) {
       const { status, message } = error;
       return res.status(status).json({ error: message });
     }
     res.json({ success: true });
-      for (const event of events) {
-        event.data =  {...event.data, ...form, submissions}
-        const candidateEvent = {user: session.user ,  ...event}
+    for (const event of events) {
+      // event.data =  {...event.data, ...form, submissions}
+      event.data = { ...event.data, formId, formName: form.name, submissions };
+      delete event.data.createdAt;
+      delete event.data.updatedAt;
+      delete event.data.ownerId;
+      delete event.data.formType;
+      delete event.data.answeringOrder;
+      delete event.data.description;
+      delete event.data.dueDate;
+      delete event.data.schema;
+      const candidateEvent = { user: session.user, ...event };
       processApiEvent(candidateEvent, formId, session.user.id);
     }
   }

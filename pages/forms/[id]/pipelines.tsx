@@ -128,6 +128,37 @@ function PipelinesPage() {
     }
   };
 
+  const migrateAction = async () => {
+    const submissionSessionRes = await fetch(
+      `/api/forms/${formId}/submissionSessions`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      }
+    );
+    const submissionSession = await submissionSessionRes.json();
+
+    await fetch(`/api/forms/${formId}/eventmigration`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        events: [
+          {
+            type: "pageSubmission",
+            data: {
+              pageName: "pageId",
+              submissionSessionId: submissionSession.id,
+              startDate: new Date(),
+            },
+          },
+        ],
+      }),
+    }).catch((err) => {
+      console.log({ err });
+    });
+  };
+
   const secondNavigation = useMemo(
     () => [
       {
@@ -293,6 +324,25 @@ function PipelinesPage() {
                           </button>
                         </div>
                       </div>
+                      {pipeline.type === "AIRTABLE" && (
+                        <div>
+                          <button
+                            type="submit"
+                            className="inline-flex my-2 justify-center px-4 py-2 ml-9  text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                            onClick={() => {
+                              if (
+                                confirm(
+                                  "Vous êtes sur le point d'envoyer les soumissions de tous les candidats du formulaire vers Airtable, Etes-vous sûr ?"
+                                )
+                              ) {
+                                migrateAction();
+                              }
+                            }}
+                          >
+                            <p>Migrer vers Airtable</p>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </li>
                 ))}

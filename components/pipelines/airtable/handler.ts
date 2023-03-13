@@ -20,7 +20,7 @@ const sendData = async (pipeline: Pipeline, event: ApiEvent) => {
 export async function handleAirtable(pipeline: Pipeline, event: ApiEvent) {
   if (pipeline.data.hasOwnProperty("endpointUrl")) {
     if (
-      event.type === "pageSubmission" &&
+      ["pageSubmission", "scoreSummary"].includes(event.type) &&
       pipeline.events.includes("PAGE_SUBMISSION")
     ) {
       delete event.data.submission;

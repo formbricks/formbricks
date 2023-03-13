@@ -139,7 +139,7 @@ export default function ResultsResponses({
                                 <div className='min-w-0 flex-1 pt-1.5 flex justify-between flex-wrap gap-4'>
                                   <div>
                                     <h3>
-                                      {formPages[event.data["pageName"]].title}
+                                      {formPages[event.data["pageName"]]?.title}
                                     </h3>
                                     <ul className='text-sm text-gray-500'>
                                       {event.data["submission"] &&
