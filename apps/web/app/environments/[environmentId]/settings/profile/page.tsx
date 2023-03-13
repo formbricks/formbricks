@@ -1,8 +1,11 @@
 import SettingsCard from "@/components/settings/SettingsCard";
 import SettingsTitle from "@/components/settings/SettingsTitle";
+import { getServerSession } from "next-auth";
 import { EditName, EditAvatar } from "./editProfile";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
-export default function ProfileSettingsPage() {
+export default async function ProfileSettingsPage() {
+  const session = await getServerSession(authOptions);
   return (
     <div>
       <SettingsTitle title="Profile" />
@@ -10,7 +13,7 @@ export default function ProfileSettingsPage() {
         <EditName />
       </SettingsCard>
       <SettingsCard title="Avatar" description="Assist your team in identifying you on Formbricks.">
-        <EditAvatar />
+        <EditAvatar session={session} />
       </SettingsCard>
     </div>
   );
