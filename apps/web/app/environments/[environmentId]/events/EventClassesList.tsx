@@ -7,11 +7,13 @@ import { timeSinceConditionally } from "@/lib/time";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/20/solid";
 import { useState } from "react";
 import EventDetailModal from "./EventDetailModal";
+import AddEventModal from "./AddEventModal";
 
 export default function EventClassesList({ environmentId }) {
   const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEventDetailModalOpen, setEventDetailModalOpen] = useState(false);
+  const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
 
   const [activeEventClass, setActiveEventClass] = useState("" as any);
 
@@ -23,16 +25,22 @@ export default function EventClassesList({ environmentId }) {
     return <div>Error</div>;
   }
 
-  const handleOpenModalClick = (e, eventClass) => {
+  const handleOpenEventDetailModalClick = (e, eventClass) => {
     e.preventDefault();
     setActiveEventClass(eventClass);
-    setIsModalOpen(true);
+    setEventDetailModalOpen(true);
   };
 
   return (
     <>
       <div className="mb-6 text-right">
-        <Button variant="primary">Add event</Button>
+        <Button
+          variant="primary"
+          onClick={() => {
+            setAddEventModalOpen(true);
+          }}>
+          Add event
+        </Button>
       </div>
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
@@ -47,7 +55,7 @@ export default function EventClassesList({ environmentId }) {
           {eventClasses.map((eventClass) => (
             <button
               onClick={(e) => {
-                handleOpenModalClick(e, eventClass);
+                handleOpenEventDetailModalClick(e, eventClass);
               }}
               className="w-full"
               key={eventClass.id}>
@@ -81,7 +89,7 @@ export default function EventClassesList({ environmentId }) {
                   {/*                   {eventClass.type !== "automatic" && (
                     <button
                       onClick={(e) => {
-                        handleOpenModalClick(e, eventClass);
+                        handleOpenEventDetailModalClick(e, eventClass);
                       }}
                       className="text-brand-dark hover:text-brand">
                       Edit<span className="sr-only">, {eventClass.name}</span>
@@ -93,7 +101,12 @@ export default function EventClassesList({ environmentId }) {
           ))}
         </div>
       </div>
-      <EventDetailModal open={isModalOpen} setOpen={setIsModalOpen} eventClass={activeEventClass} />
+      <EventDetailModal
+        open={isEventDetailModalOpen}
+        setOpen={setEventDetailModalOpen}
+        eventClass={activeEventClass}
+      />
+      <AddEventModal open={isAddEventModalOpen} setOpen={setAddEventModalOpen} />
     </>
   );
 }

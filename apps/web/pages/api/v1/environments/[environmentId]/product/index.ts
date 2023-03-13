@@ -17,34 +17,44 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       where: {
         id: environmentId,
       },
-      include: {
-        product: {
-          select: {
-            name: true,
-            teamId: true,
-            brandColor: true,
-          },
-        },
+      select: {
+        productId: true,
       },
     });
     if (environment === null) {
       return res.status(404).json({ message: "This environment doesn't exist" });
     }
-    // check if membership exists
-    const membership = await prisma.membership.findUnique({
+    const product = await prisma.product.findUnique({
       where: {
-        userId_teamId: {
-          userId: user.id,
-          teamId: environment.product.teamId,
-        },
+        id: environment.productId,
       },
     });
-    if (membership === null) {
-      return res
-        .status(403)
-        .json({ message: "You don't have access to this organisation or this organisation doesn't exist" });
+
+    if (product === null) {
+      return res.status(404).json({ message: "This product doesn't exist" });
     }
-    return res.json(environment);
+    return res.json(product);
+  }
+
+  // PUT
+  else if (req.method === "PUT") {
+    const data = { ...req.body, updatedAt: new Date() };
+    const environment = await prisma.environment.findUnique({
+      where: {
+        id: environmentId,
+      },
+      select: {
+        productId: true,
+      },
+    });
+    if (environment === null) {
+      return res.status(404).json({ message: "This environment doesn't exist" });
+    }
+    const prismaRes = await prisma.product.update({
+      where: { id: environment.productId },
+      data,
+    });
+    return res.json(prismaRes);
   }
 
   // Unknown HTTP Method

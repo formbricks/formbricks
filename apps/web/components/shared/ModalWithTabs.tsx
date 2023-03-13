@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/Button";
 interface ModalWithTabsProps {
   open: boolean;
   setOpen: (v: boolean) => void;
-  icon: React.ReactNode;
-  label: string;
+  icon?: React.ReactNode;
+  label?: string;
   description?: string;
   onSave?: () => void;
   onArchive?: () => void;
@@ -42,9 +42,9 @@ export default function ModalWithTabs({
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
-              <div className="mr-1.5 h-6 w-6 text-slate-500">{icon}</div>
+              {icon && <div className="mr-1.5 h-6 w-6 text-slate-500">{icon}</div>}
               <div>
-                <div className="text-xl font-medium text-slate-700">{label}</div>
+                {label && <div className="text-xl font-medium text-slate-700">{label}</div>}
                 {description && <div className="text-sm text-slate-500">{description}</div>}
               </div>
             </div>

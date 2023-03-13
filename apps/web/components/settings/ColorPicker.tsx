@@ -1,7 +1,25 @@
+"use client";
+
 /* import { persistForm, useForm } from "@/lib/forms"; */
 import useClickOutside from "@/lib/useClickOutside";
 import { useCallback, useRef, useState } from "react";
 import { HexColorInput, HexColorPicker } from "react-colorful";
+
+export const ColorPicker = ({ color, onChange }) => {
+  return (
+    <div className="my-2">
+      <div className="flex w-fit items-center space-x-1 rounded border px-2 text-slate-400">
+        #
+        <HexColorInput
+          className="mr-2 ml-2 h-10 w-16 text-slate-500 outline-none focus:border-none"
+          color={color}
+          onChange={onChange}
+        />
+        <PopoverPicker color={color} onChange={onChange} />
+      </div>
+    </div>
+  );
+};
 
 export const PopoverPicker = ({ color, onChange }) => {
   const popover = useRef(null);
@@ -23,47 +41,6 @@ export const PopoverPicker = ({ color, onChange }) => {
           <HexColorPicker color={color} onChange={onChange} />
         </div>
       )}
-    </div>
-  );
-};
-
-export const ColorPicker = ({}: { attribute: string }) => {
-  /*   const router = useRouter();
-  const { formId, organisationId } = router.query;
-  const { form, isLoadingForm, isErrorForm, mutateForm } = useForm(
-    formId?.toString(),
-    organisationId?.toString()
-  );
-
-  const setSurveyAttribute = (attribute: string, value: any) => {
-    const updatedForm = JSON.parse(JSON.stringify(form));
-    if (!updatedForm.schemaDraft?.config) {
-      updatedForm.schemaDraft.config = {};
-    }
-    updatedForm.schemaDraft.config[attribute] = value;
-    mutateForm(updatedForm, false);
-    persistForm(updatedForm);
-    console.log(updatedForm);
-  }; */
-
-  const [color, setColor] = useState("#123123");
-
-  const handleColorChange = (newColor) => {
-    setColor(newColor);
-    /* setSurveyAttribute(attribute, newColor); */
-  };
-
-  return (
-    <div className="my-2">
-      <div className="flex w-fit items-center space-x-1 rounded border px-2 text-slate-400">
-        #
-        <HexColorInput
-          className="mr-2 ml-2 h-10 w-16 text-slate-500 outline-none focus:border-none"
-          color={color}
-          onChange={handleColorChange}
-        />
-        <PopoverPicker color={color} onChange={handleColorChange} />
-      </div>
     </div>
   );
 };
