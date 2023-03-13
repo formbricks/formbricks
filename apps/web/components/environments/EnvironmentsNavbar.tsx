@@ -20,7 +20,6 @@ import { DashboardIcon } from "@/components/ui/icons/DashboardIcon";
 import { FilterIcon } from "@/components/ui/icons/FilterIcon";
 import { FormIcon } from "@/components/ui/icons/FormIcon";
 import { SettingsIcon } from "@/components/ui/icons/SettingsIcon";
-import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { useEnvironment } from "@/lib/environments";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { Disclosure } from "@headlessui/react";
@@ -43,6 +42,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
+import { ProfileAvatar } from "../ui/Avatars";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -192,13 +192,18 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <div className="flex cursor-pointer flex-row items-center space-x-5">
-                      <Image
-                        src={session.user.image || AvatarPlaceholder}
-                        width="100"
-                        height="100"
-                        className="h-9 w-9 rounded-full"
-                        alt="Avatar placeholder"
-                      />
+                      {session.user.image ? (
+                        <Image
+                          src={session.user.image}
+                          width="100"
+                          height="100"
+                          className="h-9 w-9 rounded-full"
+                          alt="Profile picture"
+                        />
+                      ) : (
+                        <ProfileAvatar userId={session.user.id} />
+                      )}
+
                       <div>
                         <p className="-mb-0.5 text-sm font-bold text-slate-700">
                           {environment?.product?.name}

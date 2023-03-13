@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { ProfileAvatar } from "@/components/ui/Avatars";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -52,16 +53,21 @@ export function EditName() {
   );
 }
 
-export function EditAvatar() {
+export function EditAvatar({ session }) {
   return (
     <div>
-      <Image
-        src={AvatarPlaceholder}
-        width="100"
-        height="100"
-        className="h-24 w-24 rounded-full"
-        alt="Avatar placeholder"
-      />
+      {session?.user?.image ? (
+        <Image
+          src={AvatarPlaceholder}
+          width="100"
+          height="100"
+          className="h-24 w-24 rounded-full"
+          alt="Avatar placeholder"
+        />
+      ) : (
+        <ProfileAvatar userId={session?.user?.id} />
+      )}
+
       <Button className="mt-4">Upload Image</Button>
     </div>
   );

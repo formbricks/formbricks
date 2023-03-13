@@ -1,8 +1,8 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { PersonAvatar } from "@/components/ui/Avatars";
 import { usePeople } from "@/lib/people";
-import Avatar from "boring-avatars";
 import Link from "next/link";
 
 export default function PeopleList({ environmentId }: { environmentId: string }) {
@@ -33,12 +33,7 @@ export default function PeopleList({ environmentId }: { environmentId: string })
               <div className="col-span-4 flex items-center pl-6 text-sm">
                 <div className="flex items-center">
                   <div className="h-10 w-10 flex-shrink-0">
-                    <Avatar
-                      size={40}
-                      name={person.id}
-                      variant="beam"
-                      colors={["#00e6ca", "#c4f0eb", "#334155"]}
-                    />
+                    <PersonAvatar personId={person.id} />
                   </div>
                   <div className="ml-4">
                     <div className="font-medium text-gray-900">{person.id}</div>
