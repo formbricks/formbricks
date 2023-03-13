@@ -102,7 +102,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         {
           icon: PaintBrushIcon,
           label: "Look & Feel",
-          href: `/environments/${environmentId}/settings/billing`,
+          href: `/environments/${environmentId}/settings/lookandfeel`,
         },
       ],
     },
