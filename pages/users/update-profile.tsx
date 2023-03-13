@@ -19,7 +19,6 @@ export default function UpdateProfile() {
   const [user, setUser] = useState(null);
   const [address, setAddress] = useState<Address>(null);
 
-  console.log(next)
   useEffect(() => {
     if (session.data) {
       setUser(session.data.user);
@@ -30,6 +29,10 @@ export default function UpdateProfile() {
       }
     }
   }, [session]);
+
+  const handleBlur = (e, source) => {
+    if(e.target.value === "") toast.error("Renseignez votre " +`'${source}'`);
+  };
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -75,6 +78,7 @@ export default function UpdateProfile() {
       userUpdateData.profileIsValid = true;
       delete userUpdateData.address;
       await updateUser(userUpdateData, address);
+      toast.success("Votre profil a bien été mis à jour");
       router.push(`${next}`);
     } catch (e) {
       toast(e.message);
@@ -137,7 +141,7 @@ export default function UpdateProfile() {
 
                     <div className="mt-1">
                       <label className="block text-sm font-medium text-ui-gray-dark">
-                        Nom
+                        Prénom
                       </label>
                       <input
                         id="firstname"
@@ -147,13 +151,14 @@ export default function UpdateProfile() {
                         placeholder="Jean"
                         value={user.firstname}
                         onChange={handleInputChange}
+                        onBlur={(e) => handleBlur(e, "Prénom")}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>
 
                     <div className="mt-1">
                       <label className="block text-sm font-medium text-ui-gray-dark">
-                        Post-Nom
+                        Nom
                       </label>
                       <input
                         id="lastname"
@@ -162,6 +167,7 @@ export default function UpdateProfile() {
                         required
                         placeholder="Kingandi"
                         onChange={handleInputChange}
+                        onBlur={(e) => handleBlur(e, "Nom")}
                         type="text"
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
@@ -180,6 +186,7 @@ export default function UpdateProfile() {
                           name="dob"
                           value={user.dob ? user.dob.toString().substring(0, 10) : new Date().toISOString().substring(0, 10)}
                           onChange={handleInputChange}
+                          onBlur={(e) => handleBlur(e, "Date de naissance")}
                           type="date"
                           required
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -199,6 +206,7 @@ export default function UpdateProfile() {
                         required
                         placeholder="+243 820 000 000"
                         onChange={handleInputChange}
+                        onBlur={(e) => handleBlur(e, "Téléphone")}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>
@@ -214,6 +222,7 @@ export default function UpdateProfile() {
                         value={user.whatsapp}
                         placeholder="+243 810 000 000"
                         onChange={handleInputChange}
+                        onBlur={(e) => handleBlur(e, "Whatsapp")}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>
@@ -234,6 +243,7 @@ export default function UpdateProfile() {
                           value={address ? address.line1 : ""}
                           placeholder="N° 63, Ave Colonel Mondjiba, Q. Basoko"
                           onChange={handleInputChange}
+                          onBlur={(e) => handleBlur(e, "Adresse")}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
                       </div>
@@ -245,6 +255,7 @@ export default function UpdateProfile() {
                           type="text"
                           value={address ? address.line2 : ""}
                           onChange={handleInputChange}
+                          onBlur={(e) => handleBlur(e, "une référence d'adresse")}
                           placeholder="Réf. Silikin Village, Concession COTEX"
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
@@ -259,6 +270,7 @@ export default function UpdateProfile() {
                           required
                           placeholder="Commune ou Territoire"
                           onChange={handleInputChange}
+                          onBlur={(e) => handleBlur(e, "Commune")}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
                       </div>
@@ -272,6 +284,7 @@ export default function UpdateProfile() {
                           required
                           placeholder="Ville"
                           onChange={handleInputChange}
+                          onBlur={(e) => handleBlur(e, "Ville")}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
                       </div>
@@ -282,6 +295,7 @@ export default function UpdateProfile() {
                           id="province"
                           value={address ? address.province : ""}
                           onChange={handleInputChange}
+                          onBlur={(e) => handleBlur(e, "Province")}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         >
                           {Object.keys(DRCProvinces).map((province, key) => (
