@@ -1,4 +1,4 @@
-import EnvironmentsNavbar from "@/components/environments/EnvironmentsNavbar";
+import EnvironmentsNavbar from "@/app/environments/[environmentId]/EnvironmentsNavbar";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "pages/api/auth/[...nextauth]";
@@ -10,12 +10,12 @@ export default async function EnvironmentLayout({ children, params }) {
   }
 
   return (
-    <div>
+    <>
       <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
-      <main className="mt-14 min-h-fit bg-slate-50">
+      <main className="h-full flex-1 overflow-y-auto bg-slate-50">
         {children}
         <main />
       </main>
-    </div>
+    </>
   );
 }

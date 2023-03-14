@@ -1,5 +1,5 @@
-import ContentWrapper from "@/components/shared/ContentWrapper";
+import SurveyEditor from "./SurveyEditor";
 
-export default function SurveysEditPage({}) {
-  return <ContentWrapper>Not implemented yet. </ContentWrapper>;
+export default function SurveysEditPage({ params }) {
+  return <SurveyEditor environmentId={params.environmentId} surveyId={params.surveyId} />;
 }

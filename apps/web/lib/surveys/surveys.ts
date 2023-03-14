@@ -2,22 +2,25 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 
 export const useSurveys = (environmentId: string) => {
-  const { data, error, mutate } = useSWR(`/api/v1/environments/${environmentId}/surveys`, fetcher);
+  const { data, error, mutate, isLoading } = useSWR(`/api/v1/environments/${environmentId}/surveys`, fetcher);
 
   return {
     surveys: data,
-    isLoadingSurveys: !error && !data,
+    isLoadingSurveys: isLoading,
     isErrorSurveys: error,
     mutateSurveys: mutate,
   };
 };
 
-export const useSurvey = (id: string, environmentId: string) => {
-  const { data, error, mutate } = useSWR(`/api/v1/environments/${environmentId}/surveys/${id}`, fetcher);
+export const useSurvey = (environmentId: string, id: string) => {
+  const { data, error, mutate, isLoading } = useSWR(
+    `/api/v1/environments/${environmentId}/surveys/${id}`,
+    fetcher
+  );
 
   return {
     survey: data,
-    isLoadingSurvey: !error && !data,
+    isLoadingSurvey: isLoading,
     isErrorSurvey: error,
     mutateSurvey: mutate,
   };

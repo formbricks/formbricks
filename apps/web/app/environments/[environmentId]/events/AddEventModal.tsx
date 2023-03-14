@@ -4,6 +4,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 
 interface EventDetailModalProps {
@@ -12,10 +13,10 @@ interface EventDetailModalProps {
 }
 
 export default function EventDetailModal({ open, setOpen }: EventDetailModalProps) {
-  const createEvent = () => {
+  /* const createEvent = () => {
     console.log("Save changes");
     setOpen(false);
-  };
+  }; */
 
   return (
     <Modal open={open} setOpen={setOpen} noPadding>

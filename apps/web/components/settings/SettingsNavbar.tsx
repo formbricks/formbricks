@@ -6,11 +6,10 @@ import {
   DocumentCheckIcon,
   DocumentMagnifyingGlassIcon,
   LinkIcon,
+  MegaphoneIcon,
   PaintBrushIcon,
-  StarIcon,
   UserCircleIcon,
   UsersIcon,
-  MegaphoneIcon,
 } from "@heroicons/react/24/solid";
 
 export default function SettingsNavbar({ environmentId }: { environmentId: string }) {

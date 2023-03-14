@@ -1,6 +1,6 @@
 "use client";
 
-import { createSurvey } from "@/lib/surveys";
+import { createSurvey } from "@/lib/surveys/surveys";
 import type { Template } from "@/types/template";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
@@ -8,8 +8,13 @@ import { templates } from "./templates";
 
 export default function TemplateList({ environmentId }: { environmentId: string }) {
   const router = useRouter();
+
+  const customSurvey = {
+    name: "New Survey",
+  };
+
   const addSurvey = async (template?: Template) => {
-    const survey = await createSurvey(environmentId, template?.preset);
+    const survey = await createSurvey(environmentId, template?.preset || customSurvey);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
   };
 
