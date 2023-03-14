@@ -58,7 +58,7 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
               </div>
               <div>
                 <Label>Select By</Label>
-                <RadioGroup defaultValue="no-code" className="flex">
+                <RadioGroup defaultValue="page-url" className="flex">
                   <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
                     <RadioGroupItem value="page-url" id="page-url" className="bg-slate-50" />
                     <Label htmlFor="page-url" className="flex items-center">
@@ -66,13 +66,13 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
-                    <RadioGroupItem value="inner-html" id="inner-html" className="bg-slate-50" />
+                    <RadioGroupItem disabled value="inner-html" id="inner-html" className="bg-slate-50" />
                     <Label htmlFor="inner-html" className="flex items-center">
                       Inner Text
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
-                    <RadioGroupItem value="css-selector" id="css-selector" className="bg-slate-50" />
+                    <RadioGroupItem disabled value="css-selector" id="css-selector" className="bg-slate-50" />
                     <Label htmlFor="css-selector" className="flex items-center">
                       CSS Selector
                     </Label>
