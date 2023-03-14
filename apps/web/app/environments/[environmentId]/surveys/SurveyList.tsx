@@ -5,15 +5,48 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Menu, Transition } from "@headlessui/react";
 import { DocumentPlusIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { EllipsisHorizontalIcon, TrashIcon, PencilIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/shared/DropdownMenu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/shared/AlertDialog";
+
+import DeleteDialog from "@/components/shared/DeleteDialog";
 
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
+
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const [activeSurvey, setActiveSurvey] = useState("" as any);
+  const [activeSurveyIdx, setActiveSurveyIdx] = useState("" as any);
 
   const newSurvey = async () => {
     router.push(`/environments/${environmentId}/surveys/templates`);
@@ -26,6 +59,7 @@ export default function SurveysList({ environmentId }) {
       const updatedsurveys = JSON.parse(JSON.stringify(surveys));
       updatedsurveys.splice(surveyIdx, 1);
       mutateSurveys(updatedsurveys);
+      setDeleteDialogOpen(false);
     } catch (error) {
       console.error(error);
     }
@@ -76,12 +110,44 @@ export default function SurveysList({ environmentId }) {
                         <p className="line-clamp-3 text-lg">{survey.name}</p>
                       </div>
                       <Link
-                        href={`/environments/${environmentId}/surveys/${survey.id}/edit/`}
+                        href={`/environments/${environmentId}/surveys/${survey.id}/summary`}
                         className="absolute h-full w-full"></Link>
                       <div className="divide-y divide-slate-100 ">
                         <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                           <p className="text-xs text-slate-400 ">{survey._count?.responses} responses</p>
-                          <Menu as="div" className="relative z-10 inline-block text-left">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
+                              <div>
+                                <span className="sr-only">Open options</span>
+                                <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
+                              </div>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-40">
+                              <DropdownMenuGroup>
+                                <DropdownMenuItem>
+                                  <Link
+                                    className="flex w-full items-center"
+                                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                                    <PencilIcon className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <button
+                                    className="flex w-full  items-center"
+                                    onClick={() => {
+                                      setActiveSurvey(survey);
+                                      setActiveSurveyIdx(surveyIdx);
+                                      setDeleteDialogOpen(true);
+                                    }}>
+                                    <TrashIcon className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </button>
+                                </DropdownMenuItem>
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          {/*  <Menu as="div" className="relative z-10 inline-block text-left">
                             {({ open }) => (
                               <>
                                 <div>
@@ -135,7 +201,7 @@ export default function SurveysList({ environmentId }) {
                                 </Transition>
                               </>
                             )}
-                          </Menu>
+                          </Menu> */}
                         </div>
                       </div>
                     </div>
@@ -144,6 +210,12 @@ export default function SurveysList({ environmentId }) {
             </ul>
           ))}
       </div>
+      <DeleteDialog
+        deleteWhat="Survey"
+        open={isDeleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        onDelete={() => deleteSurveyAction(activeSurvey, activeSurveyIdx)}
+      />
     </>
   );
 }

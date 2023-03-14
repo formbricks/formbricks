@@ -1,3 +1,5 @@
-export default function ProfileSettingsPage() {
-  return <div>Settings Main</div>;
+import { redirect } from "next/navigation";
+
+export default function ProfileSettingsPage({ params }) {
+  return redirect(`/environments/${params.environmentId}/settings/profile`);
 }

@@ -1,12 +1,12 @@
 import SecondNavbar from "../environments/SecondNavBar";
 import { CursorArrowRaysIcon, TagIcon } from "@heroicons/react/20/solid";
 
-interface PeopleGroupTabs {
+interface EventsAttributesTabsProps {
   activeId: string;
   environmentId: string;
 }
 
-export default function PeopleGroupsTabs({ activeId, environmentId }: PeopleGroupTabs) {
+export default function EventsAttributesTabs({ activeId, environmentId }: EventsAttributesTabsProps) {
   const tabs = [
     {
       id: "events",
