@@ -1,6 +1,5 @@
 import Layout from "@/components/shared/LayoutMdx";
 import { Callout } from "@/components/shared/Callout";
-import { Checkbox } from "@formbricks/react";
 
 export const meta = {
   title: "How to create a GDPR compliant form",
@@ -38,18 +37,5 @@ You should add a checkbox field to your form to collect opt-in consent from you
 [ ] I would like to receive the monthly newsletter
 
 The seperation allows respondents to fill out your form without having to agree to receive marketing material.
-
-### Example Code for React Library
-
-If you're using [Formbricks React](/react-form-library) to code your form, you can use this code snippet as a starting point:
-
-```jsx
-<Checkbox
-  name="gdpr-consent"
-  label="I understand that my information is stored according to the Privacy Policy"
-  validation="accepted"
-/>
-<p>Please find all information in our <a href="https://pp.com">Privacy Policy</a></p>
-```
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
