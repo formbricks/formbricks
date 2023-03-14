@@ -17,12 +17,14 @@ interface SurveyEditorProps {
 export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorProps) {
   const [activeView, setActiveView] = useState<"questions" | "audience">("questions");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [triggers, setTriggers] = useState<string[]>([]); // list of eventClass Ids
 
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
 
   useEffect(() => {
     if (survey) {
       setQuestions(survey.questions);
+      setTriggers(survey.triggers.map((trigger) => trigger.eventClassId));
     }
   }, [survey]);
 
@@ -36,14 +38,19 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
 
   return (
     <div className="h-full">
-      <SurveyMenuBar questions={questions} environmentId={environmentId} surveyId={surveyId} />
+      <SurveyMenuBar
+        questions={questions}
+        triggers={triggers}
+        environmentId={environmentId}
+        surveyId={surveyId}
+      />
       <div className="relative z-0 flex h-full flex-1 overflow-hidden">
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
           <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
           {activeView === "questions" ? (
             <QuestionsView questions={questions} setQuestions={setQuestions} />
           ) : (
-            <AudienceView />
+            <AudienceView environmentId={environmentId} triggers={triggers} setTriggers={setTriggers} />
           )}
         </main>
         <aside className="relative hidden h-full w-96 flex-shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-200 shadow-inner xl:flex xl:flex-col">

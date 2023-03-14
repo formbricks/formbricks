@@ -9,11 +9,12 @@ import { useRouter } from "next/navigation";
 
 interface SurveyMenuBarProps {
   questions: Question[];
+  triggers: string[];
   environmentId: string;
   surveyId: string;
 }
 
-export default function SurveyMenuBar({ questions, environmentId, surveyId }: SurveyMenuBarProps) {
+export default function SurveyMenuBar({ questions, triggers, environmentId, surveyId }: SurveyMenuBarProps) {
   const router = useRouter();
   const { survey } = useSurvey(environmentId, surveyId);
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, surveyId);
@@ -33,7 +34,7 @@ export default function SurveyMenuBar({ questions, environmentId, surveyId }: Su
           variant="secondary"
           className="mr-3"
           loading={isMutatingSurvey}
-          onClick={() => triggerSurveyMutate({ questions })}>
+          onClick={() => triggerSurveyMutate({ questions, triggers })}>
           Save changes
         </Button>
         <Button

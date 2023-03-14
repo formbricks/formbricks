@@ -14,7 +14,6 @@ export const useProfile = () => {
 };
 
 export const updateProfile = async (profile) => {
-  console.log("updateProfile", profile);
   try {
     await fetch(`/api/v1/users/me/`, {
       method: "PUT",
