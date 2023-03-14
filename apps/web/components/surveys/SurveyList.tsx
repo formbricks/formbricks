@@ -73,14 +73,14 @@ export default function SurveysList({ environmentId }) {
                   <li key={survey.id} className="relative col-span-1 h-56">
                     <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
                       <div className="p-6">
-                        <p className="line-clamp-3 text-lg">{survey.label}</p>
+                        <p className="line-clamp-3 text-lg">{survey.name}</p>
                       </div>
                       <Link
                         href={`/environments/${environmentId}/surveys/${survey.id}/edit/`}
                         className="absolute h-full w-full"></Link>
                       <div className="divide-y divide-slate-100 ">
                         <div className="flex justify-between px-4 py-2 text-right sm:px-6">
-                          <p className="text-xs text-slate-400 ">{survey._count?.submissions} submissions</p>
+                          <p className="text-xs text-slate-400 ">{survey._count?.responses} responses</p>
                           <Menu as="div" className="relative z-10 inline-block text-left">
                             {({ open }) => (
                               <>
@@ -110,7 +110,7 @@ export default function SurveysList({ environmentId }) {
                                             onClick={() => {
                                               if (
                                                 confirm(
-                                                  "Are you sure you want to delete this survey? This also deletes all submissions that are captured with this survey. This action cannot be undone."
+                                                  "Are you sure you want to delete this survey? This also deletes all responses that are captured with this survey. This action cannot be undone."
                                                 )
                                               ) {
                                                 deleteSurveyAction(survey, surveyIdx);

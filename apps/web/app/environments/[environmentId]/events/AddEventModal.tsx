@@ -1,11 +1,10 @@
 import Modal from "@/components/shared/Modal";
-import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
-import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { CodeBracketIcon, CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 
 interface EventDetailModalProps {
   open: boolean;
@@ -13,10 +12,10 @@ interface EventDetailModalProps {
 }
 
 export default function EventDetailModal({ open, setOpen }: EventDetailModalProps) {
-  /* const createEvent = () => {
+  const createEvent = () => {
     console.log("Save changes");
     setOpen(false);
-  }; */
+  };
 
   return (
     <Modal open={open} setOpen={setOpen} noPadding>

@@ -65,15 +65,24 @@ model Response {
   tags           String[]
 }
 
+enum SurveyStatus {
+  draft
+  inProgress
+  paused
+  completed
+  archived
+}
+
 model Survey {
-  id            String      @id @default(cuid())
-  createdAt     DateTime    @default(now()) @map(name: "created_at")
-  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
+  id            String       @id @default(cuid())
+  createdAt     DateTime     @default(now()) @map(name: "created_at")
+  updatedAt     DateTime     @updatedAt @map(name: "updated_at")
   name          String
-  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environment   Environment  @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
-  questions     Json        @default("[]")
-  audience      Json        @default("{}")
+  status        SurveyStatus @default(draft)
+  questions     Json         @default("[]")
+  audience      Json         @default("{}")
   responses     Response[]
 }
 

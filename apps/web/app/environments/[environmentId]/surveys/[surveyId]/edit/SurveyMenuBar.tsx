@@ -1,16 +1,49 @@
 "use client";
 
 import Button from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
+import { useSurvey } from "@/lib/surveys/surveys";
+import type { Question } from "@/types/questions";
+import { useRouter } from "next/navigation";
 
-export default function SurveyMenuBar({}) {
+interface SurveyMenuBarProps {
+  questions: Question[];
+  environmentId: string;
+  surveyId: string;
+}
+
+export default function SurveyMenuBar({ questions, environmentId, surveyId }: SurveyMenuBarProps) {
+  const router = useRouter();
+  const { survey } = useSurvey(environmentId, surveyId);
+  const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, surveyId);
+
   return (
     <div className="border-b border-gray-200 bg-white py-3 px-5 sm:flex sm:items-center sm:justify-between">
-      <h3 className="text-base font-semibold leading-6 text-gray-900">My new Survey</h3>
+      <Input
+        defaultValue={survey.name}
+        onBlur={(e) => triggerSurveyMutate({ name: e.target.value })}
+        className="max-w-md"
+      />
       <div className="mt-3 flex sm:mt-0 sm:ml-4">
-        <Button variant="secondary" className="mr-3">
+        <Button variant="secondary" className="mr-3" href={`/environments/${environmentId}/surveys/`}>
+          Cancel
+        </Button>
+        <Button
+          variant="secondary"
+          className="mr-3"
+          loading={isMutatingSurvey}
+          onClick={() => triggerSurveyMutate({ questions })}>
           Save changes
         </Button>
-        <Button variant="highlight">Publish Survey</Button>
+        <Button
+          variant="highlight"
+          onClick={() => {
+            triggerSurveyMutate({ status: "inProgress" });
+            router.push(`/environments/${environmentId}/surveys/`);
+          }}>
+          Publish Survey
+        </Button>
       </div>
     </div>
   );
