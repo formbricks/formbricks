@@ -42,7 +42,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
-import { ProfileAvatar } from "../ui/Avatars";
+import { ProfileAvatar } from "../../../components/ui/Avatars";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -167,7 +167,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
   ];
 
   return (
-    <nav className="fixed top-0 z-50 w-full border-b border-slate-200 bg-white">
+    <nav className="top-0 z-50 w-full border-b border-slate-200 bg-white">
       <div className="w-full px-4 sm:px-6">
         <div className="flex h-14 justify-between">
           <div className="hidden py-2 sm:flex lg:space-x-4">

@@ -1,4 +1,4 @@
-import EnvironmentsNavbar from "@/components/environments/EnvironmentsNavbar";
+import EnvironmentsNavbar from "@/app/environments/[environmentId]/EnvironmentsNavbar";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "pages/api/auth/[...nextauth]";
