@@ -14,10 +14,9 @@ type AddEmailAlertModalProps = {
 const AddEmailAlertModal: React.FC<AddEmailAlertModalProps> = ({ open, setOpen }) => {
   const surveys = [
     { label: "Survey 1", id: "1" },
-    { label: "Survey 1", id: "1" },
-    { label: "Survey 1", id: "1" },
+    { label: "Survey 2", id: "2" },
+    { label: "Survey 3", id: "3" },
   ];
-  const emailRecipients = ["Team Mate 1", "Team Mate 2", "Team Mate 3"];
 
   const onTest = () => {
     console.log("Test button clicked!");
@@ -28,13 +27,17 @@ const AddEmailAlertModal: React.FC<AddEmailAlertModalProps> = ({ open, setOpen }
 
   return (
     <>
-      <Modal open={open} setOpen={setOpen} title="Add Email Alert">
-        <form>
-          <div className="">
+      <Modal open={open} setOpen={setOpen} title="Add Slack Alert">
+        <form className="space-y-6">
+          <div>
             <Label>Alert name</Label>
             <Input type="text" placeholder="e.g. Product Team Info" />
           </div>
-          <div className="my-6">
+          <div>
+            <Label>End Point URL</Label>
+            <Input type="URL" placeholder="https://hooks.slack.com/service/ABC123/ASD213ADS" />
+          </div>
+          <div>
             <Label className="block">Trigger Event</Label>
             <Label className="font-normal text-slate-400">
               Send message every time one of the surveys receives a response:
@@ -62,11 +65,6 @@ const AddEmailAlertModal: React.FC<AddEmailAlertModalProps> = ({ open, setOpen }
             </div>
           </div>
 
-          <Label>Email Recipients</Label>
-          {emailRecipients.map((name) => (
-            <Input key={name} type="email" placeholder={name} />
-          ))}
-          <Button variant="minimal">+ Add member</Button>
           <div className="flex justify-end space-x-2">
             <Button variant="minimal" onClick={() => setOpen(false)}>
               Cancel

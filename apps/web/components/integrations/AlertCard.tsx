@@ -8,34 +8,34 @@ interface AlertCardProps extends CardProps {
   onEdit?: () => void;
 }
 
-const AlertCard: React.FC<AlertCardProps> = ({
-  href,
-  title,
-  description,
-  icon,
-  className = "",
-  onDelete,
-  onEdit,
-}) => (
-  <Card href={href} title={title} description={description} icon={icon} className={className}>
-    <div className="flex justify-end">
+const AlertCard: React.FC<AlertCardProps> = ({ title, description, icon, onDelete, onEdit }) => (
+  <div className="relative">
+    <div className="absolute right-6 top-6">
       {onDelete && (
         <button
           type="button"
           onClick={(e) => {
-            onDelete();
+            e.preventDefault();
             e.stopPropagation();
+            onDelete();
           }}>
-          <TrashIcon className="mr-2 h-7 w-7 p-1 text-slate-500 hover:text-slate-800" />
+          <TrashIcon className="mr-2 h-7 w-7 p-1 text-slate-500 hover:text-red-600" />
         </button>
       )}
       {onEdit && (
-        <button type="button" onClick={onEdit}>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onEdit();
+          }}>
           <PencilIcon className="h-7 w-7 p-1 text-slate-500 hover:text-slate-800" />
         </button>
       )}
     </div>
-  </Card>
+    <Card onClick={onEdit} title={title} description={description} icon={icon} className="w-full" />
+  </div>
 );
 
 export default AlertCard;

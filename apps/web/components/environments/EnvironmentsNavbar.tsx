@@ -37,6 +37,7 @@ import {
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import type { Session } from "next-auth";
+import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -100,7 +101,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         {
           icon: PaintBrushIcon,
           label: "Look & Feel",
-          href: `/environments/${environmentId}/settings/billing`,
+          href: `/environments/${environmentId}/settings/lookandfeel`,
         },
       ],
     },
@@ -147,20 +148,26 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         },
       ],
     },
-    {
+    /*  {
       title: "Logout",
       links: [
         {
           icon: ArrowRightOnRectangleIcon,
           label: "Logout",
-          href: `/api/auth/signout?redirect=${encodeURIComponent("/")}`,
+          onClick: async () => {
+            try {
+              await signOut({ callbackUrl: "http://app.formbricks.com/auth/login" });
+            } catch (error) {
+              console.error("Failed to sign out:", error);
+            }
+          },
         },
       ],
-    },
+    }, */
   ];
 
   return (
-    <nav className="top-0 z-50 w-full border-b border-slate-200 bg-white">
+    <nav className="fixed top-0 z-50 w-full border-b border-slate-200 bg-white">
       <div className="w-full px-4 sm:px-6">
         <div className="flex h-14 justify-between">
           <div className="hidden py-2 sm:flex lg:space-x-4">
@@ -269,6 +276,24 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     ))}
                   </DropdownMenuGroup>
                 ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <div className="flex items-center">
+                      <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
+                      <button
+                        onClick={async () => {
+                          try {
+                            await signOut();
+                          } catch (error) {
+                            console.error("Failed to sign out:", error);
+                          }
+                        }}>
+                        Logout
+                      </button>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

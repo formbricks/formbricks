@@ -6,11 +6,10 @@ import {
   DocumentCheckIcon,
   DocumentMagnifyingGlassIcon,
   LinkIcon,
+  MegaphoneIcon,
   PaintBrushIcon,
-  StarIcon,
   UserCircleIcon,
   UsersIcon,
-  MegaphoneIcon,
 } from "@heroicons/react/24/solid";
 
 export default function SettingsNavbar({ environmentId }: { environmentId: string }) {
@@ -90,12 +89,6 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           icon: ChatBubbleLeftEllipsisIcon,
           target: "_blank",
         },
-        {
-          name: "Star us on GitHub",
-          href: "https://formbricks.com/github",
-          icon: StarIcon,
-          target: "_blank",
-        },
       ],
     },
     {
@@ -108,13 +101,13 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           target: "_blank",
         },
         {
-          name: "Privacy Policy",
+          name: "Privacy",
           href: "https://formbricks.com/privacy",
           icon: LinkIcon,
           target: "_blank",
         },
         {
-          name: "Terms of Service",
+          name: "Terms",
           href: "https://formbricks.com/terms",
           icon: LinkIcon,
           target: "_blank",
@@ -124,7 +117,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
   ];
 
   return (
-    <div className=" flex h-screen flex-col bg-white pl-4 pr-10 pt-4">
+    <div className="fixed h-full bg-white py-2 pl-4 pr-10">
       <nav className="flex-1 space-y-1 bg-white px-2">
         {navigation.map((item) => (
           <div key={item.title}>
