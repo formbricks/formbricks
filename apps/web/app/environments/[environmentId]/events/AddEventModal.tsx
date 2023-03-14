@@ -1,5 +1,6 @@
 import Modal from "@/components/shared/Modal";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -25,7 +26,7 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
               {/* 
               {icon && <div className="mr-1.5 h-6 w-6 text-slate-500">{icon}</div>} */}
               <div>
-                <div className="text-xl font-medium text-slate-700">Create Event</div>
+                <div className="text-xl font-medium text-slate-700">Add Event</div>
                 <div className="text-sm text-slate-500">
                   Create a new event to filter your user base with.
                 </div>
@@ -36,8 +37,48 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
         <div className="flex justify-between rounded-lg p-6">
           <div>
             <form className="space-y-4">
-              <Label>Event Type</Label>
-              <Label>Select By</Label>
+              <div>
+                <Label>Event Type</Label>
+                <RadioGroup defaultValue="no-code" className="flex">
+                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
+                    <RadioGroupItem value="no-code" id="no-code" className="bg-slate-50" />
+                    <Label htmlFor="no-code" className="flex items-center">
+                      <CursorArrowRaysIcon className="mr-1 h-5 w-5 text-slate-500" />
+                      No Code
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
+                    <RadioGroupItem value="code" id="code" className="bg-slate-50" />
+                    <Label htmlFor="code" className="flex items-center">
+                      <CodeBracketIcon className="mr-1 h-5 w-5 text-slate-500" />
+                      Code
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div>
+                <Label>Select By</Label>
+                <RadioGroup defaultValue="no-code" className="flex">
+                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
+                    <RadioGroupItem value="page-url" id="page-url" className="bg-slate-50" />
+                    <Label htmlFor="page-url" className="flex items-center">
+                      Page URL
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
+                    <RadioGroupItem value="inner-html" id="inner-html" className="bg-slate-50" />
+                    <Label htmlFor="inner-html" className="flex items-center">
+                      Inner Text
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
+                    <RadioGroupItem value="css-selector" id="css-selector" className="bg-slate-50" />
+                    <Label htmlFor="css-selector" className="flex items-center">
+                      CSS Selector
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
               <div className="grid grid-cols-2 gap-x-2">
                 <div>
                   <Label>Name</Label>
@@ -81,7 +122,14 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
                       className="bg-white"
                       placeholder="Paste the URL you want the event to trigger on"
                     />
-                    <Button className="ml-2 whitespace-nowrap">Test Match</Button>
+                    <Button
+                      variant="secondary"
+                      className="ml-2 whitespace-nowrap"
+                      onClick={(e) => {
+                        e.preventDefault();
+                      }}>
+                      Test Match
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -97,7 +145,9 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
               }}>
               Cancel
             </Button>
-            <Button variant="primary">Create event</Button>
+            <Button variant="primary" onClick={createEvent}>
+              Add event
+            </Button>
           </div>
         </div>
       </div>

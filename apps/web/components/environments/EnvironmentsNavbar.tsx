@@ -168,7 +168,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
   ];
 
   return (
-    <Disclosure as="nav" className="fixed top-0 z-50 w-full border-b border-slate-200 bg-white">
+    <Disclosure as="nav" className="fixed top-0 z-10 w-full border-b border-slate-200 bg-white">
       {({}) => (
         <>
           <div className="w-full px-4 sm:px-6">
