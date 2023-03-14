@@ -2,7 +2,7 @@
 
 import EmptyPageFiller from "@/components/shared/EmptyPageFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { deleteSurvey, useSurveys } from "@/lib/surveys";
+import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Menu, Transition } from "@headlessui/react";
 import { DocumentPlusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/solid";
@@ -76,7 +76,7 @@ export default function SurveysList({ environmentId }) {
                         <p className="line-clamp-3 text-lg">{survey.label}</p>
                       </div>
                       <Link
-                        href={`/organisations/${environmentId}/surveys/${survey.id}/${survey.type}/`}
+                        href={`/environments/${environmentId}/surveys/${survey.id}/edit/`}
                         className="absolute h-full w-full"></Link>
                       <div className="divide-y divide-slate-100 ">
                         <div className="flex justify-between px-4 py-2 text-right sm:px-6">
