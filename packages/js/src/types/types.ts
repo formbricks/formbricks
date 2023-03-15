@@ -18,6 +18,11 @@ export interface ResponseUpdateRequest {
   };
 }
 
+export interface DisplayCreateRequest {
+  surveyId: string;
+  personId: string;
+}
+
 export interface Response {
   id: string;
   createdAt: string;

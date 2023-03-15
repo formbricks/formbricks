@@ -20,7 +20,6 @@ export const trackEvent = async (config, eventName, properties) => {
     console.error("Formbricks: Error tracking event");
     return false;
   }
-
   return true;
 };
 

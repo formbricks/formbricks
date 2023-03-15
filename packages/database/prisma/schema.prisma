@@ -48,6 +48,7 @@ model Person {
   responses     Response[]
   sessions      Session[]
   attributes    Attribute[]
+  displays      Display[]
 }
 
 model Response {
@@ -71,6 +72,22 @@ enum SurveyStatus {
   paused
   completed
   archived
+}
+
+enum DisplayStatus {
+  seen
+  responded
+}
+
+model Display {
+  id        String        @id @default(cuid())
+  createdAt DateTime      @default(now()) @map(name: "created_at")
+  updatedAt DateTime      @updatedAt @map(name: "updated_at")
+  survey    Survey        @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId  String
+  person    Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId  String
+  status    DisplayStatus @default(seen)
 }
 
 model SurveyTrigger {
@@ -97,6 +114,7 @@ model Survey {
   audience      Json            @default("{}")
   responses     Response[]
   triggers      SurveyTrigger[]
+  displays      Display[]
 }
 
 model Event {
