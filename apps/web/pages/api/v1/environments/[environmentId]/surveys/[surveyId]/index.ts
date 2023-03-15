@@ -28,6 +28,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: surveyId,
         environmentId,
       },
+      include: {
+        triggers: true,
+      },
     });
 
     return res.json(surveys);
@@ -35,7 +38,59 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // POST
   else if (req.method === "PUT") {
-    const data = { ...req.body, updatedAt: new Date() };
+    const currentTriggers = await prisma.surveyTrigger.findMany({
+      where: {
+        surveyId,
+      },
+    });
+    let data: any = { updatedAt: new Date() };
+    const body = { ...req.body };
+    if (body.triggers) {
+      const newTriggers: string[] = [];
+      const removedTriggers: string[] = [];
+      // find removed triggers
+      for (const eventClassId of body.triggers) {
+        if (currentTriggers.find((t) => t.eventClassId === eventClassId)) {
+          continue;
+        } else {
+          newTriggers.push(eventClassId);
+        }
+      }
+      // find removed triggers
+      for (const trigger of currentTriggers) {
+        if (body.triggers.find((t) => t === trigger.eventClassId)) {
+          continue;
+        } else {
+          removedTriggers.push(trigger.eventClassId);
+        }
+      }
+      // create new triggers
+      if (newTriggers.length > 0) {
+        data.triggers = {
+          ...(data.triggers || []),
+          create: newTriggers.map((eventClassId) => ({
+            eventClassId,
+          })),
+        };
+      }
+      // delete removed triggers
+      if (removedTriggers.length > 0) {
+        data.triggers = {
+          ...(data.triggers || []),
+          deleteMany: {
+            eventClassId: {
+              in: removedTriggers,
+            },
+          },
+        };
+      }
+      delete body.triggers;
+    }
+    data = {
+      ...data,
+      ...body,
+    };
+
     const prismaRes = await prisma.survey.update({
       where: { id: surveyId },
       data,
