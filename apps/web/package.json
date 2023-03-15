@@ -20,7 +20,6 @@
     "@radix-ui/react-select": "^1.2.1",
     "@radix-ui/react-switch": "^1.0.1",
     "@radix-ui/react-tabs": "^1.0.2",
-    "@tremor/react": "^2.0.0",
     "@types/node": "18.14.5",
     "@types/react": "18.0.28",
     "@types/react-dom": "18.0.11",
