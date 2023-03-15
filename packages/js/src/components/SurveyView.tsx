@@ -1,6 +1,6 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/compat";
-import { createResponse, updateResponse } from "../lib/api";
+import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
 import OpenTextQuestion from "./OpenTextQuestion";
 import Progress from "./Progress";

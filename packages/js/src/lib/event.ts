@@ -24,7 +24,7 @@ export const trackEvent = async (config, eventName, properties) => {
   return true;
 };
 
-export const triggerSurvey = (config, eventName) => {
+export const triggerSurveys = (config, eventName) => {
   const triggeredSurveys = [];
   for (const survey of config.surveys) {
     for (const trigger of survey.triggers) {

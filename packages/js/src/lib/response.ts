@@ -1,6 +1,6 @@
-import { Response, ResponseRequest } from "../types/types";
+import { Response, ResponseCreateRequest, ResponseUpdateRequest } from "../types/types";
 
-export const createResponse = async (responseRequest: ResponseRequest, config): Promise<Response> => {
+export const createResponse = async (responseRequest: ResponseCreateRequest, config): Promise<Response> => {
   const res = await fetch(`${config.apiHost}/api/v1/environments/${config.environmentId}/client/responses`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -14,7 +14,7 @@ export const createResponse = async (responseRequest: ResponseRequest, config): 
 };
 
 export const updateResponse = async (
-  responseRequest: ResponseRequest,
+  responseRequest: ResponseUpdateRequest,
   responseId,
   config
 ): Promise<Response> => {

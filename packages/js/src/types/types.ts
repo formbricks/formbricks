@@ -1,6 +1,15 @@
-export interface ResponseRequest {
+export interface ResponseCreateRequest {
   surveyId: string;
   personId: string;
+  response: {
+    finished?: boolean;
+    data: {
+      [name: string]: string | number | string[] | number[] | undefined;
+    };
+  };
+}
+
+export interface ResponseUpdateRequest {
   response: {
     finished?: boolean;
     data: {
