@@ -12,7 +12,7 @@ import {
 } from "./lib/person";
 import type { Config } from "./types/types";
 import { createSession, getLocalSession } from "./lib/session";
-import { trackEvent } from "./lib/event";
+import { trackEvent, triggerSurvey } from "./lib/event";
 
 const _habitat = habitat(App);
 
@@ -49,6 +49,7 @@ const populateConfig = async (c: Config) => {
     config.person = await createPerson(config);
     newPerson = true;
     if (!config.person) {
+      console.log("no person");
       return;
     }
   }
@@ -58,10 +59,17 @@ const populateConfig = async (c: Config) => {
     config.session = getLocalSession();
   }
   if (!config.session) {
-    config.session = await createSession(config);
+    const { session, noCodeEvents, surveys } = await createSession(config);
+    config.session = session;
+    config.noCodeEvents = noCodeEvents;
+    config.surveys = surveys;
     if (!config.session) {
       return;
     }
+  } else {
+    // if we have a session, we also have surveys and noCodeEvents
+    config.surveys = JSON.parse(localStorage.getItem("formbricks__surveys") || "[]");
+    config.noCodeEvents = JSON.parse(localStorage.getItem("formbricks__noCodeEvents") || "[]");
   }
   console.log(config);
 };
@@ -170,16 +178,27 @@ const track = async (eventName: string, properties: any = {}) => {
       console.error("Formbricks: Error sending event");
       return;
     }
+    const triggeredSurveys = triggerSurvey(config, eventName);
+    if (triggeredSurveys && triggeredSurveys.length > 0) {
+      renderSurvey(triggeredSurveys[0]);
+    }
     return;
   });
 };
 
-const renderForm = (formId, schema) => {
+const renderSurvey = (survey) => {
   _habitat.render({
     selector: "#formbricks__container",
     clean: true,
-    defaultProps: { config, schema, formId },
+    defaultProps: { config, survey, closeSurvey },
   });
+};
+
+const closeSurvey = () => {
+  const container = document.getElementById("formbricks__container");
+  if (container) {
+    container.innerHTML = "";
+  }
 };
 
 const getForms = async () => {

@@ -20,5 +20,19 @@ export const trackEvent = async (config, eventName, properties) => {
     console.error("Formbricks: Error tracking event");
     return false;
   }
+
   return true;
+};
+
+export const triggerSurvey = (config, eventName) => {
+  const triggeredSurveys = [];
+  for (const survey of config.surveys) {
+    for (const trigger of survey.triggers) {
+      if (trigger.eventClass?.name === eventName) {
+        console.log(`survey ${survey.id} triggered by event "${eventName}"`);
+        triggeredSurveys.push(survey);
+      }
+    }
+  }
+  return triggeredSurveys;
 };

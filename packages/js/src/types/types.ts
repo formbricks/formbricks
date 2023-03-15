@@ -1,14 +1,15 @@
-export interface SubmissionRequest {
-  customer?: {
-    email: string;
-    [name: string]: string | number | string[] | number[] | undefined;
-  };
-  data: {
-    [name: string]: string | number | string[] | number[] | undefined;
+export interface ResponseRequest {
+  surveyId: string;
+  personId: string;
+  response: {
+    finished?: boolean;
+    data: {
+      [name: string]: string | number | string[] | number[] | undefined;
+    };
   };
 }
 
-export interface Submission {
+export interface Response {
   id: string;
   createdAt: string;
   updatedAt: string;
@@ -25,6 +26,8 @@ export interface Config {
   apiHost: string;
   person?: Person;
   session?: Session;
+  surveys?: Survey[];
+  noCodeEvents?: any[];
 }
 
 export interface Session {
@@ -37,4 +40,30 @@ export interface Person {
   userId?: string;
   email?: string;
   attributes?: any;
+}
+
+export interface Survey {
+  id: string;
+  questions: Question[];
+  triggers: Trigger[];
+}
+
+export type Question = OpenTextQuestion;
+
+export interface OpenTextQuestion {
+  id: string;
+  type: "openText";
+  headline: string;
+  subheader?: string;
+  placeholder?: string;
+  buttonLabel?: string;
+  required: boolean;
+}
+
+export interface Trigger {
+  id: string;
+  eventClass: {
+    id: string;
+    name: string;
+  };
 }
