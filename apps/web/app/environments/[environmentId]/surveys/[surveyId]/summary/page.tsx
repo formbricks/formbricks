@@ -1,6 +1,5 @@
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import SurveyResultsTabs from "../SurveyResultsTabs";
-import OpenTextSummary from "./OpenTextSummaryBody";
 
 export default function SummaryPage({ params }) {
   return (

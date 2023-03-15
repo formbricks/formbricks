@@ -1,7 +1,3 @@
-import { Card, Text, Metric } from "@tremor/react";
-import { Toggle, ToggleItem } from "@tremor/react";
-import { ChartPieIcon, ChartBarIcon } from "@heroicons/react/24/outline";
-
 interface OpenTextSummaryBodyProps {
   data: any;
 }

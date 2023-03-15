@@ -74,9 +74,7 @@ export default function ModalWithTabs({
             </Button>
           </div>
           <div className="flex space-x-2">
-            {/*  <Button variant="minimal" onClick={onArchive}>
-              Archive
-            </Button> */}
+            <Button variant="minimal" onClick={onArchive}></Button>
             {editable && (
               <Button variant="primary" onClick={onSave}>
                 Save changes
