@@ -33,11 +33,11 @@ export default function ActivityTab({ eventClass, isAttributes }: ActivityTabPro
         )}
         <div>
           <Label className="text-slate-500">Active surveys</Label>
-          <p className="text-slate-900">List of active surveys</p>
+          <p className="text-sm text-slate-900">List of active surveys</p>
         </div>
         <div>
           <Label className="text-slate-500">Inactive surveys</Label>
-          <p className="text-slate-900">List of inactive surveys</p>
+          <p className="text-sm text-slate-900">List of inactive surveys</p>
         </div>
       </div>
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">

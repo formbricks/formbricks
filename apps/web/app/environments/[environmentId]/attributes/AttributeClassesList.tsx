@@ -84,7 +84,7 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
         <AttributeDetailModal
           open={isAttributeDetailModalOpen}
           setOpen={setAttributeDetailModalOpen}
-          eventClass={activeAttributeClass}
+          attributeClass={activeAttributeClass}
         />
         <UploadAttributesModal open={isUploadCSVModalOpen} setOpen={setUploadCSVModalOpen} />
       </div>

@@ -23,8 +23,6 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
-              {/* 
-              {icon && <div className="mr-1.5 h-6 w-6 text-slate-500">{icon}</div>} */}
               <div>
                 <div className="text-xl font-medium text-slate-700">Add Event</div>
                 <div className="text-sm text-slate-500">
@@ -41,15 +39,15 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
                 <Label>Event Type</Label>
                 <RadioGroup defaultValue="no-code" className="flex">
                   <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
-                    <RadioGroupItem value="no-code" id="no-code" className="bg-slate-50" />
-                    <Label htmlFor="no-code" className="flex items-center">
+                    <RadioGroupItem value="no-code" id="no-code" className="cursor-pointer bg-slate-50" />
+                    <Label htmlFor="no-code" className="flex cursor-pointer items-center">
                       <CursorArrowRaysIcon className="mr-1 h-5 w-5 text-slate-500" />
                       No Code
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
                     <RadioGroupItem value="code" id="code" className="bg-slate-50" />
-                    <Label htmlFor="code" className="flex items-center">
+                    <Label htmlFor="code" className="flex cursor-pointer items-center">
                       <CodeBracketIcon className="mr-1 h-5 w-5 text-slate-500" />
                       Code
                     </Label>
@@ -61,19 +59,23 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
                 <RadioGroup defaultValue="page-url" className="flex">
                   <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
                     <RadioGroupItem value="page-url" id="page-url" className="bg-slate-50" />
-                    <Label htmlFor="page-url" className="flex items-center">
+                    <Label htmlFor="page-url" className="flex cursor-pointer items-center">
                       Page URL
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
+                  <div className="flex items-center space-x-2 rounded-lg bg-slate-50 p-3">
                     <RadioGroupItem disabled value="inner-html" id="inner-html" className="bg-slate-50" />
-                    <Label htmlFor="inner-html" className="flex items-center">
+                    <Label
+                      htmlFor="inner-html"
+                      className="flex cursor-not-allowed items-center text-slate-500">
                       Inner Text
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
+                  <div className="flex items-center space-x-2 rounded-lg bg-slate-50 p-3">
                     <RadioGroupItem disabled value="css-selector" id="css-selector" className="bg-slate-50" />
-                    <Label htmlFor="css-selector" className="flex items-center">
+                    <Label
+                      htmlFor="css-selector"
+                      className="flex cursor-not-allowed items-center text-slate-500">
                       CSS Selector
                     </Label>
                   </div>
