@@ -49,6 +49,7 @@ export default function EventDetailModal({ open, setOpen, eventClass }: EventDet
         }
         label={eventClass.name}
         description={eventClass.description || ""}
+        editable={eventClass.type === "automatic" ? false : true}
         onSave={saveChanges}
         onArchive={handleArchive}
         hrefDocs="https://formbricks.com/docs"

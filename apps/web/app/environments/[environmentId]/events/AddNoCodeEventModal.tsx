@@ -1,20 +1,36 @@
+"use client";
+
 import Modal from "@/components/shared/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
-import { CodeBracketIcon, CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { useState } from "react";
+import type { MatchType } from "./testURLmatch";
+import { testURLmatch } from "./testURLmatch";
+import clsx from "clsx";
 
 interface EventDetailModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
 }
 
-export default function EventDetailModal({ open, setOpen }: EventDetailModalProps) {
+export default function AddNoCodeEventModal({ open, setOpen }: EventDetailModalProps) {
   const createEvent = () => {
     console.log("Save changes");
     setOpen(false);
+  };
+
+  const [url1, setUrl1] = useState("");
+  const [url2, setUrl2] = useState("");
+  const [matchType, setMatchType] = useState<MatchType>("exactMatch");
+  const [isMatch, setIsMatch] = useState("");
+
+  const handleMatchClick = () => {
+    const match = testURLmatch(url1, url2, matchType);
+    setIsMatch(match);
   };
 
   return (
@@ -23,10 +39,13 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
+              <div className="mr-1.5 h-6 w-6 text-slate-500">
+                <CursorArrowRaysIcon />
+              </div>
               <div>
-                <div className="text-xl font-medium text-slate-700">Add Event</div>
+                <div className="text-xl font-medium text-slate-700">Add No-Code Event</div>
                 <div className="text-sm text-slate-500">
-                  Create a new event to filter your user base with.
+                  Create a new no-code event to filter your user base with.
                 </div>
               </div>
             </div>
@@ -35,25 +54,6 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
         <div className="flex justify-between rounded-lg p-6">
           <div>
             <form className="space-y-4">
-              <div>
-                <Label>Event Type</Label>
-                <RadioGroup defaultValue="no-code" className="flex">
-                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
-                    <RadioGroupItem value="no-code" id="no-code" className="cursor-pointer bg-slate-50" />
-                    <Label htmlFor="no-code" className="flex cursor-pointer items-center">
-                      <CursorArrowRaysIcon className="mr-1 h-5 w-5 text-slate-500" />
-                      No Code
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
-                    <RadioGroupItem value="code" id="code" className="bg-slate-50" />
-                    <Label htmlFor="code" className="flex cursor-pointer items-center">
-                      <CodeBracketIcon className="mr-1 h-5 w-5 text-slate-500" />
-                      Code
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
               <div>
                 <Label>Select By</Label>
                 <RadioGroup defaultValue="page-url" className="flex">
@@ -94,9 +94,13 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
               <div className="grid w-full grid-cols-3 gap-x-8">
                 <div className="col-span-1">
                   <Label>URL</Label>
-                  <Select>
+                  <Select
+                    onValueChange={(e) => {
+                      setMatchType(e as MatchType);
+                      setIsMatch("default");
+                    }}>
                     <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Match type" />
+                      <SelectValue placeholder="Select match type" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="exactMatch">Exactly matches</SelectItem>
@@ -110,7 +114,15 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
                 </div>
 
                 <div className="col-span-2 flex w-full items-end">
-                  <Input placeholder="e.g. https://app.formbricks.com/dashboard" />
+                  <Input
+                    type="text"
+                    value={url2}
+                    onChange={(e) => {
+                      setUrl2(e.target.value);
+                      setIsMatch("default");
+                    }}
+                    placeholder="e.g. https://app.formbricks.com/dashboard"
+                  />
                 </div>
               </div>
               <div>
@@ -121,7 +133,21 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
                   </Label>
                   <div className="mt-1 flex">
                     <Input
-                      className="bg-white"
+                      type="text"
+                      value={url1}
+                      onChange={(e) => {
+                        setUrl1(e.target.value);
+                        setIsMatch("default");
+                      }}
+                      className={clsx(
+                        isMatch === "yes"
+                          ? "border-green-500 bg-green-50"
+                          : isMatch === "no"
+                          ? "border-red-200 bg-red-50"
+                          : isMatch === "default"
+                          ? "border-slate-200 bg-white"
+                          : null
+                      )}
                       placeholder="Paste the URL you want the event to trigger on"
                     />
                     <Button
@@ -129,6 +155,7 @@ export default function EventDetailModal({ open, setOpen }: EventDetailModalProp
                       className="ml-2 whitespace-nowrap"
                       onClick={(e) => {
                         e.preventDefault();
+                        handleMatchClick();
                       }}>
                       Test Match
                     </Button>

@@ -8,6 +8,7 @@ interface ModalWithTabsProps {
   icon?: React.ReactNode;
   label?: string;
   description?: string;
+  editable?: boolean;
   onSave?: () => void;
   onArchive?: () => void;
   hrefDocs: string;
@@ -26,6 +27,7 @@ export default function ModalWithTabs({
   icon,
   label,
   description,
+  editable,
   onSave,
   onArchive,
   hrefDocs,
@@ -72,12 +74,14 @@ export default function ModalWithTabs({
             </Button>
           </div>
           <div className="flex space-x-2">
-            <Button variant="minimal" onClick={onArchive}>
+            {/*  <Button variant="minimal" onClick={onArchive}>
               Archive
-            </Button>
-            <Button variant="primary" onClick={onSave}>
-              Save changes
-            </Button>
+            </Button> */}
+            {editable && (
+              <Button variant="primary" onClick={onSave}>
+                Save changes
+              </Button>
+            )}
           </div>
         </div>
       </div>
