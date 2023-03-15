@@ -18,10 +18,10 @@ export default function OpenTextSummary({}) {
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             16 responses
           </div>
-          <div className=" flex items-center rounded-lg bg-slate-100 p-2">
+          {/*           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <ArrowTrendingUpIcon className="mr-2 h-4 w-4" />
             2.8 average
-          </div>
+          </div> */}
         </div>
       </div>
       <div className="space-y-2 rounded-b-lg bg-white px-6 pt-4 pb-6">

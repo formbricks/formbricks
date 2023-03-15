@@ -21,8 +21,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // GET
   if (req.method === "GET") {
-    // get submission
-    const submissions = await prisma.response.findMany({
+    // get responses
+    const responses = await prisma.response.findMany({
       where: {
         survey: {
           id: surveyId,
@@ -34,7 +34,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       ],
     });
-    return res.json(submissions);
+    return res.json(responses);
   }
 
   // Unknown HTTP Method

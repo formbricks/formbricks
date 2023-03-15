@@ -18,3 +18,11 @@ export const parseUserAgent = (userAgent: string) => {
   const info = platform.parse(userAgent);
   return info.description;
 };
+
+// write a function that takes a string and truncates it to the specified length
+export const truncate = (str: string, length: number) => {
+  if (str.length > length) {
+    return str.substring(0, length) + "...";
+  }
+  return str;
+};
