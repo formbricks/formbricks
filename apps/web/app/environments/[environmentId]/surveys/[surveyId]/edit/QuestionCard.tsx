@@ -9,9 +9,10 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import QuestionDropdown from "./QuestionDropdown";
 import { Draggable } from "react-beautiful-dnd";
+import type { Question } from "@/types/questions";
 
 interface QuestionCardProps {
-  question: any;
+  question: Question;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;
@@ -28,7 +29,7 @@ export default function QuestionCard({
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
         <div
-          className="flex flex-row"
+          className="flex flex-row rounded-lg bg-white shadow-lg"
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}>
@@ -48,7 +49,7 @@ export default function QuestionCard({
                 <div className="inline-flex">
                   <Bars4Icon className="-ml-0.5 mr-2 h-5 w-5 text-slate-400" />
                   <div>
-                    <p className="text-sm font-semibold">{question.title}</p>
+                    <p className="text-sm font-semibold">{question.headline}</p>
                     {!open && question?.required && (
                       <p className="mt-1 truncate text-xs text-gray-500">
                         {question?.required && "Required"}
@@ -75,25 +76,25 @@ export default function QuestionCard({
             <Collapsible.CollapsibleContent className="px-4 pb-4">
               <form>
                 <div className="mt-3">
-                  <Label htmlFor="title">Title</Label>
+                  <Label htmlFor="headline">Headline</Label>
                   <div className="mt-2">
                     <Input
-                      id="title"
-                      name="title"
-                      value={question.title}
-                      onChange={(e) => updateQuestion(questionIdx, { title: e.target.value })}
+                      id="headline"
+                      name="headline"
+                      value={question.headline}
+                      onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
                     />
                   </div>
                 </div>
 
                 <div className="mt-3">
-                  <Label htmlFor="subtitle">Subtitle</Label>
+                  <Label htmlFor="subheader">Subheader</Label>
                   <div className="mt-2">
                     <Input
-                      id="subtitle"
-                      name="subtitle"
-                      value={question.subtitle}
-                      onChange={(e) => updateQuestion(questionIdx, { subtitle: e.target.value })}
+                      id="subheader"
+                      name="subheader"
+                      value={question.subheader}
+                      onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
                     />
                   </div>
                 </div>

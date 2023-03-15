@@ -1,6 +1,6 @@
 import { h } from "preact";
 import { useState } from "preact/compat";
-import { clsx } from "../lib/utils";
+import { cn } from "../lib/utils";
 
 export default function RadioElement({ element, onSubmit }) {
   const [selected, setSelected] = useState(null);
@@ -11,7 +11,7 @@ export default function RadioElement({ element, onSubmit }) {
         <div class="space-y-4">
           {element.options.map((option, index) => (
             <label
-              class={clsx(
+              class={cn(
                 selected === option.value ? " border-gray-900 ring-2 ring-indigo-500" : "border-transparent",
                 "relative block cursor-pointer rounded-lg border bg-white px-6 py-4 shadow-sm focus:outline-none sm:flex sm:justify-between"
               )}>

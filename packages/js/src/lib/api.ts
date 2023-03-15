@@ -1,34 +1,33 @@
-import { Submission, SubmissionRequest } from "../types/types";
+import { Response, ResponseRequest } from "../types/types";
 
-export const createSubmission = async (
-  submissionRequest: SubmissionRequest,
-  formId,
-  config
-): Promise<Submission> => {
-  const res = await fetch(`${config.formbricksUrl}/api/capture/forms/${formId}/submissions`, {
+export const createResponse = async (responseRequest: ResponseRequest, config): Promise<Response> => {
+  const res = await fetch(`${config.apiHost}/api/v1/environments/${config.environmentId}/client/responses`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(submissionRequest),
+    body: JSON.stringify(responseRequest),
   });
   if (!res.ok) {
-    throw new Error("Could not create submission");
+    console.error(res.text);
+    throw new Error("Could not create response");
   }
   return await res.json();
 };
 
-export const updateSubmission = async (
-  submissionRequest: SubmissionRequest,
-  formId,
-  submissionId,
+export const updateResponse = async (
+  responseRequest: ResponseRequest,
+  responseId,
   config
-): Promise<Submission> => {
-  const res = await fetch(`${config.formbricksUrl}/api/capture/forms/${formId}/submissions/${submissionId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(submissionRequest),
-  });
+): Promise<Response> => {
+  const res = await fetch(
+    `${config.apiHost}/api/v1/environments/${config.environmentId}/client/responses/${responseId}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(responseRequest),
+    }
+  );
   if (!res.ok) {
-    throw new Error("Could not update submission");
+    throw new Error("Could not update response");
   }
   return await res.json();
 };

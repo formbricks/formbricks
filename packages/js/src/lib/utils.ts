@@ -1,3 +1,3 @@
-export const clsx = (...classes) => {
+export const cn = (...classes) => {
   return classes.filter(Boolean).join(" ");
 };

@@ -57,7 +57,36 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    return res.json(session);
+    const surveys = await prisma.survey.findMany({
+      where: {
+        environmentId,
+        status: "inProgress",
+      },
+      select: {
+        id: true,
+        questions: true,
+        triggers: {
+          select: {
+            id: true,
+            eventClass: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const noCodeEvents = await prisma.eventClass.findMany({
+      where: {
+        environmentId,
+        type: "noCode",
+      },
+    });
+
+    return res.json({ session, surveys, noCodeEvents });
   }
 
   // Unknown HTTP Method

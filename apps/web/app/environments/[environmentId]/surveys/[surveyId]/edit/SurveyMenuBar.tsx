@@ -40,7 +40,7 @@ export default function SurveyMenuBar({ questions, triggers, environmentId, surv
         <Button
           variant="highlight"
           onClick={() => {
-            triggerSurveyMutate({ status: "inProgress" });
+            triggerSurveyMutate({ status: "inProgress", questions, triggers });
             router.push(`/environments/${environmentId}/surveys/`);
           }}>
           Publish Survey

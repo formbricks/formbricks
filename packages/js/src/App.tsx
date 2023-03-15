@@ -1,17 +1,29 @@
 import { h, VNode } from "preact";
-import { useEffect } from "preact/compat";
+import { useEffect, useState } from "preact/compat";
 import Modal from "./components/Modal";
-import Survey from "./components/Survey";
+import SurveyView from "./components/SurveyView";
+import type { Config, Survey } from "./types/types";
 
-export default function App({ formId, schema, config }): VNode {
-  useEffect(() => {
-    console.log(JSON.stringify(schema, null, 2));
-  }, []);
+interface AppProps {
+  config: Config;
+  survey: Survey;
+  closeSurvey: () => void;
+}
+
+export default function App({ config, survey, closeSurvey }: AppProps): VNode {
+  const [isOpen, setIsOpen] = useState(true);
+
+  const close = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      closeSurvey();
+    }, 1000); // wait for animation to finish}
+  };
 
   return (
     <div className="tailwind-preflight">
-      <Modal>
-        <Survey schema={schema} config={config} formId={formId} />
+      <Modal isOpen={isOpen}>
+        <SurveyView config={config} survey={survey} close={close} />
       </Modal>
     </div>
   );
