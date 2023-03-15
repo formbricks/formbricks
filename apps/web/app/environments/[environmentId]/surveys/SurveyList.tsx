@@ -1,41 +1,20 @@
 "use client";
 
-import EmptyPageFiller from "@/components/shared/EmptyPageFiller";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
-import { Menu, Transition } from "@headlessui/react";
-import { DocumentPlusIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { EllipsisHorizontalIcon, TrashIcon, PencilIcon } from "@heroicons/react/24/solid";
-import clsx from "clsx";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Fragment, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/shared/AlertDialog";
+import EmptyPageFiller from "@/components/shared/EmptyPageFiller";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
+import { DocumentPlusIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { EllipsisHorizontalIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
 
