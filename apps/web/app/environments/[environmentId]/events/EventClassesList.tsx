@@ -7,7 +7,7 @@ import { timeSinceConditionally } from "@/lib/time";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/20/solid";
 import { useState } from "react";
 import EventDetailModal from "./EventDetailModal";
-import AddEventModal from "./AddEventModal";
+import AddNoCodeEventModal from "./AddNoCodeEventModal";
 
 export default function EventClassesList({ environmentId }) {
   const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
@@ -39,7 +39,8 @@ export default function EventClassesList({ environmentId }) {
           onClick={() => {
             setAddEventModalOpen(true);
           }}>
-          Add event
+          <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
+          Add No-Code Event
         </Button>
       </div>
       <div className="rounded-lg border border-slate-200">
@@ -104,7 +105,7 @@ export default function EventClassesList({ environmentId }) {
         setOpen={setEventDetailModalOpen}
         eventClass={activeEventClass}
       />
-      <AddEventModal open={isAddEventModalOpen} setOpen={setAddEventModalOpen} />
+      <AddNoCodeEventModal open={isAddEventModalOpen} setOpen={setAddEventModalOpen} />
     </>
   );
 }

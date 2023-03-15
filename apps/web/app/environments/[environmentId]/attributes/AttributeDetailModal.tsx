@@ -44,6 +44,7 @@ export default function AttributeDetailModal({ open, setOpen, attributeClass }: 
         onSave={saveChanges}
         onArchive={handleArchive}
         hrefDocs="https://formbricks.com/docs"
+        editable={true}
       />
     </>
   );

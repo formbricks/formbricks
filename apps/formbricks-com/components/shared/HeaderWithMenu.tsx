@@ -30,7 +30,7 @@ const creation = [
     status: true,
   },
   {
-    name: "No Code Builder",
+    name: "No-Code Builder",
     description: "Notion-like visual builder",
     href: "/visual-builder",
     icon: CursorArrowRaysIcon,

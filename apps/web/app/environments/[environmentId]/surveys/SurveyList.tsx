@@ -126,61 +126,6 @@ export default function SurveysList({ environmentId }) {
                               </DropdownMenuGroup>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                          {/*  <Menu as="div" className="relative z-10 inline-block text-left">
-                            {({ open }) => (
-                              <>
-                                <div>
-                                  <Menu.Button className="text-red -m-2 flex items-center rounded-full p-2">
-                                    <span className="sr-only">Open options</span>
-                                    <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
-                                  </Menu.Button>
-                                </div>
-
-                                <Transition
-                                  show={open}
-                                  as={Fragment}
-                                  enter="transition ease-out duration-100"
-                                  enterFrom="transsurvey opacity-0 scale-95"
-                                  enterTo="transsurvey opacity-100 scale-100"
-                                  leave="transition ease-in duration-75"
-                                  leaveFrom="transsurvey opacity-100 scale-100"
-                                  leaveTo="transsurvey opacity-0 scale-95">
-                                  <Menu.Items
-                                    static
-                                    className="absolute left-0 mt-2 w-56 origin-top-right rounded-sm bg-white px-1 shadow-lg">
-                                    <div className="py-1">
-                                      <Menu.Item>
-                                        {({ active }) => (
-                                          <button
-                                            onClick={() => {
-                                              if (
-                                                confirm(
-                                                  "Are you sure you want to delete this survey? This also deletes all responses that are captured with this survey. This action cannot be undone."
-                                                )
-                                              ) {
-                                                deleteSurveyAction(survey, surveyIdx);
-                                              }
-                                            }}
-                                            className={clsx(
-                                              active
-                                                ? "text-ui-black rounded-sm bg-slate-100"
-                                                : "text-slate-800",
-                                              "flex w-full px-4 py-2 text-sm"
-                                            )}>
-                                            <TrashIcon
-                                              className="mr-3 h-5 w-5 text-slate-800"
-                                              aria-hidden="true"
-                                            />
-                                            <span>Delete survey</span>
-                                          </button>
-                                        )}
-                                      </Menu.Item>
-                                    </div>
-                                  </Menu.Items>
-                                </Transition>
-                              </>
-                            )}
-                          </Menu> */}
                         </div>
                       </div>
                     </div>
