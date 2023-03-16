@@ -13,7 +13,7 @@ import {
 import { ActivityFeedItem } from "./ActivityFeed"; // Import the ActivityFeedItem type from the main file
 
 export const ActivityItemIcon = ({ activityItem }: { activityItem: ActivityFeedItem }) => (
-  <div className="h-12 w-12 rounded-full bg-white p-3 text-slate-500  duration-100 ease-in-out group-hover:scale-110">
+  <div className="h-12 w-12 rounded-full bg-white p-3 text-slate-500  duration-100 ease-in-out group-hover:scale-110 group-hover:text-slate-600">
     {activityItem.type === "attribute" ? (
       <TagIcon />
     ) : activityItem.type === "display" ? (
@@ -34,21 +34,11 @@ export const ActivityItemContent = ({ activityItem }: { activityItem: ActivityFe
   <div>
     <div className="font-semibold text-slate-700">
       {activityItem.type === "attribute" ? (
-        <p>Received Attribute</p>
+        <p>{capitalizeFirstLetter(activityItem.attributeLabel)} added</p>
       ) : activityItem.type === "display" ? (
         <p>Seen survey</p>
       ) : activityItem.type === "event" ? (
-        <p>
-          Triggered{" "}
-          <span>
-            {activityItem.eventType === "code"
-              ? "Code"
-              : activityItem.eventType === "noCode"
-              ? "No-Code"
-              : "Automatic"}
-          </span>{" "}
-          Event
-        </p>
+        <p>{activityItem.eventLabel} triggered</p>
       ) : (
         <p>Unknown Activity</p>
       )}
@@ -79,7 +69,7 @@ export const ActivityItemPopover = ({
 
   return (
     <Popover>
-      <PopoverTrigger>{children}</PopoverTrigger>
+      <PopoverTrigger className="group">{children}</PopoverTrigger>
       <PopoverContent className="bg-white">
         <div className="">
           {activityItem.type === "attribute" ? (

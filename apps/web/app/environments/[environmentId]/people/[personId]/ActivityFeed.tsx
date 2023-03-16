@@ -1,6 +1,6 @@
 import EmptyPageFiller from "@/components/shared/EmptyPageFiller";
 import { InboxIcon } from "@heroicons/react/24/solid";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { ActivityItemContent, ActivityItemIcon, ActivityItemPopover } from "./ActivityItemComponents";
 
 interface ActivityFeedProps {
@@ -9,6 +9,7 @@ interface ActivityFeedProps {
   displays: any[];
   responses: any[];
   sortByDate: boolean;
+  onUnifiedAttributes: (unifiedAttributes: any[]) => void;
 }
 
 export type ActivityFeedItem = {
@@ -29,6 +30,7 @@ export default function ActivityFeed({
   displays,
   responses,
   sortByDate,
+  onUnifiedAttributes,
 }: ActivityFeedProps) {
   // Get Attributes into unified format
   const unifiedAttributes = useMemo(() => {
@@ -43,6 +45,21 @@ export default function ActivityFeed({
     }
     return [];
   }, [attributes]);
+
+  useEffect(() => {
+    if (attributes) {
+      const computedUnifiedAttributes = attributes.map((attribute) => ({
+        type: "attribute",
+        createdAt: attribute.createdAt,
+        updatedAt: attribute.updatedAt,
+        attributeLabel: attribute.attributeClass.name,
+        attributeValue: attribute.value,
+      }));
+
+      // Pass the computedUnifiedAttributes to the parent component
+      onUnifiedAttributes(computedUnifiedAttributes);
+    }
+  }, [attributes, onUnifiedAttributes]);
 
   // Get Displays into unified format
   const unifiedDisplays = useMemo(() => {
@@ -81,8 +98,8 @@ export default function ActivityFeed({
     <>
       {unifiedList.length === 0 ? (
         <EmptyPageFiller
-          alertText="You haven't received any submissions yet."
-          hintText="Embed the feedback widget on your website to start receiving feedback."
+          alertText="You haven't received any responses yet."
+          hintText="Embed the widget on your website to start receiving feedback."
           borderStyles="border-4 border-dotted border-red">
           <InboxIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
         </EmptyPageFiller>
