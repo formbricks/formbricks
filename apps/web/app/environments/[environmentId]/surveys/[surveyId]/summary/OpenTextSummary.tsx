@@ -2,11 +2,11 @@ interface OpenTextSummaryProps {
   data: any;
   environmentId: string;
 }
-import { InboxStackIcon } from "@heroicons/react/24/solid";
-import { timeSince } from "@/lib/time";
 import { PersonAvatar } from "@/components/ui/Avatars";
-import Link from "next/link";
+import { timeSince } from "@/lib/time";
 import { truncate } from "@/lib/utils";
+import { InboxStackIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
 
 export default function OpenTextSummary({ data, environmentId }: OpenTextSummaryProps) {
   return (

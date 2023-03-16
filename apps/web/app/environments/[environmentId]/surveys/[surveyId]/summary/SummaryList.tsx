@@ -1,11 +1,10 @@
 "use client";
 
-import OpenTextSummary from "./OpenTextSummary";
-import RadioSummary from "./RadioSummary";
-import { useResponses } from "@/lib/responses/responses";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
 import { useMemo } from "react";
+import OpenTextSummary from "./OpenTextSummary";
 
 export default function SummaryList({ environmentId, surveyId }) {
   const { responses, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);

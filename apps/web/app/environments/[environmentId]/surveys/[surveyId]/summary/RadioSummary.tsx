@@ -3,7 +3,7 @@
   type: string;
 } */
 import ProgressBar from "@/components/ui/ProgressBar";
-import { InboxStackIcon, ArrowTrendingUpIcon } from "@heroicons/react/24/solid";
+import { InboxStackIcon } from "@heroicons/react/24/solid";
 
 export default function OpenTextSummary({}) {
   return (
