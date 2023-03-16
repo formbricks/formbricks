@@ -3,7 +3,7 @@
 import GoBackButton from "@/components/shared/GoBackButton";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { usePerson } from "@/lib/people";
-import { onlyUnique } from "@/lib/utils";
+import { capitalizeFirstLetter, onlyUnique } from "@/lib/utils";
 import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useMemo, useState } from "react";
 import ActivityFeed from "./ActivityFeed";
@@ -17,11 +17,11 @@ interface PersonDetailsProps {
 export default function PersonDetails({ environmentId, personId }: PersonDetailsProps) {
   const { person, isLoadingPerson, isErrorPerson } = usePerson(environmentId, personId);
 
-  const formsParticipated = useMemo(() => {
+  /*   const formsParticipated = useMemo(() => {
     if (person && "responses" in person) {
       return person.responses.map((response) => Object.keys(response.data)[0]).filter(onlyUnique).length;
     }
-  }, [person]);
+  }, [person]); */
 
   const [responsesAscending, setResponsesAscending] = useState(true);
 
@@ -35,6 +35,20 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
     setActivityAscending(!activityAscending);
   };
 
+  const [attributeMap, setAttributeMap] = useState<AttributeObject[]>([]);
+
+  const handleUnifiedAttributes = (unifiedAttributes) => {
+    setAttributeMap(unifiedAttributes);
+  };
+
+  interface AttributeObject {
+    type: string;
+    createdAt: string;
+    updatedAt: string;
+    attributeLabel: string;
+    attributeValue: string;
+  }
+
   if (isLoadingPerson) {
     return (
       <div className="flex h-full w-full items-center justify-center">
@@ -46,15 +60,14 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
   if (isErrorPerson) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
-  /*  
-  console.log("person.sessions", JSON.stringify(person.sessions, null, 2));
-  console.log("person.attributes", JSON.stringify(person.attributes, null, 2));
- */
+
   return (
     <>
       <GoBackButton />
       <div className="flex items-baseline justify-between border-b border-slate-200 pt-4 pb-6">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900">{person.email}</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-slate-900">
+          {person.email ? <span>{person.email}</span> : <span>{person.id}</span>}
+        </h1>
         <div className="flex items-center space-x-3">
           <button /* onClick={deletePerson(personId)} */>
             <TrashIcon className="h-5 w-5 text-slate-500 hover:text-red-500" />
@@ -67,12 +80,23 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
             <h2 className="text-lg font-bold text-slate-700">Attributes</h2>
             <div>
               <dt className="text-sm font-medium text-slate-500">Email</dt>
-              <dd className="mt-1 text-sm text-slate-900">{person.email}</dd>
+              <dd className="mt-1 text-sm text-slate-900">
+                {person.email ? (
+                  <span>{person.email}</span>
+                ) : (
+                  <span className="text-slate-300">Not provided</span>
+                )}
+              </dd>
             </div>
-
             <div>
               <dt className="text-sm font-medium text-slate-500">User Id</dt>
-              <dd className="mt-1 text-sm text-slate-900">{person.userId}</dd>
+              <dd className="mt-1 text-sm text-slate-900">
+                {person.userId ? (
+                  <span>{person.Id}</span>
+                ) : (
+                  <span className="text-slate-300">Not provided</span>
+                )}
+              </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-slate-500">Formbricks Id (internal)</dt>
@@ -87,25 +111,14 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
               <dt className="text-sm font-medium text-slate-500">Responses</dt>
               <dd className="mt-1 text-sm text-slate-900">{person.responses.length}</dd>
             </div>
-            {/* {Object.entries(person.data).map(
-            ([key, value]) =>
-              !["name", "email"].includes(key) && (
-                <div>
-                  <dt className="text-sm font-medium text-slate-500">{key}</dt>
-                  <dd className="mt-1 text-sm text-slate-900"> value.toString() </dd>
-                </div>
-              )
-          )} */}
-            <hr className="text-slate-600" />
-            <h2 className="font-bold text-slate-700">Custom Attributes</h2>
-            <div>
-              <dt className="text-sm font-medium text-slate-500">Number of forms participated</dt>
-              <dd className="mt-1 text-sm text-slate-900">{formsParticipated}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-slate-500">Number of form submissions</dt>
-              <dd className="mt-1 text-sm text-slate-900">{person.responses.length}</dd>
-            </div>
+            {attributeMap.map((attribute) => (
+              <div key={attribute.attributeLabel}>
+                <dt className="text-sm font-medium text-slate-500">
+                  {capitalizeFirstLetter(attribute.attributeLabel)}
+                </dt>
+                <dd className="mt-1 text-sm text-slate-900">{attribute.attributeValue.toString()}</dd>
+              </div>
+            ))}
           </div>
 
           <div className="md:col-span-2">
@@ -140,6 +153,7 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
               displays={person.displays}
               responses={person.responses}
               sortByDate={activityAscending}
+              onUnifiedAttributes={handleUnifiedAttributes}
             />
           </div>
         </div>

@@ -9,8 +9,8 @@ export default function ResponseFeed({ person, sortByDate, environmentId }) {
     <>
       {person.responses.length === 0 ? (
         <EmptyPageFiller
-          alertText="You haven't received any submissions yet."
-          hintText="Embed the feedback widget on your website to start receiving feedback."
+          alertText="You haven't received any responses yet."
+          hintText="Embed the widget on your website to start receiving feedback."
           borderStyles="border-4 border-dotted border-red">
           <InboxIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
         </EmptyPageFiller>
