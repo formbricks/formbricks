@@ -39,6 +39,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             createdAt: true,
             updatedAt: true,
             data: true,
+            survey: {
+              select: {
+                id: true,
+                questions: true,
+                name: true,
+                status: true,
+              },
+            },
           },
         },
         sessions: {
@@ -49,10 +57,33 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 eventClass: {
                   select: {
                     name: true,
+                    description: true,
+                    type: true,
                   },
                 },
               },
             },
+          },
+        },
+        attributes: {
+          select: {
+            createdAt: true,
+            updatedAt: true,
+            value: true,
+            attributeClass: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+          },
+        },
+        displays: {
+          select: {
+            createdAt: true,
+            updatedAt: true,
+            surveyId: true,
           },
         },
       },

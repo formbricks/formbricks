@@ -15,7 +15,7 @@ import { EllipsisHorizontalIcon, PencilIcon, TrashIcon } from "@heroicons/react/
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
+import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 
 export default function SurveysList({ environmentId }) {
@@ -93,7 +93,12 @@ export default function SurveysList({ environmentId }) {
                         className="absolute h-full w-full"></Link>
                       <div className="divide-y divide-slate-100 ">
                         <div className="flex justify-between px-4 py-2 text-right sm:px-6">
-                          <p className="text-xs text-slate-400 ">{survey._count?.responses} responses</p>
+                          <div className="flex items-center">
+                            <SurveyStatusIndicator status={survey.status} />
+                            <p className="ml-2 text-xs text-slate-400 ">
+                              {survey._count?.responses} responses
+                            </p>
+                          </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
                               <div>
