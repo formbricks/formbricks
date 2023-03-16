@@ -1,0 +1,120 @@
+import EmptyPageFiller from "@/components/shared/EmptyPageFiller";
+import { InboxIcon } from "@heroicons/react/24/solid";
+import { useMemo } from "react";
+import { ActivityItemContent, ActivityItemIcon, ActivityItemPopover } from "./ActivityItemComponents";
+
+interface ActivityFeedProps {
+  sessions: any[];
+  attributes: any[];
+  displays: any[];
+  responses: any[];
+  sortByDate: boolean;
+}
+
+export type ActivityFeedItem = {
+  type: "event" | "attribute" | "display";
+  createdAt: string;
+  updatedAt?: string;
+  attributeLabel?: string;
+  attributeValue?: string;
+  displaySurveyId?: string;
+  eventLabel?: string;
+  eventDescription?: string;
+  eventType?: string;
+};
+
+export default function ActivityFeed({
+  sessions,
+  attributes,
+  displays,
+  responses,
+  sortByDate,
+}: ActivityFeedProps) {
+  // Get Attributes into unified format
+  const unifiedAttributes = useMemo(() => {
+    if (attributes) {
+      return attributes.map((attribute) => ({
+        type: "attribute",
+        createdAt: attribute.createdAt,
+        updatedAt: attribute.updatedAt,
+        attributeLabel: attribute.attributeClass.name,
+        attributeValue: attribute.value,
+      }));
+    }
+    return [];
+  }, [attributes]);
+
+  // Get Displays into unified format
+  const unifiedDisplays = useMemo(() => {
+    if (displays) {
+      return displays.map((display) => ({
+        type: "display",
+        createdAt: display.createdAt,
+        updatedAt: display.updatedAt,
+        displaySurveyId: display.surveyId,
+      }));
+    }
+    return [];
+  }, [displays]);
+
+  // Get Eventis into unified format
+  const unifiedEvents = useMemo(() => {
+    if (sessions) {
+      return sessions.flatMap((session) =>
+        session.events.map((event) => ({
+          type: "event",
+          eventType: event.eventClass.type,
+          createdAt: event.createdAt,
+          eventLabel: event.eventClass.name,
+          eventDescription: event.eventClass.description,
+        }))
+      );
+    }
+    return [];
+  }, [sessions]);
+
+  const unifiedList = useMemo<ActivityFeedItem[]>(() => {
+    return [...unifiedAttributes, ...unifiedDisplays, ...unifiedEvents];
+  }, [unifiedAttributes, unifiedDisplays, unifiedEvents]);
+
+  return (
+    <>
+      {unifiedList.length === 0 ? (
+        <EmptyPageFiller
+          alertText="You haven't received any submissions yet."
+          hintText="Embed the feedback widget on your website to start receiving feedback."
+          borderStyles="border-4 border-dotted border-red">
+          <InboxIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
+        </EmptyPageFiller>
+      ) : (
+        <div>
+          {unifiedList
+            .slice()
+            .sort((a, b) =>
+              sortByDate
+                ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            )
+            .map((activityItem) => (
+              <li key={activityItem.createdAt} className="list-none">
+                <div className="relative pb-12">
+                  <span
+                    className="absolute top-4 left-6 -ml-px h-full w-0.5 bg-slate-200"
+                    aria-hidden="true"
+                  />
+                  <div className="relative">
+                    <ActivityItemPopover activityItem={activityItem} responses={responses}>
+                      <div className="flex space-x-3 text-left">
+                        <ActivityItemIcon activityItem={activityItem} />
+                        <ActivityItemContent activityItem={activityItem} />
+                      </div>
+                    </ActivityItemPopover>
+                  </div>
+                </div>
+              </li>
+            ))}
+        </div>
+      )}
+    </>
+  );
+}
