@@ -1,4 +1,4 @@
-export interface ResponseRequest {
+export interface ResponseCreateRequest {
   surveyId: string;
   personId: string;
   response: {
@@ -7,6 +7,20 @@ export interface ResponseRequest {
       [name: string]: string | number | string[] | number[] | undefined;
     };
   };
+}
+
+export interface ResponseUpdateRequest {
+  response: {
+    finished?: boolean;
+    data: {
+      [name: string]: string | number | string[] | number[] | undefined;
+    };
+  };
+}
+
+export interface DisplayCreateRequest {
+  surveyId: string;
+  personId: string;
 }
 
 export interface Response {

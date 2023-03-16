@@ -10,15 +10,20 @@ import {
   updatePersonEmail,
   updatePersonUserId,
 } from "./lib/person";
-import type { Config } from "./types/types";
+import type { Config, Survey } from "./types/types";
 import { createSession, getLocalSession } from "./lib/session";
-import { trackEvent, triggerSurvey } from "./lib/event";
+import { trackEvent, triggerSurveys } from "./lib/event";
+import { addNewContainer } from "./lib/container";
 
 const _habitat = habitat(App);
 
 let config: Config = { environmentId: null, apiHost: null };
-let initFunction;
-let currentlyExecuting = Promise.resolve();
+let initFunction; // Promise that resolves when init is complete
+let currentlyExecuting = Promise.resolve(); // Promise that resolves when the current survey operation is complete
+let containerId; // id of the container element for the survey modal
+const surveyQueue: Survey[] = []; // queue of surveys to be shown
+const surveysShown: string[] = []; // ids of surveys that have been shown
+let surveyRunning = false; // whether a survey is currently being shown
 
 const init = async (c: Config) => {
   if (!initFunction) {
@@ -33,10 +38,8 @@ const init = async (c: Config) => {
     document.head.appendChild(styleElement);
   }
   // add container element
-  if (document.getElementById("formbricks__container") === null) {
-    const containerElement = document.createElement("div");
-    containerElement.id = "formbricks__container";
-    document.body.appendChild(containerElement);
+  if (containerId === undefined) {
+    containerId = addNewContainer();
   }
 };
 
@@ -49,7 +52,6 @@ const populateConfig = async (c: Config) => {
     config.person = await createPerson(config);
     newPerson = true;
     if (!config.person) {
-      console.log("no person");
       return;
     }
   }
@@ -178,42 +180,55 @@ const track = async (eventName: string, properties: any = {}) => {
       console.error("Formbricks: Error sending event");
       return;
     }
-    const triggeredSurveys = triggerSurvey(config, eventName);
+    const triggeredSurveys = triggerSurveys(config, eventName);
     if (triggeredSurveys && triggeredSurveys.length > 0) {
-      renderSurvey(triggeredSurveys[0]);
+      for (const survey of triggeredSurveys) {
+        // check if survey already in queue
+        if (
+          typeof surveyQueue.find((s) => s.id === survey.id) !== "undefined" ||
+          surveysShown.indexOf(survey.id) > -1
+        ) {
+          continue;
+        }
+        surveyQueue.push(survey);
+      }
+      await workSurveyQueue();
     }
     return;
   });
 };
 
+const workSurveyQueue = async () => {
+  if (surveyQueue.length === 0 || surveyRunning) {
+    return;
+  }
+  surveyRunning = true;
+  const survey = surveyQueue.shift();
+  if (!survey) {
+    return;
+  }
+  surveysShown.push(survey.id);
+  renderSurvey(survey);
+};
+
 const renderSurvey = (survey) => {
   _habitat.render({
-    selector: "#formbricks__container",
+    selector: `#${containerId}`,
     clean: true,
     defaultProps: { config, survey, closeSurvey },
   });
 };
 
 const closeSurvey = () => {
-  const container = document.getElementById("formbricks__container");
-  if (container) {
-    container.innerHTML = "";
-  }
-};
-
-const getForms = async () => {
-  const formRes = await fetch(`${config.apiHost}/api/public/${config.environmentId}/forms`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  if (!formRes.ok) {
-    console.error("Formbricks: Error fetching forms");
-    return;
-  }
-  const forms = formRes.json();
-  return forms;
+  // remove container element from DOM
+  const container = document.getElementById(containerId);
+  container.remove();
+  containerId = addNewContainer();
+  surveyRunning = false;
+  // wait a second before starting next survey
+  setTimeout(() => {
+    workSurveyQueue();
+  }, 1000);
 };
 
 const formbricks = { init, setUserId, setEmail, setAttribute, track, reset, config };

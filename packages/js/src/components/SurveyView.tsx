@@ -1,6 +1,7 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/compat";
-import { createResponse, updateResponse } from "../lib/api";
+import { createDisplay, markDisplayResponded } from "../lib/display";
+import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
 import OpenTextQuestion from "./OpenTextQuestion";
 import Progress from "./Progress";
@@ -10,18 +11,27 @@ export default function SurveyView({ config, survey, close }) {
   const [currentQuestion, setCurrentQuestion] = useState(survey.questions[0]);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [responseId, setResponseId] = useState(null);
+  const [displayId, setDisplayId] = useState(null);
   const [loadingElement, setLoadingElement] = useState(false);
+
+  useEffect(() => {
+    initDisplay();
+    async function initDisplay() {
+      const displayId = await createDisplay({ surveyId: survey.id, personId: config.person.id }, config);
+      setDisplayId(displayId.id);
+    }
+  }, [config, survey]);
 
   useEffect(() => {
     setProgress(calculateProgress());
 
     function calculateProgress() {
-      const elementIdx = survey.questions.findIndex((e) => e.name === currentQuestion.name);
+      const elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id);
       return elementIdx / survey.questions.length;
     }
   }, [currentQuestion, survey]);
 
-  const submitQuestion = async (data: { [x: string]: any }) => {
+  const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
     const questionIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id);
     const finished = questionIdx === survey.questions.length - 1;
@@ -32,7 +42,10 @@ export default function SurveyView({ config, survey, close }) {
       response: { finished, data },
     };
     if (!responseId) {
-      const response = await createResponse(responseRequest, config);
+      const [response, _] = await Promise.all([
+        createResponse(responseRequest, config),
+        markDisplayResponded(displayId, config),
+      ]);
       setResponseId(response.id);
     } else {
       await updateResponse(responseRequest, responseId, config);
@@ -41,6 +54,7 @@ export default function SurveyView({ config, survey, close }) {
     if (!finished) {
       setCurrentQuestion(survey.questions[questionIdx + 1]);
     } else {
+      setProgress(100);
       close();
     }
   };
@@ -49,11 +63,11 @@ export default function SurveyView({ config, survey, close }) {
     <div>
       <div className={cn(loadingElement ? "animate-pulse opacity-60" : "", "p-4")}>
         {currentQuestion.type === "radio" ? (
-          <RadioElement element={currentQuestion} onSubmit={submitQuestion} />
+          <RadioElement element={currentQuestion} onSubmit={submitResponse} />
         ) : currentQuestion.type === "openText" ? (
           <OpenTextQuestion
             question={currentQuestion}
-            onSubmit={submitQuestion}
+            onSubmit={submitResponse}
             lastQuestion={
               survey.questions.findIndex((e) => e.id === currentQuestion.id) === survey.questions.length - 1
             }
