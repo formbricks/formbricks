@@ -8,7 +8,7 @@ export default function SummaryPage({ params }) {
     <>
       <SurveyResultsTabs activeId="summary" environmentId={params.environmentId} surveyId={params.surveyId} />
       <ContentWrapper>
-        <SummaryMetadata />
+        <SummaryMetadata surveyId={params.surveyId} environmentId={params.environmentId} />
         <SummaryList environmentId={params.environmentId} surveyId={params.surveyId} />
       </ContentWrapper>
     </>
