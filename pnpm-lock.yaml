@@ -180,6 +180,8 @@ importers:
   apps/web:
     specifiers:
       '@formbricks/database': workspace:*
+      '@formbricks/ee': workspace:*
+      '@formbricks/js': workspace:*
       '@formbricks/tsconfig': workspace:*
       '@heroicons/react': ^2.0.16
       '@paralleldrive/cuid2': ^2.2.0
@@ -188,10 +190,12 @@ importers:
       '@radix-ui/react-collapsible': ^1.0.2
       '@radix-ui/react-dropdown-menu': ^2.0.4
       '@radix-ui/react-label': ^2.0.1
+      '@radix-ui/react-popover': ^1.0.5
       '@radix-ui/react-radio-group': ^1.1.2
       '@radix-ui/react-select': ^1.2.1
       '@radix-ui/react-switch': ^1.0.2
       '@radix-ui/react-tabs': ^1.0.3
+      '@radix-ui/react-tooltip': ^1.0.5
       '@tailwindcss/forms': ^0.5.3
       '@types/bcryptjs': ^2.4.2
       '@types/node': 18.15.3
@@ -210,10 +214,12 @@ importers:
       lucide-react: ^0.125.0
       next: 13.2.4
       next-auth: ^4.20.1
+      next-transpile-modules: ^10.0.0
       nodemailer: ^6.9.1
       platform: ^1.3.6
       postcss: ^8.4.21
       posthog-js: ^1.51.2
+      preact: 10.5.7
       react: 18.2.0
       react-beautiful-dnd: ^13.1.1
       react-colorful: ^5.6.1
@@ -227,6 +233,8 @@ importers:
       tailwindcss-animate: ^1.0.5
       typescript: 4.9.5
     dependencies:
+      '@formbricks/ee': link:../../packages/ee
+      '@formbricks/js': link:../../packages/js
       '@heroicons/react': 2.0.16_react@18.2.0
       '@paralleldrive/cuid2': 2.2.0
       '@radix-ui/react-alert-dialog': 1.0.3_zula6vjvt3wdocc4mwcxqa6nzi
@@ -234,10 +242,12 @@ importers:
       '@radix-ui/react-collapsible': 1.0.2_biqbaboplfbrettd7655fr4n2y
       '@radix-ui/react-dropdown-menu': 2.0.4_zula6vjvt3wdocc4mwcxqa6nzi
       '@radix-ui/react-label': 2.0.1_biqbaboplfbrettd7655fr4n2y
+      '@radix-ui/react-popover': 1.0.5_zula6vjvt3wdocc4mwcxqa6nzi
       '@radix-ui/react-radio-group': 1.1.2_biqbaboplfbrettd7655fr4n2y
       '@radix-ui/react-select': 1.2.1_zula6vjvt3wdocc4mwcxqa6nzi
       '@radix-ui/react-switch': 1.0.2_biqbaboplfbrettd7655fr4n2y
       '@radix-ui/react-tabs': 1.0.3_biqbaboplfbrettd7655fr4n2y
+      '@radix-ui/react-tooltip': 1.0.5_zula6vjvt3wdocc4mwcxqa6nzi
       '@types/node': 18.15.3
       '@types/react': 18.0.28
       '@types/react-dom': 18.0.11
@@ -255,6 +265,7 @@ importers:
       nodemailer: 6.9.1
       platform: 1.3.6
       posthog-js: 1.51.2
+      preact: 10.5.7
       react: 18.2.0
       react-beautiful-dnd: 13.1.1_biqbaboplfbrettd7655fr4n2y
       react-colorful: 5.6.1_biqbaboplfbrettd7655fr4n2y
@@ -271,6 +282,7 @@ importers:
       '@types/bcryptjs': 2.4.2
       autoprefixer: 10.4.14_postcss@8.4.21
       eslint-config-formbricks: link:../../packages/eslint-config-formbricks
+      next-transpile-modules: 10.0.0
       postcss: 8.4.21
       tailwind-merge: 1.10.0
       tailwindcss: 3.2.7_postcss@8.4.21
@@ -4205,6 +4217,34 @@ packages:
       - '@types/react'
     dev: false
 
+  /@radix-ui/react-popover/1.0.5_zula6vjvt3wdocc4mwcxqa6nzi:
+    resolution: {integrity: sha512-GRHZ8yD12MrN2NLobHPE8Rb5uHTxd9x372DE9PPNnBjpczAQHcZ5ne0KXG4xpf+RDdXSzdLv9ym6mYJCDTaUZg==}
+    peerDependencies:
+      react: ^16.8 || ^17.0 || ^18.0
+      react-dom: ^16.8 || ^17.0 || ^18.0
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@radix-ui/primitive': 1.0.0
+      '@radix-ui/react-compose-refs': 1.0.0_react@18.2.0
+      '@radix-ui/react-context': 1.0.0_react@18.2.0
+      '@radix-ui/react-dismissable-layer': 1.0.3_biqbaboplfbrettd7655fr4n2y
+      '@radix-ui/react-focus-guards': 1.0.0_react@18.2.0
+      '@radix-ui/react-focus-scope': 1.0.2_biqbaboplfbrettd7655fr4n2y
+      '@radix-ui/react-id': 1.0.0_react@18.2.0
+      '@radix-ui/react-popper': 1.1.1_zula6vjvt3wdocc4mwcxqa6nzi
+      '@radix-ui/react-portal': 1.0.2_biqbaboplfbrettd7655fr4n2y
+      '@radix-ui/react-presence': 1.0.0_biqbaboplfbrettd7655fr4n2y
+      '@radix-ui/react-primitive': 1.0.2_biqbaboplfbrettd7655fr4n2y
+      '@radix-ui/react-slot': 1.0.1_react@18.2.0
+      '@radix-ui/react-use-controllable-state': 1.0.0_react@18.2.0
+      aria-hidden: 1.2.3
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+      react-remove-scroll: 2.5.5_pmekkgnqduwlme35zpnqhenc34
+    transitivePeerDependencies:
+      - '@types/react'
+    dev: false
+
   /@radix-ui/react-popper/1.1.1_zula6vjvt3wdocc4mwcxqa6nzi:
     resolution: {integrity: sha512-keYDcdMPNMjSC8zTsZ8wezUMiWM9Yj14wtF3s0PTIs9srnEPC9Kt2Gny1T3T81mmSeyDjZxsD9N5WCwNNb712w==}
     peerDependencies:
@@ -4385,6 +4425,31 @@ packages:
       '@radix-ui/react-use-controllable-state': 1.0.0_react@18.2.0
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
+    dev: false
+
+  /@radix-ui/react-tooltip/1.0.5_zula6vjvt3wdocc4mwcxqa6nzi:
+    resolution: {integrity: sha512-cDKVcfzyO6PpckZekODJZDe5ZxZ2fCZlzKzTmPhe4mX9qTHRfLcKgqb0OKf22xLwDequ2tVleim+ZYx3rabD5w==}
+    peerDependencies:
+      react: ^16.8 || ^17.0 || ^18.0
+      react-dom: ^16.8 || ^17.0 || ^18.0
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@radix-ui/primitive': 1.0.0
+      '@radix-ui/react-compose-refs': 1.0.0_react@18.2.0
+      '@radix-ui/react-context': 1.0.0_react@18.2.0
+      '@radix-ui/react-dismissable-layer': 1.0.3_biqbaboplfbrettd7655fr4n2y
+      '@radix-ui/react-id': 1.0.0_react@18.2.0
+      '@radix-ui/react-popper': 1.1.1_zula6vjvt3wdocc4mwcxqa6nzi
+      '@radix-ui/react-portal': 1.0.2_biqbaboplfbrettd7655fr4n2y
+      '@radix-ui/react-presence': 1.0.0_biqbaboplfbrettd7655fr4n2y
+      '@radix-ui/react-primitive': 1.0.2_biqbaboplfbrettd7655fr4n2y
+      '@radix-ui/react-slot': 1.0.1_react@18.2.0
+      '@radix-ui/react-use-controllable-state': 1.0.0_react@18.2.0
+      '@radix-ui/react-visually-hidden': 1.0.2_biqbaboplfbrettd7655fr4n2y
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+    transitivePeerDependencies:
+      - '@types/react'
     dev: false
 
   /@radix-ui/react-use-callback-ref/1.0.0_react@18.2.0:
@@ -16735,6 +16800,13 @@ packages:
       next: 13.2.4_biqbaboplfbrettd7655fr4n2y
     dev: false
 
+  /next-transpile-modules/10.0.0:
+    resolution: {integrity: sha512-FyeJ++Lm2Fq31gbThiRCrJlYpIY9QaI7A3TjuhQLzOix8ChQrvn5ny4MhfIthS5cy6+uK1AhDRvxVdW17y3Xdw==}
+    deprecated: All features of next-transpile-modules are now natively built-in Next.js 13.1. Please use Next's transpilePackages option :)
+    dependencies:
+      enhanced-resolve: 5.12.0
+    dev: true
+
   /next/13.0.5_biqbaboplfbrettd7655fr4n2y:
     resolution: {integrity: sha512-awpc3DkphyKydwCotcBnuKwh6hMqkT5xdiBK4OatJtOZurDPBYLP62jtM2be/4OunpmwIbsS0Eyv+ZGU97ciEg==}
     engines: {node: '>=14.6.0'}
@@ -18775,7 +18847,6 @@ packages:
 
   /preact/10.5.7:
     resolution: {integrity: sha512-4oEpz75t/0UNcwmcsjk+BIcDdk68oao+7kxcpc1hQPNs2Oo3ZL9xFz8UBf350mxk/VEdD41L5b4l2dE3Ug3RYg==}
-    dev: true
 
   /prebuild-install/7.1.1:
     resolution: {integrity: sha512-jAXscXWMcCK8GgCoHOfIr0ODh5ai8mj63L2nWrjuAgXE6tDyYGnx4/8o/rCgU+B4JSyZBKbeZqzhtwtC3ovxjw==}

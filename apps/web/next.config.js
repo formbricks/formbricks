@@ -1,9 +1,11 @@
 /** @type {import('next').NextConfig} */
+
 const nextConfig = {
   experimental: {
     appDir: true,
     serverComponentsExternalPackages: ["@tremor/react"],
   },
+  transpilePackages: ["@formbricks/ee"],
   async headers() {
     return [
       {

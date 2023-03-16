@@ -17,6 +17,7 @@ interface SurveyEditorProps {
 
 export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorProps) {
   const [activeView, setActiveView] = useState<"questions" | "audience">("questions");
+  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [triggers, setTriggers] = useState<string[]>([]); // list of eventClass Ids
 
@@ -49,13 +50,18 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
           <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
           {activeView === "questions" ? (
-            <QuestionsView questions={questions} setQuestions={setQuestions} />
+            <QuestionsView
+              questions={questions}
+              setQuestions={setQuestions}
+              activeQuestionId={activeQuestionId}
+              setActiveQuestionId={setActiveQuestionId}
+            />
           ) : (
             <AudienceView environmentId={environmentId} triggers={triggers} setTriggers={setTriggers} />
           )}
         </main>
         <aside className="relative hidden h-full w-96 flex-shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-200 shadow-inner xl:flex xl:flex-col">
-          <Preview />
+          <Preview activeQuestionId={activeQuestionId} questions={questions} />
         </aside>
       </div>
     </div>

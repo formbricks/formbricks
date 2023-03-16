@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { ReactNode, useEffect, useState } from "react";
 
-export default function Modal({ children, isOpen = true }: { children: ReactNode; isOpen?: boolean }) {
+export default function Modal({ children, isOpen }: { children: ReactNode; isOpen: boolean }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {

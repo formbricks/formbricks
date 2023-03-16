@@ -5,7 +5,19 @@ import AddQuestionButton from "./AddQuestionButton";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 
-export default function QuestionsView({ questions, setQuestions }) {
+interface QuestionsViewProps {
+  questions: any[];
+  setQuestions: (questions: any[]) => void;
+  activeQuestionId: string | null;
+  setActiveQuestionId: (questionId: string | null) => void;
+}
+
+export default function QuestionsView({
+  questions,
+  setQuestions,
+  activeQuestionId,
+  setActiveQuestionId,
+}: QuestionsViewProps) {
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     const updatedQuestions = [...questions];
     updatedQuestions[questionIdx] = {
@@ -54,6 +66,8 @@ export default function QuestionsView({ questions, setQuestions }) {
                     questionIdx={questionIdx}
                     updateQuestion={updateQuestion}
                     deleteQuestion={deleteQuestion}
+                    activeQuestionId={activeQuestionId}
+                    setActiveQuestionId={setActiveQuestionId}
                   />
                 ))}
                 {provided.placeholder}
