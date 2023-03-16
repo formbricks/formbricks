@@ -4,18 +4,19 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Switch } from "@/components/ui/Switch";
 import { cn } from "@/lib/utils";
+import type { Question } from "@/types/questions";
 import { Bars4Icon } from "@heroicons/react/20/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState } from "react";
-import QuestionDropdown from "./QuestionDropdown";
 import { Draggable } from "react-beautiful-dnd";
-import type { Question } from "@/types/questions";
+import QuestionDropdown from "./QuestionDropdown";
 
 interface QuestionCardProps {
   question: Question;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;
+  activeQuestionId: string | null;
+  setActiveQuestionId: (questionId: string | null) => void;
 }
 
 export default function QuestionCard({
@@ -23,8 +24,10 @@ export default function QuestionCard({
   questionIdx,
   updateQuestion,
   deleteQuestion,
+  activeQuestionId,
+  setActiveQuestionId,
 }: QuestionCardProps) {
-  const [open, setOpen] = useState(true);
+  const open = activeQuestionId === question.id;
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
@@ -42,7 +45,9 @@ export default function QuestionCard({
           </div>
           <Collapsible.Root
             open={open}
-            onOpenChange={setOpen}
+            onOpenChange={(open) => {
+              setActiveQuestionId(open ? question.id : null);
+            }}
             className="flex-1 rounded-r-lg border border-gray-200">
             <Collapsible.CollapsibleTrigger asChild className="flex cursor-pointer justify-between p-4">
               <div>

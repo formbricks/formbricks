@@ -3,9 +3,9 @@
 import GoBackButton from "@/components/shared/GoBackButton";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { usePerson } from "@/lib/people";
-import { capitalizeFirstLetter, onlyUnique } from "@/lib/utils";
+import { capitalizeFirstLetter } from "@/lib/utils";
 import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import ActivityFeed from "./ActivityFeed";
 import ResponseFeed from "./ResponsesFeed";
 
