@@ -28,7 +28,39 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: personId,
         environmentId,
       },
+      select: {
+        id: true,
+        userId: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+        responses: {
+          select: {
+            createdAt: true,
+            updatedAt: true,
+            data: true,
+          },
+        },
+        sessions: {
+          select: {
+            events: {
+              select: {
+                createdAt: true,
+                eventClass: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
+
+    if (!persons) {
+      return res.status(404).json({ message: "Person not found" });
+    }
 
     return res.json(persons);
   }

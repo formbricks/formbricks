@@ -31,6 +31,9 @@ export default function PersonPage({ params }) {
     return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
   }
 
+  console.log("person", JSON.stringify(person, null, 2));
+  console.log("person", JSON.stringify(person, null, 2));
+
   return (
     <div>
       <main className="mx-auto px-4 sm:px-6 lg:px-8">
@@ -63,6 +66,15 @@ export default function PersonPage({ params }) {
               <div>
                 <dt className="text-sm font-medium text-slate-500">Email</dt>
                 <dd className="mt-1 text-sm text-slate-900">{person.email}</dd>
+              </div>
+
+              <div>
+                <dt className="text-sm font-medium text-slate-500">User Id</dt>
+                <dd className="mt-1 text-sm text-slate-900">{person.userId}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-slate-500">Formbricks Id (internal)</dt>
+                <dd className="mt-1 text-sm text-slate-900">{person.id}</dd>
               </div>
               {/* {Object.entries(person.data).map(
                     ([key, value]) =>

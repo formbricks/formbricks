@@ -31,19 +31,11 @@ export default function SummaryList({ environmentId, surveyId }) {
     return [];
   }, [survey, responses]);
 
-  if (isLoadingResponses) {
+  if (isLoadingResponses || isLoadingSurvey) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorResponses) {
-    return <div>Error</div>;
-  }
-
-  if (isLoadingSurvey) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorSurvey) {
+  if (isErrorResponses || isErrorSurvey) {
     return <div>Error</div>;
   }
 

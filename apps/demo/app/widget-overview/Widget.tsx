@@ -12,8 +12,8 @@ if (typeof window !== "undefined") {
 
 export default function Widget() {
   useEffect(() => {
-    formbricks.setUserId("123456");
-    formbricks.setEmail("user@example.com");
+    /* formbricks.setUserId("123456");
+    formbricks.setEmail("user@example.com"); */
     formbricks.setAttribute("name", "Jane Doe");
     formbricks.setAttribute("plan", "free");
     formbricks.setAttribute("name", "Pete Doe");
