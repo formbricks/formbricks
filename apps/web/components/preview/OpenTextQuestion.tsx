@@ -1,5 +1,4 @@
-import { h } from "preact";
-import type { Question } from "../types/types";
+import type { Question } from "@/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 

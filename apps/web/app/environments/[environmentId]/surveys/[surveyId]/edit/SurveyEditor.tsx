@@ -5,6 +5,7 @@ import { useSurvey } from "@/lib/surveys/surveys";
 import type { Question } from "@/types/questions";
 import { useEffect, useState } from "react";
 import AudienceView from "./AudienceView";
+import Preview from "./Preview";
 import QuestionsAudienceTabs from "./QuestionsAudienceTabs";
 import QuestionsView from "./QuestionsView";
 import SurveyMenuBar from "./SurveyMenuBar";
@@ -54,7 +55,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
           )}
         </main>
         <aside className="relative hidden h-full w-96 flex-shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-200 shadow-inner xl:flex xl:flex-col">
-          preview
+          <Preview />
         </aside>
       </div>
     </div>
