@@ -9,13 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@formbricks/charts": "workspace:*",
     "@formbricks/js": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@heroicons/react": "^2.0.16",
     "@tailwindcss/forms": "^0.5.3",
     "clsx": "^1.2.1",
-    "next": "13.2.3",
+    "next": "13.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-toastify": "^9.1.1"
@@ -23,10 +22,10 @@
   "devDependencies": {
     "@formbricks/tailwind-config": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
-    "@types/node": "^18.14.5",
+    "@types/node": "^18.15.3",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
-    "autoprefixer": "^10.4.13",
+    "autoprefixer": "^10.4.14",
     "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.21",
     "tailwindcss": "^3.2.7",
