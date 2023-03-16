@@ -47,3 +47,17 @@ export const getLocalSession = (): Session | null => {
   }
   return null;
 };
+
+export const checkSession = async (config, initFunction) => {
+  await initFunction;
+  if (config.session.expiresAt <= Date.now()) {
+    const newSession = createSession(config);
+    if (!newSession) {
+      console.error("Error creating new session");
+      return;
+    }
+    config.session = newSession;
+  } else {
+    config.session = extendSession(config.session);
+  }
+};

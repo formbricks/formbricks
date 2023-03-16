@@ -28,7 +28,7 @@ export const triggerSurveys = (config, eventName) => {
   for (const survey of config.surveys) {
     for (const trigger of survey.triggers) {
       if (trigger.eventClass?.name === eventName) {
-        console.log(`survey ${survey.id} triggered by event "${eventName}"`);
+        console.log(`survey2 ${survey.id} triggered by event "${eventName}"`);
         triggeredSurveys.push(survey);
       }
     }

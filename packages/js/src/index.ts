@@ -1,7 +1,5 @@
-import habitat from "preact-habitat";
-
 import css from "./style.css";
-
+import { h, render } from "preact";
 import App from "./App";
 import {
   createPerson,
@@ -11,11 +9,9 @@ import {
   updatePersonUserId,
 } from "./lib/person";
 import type { Config, Survey } from "./types/types";
-import { createSession, getLocalSession } from "./lib/session";
+import { checkSession, createSession, getLocalSession } from "./lib/session";
 import { trackEvent, triggerSurveys } from "./lib/event";
 import { addNewContainer } from "./lib/container";
-
-const _habitat = habitat(App);
 
 let config: Config = { environmentId: null, apiHost: null };
 let initFunction; // Promise that resolves when init is complete
@@ -212,11 +208,7 @@ const workSurveyQueue = async () => {
 };
 
 const renderSurvey = (survey) => {
-  _habitat.render({
-    selector: `#${containerId}`,
-    clean: true,
-    defaultProps: { config, survey, closeSurvey },
-  });
+  render(h(App, { config, survey, closeSurvey }), document.getElementById(containerId));
 };
 
 const closeSurvey = () => {
@@ -233,6 +225,9 @@ const closeSurvey = () => {
 
 const formbricks = { init, setUserId, setEmail, setAttribute, track, reset, config };
 
-// (window as any).formbricks = formbricks;
+// check every minute if session is still valid
+setInterval(() => {
+  checkSession(config, initFunction);
+}, 60000);
 
 export default formbricks;
