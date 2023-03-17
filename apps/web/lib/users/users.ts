@@ -1,4 +1,4 @@
-import { hashPassword } from "./auth";
+import { hashPassword } from "../auth";
 
 export const createUser = async (name: string, email: string, password: string): Promise<any> => {
   const hashedPassword = await hashPassword(password);

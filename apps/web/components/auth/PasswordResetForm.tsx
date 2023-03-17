@@ -1,6 +1,6 @@
 "use client";
 
-import { forgotPassword } from "@/lib/users";
+import { forgotPassword } from "@/lib/users/users";
 import { Button } from "@/components/ui/Button";
 import { XCircleIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/navigation";

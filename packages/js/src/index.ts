@@ -62,8 +62,10 @@ const populateConfig = async (c: Config) => {
     config.noCodeEvents = noCodeEvents;
     config.surveys = surveys;
     if (!config.session) {
+      console.error('Formbricks: Error creating "session"');
       return;
     }
+    track("New Session");
   } else {
     // if we have a session, we also have surveys and noCodeEvents
     config.surveys = JSON.parse(localStorage.getItem("formbricks__surveys") || "[]");
