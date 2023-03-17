@@ -54,6 +54,7 @@ export interface Person {
   userId?: string;
   email?: string;
   attributes?: any;
+  environmentId: string;
 }
 
 export interface Survey {
@@ -81,3 +82,5 @@ export interface Trigger {
     name: string;
   };
 }
+
+export type MatchType = "exactMatch" | "contains" | "startsWith" | "endsWith" | "notMatch" | "notContains";

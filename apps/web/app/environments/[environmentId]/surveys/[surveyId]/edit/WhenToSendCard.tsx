@@ -6,6 +6,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 interface AddQuestionButtonProps {
   triggers: any;
@@ -18,7 +19,7 @@ export default function WhenToSendCard({ environmentId, triggers, setTriggers }:
   const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
 
   if (isLoadingEventClasses) {
-    return <div>Loading</div>;
+    return <LoadingSpinner />;
   }
 
   if (isErrorEventClasses) {

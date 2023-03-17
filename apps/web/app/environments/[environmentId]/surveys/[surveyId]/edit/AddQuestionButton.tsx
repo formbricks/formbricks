@@ -50,7 +50,12 @@ export default function AddQuestionButton({ addQuestion }: AddQuestionButtonProp
             key={questionType.id}
             className="inline-flex items-center py-2 px-4 text-sm font-medium hover:bg-gray-100"
             onClick={() => {
-              addQuestion({ id: createId(), type: questionType.id });
+              addQuestion({
+                id: createId(),
+                type: questionType.id,
+                subheader: "This can help us improve your experience.",
+                placeholder: "Type your answer here...",
+              });
               setOpen(false);
             }}>
             <questionType.icon className="-ml-0.5 h-5 w-5" aria-hidden="true" />

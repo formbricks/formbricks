@@ -35,6 +35,26 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.json(eventClasses);
   }
 
+  // POST
+  else if (req.method === "POST") {
+    const eventClass = req.body;
+
+    console.log(eventClass);
+
+    if (eventClass.type === "automatic") {
+      res.status(400).json({ message: "You are not allowed to create new automatic events" });
+    }
+
+    // create eventClass in db
+    const result = await prisma.eventClass.create({
+      data: {
+        ...eventClass,
+        environment: { connect: { id: environmentId } },
+      },
+    });
+    res.json(result);
+  }
+
   // Unknown HTTP Method
   else {
     throw new Error(`The HTTP ${req.method} method is not supported by this route.`);

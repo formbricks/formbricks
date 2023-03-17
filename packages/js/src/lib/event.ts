@@ -8,6 +8,7 @@ export const trackEvent = async (config, eventName, properties) => {
     headers: {
       "Content-Type": "application/json",
     },
+
     body: JSON.stringify({
       sessionId: config.session.id,
       eventName,
@@ -26,7 +27,7 @@ export const triggerSurveys = (config, eventName) => {
   for (const survey of config.surveys) {
     for (const trigger of survey.triggers) {
       if (trigger.eventClass?.name === eventName) {
-        console.log(`survey2 ${survey.id} triggered by event "${eventName}"`);
+        /* console.log(`Formbricks: survey ${survey.id} triggered by event "${eventName}"`); */
         triggeredSurveys.push(survey);
       }
     }

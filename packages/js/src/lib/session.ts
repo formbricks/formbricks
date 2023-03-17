@@ -22,8 +22,7 @@ export const createSession = async (config: Config): Promise<any> => {
   let { session, surveys, noCodeEvents } = await response.json();
   session = extendSession(session); // also saves session to local storage
   localStorage.setItem("formbricks__surveys", JSON.stringify(surveys));
-  localStorage.setItem("formbricks__noCodeEvents", JSON.stringify(surveys));
-
+  localStorage.setItem("formbricks__noCodeEvents", JSON.stringify(noCodeEvents));
   return { session, surveys, noCodeEvents };
 };
 

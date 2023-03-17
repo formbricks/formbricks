@@ -27,6 +27,9 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     if (survey) {
       setQuestions(survey.questions);
       setTriggers(survey.triggers.map((trigger) => trigger.eventClassId));
+      if (!activeQuestionId && survey.questions.length > 0) {
+        setActiveQuestionId(survey.questions[0].id);
+      }
     }
   }, [survey]);
 

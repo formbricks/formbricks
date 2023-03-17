@@ -22,7 +22,7 @@ export default function App({ config, survey, closeSurvey }: AppProps): VNode {
 
   return (
     <div className="tailwind-preflight">
-      <Modal isOpen={isOpen}>
+      <Modal isOpen={isOpen} close={close}>
         <SurveyView config={config} survey={survey} close={close} />
       </Modal>
     </div>

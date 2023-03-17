@@ -13,11 +13,11 @@ if (typeof window !== "undefined") {
 export default function Widget() {
   useEffect(() => {
     formbricks.setEmail("user@example.com");
-    /* formbricks.setUserId("123456");
-    formbricks.setEmail("user@example.com"); */
-    // formbricks.setAttribute("name", "Jane Doe");
-    //formbricks.setAttribute("plan", "free");
-    //formbricks.setAttribute("name", "Pete Doe");
+    formbricks.setUserId("123456");
+    formbricks.setEmail("user@example.com");
+    formbricks.setAttribute("name", "Jane Doe");
+    formbricks.setAttribute("plan", "free");
+    formbricks.setAttribute("name", "Pete Doe");
     formbricks.track("View Home Page");
   }, []);
   return null;

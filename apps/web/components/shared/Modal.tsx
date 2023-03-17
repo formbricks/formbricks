@@ -11,13 +11,21 @@ type Modal = {
   children: React.ReactNode;
   title?: string;
   noPadding?: boolean;
+  closeOnOutsideClick?: boolean;
 };
 
-const Modal: React.FC<Modal> = ({ open, setOpen, children, title, noPadding }) => {
+const Modal: React.FC<Modal> = ({
+  open,
+  setOpen,
+  children,
+  title,
+  noPadding,
+  closeOnOutsideClick = true,
+}) => {
   return (
     <>
       <Transition.Root show={open} as={Fragment}>
-        <Dialog as="div" className="relative z-20" onClose={setOpen}>
+        <Dialog as="div" className="relative z-20" onClose={() => closeOnOutsideClick && setOpen(false)}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"

@@ -28,6 +28,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: true,
         userId: true,
         attributes: true,
+        environmentId: true,
       },
     });
     return res.json(personData);
