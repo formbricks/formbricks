@@ -68,8 +68,9 @@ export function EditAvatar({ session }) {
         <ProfileAvatar userId={session?.user?.id} />
       )}
 
-      <Button className="mt-4">Upload Image</Button>
+      <Button className="mt-4" disabled={true}>
+        Upload Image
+      </Button>
     </div>
   );
-  /*   return <div className="whitespace-pre-wrap">{JSON.stringify(profile, null, 2)}</div>; */
 }

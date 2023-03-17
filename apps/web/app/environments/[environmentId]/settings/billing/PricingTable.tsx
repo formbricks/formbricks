@@ -45,7 +45,9 @@ export default function PricingTable() {
                 <span className="text-base font-medium text-slate-400">/ month</span>
               </p>
 
-              <Button className="mt-6 w-full justify-center py-4 text-lg shadow-sm">Upgrade</Button>
+              <Button disabled={true} className="mt-6 w-full justify-center py-4 text-lg shadow-sm">
+                Upgrade
+              </Button>
             </div>
           </div>
         </div>

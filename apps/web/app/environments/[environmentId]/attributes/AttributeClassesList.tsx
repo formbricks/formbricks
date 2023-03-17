@@ -1,9 +1,8 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Button } from "@/components/ui/Button";
 import { useAttributeClasses } from "@/lib/attributeClasses";
-import { ArrowUpTrayIcon, TagIcon } from "@heroicons/react/20/solid";
+import { TagIcon } from "@heroicons/react/20/solid";
 import { useState } from "react";
 import AttributeDetailModal from "./AttributeDetailModal";
 import UploadAttributesModal from "./UploadAttributesModal";
@@ -31,7 +30,7 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
 
   return (
     <>
-      <div className="mb-6 text-right">
+      {/*       <div className="mb-6 text-right">
         <Button
           variant="primary"
           onClick={() => {
@@ -40,7 +39,7 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
           <ArrowUpTrayIcon className="mr-2 h-4 w-4" />
           Upload .CSV
         </Button>
-      </div>
+      </div> */}
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-3 pl-6 ">Name</div>

@@ -1,6 +1,14 @@
-import SettingsNavbar from "@/components/settings/SettingsNavbar";
+import SettingsNavbar from "./SettingsNavbar";
 
-export default function SettingsLayout({ children, title, params }) {
+export default function SettingsLayout({
+  children,
+  title,
+  params,
+}: {
+  children: React.ReactNode;
+  title: string;
+  params: { environmentId: string };
+}) {
   return (
     <>
       <div className="flex">

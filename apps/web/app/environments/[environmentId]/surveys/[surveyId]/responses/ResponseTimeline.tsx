@@ -1,5 +1,6 @@
 "use client";
 
+import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
@@ -45,11 +46,17 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
 
   return (
     <div className="space-y-4">
-      {matchQandA.map((updatedResponse) => {
-        return (
-          <SingleResponse key={updatedResponse.id} data={updatedResponse} environmentId={environmentId} />
-        );
-      })}
+      {responses.length === 0 ? (
+        <EmptySpaceFiller type="response" environmentId={environmentId} />
+      ) : (
+        <div>
+          {matchQandA.map((updatedResponse) => {
+            return (
+              <SingleResponse key={updatedResponse.id} data={updatedResponse} environmentId={environmentId} />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
