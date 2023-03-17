@@ -12,16 +12,13 @@ if (typeof window !== "undefined") {
 
 export default function Widget() {
   useEffect(() => {
+    formbricks.setEmail("user@example.com");
     /* formbricks.setUserId("123456");
     formbricks.setEmail("user@example.com"); */
-    formbricks.setAttribute("name", "Jane Doe");
-    formbricks.setAttribute("plan", "free");
-    formbricks.setAttribute("name", "Pete Doe");
+    // formbricks.setAttribute("name", "Jane Doe");
+    //formbricks.setAttribute("plan", "free");
+    //formbricks.setAttribute("name", "Pete Doe");
     formbricks.track("View Home Page");
-    setTimeout(() => {
-      console.log("trackingEvent");
-      //formbricks.track("View Homepage");
-    }, 1000);
   }, []);
   return null;
 }

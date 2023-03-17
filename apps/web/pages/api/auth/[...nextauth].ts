@@ -243,9 +243,27 @@ export const authOptions: NextAuthOptions = {
                               create: [
                                 {
                                   type: "production",
+                                  eventClasses: {
+                                    create: [
+                                      {
+                                        name: "New Session",
+                                        description: "Gets fired when a new session is created",
+                                        type: "automatic",
+                                      },
+                                    ],
+                                  },
                                 },
                                 {
                                   type: "development",
+                                  eventClasses: {
+                                    create: [
+                                      {
+                                        name: "New Session",
+                                        description: "Gets fired when a new session is created",
+                                        type: "automatic",
+                                      },
+                                    ],
+                                  },
                                 },
                               ],
                             },

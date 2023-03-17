@@ -1,4 +1,5 @@
 import { sendVerificationEmail } from "@/lib/email";
+import { populateEnvironment } from "@/lib/populate";
 import { capturePosthogEvent } from "@/lib/posthogServer";
 import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
@@ -31,9 +32,11 @@ export async function POST(request: Request) {
                           create: [
                             {
                               type: "production",
+                              ...populateEnvironment,
                             },
                             {
                               type: "development",
+                              ...populateEnvironment,
                             },
                           ],
                         },

@@ -1,6 +1,6 @@
 "use client";
 
-import { resetPassword } from "@/lib/users";
+import { resetPassword } from "@/lib/users/users";
 import { Button } from "@/components/ui/Button";
 import { XCircleIcon } from "@heroicons/react/20/solid";
 import { useRouter, useSearchParams } from "next/navigation";

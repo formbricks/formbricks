@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { resendVerificationEmail } from "@/lib/users";
+import { resendVerificationEmail } from "@/lib/users/users";
 import toast from "react-hot-toast";
 
 interface RequestEmailVerificationProps {

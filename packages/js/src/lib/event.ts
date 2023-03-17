@@ -3,19 +3,17 @@ export const trackEvent = async (config, eventName, properties) => {
     console.error("Formbricks: Unable to track event. No person set.");
     return;
   }
-  const res = await fetch(
-    `${config.apiHost}/api/v1/environments/${config.environmentId}/client/sessions/${config.session.id}/events`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        eventName,
-        properties,
-      }),
-    }
-  );
+  const res = await fetch(`${config.apiHost}/api/v1/environments/${config.environmentId}/client/events`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      sessionId: config.session.id,
+      eventName,
+      properties,
+    }),
+  });
   if (!res.ok) {
     console.error("Formbricks: Error tracking event");
     return false;

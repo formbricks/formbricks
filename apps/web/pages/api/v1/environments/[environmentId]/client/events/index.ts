@@ -8,19 +8,21 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(400).json({ message: "Missing environmentId" });
   }
 
-  const sessionId = req.query.sessionId?.toString();
-
-  if (!sessionId) {
-    return res.status(400).json({ message: "Missing sessionId" });
-  }
-
   // CORS
   if (req.method === "OPTIONS") {
     res.status(200).end();
   }
   // POST
   else if (req.method === "POST") {
-    const { eventName, properties } = req.body;
+    const { sessionId, eventName, properties } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({ message: "Missing sessionId" });
+    }
+    if (!eventName) {
+      return res.status(400).json({ message: "Missing eventName" });
+    }
+
     const eventData = await prisma.event.create({
       data: {
         properties,
