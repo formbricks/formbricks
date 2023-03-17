@@ -38,10 +38,6 @@ export default function SummaryList({ environmentId, surveyId }) {
     return <div>Error</div>;
   }
 
-  console.log("survey", survey);
-  console.log("responses", responses);
-  console.log("summaryData", JSON.stringify(summaryData, null, 2));
-
   return (
     <div className="space-y-4">
       {summaryData.map((data) => {
