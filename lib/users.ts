@@ -28,6 +28,7 @@ export const createUser = async (
           whatsapp,
           email,
           password: hashedPassword,
+          profileIsValid: true,
         },
       }),
     });
@@ -132,6 +133,19 @@ export const updateUserRole = async ({ id, role }) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, role }),
     });
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const updateUser = async (user, address) => {
+  try {
+    const data = await fetch(`/api/users/update`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({user, address}),
+    });
+    return data;
   } catch (error) {
     console.error(error);
   }
