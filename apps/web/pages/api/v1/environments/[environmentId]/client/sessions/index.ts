@@ -58,6 +58,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         environmentId,
         type: "noCode",
       },
+      select: {
+        name: true,
+        noCodeConfig: true,
+      },
     });
 
     return res.json({ session, surveys, noCodeEvents });

@@ -10,7 +10,8 @@ import EventDetailModal from "./EventDetailModal";
 import AddNoCodeEventModal from "./AddNoCodeEventModal";
 
 export default function EventClassesList({ environmentId }) {
-  const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
+  const { eventClasses, isLoadingEventClasses, isErrorEventClasses, mutateEventClasses } =
+    useEventClasses(environmentId);
 
   const [isEventDetailModalOpen, setEventDetailModalOpen] = useState(false);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
@@ -105,7 +106,12 @@ export default function EventClassesList({ environmentId }) {
         setOpen={setEventDetailModalOpen}
         eventClass={activeEventClass}
       />
-      <AddNoCodeEventModal open={isAddEventModalOpen} setOpen={setAddEventModalOpen} />
+      <AddNoCodeEventModal
+        environmentId={environmentId}
+        open={isAddEventModalOpen}
+        setOpen={setAddEventModalOpen}
+        mutateEventClasses={mutateEventClasses}
+      />
     </>
   );
 }

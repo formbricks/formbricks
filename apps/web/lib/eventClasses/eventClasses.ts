@@ -15,3 +15,15 @@ export const useEventClasses = (environmentId) => {
     mutateEventClasses: mutate,
   };
 };
+
+export const createEventClass = async (environmentId, eventClass) => {
+  const response = await fetch(`/api/v1/environments/${environmentId}/event-classes`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(eventClass),
+  });
+
+  return response.json();
+};

@@ -12,6 +12,7 @@ import type { Config, Survey } from "./types/types";
 import { checkSession, createSession, getLocalSession } from "./lib/session";
 import { trackEvent, triggerSurveys } from "./lib/event";
 import { addNewContainer } from "./lib/container";
+import { checkPageUrl } from "./lib/noCodeEvents";
 
 let config: Config = { environmentId: null, apiHost: null };
 let initFunction; // Promise that resolves when init is complete
@@ -44,7 +45,7 @@ const populateConfig = async (c: Config) => {
   // get or create person
   let newPerson;
   config.person = getLocalPerson();
-  if (!config.person) {
+  if (!config.person || config.person.environmentId !== config.environmentId) {
     config.person = await createPerson(config);
     newPerson = true;
     if (!config.person) {
@@ -71,7 +72,8 @@ const populateConfig = async (c: Config) => {
     config.surveys = JSON.parse(localStorage.getItem("formbricks__surveys") || "[]");
     config.noCodeEvents = JSON.parse(localStorage.getItem("formbricks__noCodeEvents") || "[]");
   }
-  console.log(config);
+  // check page url for nocode events
+  checkPageUrl(config, track);
 };
 
 const setUserId = async (userId: string): Promise<void> => {
@@ -231,5 +233,10 @@ const formbricks = { init, setUserId, setEmail, setAttribute, track, reset, conf
 setInterval(() => {
   checkSession(config, initFunction);
 }, 60000);
+
+/* // add event listeners for no code events
+window.addEventListener("load", () => {
+  console.log(window.location.href);
+}); */
 
 export default formbricks;
