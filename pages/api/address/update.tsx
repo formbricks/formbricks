@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../lib/prisma";
 import { getSession } from "next-auth/react";
 import NextCors from "nextjs-cors";
@@ -20,16 +20,16 @@ export default async function handle(
   }
   if (req.method === "PUT") {
     const { id } = req.body;
-    const updtDate = req.body
-    delete updtDate.id
+    const updtDate = req.body;
+    delete updtDate.id;
 
     let updateAddress;
-    const address = await prisma.address.upsert({
+    await prisma.address.upsert({
       where: {
         id,
       },
       create: req.body,
-      update: req.body
+      update: req.body,
     });
     return res.json(updateAddress);
   }

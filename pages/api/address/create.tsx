@@ -19,10 +19,10 @@ export default async function handle(
     return res.status(401).json({ message: "Not authenticated" });
   }
   if (req.method === "POST") {
-    const dataAddress = req.body
+    const dataAddress = req.body;
     const newAddress = await prisma.address.create({
-        data: dataAddress,
-      });
+      data: dataAddress,
+    });
     return res.json(newAddress);
   }
 }
