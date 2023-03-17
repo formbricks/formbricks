@@ -1,5 +1,6 @@
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import SurveyResultsTabs from "../SurveyResultsTabs";
+import ResponseTimeline from "./ResponseTimeline";
 
 export default function ResponsesPage({ params }) {
   return (
@@ -11,6 +12,7 @@ export default function ResponsesPage({ params }) {
       />
       <ContentWrapper>
         <h1>Responses List</h1>
+        <ResponseTimeline environmentId={params.environmentId} surveyId={params.surveyId} />
       </ContentWrapper>
     </>
   );
