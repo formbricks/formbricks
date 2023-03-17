@@ -37,6 +37,7 @@ export default function QuestionsView({
     const updatedQuestions = [...questions];
     updatedQuestions.push(question);
     setQuestions(updatedQuestions);
+    setActiveQuestionId(question.id);
   };
 
   const onDragEnd = (result) => {

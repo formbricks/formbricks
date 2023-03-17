@@ -3,6 +3,7 @@
 import { createSurvey } from "@/lib/surveys/surveys";
 import type { Template } from "@/types/template";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { createId } from "@paralleldrive/cuid2";
 import { useRouter } from "next/navigation";
 import { templates } from "./templates";
 
@@ -11,6 +12,14 @@ export default function TemplateList({ environmentId }: { environmentId: string 
 
   const customSurvey = {
     name: "New Survey",
+    questions: [
+      {
+        id: createId(),
+        type: "openText",
+        subheader: "This can help us improve your experience.",
+        placeholder: "Type your answer here...",
+      },
+    ],
   };
 
   const addSurvey = async (template?: Template) => {
