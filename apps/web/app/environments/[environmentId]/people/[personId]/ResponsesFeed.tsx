@@ -37,7 +37,7 @@ export default function ResponseFeed({ person, sortByDate, environmentId }) {
                       <div className="px-4 py-5 sm:p-6">
                         <div className="flex w-full justify-between">
                           <div className="text-sm text-slate-400">
-                            <time dateTime={timeSince(response.createdAt)}>
+                            <time className="text-slate-700" dateTime={timeSince(response.createdAt)}>
                               {timeSince(response.createdAt)}
                             </time>
                           </div>

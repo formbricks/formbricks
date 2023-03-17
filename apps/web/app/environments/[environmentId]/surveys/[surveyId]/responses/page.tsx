@@ -11,7 +11,6 @@ export default function ResponsesPage({ params }) {
         surveyId={params.surveyId}
       />
       <ContentWrapper>
-        <h1>Responses List</h1>
         <ResponseTimeline environmentId={params.environmentId} surveyId={params.surveyId} />
       </ContentWrapper>
     </>

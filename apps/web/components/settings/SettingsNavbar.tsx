@@ -61,6 +61,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           name: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
           icon: CreditCardIcon,
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
         },
       ],
     },
@@ -71,11 +72,6 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           name: "Setup Checklist",
           href: `/environments/${environmentId}/settings/setup`,
           icon: DocumentCheckIcon,
-        },
-        {
-          name: "Web Client",
-          href: `/environments/${environmentId}/settings/webclient`,
-          icon: CodeBracketIcon,
         },
         {
           name: "Documentation",

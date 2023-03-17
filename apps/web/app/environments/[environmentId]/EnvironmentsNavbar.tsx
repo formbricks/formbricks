@@ -73,12 +73,12 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         icon: FilterIcon,
         current: pathname?.includes("/events" || "/attributes"),
       },
-      {
+      /*       {
         name: "Integrations",
         href: `/environments/${environmentId}/integrations/installation`,
         icon: DashboardIcon,
         current: pathname?.includes("/integrations"),
-      },
+      }, */
       {
         name: "Settings",
         href: `/environments/${environmentId}/settings/profile`,
@@ -118,6 +118,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           icon: CreditCardIcon,
           label: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
         },
         {
           icon: RocketLaunchIcon,
