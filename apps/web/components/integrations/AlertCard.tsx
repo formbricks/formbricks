@@ -1,7 +1,7 @@
 import React from "react";
 import Card, { CardProps } from "@/components/ui/Card";
 
-import { TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 
 interface AlertCardProps extends CardProps {
   onDelete?: () => void;
@@ -30,7 +30,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ title, description, icon, onDelet
             e.stopPropagation();
             onEdit();
           }}>
-          <PencilIcon className="h-7 w-7 p-1 text-slate-500 hover:text-slate-800" />
+          <PencilSquareIcon className="h-7 w-7 p-1 text-slate-500 hover:text-slate-800" />
         </button>
       )}
     </div>

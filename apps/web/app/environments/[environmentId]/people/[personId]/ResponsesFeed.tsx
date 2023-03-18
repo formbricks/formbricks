@@ -1,19 +1,13 @@
-import EmptyPageFiller from "@/components/shared/EmptyPageFiller";
+import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { timeSince } from "@/lib/time";
-import { InboxIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
 export default function ResponseFeed({ person, sortByDate, environmentId }) {
   return (
     <>
       {person.responses.length === 0 ? (
-        <EmptyPageFiller
-          alertText="You haven't received any responses yet."
-          hintText="Embed the widget on your website to start receiving feedback."
-          borderStyles="border-4 border-dotted border-red">
-          <InboxIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
-        </EmptyPageFiller>
+        <EmptySpaceFiller type="response" environmentId={environmentId} />
       ) : (
         <div>
           {person.responses
@@ -37,7 +31,7 @@ export default function ResponseFeed({ person, sortByDate, environmentId }) {
                       <div className="px-4 py-5 sm:p-6">
                         <div className="flex w-full justify-between">
                           <div className="text-sm text-slate-400">
-                            <time dateTime={timeSince(response.createdAt)}>
+                            <time className="text-slate-700" dateTime={timeSince(response.createdAt)}>
                               {timeSince(response.createdAt)}
                             </time>
                           </div>
@@ -52,9 +46,11 @@ export default function ResponseFeed({ person, sortByDate, environmentId }) {
                         </div>
                         <div className="mt-3 space-y-3">
                           {response.survey.questions.map((question) => (
-                            <div key={question.id} className="text-sm text-slate-500">
-                              <p className="text-base font-semibold">{question.headline}</p>
-                              <p className="my-1">{response.data[question.id]}</p>
+                            <div key={question.id}>
+                              <p className="text-sm text-slate-500">{question.headline}</p>
+                              <p className="my-1 text-lg font-semibold text-slate-700">
+                                {response.data[question.id]}
+                              </p>
                             </div>
                           ))}
                         </div>

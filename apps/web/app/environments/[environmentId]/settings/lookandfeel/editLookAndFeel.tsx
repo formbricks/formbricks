@@ -1,6 +1,6 @@
 "use client";
 
-import { ColorPicker } from "@/components/settings/ColorPicker";
+import { ColorPicker } from "@/components/ui/ColorPicker";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Button from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 export function EditBrandColor({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
 
-  const { triggerProfileMutate, isMutatingProfile } = useProductMutation(environmentId);
+  const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
 
   const [color, setColor] = useState("");
 
@@ -36,9 +36,9 @@ export function EditBrandColor({ environmentId }) {
       <Button
         type="submit"
         className="mt-4"
-        loading={isMutatingProfile}
+        loading={isMutatingProduct}
         onClick={() => {
-          triggerProfileMutate({ brandColor: color });
+          triggerProductMutate({ brandColor: color });
         }}>
         Save
       </Button>
@@ -61,7 +61,7 @@ export function EditPlacement({ environmentId }) {
     { name: "Bottom Right", value: "bottomRight", default: true, disabled: false },
     { name: "Top Right", value: "topRight", default: false, disabled: true },
     { name: "Top Left", value: "topLeft", default: false, disabled: true },
-    { name: "Bottom Leftt", value: "bottomLeft", default: false, disabled: true },
+    { name: "Bottom Left", value: "bottomLeft", default: false, disabled: true },
     { name: "Centered Modal", value: "centered", default: false, disabled: true },
   ];
 
@@ -82,7 +82,7 @@ export function EditPlacement({ environmentId }) {
           ))}
         </RadioGroup>
         <div className="relative ml-8 h-40 w-full rounded bg-slate-200">
-          <div className="absolute top-3 right-3 h-16 w-16 rounded bg-slate-700"></div>
+          <div className="absolute bottom-3 right-3 h-16 w-16 rounded bg-slate-700"></div>
         </div>
       </div>
       <Button type="submit" className="mt-4" disabled>

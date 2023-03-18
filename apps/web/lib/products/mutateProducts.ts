@@ -8,7 +8,7 @@ export function useProductMutation(environmentId: string) {
   );
 
   return {
-    triggerProfileMutate: trigger,
-    isMutatingProfile: isMutating,
+    triggerProductMutate: trigger,
+    isMutatingProduct: isMutating,
   };
 }

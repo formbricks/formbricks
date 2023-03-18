@@ -11,7 +11,7 @@ import EmptyPageFiller from "@/components/shared/EmptyPageFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { DocumentPlusIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { EllipsisHorizontalIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { EllipsisHorizontalIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -62,7 +62,7 @@ export default function SurveysList({ environmentId }) {
                 onClick={() => newSurvey()}
                 alertText="You don't have any surveys yet."
                 hintText="Start by creating a survey."
-                buttonText="create survey"
+                buttonText="Create Survey"
                 borderStyles="border-4 border-dotted border-red"
                 hasButton={true}>
                 <DocumentPlusIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
@@ -75,7 +75,7 @@ export default function SurveysList({ environmentId }) {
                   <div className="from-brand-light to-brand-dark delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-b font-light text-white shadow transition ease-in-out hover:scale-105">
                     <div className="px-4 py-8 sm:p-14 xl:p-10">
                       <PlusIcon className="stroke-thin mx-auto h-14 w-14" />
-                      create survey
+                      Create Survey
                     </div>
                   </div>
                 </li>
@@ -112,7 +112,7 @@ export default function SurveysList({ environmentId }) {
                                   <Link
                                     className="flex w-full items-center"
                                     href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                                    <PencilIcon className="mr-2 h-4 w-4" />
+                                    <PencilSquareIcon className="mr-2 h-4 w-4" />
                                     Edit
                                   </Link>
                                 </DropdownMenuItem>

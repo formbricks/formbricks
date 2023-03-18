@@ -1,12 +1,10 @@
 import {
   AdjustmentsVerticalIcon,
   ChatBubbleLeftEllipsisIcon,
-  CodeBracketIcon,
   CreditCardIcon,
   DocumentCheckIcon,
   DocumentMagnifyingGlassIcon,
   LinkIcon,
-  MegaphoneIcon,
   PaintBrushIcon,
   UserCircleIcon,
   UsersIcon,
@@ -22,11 +20,11 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           href: `/environments/${environmentId}/settings/profile`,
           icon: UserCircleIcon,
         },
-        {
+        /*         {
           name: "Notifications",
           href: `/environments/${environmentId}/settings/notifications`,
           icon: MegaphoneIcon,
-        },
+        }, */
       ],
     },
     {
@@ -61,6 +59,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           name: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
           icon: CreditCardIcon,
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
         },
       ],
     },
@@ -71,11 +70,6 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           name: "Setup Checklist",
           href: `/environments/${environmentId}/settings/setup`,
           icon: DocumentCheckIcon,
-        },
-        {
-          name: "Web Client",
-          href: `/environments/${environmentId}/settings/webclient`,
-          icon: CodeBracketIcon,
         },
         {
           name: "Documentation",
@@ -99,16 +93,25 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           href: "https://formbricks.com/gdpr",
           icon: LinkIcon,
           target: "_blank",
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
         },
         {
           name: "Privacy",
           href: "https://formbricks.com/privacy",
           icon: LinkIcon,
           target: "_blank",
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
         },
         {
           name: "Terms",
           href: "https://formbricks.com/terms",
+          icon: LinkIcon,
+          target: "_blank",
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
+        },
+        {
+          name: "License",
+          href: "https://github.com/formbricks/formbricks/blob/main/LICENSE",
           icon: LinkIcon,
           target: "_blank",
         },

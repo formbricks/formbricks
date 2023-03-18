@@ -1,5 +1,5 @@
-import SettingsCard from "@/components/settings/SettingsCard";
-import SettingsTitle from "@/components/settings/SettingsTitle";
+import SettingsCard from "../SettingsCard";
+import SettingsTitle from "../SettingsTitle";
 import { getServerSession } from "next-auth";
 import { EditName, EditAvatar } from "./editProfile";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";

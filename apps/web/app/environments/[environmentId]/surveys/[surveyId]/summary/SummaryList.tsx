@@ -5,6 +5,7 @@ import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
 import { useMemo } from "react";
 import OpenTextSummary from "./OpenTextSummary";
+import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 
 export default function SummaryList({ environmentId, surveyId }) {
   const { responses, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
@@ -40,15 +41,21 @@ export default function SummaryList({ environmentId, surveyId }) {
 
   return (
     <div className="space-y-4">
-      {summaryData.map((data) => {
-        if (data.question.type === "openText") {
-          return <OpenTextSummary key={data.question.id} data={data} environmentId={environmentId} />;
-        }
-        /*       if (data.question.type === "radio") {
+      {responses.length === 0 ? (
+        <EmptySpaceFiller type="response" environmentId={environmentId} />
+      ) : (
+        <div>
+          {summaryData.map((data) => {
+            if (data.question.type === "openText") {
+              return <OpenTextSummary key={data.question.id} data={data} environmentId={environmentId} />;
+            }
+            /*       if (data.question.type === "radio") {
           return <RadioSummary key={data.question.id} data={data} />;
         } */
-        return null;
-      })}
+            return null;
+          })}
+        </div>
+      )}
     </div>
   );
 }

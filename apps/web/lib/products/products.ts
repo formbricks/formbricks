@@ -12,6 +12,6 @@ export const useProduct = (environmentId: string) => {
     isLoadingProduct: isLoading,
     isErrorProduct: error,
     isValidatingProduct: isValidating,
-    mutateOrganisation: mutate,
+    mutateProduct: mutate,
   };
 };

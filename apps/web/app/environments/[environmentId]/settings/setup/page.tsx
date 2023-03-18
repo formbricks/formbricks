@@ -1,4 +1,4 @@
-import SettingsTitle from "@/components/settings/SettingsTitle";
+import SettingsTitle from "../SettingsTitle";
 
 export default function ProfileSettingsPage() {
   return (

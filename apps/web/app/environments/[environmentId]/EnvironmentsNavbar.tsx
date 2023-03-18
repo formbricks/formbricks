@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
-import { DashboardIcon } from "@/components/ui/icons/DashboardIcon";
 import { FilterIcon } from "@/components/ui/icons/FilterIcon";
 import { FormIcon } from "@/components/ui/icons/FormIcon";
 import { SettingsIcon } from "@/components/ui/icons/SettingsIcon";
@@ -73,12 +72,12 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         icon: FilterIcon,
         current: pathname?.includes("/events" || "/attributes"),
       },
-      {
+      /*       {
         name: "Integrations",
         href: `/environments/${environmentId}/integrations/installation`,
         icon: DashboardIcon,
         current: pathname?.includes("/integrations"),
-      },
+      }, */
       {
         name: "Settings",
         href: `/environments/${environmentId}/settings/profile`,
@@ -118,6 +117,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           icon: CreditCardIcon,
           label: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
         },
         {
           icon: RocketLaunchIcon,
@@ -148,31 +148,15 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         },
       ],
     },
-    /*  {
-      title: "Logout",
-      links: [
-        {
-          icon: ArrowRightOnRectangleIcon,
-          label: "Logout",
-          onClick: async () => {
-            try {
-              await signOut({ callbackUrl: "http://app.formbricks.com/auth/login" });
-            } catch (error) {
-              console.error("Failed to sign out:", error);
-            }
-          },
-        },
-      ],
-    }, */
   ];
 
   return (
     <nav className="top-0 z-10 w-full border-b border-slate-200 bg-white">
       <div className="w-full px-4 sm:px-6">
         <div className="flex h-14 justify-between">
-          <div className="hidden py-2 sm:flex lg:space-x-4">
+          <div className="flex  space-x-4 py-2">
             <Link
-              href=""
+              href={`/environments/${environmentId}/surveys/templates`}
               className="from-brand-light to-brand-dark my-1 flex items-center justify-center rounded-md bg-gradient-to-b px-1 text-white transition-all ease-in-out hover:scale-105">
               <PlusIcon className="h-6 w-6" />
             </Link>

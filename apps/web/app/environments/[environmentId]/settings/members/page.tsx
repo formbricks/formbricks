@@ -1,5 +1,5 @@
-import SettingsCard from "@/components/settings/SettingsCard";
-import SettingsTitle from "@/components/settings/SettingsTitle";
+import SettingsCard from "../SettingsCard";
+import SettingsTitle from "../SettingsTitle";
 import { EditTeamName, EditMembers } from "./editMembers";
 
 export default function MembersSettingsPage() {
