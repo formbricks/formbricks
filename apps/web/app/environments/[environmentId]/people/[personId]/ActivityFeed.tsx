@@ -9,7 +9,8 @@ interface ActivityFeedProps {
   displays: any[];
   responses: any[];
   sortByDate: boolean;
-  onUnifiedAttributes: (unifiedAttributes: any[]) => void;
+  attributeMap: any[];
+  setAttributeMap: (attributeMap: any[]) => void;
 }
 
 export type ActivityFeedItem = {
@@ -30,22 +31,9 @@ export default function ActivityFeed({
   displays,
   responses,
   sortByDate,
-  onUnifiedAttributes,
+  attributeMap,
+  setAttributeMap,
 }: ActivityFeedProps) {
-  // Get Attributes into unified format
-  const unifiedAttributes = useMemo(() => {
-    if (attributes) {
-      return attributes.map((attribute) => ({
-        type: "attribute",
-        createdAt: attribute.createdAt,
-        updatedAt: attribute.updatedAt,
-        attributeLabel: attribute.attributeClass.name,
-        attributeValue: attribute.value,
-      }));
-    }
-    return [];
-  }, [attributes]);
-
   useEffect(() => {
     if (attributes) {
       const computedUnifiedAttributes = attributes.map((attribute) => ({
@@ -57,9 +45,9 @@ export default function ActivityFeed({
       }));
 
       // Pass the computedUnifiedAttributes to the parent component
-      onUnifiedAttributes(computedUnifiedAttributes);
+      setAttributeMap(computedUnifiedAttributes);
     }
-  }, [attributes, onUnifiedAttributes]);
+  }, [attributes, setAttributeMap]);
 
   // Get Displays into unified format
   const unifiedDisplays = useMemo(() => {
@@ -91,8 +79,8 @@ export default function ActivityFeed({
   }, [sessions]);
 
   const unifiedList = useMemo<ActivityFeedItem[]>(() => {
-    return [...unifiedAttributes, ...unifiedDisplays, ...unifiedEvents];
-  }, [unifiedAttributes, unifiedDisplays, unifiedEvents]);
+    return [...attributeMap, ...unifiedDisplays, ...unifiedEvents];
+  }, [attributeMap, unifiedDisplays, unifiedEvents]);
 
   return (
     <>

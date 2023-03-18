@@ -37,10 +37,6 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
 
   const [attributeMap, setAttributeMap] = useState<AttributeObject[]>([]);
 
-  const handleUnifiedAttributes = (unifiedAttributes) => {
-    setAttributeMap(unifiedAttributes);
-  };
-
   interface AttributeObject {
     type: string;
     createdAt: string;
@@ -68,11 +64,11 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
         <h1 className="text-4xl font-bold tracking-tight text-slate-900">
           {person.email ? <span>{person.email}</span> : <span>{person.id}</span>}
         </h1>
-        <div className="flex items-center space-x-3">
-          <button /* onClick={deletePerson(personId)} */>
+        {/* <div className="flex items-center space-x-3">
+          <button>
             <TrashIcon className="h-5 w-5 text-slate-500 hover:text-red-500" />
           </button>
-        </div>
+        </div> */}
       </div>
       <section className="pt-6 pb-24">
         <div className="grid grid-cols-1 gap-x-8  md:grid-cols-4">
@@ -153,7 +149,8 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
               displays={person.displays}
               responses={person.responses}
               sortByDate={activityAscending}
-              onUnifiedAttributes={handleUnifiedAttributes}
+              attributeMap={attributeMap}
+              setAttributeMap={setAttributeMap}
             />
           </div>
         </div>
