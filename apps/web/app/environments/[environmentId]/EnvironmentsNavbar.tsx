@@ -119,11 +119,11 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           href: `/environments/${environmentId}/settings/billing`,
           hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
         },
-        {
+        /*         {
           icon: RocketLaunchIcon,
           label: "Upgrade account",
           href: `/environments/${environmentId}/settings/billing`,
-        },
+        }, */
       ],
     },
     {
@@ -220,7 +220,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>
+                      <DropdownMenuItem disabled>
                         <PlusIcon className="mr-2 h-4 w-4" />
                         <span>Add product</span>
                       </DropdownMenuItem>
