@@ -34,16 +34,6 @@ export default function AttributeDetailModal({
     },
   ];
 
-  const saveChanges = () => {
-    console.log("Save changes");
-    setOpen(false);
-  };
-
-  const handleArchive = () => {
-    console.log("Archive");
-    setOpen(false);
-  };
-
   return (
     <>
       <ModalWithTabs

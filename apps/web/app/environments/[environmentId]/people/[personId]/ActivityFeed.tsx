@@ -1,5 +1,4 @@
-import EmptyPageFiller from "@/components/shared/EmptyPageFiller";
-import { InboxIcon } from "@heroicons/react/24/solid";
+import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { useEffect, useMemo } from "react";
 import { ActivityItemContent, ActivityItemIcon, ActivityItemPopover } from "./ActivityItemComponents";
 
@@ -98,12 +97,7 @@ export default function ActivityFeed({
   return (
     <>
       {unifiedList.length === 0 ? (
-        <EmptyPageFiller
-          alertText="You haven't received any responses yet."
-          hintText="Embed the widget on your website to start receiving feedback."
-          borderStyles="border-4 border-dotted border-red">
-          <InboxIcon className="stroke-thin mx-auto h-24 w-24 text-slate-300" />
-        </EmptyPageFiller>
+        <EmptySpaceFiller type={"event"} />
       ) : (
         <div>
           {unifiedList

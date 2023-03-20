@@ -54,7 +54,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
     });
-    let activeSurveys = await prisma.surveyTrigger.findMany({
+    const activeSurveysData = await prisma.surveyTrigger.findMany({
       where: {
         eventClassId,
         survey: {
@@ -69,9 +69,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
     });
-    activeSurveys = activeSurveys.map((t) => t.survey.name);
+    const activeSurveys = activeSurveysData.map((t) => t.survey.name);
 
-    let inactiveSurveys = await prisma.surveyTrigger.findMany({
+    const inactiveSurveysData = await prisma.surveyTrigger.findMany({
       where: {
         eventClassId,
         survey: {
@@ -88,7 +88,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
     });
-    inactiveSurveys = inactiveSurveys.map((t) => t.survey.name);
+    const inactiveSurveys = inactiveSurveysData.map((t) => t.survey.name);
 
     return res.json({
       ...eventClass,
