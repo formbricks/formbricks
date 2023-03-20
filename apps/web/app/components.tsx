@@ -13,5 +13,6 @@ export function HomeRedirect() {
       return redirect(`/environments/${data.id}`);
     }
   }, [data, error]);
-  return error || null;
+
+  return <div>{error && error.toString()}</div>;
 }
