@@ -6,9 +6,7 @@ export default function ProfileSettingsPage({ params }) {
   return (
     <div>
       <SettingsTitle title="Setup Checklist" />
-      <SettingsCard
-        title="Widget Status Indicator"
-        description="Check if the Formbricks widget is alive and kicking.">
+      <SettingsCard title="Widget Status" description="Check if the Formbricks widget is alive and kicking.">
         <WidgetStatusIndicator environmentId={params.environmentId} />
       </SettingsCard>
     </div>
