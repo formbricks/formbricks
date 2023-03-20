@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { fetcher } from "./fetcher";
+import { fetcher } from "../fetcher";
 
 export const useEnvironment = (environmentId: string) => {
   const { data, isLoading, error, mutate, isValidating } = useSWR(

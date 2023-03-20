@@ -19,7 +19,7 @@ import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
 import { FilterIcon } from "@/components/ui/icons/FilterIcon";
 import { FormIcon } from "@/components/ui/icons/FormIcon";
 import { SettingsIcon } from "@/components/ui/icons/SettingsIcon";
-import { useEnvironment } from "@/lib/environments";
+import { useEnvironment } from "@/lib/environments/environments";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import {
   AdjustmentsVerticalIcon,

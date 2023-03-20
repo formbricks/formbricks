@@ -6,7 +6,7 @@ import Button from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { Switch } from "@/components/ui/Switch";
-import { useEnvironment } from "@/lib/environments";
+import { useEnvironment } from "@/lib/environments/environments";
 import { useProduct } from "@/lib/products/products";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useEffect, useState } from "react";

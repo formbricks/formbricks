@@ -1,7 +1,6 @@
 import SurveyList from "./SurveyList";
 import ContentWrapper from "@/components/shared/ContentWrapper";
-
-import WidgetStatusIndicator from "../settings/setup/WidgetStatusIndicator";
+import WidgetStatusIndicator from "@/components/shared/WidgetStatusIndicator";
 
 export default async function SurveysPage({ params }) {
   return (

@@ -73,14 +73,26 @@ export default function SurveysList({ environmentId }) {
                   <p className="line-clamp-3 text-lg">{survey.name}</p>
                 </div>
                 <Link
-                  href={`/environments/${environmentId}/surveys/${survey.id}/summary`}
+                  href={
+                    survey.status === "draft"
+                      ? `/environments/${environmentId}/surveys/${survey.id}/edit`
+                      : `/environments/${environmentId}/surveys/${survey.id}/summary`
+                  }
                   className="absolute h-full w-full"></Link>
                 <div className="divide-y divide-slate-100 ">
                   <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                     <div className="flex items-center">
-                      <SurveyStatusIndicator status={survey.status} />
-                      <p className="ml-2 text-xs text-slate-400 ">{survey._count?.responses} responses</p>
+                      {survey.status !== "draft" && (
+                        <>
+                          <SurveyStatusIndicator status={survey.status} tooltip />
+                          <p className="ml-2 text-xs text-slate-400 ">{survey._count?.responses} responses</p>
+                        </>
+                      )}
+                      {survey.status === "draft" && (
+                        <span className="text-xs italic text-slate-400">Draft</span>
+                      )}
                     </div>
+
                     <DropdownMenu>
                       <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
                         <div>

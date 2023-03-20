@@ -170,6 +170,7 @@ model Environment {
   type           EnvironmentType
   product        Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId      String
+  isWidgetSetup  Boolean          @default(false) @map(name: "is_widget_setup")
   surveys        Survey[]
   people         Person[]
   eventClasses   EventClass[]

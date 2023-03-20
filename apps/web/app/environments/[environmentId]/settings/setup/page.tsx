@@ -1,6 +1,6 @@
 import SettingsTitle from "../SettingsTitle";
 import SettingsCard from "../SettingsCard";
-import WidgetStatusIndicator from "./WidgetStatusIndicator";
+import WidgetStatusIndicator from "@/components/shared/WidgetStatusIndicator";
 
 export default function ProfileSettingsPage({ params }) {
   return (
