@@ -2,15 +2,21 @@ import ModalWithTabs from "@/components/shared/ModalWithTabs";
 import { TagIcon } from "@heroicons/react/24/solid";
 import AttributeActivityTab from "./AttributeActivityTab";
 import type { AttributeClass } from "@prisma/client";
-import AttributeSettingsTab from "./AttirbuteSettingsTab";
+import AttributeSettingsTab from "./AttributeSettingsTab";
 
 interface AttributeDetailModalProps {
+  environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
   attributeClass: AttributeClass;
 }
 
-export default function AttributeDetailModal({ open, setOpen, attributeClass }: AttributeDetailModalProps) {
+export default function AttributeDetailModal({
+  environmentId,
+  open,
+  setOpen,
+  attributeClass,
+}: AttributeDetailModalProps) {
   const tabs = [
     {
       title: "Activity",
@@ -18,7 +24,13 @@ export default function AttributeDetailModal({ open, setOpen, attributeClass }: 
     },
     {
       title: "Settings",
-      children: <AttributeSettingsTab attributeClass={attributeClass} />,
+      children: (
+        <AttributeSettingsTab
+          attributeClass={attributeClass}
+          environmentId={environmentId}
+          setOpen={setOpen}
+        />
+      ),
     },
   ];
 
@@ -41,10 +53,6 @@ export default function AttributeDetailModal({ open, setOpen, attributeClass }: 
         icon={<TagIcon />}
         label={attributeClass.name}
         description={attributeClass.description || ""}
-        onSave={saveChanges}
-        onArchive={handleArchive}
-        hrefDocs="https://formbricks.com/docs"
-        editable={true}
       />
     </>
   );

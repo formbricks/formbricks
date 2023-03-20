@@ -3,14 +3,21 @@ import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/r
 import EventActivityTab from "./EventActivityTab";
 import EventSettingsTab from "./EventSettingsTab";
 import type { EventClass } from "@prisma/client";
+import { useEventClassMutation } from "@/lib/eventClasses/mutateEventClasses";
 
 interface EventDetailModalProps {
+  environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
   eventClass: EventClass;
 }
 
-export default function EventDetailModal({ open, setOpen, eventClass }: EventDetailModalProps) {
+export default function EventDetailModal({
+  environmentId,
+  open,
+  setOpen,
+  eventClass,
+}: EventDetailModalProps) {
   const tabs = [
     {
       title: "Activity",
@@ -18,19 +25,9 @@ export default function EventDetailModal({ open, setOpen, eventClass }: EventDet
     },
     {
       title: "Settings",
-      children: <EventSettingsTab eventClass={eventClass} />,
+      children: <EventSettingsTab eventClass={eventClass} environmentId={environmentId} setOpen={setOpen} />,
     },
   ];
-
-  const saveChanges = () => {
-    console.log("Save changes");
-    setOpen(false);
-  };
-
-  const handleArchive = () => {
-    console.log("Archive");
-    setOpen(false);
-  };
 
   return (
     <>
@@ -49,10 +46,6 @@ export default function EventDetailModal({ open, setOpen, eventClass }: EventDet
         }
         label={eventClass.name}
         description={eventClass.description || ""}
-        editable={eventClass.type === "automatic" ? false : true}
-        onSave={saveChanges}
-        onArchive={handleArchive}
-        hrefDocs="https://formbricks.com/docs"
       />
     </>
   );

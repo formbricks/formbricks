@@ -1,23 +1,47 @@
+import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
+import { useEventClasses } from "@/lib/eventClasses/eventClasses";
+import { useEventClassMutation } from "@/lib/eventClasses/mutateEventClasses";
 import type { EventClass } from "@prisma/client";
+import { useForm } from "react-hook-form";
 
 interface EventSettingsTabProps {
+  environmentId: string;
   eventClass: EventClass;
+  setOpen: (v: boolean) => void;
 }
 
-export default function EventSettingsTab({ eventClass }: EventSettingsTabProps) {
+export default function EventSettingsTab({ environmentId, eventClass, setOpen }: EventSettingsTabProps) {
+  const { register, handleSubmit } = useForm({
+    defaultValues: { name: eventClass.name, description: eventClass.description },
+  });
+  const { triggerEventClassMutate, isMutatingEventClass } = useEventClassMutation(
+    environmentId,
+    eventClass.id
+  );
+
+  const { mutateEventClasses } = useEventClasses(environmentId);
+
+  const onSubmit = async (data) => {
+    await triggerEventClassMutate(data);
+    mutateEventClasses();
+    setOpen(false);
+  };
+
   return (
     <div>
-      <form className="space-y-4">
+      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
         <div className="">
           <Label className="text-slate-600">Display name</Label>
           <Input
             type="text"
             placeholder="e.g. Product Team Info"
-            defaultValue={eventClass.name}
-            disabled={eventClass.type === "automatic" || "code" ? true : false}
+            {...register("name", {
+              value: eventClass.name,
+              disabled: eventClass.type === "automatic" || eventClass.type === "code" ? true : false,
+            })}
           />
         </div>
         <div className="">
@@ -25,8 +49,10 @@ export default function EventSettingsTab({ eventClass }: EventSettingsTabProps) 
           <Input
             type="text"
             placeholder="e.g. Triggers when user changed subscription"
-            defaultValue={eventClass.description || ""}
-            disabled={eventClass.type === "automatic" ? true : false}
+            {...register("description", {
+              value: eventClass.description,
+              disabled: eventClass.type === "automatic" ? true : false,
+            })}
           />
         </div>
         <div className="my-6">
@@ -66,6 +92,18 @@ export default function EventSettingsTab({ eventClass }: EventSettingsTabProps) 
               This event was created automatically. You cannot make changes to it.
             </p>
           ) : null}
+        </div>
+        <div className="flex justify-between border-t border-slate-200 pt-6">
+          <div>
+            <Button variant="secondary" href="https://formbricks.com/docs" target="_blank">
+              Read Docs
+            </Button>
+          </div>
+          <div className="flex space-x-2">
+            <Button type="submit" variant="primary" loading={isMutatingEventClass}>
+              Save changes
+            </Button>
+          </div>
         </div>
       </form>
     </div>

@@ -58,8 +58,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
     // if person exists, reconnect ression and delete old user
     if (existingPerson) {
-      console.log("found existing person");
-      console.log("reconnecting session");
       // reconnect session to new person
       await prisma.session.update({
         where: {
@@ -74,8 +72,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       });
 
-      console.log("deleting existing person");
-
       // delete old person
       await prisma.person.delete({
         where: {
@@ -84,7 +80,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
       returnedPerson = existingPerson;
     } else {
-      console.log("no person found - update existing person");
       // update person
       returnedPerson = await prisma.person.update({
         where: {
