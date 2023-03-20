@@ -1,12 +1,12 @@
 "use client";
 
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Button from "@/components/ui/Button";
-import { ClockIcon, TrashIcon } from "@heroicons/react/20/solid";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { CheckCircleIcon, TrashIcon } from "@heroicons/react/20/solid";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { useState } from "react";
 
 interface AddQuestionButtonProps {
   triggers: any;
@@ -42,10 +42,16 @@ export default function WhenToSendCard({ environmentId, triggers, setTriggers }:
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className="w-full space-y-2 rounded-lg border border-gray-300">
+      className="w-full space-y-2 rounded-lg border border-gray-300 bg-white">
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full">
         <div className="inline-flex p-4">
-          <ClockIcon className="-ml-0.5 mr-1 h-5 w-5 text-slate-400" />
+          <div className="-ml-0.5 mr-1">
+            {triggers.length === 0 || !triggers[0] ? (
+              <div className="h-5 w-5 rounded-full border border-slate-400" />
+            ) : (
+              <CheckCircleIcon className="h-5 w-5 text-teal-400" />
+            )}
+          </div>
           <div>
             <p className="text-sm font-semibold">When to send</p>
             <p className="mt-1 truncate text-sm text-gray-500">

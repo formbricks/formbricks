@@ -33,7 +33,7 @@ export default function AddQuestionButton({ addQuestion }: AddQuestionButtonProp
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className="w-full space-y-2 rounded-lg border border-dashed border-gray-300">
+      className="w-full space-y-2 rounded-lg border border-dashed border-gray-300 bg-white">
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full">
         <div className="inline-flex p-4">
           <PlusCircleIcon className="-ml-0.5 mr-1 h-5 w-5 text-slate-400" />
@@ -48,7 +48,7 @@ export default function AddQuestionButton({ addQuestion }: AddQuestionButtonProp
         {questionTypes.map((questionType) => (
           <button
             key={questionType.id}
-            className="inline-flex items-center py-2 px-4 text-sm font-medium hover:bg-gray-100"
+            className="inline-flex items-center py-2 px-4 text-sm font-medium text-slate-600 hover:bg-gray-100"
             onClick={() => {
               addQuestion({
                 id: createId(),
@@ -58,7 +58,7 @@ export default function AddQuestionButton({ addQuestion }: AddQuestionButtonProp
               });
               setOpen(false);
             }}>
-            <questionType.icon className="-ml-0.5 h-5 w-5" aria-hidden="true" />
+            <questionType.icon className="-ml-0.5 mr-2 h-5 w-5 text-slate-600" aria-hidden="true" />
             {questionType.label}
           </button>
         ))}
