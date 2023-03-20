@@ -197,6 +197,7 @@ importers:
       '@radix-ui/react-tabs': ^1.0.3
       '@radix-ui/react-tooltip': ^1.0.5
       '@tailwindcss/forms': ^0.5.3
+      '@tailwindcss/typography': ^0.5.9
       '@types/bcryptjs': ^2.4.2
       '@types/node': 18.15.3
       '@types/react': 18.0.28
@@ -282,6 +283,7 @@ importers:
       '@formbricks/database': link:../../packages/database
       '@formbricks/tsconfig': link:../../packages/tsconfig
       '@tailwindcss/forms': 0.5.3_tailwindcss@3.2.7
+      '@tailwindcss/typography': 0.5.9_tailwindcss@3.2.7
       '@types/bcryptjs': 2.4.2
       autoprefixer: 10.4.14_postcss@8.4.21
       eslint-config-formbricks: link:../../packages/eslint-config-formbricks

@@ -1,15 +1,19 @@
 // a component which receives a settings title, description and children
 
+import { cn } from "@/lib/utils";
+
 export default function SettingsCard({
   title,
   description,
   children,
-  soon,
+  soon = false,
+  noPadding = false,
 }: {
   title: string;
   description: string;
   children: any;
   soon?: boolean;
+  noPadding?: boolean;
 }) {
   return (
     <div className="my-4 w-full bg-white shadow sm:rounded-lg">
@@ -24,7 +28,7 @@ export default function SettingsCard({
         </div>
         <p className="mt-1 text-sm text-gray-500">{description}</p>
       </div>
-      <div className=" px-6 py-5">{children} </div>
+      <div className={cn(noPadding ? "" : "px-6 py-5")}>{children} </div>
     </div>
   );
 }

@@ -64,10 +64,6 @@ export default function WidgetStatusIndicator({
     return <div>Error loading resources. Maybe you don&lsquo;t have enough access rights</div>;
   }
 
-  console.log("events", events);
-  console.log("status", status);
-  console.log("currentStatus", currentStatus);
-
   if (type === "large") {
     return (
       <div

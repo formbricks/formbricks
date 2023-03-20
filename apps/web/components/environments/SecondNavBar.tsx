@@ -6,10 +6,10 @@ interface SecondNavbarProps {
   activeId: string;
 }
 
-export default function SecondNavbar({ tabs, activeId }: SecondNavbarProps) {
+export default function SecondNavbar({ tabs, activeId, ...props }: SecondNavbarProps) {
   return (
-    <div>
-      <div className="flex h-14 w-full items-center justify-center border bg-white">
+    <div {...props}>
+      <div className="flex h-14 w-full items-center justify-center border-b bg-white">
         <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
           {tabs.map((tab) => (
             <Link
