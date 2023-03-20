@@ -51,8 +51,6 @@ export interface Session {
 
 export interface Person {
   id: string;
-  userId?: string;
-  email?: string;
   attributes?: any;
   environmentId: string;
 }

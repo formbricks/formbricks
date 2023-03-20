@@ -1,4 +1,13 @@
 -- CreateEnum
+CREATE TYPE "AttributeType" AS ENUM ('code', 'noCode', 'automatic');
+
+-- CreateEnum
+CREATE TYPE "SurveyStatus" AS ENUM ('draft', 'inProgress', 'paused', 'completed', 'archived');
+
+-- CreateEnum
+CREATE TYPE "DisplayStatus" AS ENUM ('seen', 'responded');
+
+-- CreateEnum
 CREATE TYPE "EventType" AS ENUM ('code', 'noCode', 'automatic');
 
 -- CreateEnum
@@ -32,6 +41,7 @@ CREATE TABLE "AttributeClass" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
+    "type" "AttributeType" NOT NULL,
     "environmentId" TEXT NOT NULL,
 
     CONSTRAINT "AttributeClass_pkey" PRIMARY KEY ("id")
@@ -40,8 +50,6 @@ CREATE TABLE "AttributeClass" (
 -- CreateTable
 CREATE TABLE "Person" (
     "id" TEXT NOT NULL,
-    "userId" TEXT,
-    "email" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "environmentId" TEXT NOT NULL,
@@ -66,14 +74,37 @@ CREATE TABLE "Response" (
 );
 
 -- CreateTable
+CREATE TABLE "Display" (
+    "id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "surveyId" TEXT NOT NULL,
+    "personId" TEXT NOT NULL,
+    "status" "DisplayStatus" NOT NULL DEFAULT 'seen',
+
+    CONSTRAINT "Display_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SurveyTrigger" (
+    "id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "surveyId" TEXT NOT NULL,
+    "eventClassId" TEXT NOT NULL,
+
+    CONSTRAINT "SurveyTrigger_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Survey" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "environmentId" TEXT NOT NULL,
+    "status" "SurveyStatus" NOT NULL DEFAULT 'draft',
     "questions" JSONB NOT NULL DEFAULT '[]',
-    "audience" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Survey_pkey" PRIMARY KEY ("id")
 );
@@ -213,6 +244,9 @@ CREATE UNIQUE INDEX "Attribute_attributeClassId_personId_key" ON "Attribute"("at
 CREATE UNIQUE INDEX "AttributeClass_name_environmentId_key" ON "AttributeClass"("name", "environmentId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "SurveyTrigger_surveyId_eventClassId_key" ON "SurveyTrigger"("surveyId", "eventClassId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "EventClass_name_environmentId_key" ON "EventClass"("name", "environmentId");
 
 -- CreateIndex
@@ -231,7 +265,7 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 ALTER TABLE "Attribute" ADD CONSTRAINT "Attribute_attributeClassId_fkey" FOREIGN KEY ("attributeClassId") REFERENCES "AttributeClass"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Attribute" ADD CONSTRAINT "Attribute_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Attribute" ADD CONSTRAINT "Attribute_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "AttributeClass" ADD CONSTRAINT "AttributeClass_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -244,6 +278,18 @@ ALTER TABLE "Response" ADD CONSTRAINT "Response_surveyId_fkey" FOREIGN KEY ("sur
 
 -- AddForeignKey
 ALTER TABLE "Response" ADD CONSTRAINT "Response_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Display" ADD CONSTRAINT "Display_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Display" ADD CONSTRAINT "Display_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SurveyTrigger" ADD CONSTRAINT "SurveyTrigger_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SurveyTrigger" ADD CONSTRAINT "SurveyTrigger_eventClassId_fkey" FOREIGN KEY ("eventClassId") REFERENCES "EventClass"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Survey" ADD CONSTRAINT "Survey_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;

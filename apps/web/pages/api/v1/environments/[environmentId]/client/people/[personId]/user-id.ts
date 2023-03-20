@@ -31,12 +31,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     // check if person exists
     const existingPerson = await prisma.person.findFirst({
       where: {
-        userId,
+        attributes: {
+          some: {
+            attributeClass: {
+              name: "userId",
+            },
+            value: userId,
+          },
+        },
       },
       select: {
         id: true,
-        userId: true,
-        email: true,
         attributes: {
           select: {
             id: true,
@@ -53,6 +58,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
     // if person exists, reconnect ression and delete old user
     if (existingPerson) {
+      console.log("found existing person");
+      console.log("reconnecting session");
       // reconnect session to new person
       await prisma.session.update({
         where: {
@@ -67,6 +74,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       });
 
+      console.log("deleting existing person");
+
       // delete old person
       await prisma.person.delete({
         where: {
@@ -75,18 +84,29 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
       returnedPerson = existingPerson;
     } else {
+      console.log("no person found - update existing person");
       // update person
       returnedPerson = await prisma.person.update({
         where: {
           id: personId,
         },
         data: {
-          userId,
+          attributes: {
+            create: {
+              value: userId,
+              attributeClass: {
+                connect: {
+                  name_environmentId: {
+                    name: "userId",
+                    environmentId,
+                  },
+                },
+              },
+            },
+          },
         },
         select: {
           id: true,
-          userId: true,
-          email: true,
           attributes: {
             select: {
               id: true,
@@ -102,6 +122,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       });
     }
+
+    // return updated person
     return res.json(returnedPerson);
   }
 

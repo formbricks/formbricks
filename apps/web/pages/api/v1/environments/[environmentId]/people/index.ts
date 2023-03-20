@@ -24,6 +24,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
       include: {
+        attributes: {
+          select: {
+            id: true,
+            value: true,
+            attributeClass: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         _count: {
           select: { sessions: true },
         },

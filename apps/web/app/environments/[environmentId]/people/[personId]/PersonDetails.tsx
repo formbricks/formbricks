@@ -2,9 +2,10 @@
 
 import GoBackButton from "@/components/shared/GoBackButton";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { usePerson } from "@/lib/people";
+import { deletePerson, usePerson } from "@/lib/people";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ActivityFeed from "./ActivityFeed";
 import ResponseFeed from "./ResponsesFeed";
@@ -15,6 +16,7 @@ interface PersonDetailsProps {
 }
 
 export default function PersonDetails({ environmentId, personId }: PersonDetailsProps) {
+  const router = useRouter();
   const { person, isLoadingPerson, isErrorPerson } = usePerson(environmentId, personId);
 
   /*   const formsParticipated = useMemo(() => {
@@ -64,11 +66,21 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
         <h1 className="text-4xl font-bold tracking-tight text-slate-900">
           {person.email ? <span>{person.email}</span> : <span>{person.id}</span>}
         </h1>
-        {/* <div className="flex items-center space-x-3">
-          <button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={async () => {
+              if (
+                confirm(
+                  "Are you sure you want to delete this person? All of it's responses, events and attributes will be deleted as well. This action cannot be undone."
+                )
+              ) {
+                await deletePerson(environmentId, personId);
+                router.push(`/environments/${environmentId}/people`);
+              }
+            }}>
             <TrashIcon className="h-5 w-5 text-slate-500 hover:text-red-500" />
           </button>
-        </div> */}
+        </div>
       </div>
       <section className="pt-6 pb-24">
         <div className="grid grid-cols-1 gap-x-8  md:grid-cols-4">
