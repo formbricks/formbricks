@@ -1,4 +1,4 @@
-import { getSessionOrUser } from "@/lib/apiHelper";
+import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -15,6 +15,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(400).json({ message: "Missing environmentId" });
   }
 
+  const hasAccess = await hasEnvironmentAccess(user, environmentId);
+  if (hasAccess === false) {
+    return res.status(403).json({ message: "Not authorized" });
+  }
+
   // GET
   if (req.method === "GET") {
     const people = await prisma.person.findMany({
@@ -24,6 +29,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
       include: {
+        attributes: {
+          select: {
+            id: true,
+            value: true,
+            attributeClass: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         _count: {
           select: { sessions: true },
         },

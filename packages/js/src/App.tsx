@@ -8,9 +8,10 @@ interface AppProps {
   config: Config;
   survey: Survey;
   closeSurvey: () => void;
+  brandColor: string;
 }
 
-export default function App({ config, survey, closeSurvey }: AppProps): VNode {
+export default function App({ config, survey, closeSurvey, brandColor }: AppProps): VNode {
   const [isOpen, setIsOpen] = useState(true);
 
   const close = () => {
@@ -23,7 +24,7 @@ export default function App({ config, survey, closeSurvey }: AppProps): VNode {
   return (
     <div className="tailwind-preflight">
       <Modal isOpen={isOpen} close={close}>
-        <SurveyView config={config} survey={survey} close={close} />
+        <SurveyView config={config} survey={survey} close={close} brandColor={brandColor} />
       </Modal>
     </div>
   );

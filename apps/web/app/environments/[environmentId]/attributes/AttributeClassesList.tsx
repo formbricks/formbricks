@@ -1,7 +1,7 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useAttributeClasses } from "@/lib/attributeClasses";
+import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { TagIcon } from "@heroicons/react/20/solid";
 import { useState } from "react";
 import AttributeDetailModal from "./AttributeDetailModal";
@@ -60,10 +60,11 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
                 <div className="col-span-3 flex items-center pl-6 text-sm">
                   <div className="flex items-center">
                     <div className="h-10 w-10 flex-shrink-0">
-                      <TagIcon className="h-8 w-8 flex-shrink-0 text-slate-300" />
+                      <TagIcon className="h-8 w-8 flex-shrink-0 text-slate-500" />
                     </div>
-                    <div className="ml-4">
-                      <div className="font-medium text-gray-900">{attributeClass.name}</div>
+                    <div className="ml-4 text-left">
+                      <div className="font-medium text-slate-900">{attributeClass.name}</div>
+                      <div className="text-xs text-slate-400">{attributeClass.description}</div>
                     </div>
                   </div>
                 </div>
@@ -81,6 +82,7 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
           ))}
         </div>
         <AttributeDetailModal
+          environmentId={environmentId}
           open={isAttributeDetailModalOpen}
           setOpen={setAttributeDetailModalOpen}
           attributeClass={activeAttributeClass}

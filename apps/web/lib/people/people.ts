@@ -30,3 +30,14 @@ export const usePerson = (environmentId, personId) => {
     mutatePerson: mutate,
   };
 };
+
+export const deletePerson = async (environmentId: string, personId: string) => {
+  try {
+    await fetch(`/api/v1/environments/${environmentId}/people/${personId}`, {
+      method: "DELETE",
+    });
+  } catch (error) {
+    console.error(error);
+    throw Error(`deletePerson: unable to delete person: ${error.message}`);
+  }
+};

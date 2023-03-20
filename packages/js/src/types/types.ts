@@ -40,8 +40,11 @@ export interface Config {
   apiHost: string;
   person?: Person;
   session?: Session;
-  surveys?: Survey[];
-  noCodeEvents?: any[];
+  settings?: {
+    surveys?: Survey[];
+    noCodeEvents?: any[];
+    brandColor: string;
+  };
 }
 
 export interface Session {
@@ -51,8 +54,6 @@ export interface Session {
 
 export interface Person {
   id: string;
-  userId?: string;
-  email?: string;
   attributes?: any;
   environmentId: string;
 }
@@ -63,7 +64,7 @@ export interface Survey {
   triggers: Trigger[];
 }
 
-export type Question = OpenTextQuestion;
+export type Question = OpenTextQuestion | RadioQuestion;
 
 export interface OpenTextQuestion {
   id: string;
@@ -71,6 +72,15 @@ export interface OpenTextQuestion {
   headline: string;
   subheader?: string;
   placeholder?: string;
+  buttonLabel?: string;
+  required: boolean;
+}
+
+export interface RadioQuestion {
+  id: string;
+  type: "radio";
+  headline: string;
+  subheader?: string;
   buttonLabel?: string;
   required: boolean;
 }

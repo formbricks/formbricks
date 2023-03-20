@@ -2,10 +2,11 @@ import css from "./style.css";
 import { h, render } from "preact";
 import App from "./App";
 import {
+  attributeAlreadyExists,
+  attributeAlreadySet,
   createPerson,
   getLocalPerson,
   updatePersonAttribute,
-  updatePersonEmail,
   updatePersonUserId,
 } from "./lib/person";
 import type { Config, Survey } from "./types/types";
@@ -16,6 +17,7 @@ import { checkPageUrl } from "./lib/noCodeEvents";
 
 let config: Config = { environmentId: null, apiHost: null };
 let initFunction; // Promise that resolves when init is complete
+let resetRunning; // boolean indicating whether reset is currently running
 let currentlyExecuting = Promise.resolve(); // Promise that resolves when the current survey operation is complete
 let containerId; // id of the container element for the survey modal
 const surveyQueue: Survey[] = []; // queue of surveys to be shown
@@ -58,10 +60,9 @@ const populateConfig = async (c: Config) => {
     config.session = getLocalSession();
   }
   if (!config.session) {
-    const { session, noCodeEvents, surveys } = await createSession(config);
+    const { session, settings } = await createSession(config);
     config.session = session;
-    config.noCodeEvents = noCodeEvents;
-    config.surveys = surveys;
+    config.settings = settings;
     if (!config.session) {
       console.error('Formbricks: Error creating "session"');
       return;
@@ -69,8 +70,7 @@ const populateConfig = async (c: Config) => {
     track("New Session");
   } else {
     // if we have a session, we also have surveys and noCodeEvents
-    config.surveys = JSON.parse(localStorage.getItem("formbricks__surveys") || "[]");
-    config.noCodeEvents = JSON.parse(localStorage.getItem("formbricks__noCodeEvents") || "[]");
+    config.settings = JSON.parse(localStorage.getItem("formbricks__settings") || "{}");
   }
   // check page url for nocode events
   checkPageUrl(config, track);
@@ -88,9 +88,11 @@ const setUserId = async (userId: string): Promise<void> => {
       console.error("Formbricks: Error setting userId, userId is null or undefined");
       return;
     }
-    if (userId === config.person.userId) {
+    // check if attribute already exists with this value
+    if (attributeAlreadySet(config, "userId", userId)) {
       return;
-    } else if (config.person.userId) {
+    }
+    if (attributeAlreadyExists(config, "userId")) {
       console.error("Formbricks: userId cannot be changed after it has been set. You need to reset first");
       return;
     }
@@ -105,28 +107,7 @@ const setUserId = async (userId: string): Promise<void> => {
 };
 
 const setEmail = async (email: string): Promise<void> => {
-  if (!initFunction) {
-    console.error("Formbricks: Error setting email, init function not yet called");
-    return;
-  }
-  await initFunction;
-  await currentlyExecuting;
-  currentlyExecuting = currentlyExecuting.then(async () => {
-    if (!email) {
-      console.error("Formbricks: Error setting userId, userId is null or undefined");
-      return;
-    }
-    if (email === config.person.email) {
-      return;
-    }
-    const updatedPerson = await updatePersonEmail(config, email);
-    if (!updatedPerson) {
-      console.error('Formbricks: Error updating "email"');
-      return;
-    }
-    config.person = { ...config.person, ...updatedPerson };
-    return;
-  });
+  setAttribute("email", email);
 };
 
 const setAttribute = async (key: string, value: string): Promise<void> => {
@@ -141,10 +122,11 @@ const setAttribute = async (key: string, value: string): Promise<void> => {
       console.error("Formbricks: Error setting attribute, please provide key and value");
       return;
     }
-    // check if attribute already exists
-    if (typeof config.person.attributes.find((a) => a.attributeClass?.name === key) !== "undefined") {
+    // check if attribute already exists with this value
+    if (attributeAlreadySet(config, key, value)) {
       return;
     }
+
     const updatedPerson = await updatePersonAttribute(config, key, value);
     if (!updatedPerson) {
       console.error("Formbricks: Error updating attribute");
@@ -155,12 +137,19 @@ const setAttribute = async (key: string, value: string): Promise<void> => {
   });
 };
 
-const reset = () => {
-  delete config.person;
-  delete config.session;
-  localStorage.removeItem("formbricks__person");
-  localStorage.removeItem("formbricks__session");
-  initFunction = populateConfig({ environmentId: config.environmentId, apiHost: config.apiHost });
+const reset = async () => {
+  if (!resetRunning) {
+    resetRunning = true;
+    delete config.person;
+    delete config.session;
+    localStorage.removeItem("formbricks__person");
+    localStorage.removeItem("formbricks__session");
+    initFunction = populateConfig({ environmentId: config.environmentId, apiHost: config.apiHost });
+    await initFunction;
+    resetRunning = false;
+  } else {
+    console.log("Formbricks: Reset already running");
+  }
 };
 
 const track = async (eventName: string, properties: any = {}) => {
@@ -212,7 +201,10 @@ const workSurveyQueue = async () => {
 };
 
 const renderSurvey = (survey) => {
-  render(h(App, { config, survey, closeSurvey }), document.getElementById(containerId));
+  render(
+    h(App, { config, survey, closeSurvey, brandColor: config.settings?.brandColor }),
+    document.getElementById(containerId)
+  );
 };
 
 const closeSurvey = () => {

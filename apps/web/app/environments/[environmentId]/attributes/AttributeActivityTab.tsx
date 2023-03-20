@@ -12,11 +12,11 @@ export default function EventActivityTab({ attributeClass }: EventActivityTabPro
       <div className="col-span-2 space-y-4 pr-6">
         <div>
           <Label className="text-slate-500">Active surveys</Label>
-          <p className="text-sm text-slate-900">List of active surveys</p>
+          <p className="text-sm text-slate-900">-</p>
         </div>
         <div>
           <Label className="text-slate-500">Inactive surveys</Label>
-          <p className="text-sm text-slate-900">List of inactive surveys</p>
+          <p className="text-sm text-slate-900">-</p>
         </div>
       </div>
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">

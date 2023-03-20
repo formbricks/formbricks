@@ -31,7 +31,6 @@ import {
   HeartIcon,
   PaintBrushIcon,
   PlusIcon,
-  RocketLaunchIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";

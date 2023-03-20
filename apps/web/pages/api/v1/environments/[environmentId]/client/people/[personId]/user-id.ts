@@ -31,12 +31,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     // check if person exists
     const existingPerson = await prisma.person.findFirst({
       where: {
-        userId,
+        attributes: {
+          some: {
+            attributeClass: {
+              name: "userId",
+            },
+            value: userId,
+          },
+        },
       },
       select: {
         id: true,
-        userId: true,
-        email: true,
         attributes: {
           select: {
             id: true,
@@ -81,12 +86,22 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           id: personId,
         },
         data: {
-          userId,
+          attributes: {
+            create: {
+              value: userId,
+              attributeClass: {
+                connect: {
+                  name_environmentId: {
+                    name: "userId",
+                    environmentId,
+                  },
+                },
+              },
+            },
+          },
         },
         select: {
           id: true,
-          userId: true,
-          email: true,
           attributes: {
             select: {
               id: true,
@@ -102,6 +117,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       });
     }
+
+    // return updated person
     return res.json(returnedPerson);
   }
 

@@ -1,4 +1,4 @@
-import { getSessionOrUser } from "@/lib/apiHelper";
+import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -13,6 +13,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   if (!environmentId) {
     return res.status(400).json({ message: "Missing environmentId" });
+  }
+
+  const hasAccess = await hasEnvironmentAccess(user, environmentId);
+  if (hasAccess === false) {
+    return res.status(403).json({ message: "Not authorized" });
   }
 
   // GET
@@ -38,8 +43,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // POST
   else if (req.method === "POST") {
     const eventClass = req.body;
-
-    console.log(eventClass);
 
     if (eventClass.type === "automatic") {
       res.status(400).json({ message: "You are not allowed to create new automatic events" });

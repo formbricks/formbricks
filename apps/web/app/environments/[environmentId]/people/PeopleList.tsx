@@ -16,6 +16,10 @@ export default function PeopleList({ environmentId }: { environmentId: string })
     return <div>Error</div>;
   }
 
+  const getAttributeValue = (person, attributeName) => {
+    return person.attributes.find((a) => a.attributeClass.name === attributeName)?.value;
+  };
+
   return (
     <>
       {people.length === 0 ? (
@@ -46,10 +50,10 @@ export default function PeopleList({ environmentId }: { environmentId: string })
                     </div>
                   </div>
                   <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
-                    <div className="text-gray-900">{person.userId}</div>
+                    <div className="text-gray-900">{getAttributeValue(person, "userId")}</div>
                   </div>
                   <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
-                    <div className="text-gray-900">{person.email}</div>
+                    <div className="text-gray-900">{getAttributeValue(person, "email")}</div>
                   </div>
                   <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
                     <div className="text-gray-900">{person._count?.sessions}</div>

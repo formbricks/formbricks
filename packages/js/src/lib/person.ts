@@ -49,34 +49,9 @@ export const updatePersonUserId = async (config: Config, userId: string) => {
   return updatedPerson;
 };
 
-export const updatePersonEmail = async (config: Config, email: string) => {
-  if (!config.person || !config.person.id) {
-    console.error("Formbricks: Unable to update userId. No person set.");
-    return;
-  }
-  const res = await fetch(
-    `${config.apiHost}/api/v1/environments/${config.environmentId}/client/people/${config.person.id}/email`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email }),
-    }
-  );
-  const updatedPerson = await res.json();
-  if (!res.ok) {
-    console.error("Formbricks: Error updating person");
-    return;
-  }
-  // save to local storage
-  localStorage.setItem("formbricks__person", JSON.stringify(updatedPerson));
-  return updatedPerson;
-};
-
 export const updatePersonAttribute = async (config: Config, key: string, value: string) => {
   if (!config.person || !config.person.id) {
-    console.error("Formbricks: Unable to update userId. No person set.");
+    console.error("Formbricks: Unable to update attribute. No person set.");
     return;
   }
   const res = await fetch(
@@ -97,4 +72,20 @@ export const updatePersonAttribute = async (config: Config, key: string, value: 
   // save to local storage
   localStorage.setItem("formbricks__person", JSON.stringify(updatedPerson));
   return updatedPerson;
+};
+
+export const attributeAlreadySet = (config: Config, key: string, value: string) => {
+  const existingAttribute = config.person.attributes.find((a) => a.attributeClass?.name === key);
+  if (existingAttribute && existingAttribute.value === value) {
+    return true;
+  }
+  return false;
+};
+
+export const attributeAlreadyExists = (config: Config, key: string) => {
+  const existingAttribute = config.person.attributes.find((a) => a.attributeClass?.name === key);
+  if (existingAttribute) {
+    return true;
+  }
+  return false;
 };

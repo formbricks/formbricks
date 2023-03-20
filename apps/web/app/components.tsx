@@ -12,9 +12,6 @@ export function HomeRedirect() {
     if (data && !error) {
       return redirect(`/environments/${data.id}`);
     }
-    if (error) {
-      alert(error);
-    }
   }, [data, error]);
-  return null;
+  return error || null;
 }

@@ -64,7 +64,22 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    return res.json({ session, surveys, noCodeEvents });
+    const environmentProdut = await prisma.environment.findUnique({
+      where: {
+        id: environmentId,
+      },
+      select: {
+        product: {
+          select: {
+            brandColor: true,
+          },
+        },
+      },
+    });
+
+    const brandColor = environmentProdut?.product.brandColor;
+
+    return res.json({ session, settings: { surveys, noCodeEvents, brandColor } });
   }
 
   // Unknown HTTP Method

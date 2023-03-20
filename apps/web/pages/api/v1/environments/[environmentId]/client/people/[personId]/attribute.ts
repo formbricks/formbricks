@@ -47,58 +47,75 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(400).json({ message: "Person not found" });
     }
 
-    // delete old attribute
-    let deleteAttributes: any[] = [];
-    const oldAttribute = currentPerson.attributes.find((attribute) => attribute.attributeClass.name === key);
-    if (oldAttribute) {
-      deleteAttributes = [{ id: oldAttribute.id }];
-    }
-
-    // update person
-    const updatedPerson = await prisma.person.update({
+    // find attribute class
+    let attributeClass = await prisma.attributeClass.findUnique({
       where: {
-        id: personId,
-      },
-      data: {
-        attributes: {
-          deleteMany: [...deleteAttributes],
-          create: [
-            {
-              value: value,
-              attributeClass: {
-                connectOrCreate: {
-                  where: {
-                    name_environmentId: {
-                      name: key,
-                      environmentId,
-                    },
-                  },
-                  create: {
-                    name: key,
-                    environment: {
-                      connect: {
-                        id: environmentId,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          ],
+        name_environmentId: {
+          name: key,
+          environmentId,
         },
       },
       select: {
         id: true,
-        userId: true,
-        email: true,
-        attributes: {
+      },
+    });
+
+    // create new attribute class if not found
+    if (attributeClass === null) {
+      attributeClass = await prisma.attributeClass.create({
+        data: {
+          name: key,
+          type: "code",
+          environment: {
+            connect: {
+              id: environmentId,
+            },
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+    }
+
+    // upsert attribute (update or create)
+    const attribute = await prisma.attribute.upsert({
+      where: {
+        attributeClassId_personId: {
+          attributeClassId: attributeClass.id,
+          personId,
+        },
+      },
+      update: {
+        value,
+      },
+      create: {
+        attributeClass: {
+          connect: {
+            id: attributeClass.id,
+          },
+        },
+        person: {
+          connect: {
+            id: personId,
+          },
+        },
+        value,
+      },
+      select: {
+        person: {
           select: {
             id: true,
-            value: true,
-            attributeClass: {
+            attributes: {
               select: {
                 id: true,
-                name: true,
+                value: true,
+                attributeClass: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -106,7 +123,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    return res.json(updatedPerson);
+    // return updated person
+    return res.json(attribute.person);
   }
 
   // Unknown HTTP Method

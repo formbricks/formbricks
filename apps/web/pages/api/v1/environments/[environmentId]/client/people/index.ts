@@ -26,8 +26,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
       select: {
         id: true,
-        userId: true,
-        attributes: true,
+        attributes: {
+          select: {
+            id: true,
+            value: true,
+            attributeClass: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         environmentId: true,
       },
     });

@@ -1,6 +1,5 @@
 import Modal from "@/components/shared/Modal";
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
 
 interface ModalWithTabsProps {
   open: boolean;
@@ -8,10 +7,6 @@ interface ModalWithTabsProps {
   icon?: React.ReactNode;
   label?: string;
   description?: string;
-  editable?: boolean;
-  onSave?: () => void;
-  onArchive?: () => void;
-  hrefDocs: string;
   tabs: TabProps[];
 }
 
@@ -20,18 +15,7 @@ type TabProps = {
   children: React.ReactNode;
 };
 
-export default function ModalWithTabs({
-  open,
-  setOpen,
-  tabs,
-  icon,
-  label,
-  description,
-  editable,
-  onSave,
-  onArchive,
-  hrefDocs,
-}: ModalWithTabsProps) {
+export default function ModalWithTabs({ open, setOpen, tabs, icon, label, description }: ModalWithTabsProps) {
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabClick = (index: number) => {
@@ -66,22 +50,7 @@ export default function ModalWithTabs({
             </button>
           ))}
         </div>
-        <div className="flex-1 border-b border-slate-200 p-6">{tabs[activeTab].children}</div>
-        <div className="flex justify-between rounded-lg p-6">
-          <div>
-            <Button variant="secondary" href={hrefDocs} target="_blank">
-              Read Docs
-            </Button>
-          </div>
-          <div className="flex space-x-2">
-            <Button variant="minimal" onClick={onArchive}></Button>
-            {editable && (
-              <Button variant="primary" onClick={onSave}>
-                Save changes
-              </Button>
-            )}
-          </div>
-        </div>
+        <div className="flex-1 p-6">{tabs[activeTab].children}</div>
       </div>
     </Modal>
   );

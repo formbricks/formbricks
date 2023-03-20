@@ -8,7 +8,8 @@ interface ActivityFeedProps {
   displays: any[];
   responses: any[];
   sortByDate: boolean;
-  onUnifiedAttributes: (unifiedAttributes: any[]) => void;
+  attributeMap: any[];
+  setAttributeMap: (attributeMap: any[]) => void;
 }
 
 export type ActivityFeedItem = {
@@ -29,7 +30,7 @@ export default function ActivityFeed({
   displays,
   responses,
   sortByDate,
-  onUnifiedAttributes,
+  setAttributeMap,
 }: ActivityFeedProps) {
   // Convert Attributes into unified format
   const unifiedAttributes = useMemo(() => {
@@ -56,9 +57,9 @@ export default function ActivityFeed({
       }));
 
       // Pass the computedUnifiedAttributes to the parent component
-      onUnifiedAttributes(computedUnifiedAttributes);
+      setAttributeMap(computedUnifiedAttributes);
     }
-  }, [attributes, onUnifiedAttributes]);
+  }, [attributes]);
 
   // Convert Displays into unified format
   const unifiedDisplays = useMemo(() => {
@@ -96,7 +97,7 @@ export default function ActivityFeed({
   return (
     <>
       {unifiedList.length === 0 ? (
-        <EmptySpaceFiller type="event" />
+        <EmptySpaceFiller type={"event"} />
       ) : (
         <div>
           {unifiedList

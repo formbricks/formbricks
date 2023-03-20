@@ -64,7 +64,7 @@ export default function EventClassesList({ environmentId }) {
               <div className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
                 <div className="col-span-4 flex items-center pl-6 text-sm">
                   <div className="flex items-center">
-                    <div className="text-slate-00 h-5 w-5 flex-shrink-0">
+                    <div className="h-5 w-5 flex-shrink-0 text-slate-500">
                       {eventClass.type === "code" ? (
                         <CodeBracketIcon />
                       ) : eventClass.type === "noCode" ? (
@@ -102,6 +102,7 @@ export default function EventClassesList({ environmentId }) {
         </div>
       </div>
       <EventDetailModal
+        environmentId={environmentId}
         open={isEventDetailModalOpen}
         setOpen={setEventDetailModalOpen}
         eventClass={activeEventClass}

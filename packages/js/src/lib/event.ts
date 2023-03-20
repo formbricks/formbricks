@@ -24,7 +24,7 @@ export const trackEvent = async (config, eventName, properties) => {
 
 export const triggerSurveys = (config, eventName) => {
   const triggeredSurveys = [];
-  for (const survey of config.surveys) {
+  for (const survey of config.settings?.surveys) {
     for (const trigger of survey.triggers) {
       if (trigger.eventClass?.name === eventName) {
         /* console.log(`Formbricks: survey ${survey.id} triggered by event "${eventName}"`); */

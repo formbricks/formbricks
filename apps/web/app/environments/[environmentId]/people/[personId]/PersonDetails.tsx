@@ -2,9 +2,10 @@
 
 import GoBackButton from "@/components/shared/GoBackButton";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { usePerson } from "@/lib/people/people";
+import { deletePerson, usePerson } from "@/lib/people/people";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ActivityFeed from "./ActivityFeed";
 import ResponseFeed from "./ResponsesFeed";
@@ -15,6 +16,7 @@ interface PersonDetailsProps {
 }
 
 export default function PersonDetails({ environmentId, personId }: PersonDetailsProps) {
+  const router = useRouter();
   const { person, isLoadingPerson, isErrorPerson } = usePerson(environmentId, personId);
 
   /*   const formsParticipated = useMemo(() => {
@@ -36,10 +38,6 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
   };
 
   const [attributeMap, setAttributeMap] = useState<AttributeObject[]>([]);
-
-  const handleUnifiedAttributes = (unifiedAttributes) => {
-    setAttributeMap(unifiedAttributes);
-  };
 
   interface AttributeObject {
     type: string;
@@ -69,7 +67,17 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
           {person.email ? <span>{person.email}</span> : <span>{person.id}</span>}
         </h1>
         <div className="flex items-center space-x-3">
-          <button /* onClick={deletePerson(personId)} */>
+          <button
+            onClick={async () => {
+              if (
+                confirm(
+                  "Are you sure you want to delete this person? All of it's responses, events and attributes will be deleted as well. This action cannot be undone."
+                )
+              ) {
+                await deletePerson(environmentId, personId);
+                router.push(`/environments/${environmentId}/people`);
+              }
+            }}>
             <TrashIcon className="h-5 w-5 text-slate-500 hover:text-red-500" />
           </button>
         </div>
@@ -153,7 +161,8 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
               displays={person.displays}
               responses={person.responses}
               sortByDate={activityAscending}
-              onUnifiedAttributes={handleUnifiedAttributes}
+              attributeMap={attributeMap}
+              setAttributeMap={setAttributeMap}
             />
           </div>
         </div>

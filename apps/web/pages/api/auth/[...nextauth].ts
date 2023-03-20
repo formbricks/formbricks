@@ -252,6 +252,20 @@ export const authOptions: NextAuthOptions = {
                                       },
                                     ],
                                   },
+                                  attributeClasses: {
+                                    create: [
+                                      {
+                                        name: "userId",
+                                        description: "The internal ID of the person",
+                                        type: "automatic",
+                                      },
+                                      {
+                                        name: "email",
+                                        description: "The email of the person",
+                                        type: "automatic",
+                                      },
+                                    ],
+                                  },
                                 },
                                 {
                                   type: "development",
@@ -260,6 +274,20 @@ export const authOptions: NextAuthOptions = {
                                       {
                                         name: "New Session",
                                         description: "Gets fired when a new session is created",
+                                        type: "automatic",
+                                      },
+                                    ],
+                                  },
+                                  attributeClasses: {
+                                    create: [
+                                      {
+                                        name: "userId",
+                                        description: "The internal ID of the person",
+                                        type: "automatic",
+                                      },
+                                      {
+                                        name: "email",
+                                        description: "The email of the person",
                                         type: "automatic",
                                       },
                                     ],
