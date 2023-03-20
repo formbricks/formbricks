@@ -31,7 +31,7 @@ export default function ActivityFeed({
   sortByDate,
   onUnifiedAttributes,
 }: ActivityFeedProps) {
-  // Get Attributes into unified format
+  // Convert Attributes into unified format
   const unifiedAttributes = useMemo(() => {
     if (attributes) {
       return attributes.map((attribute) => ({
@@ -60,7 +60,7 @@ export default function ActivityFeed({
     }
   }, [attributes, onUnifiedAttributes]);
 
-  // Get Displays into unified format
+  // Convert Displays into unified format
   const unifiedDisplays = useMemo(() => {
     if (displays) {
       return displays.map((display) => ({
@@ -73,7 +73,7 @@ export default function ActivityFeed({
     return [];
   }, [displays]);
 
-  // Get Eventis into unified format
+  // Convert Events into unified format
   const unifiedEvents = useMemo(() => {
     if (sessions) {
       return sessions.flatMap((session) =>

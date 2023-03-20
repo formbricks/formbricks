@@ -1,14 +1,16 @@
 import SettingsTitle from "../SettingsTitle";
+import SettingsCard from "../SettingsCard";
+import WidgetStatusIndicator from "./WidgetStatusIndicator";
 
-export default function ProfileSettingsPage() {
+export default function ProfileSettingsPage({ params }) {
   return (
     <div>
       <SettingsTitle title="Setup Checklist" />
-      {/*       <SettingsCard
-        title="Manage subscription"
-        description="View, update and cancel your subscription in the billing portal.">
-        <Button variant="primary">Billing Portal</Button>
-      </SettingsCard> */}
+      <SettingsCard
+        title="Widget Status Indicator"
+        description="Check if the Formbricks widget is alive and kicking.">
+        <WidgetStatusIndicator environmentId={params.environmentId} />
+      </SettingsCard>
     </div>
   );
 }
