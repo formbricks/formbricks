@@ -2,7 +2,7 @@
 
 import GoBackButton from "@/components/shared/GoBackButton";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { deletePerson, usePerson } from "@/lib/people";
+import { deletePerson, usePerson } from "@/lib/people/people";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
