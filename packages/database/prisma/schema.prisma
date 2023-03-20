@@ -169,17 +169,17 @@ enum EnvironmentType {
 }
 
 model Environment {
-  id               String           @id @default(cuid())
-  createdAt        DateTime         @default(now()) @map(name: "created_at")
-  updatedAt        DateTime         @updatedAt @map(name: "updated_at")
-  type             EnvironmentType
-  product          Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId        String
-  isWidgetSetup    Boolean          @default(false) @map(name: "is_widget_setup")
-  surveys          Survey[]
-  people           Person[]
-  eventClasses     EventClass[]
-  attributeClasses AttributeClass[]
+  id                      String           @id @default(cuid())
+  createdAt               DateTime         @default(now()) @map(name: "created_at")
+  updatedAt               DateTime         @updatedAt @map(name: "updated_at")
+  type                    EnvironmentType
+  product                 Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId               String
+  widgetSetupCompleted    Boolean          @default(false)
+  surveys                 Survey[]
+  people                  Person[]
+  eventClasses            EventClass[]
+  attributeClasses        AttributeClass[]
 }
 
 model Product {

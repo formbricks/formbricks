@@ -1,7 +1,26 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
+import { useEnvironment } from "@/lib/environments/environments";
 import { ArchiveBoxIcon, CheckIcon, PauseIcon } from "@heroicons/react/24/solid";
 
-export default function SurveyStatusIndicator({ status, tooltip }: { status: string; tooltip?: boolean }) {
+interface SurveyStatusIndicatorProps {
+  status: string;
+  tooltip?: boolean;
+  environmentId: string;
+}
+
+export default function SurveyStatusIndicator({
+  status,
+  tooltip,
+  environmentId,
+}: SurveyStatusIndicatorProps) {
+  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
+
+  if (isLoadingEnvironment) return <></>;
+  if (isErrorEnvironment) return <></>;
+
+  console.log("environment.widgetSetupCompleted", environment.widgetSetupCompleted);
+
+  if (!environment.widgetSetupCompleted) return null;
   if (tooltip) {
     return (
       <TooltipProvider>

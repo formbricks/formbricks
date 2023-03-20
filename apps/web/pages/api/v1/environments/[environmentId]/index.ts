@@ -35,6 +35,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (environment === null) {
       return res.status(404).json({ message: "This environment doesn't exist" });
     }
+
     // check if membership exists
     const membership = await prisma.membership.findUnique({
       where: {
@@ -50,6 +51,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         .json({ message: "You don't have access to this organisation or this organisation doesn't exist" });
     }
     return res.json(environment);
+  }
+
+  if (req.method === "PUT") {
+    const data = { ...req.body, updatedAt: new Date() };
+    const prismaRes = await prisma.environment.update({
+      where: { id: environmentId },
+      data,
+    });
+    return res.json(prismaRes);
   }
 
   // Unknown HTTP Method

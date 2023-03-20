@@ -41,7 +41,10 @@ export default function ResponseFeed({ person, sortByDate, environmentId }) {
                               href={`environments/${environmentId}/surveys/${response.survey.id}/summary`}>
                               {response.survey.name}
                             </Link>
-                            <SurveyStatusIndicator status={response.survey.status} />
+                            <SurveyStatusIndicator
+                              status={response.survey.status}
+                              environmentId={environmentId}
+                            />
                           </div>
                         </div>
                         <div className="mt-3 space-y-3">

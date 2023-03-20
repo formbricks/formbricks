@@ -84,7 +84,11 @@ export default function SurveysList({ environmentId }) {
                     <div className="flex items-center">
                       {survey.status !== "draft" && (
                         <>
-                          <SurveyStatusIndicator status={survey.status} tooltip />
+                          <SurveyStatusIndicator
+                            status={survey.status}
+                            tooltip
+                            environmentId={environmentId}
+                          />
                           <p className="ml-2 text-xs text-slate-400 ">{survey._count?.responses} responses</p>
                         </>
                       )}

@@ -1,25 +1,34 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
-import { useMemo } from "react";
+import { CheckIcon, ExclamationTriangleIcon, ArrowDownIcon } from "@heroicons/react/24/solid";
+import { useEffect, useMemo } from "react";
 import { useEvents } from "@/lib/events/events";
 import clsx from "clsx";
 import { timeSince } from "@/lib/time";
 import Link from "next/link";
+import { useEnvironmentMutation } from "@/lib/environments/mutateEnvironments";
+import { useEnvironment } from "@/lib/environments/environments";
 
-export default function WidgetStatusIndicator({
-  environmentId,
-  type,
-}: {
+interface WidgetStatusIndicatorProps {
   environmentId: string;
-  type: string;
-}) {
+  type: "large" | "mini";
+}
+
+export default function WidgetStatusIndicator({ environmentId, type }: WidgetStatusIndicatorProps) {
   const { events, isLoadingEvents, isErrorEvents } = useEvents(environmentId);
+  const { triggerEnvironmentMutate } = useEnvironmentMutation(environmentId);
+  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
+
+  useEffect(() => {
+    if (!environment?.widgetSetupCompleted && events && events.length > 0) {
+      triggerEnvironmentMutate({ widgetSetupCompleted: true });
+    }
+  }, [environment, triggerEnvironmentMutate, events]);
 
   const stati = {
     notImplemented: {
-      icon: CheckIcon,
+      icon: ArrowDownIcon,
       color: "slate",
       title: "Not implemented yet.",
       subtitle: "The Formbricks widget has not yet been implemented.",
@@ -52,7 +61,7 @@ export default function WidgetStatusIndicator({
 
   const currentStatus = stati[status];
 
-  if (isLoadingEvents) {
+  if (isLoadingEvents || isLoadingEnvironment) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <LoadingSpinner />
@@ -60,13 +69,11 @@ export default function WidgetStatusIndicator({
     );
   }
 
-  if (isErrorEvents) {
+  if (isErrorEvents || isErrorEnvironment) {
     return <div>Error loading resources. Maybe you don&lsquo;t have enough access rights</div>;
   }
 
-  console.log("events", events);
-  console.log("status", status);
-  console.log("currentStatus", currentStatus);
+  console.log(environment.widgetSetupCompleted);
 
   if (type === "large") {
     return (
