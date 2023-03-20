@@ -25,8 +25,6 @@ export default function AttributeSettingsTab({
     attributeClass.id
   );
 
-  console.log(attributeClass);
-
   const { mutateAttributeClasses } = useAttributeClasses(environmentId);
 
   const onSubmit = async (data) => {

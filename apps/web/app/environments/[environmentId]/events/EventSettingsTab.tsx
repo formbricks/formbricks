@@ -1,19 +1,21 @@
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
-import { useEventClasses } from "@/lib/eventClasses/eventClasses";
+import { useEventClass, useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { useEventClassMutation } from "@/lib/eventClasses/mutateEventClasses";
-import type { EventClass } from "@prisma/client";
 import { useForm } from "react-hook-form";
 
 interface EventSettingsTabProps {
   environmentId: string;
-  eventClass: EventClass;
+  eventClassId: string;
   setOpen: (v: boolean) => void;
 }
 
-export default function EventSettingsTab({ environmentId, eventClass, setOpen }: EventSettingsTabProps) {
+export default function EventSettingsTab({ environmentId, eventClassId, setOpen }: EventSettingsTabProps) {
+  const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, eventClassId);
+
   const { register, handleSubmit } = useForm({
     defaultValues: { name: eventClass.name, description: eventClass.description },
   });
@@ -29,6 +31,9 @@ export default function EventSettingsTab({ environmentId, eventClass, setOpen }:
     mutateEventClasses();
     setOpen(false);
   };
+
+  if (isLoadingEventClass) return <LoadingSpinner />;
+  if (isErrorEventClass) return <p>Error</p>;
 
   return (
     <div>

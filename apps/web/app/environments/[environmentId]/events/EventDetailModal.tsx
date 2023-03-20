@@ -1,9 +1,8 @@
 import ModalWithTabs from "@/components/shared/ModalWithTabs";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import type { EventClass } from "@prisma/client";
 import EventActivityTab from "./EventActivityTab";
 import EventSettingsTab from "./EventSettingsTab";
-import type { EventClass } from "@prisma/client";
-import { useEventClassMutation } from "@/lib/eventClasses/mutateEventClasses";
 
 interface EventDetailModalProps {
   environmentId: string;
@@ -21,11 +20,13 @@ export default function EventDetailModal({
   const tabs = [
     {
       title: "Activity",
-      children: <EventActivityTab eventClass={eventClass} />,
+      children: <EventActivityTab environmentId={environmentId} eventClassId={eventClass.id} />,
     },
     {
       title: "Settings",
-      children: <EventSettingsTab eventClass={eventClass} environmentId={environmentId} setOpen={setOpen} />,
+      children: (
+        <EventSettingsTab environmentId={environmentId} eventClassId={eventClass.id} setOpen={setOpen} />
+      ),
     },
   ];
 

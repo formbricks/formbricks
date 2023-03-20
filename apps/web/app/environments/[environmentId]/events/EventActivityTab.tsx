@@ -1,14 +1,23 @@
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Label } from "@/components/ui/Label";
+import { useEventClass } from "@/lib/eventClasses/eventClasses";
 import { convertDateTimeStringShort } from "@/lib/time";
-import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
 import { capitalizeFirstLetter } from "@/lib/utils";
-import type { EventClass } from "@prisma/client";
+import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
 
 interface ActivityTabProps {
-  eventClass: EventClass;
+  environmentId: string;
+  eventClassId: string;
 }
 
-export default function ActivityTab({ eventClass }: ActivityTabProps) {
+export default function ActivityTab({ environmentId, eventClassId }: ActivityTabProps) {
+  const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, eventClassId);
+
+  if (isLoadingEventClass) return <LoadingSpinner />;
+  if (isErrorEventClass) return <p>Error</p>;
+
+  console.log(JSON.stringify(eventClass, null, 2));
+
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">
@@ -16,27 +25,33 @@ export default function ActivityTab({ eventClass }: ActivityTabProps) {
           <Label className="text-slate-500">Ocurrances</Label>
           <div className="mt-1 grid w-fit grid-cols-3 rounded-lg border-slate-100 bg-slate-50">
             <div className="border-r border-slate-200 py-2 px-4 text-center">
-              <p className="font-bold text-slate-800">1</p>
+              <p className="font-bold text-slate-800">{eventClass.numEventsLastHour}</p>
               <p className="text-xs text-slate-500">last hour</p>
             </div>
             <div className="border-r border-slate-200 py-2 px-4 text-center">
-              <p className="font-bold text-slate-800">1</p>
-              <p className="text-xs text-slate-500">last hour</p>
+              <p className="font-bold text-slate-800">{eventClass.numEventsLast24Hours}</p>
+              <p className="text-xs text-slate-500">last 24 hours</p>
             </div>
             <div className="py-2 px-4 text-center">
-              <p className="font-bold text-slate-800">1</p>
-              <p className="text-xs text-slate-500">last hour</p>
+              <p className="font-bold text-slate-800">{eventClass.numEventsLast7Days}</p>
+              <p className="text-xs text-slate-500">last week</p>
             </div>
           </div>
         </div>
 
         <div>
           <Label className="text-slate-500">Active surveys</Label>
-          <p className="text-sm text-slate-900">List of active surveys</p>
+          {eventClass.activeSurveys.length === 0 && <p className="text-sm text-slate-900">-</p>}
+          {eventClass.activeSurveys.map((surveyName) => (
+            <p className="text-sm text-slate-900">{surveyName}</p>
+          ))}
         </div>
         <div>
           <Label className="text-slate-500">Inactive surveys</Label>
-          <p className="text-sm text-slate-900">List of inactive surveys</p>
+          {eventClass.inactiveSurveys.length === 0 && <p className="text-sm text-slate-900">-</p>}
+          {eventClass.inactiveSurveys.map((surveyName) => (
+            <p className="text-sm text-slate-900">{surveyName}</p>
+          ))}
         </div>
       </div>
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">

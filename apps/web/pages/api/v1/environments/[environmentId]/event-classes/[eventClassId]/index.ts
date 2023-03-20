@@ -30,7 +30,74 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    return res.json(eventClass);
+    const numEventsLastHour = await prisma.event.count({
+      where: {
+        eventClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 60 * 60 * 1000),
+        },
+      },
+    });
+    const numEventsLast24Hours = await prisma.event.count({
+      where: {
+        eventClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+    const numEventsLast7Days = await prisma.event.count({
+      where: {
+        eventClassId,
+        createdAt: {
+          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+    let activeSurveys = await prisma.surveyTrigger.findMany({
+      where: {
+        eventClassId,
+        survey: {
+          status: "inProgress",
+        },
+      },
+      select: {
+        survey: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+    activeSurveys = activeSurveys.map((t) => t.survey.name);
+
+    let inactiveSurveys = await prisma.surveyTrigger.findMany({
+      where: {
+        eventClassId,
+        survey: {
+          status: {
+            in: ["paused", "completed"],
+          },
+        },
+      },
+      select: {
+        survey: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+    inactiveSurveys = inactiveSurveys.map((t) => t.survey.name);
+
+    return res.json({
+      ...eventClass,
+      numEventsLastHour,
+      numEventsLast24Hours,
+      numEventsLast7Days,
+      activeSurveys,
+      inactiveSurveys,
+    });
   }
 
   // PUT
