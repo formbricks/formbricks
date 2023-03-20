@@ -28,6 +28,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             name: true,
             teamId: true,
             brandColor: true,
+            environments: true,
           },
         },
       },

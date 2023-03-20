@@ -38,7 +38,7 @@ import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { ProfileAvatar } from "../../../components/ui/Avatars";
 
@@ -48,6 +48,7 @@ interface EnvironmentsNavbarProps {
 }
 
 export default function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
+  const router = useRouter();
   const { environment } = useEnvironment(environmentId);
   const pathname = usePathname();
 
@@ -149,8 +150,19 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     },
   ];
 
+  const changeEnvironment = (environmentType: string) => {
+    const newEnvironmentId = environment.product.environments.find((e) => e.type === environmentType)?.id;
+    router.push(`/environments/${newEnvironmentId}/`);
+  };
+
   return (
     <nav className="top-0 z-10 w-full border-b border-slate-200 bg-white">
+      {environment?.type === "development" && (
+        <div className="h-6 w-full bg-yellow-500 p-0.5 text-center text-sm text-white">
+          {"< Development />"}
+        </div>
+      )}
+
       <div className="w-full px-4 sm:px-6">
         <div className="flex h-14 justify-between">
           <div className="flex  space-x-4 py-2">
@@ -236,7 +248,9 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
-                      <DropdownMenuRadioGroup value={environment?.type} onValueChange={() => {}}>
+                      <DropdownMenuRadioGroup
+                        value={environment?.type}
+                        onValueChange={(v) => changeEnvironment(v)}>
                         <DropdownMenuRadioItem value="production">Production</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="development">Development</DropdownMenuRadioItem>
                       </DropdownMenuRadioGroup>
