@@ -20,7 +20,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({ type, environmentId
             <Link
               className="flex h-full w-full items-center justify-center"
               href={`/environments/${environmentId}/settings/setup`}>
-              <span className="opacity-0 transition-all duration-300  ease-in-out group-hover:opacity-100">
+              <span className="transition-all duration-300  ease-in-out">
                 No data yet. Setup Formbricks Widget to get started 🚀
               </span>
             </Link>
@@ -44,7 +44,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({ type, environmentId
             <Link
               className="flex h-full w-full items-center justify-center"
               href={`/environments/${environmentId}/settings/setup`}>
-              <span className="opacity-0 transition-all duration-300  ease-in-out group-hover:opacity-100">
+              <span className=" transition-all duration-300  ease-in-out">
                 No data yet. Setup Formbricks Widget to get started 🚀
               </span>
             </Link>
@@ -54,24 +54,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({ type, environmentId
       </div>
     );
   }
-  if (type === "event") {
-    return (
-      <div className="group space-y-8 rounded-lg bg-white p-6 ">
-        <div className="flex items-center space-x-4">
-          <div className="h-12 w-12 rounded-full bg-slate-100"></div>
-          <div className=" h-6 w-full rounded-full bg-slate-100"></div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="h-12 w-12 rounded-full bg-slate-100"></div>
-          <div className=" h-6 w-full rounded-full bg-slate-100"></div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="h-12 w-12 rounded-full bg-slate-100"></div>
-          <div className=" h-6 w-full rounded-full bg-slate-100"></div>
-        </div>
-      </div>
-    );
-  }
+
   return null;
 };
 
