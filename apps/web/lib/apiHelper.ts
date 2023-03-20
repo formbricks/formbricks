@@ -27,6 +27,34 @@ export const hasOwnership = async (model, session, id) => {
   }
 };
 
+export const hasEnvironmentAccess = async (user, environmentId) => {
+  const environment = await prisma.environment.findUnique({
+    where: {
+      id: environmentId,
+    },
+    select: {
+      product: {
+        select: {
+          team: {
+            select: {
+              members: {
+                select: {
+                  userId: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  const environmentUsers = environment?.product.team.members.map((member) => member.userId) || [];
+  if (environmentUsers.includes(user.id)) {
+    return true;
+  }
+  return false;
+};
+
 export const getSessionOrUser = async (req: NextApiRequest, res: NextApiResponse) => {
   // check for session (browser usage)
   let session: any = await getServerSession(req, res, authOptions);

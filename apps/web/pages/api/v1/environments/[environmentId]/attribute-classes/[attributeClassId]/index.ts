@@ -1,4 +1,4 @@
-import { getSessionOrUser } from "@/lib/apiHelper";
+import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/apiHelper";
 import { capturePosthogEvent } from "@/lib/posthogServer";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -11,14 +11,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
 
   const environmentId = req.query.environmentId?.toString();
-
-  const attributeClassId = req.query.attributeClassId?.toString();
-
   if (environmentId === undefined) {
     return res.status(400).json({ message: "Missing environmentId" });
   }
+
+  const attributeClassId = req.query.attributeClassId?.toString();
   if (attributeClassId === undefined) {
     return res.status(400).json({ message: "Missing attributeClassId" });
+  }
+
+  const hasAccess = await hasEnvironmentAccess(user, environmentId);
+  if (hasAccess === false) {
+    return res.status(403).json({ message: "Not authorized" });
   }
 
   // GET

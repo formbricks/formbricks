@@ -1,4 +1,4 @@
-import { getSessionOrUser } from "@/lib/apiHelper";
+import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -10,6 +10,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
 
   const environmentId = req.query?.environmentId?.toString();
+
+  const hasAccess = await hasEnvironmentAccess(user, environmentId);
+  if (hasAccess === false) {
+    return res.status(403).json({ message: "Not authorized" });
+  }
 
   // GET
   if (req.method === "GET") {
