@@ -1,7 +1,9 @@
 import type { Config, MatchType } from "../types/types";
 
 export const checkPageUrl = (config: Config, track: (eventName: string) => void) => {
-  const pageUrlEvents = config.noCodeEvents.filter((event) => event.noCodeConfig?.type === "pageUrl");
+  const pageUrlEvents = config.settings?.noCodeEvents.filter(
+    (event) => event.noCodeConfig?.type === "pageUrl"
+  );
   if (pageUrlEvents.length === 0) {
     return;
   }

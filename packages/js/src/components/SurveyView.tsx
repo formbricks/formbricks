@@ -3,11 +3,19 @@ import { useEffect, useState } from "preact/compat";
 import { createDisplay, markDisplayResponded } from "../lib/display";
 import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
+import { Config, Survey } from "../types/types";
 import OpenTextQuestion from "./OpenTextQuestion";
 import Progress from "./Progress";
 import RadioElement from "./RadioElement";
 
-export default function SurveyView({ config, survey, close }) {
+interface SurveyViewProps {
+  config: Config;
+  survey: Survey;
+  close: () => void;
+  brandColor: string;
+}
+
+export default function SurveyView({ config, survey, close, brandColor }: SurveyViewProps) {
   const [currentQuestion, setCurrentQuestion] = useState(survey.questions[0]);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [responseId, setResponseId] = useState(null);
@@ -71,11 +79,12 @@ export default function SurveyView({ config, survey, close }) {
             lastQuestion={
               survey.questions.findIndex((e) => e.id === currentQuestion.id) === survey.questions.length - 1
             }
+            brandColor={brandColor}
           />
         ) : null}
       </div>
       <div className="mt-2">
-        <Progress progress={progress} />
+        <Progress progress={progress} brandColor={brandColor} />
       </div>
     </div>
   );

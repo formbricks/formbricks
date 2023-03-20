@@ -60,10 +60,9 @@ const populateConfig = async (c: Config) => {
     config.session = getLocalSession();
   }
   if (!config.session) {
-    const { session, noCodeEvents, surveys } = await createSession(config);
+    const { session, settings } = await createSession(config);
     config.session = session;
-    config.noCodeEvents = noCodeEvents;
-    config.surveys = surveys;
+    config.settings = settings;
     if (!config.session) {
       console.error('Formbricks: Error creating "session"');
       return;
@@ -71,8 +70,7 @@ const populateConfig = async (c: Config) => {
     track("New Session");
   } else {
     // if we have a session, we also have surveys and noCodeEvents
-    config.surveys = JSON.parse(localStorage.getItem("formbricks__surveys") || "[]");
-    config.noCodeEvents = JSON.parse(localStorage.getItem("formbricks__noCodeEvents") || "[]");
+    config.settings = JSON.parse(localStorage.getItem("formbricks__settings") || "{}");
   }
   // check page url for nocode events
   checkPageUrl(config, track);
@@ -203,7 +201,10 @@ const workSurveyQueue = async () => {
 };
 
 const renderSurvey = (survey) => {
-  render(h(App, { config, survey, closeSurvey }), document.getElementById(containerId));
+  render(
+    h(App, { config, survey, closeSurvey, brandColor: config.settings?.brandColor }),
+    document.getElementById(containerId)
+  );
 };
 
 const closeSurvey = () => {
