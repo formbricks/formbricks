@@ -9,6 +9,7 @@ interface ActivityFeedProps {
   responses: any[];
   sortByDate: boolean;
   attributeMap: any[];
+  environmentId: string;
   setAttributeMap: (attributeMap: any[]) => void;
 }
 
@@ -31,6 +32,7 @@ export default function ActivityFeed({
   responses,
   sortByDate,
   setAttributeMap,
+  environmentId,
 }: ActivityFeedProps) {
   // Convert Attributes into unified format
   const unifiedAttributes = useMemo(() => {
@@ -97,7 +99,7 @@ export default function ActivityFeed({
   return (
     <>
       {unifiedList.length === 0 ? (
-        <EmptySpaceFiller type={"event"} />
+        <EmptySpaceFiller type={"event"} environmentId={environmentId} />
       ) : (
         <div>
           {unifiedList

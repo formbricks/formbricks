@@ -163,6 +163,7 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
               sortByDate={activityAscending}
               attributeMap={attributeMap}
               setAttributeMap={setAttributeMap}
+              environmentId={environmentId}
             />
           </div>
         </div>
