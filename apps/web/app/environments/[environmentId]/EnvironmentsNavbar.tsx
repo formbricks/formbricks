@@ -143,7 +143,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         {
           icon: HeartIcon,
           label: "Contribute to Formbricks",
-          href: "https://formbricks.com/discord",
+          href: "https://github.com/formbricks/formbricks",
           target: "_blank",
         },
       ],
