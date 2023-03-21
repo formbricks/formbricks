@@ -23,7 +23,7 @@ export default function TabBar({ tabs, activeId, setActiveId }: SecondNavbarProp
               "flex h-full items-center px-3 text-sm font-medium"
             )}
             aria-current={tab.id === activeId ? "page" : undefined}>
-            {tab.icon && <div className="mr-2 h-5 w-5">{tab.icon}</div>}
+            {tab.icon && <div className="flex h-5 w-5 items-center">{tab.icon}</div>}
             {tab.label}
           </button>
         ))}
