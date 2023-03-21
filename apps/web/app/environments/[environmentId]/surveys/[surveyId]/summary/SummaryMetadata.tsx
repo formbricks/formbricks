@@ -59,11 +59,11 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
                 </div>
               ) : (
                 <Select onValueChange={(value) => triggerSurveyMutate({ status: value })}>
-                  <SelectTrigger className="w-[180px] bg-white py-1.5">
+                  <SelectTrigger className="w-[200px] bg-white py-1.5">
                     <SelectValue>
                       <div className="flex items-center">
                         <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
-                        <span className="ml-2 text-slate-700">
+                        <span className="ml-2 text-sm text-slate-700">
                           {survey.status === "draft" && "Survey drafted"}
                           {survey.status === "inProgress" && "Collecting insights"}
                           {survey.status === "paused" && "Survey paused"}
