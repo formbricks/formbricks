@@ -12,9 +12,16 @@ interface SurveyMenuBarProps {
   triggers: string[];
   environmentId: string;
   surveyId: string;
+  showSetting: "once" | "always";
 }
 
-export default function SurveyMenuBar({ questions, triggers, environmentId, surveyId }: SurveyMenuBarProps) {
+export default function SurveyMenuBar({
+  questions,
+  triggers,
+  environmentId,
+  surveyId,
+  showSetting,
+}: SurveyMenuBarProps) {
   const router = useRouter();
   const { survey } = useSurvey(environmentId, surveyId);
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, surveyId);
@@ -34,13 +41,13 @@ export default function SurveyMenuBar({ questions, triggers, environmentId, surv
           variant="secondary"
           className="mr-3"
           loading={isMutatingSurvey}
-          onClick={() => triggerSurveyMutate({ questions, triggers })}>
+          onClick={() => triggerSurveyMutate({ questions, triggers, show: showSetting })}>
           Save changes
         </Button>
         <Button
           variant="highlight"
           onClick={() => {
-            triggerSurveyMutate({ status: "inProgress", questions, triggers });
+            triggerSurveyMutate({ status: "inProgress", questions, triggers, show: showSetting });
             router.push(`/environments/${environmentId}/surveys/${surveyId}/summary?success=true`);
           }}>
           Publish Survey

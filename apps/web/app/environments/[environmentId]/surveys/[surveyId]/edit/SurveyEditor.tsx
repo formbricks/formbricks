@@ -20,6 +20,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [triggers, setTriggers] = useState<string[]>([]); // list of eventClass Ids
+  const [showSetting, setShowSetting] = useState<"once" | "always">("once");
 
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
 
@@ -27,6 +28,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     if (survey) {
       setQuestions(survey.questions);
       setTriggers(survey.triggers.map((trigger) => trigger.eventClassId));
+      setShowSetting(survey.show);
       if (!activeQuestionId && survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
@@ -46,6 +48,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
       <SurveyMenuBar
         questions={questions}
         triggers={triggers}
+        showSetting={showSetting}
         environmentId={environmentId}
         surveyId={surveyId}
       />
@@ -60,7 +63,13 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
               setActiveQuestionId={setActiveQuestionId}
             />
           ) : (
-            <AudienceView environmentId={environmentId} triggers={triggers} setTriggers={setTriggers} />
+            <AudienceView
+              environmentId={environmentId}
+              triggers={triggers}
+              setTriggers={setTriggers}
+              showSetting={showSetting}
+              setShowSetting={setShowSetting}
+            />
           )}
         </main>
         <aside className="relative hidden h-full w-96 flex-shrink-0 overflow-y-auto border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">

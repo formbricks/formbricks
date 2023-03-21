@@ -11,22 +11,21 @@ const options = [
     id: "once",
     name: "Show once",
     description: "Every person can see this survey only once.",
-    comingSoon: false,
   },
   {
-    id: "multiple",
-    name: "Show multiple times",
-
-    description: "Every person can see this survey multiple times.",
-    comingSoon: false,
+    id: "always",
+    name: "Show always",
+    description: "Show this survey every time the trigger is fired.",
   },
 ];
 
-interface RecontactOptionsCardProps {}
+interface RecontactOptionsCardProps {
+  showSetting: "once" | "always";
+  setShowSetting: (showSetting: "once" | "always") => void;
+}
 
-export default function RecontactOptionsCard({}: RecontactOptionsCardProps) {
+export default function RecontactOptionsCard({ showSetting, setShowSetting }: RecontactOptionsCardProps) {
   const [open, setOpen] = useState(false);
-  const [checkedOption, setCheckedOption] = useState(false);
 
   return (
     <Collapsible.Root
@@ -36,7 +35,7 @@ export default function RecontactOptionsCard({}: RecontactOptionsCardProps) {
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
-            {!checkedOption ? (
+            {!showSetting ? (
               <div className="h-7 w-7 rounded-full border border-slate-400" />
             ) : (
               <CheckCircleIcon className="h-8 w-8 text-teal-400" />
@@ -54,9 +53,11 @@ export default function RecontactOptionsCard({}: RecontactOptionsCardProps) {
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           <RadioGroup
-            defaultValue="web"
+            value={showSetting}
             className="flex flex-col space-y-3"
-            onValueChange={() => setCheckedOption(true)}>
+            onValueChange={(v) => {
+              if (v === "always" || v === "once") setShowSetting(v);
+            }}>
             {options.map((option) => (
               <Label
                 htmlFor={option.id}
@@ -65,7 +66,6 @@ export default function RecontactOptionsCard({}: RecontactOptionsCardProps) {
                   value={option.id}
                   id={option.id}
                   className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
-                  disabled={option.comingSoon}
                 />
                 <div className="">
                   <p className="font-semibold text-slate-700">{option.name}</p>
