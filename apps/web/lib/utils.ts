@@ -26,3 +26,10 @@ export const truncate = (str: string, length: number) => {
   }
   return str;
 };
+
+export const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+};
