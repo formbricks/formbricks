@@ -1,5 +1,5 @@
 import SecondNavbar from "../environments/SecondNavBar";
-import { CursorArrowRaysIcon, TagIcon } from "@heroicons/react/20/solid";
+import { CursorArrowRaysIcon, TagIcon } from "@heroicons/react/24/solid";
 
 interface EventsAttributesTabsProps {
   activeId: string;

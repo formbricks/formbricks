@@ -65,14 +65,14 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
                     </div>
                   </div>
                 </div>
-                <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
-                  <div className="text-gray-900">{attributeClass.userId}</div>
+                <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
+                  <div className="text-slate-900">{attributeClass.userId}</div>
                 </div>
-                <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
-                  <div className="text-gray-900">{attributeClass.email}</div>
+                <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
+                  <div className="text-slate-900">{attributeClass.email}</div>
                 </div>
-                <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
-                  <div className="text-gray-900">{attributeClass._count?.sessions}</div>
+                <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
+                  <div className="text-slate-900">{attributeClass._count?.sessions}</div>
                 </div>
               </div>
             </button>

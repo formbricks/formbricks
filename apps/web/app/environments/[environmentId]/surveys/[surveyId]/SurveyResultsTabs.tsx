@@ -1,5 +1,5 @@
 import SecondNavbar from "@/components/environments/SecondNavBar";
-import { PresentationChartLineIcon, InboxStackIcon } from "@heroicons/react/20/solid";
+import { PresentationChartLineIcon, InboxStackIcon } from "@heroicons/react/24/solid";
 
 interface SurveyResultsTabProps {
   activeId: string;

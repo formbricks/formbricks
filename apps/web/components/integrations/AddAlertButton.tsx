@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusCircleIcon } from "@heroicons/react/20/solid";
+import { PlusCircleIcon } from "@heroicons/react/24/solid";
 
 interface AddAlertButtonProps {
   channel: string;

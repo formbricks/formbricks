@@ -63,7 +63,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             <AudienceView environmentId={environmentId} triggers={triggers} setTriggers={setTriggers} />
           )}
         </main>
-        <aside className="relative hidden h-full w-96 flex-shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-200 shadow-inner xl:flex xl:flex-col">
+        <aside className="relative hidden h-full w-96 flex-shrink-0 overflow-y-auto border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">
           <Preview activeQuestionId={activeQuestionId} questions={questions} />
         </aside>
       </div>

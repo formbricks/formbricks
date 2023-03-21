@@ -4,7 +4,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Button from "@/components/ui/Button";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { timeSinceConditionally } from "@/lib/time";
-import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/20/solid";
+import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import AddNoCodeEventModal from "./AddNoCodeEventModal";
 import EventDetailModal from "./EventDetailModal";

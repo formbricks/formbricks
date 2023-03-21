@@ -1,5 +1,5 @@
 import { useState, ChangeEvent } from "react";
-import { ChevronDownIcon, ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon, ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 
 interface APICallProps {

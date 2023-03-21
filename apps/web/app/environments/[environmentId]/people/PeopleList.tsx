@@ -26,7 +26,7 @@ export default function PeopleList({ environmentId }: { environmentId: string })
         <EmptySpaceFiller type="table" environmentId={environmentId} />
       ) : (
         <div className="rounded-lg border border-slate-200">
-          <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-gray-900">
+          <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
             <div className="col-span-4 pl-6 ">User</div>
             <div className="text-center">User ID</div>
             <div className="text-center">Email</div>
@@ -45,18 +45,18 @@ export default function PeopleList({ environmentId }: { environmentId: string })
                         <PersonAvatar personId={person.id} />
                       </div>
                       <div className="ml-4">
-                        <div className="font-medium text-gray-900">{person.id}</div>
+                        <div className="font-medium text-slate-900">{person.id}</div>
                       </div>
                     </div>
                   </div>
-                  <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
-                    <div className="text-gray-900">{getAttributeValue(person, "userId")}</div>
+                  <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
+                    <div className="text-slate-900">{getAttributeValue(person, "userId")}</div>
                   </div>
-                  <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
-                    <div className="text-gray-900">{getAttributeValue(person, "email")}</div>
+                  <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
+                    <div className="text-slate-900">{getAttributeValue(person, "email")}</div>
                   </div>
-                  <div className="my-auto whitespace-nowrap text-center text-sm text-gray-500">
-                    <div className="text-gray-900">{person._count?.sessions}</div>
+                  <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
+                    <div className="text-slate-900">{person._count?.sessions}</div>
                   </div>
                 </div>
               </Link>

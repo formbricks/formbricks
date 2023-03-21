@@ -17,8 +17,8 @@ export default function SecondNavbar({ tabs, activeId, ...props }: SecondNavbarP
               href={tab.href}
               className={cn(
                 tab.id === activeId
-                  ? " border-brand-dark border-b-2 font-semibold text-gray-900"
-                  : "text-gray-500 hover:text-gray-700",
+                  ? " border-brand-dark border-b-2 font-semibold text-slate-900"
+                  : "text-slate-500 hover:text-slate-700",
                 "flex h-full items-center px-3 text-sm font-medium"
               )}
               aria-current={tab.id === activeId ? "page" : undefined}>

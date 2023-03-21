@@ -2,7 +2,7 @@
 
 import { forgotPassword } from "@/lib/users/users";
 import { Button } from "@/components/ui/Button";
-import { XCircleIcon } from "@heroicons/react/20/solid";
+import { XCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 

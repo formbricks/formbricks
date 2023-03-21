@@ -16,8 +16,6 @@ export default function EventActivityTab({ environmentId, eventClassId }: Activi
   if (isLoadingEventClass) return <LoadingSpinner />;
   if (isErrorEventClass) return <p>Error</p>;
 
-  console.log(JSON.stringify(eventClass, null, 2));
-
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">

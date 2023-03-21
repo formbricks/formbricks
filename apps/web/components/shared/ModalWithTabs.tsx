@@ -42,8 +42,8 @@ export default function ModalWithTabs({ open, setOpen, tabs, icon, label, descri
               key={index}
               className={`mr-4 px-1 pb-3 pt-6 focus:outline-none ${
                 activeTab === index
-                  ? "border-brand-dark border-b-2 font-semibold text-gray-900"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "border-brand-dark border-b-2 font-semibold text-slate-900"
+                  : "text-slate-500 hover:text-slate-700"
               }`}
               onClick={() => handleTabClick(index)}>
               {tab.title}
