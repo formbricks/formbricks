@@ -1,15 +1,15 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import Button from "@/components/ui/Button";
-import { useResponses } from "@/lib/responses/responses";
-import { useMemo } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { useSurvey } from "@/lib/surveys/surveys";
-import { PlayCircleIcon, PauseCircleIcon, StopCircleIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
-import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
+import Button from "@/components/ui/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { useEnvironment } from "@/lib/environments/environments";
+import { useResponses } from "@/lib/responses/responses";
+import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
+import { useSurvey } from "@/lib/surveys/surveys";
+import { PauseCircleIcon, PencilSquareIcon, PlayCircleIcon, StopCircleIcon } from "@heroicons/react/24/solid";
+import { useMemo } from "react";
 
 export default function SummaryMetadata({ surveyId, environmentId }) {
   const { responses, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
@@ -31,7 +31,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
   }
 
   return (
-    <div className="mb-4 grid grid-cols-3 gap-x-4">
+    <div className="mb-4 grid grid-cols-5 gap-x-4">
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-sm text-slate-600">Total Responses</p>
         <p className="text-2xl font-bold text-slate-800">
@@ -44,7 +44,13 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
           {responses.length === 0 ? <span>-</span> : <span>{parseFloat(responseRate.toFixed(2))} %</span>}
         </p>
       </div>
-      <div className="flex flex-col justify-between">
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-sm text-slate-600">Completion Rate</p>
+        <p className="text-2xl font-bold text-slate-800">
+          {responses.length === 0 ? <span>-</span> : <span>{parseFloat(responseRate.toFixed(2))} %</span>}
+        </p>
+      </div>
+      <div className="col-span-2 flex flex-col justify-between">
         <div className=""></div>
         <div className="flex justify-end">
           {environment.widgetSetupCompleted && (

@@ -57,7 +57,7 @@ export default function AttributeSettingsTab({
           />
         </div>
         <div className="my-6">
-          <Label>Event Type</Label>
+          <Label>Attribute Type</Label>
           {attributeClass.type === "code" ? (
             <p className="text-sm text-slate-600">
               This is a code attribute. You can only change the description.
