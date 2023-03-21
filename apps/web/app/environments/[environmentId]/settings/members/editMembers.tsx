@@ -1,22 +1,105 @@
 "use client";
 
+import DeleteDialog from "@/components/shared/DeleteDialog";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { ProfileAvatar } from "@/components/ui/Avatars";
 import Button from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
+import { SendIcon } from "@/components/ui/icons/SendIcon";
+import { TrashIcon } from "@/components/ui/icons/TrashIcon";
+import { addMember, removeMember, resendInvite, useTeam } from "@/lib/teams";
+import { useState } from "react";
+import AddMemberModal from "./AddMemberModal";
 
-export function EditMembers() {
-  return <div className="w-full max-w-sm items-center"></div>;
-}
+export function EditMembers({ environmentId }) {
 
-export function EditTeamName() {
+  const { team, isErrorTeam, isLoadingTeam, isValidatingTeam } =
+    useTeam(environmentId);
+
+  const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
+  const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
+
+  const [activeMember, setActiveMember] = useState({} as any);
+
+  const handleOpenDeleteMemberModal = (e, member) => {
+    e.preventDefault();
+    setActiveMember(member);
+    setDeleteMemberModalOpen(true);
+  };
+  const handleDeleteMember = async () => {
+    await removeMember(team.teamId, activeMember.userId);
+    setDeleteMemberModalOpen(false);
+  }
+  const handleResendInvite = async (userId: string) => {
+    await resendInvite(team.teamId, userId);
+  }
+
+  if (isLoadingTeam) {
+    return <LoadingSpinner />;
+  }
+
+  if (isErrorTeam) {
+    console.log(isErrorTeam)
+    return <div>Error</div>;
+  }
+  const accepted = false;
+
   return (
-    <div className="w-full max-w-sm items-center">
-      <Label htmlFor="teamname">Team Name</Label>
-      <Input type="text" id="teamname" />
+    <>
+      <div className="mb-6 text-right">
+        <Button
+          variant="primary"
+          onClick={() => {
+            setAddMemberModalOpen(true);
+          }}
+        >
+          Add Member
+        </Button>
+      </div>
+      <div className="rounded-lg border border-slate-200">
+        <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+          <div className="px-6"></div>
+          <div className="col-span-2  ">Fullname</div>
+          <div className="col-span-2">Email</div>
+          <div className=""></div>
+        </div>
+        <div className="grid-cols-7">
+          {team.members.map((member) => (
+            <div className="w-full grid h-12  py-2 grid-cols-7 content-center rounded-lg text-left text-sm text-slate-900 hover:bg-slate-100" key={member.userId}>
+              <div className="px-6 h-58 ">
+                <ProfileAvatar userId={member.userId} />
+              </div>
+              <div className="col-span-2 flex flex-col justify-center"><p>{member.name}</p></div>
+              <div className="col-span-2 flex flex-col justify-center">{member.email}</div>
+              <div className="col-span-2 flex justify-end gap-x-6 pr-6 items-center">
+                {!accepted && (
+                  <p className="text-xs text-amber-500 bg-amber-50 border-amber-500 border-2 rounded-md px-2 py-px">Pending</p>
+                )}
+                <button onClick={e => handleOpenDeleteMemberModal(e, member)}>
+                  <TrashIcon />
+                </button>
+                {!accepted && (
+                  <button onClick={() => handleResendInvite(member.userId)}>
+                    <SendIcon />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-      <Button type="submit" className="mt-4" onClick={(e) => console.log(e)}>
-        Update
-      </Button>
-    </div>
+      <AddMemberModal
+        environmentId={environmentId}
+        teamId={team.teamId}
+        open={isAddMemberModalOpen}
+        setOpen={setAddMemberModalOpen}
+      />
+      <DeleteDialog
+        open={isDeleteMemberModalOpen}
+        setOpen={setDeleteMemberModalOpen}
+        deleteWhat={activeMember.name + " from your team"}
+        onDelete={handleDeleteMember}
+      />
+    </>
   );
 }
