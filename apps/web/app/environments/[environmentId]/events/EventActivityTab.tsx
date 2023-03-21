@@ -10,7 +10,7 @@ interface ActivityTabProps {
   eventClassId: string;
 }
 
-export default function ActivityTab({ environmentId, eventClassId }: ActivityTabProps) {
+export default function EventActivityTab({ environmentId, eventClassId }: ActivityTabProps) {
   const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, eventClassId);
 
   if (isLoadingEventClass) return <LoadingSpinner />;

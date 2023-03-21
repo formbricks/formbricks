@@ -6,8 +6,8 @@ import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { timeSinceConditionally } from "@/lib/time";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/20/solid";
 import { useState } from "react";
-import EventDetailModal from "./EventDetailModal";
 import AddNoCodeEventModal from "./AddNoCodeEventModal";
+import EventDetailModal from "./EventDetailModal";
 
 export default function EventClassesList({ environmentId }) {
   const { eventClasses, isLoadingEventClasses, isErrorEventClasses, mutateEventClasses } =

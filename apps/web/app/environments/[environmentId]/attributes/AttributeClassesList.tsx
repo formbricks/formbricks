@@ -1,8 +1,9 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { Button } from "@/components/ui/Button";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
-import { TagIcon } from "@heroicons/react/20/solid";
+import { QuestionMarkCircleIcon, TagIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import AttributeDetailModal from "./AttributeDetailModal";
 import UploadAttributesModal from "./UploadAttributesModal";
@@ -30,16 +31,12 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
 
   return (
     <>
-      {/*       <div className="mb-6 text-right">
-        <Button
-          variant="primary"
-          onClick={() => {
-            setUploadCSVModalOpen(true);
-          }}>
-          <ArrowUpTrayIcon className="mr-2 h-4 w-4" />
-          Upload .CSV
+      <div className="mb-6 text-right">
+        <Button variant="secondary" href="https://formbricks.com/docs" target="_blank">
+          <QuestionMarkCircleIcon className="mr-2 h-4 w-4" />
+          How to add attributes
         </Button>
-      </div> */}
+      </div>
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-3 pl-6 ">Name</div>

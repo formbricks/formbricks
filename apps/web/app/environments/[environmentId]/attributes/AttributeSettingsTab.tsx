@@ -56,17 +56,31 @@ export default function AttributeSettingsTab({
             })}
           />
         </div>
+        <div className="my-6">
+          <Label>Event Type</Label>
+          {attributeClass.type === "code" ? (
+            <p className="text-sm text-slate-600">
+              This is a code attribute. You can only change the description.
+            </p>
+          ) : attributeClass.type === "automatic" ? (
+            <p className="text-sm text-slate-600">
+              This attribute was added automatically. You cannot make changes to it.
+            </p>
+          ) : null}
+        </div>
         <div className="flex justify-between border-t border-slate-200 pt-6">
           <div>
             <Button variant="secondary" href="https://formbricks.com/docs" target="_blank">
               Read Docs
             </Button>
           </div>
-          <div className="flex space-x-2">
-            <Button type="submit" variant="primary" loading={isMutatingAttributeClass}>
-              Save changes
-            </Button>
-          </div>
+          {attributeClass.type !== "automatic" && (
+            <div className="flex space-x-2">
+              <Button type="submit" variant="primary" loading={isMutatingAttributeClass}>
+                Save changes
+              </Button>
+            </div>
+          )}
         </div>
       </form>
     </div>
