@@ -79,7 +79,9 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
                   {Math.round(result.percentage * 100)}%
                 </div>
               </div>
-              <p className="text-slate-600">{result.count} response</p>
+              <p className="text-slate-600">
+                {result.count} {result.count === 1 ? "response" : "responses"}
+              </p>
             </div>
             <ProgressBar barColor="bg-brand" progress={result.percentage} />
           </div>
