@@ -12,7 +12,7 @@ export default function AudienceView({ environmentId, triggers, setTriggers }) {
         <WhenToSendCard triggers={triggers} setTriggers={setTriggers} environmentId={environmentId} />
       </div>
       <div className="mb-5">
-        <RecontactOptionsCard environmentId={environmentId} />
+        <RecontactOptionsCard />
       </div>
     </div>
   );

@@ -2,15 +2,8 @@
 
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
-import {
-  CheckCircleIcon,
-  ComputerDesktopIcon,
-  DevicePhoneMobileIcon,
-  EnvelopeIcon,
-  LinkIcon,
-} from "@heroicons/react/24/solid";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import clsx from "clsx";
 import { useState } from "react";
 
 const options = [
@@ -29,11 +22,9 @@ const options = [
   },
 ];
 
-interface RecontactOptionsCardProps {
-  environmentId: string;
-}
+interface RecontactOptionsCardProps {}
 
-export default function RecontactOptionsCard({ environmentId }: RecontactOptionsCardProps) {
+export default function RecontactOptionsCard({}: RecontactOptionsCardProps) {
   const [open, setOpen] = useState(false);
   const [checkedOption, setCheckedOption] = useState(false);
 
