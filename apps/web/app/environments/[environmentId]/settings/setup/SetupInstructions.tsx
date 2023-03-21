@@ -2,10 +2,10 @@
 
 import TabBar from "@/components/ui/TabBar";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { IoLogoHtml5, IoLogoReact } from "react-icons/io5";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";
+import { useEffect, useState } from "react";
+import { IoLogoHtml5, IoLogoReact } from "react-icons/io5";
 
 const tabs = [
   { id: "react", label: "React", icon: <IoLogoReact /> },
@@ -53,8 +53,7 @@ if (typeof window !== "undefined") {
                 environment: {environmentId} is yours.
               </li>
               <li>
-                <span className="font-semibold">apiHost:</span> localhost for tests in development
-                environment. To use in production, replace with Formbricks backend URL.
+                <span className="font-semibold">apiHost:</span> This is the URL of your Formbricks backend.
               </li>
             </ul>
             <p className="text-lg font-semibold text-slate-800">You&apos;re done 🎉</p>

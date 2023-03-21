@@ -15,6 +15,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
 import { FilterIcon } from "@/components/ui/icons/FilterIcon";
 import { FormIcon } from "@/components/ui/icons/FormIcon";
@@ -39,7 +40,7 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProfileAvatar } from "../../../components/ui/Avatars";
 
 interface EnvironmentsNavbarProps {
@@ -49,8 +50,18 @@ interface EnvironmentsNavbarProps {
 
 export default function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
   const router = useRouter();
-  const { environment } = useEnvironment(environmentId);
+  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
   const pathname = usePathname();
+
+  const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
+
+  useEffect(() => {
+    if (environment && environment.widgetSetupCompleted) {
+      setWidgetSetupCompleted(true);
+    } else {
+      setWidgetSetupCompleted(false);
+    }
+  }, [environment]);
 
   const navigation = useMemo(
     () => [
@@ -133,6 +144,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           icon: DocumentCheckIcon,
           label: "Setup checklist",
           href: `/environments/${environmentId}/settings/setup`,
+          hidden: widgetSetupCompleted,
         },
         {
           icon: CodeBracketIcon,
@@ -154,6 +166,14 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     const newEnvironmentId = environment.product.environments.find((e) => e.type === environmentType)?.id;
     router.push(`/environments/${newEnvironmentId}/`);
   };
+
+  if (isLoadingEnvironment) {
+    return <LoadingSpinner />;
+  }
+
+  if (isErrorEnvironment) {
+    return <div>Error</div>;
+  }
 
   return (
     <nav className="top-0 z-10 w-full border-b border-slate-200 bg-white">
@@ -261,16 +281,19 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 {dropdownnavigation.map((item) => (
                   <DropdownMenuGroup key={item.title}>
                     <DropdownMenuSeparator />
-                    {item.links.map((link) => (
-                      <Link href={link.href} target={link.target} key={link.label}>
-                        <DropdownMenuItem key={link.label}>
-                          <div className="flex items-center">
-                            <link.icon className="mr-2 h-4 w-4" />
-                            <span>{link.label}</span>
-                          </div>
-                        </DropdownMenuItem>
-                      </Link>
-                    ))}
+                    {item.links.map(
+                      (link) =>
+                        !link.hidden && (
+                          <Link href={link.href} target={link.target} key={link.label}>
+                            <DropdownMenuItem key={link.label}>
+                              <div className="flex items-center">
+                                <link.icon className="mr-2 h-4 w-4" />
+                                <span>{link.label}</span>
+                              </div>
+                            </DropdownMenuItem>
+                          </Link>
+                        )
+                    )}
                   </DropdownMenuGroup>
                 ))}
                 <DropdownMenuSeparator />

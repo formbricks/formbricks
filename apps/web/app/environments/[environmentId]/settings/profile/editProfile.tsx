@@ -44,7 +44,7 @@ export function EditName() {
 
       <div className="mt-4">
         <Label htmlFor="email">Email</Label>
-        <Input type="email" id="fullname" defaultValue={profile.email} />
+        <Input type="email" id="fullname" defaultValue={profile.email} disabled />
       </div>
       <Button type="submit" className="mt-4" loading={isMutatingProfile}>
         Update
