@@ -16,6 +16,7 @@ export default function TemplateList({ environmentId }: { environmentId: string 
       {
         id: createId(),
         type: "openText",
+        headline: "What's poppin?",
         subheader: "This can help us improve your experience.",
         placeholder: "Type your answer here...",
       },

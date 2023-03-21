@@ -59,7 +59,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           name: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
           icon: CreditCardIcon,
-          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
         },
       ],
     },
@@ -93,21 +93,21 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           href: "https://formbricks.com/gdpr",
           icon: LinkIcon,
           target: "_blank",
-          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
         },
         {
           name: "Privacy",
           href: "https://formbricks.com/privacy",
           icon: LinkIcon,
           target: "_blank",
-          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
         },
         {
           name: "Terms",
           href: "https://formbricks.com/terms",
           icon: LinkIcon,
           target: "_blank",
-          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
         },
         {
           name: "License",
@@ -128,19 +128,21 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
               {item.title}
             </p>
             <div className="mt-1 ml-4 space-y-1">
-              {item.links.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  target={link.target}
-                  className="group flex items-center whitespace-nowrap rounded-md px-1 py-1 text-sm font-medium text-slate-900 hover:text-slate-700">
-                  <link.icon
-                    className="mr-3 h-4 w-4 flex-shrink-0 text-slate-400 group-hover:text-slate-500"
-                    aria-hidden="true"
-                  />
-                  {link.name}
-                </a>
-              ))}
+              {item.links
+                .filter((l) => !l.hidden)
+                .map((link) => (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    target={link.target}
+                    className="group flex items-center whitespace-nowrap rounded-md px-1 py-1 text-sm font-medium text-slate-900 hover:text-slate-700">
+                    <link.icon
+                      className="mr-3 h-4 w-4 flex-shrink-0 text-slate-400 group-hover:text-slate-500"
+                      aria-hidden="true"
+                    />
+                    {link.name}
+                  </a>
+                ))}
             </div>
           </div>
         ))}

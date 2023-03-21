@@ -70,7 +70,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         name: "Events & Attributes",
         href: `/environments/${environmentId}/events`,
         icon: FilterIcon,
-        current: pathname?.includes("/events" || "/attributes"),
+        current: pathname?.includes("/events") || pathname?.includes("/attributes"),
       },
       /*       {
         name: "Integrations",

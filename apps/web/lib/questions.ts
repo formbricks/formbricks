@@ -27,7 +27,6 @@ export const questionTypes = [
 
 export const universalQuestionDefaults = {
   required: true,
-  subheader: "This can help us improve your experience.",
 };
 
 export const getQuestionDefaults = (id: string) => {

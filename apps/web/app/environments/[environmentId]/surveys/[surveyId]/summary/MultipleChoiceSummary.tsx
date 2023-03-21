@@ -22,6 +22,7 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
       resultsDict[choice.label] = {
         count: 0,
         label: choice.label,
+        percentage: 0,
       };
     }
     // count the responses
@@ -34,7 +35,9 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
     // add the percentage
     const total = questionSummary.responses.length;
     for (const key of Object.keys(resultsDict)) {
-      resultsDict[key].percentage = resultsDict[key].count / total;
+      if (resultsDict[key].count) {
+        resultsDict[key].percentage = resultsDict[key].count / total;
+      }
     }
     // sort by count and transform to array
     const results = Object.values(resultsDict).sort((a: any, b: any) => b.count - a.count);
