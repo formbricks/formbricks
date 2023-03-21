@@ -31,7 +31,7 @@ export default function Modal({
             <button
               type="button"
               onClick={close}
-              class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
+              class="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
               <span class="sr-only">Close</span>
               <svg
                 class="h-6 w-6"

@@ -1,5 +1,5 @@
 import SecondNavbar from "../environments/SecondNavBar";
-import { CodeBracketSquareIcon, MegaphoneIcon, ArrowPathIcon } from "@heroicons/react/20/solid";
+import { CodeBracketSquareIcon, MegaphoneIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 
 interface IntegrationsTabs {
   activeId: string;

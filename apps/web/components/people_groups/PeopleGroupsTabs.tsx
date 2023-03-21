@@ -1,5 +1,5 @@
 import SecondNavbar from "../environments/SecondNavBar";
-import { UserIcon, UserGroupIcon } from "@heroicons/react/20/solid";
+import { UserIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 
 interface PeopleGroupTabs {
   activeId: string;

@@ -51,7 +51,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({ type, environmentId
         </div>
         <div className="space-y-4">
           <div className="h-12 w-full rounded-full bg-slate-100"></div>
-          <div className=" flex h-12 w-full items-center justify-center rounded-full bg-slate-50">
+          <div className=" flex h-12 w-full items-center justify-center rounded-full bg-slate-50 text-sm text-slate-500">
             {!environment.widgetSetupCompleted && (
               <Link
                 className="flex h-full w-full items-center justify-center"

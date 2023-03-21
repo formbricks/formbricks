@@ -1,4 +1,5 @@
 import HowToSendCard from "./HowToSendCard";
+import RecontactOptionsCard from "./RecontactOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
 
 export default function AudienceView({ environmentId, triggers, setTriggers }) {
@@ -9,6 +10,9 @@ export default function AudienceView({ environmentId, triggers, setTriggers }) {
       </div>
       <div className="mb-5">
         <WhenToSendCard triggers={triggers} setTriggers={setTriggers} environmentId={environmentId} />
+      </div>
+      <div className="mb-5">
+        <RecontactOptionsCard />
       </div>
     </div>
   );

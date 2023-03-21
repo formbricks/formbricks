@@ -1,5 +1,5 @@
 import { RadioGroup } from "@headlessui/react";
-import { CheckCircleIcon } from "@heroicons/react/20/solid";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";

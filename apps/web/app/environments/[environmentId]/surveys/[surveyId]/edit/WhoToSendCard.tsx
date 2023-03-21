@@ -8,14 +8,14 @@ import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid"
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 
-interface WhenToSendCardProps {
+interface AddQuestionButtonProps {
   triggers: any;
   setTriggers: (triggers: any) => void;
   environmentId: string;
 }
 
-export default function WhenToSendCard({ environmentId, triggers, setTriggers }: WhenToSendCardProps) {
-  const [open, setOpen] = useState(false);
+export default function WhoToSendCard({ environmentId, triggers, setTriggers }: AddQuestionButtonProps) {
+  const [open, setOpen] = useState(true);
   const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
 
   if (isLoadingEventClasses) {
@@ -56,7 +56,7 @@ export default function WhenToSendCard({ environmentId, triggers, setTriggers }:
           <div>
             <p className="text-lg font-semibold text-slate-800">When to send</p>
             <p className="mt-1 truncate text-sm text-slate-500">
-              Choose the events when you want the survey to trigger.
+              Choose the events when you want the survey to trigger
             </p>
           </div>
         </div>

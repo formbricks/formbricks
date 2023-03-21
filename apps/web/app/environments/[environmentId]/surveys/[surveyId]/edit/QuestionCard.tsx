@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/Switch";
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/types/questions";
-import { Bars4Icon } from "@heroicons/react/20/solid";
+import { Bars4Icon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Draggable } from "react-beautiful-dnd";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
@@ -43,7 +43,7 @@ export default function QuestionCard({
           <div
             className={cn(
               open ? "bg-slate-600" : "bg-slate-500",
-              "top-0 w-10 cursor-pointer rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-700"
+              "top-0 w-10 cursor-grabbing rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-700"
             )}>
             {questionIdx + 1}
           </div>
@@ -52,8 +52,10 @@ export default function QuestionCard({
             onOpenChange={(open) => {
               setActiveQuestionId(open ? question.id : null);
             }}
-            className="flex-1 rounded-r-lg border border-gray-200">
-            <Collapsible.CollapsibleTrigger asChild className="flex cursor-pointer justify-between p-4">
+            className="flex-1 rounded-r-lg border border-slate-200">
+            <Collapsible.CollapsibleTrigger
+              asChild
+              className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
               <div>
                 <div className="inline-flex">
                   <Bars4Icon className="-ml-0.5 mr-2 h-5 w-5 text-slate-400" />
@@ -62,7 +64,7 @@ export default function QuestionCard({
                       {question.headline || getQuestionTypeName(question.type)}
                     </p>
                     {!open && question?.required && (
-                      <p className="mt-1 truncate text-xs text-gray-500">
+                      <p className="mt-1 truncate text-xs text-slate-500">
                         {question?.required && "Required"}
                       </p>
                     )}

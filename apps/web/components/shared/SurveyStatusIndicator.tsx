@@ -18,8 +18,6 @@ export default function SurveyStatusIndicator({
   if (isLoadingEnvironment) return <></>;
   if (isErrorEnvironment) return <></>;
 
-  console.log("environment.widgetSetupCompleted", environment.widgetSetupCompleted);
-
   if (!environment.widgetSetupCompleted) return null;
   if (tooltip) {
     return (

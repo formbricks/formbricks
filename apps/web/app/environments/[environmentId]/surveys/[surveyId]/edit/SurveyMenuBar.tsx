@@ -20,7 +20,7 @@ export default function SurveyMenuBar({ questions, triggers, environmentId, surv
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, surveyId);
 
   return (
-    <div className="border-b border-gray-200 bg-white py-3 px-5 sm:flex sm:items-center sm:justify-between">
+    <div className="border-b border-slate-200 bg-white py-3 px-5 sm:flex sm:items-center sm:justify-between">
       <Input
         defaultValue={survey.name}
         onBlur={(e) => triggerSurveyMutate({ name: e.target.value })}
