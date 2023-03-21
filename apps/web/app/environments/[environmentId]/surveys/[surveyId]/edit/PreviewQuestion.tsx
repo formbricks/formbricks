@@ -1,4 +1,5 @@
 import Modal from "@/components/preview/Modal";
+import MultipleChoiceSingleQuestion from "@/components/preview/MultipleChoiceSingleQuestion";
 import OpenTextQuestion from "@/components/preview/OpenTextQuestion";
 import type { Question } from "@/types/questions";
 import { useEffect, useMemo, useState } from "react";
@@ -6,9 +7,10 @@ import { useEffect, useMemo, useState } from "react";
 interface PreviewProps {
   activeQuestionId: string | null;
   questions: Question[];
+  lastQuestion: boolean;
 }
 
-export default function Preview({ activeQuestionId, questions }: PreviewProps) {
+export default function PreviewQuestion({ activeQuestionId, questions, lastQuestion }: PreviewProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
 
   useEffect(() => {
@@ -34,7 +36,11 @@ export default function Preview({ activeQuestionId, questions }: PreviewProps) {
 
   return (
     <Modal isOpen={isModalOpen}>
-      <OpenTextQuestion question={question} onSubmit={() => {}} lastQuestion={false} />
+      {question.type === "openText" ? (
+        <OpenTextQuestion question={question} onSubmit={() => {}} lastQuestion={lastQuestion} />
+      ) : question.type === "multipleChoiceSingle" ? (
+        <MultipleChoiceSingleQuestion question={question} onSubmit={() => {}} lastQuestion={lastQuestion} />
+      ) : null}
     </Modal>
   );
 }

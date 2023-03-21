@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { useState } from "preact/compat";
+import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 
 export default function RadioElement({ element, onSubmit }) {

@@ -69,6 +69,7 @@ export default function QuestionsView({
                     deleteQuestion={deleteQuestion}
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
+                    lastQuestion={questionIdx === questions.length - 1}
                   />
                 ))}
                 {provided.placeholder}

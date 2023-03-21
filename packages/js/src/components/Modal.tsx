@@ -1,5 +1,5 @@
 import { h, VNode } from "preact";
-import { useEffect, useState } from "preact/compat";
+import { useEffect, useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 
 export default function Modal({

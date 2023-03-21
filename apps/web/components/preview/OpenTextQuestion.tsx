@@ -1,9 +1,9 @@
-import type { Question } from "@/types/questions";
+import type { OpenTextQuestion } from "@/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface OpenTextQuestionProps {
-  question: Question;
+  question: OpenTextQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
 }

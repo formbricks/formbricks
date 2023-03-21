@@ -1,4 +1,4 @@
-export type Question = OpenTextQuestion;
+export type Question = OpenTextQuestion | MultipleChoiceSingleQuestion;
 
 export interface OpenTextQuestion {
   id: string;
@@ -8,4 +8,19 @@ export interface OpenTextQuestion {
   placeholder?: string;
   buttonLabel?: string;
   required: boolean;
+}
+
+export interface MultipleChoiceSingleQuestion {
+  id: string;
+  type: "multipleChoiceSingle";
+  headline: string;
+  subheader?: string;
+  required: boolean;
+  buttonLabel?: string;
+  choices: Choice[];
+}
+
+export interface Choice {
+  id: string;
+  label: string;
 }
