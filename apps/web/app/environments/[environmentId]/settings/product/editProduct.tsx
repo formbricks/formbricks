@@ -56,8 +56,17 @@ export function EditWaitingTime({ environmentId }) {
       onSubmit={handleSubmit((data) => {
         triggerProductMutate(data);
       })}>
-      <Label htmlFor="waitingDays">Wait X days before showing next survey:</Label>
-      <Input type="number" id="waitingDays" defaultValue={product.waitingDays} {...register("waitingDays")} />
+      <Label htmlFor="recontactDays">Wait X days before showing next survey:</Label>
+      <Input
+        type="number"
+        id="recontactDays"
+        defaultValue={product.recontactDays}
+        {...register("recontactDays", {
+          min: 0,
+          max: 365,
+          valueAsNumber: true,
+        })}
+      />
 
       <Button type="submit" className="mt-4" loading={isMutatingProduct}>
         Update

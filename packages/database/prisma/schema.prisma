@@ -113,11 +113,19 @@ enum ShowOptions {
   always
 }
 
+enum SurveyType {
+  email
+  link
+  mobile
+  web
+}
+
 model Survey {
   id            String          @id @default(cuid())
   createdAt     DateTime        @default(now()) @map(name: "created_at")
   updatedAt     DateTime        @updatedAt @map(name: "updated_at")
   name          String
+  type          String          @default("web")
   environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
   status        SurveyStatus    @default(draft)
@@ -189,14 +197,15 @@ model Environment {
 }
 
 model Product {
-  id           String        @id @default(cuid())
-  createdAt    DateTime      @default(now()) @map(name: "created_at")
-  updatedAt    DateTime      @updatedAt @map(name: "updated_at")
-  name         String
-  team         Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId       String
-  environments Environment[]
-  brandColor   String        @default("#334155")
+  id            String        @id @default(cuid())
+  createdAt     DateTime      @default(now()) @map(name: "created_at")
+  updatedAt     DateTime      @updatedAt @map(name: "updated_at")
+  name          String
+  team          Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId        String
+  environments  Environment[]
+  brandColor    String        @default("#334155")
+  recontactDays Int           @default(7)
 }
 
 enum Plan {
