@@ -28,18 +28,39 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // GET
   if (req.method === "GET") {
-    const surveys = await prisma.survey.findFirst({
+    const surveyData = await prisma.survey.findFirst({
       where: {
         id: surveyId,
         environmentId,
       },
       include: {
         triggers: true,
-        displays: true,
       },
     });
 
-    return res.json(surveys);
+    if (!surveyData) {
+      return res.status(404).json({ message: "Survey not found" });
+    }
+
+    const numDisplays = await prisma.display.count({
+      where: {
+        surveyId,
+      },
+    });
+    const numDisplaysResponded = await prisma.display.count({
+      where: {
+        surveyId,
+        status: "responded",
+      },
+    });
+    // responseRate, rounded to 2 decimal places
+    const responseRate = Math.round((numDisplaysResponded / numDisplays) * 100) / 100;
+
+    return res.json({
+      ...surveyData,
+      responseRate,
+      triggers: surveyData.triggers.map((t) => t.eventClassId),
+    });
   }
 
   // POST
