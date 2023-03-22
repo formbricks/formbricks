@@ -8,12 +8,14 @@ interface MultipleChoiceSingleProps {
   question: MultipleChoiceSingleQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
+  brandColor: string;
 }
 
 export default function MultipleChoiceSingleQuestion({
   question,
   onSubmit,
   lastQuestion,
+  brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   return (
@@ -48,11 +50,12 @@ export default function MultipleChoiceSingleQuestion({
                       id={choice.id}
                       name={question.id}
                       value={choice.label}
-                      className="h-4 w-4 border-gray-300 text-slate-600 focus:ring-slate-600"
+                      className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
                       onChange={(e) => {
                         setSelectedChoice(e.currentTarget.value);
                       }}
+                      style={{ borderColor: brandColor, color: brandColor }}
                     />
                     <span id={`${choice.id}-label`} className="ml-3 font-medium">
                       {choice.label}
@@ -67,7 +70,8 @@ export default function MultipleChoiceSingleQuestion({
         <div></div>
         <button
           type="submit"
-          className="flex items-center rounded-md border border-transparent bg-slate-600 px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
+          className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+          style={{ backgroundColor: brandColor }}>
           {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
         </button>
       </div>
