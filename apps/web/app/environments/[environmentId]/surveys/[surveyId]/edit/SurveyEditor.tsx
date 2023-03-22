@@ -59,9 +59,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     return <div>Error</div>;
   }
 
-  console.log("product", product);
-  console.log("survey", JSON.stringify(survey, null, 2));
-
   return (
     <div className="flex h-full flex-col">
       <SurveyMenuBar

@@ -20,7 +20,7 @@ export default function QuestionsView({
   setLocalSurvey,
 }: QuestionsViewProps) {
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
-    const updatedSurvey = { ...localSurvey };
+    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions[questionIdx] = {
       ...updatedSurvey.questions[questionIdx],
       ...updatedAttributes,
@@ -29,13 +29,13 @@ export default function QuestionsView({
   };
 
   const deleteQuestion = (questionIdx: number) => {
-    const updatedSurvey = { ...localSurvey };
+    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions.splice(questionIdx, 1);
     setLocalSurvey(updatedSurvey);
   };
 
   const addQuestion = (question: any) => {
-    const updatedSurvey = { ...localSurvey };
+    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions.push(question);
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);

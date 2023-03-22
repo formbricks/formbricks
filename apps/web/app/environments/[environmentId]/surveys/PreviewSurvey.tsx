@@ -16,9 +16,13 @@ export default function PreviewSurvey({ activeQuestionId, questions, brandColor 
 
   useEffect(() => {
     if (activeQuestionId) {
+      if (currentQuestion && currentQuestion.id === activeQuestionId) {
+        setCurrentQuestion(questions.find((q) => q.id === activeQuestionId) || null);
+        return;
+      }
       setIsModalOpen(false);
-      setCurrentQuestion(questions.find((q) => q.id === activeQuestionId) || null);
       setTimeout(() => {
+        setCurrentQuestion(questions.find((q) => q.id === activeQuestionId) || null);
         setIsModalOpen(true);
       }, 300);
     } else {
