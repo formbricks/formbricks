@@ -29,20 +29,20 @@ export default function OpenTextQuestion({
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
-      <div className="mt-4">
+      <div className="fb-mt-4">
         <textarea
           rows={3}
           name={question.id}
           id={question.id}
           placeholder={question.placeholder}
           required
-          className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>
+          className="fb-block fb-w-full fb-rounded-md fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm border-slate-100 bg-slate-50 focus:border-slate-500"></textarea>
       </div>
-      <div className="mt-4 flex w-full justify-between">
+      <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
         <div></div>
         <button
           type="submit"
-          className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+          className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 focus:ring-slate-500"
           style={{ backgroundColor: brandColor }}>
           {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
         </button>

@@ -33,32 +33,34 @@ export default function MultipleChoiceSingleQuestion({
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
-      <div className="mt-4">
+      <div className="fb-mt-4">
         <fieldset>
-          <legend className="sr-only">Choices</legend>
-          <div className="relative space-y-2 rounded-md bg-white">
+          <legend className="fb-sr-only">Choices</legend>
+          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white">
             {question.choices &&
               question.choices.map((choice) => (
                 <label
                   key={choice.id}
                   className={cn(
-                    selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
+                    selectedChoice === choice.label
+                      ? "fb-z-10 border-slate-400 bg-slate-50"
+                      : "fb-border-gray-200",
+                    "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-rounded-md fb-border fb-p-4 focus:fb-outline-none hover:bg-slate-50"
                   )}>
-                  <span className="flex items-center text-sm">
+                  <span className="fb-flex fb-items-center fb-text-sm">
                     <input
                       type="radio"
                       id={choice.id}
                       name={question.id}
                       value={choice.label}
-                      className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
+                      className="fb-h-4 fb-w-4 fb-border fb-border-gray-300 focus:fb-ring-0 focus:fb-ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
                       onChange={(e) => {
                         setSelectedChoice(e.currentTarget.value);
                       }}
                       style={{ borderColor: brandColor, color: brandColor }}
                     />
-                    <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                    <span id={`${choice.id}-label`} className="fb-ml-3 fb-font-medium">
                       {choice.label}
                     </span>
                   </span>
@@ -67,11 +69,11 @@ export default function MultipleChoiceSingleQuestion({
           </div>
         </fieldset>
       </div>
-      <div className="mt-4 flex w-full justify-between">
+      <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
         <div></div>
         <button
           type="submit"
-          className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+          className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 focus:ring-slate-500"
           style={{ backgroundColor: brandColor }}>
           {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
         </button>
