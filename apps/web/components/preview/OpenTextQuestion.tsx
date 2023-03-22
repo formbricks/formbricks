@@ -6,9 +6,15 @@ interface OpenTextQuestionProps {
   question: OpenTextQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
+  brandColor: string;
 }
 
-export default function OpenTextQuestion({ question, onSubmit, lastQuestion }: OpenTextQuestionProps) {
+export default function OpenTextQuestion({
+  question,
+  onSubmit,
+  lastQuestion,
+  brandColor,
+}: OpenTextQuestionProps) {
   return (
     <form
       onSubmit={(e) => {
@@ -29,13 +35,14 @@ export default function OpenTextQuestion({ question, onSubmit, lastQuestion }: O
           id={question.id}
           placeholder={question.placeholder}
           required
-          className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-slate-500 sm:text-sm"></textarea>
+          className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>
       </div>
       <div className="mt-4 flex w-full justify-between">
         <div></div>
         <button
           type="submit"
-          className="flex items-center rounded-md border border-transparent bg-slate-600 px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
+          className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+          style={{ backgroundColor: brandColor }}>
           {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
         </button>
       </div>

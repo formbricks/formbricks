@@ -1,11 +1,12 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
 import type { Question } from "@/types/questions";
 import { useEffect, useState } from "react";
+import PreviewSurvey from "../../PreviewSurvey";
 import AudienceView from "./AudienceView";
-import PreviewQuestion from "./PreviewQuestion";
 import QuestionsAudienceTabs from "./QuestionsAudienceTabs";
 import QuestionsView from "./QuestionsView";
 import SurveyMenuBar from "./SurveyMenuBar";
@@ -23,6 +24,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
   const [showSetting, setShowSetting] = useState<"once" | "always">("once");
 
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
 
   useEffect(() => {
     if (survey) {
@@ -35,16 +37,18 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     }
   }, [survey]);
 
-  if (isLoadingSurvey) {
+  if (isLoadingSurvey || isLoadingProduct) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorSurvey) {
+  if (isErrorSurvey || isErrorProduct) {
     return <div>Error</div>;
   }
 
+  console.log(product);
+
   return (
-    <div className="h-full">
+    <div className="flex h-full flex-col">
       <SurveyMenuBar
         questions={questions}
         triggers={triggers}
@@ -52,7 +56,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
         environmentId={environmentId}
         surveyId={surveyId}
       />
-      <div className="relative z-0 flex h-full flex-1 overflow-hidden">
+      <div className="relative z-0 flex flex-1 overflow-hidden">
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
           <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
           {activeView === "questions" ? (
@@ -72,11 +76,11 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             />
           )}
         </main>
-        <aside className="relative hidden h-full w-96 flex-shrink-0 overflow-y-auto border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">
-          <PreviewQuestion
+        <aside className="relative hidden h-full flex-1 flex-shrink-0 overflow-hidden border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">
+          <PreviewSurvey
             activeQuestionId={activeQuestionId}
             questions={questions}
-            lastQuestion={questions.findIndex((q) => q.id === activeQuestionId) === questions.length - 1}
+            brandColor={product.brandColor}
           />
         </aside>
       </div>
