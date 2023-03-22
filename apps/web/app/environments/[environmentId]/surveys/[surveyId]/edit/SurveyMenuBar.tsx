@@ -3,33 +3,25 @@
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
-import { useRouter } from "next/navigation";
 import { Survey } from "@/types/surveys";
+import { useRouter } from "next/navigation";
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
   setLocalSurvey: (survey: Survey) => void;
   environmentId: string;
-  surveyId: string;
 }
 
-export default function SurveyMenuBar({
-  localSurvey,
-  environmentId,
-  surveyId,
-  setLocalSurvey,
-}: SurveyMenuBarProps) {
+export default function SurveyMenuBar({ localSurvey, environmentId, setLocalSurvey }: SurveyMenuBarProps) {
   const router = useRouter();
-  const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, surveyId);
+  const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
 
   return (
     <div className="border-b border-slate-200 bg-white py-3 px-5 sm:flex sm:items-center sm:justify-between">
       <Input
         defaultValue={localSurvey.name}
-        onBlur={(e) => {
-          triggerSurveyMutate({ name: e.target.value });
-          const updatedSurvey = { ...localSurvey };
-          updatedSurvey.name = e.target.value;
+        onChange={(e) => {
+          const updatedSurvey = { ...localSurvey, name: e.target.value };
           setLocalSurvey(updatedSurvey);
         }}
         className="max-w-md"
@@ -49,7 +41,7 @@ export default function SurveyMenuBar({
           variant="highlight"
           onClick={() => {
             triggerSurveyMutate({ ...localSurvey, status: "inProgress" });
-            router.push(`/environments/${environmentId}/surveys/${surveyId}/summary?success=true`);
+            router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
           }}>
           Publish Survey
         </Button>

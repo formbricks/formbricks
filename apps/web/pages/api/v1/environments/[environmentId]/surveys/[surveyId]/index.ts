@@ -47,12 +47,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         surveyId,
       },
     });
+
     const numDisplaysResponded = await prisma.display.count({
       where: {
         surveyId,
         status: "responded",
       },
     });
+
     // responseRate, rounded to 2 decimal places
     const responseRate = Math.round((numDisplaysResponded / numDisplays) * 100) / 100;
 
@@ -63,7 +65,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
   }
 
-  // POST
+  // PUT
   else if (req.method === "PUT") {
     const currentTriggers = await prisma.surveyTrigger.findMany({
       where: {
@@ -117,6 +119,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       ...data,
       ...body,
     };
+
+    delete data.responseRate;
 
     const prismaRes = await prisma.survey.update({
       where: { id: surveyId },

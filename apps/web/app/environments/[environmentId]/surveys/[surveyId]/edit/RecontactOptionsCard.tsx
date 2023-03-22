@@ -3,10 +3,9 @@
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { Survey } from "@/types/surveys";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
-import { Survey } from "@/types/surveys";
 
 const displayOptions = [
   {
@@ -34,7 +33,7 @@ const responseOptions = [
   },
 ];
 
-const recontactOptions = [
+/* const recontactOptions = [
   {
     id: "false",
     name: "Ignore waiting period, always show this survey.",
@@ -46,7 +45,7 @@ const recontactOptions = [
     description: "Overwrites waiting period between surveys to ___ days.",
   },
 ];
-
+ */
 interface RecontactOptionsCardProps {
   localSurvey: Survey;
   setLocalSurvey: (survey: Survey) => void;

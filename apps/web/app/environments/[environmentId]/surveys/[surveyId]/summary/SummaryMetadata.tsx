@@ -23,11 +23,6 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
     return (responses.filter((r) => r.finished).length / responses.length) * 100;
   }, [responses]);
 
-  const responseRate = useMemo(() => {
-    if (!responses || !survey) return 0;
-    return (responses.length / survey.displays.length) * 100;
-  }, [survey, responses]);
-
   if (isLoadingResponses || isLoadingSurvey || isLoadingEnvironment) {
     return <LoadingSpinner />;
   }
@@ -56,10 +51,10 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
             <div className="cursor-default space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
               <p className="text-sm text-slate-600">Response Rate</p>
               <p className="text-2xl font-bold text-slate-800">
-                {responses.length === 0 ? (
+                {survey.responseRate === null || survey.responseRate === 0 ? (
                   <span>-</span>
                 ) : (
-                  <span>{parseFloat(responseRate.toFixed(2))} %</span>
+                  <span>{survey.responseRate} %</span>
                 )}
               </p>
             </div>

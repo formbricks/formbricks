@@ -4,10 +4,10 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Button from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
+import { Survey } from "@/types/surveys";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
-import { Survey } from "@/types/surveys";
 
 interface WhenToSendCardProps {
   localSurvey: Survey;
@@ -29,7 +29,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
   const addTriggerEvent = () => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers = "";
+    updatedSurvey.triggers = [...localSurvey.triggers, ""];
     setLocalSurvey(updatedSurvey);
   };
 
@@ -41,9 +41,8 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
   const removeTriggerEvent = (idx: number) => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers[idx] = "";
+    updatedSurvey.triggers = [...localSurvey.triggers.slice(0, idx), ...localSurvey.triggers.slice(idx + 1)];
     setLocalSurvey(updatedSurvey);
-    /* setTriggers([...triggers.slice(0, idx), ...triggers.slice(idx + 1)]); */
   };
 
   return (

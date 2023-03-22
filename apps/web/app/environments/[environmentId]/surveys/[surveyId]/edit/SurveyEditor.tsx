@@ -1,9 +1,9 @@
 "use client";
 
-import { Survey } from "@/types/surveys";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
+import { Survey } from "@/types/surveys";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
 import AudienceView from "./AudienceView";
@@ -35,7 +35,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
       setShowSetting(survey.show); */
       if (!localSurvey) {
         setLocalSurvey(survey);
-      } else {
+      } /* else {
         if (
           confirm(
             "This survey has been updated. Do you want to discard your changes and continue with the new version?"
@@ -43,7 +43,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
         ) {
           setLocalSurvey(survey);
         }
-      }
+      } */
 
       if (!activeQuestionId && survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
@@ -68,7 +68,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
         setLocalSurvey={setLocalSurvey}
         localSurvey={localSurvey}
         environmentId={environmentId}
-        surveyId={surveyId}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">

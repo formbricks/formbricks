@@ -1,9 +1,9 @@
+import { Survey } from "@/types/surveys";
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
+import ResponseOptionsCard from "./ResponseOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
-import ResponseOptionsCard from "./ResponseOptionsCard";
-import { Survey } from "@/types/surveys";
 
 interface AudienceViewProps {
   environmentId: string;
@@ -24,7 +24,7 @@ export default function AudienceView({ environmentId, localSurvey, setLocalSurve
         environmentId={environmentId}
       />
 
-      <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+      <ResponseOptionsCard />
 
       <RecontactOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
     </div>

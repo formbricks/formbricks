@@ -26,13 +26,6 @@ export default function QuestionsView({
       ...updatedAttributes,
     };
     setLocalSurvey(updatedSurvey);
-
-    /*  const updatedQuestions = [...questions];
-    updatedQuestions[questionIdx] = {
-      ...updatedQuestions[questionIdx],
-      ...updatedAttributes,
-    };
-    setQuestions(updatedQuestions); */
   };
 
   const deleteQuestion = (questionIdx: number) => {
@@ -45,9 +38,6 @@ export default function QuestionsView({
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.questions.push(question);
     setLocalSurvey(updatedSurvey);
-    /*     const updatedQuestions = [...questions];
-    updatedQuestions.push(question);
-    setQuestions(updatedQuestions);*/
     setActiveQuestionId(question.id);
   };
 
@@ -56,11 +46,10 @@ export default function QuestionsView({
       return;
     }
 
-    const items = Array.from(localSurvey.questions);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.questions = items;
+    const newQuestions = Array.from(localSurvey.questions);
+    const [reorderedQuestion] = newQuestions.splice(result.source.index, 1);
+    newQuestions.splice(result.destination.index, 0, reorderedQuestion);
+    const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
 
