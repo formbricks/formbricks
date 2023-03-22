@@ -26,6 +26,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
       select: {
         id: true,
+        environmentId: true,
         attributes: {
           select: {
             id: true,
@@ -38,7 +39,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             },
           },
         },
-        environmentId: true,
       },
     });
     return res.json(personData);

@@ -30,6 +30,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
       select: {
         id: true,
+        environmentId: true,
         attributes: {
           select: {
             id: true,
@@ -106,6 +107,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         person: {
           select: {
             id: true,
+            environmentId: true,
             attributes: {
               select: {
                 id: true,

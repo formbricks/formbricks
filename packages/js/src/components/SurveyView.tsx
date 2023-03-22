@@ -69,7 +69,7 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
 
   return (
     <div>
-      <div className={cn(loadingElement ? "animate-pulse opacity-60" : "", "p-4")}>
+      <div className={cn(loadingElement ? "fb-animate-pulse fb-opacity-60" : "", "fb-p-4")}>
         {currentQuestion.type === "multipleChoiceSingle" ? (
           <MultipleChoiceSingleQuestion
             question={currentQuestion}
@@ -90,7 +90,7 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
           />
         ) : null}
       </div>
-      <div className="mt-2">
+      <div className="fb-mt-2">
         <Progress progress={progress} brandColor={brandColor} />
       </div>
     </div>
