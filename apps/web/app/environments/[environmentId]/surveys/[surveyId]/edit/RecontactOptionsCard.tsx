@@ -1,30 +1,31 @@
 "use client";
 
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 
-const options = [
+const displayOptions = [
   {
-    id: "once",
-    name: "Show once",
+    id: "false",
+    name: "Show once per person",
     description: "Every person can see this survey only once.",
   },
   {
-    id: "always",
-    name: "Show always",
-    description: "Show this survey every time the trigger is fired.",
+    id: "true",
+    name: "Can be shown multiple times per person",
+    description: "A person can see this survey multiple times.",
   },
 ];
 
 interface RecontactOptionsCardProps {
-  showSetting: "once" | "always";
-  setShowSetting: (showSetting: "once" | "always") => void;
+  localSurvey: Survey;
+  setLocalSurvey: (survey: Survey) => void;
 }
 
-export default function RecontactOptionsCard({ showSetting, setShowSetting }: RecontactOptionsCardProps) {
+export default function RecontactOptionsCard({ localSurvey, setLocalSurvey }: RecontactOptionsCardProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,11 +36,11 @@ export default function RecontactOptionsCard({ showSetting, setShowSetting }: Re
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
-            {!showSetting ? (
+            {/*   {!displayType ? (
               <div className="h-7 w-7 rounded-full border border-slate-400" />
             ) : (
               <CheckCircleIcon className="h-8 w-8 text-teal-400" />
-            )}
+            )} */}
           </div>
           <div>
             <p className="text-lg font-semibold text-slate-800">Recontact Options</p>
@@ -52,11 +53,42 @@ export default function RecontactOptionsCard({ showSetting, setShowSetting }: Re
       <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
+          <p>How often can it be seen</p>
           <RadioGroup
-            value={showSetting}
+            value={localSurvey.allowMultipleDisplays.toString()}
             className="flex flex-col space-y-3"
             onValueChange={(v) => {
-              if (v === "always" || v === "once") setShowSetting(v);
+              const updatedSurvey = [...localSurvey];
+              updatedSurvey.allowMultipleDisplays = v === "true";
+              setLocalSurvey(updatedSurvey);
+            }}>
+            {displayOptions.map((option) => (
+              <Label
+                htmlFor={option.id}
+                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                <RadioGroupItem
+                  value={option.id}
+                  id={option.id}
+                  className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
+                />
+                <div className="">
+                  <p className="font-semibold text-slate-700">{option.name}</p>
+
+                  <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
+                </div>
+              </Label>
+            ))}
+          </RadioGroup>
+        </div>
+        <div className="p-3">
+          <p>How often can it be filled out</p>
+          <RadioGroup
+            value={localSurvey.allowMultipleResponses}
+            className="flex flex-col space-y-3"
+            onValueChange={(v) => {
+              const updatedSurvey = [...localSurvey];
+              updatedSurvey.allowMultipleResponses = v;
+              setLocalSurvey(updatedSurvey);
             }}>
             {options.map((option) => (
               <Label
@@ -75,6 +107,34 @@ export default function RecontactOptionsCard({ showSetting, setShowSetting }: Re
               </Label>
             ))}
           </RadioGroup>
+        </div>
+        <div className="p-3">
+          <p>Advanced Settings</p>
+          <Checkbox />
+          <Label>Overwrite Waiting Time (Throttling)</Label>
+          {/* <RadioGroup
+            value={recontactSetting.recontactDays}
+            className="flex flex-col space-y-3"
+            onValueChange={(v) => {
+              if (v === "always" || v === "once") setRecontactSetting.setShowSetting(v);
+            }}>
+            {options.map((option) => (
+              <Label
+                htmlFor={option.id}
+                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                <RadioGroupItem
+                  value={option.id}
+                  id={option.id}
+                  className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
+                />
+                <div className="">
+                  <p className="font-semibold text-slate-700">{option.name}</p>
+
+                  <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
+                </div>
+              </Label>
+            ))}
+          </RadioGroup> */}
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

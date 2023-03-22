@@ -4,24 +4,16 @@ import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { useSurvey } from "@/lib/surveys/surveys";
-import type { Question } from "@/types/questions";
 import { useRouter } from "next/navigation";
+import { Survey } from "@/../../packages/js/dist/types/types";
 
 interface SurveyMenuBarProps {
-  questions: Question[];
-  triggers: string[];
+  localSurvey: Survey;
   environmentId: string;
   surveyId: string;
-  showSetting: "once" | "always";
 }
 
-export default function SurveyMenuBar({
-  questions,
-  triggers,
-  environmentId,
-  surveyId,
-  showSetting,
-}: SurveyMenuBarProps) {
+export default function SurveyMenuBar({ localSurvey, environmentId, surveyId }: SurveyMenuBarProps) {
   const router = useRouter();
   const { survey } = useSurvey(environmentId, surveyId);
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, surveyId);
@@ -41,13 +33,13 @@ export default function SurveyMenuBar({
           variant="secondary"
           className="mr-3"
           loading={isMutatingSurvey}
-          onClick={() => triggerSurveyMutate({ questions, triggers, show: showSetting })}>
+          onClick={() => triggerSurveyMutate({ ...localSurvey })}>
           Save changes
         </Button>
         <Button
           variant="highlight"
           onClick={() => {
-            triggerSurveyMutate({ status: "inProgress", questions, triggers, show: showSetting });
+            triggerSurveyMutate({ ...localSurvey, status: "inProgress" });
             router.push(`/environments/${environmentId}/surveys/${surveyId}/summary?success=true`);
           }}>
           Publish Survey

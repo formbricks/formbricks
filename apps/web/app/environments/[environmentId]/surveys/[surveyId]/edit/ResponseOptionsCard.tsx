@@ -9,22 +9,28 @@ import { useState } from "react";
 
 const options = [
   {
-    id: "all",
-    name: "Survey all people",
-    description: "Potentially, all users can be surveyed.",
+    id: "ongoing",
+    name: "Ongoing",
+    description: "Collects responses until survey is stopped manually.",
     disabled: false,
   },
   {
-    id: "filter",
-    name: "Filter based on attributes",
-    description: "Only people with specific attributes can be surveyed.",
+    id: "limit",
+    name: "Collects a limited amount of responses",
+    description: "Stops collecting responses when limit is reached.",
     disabled: true,
   },
 ];
 
-interface WhoToSendToCardProps {}
+interface ResponseOptionsCardProps {
+  responseSetting: "ongoing" | "limit";
+  setResponseSetting: (responseSetting: "ongoing" | "limit") => void;
+}
 
-export default function WhoToSendToCard({}: WhoToSendToCardProps) {
+export default function ResponseOptionsCard({
+  responseSetting = "ongoing",
+  setResponseSetting,
+}: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,20 +41,28 @@ export default function WhoToSendToCard({}: WhoToSendToCardProps) {
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
-            <CheckCircleIcon className="h-8 w-8 text-teal-400" />
+            {!responseSetting ? (
+              <div className="h-7 w-7 rounded-full border border-slate-400" />
+            ) : (
+              <CheckCircleIcon className="h-8 w-8 text-teal-400" />
+            )}
           </div>
           <div>
-            <p className="text-lg font-semibold text-slate-800">Who to send to</p>
-            <p className="mt-1 truncate text-sm text-slate-500">
-              Decide which group of you users can be surveyed.
-            </p>
+            <p className="text-lg font-semibold text-slate-800">Response Options</p>
+            <p className="mt-1 truncate text-sm text-slate-500">Decide when the survey should end.</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
-          <RadioGroup value="all" className="flex flex-col space-y-3">
+          <RadioGroup
+            value={responseSetting}
+            className="flex flex-col space-y-3"
+            /* onValueChange={(v) => {
+              if (v === "ongoing" || v === "filter") setResponseSetting(v);
+            }} */
+          >
             {options.map((option) => (
               <Label
                 htmlFor={option.id}

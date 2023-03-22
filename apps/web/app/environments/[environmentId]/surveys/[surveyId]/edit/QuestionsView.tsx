@@ -7,7 +7,7 @@ import { StrictModeDroppable } from "./StrictModeDroppable";
 
 interface QuestionsViewProps {
   questions: any[];
-  setQuestions: (questions: any[]) => void;
+  setLocalSurvey: (questions: any[]) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
 }

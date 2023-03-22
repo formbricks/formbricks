@@ -1,33 +1,38 @@
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
+import WhoToSendCard from "./WhoToSendCard";
+import ResponseOptionsCard from "./ResponseOptionsCard";
 
 interface AudienceViewProps {
   environmentId: string;
-  triggers: string[];
-  setTriggers: (triggers: string[]) => void;
-  showSetting: "once" | "always";
-  setShowSetting: (showSetting: "once" | "always") => void;
+  localSurvey: Survey;
+  };
 }
 
 export default function AudienceView({
   environmentId,
-  triggers,
-  setTriggers,
-  showSetting,
-  setShowSetting,
+ localSurvey
 }: AudienceViewProps) {
   return (
-    <div className="p-5">
-      <div className="mb-5">
-        <HowToSendCard />
-      </div>
-      <div className="mb-5">
-        <WhenToSendCard triggers={triggers} setTriggers={setTriggers} environmentId={environmentId} />
-      </div>
-      <div className="mb-5">
-        <RecontactOptionsCard showSetting={showSetting} setShowSetting={setShowSetting} />
-      </div>
+    <div className="space-y-3 p-5">
+      <HowToSendCard />
+
+      <WhoToSendCard />
+
+      <WhenToSendCard 
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey} environmentId={environmentId} />
+
+      <ResponseOptionsCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+      />
+
+      <RecontactOptionsCard
+       localSurvey={localSurvey}
+       setLocalSurvey={setLocalSurvey}
+      />
     </div>
   );
 }

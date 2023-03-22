@@ -1,8 +1,8 @@
 "use client";
 
+import { Survey } from "@/../../packages/js/dist/types/types";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useSurvey } from "@/lib/surveys/surveys";
-import type { Question } from "@/types/questions";
 import { useEffect, useState } from "react";
 import AudienceView from "./AudienceView";
 import PreviewQuestion from "./PreviewQuestion";
@@ -18,24 +18,38 @@ interface SurveyEditorProps {
 export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorProps) {
   const [activeView, setActiveView] = useState<"questions" | "audience">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  /* const [questions, setQuestions] = useState<Question[]>([]);
   const [triggers, setTriggers] = useState<string[]>([]); // list of eventClass Ids
   const [showSetting, setShowSetting] = useState<"once" | "always">("once");
+ */
+  const [localSurvey, setLocalSurvey] = useState<Survey | null>();
 
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
 
   useEffect(() => {
     if (survey) {
-      setQuestions(survey.questions);
+      /* setQuestions(survey.questions);
       setTriggers(survey.triggers.map((trigger) => trigger.eventClassId));
-      setShowSetting(survey.show);
+      setShowSetting(survey.show); */
+      if (!localSurvey) {
+        setLocalSurvey(survey);
+      } else {
+        if (
+          confirm(
+            "This survey has been updated. Do you want to discard your changes and continue with the new version?"
+          )
+        ) {
+          setLocalSurvey(survey);
+        }
+      }
+
       if (!activeQuestionId && survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
     }
   }, [survey]);
 
-  if (isLoadingSurvey) {
+  if (isLoadingSurvey || !localSurvey) {
     return <LoadingSpinner />;
   }
 
@@ -45,30 +59,25 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
 
   return (
     <div className="h-full">
-      <SurveyMenuBar
-        questions={questions}
-        triggers={triggers}
-        showSetting={showSetting}
-        environmentId={environmentId}
-        surveyId={surveyId}
-      />
+      <SurveyMenuBar localSurvey={localSurvey} environmentId={environmentId} surveyId={surveyId} />
       <div className="relative z-0 flex h-full flex-1 overflow-hidden">
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
           <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
           {activeView === "questions" ? (
             <QuestionsView
-              questions={questions}
-              setQuestions={setQuestions}
+              questions={localSurvey.questions}
+              setLocalSurvey={setLocalSurvey}
               activeQuestionId={activeQuestionId}
               setActiveQuestionId={setActiveQuestionId}
             />
           ) : (
             <AudienceView
               environmentId={environmentId}
-              triggers={triggers}
-              setTriggers={setTriggers}
-              showSetting={showSetting}
-              setShowSetting={setShowSetting}
+              localSurvey={localSurvey}
+              /* triggers={localSurvey.triggers}
+              setLocalSurvey={setLocalSurvey}
+              showSetting={localSurvey.showSetting} */
+              setLocalSurvey={setLocalSurvey}
             />
           )}
         </main>
