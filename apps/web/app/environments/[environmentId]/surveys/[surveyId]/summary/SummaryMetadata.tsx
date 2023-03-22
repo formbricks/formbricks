@@ -36,7 +36,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
       <div className=" space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <p className="text-sm text-slate-600">Survey displays</p>
         <p className="text-2xl font-bold text-slate-800">
-          {responses.length === 0 ? <span>-</span> : survey.displays.length}
+          {survey.numDisplays === 0 ? <span>-</span> : survey.numDisplays}
         </p>
       </div>
       <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -54,7 +54,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
                 {survey.responseRate === null || survey.responseRate === 0 ? (
                   <span>-</span>
                 ) : (
-                  <span>{survey.responseRate} %</span>
+                  <span>{Math.round(survey.responseRate * 100)} %</span>
                 )}
               </p>
             </div>

@@ -12,7 +12,7 @@ interface OpenTextSummaryProps {
 
 export default function OpenTextSummary({ questionSummary, environmentId }: OpenTextSummaryProps) {
   return (
-    <div className=" my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-6 pb-5 pt-6">
         <div>
           <h3 className="pb-1 text-xl font-semibold text-slate-900">{questionSummary.question.headline}</h3>

@@ -34,8 +34,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const surveys = await prisma.survey.findMany({
       where: {
         OR: [
-          { environmentId, status: "inProgress" },
-          { environmentId, status: "inProgress", displays: { none: { personId } } },
+          { environmentId, status: "inProgress", allowMultipleDisplays: true, allowMultipleResponses: true },
+          {
+            environmentId,
+            status: "inProgress",
+            allowMultipleDisplays: false,
+            displays: { none: { personId } },
+          },
+          {
+            environmentId,
+            status: "inProgress",
+            allowMultipleDisplays: true,
+            allowMultipleResponses: false,
+            displays: { none: { personId, status: "responded" } },
+          },
         ],
       },
       select: {

@@ -61,11 +61,11 @@ export default function SummaryList({ environmentId, surveyId }) {
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="mt-10 space-y-8">
         {responses.length === 0 ? (
           <EmptySpaceFiller type="response" environmentId={environmentId} />
         ) : (
-          <div>
+          <>
             {summaryData.map((questionSummary) => {
               if (questionSummary.question.type === "openText") {
                 return (
@@ -86,7 +86,7 @@ export default function SummaryList({ environmentId, surveyId }) {
               }
               return null;
             })}
-          </div>
+          </>
         )}
         {confetti && <Confetti />}
       </div>
