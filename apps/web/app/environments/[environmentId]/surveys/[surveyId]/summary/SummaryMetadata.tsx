@@ -4,6 +4,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import Button from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
@@ -17,10 +18,15 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
   const { triggerSurveyMutate } = useSurveyMutation(environmentId, surveyId);
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
 
-  const responseRate = useMemo(() => {
+  const completionRate = useMemo(() => {
     if (!responses) return 0;
     return (responses.filter((r) => r.finished).length / responses.length) * 100;
   }, [responses]);
+
+  const responseRate = useMemo(() => {
+    if (!responses || !survey) return 0;
+    return (responses.length / survey.displays.length) * 100;
+  }, [survey, responses]);
 
   if (isLoadingResponses || isLoadingSurvey || isLoadingEnvironment) {
     return <LoadingSpinner />;
@@ -31,26 +37,60 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
   }
 
   return (
-    <div className="mb-4 grid grid-cols-5 gap-x-4">
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="mb-4 grid grid-cols-7 gap-x-2">
+      <div className=" space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <p className="text-sm text-slate-600">Survey displays</p>
+        <p className="text-2xl font-bold text-slate-800">
+          {responses.length === 0 ? <span>-</span> : survey.displays.length}
+        </p>
+      </div>
+      <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <p className="text-sm text-slate-600">Total Responses</p>
         <p className="text-2xl font-bold text-slate-800">
           {responses.length === 0 ? <span>-</span> : responses.length}
         </p>
       </div>
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-600">Response Rate</p>
-        <p className="text-2xl font-bold text-slate-800">
-          {responses.length === 0 ? <span>-</span> : <span>{parseFloat(responseRate.toFixed(2))} %</span>}
-        </p>
-      </div>
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-600">Completion Rate</p>
-        <p className="text-2xl font-bold text-slate-800">
-          {responses.length === 0 ? <span>-</span> : <span>{parseFloat(responseRate.toFixed(2))} %</span>}
-        </p>
-      </div>
-      <div className="col-span-2 flex flex-col justify-between">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <div className="cursor-default space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
+              <p className="text-sm text-slate-600">Response Rate</p>
+              <p className="text-2xl font-bold text-slate-800">
+                {responses.length === 0 ? (
+                  <span>-</span>
+                ) : (
+                  <span>{parseFloat(responseRate.toFixed(2))} %</span>
+                )}
+              </p>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>% of people who responded when survey was shown.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
+              <p className="text-sm text-slate-600">Completion Rate</p>
+              <p className="text-2xl font-bold text-slate-800">
+                {responses.length === 0 ? (
+                  <span>-</span>
+                ) : (
+                  <span>{parseFloat(completionRate.toFixed(2))} %</span>
+                )}
+              </p>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>
+              % of people who started <strong>and</strong> completed the survey.
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <div className="col-span-3 flex flex-col justify-between">
         <div className=""></div>
         <div className="flex justify-end">
           {environment.widgetSetupCompleted && (
