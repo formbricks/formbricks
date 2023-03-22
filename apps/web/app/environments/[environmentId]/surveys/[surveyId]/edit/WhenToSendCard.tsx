@@ -7,6 +7,7 @@ import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
+import { Survey } from "@/types/surveys";
 
 interface WhenToSendCardProps {
   localSurvey: Survey;
@@ -27,19 +28,19 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
   }
 
   const addTriggerEvent = () => {
-    const updatedSurvey = [...localSurvey];
+    const updatedSurvey = { ...localSurvey };
     updatedSurvey.triggers = "";
     setLocalSurvey(updatedSurvey);
   };
 
   const setTriggerEvent = (idx: number, eventClassId: string) => {
-    const updatedSurvey = [...localSurvey];
+    const updatedSurvey = { ...localSurvey };
     updatedSurvey.triggers[idx] = eventClassId;
     setLocalSurvey(updatedSurvey);
   };
 
   const removeTriggerEvent = (idx: number) => {
-    const updatedSurvey = [...localSurvey];
+    const updatedSurvey = { ...localSurvey };
     updatedSurvey.triggers[idx] = "";
     setLocalSurvey(updatedSurvey);
     /* setTriggers([...triggers.slice(0, idx), ...triggers.slice(idx + 1)]); */

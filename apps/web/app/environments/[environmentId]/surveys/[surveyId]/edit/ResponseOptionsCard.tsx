@@ -2,6 +2,7 @@
 
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
+import { Survey } from "@/types/surveys";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import clsx from "clsx";
@@ -22,15 +23,9 @@ const options = [
   },
 ];
 
-interface ResponseOptionsCardProps {
-  responseSetting: "ongoing" | "limit";
-  setResponseSetting: (responseSetting: "ongoing" | "limit") => void;
-}
+interface ResponseOptionsCardProps {}
 
-export default function ResponseOptionsCard({
-  responseSetting = "ongoing",
-  setResponseSetting,
-}: ResponseOptionsCardProps) {
+export default function ResponseOptionsCard({}: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -41,11 +36,7 @@ export default function ResponseOptionsCard({
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
-            {!responseSetting ? (
-              <div className="h-7 w-7 rounded-full border border-slate-400" />
-            ) : (
-              <CheckCircleIcon className="h-8 w-8 text-teal-400" />
-            )}
+            <CheckCircleIcon className="h-8 w-8 text-teal-400" />
           </div>
           <div>
             <p className="text-lg font-semibold text-slate-800">Response Options</p>
@@ -56,13 +47,7 @@ export default function ResponseOptionsCard({
       <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
-          <RadioGroup
-            value={responseSetting}
-            className="flex flex-col space-y-3"
-            /* onValueChange={(v) => {
-              if (v === "ongoing" || v === "filter") setResponseSetting(v);
-            }} */
-          >
+          <RadioGroup value="ongoing" className="flex flex-col space-y-3">
             {options.map((option) => (
               <Label
                 htmlFor={option.id}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Survey } from "@/../../packages/js/dist/types/types";
+import { Survey } from "@/types/surveys";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
@@ -51,7 +51,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     }
   }, [survey]);
 
-  if (isLoadingSurvey || isLoadingProduct) {
+  if (isLoadingSurvey || isLoadingProduct || !localSurvey) {
     return <LoadingSpinner />;
   }
 
@@ -59,14 +59,14 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     return <div>Error</div>;
   }
 
-  console.log(product);
+  console.log("product", product);
+  console.log("survey", JSON.stringify(survey, null, 2));
 
   return (
     <div className="flex h-full flex-col">
       <SurveyMenuBar
-        questions={questions}
-        triggers={triggers}
-        showSetting={showSetting}
+        setLocalSurvey={setLocalSurvey}
+        localSurvey={localSurvey}
         environmentId={environmentId}
         surveyId={surveyId}
       />
@@ -75,7 +75,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
           <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
           {activeView === "questions" ? (
             <QuestionsView
-              questions={localSurvey.questions}
+              localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
               activeQuestionId={activeQuestionId}
               setActiveQuestionId={setActiveQuestionId}
@@ -94,7 +94,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
         <aside className="relative hidden h-full flex-1 flex-shrink-0 overflow-hidden border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">
           <PreviewSurvey
             activeQuestionId={activeQuestionId}
-            questions={questions}
+            questions={localSurvey.questions}
             brandColor={product.brandColor}
           />
         </aside>

@@ -1,42 +1,53 @@
 "use client";
 
+import { Survey } from "@/types/surveys";
 import { DragDropContext } from "react-beautiful-dnd";
 import AddQuestionButton from "./AddQuestionButton";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 
 interface QuestionsViewProps {
-  questions: any[];
-  setLocalSurvey: (questions: any[]) => void;
+  localSurvey: Survey;
+  setLocalSurvey: (survey: Survey) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
 }
 
 export default function QuestionsView({
-  questions,
-  setQuestions,
   activeQuestionId,
   setActiveQuestionId,
+  localSurvey,
+  setLocalSurvey,
 }: QuestionsViewProps) {
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
-    const updatedQuestions = [...questions];
+    const updatedSurvey = { ...localSurvey };
+    updatedSurvey.questions[questionIdx] = {
+      ...updatedSurvey.questions[questionIdx],
+      ...updatedAttributes,
+    };
+    setLocalSurvey(updatedSurvey);
+
+    /*  const updatedQuestions = [...questions];
     updatedQuestions[questionIdx] = {
       ...updatedQuestions[questionIdx],
       ...updatedAttributes,
     };
-    setQuestions(updatedQuestions);
+    setQuestions(updatedQuestions); */
   };
 
   const deleteQuestion = (questionIdx: number) => {
-    const updatedQuestions = [...questions];
-    updatedQuestions.splice(questionIdx, 1);
-    setQuestions(updatedQuestions);
+    const updatedSurvey = { ...localSurvey };
+    updatedSurvey.questions.splice(questionIdx, 1);
+    setLocalSurvey(updatedSurvey);
   };
 
   const addQuestion = (question: any) => {
-    const updatedQuestions = [...questions];
+    const updatedSurvey = { ...localSurvey };
+    updatedSurvey.questions.push(question);
+    setLocalSurvey(updatedSurvey);
+    /*     const updatedQuestions = [...questions];
     updatedQuestions.push(question);
-    setQuestions(updatedQuestions);
+    setQuestions(updatedQuestions);*/
     setActiveQuestionId(question.id);
   };
 
@@ -45,11 +56,12 @@ export default function QuestionsView({
       return;
     }
 
-    const items = Array.from(questions);
+    const items = Array.from(localSurvey.questions);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
-
-    setQuestions(items);
+    const updatedSurvey = { ...localSurvey };
+    updatedSurvey.questions = items;
+    setLocalSurvey(updatedSurvey);
   };
 
   return (
@@ -59,7 +71,7 @@ export default function QuestionsView({
           <StrictModeDroppable droppableId="questionsList">
             {(provided) => (
               <div className="grid gap-5" ref={provided.innerRef} {...provided.droppableProps}>
-                {questions.map((question, questionIdx) => (
+                {localSurvey.questions.map((question, questionIdx) => (
                   // display a question form
                   <QuestionCard
                     key={question.id}
@@ -69,7 +81,7 @@ export default function QuestionsView({
                     deleteQuestion={deleteQuestion}
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
-                    lastQuestion={questionIdx === questions.length - 1}
+                    lastQuestion={questionIdx === localSurvey.questions.length - 1}
                   />
                 ))}
                 {provided.placeholder}

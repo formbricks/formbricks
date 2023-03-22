@@ -6,6 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
+import { Survey } from "@/types/surveys";
 
 const displayOptions = [
   {
@@ -17,6 +18,32 @@ const displayOptions = [
     id: "true",
     name: "Can be shown multiple times per person",
     description: "A person can see this survey multiple times.",
+  },
+];
+
+const responseOptions = [
+  {
+    id: "false",
+    name: "One response per person",
+    description: "Every person can respond to this survey only once.",
+  },
+  {
+    id: "true",
+    name: "Multiple responses per person",
+    description: "A person can respond to this survey multiple times.",
+  },
+];
+
+const recontactOptions = [
+  {
+    id: "false",
+    name: "Ignore waiting period, always show this survey.",
+    description: "This survey will be shown even if the waiting period is not over yet.",
+  },
+  {
+    id: "true",
+    name: "Wait ___ days before showing this survey again.",
+    description: "Overwrites waiting period between surveys to ___ days.",
   },
 ];
 
@@ -58,7 +85,7 @@ export default function RecontactOptionsCard({ localSurvey, setLocalSurvey }: Re
             value={localSurvey.allowMultipleDisplays.toString()}
             className="flex flex-col space-y-3"
             onValueChange={(v) => {
-              const updatedSurvey = [...localSurvey];
+              const updatedSurvey = { ...localSurvey };
               updatedSurvey.allowMultipleDisplays = v === "true";
               setLocalSurvey(updatedSurvey);
             }}>
@@ -83,14 +110,14 @@ export default function RecontactOptionsCard({ localSurvey, setLocalSurvey }: Re
         <div className="p-3">
           <p>How often can it be filled out</p>
           <RadioGroup
-            value={localSurvey.allowMultipleResponses}
+            value={localSurvey.allowMultipleResponses.toString()}
             className="flex flex-col space-y-3"
             onValueChange={(v) => {
-              const updatedSurvey = [...localSurvey];
-              updatedSurvey.allowMultipleResponses = v;
+              const updatedSurvey = { ...localSurvey };
+              updatedSurvey.allowMultipleResponses = v === "true";
               setLocalSurvey(updatedSurvey);
             }}>
-            {options.map((option) => (
+            {responseOptions.map((option) => (
               <Label
                 htmlFor={option.id}
                 className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
@@ -112,13 +139,15 @@ export default function RecontactOptionsCard({ localSurvey, setLocalSurvey }: Re
           <p>Advanced Settings</p>
           <Checkbox />
           <Label>Overwrite Waiting Time (Throttling)</Label>
-          {/* <RadioGroup
-            value={recontactSetting.recontactDays}
+          {/*          <RadioGroup
+            value={localSurvey.recontactDays.toString()}
             className="flex flex-col space-y-3"
             onValueChange={(v) => {
-              if (v === "always" || v === "once") setRecontactSetting.setShowSetting(v);
+              const updatedSurvey = { ...localSurvey };
+              updatedSurvey.recontactDays = v;
+              setLocalSurvey(updatedSurvey);
             }}>
-            {options.map((option) => (
+            {recontactOptions.map((option) => (
               <Label
                 htmlFor={option.id}
                 className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
