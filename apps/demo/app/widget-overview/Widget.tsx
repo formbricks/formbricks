@@ -16,11 +16,6 @@ export default function Widget() {
     formbricks.setAttribute("name", "Jane Doe");
     formbricks.setEmail("user@example.com");
     formbricks.setUserId("123456");
-    formbricks.setEmail("user@example.com");
-    formbricks.setAttribute("name", "Jane Doe");
-    formbricks.setAttribute("plan", "free");
-    formbricks.setAttribute("name", "Pete Doe");
-    formbricks.track("View Home Page");
   }, []);
   return null;
 }

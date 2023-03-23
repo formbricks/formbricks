@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 interface DisplayOption {
-  id: string;
+  id: "displayOnce" | "displayMultiple" | "respondMultiple";
   name: string;
   description: string;
 }
@@ -94,8 +94,11 @@ export default function RecontactOptionsCard({
             value={localSurvey.displayOptions}
             className="flex flex-col space-y-3"
             onValueChange={(v) => {
-              const updatedSurvey = { ...localSurvey, displayOptions: v };
-              setLocalSurvey(updatedSurvey);
+              if (v === "displayOnce" || v === "displayMultiple" || v === "respondMultiple") {
+                const updatedSurvey = { ...localSurvey, displayOption: v };
+                // @ts-ignore
+                setLocalSurvey(updatedSurvey);
+              }
             }}>
             {displayOptions.map((option) => (
               <Label

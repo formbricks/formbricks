@@ -6,4 +6,5 @@ export interface Survey extends Omit<PrismaSurvey, "questions" | "triggers"> {
   triggers: string[];
   numDisplays: number;
   responseRate: number;
+  displayOptions: "displayOnce" | "displayMultiple" | "respondMultiple";
 }

@@ -115,21 +115,27 @@ enum SurveyType {
   web
 }
 
+enum displayOptions {
+  displayOnce
+  displayMultiple
+  respondMultiple
+}
+
 model Survey {
-  id                     String          @id @default(cuid())
-  createdAt              DateTime        @default(now()) @map(name: "created_at")
-  updatedAt              DateTime        @updatedAt @map(name: "updated_at")
-  name                   String
-  type                   String          @default("web")
-  environment            Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  environmentId          String
-  status                 SurveyStatus    @default(draft)
-  questions              Json            @default("[]")
-  responses              Response[]
-  displayOptions         String          @default("displayOnce")
-  recontactDays          Int?
-  triggers               SurveyTrigger[]
-  displays               Display[]
+  id            String          @id @default(cuid())
+  createdAt     DateTime        @default(now()) @map(name: "created_at")
+  updatedAt     DateTime        @updatedAt @map(name: "updated_at")
+  name          String
+  type          String          @default("web")
+  environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId String
+  status        SurveyStatus    @default(draft)
+  questions     Json            @default("[]")
+  responses     Response[]
+  displayOption displayOptions  @default(displayOnce)
+  recontactDays Int?
+  triggers      SurveyTrigger[]
+  displays      Display[]
 }
 
 model Event {

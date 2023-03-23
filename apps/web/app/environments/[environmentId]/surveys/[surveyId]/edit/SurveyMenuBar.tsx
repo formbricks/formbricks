@@ -12,7 +12,7 @@ interface SurveyMenuBarProps {
   localSurvey: Survey;
   setLocalSurvey: (survey: Survey) => void;
   environmentId: string;
-  setActiveId: (id: string) => void;
+  setActiveId: (id: "questions" | "audience") => void;
 }
 
 export default function SurveyMenuBar({

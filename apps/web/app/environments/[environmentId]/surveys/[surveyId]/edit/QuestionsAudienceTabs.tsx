@@ -1,12 +1,13 @@
 import { cn } from "@/lib/utils";
 import { QuestionMarkCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 
-interface QuestionsAudienceTabsProps {
-  activeId: "questions" | "audience";
-  setActiveId: (id: string) => void;
+interface Tab {
+  id: "questions" | "audience";
+  label: string;
+  icon: JSX.Element;
 }
 
-const tabs = [
+const tabs: Tab[] = [
   {
     id: "questions",
     label: "Questions",
@@ -18,6 +19,11 @@ const tabs = [
     icon: <UserGroupIcon />,
   },
 ];
+
+interface QuestionsAudienceTabsProps {
+  activeId: "questions" | "audience";
+  setActiveId: (id: "questions" | "audience") => void;
+}
 
 export default function QuestionsAudienceTabs({ activeId, setActiveId }: QuestionsAudienceTabsProps) {
   return (
