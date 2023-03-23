@@ -20,7 +20,8 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ children, language }) => {
       <DocumentDuplicateIcon
         className="absolute top-4 right-4 z-20 h-5 w-5 cursor-pointer text-slate-600 opacity-0 transition-all duration-150 group-hover:opacity-60"
         onClick={() => {
-          navigator.clipboard.writeText(children.toString());
+          const childText = children?.toString() || "";
+          navigator.clipboard.writeText(childText);
           toast.success("Copied to clipboard");
         }}
       />
