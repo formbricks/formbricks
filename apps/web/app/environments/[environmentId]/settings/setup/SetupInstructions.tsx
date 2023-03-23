@@ -1,7 +1,7 @@
 "use client";
 
-import TabBar from "@/components/ui/TabBar";
 import CodeBlock from "@/components/shared/CodeBlock";
+import TabBar from "@/components/ui/TabBar";
 import Link from "next/link";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";

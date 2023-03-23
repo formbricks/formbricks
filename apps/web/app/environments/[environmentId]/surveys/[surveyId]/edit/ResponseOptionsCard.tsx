@@ -4,6 +4,8 @@ import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+
+import Badge from "@/components/ui/Badge";
 import clsx from "clsx";
 import { useState } from "react";
 
@@ -35,7 +37,7 @@ export default function ResponseOptionsCard({}: ResponseOptionsCardProps) {
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
-            <CheckCircleIcon className="h-8 w-8 text-teal-400" />
+            <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
             <p className="text-lg font-semibold text-slate-800">Response Options</p>
@@ -78,11 +80,7 @@ export default function ResponseOptionsCard({}: ResponseOptionsCardProps) {
                       )}>
                       {option.name}
                     </p>
-                    {option.disabled && (
-                      <span className="ml-2 inline-flex items-center rounded bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
-                        coming soon
-                      </span>
-                    )}
+                    {option.disabled && <Badge text="coming soon" size="normal" type="warning" />}
                   </div>
                   <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
                 </div>

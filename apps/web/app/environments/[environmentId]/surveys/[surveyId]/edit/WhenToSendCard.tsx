@@ -56,7 +56,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
             {localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
               <div className="h-7 w-7 rounded-full border border-slate-400" />
             ) : (
-              <CheckCircleIcon className="h-8 w-8 text-teal-400" />
+              <CheckCircleIcon className="h-8 w-8 text-green-400" />
             )}
           </div>
 

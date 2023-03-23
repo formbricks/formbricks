@@ -1,15 +1,15 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { CheckIcon, ExclamationTriangleIcon, ArrowDownIcon } from "@heroicons/react/24/solid";
-import { useEffect, useMemo, useState } from "react";
-import { useEvents } from "@/lib/events/events";
-import clsx from "clsx";
-import { timeSince } from "@/lib/time";
-import Link from "next/link";
-import { useEnvironmentMutation } from "@/lib/environments/mutateEnvironments";
-import { useEnvironment } from "@/lib/environments/environments";
 import { Confetti } from "@/components/ui/Confetti";
+import { useEnvironment } from "@/lib/environments/environments";
+import { useEnvironmentMutation } from "@/lib/environments/mutateEnvironments";
+import { useEvents } from "@/lib/events/events";
+import { timeSince } from "@/lib/time";
+import { ArrowDownIcon, CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import clsx from "clsx";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 
 interface WidgetStatusIndicatorProps {
   environmentId: string;

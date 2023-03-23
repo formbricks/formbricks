@@ -9,7 +9,12 @@ import { useEnvironment } from "@/lib/environments/environments";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { useSurvey } from "@/lib/surveys/surveys";
-import { PauseCircleIcon, PencilSquareIcon, PlayCircleIcon, StopCircleIcon } from "@heroicons/react/24/solid";
+import {
+  CheckCircleIcon,
+  PauseCircleIcon,
+  PencilSquareIcon,
+  PlayCircleIcon,
+} from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 
 export default function SummaryMetadata({ surveyId, environmentId }) {
@@ -124,7 +129,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
                       Pause Survey
                     </SelectItem>
                     <SelectItem className="group  font-normal hover:text-slate-900" value="completed">
-                      <StopCircleIcon className="mr-1 -mt-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
+                      <CheckCircleIcon className="mr-1 -mt-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
                       End Survey
                     </SelectItem>
                   </SelectContent>

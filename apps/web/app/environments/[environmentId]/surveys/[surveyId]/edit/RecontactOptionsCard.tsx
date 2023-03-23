@@ -77,7 +77,7 @@ export default function RecontactOptionsCard({
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
-            <CheckCircleIcon className="h-8 w-8 text-teal-400" />
+            <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
             <p className="text-lg font-semibold text-slate-800">Recontact Options</p>
