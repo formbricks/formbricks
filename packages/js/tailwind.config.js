@@ -8,5 +8,6 @@ module.exports = {
   theme: {
     extend: {},
   },
+  prefix: "fb-",
   plugins: [require("./disable_preflight/tailwindSelectivePreflight.js")],
 };

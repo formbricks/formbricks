@@ -1,25 +1,27 @@
-interface OpenTextSummaryProps {
-  data: any;
-  environmentId: string;
-}
 import { PersonAvatar } from "@/components/ui/Avatars";
 import { timeSince } from "@/lib/time";
 import { truncate } from "@/lib/utils";
+import type { QuestionSummary } from "@/types/responses";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
-export default function OpenTextSummary({ data, environmentId }: OpenTextSummaryProps) {
+interface OpenTextSummaryProps {
+  questionSummary: QuestionSummary;
+  environmentId: string;
+}
+
+export default function OpenTextSummary({ questionSummary, environmentId }: OpenTextSummaryProps) {
   return (
-    <div className=" my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-6 pb-5 pt-6">
         <div>
-          <h3 className="pb-1 text-xl font-semibold text-slate-900">{data.question.headline}</h3>
+          <h3 className="pb-1 text-xl font-semibold text-slate-900">{questionSummary.question.headline}</h3>
         </div>
         <div className="flex space-x-2 font-semibold text-slate-600">
-          <div className="rounded-lg bg-slate-100 p-2 ">Open Text Question</div>
-          <div className=" flex items-center rounded-lg  bg-slate-100 p-2">
-            <InboxStackIcon className="mr-2 h-4 w-4 " />
-            {data.responses.length} Responses
+          <div className="rounded-lg bg-slate-100 p-2 text-sm">Open Text Question</div>
+          <div className=" flex items-center rounded-lg bg-slate-100 p-2 text-sm">
+            <InboxStackIcon className="mr-2 h-4 w-4" />
+            {questionSummary.responses.length} Responses
           </div>
         </div>
       </div>
@@ -29,7 +31,7 @@ export default function OpenTextSummary({ data, environmentId }: OpenTextSummary
           <div className="col-span-2 pl-6">Response</div>
           <div className="px-6">Time</div>
         </div>
-        {data.responses.map((response) => {
+        {questionSummary.responses.map((response) => {
           return (
             <div
               key={response.id}
@@ -45,7 +47,7 @@ export default function OpenTextSummary({ data, environmentId }: OpenTextSummary
                   </p>
                 </Link>
               </div>
-              <div className="col-span-2 pl-6 text-lg font-semibold">{response.value}</div>
+              <div className="col-span-2 whitespace-pre-wrap pl-6 font-semibold">{response.value}</div>
               <div className="px-6 text-slate-500">{timeSince(response.updatedAt)}</div>
             </div>
           );

@@ -1,12 +1,12 @@
 import { h } from "preact";
-import { useEffect, useState } from "preact/compat";
+import { useEffect, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
 import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
 import { Config, Survey } from "../types/types";
 import OpenTextQuestion from "./OpenTextQuestion";
+import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import Progress from "./Progress";
-import RadioElement from "./RadioElement";
 
 interface SurveyViewProps {
   config: Config;
@@ -69,9 +69,16 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
 
   return (
     <div>
-      <div className={cn(loadingElement ? "animate-pulse opacity-60" : "", "p-4")}>
-        {currentQuestion.type === "radio" ? (
-          <RadioElement element={currentQuestion} onSubmit={submitResponse} />
+      <div className={cn(loadingElement ? "fb-animate-pulse fb-opacity-60" : "", "fb-p-4")}>
+        {currentQuestion.type === "multipleChoiceSingle" ? (
+          <MultipleChoiceSingleQuestion
+            question={currentQuestion}
+            onSubmit={submitResponse}
+            lastQuestion={
+              survey.questions.findIndex((e) => e.id === currentQuestion.id) === survey.questions.length - 1
+            }
+            brandColor={brandColor}
+          />
         ) : currentQuestion.type === "openText" ? (
           <OpenTextQuestion
             question={currentQuestion}
@@ -83,7 +90,7 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
           />
         ) : null}
       </div>
-      <div className="mt-2">
+      <div className="fb-mt-2">
         <Progress progress={progress} brandColor={brandColor} />
       </div>
     </div>

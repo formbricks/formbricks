@@ -1,27 +1,10 @@
 "use client";
 
-import { Bars4Icon, PlusIcon } from "@heroicons/react/24/solid";
+import { getQuestionDefaults, questionTypes, universalQuestionDefaults } from "@/lib/questions";
+import { PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
-
-const questionTypes = [
-  {
-    id: "openText",
-    label: "Open Text",
-    icon: Bars4Icon,
-  },
-  /*   {
-    id: "multipleChoiceSingle",
-    label: "Multiple Choice Single-Select",
-    icon: ListBulletIcon,
-  },
-  {
-    id: "multipleChoiceMultiple",
-    label: "Multiple Choice Multi-Select",
-    icon: ListBulletIcon,
-  }, */
-];
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
@@ -55,8 +38,8 @@ export default function AddQuestionButton({ addQuestion }: AddQuestionButtonProp
               addQuestion({
                 id: createId(),
                 type: questionType.id,
-                subheader: "This can help us improve your experience.",
-                placeholder: "Type your answer here...",
+                ...universalQuestionDefaults,
+                ...getQuestionDefaults(questionType.id),
               });
               setOpen(false);
             }}>

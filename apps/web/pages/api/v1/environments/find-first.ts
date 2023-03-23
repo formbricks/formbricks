@@ -37,6 +37,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const firstEnvironment = await prisma.environment.findFirst({
       where: {
         productId: firstProduct.id,
+        type: "production",
       },
       select: {
         id: true,

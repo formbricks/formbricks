@@ -4,7 +4,7 @@ export const createDisplay = async (
   displayCreateRequest: DisplayCreateRequest,
   config
 ): Promise<Response> => {
-  const res = await fetch(`${config.apiHost}/api/v1/environments/${config.environmentId}/client/displays`, {
+  const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(displayCreateRequest),
@@ -18,7 +18,7 @@ export const createDisplay = async (
 
 export const markDisplayResponded = async (displayId, config): Promise<void> => {
   const res = await fetch(
-    `${config.apiHost}/api/v1/environments/${config.environmentId}/client/displays/${displayId}/responded`,
+    `${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays/${displayId}/responded`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

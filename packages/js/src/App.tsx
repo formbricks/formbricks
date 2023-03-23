@@ -1,5 +1,5 @@
 import { h, VNode } from "preact";
-import { useEffect, useState } from "preact/compat";
+import { useState } from "preact/hooks";
 import Modal from "./components/Modal";
 import SurveyView from "./components/SurveyView";
 import type { Config, Survey } from "./types/types";

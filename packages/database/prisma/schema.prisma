@@ -108,18 +108,29 @@ model SurveyTrigger {
   @@unique([surveyId, eventClassId])
 }
 
+enum SurveyType {
+  email
+  link
+  mobile
+  web
+}
+
 model Survey {
-  id            String          @id @default(cuid())
-  createdAt     DateTime        @default(now()) @map(name: "created_at")
-  updatedAt     DateTime        @updatedAt @map(name: "updated_at")
-  name          String
-  environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  environmentId String
-  status        SurveyStatus    @default(draft)
-  questions     Json            @default("[]")
-  responses     Response[]
-  triggers      SurveyTrigger[]
-  displays      Display[]
+  id                     String          @id @default(cuid())
+  createdAt              DateTime        @default(now()) @map(name: "created_at")
+  updatedAt              DateTime        @updatedAt @map(name: "updated_at")
+  name                   String
+  type                   String          @default("web")
+  environment            Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId          String
+  status                 SurveyStatus    @default(draft)
+  questions              Json            @default("[]")
+  responses              Response[]
+  allowMultipleDisplays  Boolean         @default(false)
+  allowMultipleResponses Boolean         @default(false)
+  recontactDays          Int?
+  triggers               SurveyTrigger[]
+  displays               Display[]
 }
 
 model Event {
@@ -169,28 +180,29 @@ enum EnvironmentType {
 }
 
 model Environment {
-  id                      String           @id @default(cuid())
-  createdAt               DateTime         @default(now()) @map(name: "created_at")
-  updatedAt               DateTime         @updatedAt @map(name: "updated_at")
-  type                    EnvironmentType
-  product                 Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId               String
-  widgetSetupCompleted    Boolean          @default(false)
-  surveys                 Survey[]
-  people                  Person[]
-  eventClasses            EventClass[]
-  attributeClasses        AttributeClass[]
+  id                   String           @id @default(cuid())
+  createdAt            DateTime         @default(now()) @map(name: "created_at")
+  updatedAt            DateTime         @updatedAt @map(name: "updated_at")
+  type                 EnvironmentType
+  product              Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId            String
+  widgetSetupCompleted Boolean          @default(false)
+  surveys              Survey[]
+  people               Person[]
+  eventClasses         EventClass[]
+  attributeClasses     AttributeClass[]
 }
 
 model Product {
-  id           String        @id @default(cuid())
-  createdAt    DateTime      @default(now()) @map(name: "created_at")
-  updatedAt    DateTime      @updatedAt @map(name: "updated_at")
-  name         String
-  team         Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId       String
-  environments Environment[]
-  brandColor   String        @default("#000000")
+  id            String        @id @default(cuid())
+  createdAt     DateTime      @default(now()) @map(name: "created_at")
+  updatedAt     DateTime      @updatedAt @map(name: "updated_at")
+  name          String
+  team          Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId        String
+  environments  Environment[]
+  brandColor    String        @default("#334155")
+  recontactDays Int           @default(7)
 }
 
 enum Plan {

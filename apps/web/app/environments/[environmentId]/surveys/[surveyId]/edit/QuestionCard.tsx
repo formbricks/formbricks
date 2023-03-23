@@ -1,13 +1,15 @@
 "use client";
 
-import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Switch } from "@/components/ui/Switch";
+import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/types/questions";
 import { Bars4Icon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Draggable } from "react-beautiful-dnd";
+import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
+import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionDropdown";
 
 interface QuestionCardProps {
@@ -17,6 +19,7 @@ interface QuestionCardProps {
   deleteQuestion: (questionIdx: number) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
+  lastQuestion: boolean;
 }
 
 export default function QuestionCard({
@@ -26,6 +29,7 @@ export default function QuestionCard({
   deleteQuestion,
   activeQuestionId,
   setActiveQuestionId,
+  lastQuestion,
 }: QuestionCardProps) {
   const open = activeQuestionId === question.id;
   return (
@@ -56,7 +60,9 @@ export default function QuestionCard({
                 <div className="inline-flex">
                   <Bars4Icon className="-ml-0.5 mr-2 h-5 w-5 text-slate-400" />
                   <div>
-                    <p className="text-sm font-semibold">{question.headline}</p>
+                    <p className="text-sm font-semibold">
+                      {question.headline || getQuestionTypeName(question.type)}
+                    </p>
                     {!open && question?.required && (
                       <p className="mt-1 truncate text-xs text-slate-500">
                         {question?.required && "Required"}
@@ -81,55 +87,21 @@ export default function QuestionCard({
               </div>
             </Collapsible.CollapsibleTrigger>
             <Collapsible.CollapsibleContent className="px-4 pb-4">
-              <form>
-                <div className="mt-3">
-                  <Label htmlFor="headline">Headline</Label>
-                  <div className="mt-2">
-                    <Input
-                      id="headline"
-                      name="headline"
-                      value={question.headline}
-                      onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <Label htmlFor="subheader">Subheader</Label>
-                  <div className="mt-2">
-                    <Input
-                      id="subheader"
-                      name="subheader"
-                      value={question.subheader}
-                      onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <Label htmlFor="placeholder">Placeholder</Label>
-                  <div className="mt-2">
-                    <Input
-                      id="placeholder"
-                      name="placeholder"
-                      value={question.placeholder}
-                      onChange={(e) => updateQuestion(questionIdx, { placeholder: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <Label htmlFor="buttonLabel">Button Label</Label>
-                  <div className="mt-2">
-                    <Input
-                      id="buttonLabel"
-                      name="buttonLabel"
-                      value={question.buttonLabel}
-                      onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </form>
+              {question.type === "openText" ? (
+                <OpenQuestionForm
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                />
+              ) : question.type === "multipleChoiceSingle" ? (
+                <MultipleChoiceSingleForm
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                />
+              ) : null}
             </Collapsible.CollapsibleContent>
           </Collapsible.Root>
         </div>

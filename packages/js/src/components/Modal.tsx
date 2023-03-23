@@ -1,5 +1,5 @@
 import { h, VNode } from "preact";
-import { useEffect, useState } from "preact/compat";
+import { useEffect, useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 
 export default function Modal({
@@ -20,21 +20,23 @@ export default function Modal({
     setShow(isOpen);
   }, [isOpen]);
   return (
-    <div aria-live="assertive" className="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:p-6">
-      <div className="flex w-full flex-col items-center space-y-4 sm:items-end">
+    <div
+      aria-live="assertive"
+      className="fb-pointer-events-none fb-fixed fb-inset-0 fb-flex fb-items-end fb-px-4 fb-py-6 sm:fb-p-6">
+      <div className="fb-flex fb-w-full fb-flex-col fb-items-center fb-space-y-4 sm:fb-items-end">
         <div
           className={cn(
-            show ? "translate-x-0 opacity-100" : "translate-x-28 opacity-0",
-            "pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out"
+            show ? "fb-translate-x-0 fb-opacity-100" : "fb-translate-x-28 fb-opacity-0",
+            "fb-pointer-events-auto fb-relative fb-w-full fb-max-w-sm fb-overflow-hidden fb-rounded-lg fb-bg-white fb-shadow-lg fb-ring-1 fb-ring-black fb-ring-opacity-5 fb-transition-all fb-duration-500 fb-ease-in-out"
           )}>
-          <div class="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
+          <div class="fb-absolute fb-top-0 fb-right-0 fb-hidden fb-pt-4 fb-pr-4 sm:fb-block">
             <button
               type="button"
               onClick={close}
-              class="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
-              <span class="sr-only">Close</span>
+              class="fb-rounded-md fb-bg-white focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 text-slate-400 hover:text-slate-500 focus:ring-slate-500">
+              <span class="fb-sr-only">Close</span>
               <svg
-                class="h-6 w-6"
+                class="fb-h-6 fb-w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke-width="1.5"

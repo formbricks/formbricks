@@ -1,19 +1,32 @@
+import { Survey } from "@/types/surveys";
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
+import ResponseOptionsCard from "./ResponseOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
+import WhoToSendCard from "./WhoToSendCard";
 
-export default function AudienceView({ environmentId, triggers, setTriggers }) {
+interface AudienceViewProps {
+  environmentId: string;
+  localSurvey: Survey;
+  setLocalSurvey: (survey: Survey) => void;
+}
+
+export default function AudienceView({ environmentId, localSurvey, setLocalSurvey }: AudienceViewProps) {
   return (
-    <div className="p-5">
-      <div className="mb-5">
-        <HowToSendCard />
-      </div>
-      <div className="mb-5">
-        <WhenToSendCard triggers={triggers} setTriggers={setTriggers} environmentId={environmentId} />
-      </div>
-      <div className="mb-5">
-        <RecontactOptionsCard />
-      </div>
+    <div className="space-y-3 p-5">
+      <HowToSendCard />
+
+      <WhoToSendCard />
+
+      <WhenToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environmentId={environmentId}
+      />
+
+      <ResponseOptionsCard />
+
+      <RecontactOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
     </div>
   );
 }

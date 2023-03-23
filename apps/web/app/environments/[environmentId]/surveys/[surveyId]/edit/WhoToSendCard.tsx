@@ -1,42 +1,31 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import Button from "@/components/ui/Button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
-import { useEventClasses } from "@/lib/eventClasses/eventClasses";
-import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { Label } from "@/components/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import clsx from "clsx";
 import { useState } from "react";
 
-interface AddQuestionButtonProps {
-  triggers: any;
-  setTriggers: (triggers: any) => void;
-  environmentId: string;
-}
+const options = [
+  {
+    id: "all",
+    name: "Survey all people",
+    description: "Potentially, all users can be surveyed.",
+    disabled: false,
+  },
+  {
+    id: "filter",
+    name: "Filter based on attributes",
+    description: "Only people with specific attributes can be surveyed.",
+    disabled: true,
+  },
+];
 
-export default function WhoToSendCard({ environmentId, triggers, setTriggers }: AddQuestionButtonProps) {
-  const [open, setOpen] = useState(true);
-  const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
+interface WhoToSendToCardProps {}
 
-  if (isLoadingEventClasses) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorEventClasses) {
-    return <div>Error</div>;
-  }
-
-  const addTriggerEvent = () => {
-    setTriggers([...triggers, ""]);
-  };
-
-  const setTriggerEvent = (idx: number, eventClassId: string) => {
-    setTriggers([...triggers.slice(0, idx), eventClassId, ...triggers.slice(idx + 1)]);
-  };
-
-  const removeTriggerEvent = (idx: number) => {
-    setTriggers([...triggers.slice(0, idx), ...triggers.slice(idx + 1)]);
-  };
+export default function WhoToSendToCard({}: WhoToSendToCardProps) {
+  const [open, setOpen] = useState(false);
 
   return (
     <Collapsible.Root
@@ -46,54 +35,55 @@ export default function WhoToSendCard({ environmentId, triggers, setTriggers }: 
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
-            {triggers.length === 0 || !triggers[0] ? (
-              <div className="h-7 w-7 rounded-full border border-slate-400" />
-            ) : (
-              <CheckCircleIcon className="h-8 w-8 text-teal-400" />
-            )}
+            <CheckCircleIcon className="h-8 w-8 text-teal-400" />
           </div>
-
           <div>
-            <p className="text-lg font-semibold text-slate-800">When to send</p>
+            <p className="text-lg font-semibold text-slate-800">Who to send to</p>
             <p className="mt-1 truncate text-sm text-slate-500">
-              Choose the events when you want the survey to trigger
+              Decide which group of you users can be surveyed.
             </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent className="">
+      <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
-        {triggers.map((triggerEventClassId, idx) => (
-          <div className="mt-2">
-            <div className="inline-flex items-center">
-              <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
-              <Select
-                value={triggerEventClassId}
-                onValueChange={(eventClassId) => setTriggerEvent(idx, eventClassId)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {eventClasses.map((eventClass) => (
-                    <SelectItem value={eventClass.id}>{eventClass.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <button onClick={() => removeTriggerEvent(idx)}>
-                <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
-              </button>
-            </div>
-          </div>
-        ))}
         <div className="p-3">
-          <Button
-            variant="secondary"
-            onClick={() => {
-              addTriggerEvent();
-            }}>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add event
-          </Button>
+          <RadioGroup value="all" className="flex flex-col space-y-3">
+            {options.map((option) => (
+              <Label
+                htmlFor={option.id}
+                className={clsx(
+                  "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
+                  option.disabled
+                    ? "border-slate-200 bg-slate-50/50"
+                    : "border-brand-dark cursor-pointer bg-slate-50"
+                )}>
+                <RadioGroupItem
+                  value={option.id}
+                  id={option.id}
+                  disabled={option.disabled}
+                  className="aria-checked:border-brand-dark  mx-5 disabled:cursor-not-allowed disabled:border-slate-400 aria-checked:border-2"
+                />
+                <div>
+                  <div className="inline-flex items-center">
+                    <p
+                      className={clsx(
+                        "font-semibold",
+                        option.disabled ? "text-slate-500" : "text-slate-800"
+                      )}>
+                      {option.name}
+                    </p>
+                    {option.disabled && (
+                      <span className="ml-2 inline-flex items-center rounded bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
+                        coming soon
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
+                </div>
+              </Label>
+            ))}
+          </RadioGroup>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

@@ -64,7 +64,7 @@ export interface Survey {
   triggers: Trigger[];
 }
 
-export type Question = OpenTextQuestion | RadioQuestion;
+export type Question = OpenTextQuestion | MultipleChoiceSingleQuestion;
 
 export interface OpenTextQuestion {
   id: string;
@@ -76,13 +76,19 @@ export interface OpenTextQuestion {
   required: boolean;
 }
 
-export interface RadioQuestion {
+export interface MultipleChoiceSingleQuestion {
   id: string;
-  type: "radio";
+  type: "multipleChoiceSingle";
   headline: string;
   subheader?: string;
-  buttonLabel?: string;
   required: boolean;
+  buttonLabel?: string;
+  choices?: Choice[];
+}
+
+export interface Choice {
+  id: string;
+  label: string;
 }
 
 export interface Trigger {

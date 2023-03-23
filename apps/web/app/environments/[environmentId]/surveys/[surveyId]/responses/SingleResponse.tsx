@@ -17,11 +17,9 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
             className="group flex items-center"
             href={`/environments/${environmentId}/people/${data.personId}`}>
             <PersonAvatar personId={data.personId} />
-            <h3 className="ml-4 pb-1 text-xl font-semibold text-slate-600 group-hover:underline">
-              {data.personId}
-            </h3>
+            <h3 className="ml-4 pb-1 font-semibold text-slate-600 group-hover:underline">{data.personId}</h3>
           </Link>
-          <div className="flex space-x-4">
+          <div className="flex space-x-4 text-sm">
             {data.finished && (
               <span className="flex items-center rounded-full bg-slate-100 px-3 text-slate-600">
                 Completed <CheckCircleIcon className="ml-1 h-5 w-5 text-green-400" />
@@ -38,7 +36,7 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
           return (
             <div key={response.id}>
               <p className="text-sm text-slate-500">{response.question}</p>
-              <p className="my-1 text-lg font-semibold text-slate-700">{response.answer}</p>
+              <p className="my-1 font-semibold text-slate-700">{response.answer}</p>
             </div>
           );
         })}

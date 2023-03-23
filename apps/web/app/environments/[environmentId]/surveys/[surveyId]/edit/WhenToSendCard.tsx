@@ -4,17 +4,18 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Button from "@/components/ui/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
+import { Survey } from "@/types/surveys";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 
 interface WhenToSendCardProps {
-  triggers: any;
-  setTriggers: (triggers: any) => void;
+  localSurvey: Survey;
+  setLocalSurvey: (survey: Survey) => void;
   environmentId: string;
 }
 
-export default function WhenToSendCard({ environmentId, triggers, setTriggers }: WhenToSendCardProps) {
+export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhenToSendCardProps) {
   const [open, setOpen] = useState(false);
   const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
 
@@ -27,15 +28,21 @@ export default function WhenToSendCard({ environmentId, triggers, setTriggers }:
   }
 
   const addTriggerEvent = () => {
-    setTriggers([...triggers, ""]);
+    const updatedSurvey = { ...localSurvey };
+    updatedSurvey.triggers = [...localSurvey.triggers, ""];
+    setLocalSurvey(updatedSurvey);
   };
 
   const setTriggerEvent = (idx: number, eventClassId: string) => {
-    setTriggers([...triggers.slice(0, idx), eventClassId, ...triggers.slice(idx + 1)]);
+    const updatedSurvey = { ...localSurvey };
+    updatedSurvey.triggers[idx] = eventClassId;
+    setLocalSurvey(updatedSurvey);
   };
 
   const removeTriggerEvent = (idx: number) => {
-    setTriggers([...triggers.slice(0, idx), ...triggers.slice(idx + 1)]);
+    const updatedSurvey = { ...localSurvey };
+    updatedSurvey.triggers = [...localSurvey.triggers.slice(0, idx), ...localSurvey.triggers.slice(idx + 1)];
+    setLocalSurvey(updatedSurvey);
   };
 
   return (
@@ -46,7 +53,7 @@ export default function WhenToSendCard({ environmentId, triggers, setTriggers }:
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
-            {triggers.length === 0 || !triggers[0] ? (
+            {localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
               <div className="h-7 w-7 rounded-full border border-slate-400" />
             ) : (
               <CheckCircleIcon className="h-8 w-8 text-teal-400" />
@@ -63,7 +70,7 @@ export default function WhenToSendCard({ environmentId, triggers, setTriggers }:
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="">
         <hr className="py-1 text-slate-600" />
-        {triggers.map((triggerEventClassId, idx) => (
+        {localSurvey.triggers.map((triggerEventClassId, idx) => (
           <div className="mt-2">
             <div className="inline-flex items-center">
               <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
