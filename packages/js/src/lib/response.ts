@@ -1,7 +1,7 @@
 import { Response, ResponseCreateRequest, ResponseUpdateRequest } from "../types/types";
 
 export const createResponse = async (responseRequest: ResponseCreateRequest, config): Promise<Response> => {
-  const res = await fetch(`${config.apiHost}/api/v1/environments/${config.environmentId}/client/responses`, {
+  const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/responses`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(responseRequest),
@@ -19,7 +19,7 @@ export const updateResponse = async (
   config
 ): Promise<Response> => {
   const res = await fetch(
-    `${config.apiHost}/api/v1/environments/${config.environmentId}/client/responses/${responseId}`,
+    `${config.apiHost}/api/v1/client/environments/${config.environmentId}/responses/${responseId}`,
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

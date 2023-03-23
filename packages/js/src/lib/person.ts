@@ -1,7 +1,7 @@
 import type { Config } from "../types/types";
 
 export const createPerson = async (config: Config) => {
-  const res = await fetch(`${config.apiHost}/api/v1/environments/${config.environmentId}/client/people`, {
+  const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/people`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -30,7 +30,7 @@ export const updatePersonUserId = async (config: Config, userId: string) => {
     return;
   }
   const res = await fetch(
-    `${config.apiHost}/api/v1/environments/${config.environmentId}/client/people/${config.person.id}/user-id`,
+    `${config.apiHost}/api/v1/client/environments/${config.environmentId}/people/${config.person.id}/user-id`,
     {
       method: "POST",
       headers: {
@@ -55,7 +55,7 @@ export const updatePersonAttribute = async (config: Config, key: string, value: 
     return;
   }
   const res = await fetch(
-    `${config.apiHost}/api/v1/environments/${config.environmentId}/client/people/${config.person.id}/attribute`,
+    `${config.apiHost}/api/v1/client/environments/${config.environmentId}/people/${config.person.id}/attribute`,
     {
       method: "POST",
       headers: {
