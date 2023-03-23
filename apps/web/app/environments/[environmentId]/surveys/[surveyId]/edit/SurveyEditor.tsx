@@ -19,10 +19,6 @@ interface SurveyEditorProps {
 export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorProps) {
   const [activeView, setActiveView] = useState<"questions" | "audience">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  /* const [questions, setQuestions] = useState<Question[]>([]);
-  const [triggers, setTriggers] = useState<string[]>([]); // list of eventClass Ids
-  const [showSetting, setShowSetting] = useState<"once" | "always">("once");
- */
   const [localSurvey, setLocalSurvey] = useState<Survey | null>();
 
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
@@ -30,20 +26,9 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
 
   useEffect(() => {
     if (survey) {
-      /* setQuestions(survey.questions);
-      setTriggers(survey.triggers.map((trigger) => trigger.eventClassId));
-      setShowSetting(survey.show); */
       if (!localSurvey) {
         setLocalSurvey(survey);
-      } /* else {
-        if (
-          confirm(
-            "This survey has been updated. Do you want to discard your changes and continue with the new version?"
-          )
-        ) {
-          setLocalSurvey(survey);
-        }
-      } */
+      }
 
       if (!activeQuestionId && survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);

@@ -35,7 +35,7 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Choices</legend>
-          <div className="relative space-y-2 rounded-md bg-white">
+          <div className="relative space-y-2 rounded-md">
             {question.choices &&
               question.choices.map((choice) => (
                 <label

@@ -6,7 +6,7 @@ export const createSession = async (config: Config): Promise<any> => {
     return;
   }
   const response = await fetch(
-    `${config.apiHost}/api/v1/environments/${config.environmentId}/client/sessions`,
+    `${config.apiHost}/api/v1/client/environments/${config.environmentId}/sessions`,
     {
       method: "POST",
       headers: {
