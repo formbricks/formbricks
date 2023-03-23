@@ -24,7 +24,7 @@ export default function AudienceView({ environmentId, localSurvey, setLocalSurve
         environmentId={environmentId}
       />
 
-      <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+      <ResponseOptionsCard />
 
       <RecontactOptionsCard
         localSurvey={localSurvey}
