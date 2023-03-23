@@ -52,6 +52,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
         setLocalSurvey={setLocalSurvey}
         localSurvey={localSurvey}
         environmentId={environmentId}
+        setActiveId={setActiveView}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
@@ -67,9 +68,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             <AudienceView
               environmentId={environmentId}
               localSurvey={localSurvey}
-              /* triggers={localSurvey.triggers}
-              setLocalSurvey={setLocalSurvey}
-              showSetting={localSurvey.showSetting} */
               setLocalSurvey={setLocalSurvey}
             />
           )}

@@ -1,6 +1,11 @@
 import { cn } from "@/lib/utils";
 import { QuestionMarkCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 
+interface QuestionsAudienceTabsProps {
+  activeId: "questions" | "audience";
+  setActiveId: () => void;
+}
+
 const tabs = [
   {
     id: "questions",
