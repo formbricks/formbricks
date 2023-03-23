@@ -3,7 +3,7 @@ import { QuestionMarkCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid
 
 interface QuestionsAudienceTabsProps {
   activeId: "questions" | "audience";
-  setActiveId: () => void;
+  setActiveId: (id: string) => void;
 }
 
 const tabs = [
@@ -19,7 +19,7 @@ const tabs = [
   },
 ];
 
-export default function QuestionsAudienceTabs({ activeId, setActiveId }) {
+export default function QuestionsAudienceTabs({ activeId, setActiveId }: QuestionsAudienceTabsProps) {
   return (
     <div className="flex h-14 w-full items-center justify-center border bg-white">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
