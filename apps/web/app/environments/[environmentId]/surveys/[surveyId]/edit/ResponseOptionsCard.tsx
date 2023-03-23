@@ -2,7 +2,6 @@
 
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
-import { Survey } from "@/types/surveys";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import clsx from "clsx";
@@ -23,25 +22,9 @@ const options = [
   },
 ];
 
-const responseOptions = [
-  {
-    id: "false",
-    name: "One response per person",
-    description: "Every person can respond to this survey only once.",
-  },
-  {
-    id: "true",
-    name: "Multiple responses per person",
-    description: "A person can respond to this survey multiple times.",
-  },
-];
+interface ResponseOptionsCardProps {}
 
-interface ResponseOptionsCardProps {
-  localSurvey: Survey;
-  setLocalSurvey: (survey: Survey) => void;
-}
-
-export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
+export default function ResponseOptionsCard({}: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -64,39 +47,6 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
-
-        <div className="p-3">
-          <div className="mb-4 ml-2">
-            <h3 className="font-semibold text-slate-700">Response frequency</h3>
-            <p className="text-xs text-slate-500">How often can the survey be filled out per person?</p>
-          </div>
-          <RadioGroup
-            value={localSurvey.allowMultipleResponses.toString()}
-            className="flex flex-col space-y-3"
-            onValueChange={(v) => {
-              const updatedSurvey = { ...localSurvey };
-              updatedSurvey.allowMultipleResponses = v === "true";
-              setLocalSurvey(updatedSurvey);
-            }}>
-            {responseOptions.map((option) => (
-              <Label
-                key={option.name}
-                htmlFor={option.id}
-                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
-                <RadioGroupItem
-                  value={option.id}
-                  id={option.id}
-                  className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
-                />
-                <div className="">
-                  <p className="font-semibold text-slate-700">{option.name}</p>
-
-                  <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
-                </div>
-              </Label>
-            ))}
-          </RadioGroup>
-        </div>
         <div className="p-3">
           <div className="mb-4 ml-2">
             <h3 className="font-semibold text-slate-700">Survey end</h3>

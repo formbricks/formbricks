@@ -1,41 +1,36 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { Survey } from "@/types/surveys";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { useState } from "react";
 
-const displayOptions = [
+interface DisplayOption {
+  id: string;
+  name: string;
+  description: string;
+}
+
+const displayOptions: DisplayOption[] = [
   {
     id: "displayOnce",
-    name: "If person sees survey and does not respond, do not show again.",
-    description: "Most common option. Keeps survey fatigue at minimum.",
+    name: "Show once",
+    description: "If person doesn't respond the survey won't be shown again.",
   },
   {
     id: "displayMultiple",
-    name: "If person sees survey and does not respond, show again.",
-    description: "If you really want that answer, ask several times.",
+    name: "Display until responded",
+    description: "If you really want that answer, ask until you get it.",
   },
   {
     id: "respondMultiple",
-    name: "If person has responded, show again when conditions match.",
-    description: "This is useful for e.g. Feedback Boxes or Cancel Subscription Flows.",
-  },
-];
-
-const waitingPeriod = [
-  {
-    id: 0,
-    name: "Ignore waiting period, always show this survey.",
-    description: "This survey will be shown even if the waiting period is not over yet.",
-  },
-  {
-    id: 1,
-    name: "Wait ___ days before showing this survey again.",
-    description: "Overwrites waiting period between surveys to ___ days.",
+    name: "Always display when conditions match",
+    description: "This is useful for e.g. Feedback Boxes. Can cause survey fatigue.",
   },
 ];
 
@@ -51,20 +46,38 @@ export default function RecontactOptionsCard({
   environmentId,
 }: RecontactOptionsCardProps) {
   const [open, setOpen] = useState(false);
+  const ignoreWaiting = localSurvey.recontactDays !== null;
+  const [inputDays, setInputDays] = useState(
+    localSurvey.recontactDays !== null ? localSurvey.recontactDays : 1
+  );
+
+  const handleCheckMark = () => {
+    if (ignoreWaiting) {
+      const updatedSurvey = { ...localSurvey, recontactDays: null };
+      setLocalSurvey(updatedSurvey);
+    } else {
+      const updatedSurvey = { ...localSurvey, recontactDays: 0 };
+      setLocalSurvey(updatedSurvey);
+    }
+  };
+
+  const handleRecontactDaysChange = (event) => {
+    const value = Number(event.target.value);
+    setInputDays(value);
+
+    const updatedSurvey = { ...localSurvey, recontactDays: value };
+    setLocalSurvey(updatedSurvey);
+  };
 
   return (
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className="w-full space-y-2 rounded-lg border border-slate-300 bg-white">
+      className=" w-full space-y-2 rounded-lg border border-slate-300 bg-white">
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
-            {/*   {!displayType ? (
-              <div className="h-7 w-7 rounded-full border border-slate-400" />
-            ) : (
-              <CheckCircleIcon className="h-8 w-8 text-teal-400" />
-            )} */}
+            <CheckCircleIcon className="h-8 w-8 text-teal-400" />
           </div>
           <div>
             <p className="text-lg font-semibold text-slate-800">Recontact Options</p>
@@ -74,7 +87,7 @@ export default function RecontactOptionsCard({
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent>
+      <Collapsible.CollapsibleContent className="pb-3">
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           <RadioGroup
@@ -105,48 +118,84 @@ export default function RecontactOptionsCard({
         </div>
 
         <div className="p-3">
-          <div className="mb-4 ml-2">
-            <h3 className="font-semibold text-slate-700">Ignore waiting time between surveys</h3>
-            <p className="text-xs text-slate-500">
-              This setting overwrites your{" "}
-              <Link
-                className="decoration-brand-dark underline"
-                href={`/environments/${environmentId}/settings/product`}
-                target="_blank">
-                waiting period
-              </Link>
-              . This can cause survey fatigue.
-            </p>
-          </div>
           <div className="ml-2 flex items-center space-x-1">
-            <Checkbox id="recontactDays" />
-            <Label htmlFor="recontactDays">Ignore waiting time.</Label>
+            <Checkbox id="recontactDays" checked={ignoreWaiting} onCheckedChange={handleCheckMark} />
+            <Label htmlFor="recontactDays" className="cursor-pointer">
+              <div className="ml-2">
+                <h3 className="text-base font-semibold text-slate-700">
+                  Ignore waiting time between surveys
+                </h3>
+                <p className="text-xs font-normal text-slate-500">
+                  This setting overwrites your{" "}
+                  <Link
+                    className="decoration-brand-dark underline"
+                    href={`/environments/${environmentId}/settings/product`}
+                    target="_blank">
+                    waiting period
+                  </Link>
+                  . Use with caution.
+                </p>
+              </div>
+            </Label>
           </div>
-          {/* <RadioGroup
-            value={localSurvey.recontactDays}
-            className="flex flex-col space-y-3"
-            onValueChange={(v) => {
-              const updatedSurvey = { ...localSurvey };
-              updatedSurvey.recontactDays = v;
-              setLocalSurvey(updatedSurvey);
-            }}>
-            {waitingPeriod.map((option) => (
-              <Label
-                htmlFor={option.id}
-                className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
-                <RadioGroupItem
-                  value={option.id}
-                  id={option.id}
-                  className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
-                />
-                <div className="">
-                  <p className="font-semibold text-slate-700">{option.name}</p>
+          {ignoreWaiting && localSurvey.recontactDays !== null && (
+            <div className="p-3">
+              <RadioGroup
+                value={localSurvey.recontactDays.toString()}
+                className="flex flex-col space-y-3"
+                onValueChange={(v) => {
+                  const updatedSurvey = { ...localSurvey, recontactDays: v === "null" ? null : Number(v) };
+                  setLocalSurvey(updatedSurvey);
+                }}>
+                <Label
+                  key="ignore"
+                  htmlFor="ignore"
+                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                  <RadioGroupItem
+                    value="0"
+                    id="ignore"
+                    className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
+                  />
+                  <div className="">
+                    <p className="font-semibold text-slate-700">Always show survey</p>
 
-                  <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
-                </div>
-              </Label>
-            ))}
-          </RadioGroup> */}
+                    <p className="mt-2 text-xs font-normal text-slate-600">
+                      When conditions match, waiting time will be ignored and survey shown.
+                    </p>
+                  </div>
+                </Label>
+
+                <Label
+                  key="newDays"
+                  htmlFor="newDays"
+                  className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                  <RadioGroupItem
+                    value={inputDays.toString()}
+                    id="newDays"
+                    className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
+                  />
+                  <div className="">
+                    <p className="font-semibold text-slate-700">
+                      Wait
+                      <Input
+                        type="number"
+                        min="1"
+                        id="inputDays"
+                        value={inputDays}
+                        onChange={handleRecontactDaysChange}
+                        className="ml-2 mr-2 inline  w-16 text-center"
+                      />
+                      days before showing this survey again.
+                    </p>
+
+                    <p className="mt-2 text-xs font-normal text-slate-600">
+                      Overwrites waiting period between surveys to {inputDays} day(s).
+                    </p>
+                  </div>
+                </Label>
+              </RadioGroup>
+            </div>
+          )}
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
