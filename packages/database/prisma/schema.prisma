@@ -126,8 +126,7 @@ model Survey {
   status                 SurveyStatus    @default(draft)
   questions              Json            @default("[]")
   responses              Response[]
-  allowMultipleDisplays  Boolean         @default(false)
-  allowMultipleResponses Boolean         @default(false)
+  displayOptions         String          @default("displayOnce")
   recontactDays          Int?
   triggers               SurveyTrigger[]
   displays               Display[]

@@ -71,7 +71,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
       <Collapsible.CollapsibleContent className="">
         <hr className="py-1 text-slate-600" />
         {localSurvey.triggers.map((triggerEventClassId, idx) => (
-          <div className="mt-2">
+          <div className="mt-2" key={idx}>
             <div className="inline-flex items-center">
               <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
               <Select

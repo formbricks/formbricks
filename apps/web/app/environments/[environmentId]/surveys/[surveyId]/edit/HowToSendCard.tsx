@@ -73,6 +73,7 @@ export default function HowToSendCard({}: HowToSendCardProps) {
           <RadioGroup defaultValue="web" className="flex flex-col space-y-3">
             {options.map((option) => (
               <Label
+                key={option.id}
                 htmlFor={option.id}
                 className={clsx(
                   "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
