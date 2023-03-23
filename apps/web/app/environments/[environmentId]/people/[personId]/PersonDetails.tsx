@@ -1,5 +1,6 @@
 "use client";
 
+import DeleteDialog from "@/components/shared/DeleteDialog";
 import GoBackButton from "@/components/shared/GoBackButton";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { deletePerson, usePerson } from "@/lib/people/people";
@@ -7,6 +8,7 @@ import { capitalizeFirstLetter } from "@/lib/utils";
 import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import ActivityFeed from "./ActivityFeed";
 import ResponseFeed from "./ResponsesFeed";
 
@@ -26,9 +28,16 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
   }, [person]); */
 
   const [responsesAscending, setResponsesAscending] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const toggleSortResponses = () => {
     setResponsesAscending(!responsesAscending);
+  };
+
+  const handleDeletePerson = async () => {
+    await deletePerson(environmentId, personId);
+    router.push(`/environments/${environmentId}/people`);
+    toast.success("Person deleted successfully.");
   };
 
   const [activityAscending, setActivityAscending] = useState(true);
@@ -68,15 +77,8 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
         </h1>
         <div className="flex items-center space-x-3">
           <button
-            onClick={async () => {
-              if (
-                confirm(
-                  "Are you sure you want to delete this person? All of it's responses, events and attributes will be deleted as well. This action cannot be undone."
-                )
-              ) {
-                await deletePerson(environmentId, personId);
-                router.push(`/environments/${environmentId}/people`);
-              }
+            onClick={() => {
+              setDeleteDialogOpen(true);
             }}>
             <TrashIcon className="h-5 w-5 text-slate-500 hover:text-red-500" />
           </button>
@@ -168,6 +170,12 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
           </div>
         </div>
       </section>
+      <DeleteDialog
+        open={deleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        deleteWhat="person"
+        onDelete={handleDeletePerson}
+      />
     </>
   );
 }

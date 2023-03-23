@@ -12,6 +12,7 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
+import toast from "react-hot-toast";
 
 export function EditName() {
   const { register, handleSubmit } = useForm();
@@ -37,7 +38,13 @@ export function EditName() {
     <form
       className="w-full max-w-sm items-center"
       onSubmit={handleSubmit((data) => {
-        triggerProfileMutate(data);
+        triggerProfileMutate(data)
+          .then(() => {
+            toast.success("Your name was updated successfully.");
+          })
+          .catch((error) => {
+            toast.error(`Error: ${error.message}`);
+          });
       })}>
       <Label htmlFor="fullname">Full Name</Label>
       <Input type="text" id="fullname" defaultValue={profile.name} {...register("name")} />

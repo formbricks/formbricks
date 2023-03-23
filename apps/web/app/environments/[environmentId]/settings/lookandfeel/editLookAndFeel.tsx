@@ -10,6 +10,7 @@ import { useEnvironment } from "@/lib/environments/environments";
 import { useProduct } from "@/lib/products/products";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export function EditBrandColor({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
@@ -38,7 +39,13 @@ export function EditBrandColor({ environmentId }) {
         className="mt-4"
         loading={isMutatingProduct}
         onClick={() => {
-          triggerProductMutate({ brandColor: color });
+          triggerProductMutate({ brandColor: color })
+            .then(() => {
+              toast.success("Brand color updated successfully.");
+            })
+            .catch((error) => {
+              toast.error(`Error: ${error.message}`);
+            });
         }}>
         Save
       </Button>

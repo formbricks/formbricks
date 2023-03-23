@@ -1,7 +1,14 @@
 import Modal from "@/components/shared/Modal";
 import { Button } from "@/components/ui/Button";
 
-export default function DeleteDialog({ open, setOpen, deleteWhat, onDelete }) {
+interface DeleteDialogProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  deleteWhat: string;
+  onDelete: () => void;
+}
+
+export default function DeleteDialog({ open, setOpen, deleteWhat, onDelete }: DeleteDialogProps) {
   return (
     <Modal open={open} setOpen={setOpen} title={`Delete ${deleteWhat}`}>
       <p>Are you sure? This action cannot be undone.</p>

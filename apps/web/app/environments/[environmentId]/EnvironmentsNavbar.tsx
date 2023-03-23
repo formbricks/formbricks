@@ -128,7 +128,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           icon: CreditCardIcon,
           label: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
-          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
         },
         /*         {
           icon: RocketLaunchIcon,
@@ -271,8 +271,12 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       <DropdownMenuRadioGroup
                         value={environment?.type}
                         onValueChange={(v) => changeEnvironment(v)}>
-                        <DropdownMenuRadioItem value="production">Production</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="development">Development</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="production" className="cursor-pointer">
+                          Production
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="development" className="cursor-pointer">
+                          Development
+                        </DropdownMenuRadioItem>
                       </DropdownMenuRadioGroup>
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>

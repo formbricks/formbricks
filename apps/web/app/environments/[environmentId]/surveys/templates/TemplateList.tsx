@@ -12,7 +12,9 @@ import TemplateMenuBar from "./TemplateMenuBar";
 import { templates } from "./templates";
 
 export default function TemplateList({ environmentId }: { environmentId: string }) {
-  const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
+  const [activeTemplate, setActiveTemplate] = useState<Template | null>(
+    templates.length > 0 ? templates[0] : null
+  );
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
 
   if (isLoadingProduct) return <LoadingSpinner />;
@@ -42,10 +44,8 @@ export default function TemplateList({ environmentId }: { environmentId: string 
       <TemplateMenuBar activeTemplate={activeTemplate} environmentId={environmentId} />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main className="relative z-0 flex-1 overflow-y-auto p-8 focus:outline-none">
-          <h1 className="my-2 text-3xl font-bold text-slate-800">New Survey</h1>
-          <p className="mb-6 text-slate-500">
-            Choose from one of the templates below to create a new survey.
-          </p>
+          <h1 className="my-1 text-3xl font-bold text-slate-800">Start with a template</h1>
+          <p className="mb-6 text-slate-500">Choose from one of the templates below or start from scratch.</p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {templates.map((template: Template) => (
               <button
@@ -54,7 +54,7 @@ export default function TemplateList({ environmentId }: { environmentId: string 
                 key={template.name}
                 className={cn(
                   activeTemplate?.name === template.name && "ring-brand ring-2",
-                  "duration-120 relative rounded-lg  bg-white p-8 shadow hover:bg-slate-50"
+                  "duration-120 relative rounded-lg  bg-white p-8 shadow hover:bg-slate-50/50"
                 )}>
                 <template.icon className="h-8 w-8" />
                 <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700">{template.name}</h3>
@@ -66,9 +66,9 @@ export default function TemplateList({ environmentId }: { environmentId: string 
               onClick={() => setActiveTemplate(customSurvey)}
               className={cn(
                 activeTemplate?.name === customSurvey.name && "ring-brand ring-2",
-                "duration-120 relative rounded-lg border-2 border-dashed border-slate-300 bg-transparent p-8 hover:bg-slate-50"
+                "duration-120 hover:border-brand-dark group relative rounded-lg border-2 border-dashed border-slate-300 bg-transparent p-8 transition-colors duration-150"
               )}>
-              <PlusCircleIcon className="h-8 w-8" />
+              <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
               <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700 ">{customSurvey.name}</h3>
               <p className="text-left text-xs text-slate-600 ">{customSurvey.description}</p>
             </button>

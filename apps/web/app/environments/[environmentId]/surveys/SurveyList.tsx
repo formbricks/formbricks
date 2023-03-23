@@ -16,6 +16,7 @@ import { EllipsisHorizontalIcon, PencilSquareIcon, TrashIcon } from "@heroicons/
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
@@ -38,6 +39,7 @@ export default function SurveysList({ environmentId }) {
       updatedsurveys.splice(surveyIdx, 1);
       mutateSurveys(updatedsurveys);
       setDeleteDialogOpen(false);
+      toast.success("Survey deleted successfully.");
     } catch (error) {
       console.error(error);
     }
