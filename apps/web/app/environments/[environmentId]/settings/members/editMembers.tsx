@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import { SendIcon } from "@/components/ui/icons/SendIcon";
 import { TrashIcon } from "@/components/ui/icons/TrashIcon";
 import { addMember, removeMember, resendInvite, useTeam } from "@/lib/teams";
+import * as Tooltip from "@/components/ui/Tooltip";
 import { useState } from "react";
 import AddMemberModal from "./AddMemberModal";
 
@@ -78,9 +79,18 @@ export function EditMembers({ environmentId }) {
                   <TrashIcon />
                 </button>
                 {!accepted && (
-                  <button onClick={() => handleResendInvite(member.userId)}>
-                    <SendIcon />
-                  </button>
+                  <Tooltip.TooltipProvider>
+                    <Tooltip.Tooltip>
+                      <Tooltip.TooltipTrigger asChild>
+                        <button onClick={() => handleResendInvite(member.userId)}>
+                          <SendIcon />
+                        </button>
+                      </Tooltip.TooltipTrigger>
+                      <Tooltip.TooltipContent className="TooltipContent" sideOffset={5}>
+                        Resend Invitation Email
+                      </Tooltip.TooltipContent>
+                    </Tooltip.Tooltip>
+                  </Tooltip.TooltipProvider>
                 )}
               </div>
             </div>
