@@ -222,13 +222,10 @@ const closeSurvey = () => {
 const formbricks = { init, setUserId, setEmail, setAttribute, track, reset, config };
 
 // check every minute if session is still valid
-setInterval(() => {
-  checkSession(config, initFunction);
-}, 60000);
-
-/* // add event listeners for no code events
-window.addEventListener("load", () => {
-  console.log(window.location.href);
-}); */
+if (typeof window !== "undefined") {
+  window?.setInterval(() => {
+    checkSession(config, initFunction);
+  }, 60000);
+}
 
 export default formbricks;
