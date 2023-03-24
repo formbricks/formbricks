@@ -31,6 +31,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     // check if person exists
     const existingPerson = await prisma.person.findFirst({
       where: {
+        environmentId,
         attributes: {
           some: {
             attributeClass: {
