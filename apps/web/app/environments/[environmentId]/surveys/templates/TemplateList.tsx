@@ -12,6 +12,7 @@ import PreviewSurvey from "../PreviewSurvey";
 import TemplateMenuBar from "./TemplateMenuBar";
 import { templates } from "./templates";
 import { PaintBrushIcon } from "@heroicons/react/24/solid";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 
 export default function TemplateList({ environmentId }: { environmentId: string }) {
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(
@@ -25,7 +26,7 @@ export default function TemplateList({ environmentId }: { environmentId: string 
   ];
 
   if (isLoadingProduct) return <LoadingSpinner />;
-  if (isErrorProduct) return <div>Error...</div>;
+  if (isErrorProduct) return <ErrorComponent />;
 
   const customSurvey: Template = {
     name: "Custom Survey",

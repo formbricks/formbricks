@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
 import { Survey } from "@/types/surveys";
@@ -41,7 +42,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
   }
 
   if (isErrorSurvey || isErrorProduct) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   return (

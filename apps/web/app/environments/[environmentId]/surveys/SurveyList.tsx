@@ -10,6 +10,7 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
@@ -50,7 +51,7 @@ export default function SurveysList({ environmentId }) {
   }
 
   if (isErrorSurveys) {
-    return <p>Error loading Surveys</p>;
+    return <ErrorComponent />;
   }
 
   return (

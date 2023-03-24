@@ -10,6 +10,7 @@ import { ArrowDownIcon, CheckIcon, ExclamationTriangleIcon } from "@heroicons/re
 import clsx from "clsx";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import ErrorComponent from "../ui/ErrorComponent";
 
 interface WidgetStatusIndicatorProps {
   environmentId: string;
@@ -73,7 +74,7 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
   }
 
   if (isErrorEvents || isErrorEnvironment) {
-    return <div>Error loading resources. Maybe you don&lsquo;t have enough access rights</div>;
+    return <ErrorComponent />;
   }
 
   if (type === "large") {

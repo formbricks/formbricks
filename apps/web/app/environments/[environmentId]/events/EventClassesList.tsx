@@ -2,6 +2,7 @@
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Button from "@/components/ui/Button";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { timeSinceConditionally } from "@/lib/time";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
@@ -23,7 +24,7 @@ export default function EventClassesList({ environmentId }) {
   }
 
   if (isErrorEventClasses) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   const handleOpenEventDetailModalClick = (e, eventClass) => {

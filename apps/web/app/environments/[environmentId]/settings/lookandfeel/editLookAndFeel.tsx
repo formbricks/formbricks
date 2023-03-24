@@ -11,6 +11,7 @@ import { useProduct } from "@/lib/products/products";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 
 export function EditBrandColor({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
@@ -61,7 +62,7 @@ export function EditPlacement({ environmentId }) {
     return <LoadingSpinner />;
   }
   if (isErrorEnvironment) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   const placements = [
@@ -107,7 +108,7 @@ export function EditFormbricksSignature({ environmentId }) {
     return <LoadingSpinner />;
   }
   if (isErrorEnvironment) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   return (

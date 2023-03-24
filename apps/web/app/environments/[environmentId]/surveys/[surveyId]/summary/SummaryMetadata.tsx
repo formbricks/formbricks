@@ -3,6 +3,7 @@
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import Button from "@/components/ui/Button";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
 import { useEnvironment } from "@/lib/environments/environments";
@@ -33,7 +34,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
   }
 
   if (isErrorResponses || isErrorSurvey || isErrorEnvironment) {
-    return <p>Error loading Surveys</p>;
+    return <ErrorComponent />;
   }
 
   return (

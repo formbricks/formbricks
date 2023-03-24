@@ -2,6 +2,7 @@
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
 import { useMemo } from "react";
@@ -41,7 +42,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
   }
 
   if (isErrorResponses || isErrorSurvey) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   return (

@@ -3,6 +3,7 @@
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { PersonAvatar } from "@/components/ui/Avatars";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 import { usePeople } from "@/lib/people/people";
 import Link from "next/link";
 
@@ -13,7 +14,7 @@ export default function PeopleList({ environmentId }: { environmentId: string })
     return <LoadingSpinner />;
   }
   if (isErrorPeople) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   const getAttributeValue = (person, attributeName) => {

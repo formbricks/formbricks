@@ -3,6 +3,7 @@
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Confetti } from "@/components/ui/Confetti";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
 import { QuestionSummary } from "@/types/responses";
@@ -56,7 +57,7 @@ export default function SummaryList({ environmentId, surveyId }) {
   }
 
   if (isErrorResponses || isErrorSurvey) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   return (

@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
 import { FilterIcon } from "@/components/ui/icons/FilterIcon";
 import { FormIcon } from "@/components/ui/icons/FormIcon";
@@ -172,7 +173,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
   }
 
   if (isErrorEnvironment) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   return (

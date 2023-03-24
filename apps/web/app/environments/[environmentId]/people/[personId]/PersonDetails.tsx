@@ -3,6 +3,7 @@
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import GoBackButton from "@/components/shared/GoBackButton";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 import { deletePerson, usePerson } from "@/lib/people/people";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -65,7 +66,7 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
   }
 
   if (isErrorPerson) {
-    return <div>Error loading ressources. Maybe you don&lsquo;t have enough access rights</div>;
+    return <ErrorComponent />;
   }
 
   return (

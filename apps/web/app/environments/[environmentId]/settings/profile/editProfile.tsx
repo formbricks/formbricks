@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import toast from "react-hot-toast";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 
 export function EditName() {
   const { register, handleSubmit } = useForm();
@@ -31,7 +32,7 @@ export function EditName() {
     return <LoadingSpinner />;
   }
   if (isErrorProfile) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   return (

@@ -1,4 +1,5 @@
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 import { Label } from "@/components/ui/Label";
 import { useEventClass } from "@/lib/eventClasses/eventClasses";
 import { convertDateTimeStringShort } from "@/lib/time";
@@ -14,7 +15,7 @@ export default function EventActivityTab({ environmentId, eventClassId }: Activi
   const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, eventClassId);
 
   if (isLoadingEventClass) return <LoadingSpinner />;
-  if (isErrorEventClass) return <p>Error</p>;
+  if (isErrorEventClass) return <ErrorComponent />;
 
   return (
     <div className="grid grid-cols-3 pb-2">

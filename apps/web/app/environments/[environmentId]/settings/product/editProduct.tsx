@@ -2,6 +2,7 @@
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import Button from "@/components/ui/Button";
+import ErrorComponent from "@/components/ui/ErrorComponent";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { useProductMutation } from "@/lib/products/mutateProducts";
@@ -19,7 +20,7 @@ export function EditProductName({ environmentId }) {
     return <LoadingSpinner />;
   }
   if (isErrorProduct) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   return (
@@ -54,7 +55,7 @@ export function EditWaitingTime({ environmentId }) {
     return <LoadingSpinner />;
   }
   if (isErrorProduct) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   return (
