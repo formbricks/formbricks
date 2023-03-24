@@ -61,7 +61,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
           </div>
 
           <div>
-            <p className="text-lg font-semibold text-slate-800">When to send</p>
+            <p className="font-semibold text-slate-800">When to send</p>
             <p className="mt-1 truncate text-sm text-slate-500">
               Choose the events when you want the survey to trigger.
             </p>

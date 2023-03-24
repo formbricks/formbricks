@@ -39,7 +39,7 @@ export default function WhoToSendToCard({}: WhoToSendToCardProps) {
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
-            <p className="text-lg font-semibold text-slate-800">Who to send to</p>
+            <p className="font-semibold text-slate-800">Who to send to</p>
             <p className="mt-1 truncate text-sm text-slate-500">
               Decide which group of you users can be surveyed.
             </p>

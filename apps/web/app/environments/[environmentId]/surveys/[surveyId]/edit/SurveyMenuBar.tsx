@@ -6,12 +6,13 @@ import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { Survey } from "@/types/surveys";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
   setLocalSurvey: (survey: Survey) => void;
   environmentId: string;
+  activeId: "questions" | "audience";
   setActiveId: (id: "questions" | "audience") => void;
 }
 
@@ -19,11 +20,18 @@ export default function SurveyMenuBar({
   localSurvey,
   environmentId,
   setLocalSurvey,
+  activeId,
   setActiveId,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
-  const [buttonClicked, setButtonClicked] = useState(false);
+  const [audiencePrompt, setAudiencePrompt] = useState(true);
+
+  useEffect(() => {
+    if (audiencePrompt && activeId === "audience") {
+      setAudiencePrompt(false);
+    }
+  }, [activeId, audiencePrompt]);
 
   return (
     <div className="border-b border-slate-200 bg-white py-3 px-5 sm:flex sm:items-center sm:justify-between">
@@ -46,17 +54,17 @@ export default function SurveyMenuBar({
           onClick={() => triggerSurveyMutate({ ...localSurvey })}>
           Save changes
         </Button>
-        {!buttonClicked && (
+        {audiencePrompt && (
           <Button
             variant="highlight"
             onClick={() => {
-              setButtonClicked(true);
+              setAudiencePrompt(false);
               setActiveId("audience");
             }}>
             <UserGroupIcon className="mr-1 h-4 w-4" /> Continue to Audience
           </Button>
         )}
-        {buttonClicked && (
+        {!audiencePrompt && (
           <Button
             disabled={localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0}
             variant="highlight"

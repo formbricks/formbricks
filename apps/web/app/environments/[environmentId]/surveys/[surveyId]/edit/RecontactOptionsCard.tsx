@@ -80,7 +80,7 @@ export default function RecontactOptionsCard({
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
-            <p className="text-lg font-semibold text-slate-800">Recontact Options</p>
+            <p className="font-semibold text-slate-800">Recontact Options</p>
             <p className="mt-1 truncate text-sm text-slate-500">
               Decide how often people can answer this survey.
             </p>
@@ -91,7 +91,7 @@ export default function RecontactOptionsCard({
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           <RadioGroup
-            value={localSurvey.displayOptions}
+            value={localSurvey.displayOption}
             className="flex flex-col space-y-3"
             onValueChange={(v) => {
               if (v === "displayOnce" || v === "displayMultiple" || v === "respondMultiple") {
@@ -125,9 +125,7 @@ export default function RecontactOptionsCard({
             <Checkbox id="recontactDays" checked={ignoreWaiting} onCheckedChange={handleCheckMark} />
             <Label htmlFor="recontactDays" className="cursor-pointer">
               <div className="ml-2">
-                <h3 className="text-base font-semibold text-slate-700">
-                  Ignore waiting time between surveys
-                </h3>
+                <h3 className="text-sm font-semibold text-slate-700">Ignore waiting time between surveys</h3>
                 <p className="text-xs font-normal text-slate-500">
                   This setting overwrites your{" "}
                   <Link
@@ -151,15 +149,14 @@ export default function RecontactOptionsCard({
                   setLocalSurvey(updatedSurvey);
                 }}>
                 <Label
-                  key="ignore"
                   htmlFor="ignore"
                   className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                   <RadioGroupItem
                     value="0"
                     id="ignore"
-                    className="aria-checked:border-brand-dark  mx-5 disabled:border-slate-400 aria-checked:border-2"
+                    className="aria-checked:border-brand-dark mx-5 text-sm disabled:border-slate-400 aria-checked:border-2"
                   />
-                  <div className="">
+                  <div>
                     <p className="font-semibold text-slate-700">Always show survey</p>
 
                     <p className="mt-2 text-xs font-normal text-slate-600">
@@ -168,8 +165,7 @@ export default function RecontactOptionsCard({
                   </div>
                 </Label>
 
-                <Label
-                  key="newDays"
+                <label
                   htmlFor="newDays"
                   className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                   <RadioGroupItem
@@ -178,7 +174,7 @@ export default function RecontactOptionsCard({
                     className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
                   />
                   <div className="">
-                    <p className="font-semibold text-slate-700">
+                    <p className="text-sm font-semibold text-slate-700">
                       Wait
                       <Input
                         type="number"
@@ -186,7 +182,7 @@ export default function RecontactOptionsCard({
                         id="inputDays"
                         value={inputDays}
                         onChange={handleRecontactDaysChange}
-                        className="ml-2 mr-2 inline  w-16 text-center"
+                        className="ml-2 mr-2 inline w-16 text-center text-sm"
                       />
                       days before showing this survey again.
                     </p>
@@ -195,7 +191,7 @@ export default function RecontactOptionsCard({
                       Overwrites waiting period between surveys to {inputDays} day(s).
                     </p>
                   </div>
-                </Label>
+                </label>
               </RadioGroup>
             </div>
           )}

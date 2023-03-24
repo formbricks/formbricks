@@ -61,7 +61,7 @@ export default function HowToSendCard({}: HowToSendCardProps) {
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
-            <p className="text-lg font-semibold text-slate-800">How to send</p>
+            <p className="font-semibold text-slate-800">How to send</p>
             <p className="mt-1 truncate text-sm text-slate-500">
               Choose how you want to reach your audience.
             </p>
