@@ -35,6 +35,12 @@ export interface Response {
   };
 }
 
+export interface InitConfig {
+  environmentId: string;
+  apiHost: string;
+  logLevel?: "debug" | "error";
+}
+
 export interface Config {
   environmentId: string;
   apiHost: string;

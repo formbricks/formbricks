@@ -381,7 +381,10 @@ importers:
     specifiers: {}
 
   packages/types:
-    specifiers: {}
+    specifiers:
+      '@formbricks/tsconfig': workspace:*
+    devDependencies:
+      '@formbricks/tsconfig': link:../tsconfig
 
   packages/ui:
     specifiers:

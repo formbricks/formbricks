@@ -1,19 +1,20 @@
-import css from "./style.css";
+import type { Config, InitConfig, Survey } from "@formbricks/types/js";
 import { h, render } from "preact";
 import App from "./App";
+import { addNewContainer } from "./lib/container";
+import { trackEvent, triggerSurveys } from "./lib/event";
+import { checkPageUrl } from "./lib/noCodeEvents";
 import {
   attributeAlreadyExists,
   attributeAlreadySet,
   createPerson,
-  getLocalPerson,
   updatePersonAttribute,
   updatePersonUserId,
 } from "./lib/person";
-import type { Config, Survey } from "@formbricks/types/js";
-import { checkSession, createSession, getLocalSession } from "./lib/session";
-import { trackEvent, triggerSurveys } from "./lib/event";
-import { addNewContainer } from "./lib/container";
-import { checkPageUrl } from "./lib/noCodeEvents";
+import { Logger } from "./lib/logger";
+import { createSession, extendOrCreateSession, isExpired } from "./lib/session";
+import { persistConfig, removeConfig, retrieveConfig } from "./lib/storage";
+import css from "./style.css";
 
 let config: Config = { environmentId: null, apiHost: null };
 let initFunction; // Promise that resolves when init is complete
@@ -24,7 +25,9 @@ const surveyQueue: Survey[] = []; // queue of surveys to be shown
 const surveysShown: string[] = []; // ids of surveys that have been shown
 let surveyRunning = false; // whether a survey is currently being shown
 
-const init = async (c: Config) => {
+const logger = Logger.getInstance();
+
+const init = async (c: InitConfig) => {
   if (!initFunction) {
     initFunction = populateConfig(c);
   }
@@ -42,50 +45,61 @@ const init = async (c: Config) => {
   }
 };
 
-const populateConfig = async (c: Config) => {
-  config = c;
+const populateConfig = async (c: InitConfig) => {
+  if (c.logLevel) {
+    logger.configure({ logLevel: c.logLevel });
+  }
+
+  const existingConfig = retrieveConfig();
+  // check if config already exists and was created with the same environmentId
+  if (
+    existingConfig &&
+    existingConfig.environmentId === c.environmentId &&
+    existingConfig.apiHost === c.apiHost
+  ) {
+    config = { ...existingConfig };
+  } else {
+    config = { ...config, environmentId: c.environmentId, apiHost: c.apiHost };
+  }
   // get or create person
-  let newPerson;
-  config.person = getLocalPerson();
-  if (!config.person || config.person.environmentId !== config.environmentId) {
+  let newPerson = false;
+  if (!config.person) {
+    logger.debug("No person found in config, creating new person");
     config.person = await createPerson(config);
     newPerson = true;
     if (!config.person) {
+      logger.error('Formbricks: Error creating "person"');
       return;
     }
   }
-  // get or create session
-  if (!newPerson) {
-    // if new person, we need a new session and skip this step
-    config.session = getLocalSession();
-  }
-  if (!config.session) {
+  if (newPerson || !config.session || isExpired(config.session) || !config.settings) {
+    logger.debug("Creating new session");
     const { session, settings } = await createSession(config);
     config.session = session;
     config.settings = settings;
-    if (!config.session) {
-      console.error('Formbricks: Error creating "session"');
+    if (!config.session || !config.settings) {
+      logger.error('Formbricks: Error creating "session"');
       return;
     }
+    logger.debug("New session created. Sending new session event");
     track("New Session");
-  } else {
-    // if we have a session, we also have surveys and noCodeEvents
-    config.settings = JSON.parse(localStorage.getItem("formbricks__settings") || "{}");
   }
+  // save config to local storage
+  persistConfig(config);
   // check page url for nocode events
   checkPageUrl(config, track);
 };
 
 const setUserId = async (userId: string): Promise<void> => {
   if (!initFunction) {
-    console.error("Formbricks: Error setting userId, init function not yet called");
+    logger.error("Formbricks: Error setting userId, init function not yet called");
     return;
   }
   await initFunction;
   await currentlyExecuting;
   currentlyExecuting = currentlyExecuting.then(async () => {
     if (!userId) {
-      console.error("Formbricks: Error setting userId, userId is null or undefined");
+      logger.error("Formbricks: Error setting userId, userId is null or undefined");
       return;
     }
     // check if attribute already exists with this value
@@ -93,15 +107,16 @@ const setUserId = async (userId: string): Promise<void> => {
       return;
     }
     if (attributeAlreadyExists(config, "userId")) {
-      console.error("Formbricks: userId cannot be changed after it has been set. You need to reset first");
+      logger.error("Formbricks: userId cannot be changed after it has been set. You need to reset first");
       return;
     }
     const updatedPerson = await updatePersonUserId(config, userId);
     if (!updatedPerson) {
-      console.error('Formbricks: Error updating "userId"');
+      logger.error('Formbricks: Error updating "userId"');
       return;
     }
     config.person = { ...config.person, ...updatedPerson };
+    persistConfig(config);
     return;
   });
 };
@@ -112,14 +127,14 @@ const setEmail = async (email: string): Promise<void> => {
 
 const setAttribute = async (key: string, value: string): Promise<void> => {
   if (!initFunction) {
-    console.error("Formbricks: Error setting attribute, init function not yet called");
+    logger.error("Formbricks: Error setting attribute, init function not yet called");
     return;
   }
   await initFunction;
   await currentlyExecuting;
   currentlyExecuting = currentlyExecuting.then(async () => {
     if (!key || !value) {
-      console.error("Formbricks: Error setting attribute, please provide key and value");
+      logger.error("Formbricks: Error setting attribute, please provide key and value");
       return;
     }
     // check if attribute already exists with this value
@@ -129,10 +144,11 @@ const setAttribute = async (key: string, value: string): Promise<void> => {
 
     const updatedPerson = await updatePersonAttribute(config, key, value);
     if (!updatedPerson) {
-      console.error("Formbricks: Error updating attribute");
+      logger.error("Formbricks: Error updating attribute");
       return;
     }
     config.person = { ...config.person, ...updatedPerson };
+    persistConfig(config);
     return;
   });
 };
@@ -140,33 +156,34 @@ const setAttribute = async (key: string, value: string): Promise<void> => {
 const reset = async () => {
   if (!resetRunning) {
     resetRunning = true;
-    delete config.person;
-    delete config.session;
-    localStorage.removeItem("formbricks__person");
-    localStorage.removeItem("formbricks__session");
-    initFunction = populateConfig({ environmentId: config.environmentId, apiHost: config.apiHost });
+    const initConfig: InitConfig = {
+      environmentId: config.environmentId,
+      apiHost: config.apiHost,
+    };
+    removeConfig();
+    initFunction = populateConfig(initConfig);
     await initFunction;
     resetRunning = false;
   } else {
-    console.log("Formbricks: Reset already running");
+    logger.debug("Reset already running");
   }
 };
 
 const track = async (eventName: string, properties: any = {}) => {
   if (!initFunction) {
-    console.error("Formbricks: Error setting attribute, init function not yet called");
+    logger.error("Error setting attribute, init function not yet called");
     return;
   }
   await initFunction;
   await currentlyExecuting;
   currentlyExecuting = currentlyExecuting.then(async () => {
     if (!eventName) {
-      console.error("Formbricks: Error tracking event, please provide an eventName");
+      logger.error("Error tracking event, please provide an eventName");
       return;
     }
     const event = await trackEvent(config, eventName, properties);
     if (!event) {
-      console.error("Formbricks: Error sending event");
+      logger.error("Formbricks: Error sending event");
       return;
     }
     const triggeredSurveys = triggerSurveys(config, eventName);
@@ -223,8 +240,9 @@ const formbricks = { init, setUserId, setEmail, setAttribute, track, reset, conf
 
 // check every minute if session is still valid
 if (typeof window !== "undefined") {
-  window?.setInterval(() => {
-    checkSession(config, initFunction);
+  window?.setInterval(async () => {
+    config = await extendOrCreateSession(config, initFunction);
+    persistConfig(config);
   }, 60000);
 }
 

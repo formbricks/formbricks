@@ -1,4 +1,9 @@
-export const trackEvent = async (config, eventName, properties) => {
+import { Survey } from "@formbricks/types/js";
+import { Logger } from "./logger";
+
+const logger = Logger.getInstance();
+
+export const trackEvent = async (config, eventName, properties): Promise<boolean> => {
   if (!config.person || !config.person.id) {
     console.error("Formbricks: Unable to track event. No person set.");
     return;
@@ -22,12 +27,12 @@ export const trackEvent = async (config, eventName, properties) => {
   return true;
 };
 
-export const triggerSurveys = (config, eventName) => {
+export const triggerSurveys = (config, eventName): Survey[] => {
   const triggeredSurveys = [];
   for (const survey of config.settings?.surveys) {
     for (const trigger of survey.triggers) {
       if (trigger.eventClass?.name === eventName) {
-        /* console.log(`Formbricks: survey ${survey.id} triggered by event "${eventName}"`); */
+        logger.debug(`Formbricks: survey ${survey.id} triggered by event "${eventName}"`);
         triggeredSurveys.push(survey);
       }
     }

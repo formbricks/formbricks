@@ -1,6 +1,6 @@
 import type { Config, MatchType } from "@formbricks/types/js";
 
-export const checkPageUrl = (config: Config, track: (eventName: string) => void) => {
+export const checkPageUrl = (config: Config, track: (eventName: string) => void): void => {
   const pageUrlEvents = config.settings?.noCodeEvents.filter(
     (event) => event.noCodeConfig?.type === "pageUrl"
   );

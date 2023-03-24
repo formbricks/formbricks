@@ -1,6 +1,6 @@
-import type { Config } from "@formbricks/types/js";
+import type { Config, Person } from "@formbricks/types/js";
 
-export const createPerson = async (config: Config) => {
+export const createPerson = async (config: Config): Promise<Person> => {
   const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/people`, {
     method: "POST",
     headers: {
@@ -12,7 +12,6 @@ export const createPerson = async (config: Config) => {
     return null;
   }
   const person = await res.json();
-  localStorage.setItem("formbricks__person", JSON.stringify(person));
   return person;
 };
 
@@ -24,7 +23,7 @@ export const getLocalPerson = () => {
   return null;
 };
 
-export const updatePersonUserId = async (config: Config, userId: string) => {
+export const updatePersonUserId = async (config: Config, userId: string): Promise<Person> => {
   if (!config.person || !config.person.id) {
     console.error("Formbricks: Unable to update userId. No person set.");
     return;
@@ -44,12 +43,10 @@ export const updatePersonUserId = async (config: Config, userId: string) => {
     console.error("Formbricks: Error updating person");
     return;
   }
-  // save to local storage
-  localStorage.setItem("formbricks__person", JSON.stringify(updatedPerson));
   return updatedPerson;
 };
 
-export const updatePersonAttribute = async (config: Config, key: string, value: string) => {
+export const updatePersonAttribute = async (config: Config, key: string, value: string): Promise<Person> => {
   if (!config.person || !config.person.id) {
     console.error("Formbricks: Unable to update attribute. No person set.");
     return;
@@ -69,12 +66,10 @@ export const updatePersonAttribute = async (config: Config, key: string, value: 
     console.error("Formbricks: Error updating person");
     return;
   }
-  // save to local storage
-  localStorage.setItem("formbricks__person", JSON.stringify(updatedPerson));
   return updatedPerson;
 };
 
-export const attributeAlreadySet = (config: Config, key: string, value: string) => {
+export const attributeAlreadySet = (config: Config, key: string, value: string): boolean => {
   const existingAttribute = config.person.attributes.find((a) => a.attributeClass?.name === key);
   if (existingAttribute && existingAttribute.value === value) {
     return true;
@@ -82,7 +77,7 @@ export const attributeAlreadySet = (config: Config, key: string, value: string) 
   return false;
 };
 
-export const attributeAlreadyExists = (config: Config, key: string) => {
+export const attributeAlreadyExists = (config: Config, key: string): boolean => {
   const existingAttribute = config.person.attributes.find((a) => a.attributeClass?.name === key);
   if (existingAttribute) {
     return true;

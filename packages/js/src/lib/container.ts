@@ -1,4 +1,4 @@
-const generateContainerId = () => {
+const generateContainerId = (): string => {
   const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let text = "";
   for (let i = 0; i < 5; i++) {
@@ -7,7 +7,7 @@ const generateContainerId = () => {
   return `formbricks__container-${text}`;
 };
 
-export const addNewContainer = () => {
+export const addNewContainer = (): string => {
   const containerElement = document.createElement("div");
   const containerId = generateContainerId();
   containerElement.id = containerId;
