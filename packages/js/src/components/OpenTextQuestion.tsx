@@ -1,5 +1,5 @@
 import { h } from "preact";
-import type { OpenTextQuestion, Question } from "../types/types";
+import type { OpenTextQuestion, Question } from "@formbricks/types/js";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 

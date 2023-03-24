@@ -1,7 +1,7 @@
 import { PersonAvatar } from "@/components/ui/Avatars";
 import { timeSince } from "@/lib/time";
 import { truncate } from "@/lib/utils";
-import type { QuestionSummary } from "@/types/responses";
+import type { QuestionSummary } from "@formbricks/types/responses";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 

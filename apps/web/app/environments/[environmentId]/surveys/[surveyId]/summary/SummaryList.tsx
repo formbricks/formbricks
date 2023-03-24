@@ -6,7 +6,7 @@ import { Confetti } from "@/components/ui/Confetti";
 import ErrorComponent from "@/components/ui/ErrorComponent";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
-import { QuestionSummary } from "@/types/responses";
+import type { QuestionSummary } from "@formbricks/types/responses";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";

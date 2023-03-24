@@ -4,7 +4,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import ErrorComponent from "@/components/ui/ErrorComponent";
 import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
-import { Survey } from "@/types/surveys";
+import type { Survey } from "@formbricks/types/surveys";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
 import AudienceView from "./AudienceView";

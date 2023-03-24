@@ -11,7 +11,7 @@ import { TaskListSearchIcon } from "@/components/ui/icons/TaskListSearchIcon";
 import { BaseballIcon } from "@/components/ui/icons/BaseballIcon";
 import { CheckMarkIcon } from "@/components/ui/icons/CheckMarkIcon";
 import { ArrowRightCircleIcon } from "@/components/ui/icons/ArrowRightCircleIcon";
-import type { Template } from "@/types/templates";
+import type { Template } from "@formbricks/types/templates";
 import { createId } from "@paralleldrive/cuid2";
 
 export const templates: Template[] = [

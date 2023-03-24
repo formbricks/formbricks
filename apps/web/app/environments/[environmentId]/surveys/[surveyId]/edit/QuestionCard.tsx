@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/Label";
 import { Switch } from "@/components/ui/Switch";
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@/lib/utils";
-import type { Question } from "@/types/questions";
+import type { Question } from "@formbricks/types/questions";
 import { Bars4Icon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Draggable } from "react-beautiful-dnd";

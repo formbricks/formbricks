@@ -1,7 +1,7 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
-import type { MultipleChoiceSingleQuestion } from "../types/types";
+import type { MultipleChoiceSingleQuestion } from "@formbricks/types/js";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 

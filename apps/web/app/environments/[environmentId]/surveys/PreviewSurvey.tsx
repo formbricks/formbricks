@@ -1,7 +1,7 @@
 import Modal from "@/components/preview/Modal";
 import MultipleChoiceSingleQuestion from "@/components/preview/MultipleChoiceSingleQuestion";
 import OpenTextQuestion from "@/components/preview/OpenTextQuestion";
-import type { Question } from "@/types/questions";
+import type { Question } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 
 interface PreviewSurveyProps {

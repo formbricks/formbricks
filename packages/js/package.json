@@ -37,6 +37,7 @@
   "author": "Formbricks <hola@formbricks.com>",
   "license": "MIT",
   "devDependencies": {
+    "@formbricks/types": "workspace:*",
     "@types/enzyme": "^3.10.8",
     "@types/jest": "^27.0.2",
     "@typescript-eslint/eslint-plugin": "^4.6.1",

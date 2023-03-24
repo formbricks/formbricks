@@ -3,7 +3,7 @@
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
-import { Survey } from "@/types/surveys";
+import type { Survey } from "@formbricks/types/surveys";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

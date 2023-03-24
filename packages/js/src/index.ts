@@ -9,7 +9,7 @@ import {
   updatePersonAttribute,
   updatePersonUserId,
 } from "./lib/person";
-import type { Config, Survey } from "./types/types";
+import type { Config, Survey } from "@formbricks/types/js";
 import { checkSession, createSession, getLocalSession } from "./lib/session";
 import { trackEvent, triggerSurveys } from "./lib/event";
 import { addNewContainer } from "./lib/container";

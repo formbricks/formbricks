@@ -1,7 +1,7 @@
 "use client";
 
 import Button from "@/components/ui/Button";
-import type { Template } from "@/types/templates";
+import type { Template } from "@formbricks/types/templates";
 import { createSurvey } from "@/lib/surveys/surveys";
 import { useRouter } from "next/navigation";
 

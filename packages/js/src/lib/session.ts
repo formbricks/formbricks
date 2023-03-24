@@ -1,4 +1,4 @@
-import type { Config, Session } from "../types/types";
+import type { Config, Session } from "@formbricks/types/js";
 
 export const createSession = async (config: Config): Promise<any> => {
   if (!config.person) {

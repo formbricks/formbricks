@@ -3,7 +3,7 @@
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { cn } from "@/lib/utils";
-import type { Template } from "@/types/templates";
+import type { Template } from "@formbricks/types/templates";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { createId } from "@paralleldrive/cuid2";
 import Link from "next/link";

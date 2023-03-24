@@ -9,7 +9,7 @@ import { Confetti } from "@/components/ui/Confetti";
 import { createResponse, updateResponse } from "@/lib/clientResponse/response";
 import { useLinkSurvey } from "@/lib/linkSurvey/linkSurvey";
 import { cn } from "@/lib/utils";
-import { Question } from "@/types/questions";
+import type { Question } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 
 interface LinkSurveyProps {

@@ -1,4 +1,4 @@
-import { Survey } from "@/types/surveys";
+import type { Survey } from "@formbricks/types/surveys";
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";

@@ -1,4 +1,4 @@
-import type { Config } from "../types/types";
+import type { Config } from "@formbricks/types/js";
 
 export const createPerson = async (config: Config) => {
   const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/people`, {
