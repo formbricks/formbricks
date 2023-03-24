@@ -6,16 +6,23 @@ import { cn } from "@/lib/utils";
 import type { Template } from "@/types/templates";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { createId } from "@paralleldrive/cuid2";
+import Link from "next/link";
 import { useState } from "react";
 import PreviewSurvey from "../PreviewSurvey";
 import TemplateMenuBar from "./TemplateMenuBar";
 import { templates } from "./templates";
+import { PaintBrushIcon } from "@heroicons/react/24/solid";
 
 export default function TemplateList({ environmentId }: { environmentId: string }) {
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(
     templates.length > 0 ? templates[0] : null
   );
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+  const [selectedFilter, setSelectedFilter] = useState("All");
+  const categories = [
+    "All",
+    ...(Array.from(new Set(templates.map((template) => template.category))) as string[]),
+  ];
 
   if (isLoadingProduct) return <LoadingSpinner />;
   if (isErrorProduct) return <div>Error...</div>;
@@ -43,24 +50,43 @@ export default function TemplateList({ environmentId }: { environmentId: string 
     <div className="flex h-full flex-col">
       <TemplateMenuBar activeTemplate={activeTemplate} environmentId={environmentId} />
       <div className="relative z-0 flex flex-1 overflow-hidden">
-        <main className="relative z-0 flex-1 overflow-y-auto p-8 focus:outline-none">
-          <h1 className="my-1 text-3xl font-bold text-slate-800">Start with a template</h1>
-          <p className="mb-6 text-slate-500">Choose from one of the templates below or start from scratch.</p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {templates.map((template: Template) => (
+        <main className="relative z-0 flex-1 overflow-y-auto px-8 py-6 focus:outline-none">
+          <div className="mb-6 flex space-x-2">
+            {categories.map((category) => (
               <button
+                key={category}
                 type="button"
-                onClick={() => setActiveTemplate(template)}
-                key={template.name}
+                onClick={() => setSelectedFilter(category)}
                 className={cn(
-                  activeTemplate?.name === template.name && "ring-brand ring-2",
-                  "duration-120 relative rounded-lg  bg-white p-8 shadow hover:bg-slate-50/50"
+                  selectedFilter === category
+                    ? "text-brand-dark border-brand-dark font-semibold"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-100",
+                  "rounded border  bg-slate-50 px-3 py-1 text-sm transition-all duration-150 "
                 )}>
-                <template.icon className="h-8 w-8" />
-                <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700">{template.name}</h3>
-                <p className="text-left text-xs text-slate-600">{template.description}</p>
+                {category}
               </button>
             ))}
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {templates
+              .filter((template) => selectedFilter === "All" || template.category === selectedFilter)
+              .map((template: Template) => (
+                <button
+                  type="button"
+                  onClick={() => setActiveTemplate(template)}
+                  key={template.name}
+                  className={cn(
+                    activeTemplate?.name === template.name && "ring-brand ring-2",
+                    "duration-120  group  relative rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105"
+                  )}>
+                  <div className="absolute top-6 right-6 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500">
+                    {template.category}
+                  </div>
+                  <template.icon className="h-8 w-8" />
+                  <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700">{template.name}</h3>
+                  <p className="text-left text-xs text-slate-600">{template.description}</p>
+                </button>
+              ))}
             <button
               type="button"
               onClick={() => setActiveTemplate(customSurvey)}
@@ -74,7 +100,12 @@ export default function TemplateList({ environmentId }: { environmentId: string 
             </button>
           </div>
         </main>
-        <aside className="relative hidden h-full flex-1 flex-shrink-0 overflow-hidden border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">
+        <aside className="group relative hidden h-full flex-1 flex-shrink-0 overflow-hidden border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">
+          <Link href={`/environments/${environmentId}/settings/lookandfeel`} target="_blank">
+            <div className="absolute left-6  top-6 flex items-center rounded bg-slate-50 px-2 py-0.5 text-xs text-slate-500 opacity-0 transition-all delay-1000 duration-500 hover:bg-slate-100 group-hover:opacity-100">
+              Update brand color <PaintBrushIcon className="ml-1.5 h-3 w-3" />
+            </div>
+          </Link>
           {activeTemplate && (
             <PreviewSurvey
               activeQuestionId={null}
