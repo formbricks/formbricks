@@ -60,9 +60,6 @@ importers:
   apps/formbricks-com:
     specifiers:
       '@docsearch/react': ^3.3.3
-      '@formbricks/engine-react': ^0.1.1
-      '@formbricks/feedback': ^0.3.2
-      '@formbricks/pmf': ^0.1.1
       '@formbricks/ui': workspace:*
       '@headlessui/react': ^1.7.13
       '@heroicons/react': ^2.0.16
@@ -96,9 +93,6 @@ importers:
       typescript: 4.9.5
     dependencies:
       '@docsearch/react': 3.3.3_zytk3tupt4i5432ph5k7d2vxd4
-      '@formbricks/engine-react': 0.1.1_react@18.2.0
-      '@formbricks/feedback': 0.3.2
-      '@formbricks/pmf': 0.1.1
       '@formbricks/ui': link:../../packages/ui
       '@headlessui/react': 1.7.13_biqbaboplfbrettd7655fr4n2y
       '@heroicons/react': 2.0.16_react@18.2.0
@@ -2519,23 +2513,6 @@ packages:
       use-isomorphic-layout-effect: 1.1.2_pmekkgnqduwlme35zpnqhenc34
     transitivePeerDependencies:
       - '@types/react'
-    dev: false
-
-  /@formbricks/engine-react/0.1.1_react@18.2.0:
-    resolution: {integrity: sha512-oIiOFUIG5geABevbbI7ser1x+8HiHf/ktwSXN8Q+NuSzliyb6T8wIsiqiffDDT92hIzNcMicWGC0tl7JZHZdRQ==}
-    peerDependencies:
-      react: ^16.8.0 || ^17 || ^18
-    dependencies:
-      react: 18.2.0
-      react-hook-form: 7.43.5_react@18.2.0
-    dev: false
-
-  /@formbricks/feedback/0.3.2:
-    resolution: {integrity: sha512-fQvWPGRn4cA20jpsi0kkd1Sawmu0/KOA/ZkruRWKWkWtCBFix6pcmDz7tzqZhBcg44qcJYqMEkxJ52N+/FU+4w==}
-    dev: false
-
-  /@formbricks/pmf/0.1.1:
-    resolution: {integrity: sha512-8HMn4/VlLTUw2dcbfVXC/mOMM3aTIx6Rx3FZaZtvgRPUMNIv7AXNMDgBJeiHaXm4zXHQz3B7NoNiV/mrf2aCbQ==}
     dev: false
 
   /@gar/promisify/1.1.3:
