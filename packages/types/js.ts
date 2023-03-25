@@ -44,7 +44,7 @@ export interface InitConfig {
 export interface Settings {
   surveys?: Survey[];
   noCodeEvents?: any[];
-  brandColor: string;
+  brandColor?: string;
 }
 
 export interface JsConfig {
@@ -57,7 +57,7 @@ export interface JsConfig {
 
 export interface Session {
   id: string;
-  expiresAt: number;
+  expiresAt?: number;
 }
 
 export interface Person {

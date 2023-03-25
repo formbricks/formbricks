@@ -1,13 +1,13 @@
 import type { MatchType } from "@formbricks/types/js";
-import Config from "./config";
+import { Config } from "./config";
 import { trackEvent } from "./event";
 
-const config = Config.get();
+const config = Config.getInstance();
 
 export const checkPageUrl = (): void => {
-  const pageUrlEvents = config.settings?.noCodeEvents.filter(
-    (event) => event.noCodeConfig?.type === "pageUrl"
-  );
+  const pageUrlEvents = config
+    .get()
+    .settings?.noCodeEvents.filter((event) => event.noCodeConfig?.type === "pageUrl");
   if (pageUrlEvents.length === 0) {
     return;
   }

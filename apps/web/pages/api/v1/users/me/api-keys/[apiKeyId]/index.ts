@@ -1,4 +1,4 @@
-import { getSessionOrUser, hasOwnership } from "@/lib/apiHelper";
+import { getSessionOrUser, hasOwnership } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 

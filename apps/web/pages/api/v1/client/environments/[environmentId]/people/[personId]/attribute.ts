@@ -1,3 +1,4 @@
+import { getSettings } from "@/lib/api/clientSettings";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -125,8 +126,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
+    const person = attribute.person;
+
+    const settings = await getSettings(environmentId, person.id);
+
     // return updated person
-    return res.json(attribute.person);
+    return res.json({ person, settings });
   }
 
   // Unknown HTTP Method

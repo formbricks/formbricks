@@ -1,4 +1,4 @@
-import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/apiHelper";
+import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { capturePosthogEvent } from "@/lib/posthogServer";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";

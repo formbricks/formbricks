@@ -1,4 +1,5 @@
-import { prisma } from "@formbricks/database";
+import { createSession } from "@/lib/api/clientSession";
+import { getSettings } from "@/lib/api/clientSettings";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -20,18 +21,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(400).json({ message: "Missing personId" });
     }
 
-    // create new session
-    const session = await prisma.session.create({
-      data: {
-        person: {
-          connect: {
-            id: personId,
-          },
-        },
-      },
-    });
+    const session = await createSession(personId);
+    const settings = await getSettings(environmentId, personId);
 
-    return res.json(session);
+    return res.json({ session, settings });
   }
 
   // Unknown HTTP Method

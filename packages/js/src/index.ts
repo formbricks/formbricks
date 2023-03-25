@@ -3,6 +3,7 @@ import { CommandQueue } from "./lib/commandQueue";
 import { trackEvent } from "./lib/event";
 import { checkInitialized, initialize } from "./lib/init";
 import { resetPerson, setPersonAttribute, setPersonUserId } from "./lib/person";
+import { refreshSettings } from "./lib/settings";
 
 const queue = new CommandQueue();
 
@@ -44,6 +45,17 @@ const track = (eventName: string, properties: any = {}): void => {
   });
 };
 
-const formbricks = { init, setUserId, setEmail, setAttribute, track, logout };
+const refresh = (): void => {
+  queue.add(async () => {
+    checkInitialized();
+    await refreshSettings();
+  });
+};
+
+const formbricks = { init, setUserId, setEmail, setAttribute, track, logout, refresh };
+
+if (typeof window !== "undefined") {
+  (window as any).formbricks = { refresh };
+}
 
 export default formbricks;

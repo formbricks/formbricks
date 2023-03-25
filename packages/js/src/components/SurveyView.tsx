@@ -25,8 +25,8 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
   useEffect(() => {
     initDisplay();
     async function initDisplay() {
-      /* const displayId = await createDisplay({ surveyId: survey.id, personId: config.person.id }, config);
-      setDisplayId(displayId.id); */
+      const displayId = await createDisplay({ surveyId: survey.id, personId: config.person.id }, config);
+      setDisplayId(displayId.id);
     }
   }, [config, survey]);
 
