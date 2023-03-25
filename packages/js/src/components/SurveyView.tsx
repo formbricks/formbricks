@@ -3,13 +3,13 @@ import { useEffect, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
 import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
-import { Config, Survey } from "@formbricks/types/js";
+import { JsConfig, Survey } from "@formbricks/types/js";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import Progress from "./Progress";
 
 interface SurveyViewProps {
-  config: Config;
+  config: JsConfig;
   survey: Survey;
   close: () => void;
   brandColor: string;
@@ -25,8 +25,8 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
   useEffect(() => {
     initDisplay();
     async function initDisplay() {
-      const displayId = await createDisplay({ surveyId: survey.id, personId: config.person.id }, config);
-      setDisplayId(displayId.id);
+      /* const displayId = await createDisplay({ surveyId: survey.id, personId: config.person.id }, config);
+      setDisplayId(displayId.id); */
     }
   }, [config, survey]);
 

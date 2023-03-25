@@ -1,13 +1,11 @@
-import { Survey } from "@formbricks/types/js";
+import { renderWidget } from "./widget";
 import { Logger } from "./logger";
+import Config from "./config";
 
 const logger = Logger.getInstance();
+const config = Config.get();
 
-export const trackEvent = async (config, eventName, properties): Promise<boolean> => {
-  if (!config.person || !config.person.id) {
-    console.error("Formbricks: Unable to track event. No person set.");
-    return;
-  }
+export const trackEvent = async (eventName: string, properties?: any): Promise<void> => {
   const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/events`, {
     method: "POST",
     headers: {
@@ -21,21 +19,22 @@ export const trackEvent = async (config, eventName, properties): Promise<boolean
     }),
   });
   if (!res.ok) {
-    console.error("Formbricks: Error tracking event");
-    return false;
+    const error = await res.json();
+    logger.error(`Formbricks: Error tracking event: ${JSON.stringify(error)}`);
+    return;
   }
-  return true;
+  logger.debug(`Formbricks: Event "${eventName}" tracked`);
+  triggerSurvey(eventName);
 };
 
-export const triggerSurveys = (config, eventName): Survey[] => {
-  const triggeredSurveys = [];
+export const triggerSurvey = (eventName: string): void => {
   for (const survey of config.settings?.surveys) {
     for (const trigger of survey.triggers) {
       if (trigger.eventClass?.name === eventName) {
         logger.debug(`Formbricks: survey ${survey.id} triggered by event "${eventName}"`);
-        triggeredSurveys.push(survey);
+        renderWidget(survey);
+        return;
       }
     }
   }
-  return triggeredSurveys;
 };

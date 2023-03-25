@@ -121,7 +121,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       ...body,
     };
 
+    // remove fields that are not in the survey model
     delete data.responseRate;
+    delete data.numDisplays;
 
     const prismaRes = await prisma.survey.update({
       where: { id: surveyId },

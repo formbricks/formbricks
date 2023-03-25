@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@formbricks/ee": "workspace:*",
-    "@formbricks/js": "workspace:*",
     "@heroicons/react": "^2.0.16",
     "@paralleldrive/cuid2": "^2.2.0",
     "@radix-ui/react-alert-dialog": "^1.0.3",

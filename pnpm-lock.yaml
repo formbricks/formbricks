@@ -136,7 +136,6 @@ importers:
     specifiers:
       '@formbricks/database': workspace:*
       '@formbricks/ee': workspace:*
-      '@formbricks/js': workspace:*
       '@formbricks/tsconfig': workspace:*
       '@formbricks/types': workspace:*
       '@heroicons/react': ^2.0.16
@@ -193,7 +192,6 @@ importers:
       typescript: 4.9.5
     dependencies:
       '@formbricks/ee': link:../../packages/ee
-      '@formbricks/js': link:../../packages/js
       '@heroicons/react': 2.0.16_react@18.2.0
       '@paralleldrive/cuid2': 2.2.0
       '@radix-ui/react-alert-dialog': 1.0.3_zula6vjvt3wdocc4mwcxqa6nzi

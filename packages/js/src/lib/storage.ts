@@ -1,9 +1,10 @@
-import { Config } from "@formbricks/types/js";
+import { JsConfig } from "@formbricks/types/js";
 import { Logger } from "./logger";
 
 const logger = Logger.getInstance();
 
-export const retrieveConfig = (): Config => {
+// retrieve config from local storage
+export const retrieve = (): JsConfig => {
   logger.debug("Retrieving config from local storage");
   const configData = localStorage.getItem("formbricks__config");
   if (!configData) {
@@ -11,13 +12,15 @@ export const retrieveConfig = (): Config => {
     return null;
   }
   logger.debug("Config found in local storage");
-  return JSON.parse(configData) as Config;
+  return JSON.parse(configData) as JsConfig;
 };
 
-export const persistConfig = (config: Config): void => {
+// save config to local storage
+export const persistConfig = (config: JsConfig): void => {
   localStorage.setItem("formbricks__config", JSON.stringify(config));
 };
 
+// remove config from local storage
 export const removeConfig = (): void => {
   localStorage.removeItem("formbricks__config");
 };

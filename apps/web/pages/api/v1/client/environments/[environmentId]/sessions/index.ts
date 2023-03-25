@@ -31,75 +31,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    const surveys = await prisma.survey.findMany({
-      where: {
-        OR: [
-          {
-            environmentId,
-            type: "web",
-            status: "inProgress",
-            displayOption: "respondMultiple",
-          },
-          {
-            environmentId,
-            type: "web",
-            status: "inProgress",
-            displayOption: "displayOnce",
-            displays: { none: { personId } },
-          },
-          {
-            environmentId,
-            type: "web",
-            status: "inProgress",
-            displayOption: "respondMultiple",
-            displays: { none: { personId, status: "responded" } },
-          },
-        ],
-      },
-      select: {
-        id: true,
-        questions: true,
-        triggers: {
-          select: {
-            id: true,
-            eventClass: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const noCodeEvents = await prisma.eventClass.findMany({
-      where: {
-        environmentId,
-        type: "noCode",
-      },
-      select: {
-        name: true,
-        noCodeConfig: true,
-      },
-    });
-
-    const environmentProdut = await prisma.environment.findUnique({
-      where: {
-        id: environmentId,
-      },
-      select: {
-        product: {
-          select: {
-            brandColor: true,
-          },
-        },
-      },
-    });
-
-    const brandColor = environmentProdut?.product.brandColor;
-
-    return res.json({ session, settings: { surveys, noCodeEvents, brandColor } });
+    return res.json(session);
   }
 
   // Unknown HTTP Method

@@ -41,16 +41,18 @@ export interface InitConfig {
   logLevel?: "debug" | "error";
 }
 
-export interface Config {
+export interface Settings {
+  surveys?: Survey[];
+  noCodeEvents?: any[];
+  brandColor: string;
+}
+
+export interface JsConfig {
   environmentId: string;
   apiHost: string;
   person?: Person;
   session?: Session;
-  settings?: {
-    surveys?: Survey[];
-    noCodeEvents?: any[];
-    brandColor: string;
-  };
+  settings?: Settings;
 }
 
 export interface Session {

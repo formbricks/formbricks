@@ -1,6 +1,10 @@
-import type { Config, MatchType } from "@formbricks/types/js";
+import type { MatchType } from "@formbricks/types/js";
+import Config from "./config";
+import { trackEvent } from "./event";
 
-export const checkPageUrl = (config: Config, track: (eventName: string) => void): void => {
+const config = Config.get();
+
+export const checkPageUrl = (): void => {
   const pageUrlEvents = config.settings?.noCodeEvents.filter(
     (event) => event.noCodeConfig?.type === "pageUrl"
   );
@@ -16,7 +20,7 @@ export const checkPageUrl = (config: Config, track: (eventName: string) => void)
     }
     const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule);
     if (match) {
-      track(event.name);
+      trackEvent(event.name);
     }
   }
 };

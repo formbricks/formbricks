@@ -1,9 +1,13 @@
-import type { Config, Session } from "@formbricks/types/js";
-import { persistConfig } from "./storage";
+import type { Session, Settings } from "@formbricks/types/js";
+import { Logger } from "./logger";
+import Config from "./config";
 
-export const createSession = async (config: Config): Promise<any> => {
+const logger = Logger.getInstance();
+const config = Config.get();
+
+export const createSession = async (): Promise<{ session: Session; settings: Settings }> => {
   if (!config.person) {
-    console.error("Formbricks: Unable to create session. No person found");
+    logger.error("Formbricks: Unable to create session. No person found");
     return;
   }
   const response = await fetch(
@@ -17,17 +21,16 @@ export const createSession = async (config: Config): Promise<any> => {
     }
   );
   if (!response.ok) {
-    console.error("Error creating session");
+    logger.error("Error creating session");
     return;
   }
-  let { session, settings } = await response.json();
-  session = extendSession(session);
-  return { session, settings };
+  return await response.json();
 };
 
 export const extendSession = (session: Session): Session => {
   const updatedSession = { ...session };
-  updatedSession.expiresAt = Date.now() + 1000 * 60 * 10; // extend session for 10 minutes
+  // updatedSession.expiresAt = Date.now() + 1000 * 60 * 10; // extend session for 10 minutes
+  updatedSession.expiresAt = Date.now() + 1000 * 20; // extend session for 20 seconds
   return updatedSession;
 };
 
@@ -35,15 +38,17 @@ export const isExpired = (session: Session): boolean => {
   return session.expiresAt <= Date.now();
 };
 
-export const extendOrCreateSession = async (config, initFunction): Promise<Config> => {
-  await initFunction;
+export const extendOrCreateSession = async (): Promise<void> => {
+  logger.debug("Checking session");
   if (isExpired(config.session)) {
-    const newSession = createSession(config);
-    if (!newSession) {
-      console.error("Error creating new session");
-      return;
+    logger.debug("Session expired, creating new session");
+    const { session, settings } = await createSession();
+    if (!session || !settings) {
+      logger.error("Error creating new session");
+      throw Error("Error creating new session");
     }
-    return { ...config, session: newSession };
+    Config.update({ session, settings });
   }
-  return { ...config, session: extendSession(config.session) };
+  logger.debug("Session not expired, extending session");
+  Config.update({ session: extendSession(config.session) });
 };
