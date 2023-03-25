@@ -11,9 +11,6 @@
   },
   "dependencies": {
     "@docsearch/react": "^3.3.3",
-    "@formbricks/engine-react": "^0.1.1",
-    "@formbricks/feedback": "^0.3.2",
-    "@formbricks/pmf": "^0.1.1",
     "@formbricks/ui": "workspace:*",
     "@headlessui/react": "^1.7.13",
     "@heroicons/react": "^2.0.16",
