@@ -11,7 +11,6 @@ import PreSegmentation from "@/images/pre-segmentation.png";
 import DashboardMockupDark from "@/images/dashboard-mockup-dark.png";
 import PipelinesDark from "@/images/pipelines-dark.png";
 import PreSegmentationDark from "@/images/pre-segmentation-dark.png";
-import PmfDummy from "@/components/docs/PmfDummy";
 import EarlyBirdDeal from "@/components/shared/EarlyBirdDeal";
 import { usePlausible } from "next-plausible";
 
@@ -111,9 +110,7 @@ export default function GetStartedPage() {
         <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
             <div className="order-last w-full rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:py-8 md:order-first">
-              <div className="mx-auto md:w-3/4">
-                <PmfDummy />
-              </div>
+              <div className="mx-auto md:w-3/4"></div>
             </div>
             <div className="pb-8 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 2</h4>
