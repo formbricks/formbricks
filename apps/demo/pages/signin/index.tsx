@@ -1,4 +1,15 @@
+import formbricks from "@formbricks/js";
+import { useRouter } from "next/router";
+import { FormEvent } from "react";
+
 export default function SiginPage() {
+  const router = useRouter();
+
+  const submitAction = (e: FormEvent) => {
+    e.preventDefault();
+    formbricks.setEmail("matti@example.com");
+    router.push("/app");
+  };
   return (
     <div className="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -15,7 +26,7 @@ export default function SiginPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" action="#" method="POST">
+          <form className="space-y-6" onSubmit={submitAction}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
                 Email address

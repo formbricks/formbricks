@@ -1,6 +1,5 @@
 import LayoutApp from "@/components/LayoutApp";
 import { classNames } from "@/lib/utils";
-import formbricks from "@formbricks/js";
 import { Bars3CenterLeftIcon, BellIcon, ScaleIcon } from "@heroicons/react/24/outline";
 import {
   BanknotesIcon,
@@ -30,14 +29,6 @@ const statusStyles: any = {
   processing: "bg-yellow-100 text-yellow-800",
   failed: "bg-slate-100 text-slate-800",
 };
-
-if (typeof window !== "undefined") {
-  formbricks.init({
-    environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
-    apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-    logLevel: "debug",
-  });
-}
 
 export default function AppPage({}) {
   return (

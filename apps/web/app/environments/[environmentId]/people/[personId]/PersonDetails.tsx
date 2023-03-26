@@ -8,7 +8,7 @@ import { deletePerson, usePerson } from "@/lib/people/people";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import ActivityFeed from "./ActivityFeed";
 import ResponseFeed from "./ResponsesFeed";
@@ -22,14 +22,26 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
   const router = useRouter();
   const { person, isLoadingPerson, isErrorPerson } = usePerson(environmentId, personId);
 
-  /*   const formsParticipated = useMemo(() => {
-    if (person && "responses" in person) {
-      return person.responses.map((response) => Object.keys(response.data)[0]).filter(onlyUnique).length;
-    }
-  }, [person]); */
-
   const [responsesAscending, setResponsesAscending] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [activityAscending, setActivityAscending] = useState(true);
+
+  const personEmail = useMemo(
+    () => person?.attributes?.find((attribute) => attribute.attributeClass.name === "email"),
+    [person]
+  );
+  const personUserId = useMemo(
+    () => person?.attributes?.find((attribute) => attribute.attributeClass.name === "userId"),
+    [person]
+  );
+
+  const otherAttributes = useMemo(
+    () =>
+      person?.attributes?.filter(
+        (attribute) => attribute.attributeClass.name !== "email" && attribute.attributeClass.name !== "userId"
+      ) as any[],
+    [person]
+  );
 
   const toggleSortResponses = () => {
     setResponsesAscending(!responsesAscending);
@@ -41,21 +53,9 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
     toast.success("Person deleted successfully.");
   };
 
-  const [activityAscending, setActivityAscending] = useState(true);
-
   const toggleSortActivity = () => {
     setActivityAscending(!activityAscending);
   };
-
-  const [attributeMap, setAttributeMap] = useState<AttributeObject[]>([]);
-
-  interface AttributeObject {
-    type: string;
-    createdAt: string;
-    updatedAt: string;
-    attributeLabel: string;
-    attributeValue: string;
-  }
 
   if (isLoadingPerson) {
     return (
@@ -74,7 +74,7 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
       <GoBackButton />
       <div className="flex items-baseline justify-between border-b border-slate-200 pt-4 pb-6">
         <h1 className="text-4xl font-bold tracking-tight text-slate-900">
-          {person.email ? <span>{person.email}</span> : <span>{person.id}</span>}
+          {personEmail ? <span>{personEmail.value}</span> : <span>{person.id}</span>}
         </h1>
         <div className="flex items-center space-x-3">
           <button
@@ -92,8 +92,8 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
             <div>
               <dt className="text-sm font-medium text-slate-500">Email</dt>
               <dd className="mt-1 text-sm text-slate-900">
-                {person.email ? (
-                  <span>{person.email}</span>
+                {personEmail ? (
+                  <span>{personEmail?.value}</span>
                 ) : (
                   <span className="text-slate-300">Not provided</span>
                 )}
@@ -102,8 +102,8 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
             <div>
               <dt className="text-sm font-medium text-slate-500">User Id</dt>
               <dd className="mt-1 text-sm text-slate-900">
-                {person.userId ? (
-                  <span>{person.Id}</span>
+                {personUserId ? (
+                  <span>{personUserId?.value}</span>
                 ) : (
                   <span className="text-slate-300">Not provided</span>
                 )}
@@ -122,12 +122,12 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
               <dt className="text-sm font-medium text-slate-500">Responses</dt>
               <dd className="mt-1 text-sm text-slate-900">{person.responses.length}</dd>
             </div>
-            {attributeMap.map((attribute) => (
-              <div key={attribute.attributeLabel}>
+            {otherAttributes.map((attribute) => (
+              <div key={attribute.attributeClass.name}>
                 <dt className="text-sm font-medium text-slate-500">
-                  {capitalizeFirstLetter(attribute.attributeLabel)}
+                  {capitalizeFirstLetter(attribute.attributeClass.name)}
                 </dt>
-                <dd className="mt-1 text-sm text-slate-900">{attribute.attributeValue.toString()}</dd>
+                <dd className="mt-1 text-sm text-slate-900">{attribute.value}</dd>
               </div>
             ))}
           </div>
@@ -164,8 +164,6 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
               displays={person.displays}
               responses={person.responses}
               sortByDate={activityAscending}
-              attributeMap={attributeMap}
-              setAttributeMap={setAttributeMap}
               environmentId={environmentId}
             />
           </div>

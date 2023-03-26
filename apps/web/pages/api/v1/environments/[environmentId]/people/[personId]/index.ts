@@ -39,6 +39,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         updatedAt: true,
         responses: {
           select: {
+            id: true,
             createdAt: true,
             updatedAt: true,
             data: true,
@@ -56,6 +57,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           select: {
             events: {
               select: {
+                id: true,
                 createdAt: true,
                 eventClass: {
                   select: {
@@ -70,6 +72,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         attributes: {
           select: {
+            id: true,
             createdAt: true,
             updatedAt: true,
             value: true,
@@ -84,6 +87,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         displays: {
           select: {
+            id: true,
             createdAt: true,
             updatedAt: true,
             surveyId: true,

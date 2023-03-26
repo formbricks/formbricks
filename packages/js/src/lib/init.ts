@@ -25,6 +25,12 @@ const addSessionEventListeners = (): void => {
 };
 
 export const initialize = async (c: InitConfig): Promise<void> => {
+  if (!c.environmentId) {
+    throw Error("Formbricks: environmentId is required");
+  }
+  if (!c.apiHost) {
+    throw Error("Formbricks: apiHost is required");
+  }
   if (c.logLevel) {
     logger.configure({ logLevel: c.logLevel });
   }
