@@ -1,9 +1,6 @@
-module.exports = {
-  transpilePackages: ["ui"],
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true,
-  },
   images: {
     remotePatterns: [
       {
@@ -17,3 +14,5 @@ module.exports = {
     ],
   },
 };
+
+module.exports = nextConfig;
