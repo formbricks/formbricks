@@ -34,6 +34,8 @@ export const initialize = async (c: InitConfig): Promise<void> => {
   if (c.logLevel) {
     logger.configure({ logLevel: c.logLevel });
   }
+  addWidgetContainer();
+  addStylesToDom();
   if (!config || config.get().environmentId !== c.environmentId || config.get().apiHost !== c.apiHost) {
     // we need new config
     config.update({ environmentId: c.environmentId, apiHost: c.apiHost });
@@ -45,11 +47,9 @@ export const initialize = async (c: InitConfig): Promise<void> => {
     // we need new session
     const { session, settings } = await createSession();
     config.update({ session: extendSession(session), settings });
+    trackEvent("New Session");
   }
-  addWidgetContainer();
-  addStylesToDom();
   addSessionEventListeners();
-  trackEvent("New Session");
   checkPageUrl();
 };
 
