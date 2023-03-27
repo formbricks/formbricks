@@ -13,61 +13,62 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (environmentId === undefined) {
         return res.status(400).json({ message: "Missing environmentId" });
     }
-    // GET /api/v1/teams/[teamId]/members
-    // Get a all members of an organisation
-    if (req.method === "GET") {
-        // get current team id by environment id
-        const environment = await prisma.environment.findUnique({
-            where: {
-                id: environmentId,
-            },
-        });
-        if (environment === null) {
-            return res.status(400).json({ message: "Invalid environment ID" });
-        }
-        const team = await prisma.product.findUnique({
-            where: {
-                id: environment.productId,
-            },
-            select: {
-                teamId: true,
-            }
-        });
-        const teamId = team?.teamId;
-        if (teamId === undefined) {
-            return res.status(400).json({ message: "Missing teamId" });
-        }
 
-        // check if membership exists
-        const membership = await prisma.membership.findUnique({
-            where: {
-                userId_teamId: {
-                    userId: user.id,
-                    teamId,
+    if (req.method === "GET") {
+        const environment = await prisma.environment.findUnique({
+            where: { id: environmentId },
+            include: {
+                product: {
+                    select: {
+                        teamId: true,
+                        team: {
+                            select: {
+                                members: {
+                                    where: { userId: user.id },
+                                },
+                            },
+                        },
+                    },
                 },
             },
         });
-        if (membership === null) {
-            return res
-                .status(403)
-                .json({ message: "You don't have access to this organisation or this organisation doesn't exist" });
+
+        if (!environment) {
+            return res.status(400).json({ message: "Invalid environment ID" });
         }
 
-        // // get all members of the organisation
+        const teamId = environment.product.teamId;
+
+        if (!teamId || environment.product.team.members.length === 0) {
+            return res.status(403).json({
+                message: "You don't have access to this organisation or this organisation doesn't exist",
+            });
+        }
+
         const members = await prisma.membership.findMany({
-            where: {
-                teamId,
-            },
+            where: { teamId },
             select: {
                 user: {
                     select: {
                         name: true,
                         email: true,
-                    }
+                    },
                 },
                 userId: true,
                 accepted: true,
                 role: true,
+            },
+        });
+
+        const invitees = await prisma.invite.findMany({
+            where: { teamId, accepted: false },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                acceptorId: true,
+                role: true,
+                accepted: true,
             },
         });
 
@@ -76,12 +77,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             member.email = member.user.email;
             delete member.user;
         });
+        invitees.forEach((invite) => {
+            invite.inviteId = invite.id;
+            delete invite.id;
+        });
 
-        return res.json({ members, teamId });
-    }
-
-    // Unknown HTTP Method
-    else {
+        return res.json({ members, invitees, teamId });
+    } else {
         throw new Error(`The HTTP ${req.method} method is not supported by this route.`);
     }
 }

@@ -219,6 +219,7 @@ model Team {
   products         Product[]
   plan             Plan         @default(free)
   stripeCustomerId String?
+  Invite           Invite[]
 }
 
 enum MembershipRole {
@@ -238,6 +239,24 @@ model Membership {
   role     MembershipRole
 
   @@id([userId, teamId])
+}
+
+model Invite {
+  id         String         @id @default(uuid())
+  email      String
+  name       String?
+  team       Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId     String
+  creator    User           @relation("inviteCreatedBy", fields: [creatorId], references: [id])
+  creatorId  String
+  acceptor   User?          @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
+  acceptorId String?
+  accepted   Boolean        @default(false)
+  createdAt  DateTime       @default(now())
+  expiresAt  DateTime
+  role       MembershipRole @default(admin)
+
+  @@index([email, teamId], name: "email_teamId_unique")
 }
 
 model ApiKey {
@@ -289,4 +308,6 @@ model User {
   accounts                  Account[]
   apiKeys                   ApiKey[]
   groupId                   String?
+  inviteCreatedBy           Invite[]         @relation("inviteCreatedBy")
+  inviteAcceptedBy          Invite[]         @relation("inviteAcceptedBy")
 }

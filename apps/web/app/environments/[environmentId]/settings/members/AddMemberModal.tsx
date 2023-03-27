@@ -8,22 +8,22 @@ import { useForm } from "react-hook-form";
 import { addMember } from "@/lib/teams";
 
 interface MemberModalProps {
-    environmentId: string;
     teamId: string;
     open: boolean;
     setOpen: (v: boolean) => void;
 }
 
 export default function AddMemberModal({
-    environmentId,
     teamId,
     open,
     setOpen,
 }: MemberModalProps) {
-    const { register, control, handleSubmit, reset } = useForm();
+    const { register, getValues, handleSubmit, reset } = useForm<{ name: string, email: string }>();
 
-    const submitEventClass = async (data) => {
+    const submitEventClass = async () => {
+        const data = getValues();
         await addMember(teamId, data);
+        // TODO: handle http 409 user is already part of the team
         setOpen(false);
         reset();
     };
@@ -61,7 +61,9 @@ export default function AddMemberModal({
                                 }}>
                                 Cancel
                             </Button>
-                            <Button variant="primary" type="submit">
+                            <Button variant="primary" type="submit" onClick={() => {
+                                setOpen(false);
+                            }}>
                                 Send Invitation
                             </Button>
                         </div>

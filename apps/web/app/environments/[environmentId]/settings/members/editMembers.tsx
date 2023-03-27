@@ -6,7 +6,7 @@ import { ProfileAvatar } from "@/components/ui/Avatars";
 import Button from "@/components/ui/Button";
 import { SendIcon } from "@/components/ui/icons/SendIcon";
 import { TrashIcon } from "@/components/ui/icons/TrashIcon";
-import { addMember, removeMember, resendInvite, useTeam } from "@/lib/teams";
+import { addMember, deleteInvite, removeMember, resendInvite, useTeam } from "@/lib/teams";
 import * as Tooltip from "@/components/ui/Tooltip";
 import { useState } from "react";
 import AddMemberModal from "./AddMemberModal";
@@ -27,7 +27,11 @@ export function EditMembers({ environmentId }) {
     setDeleteMemberModalOpen(true);
   };
   const handleDeleteMember = async () => {
-    await removeMember(team.teamId, activeMember.userId);
+    if (activeMember.accepted) {
+      await removeMember(team.teamId, activeMember.userId);
+    } else {
+      await deleteInvite(team.teamId, activeMember.inviteId)
+    }
     setDeleteMemberModalOpen(false);
   }
   const handleResendInvite = async (userId: string) => {
@@ -42,7 +46,6 @@ export function EditMembers({ environmentId }) {
     console.log(isErrorTeam)
     return <div>Error</div>;
   }
-  const accepted = false;
 
   return (
     <>
@@ -64,7 +67,7 @@ export function EditMembers({ environmentId }) {
           <div className=""></div>
         </div>
         <div className="grid-cols-7">
-          {team.members.map((member) => (
+          {[...team.members, ...team.invitees].map((member) => (
             <div className="w-full grid h-12  py-2 grid-cols-7 content-center rounded-lg text-left text-sm text-slate-900 hover:bg-slate-100" key={member.userId}>
               <div className="px-6 h-58 ">
                 <ProfileAvatar userId={member.userId} />
@@ -72,13 +75,13 @@ export function EditMembers({ environmentId }) {
               <div className="col-span-2 flex flex-col justify-center"><p>{member.name}</p></div>
               <div className="col-span-2 flex flex-col justify-center">{member.email}</div>
               <div className="col-span-2 flex justify-end gap-x-6 pr-6 items-center">
-                {!accepted && (
+                {!member.accepted && (
                   <p className="text-xs text-amber-500 bg-amber-50 border-amber-500 border-2 rounded-md px-2 py-px">Pending</p>
                 )}
                 <button onClick={e => handleOpenDeleteMemberModal(e, member)}>
                   <TrashIcon />
                 </button>
-                {!accepted && (
+                {!member.accepted && (
                   <Tooltip.TooltipProvider>
                     <Tooltip.Tooltip>
                       <Tooltip.TooltipTrigger asChild>
@@ -99,7 +102,6 @@ export function EditMembers({ environmentId }) {
       </div>
 
       <AddMemberModal
-        environmentId={environmentId}
         teamId={team.teamId}
         open={isAddMemberModalOpen}
         setOpen={setAddMemberModalOpen}

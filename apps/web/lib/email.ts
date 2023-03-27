@@ -1,5 +1,5 @@
 import { withEmailTemplate } from "./email-template";
-import { createToken } from "./jwt";
+import { createInviteToken, createToken } from "./jwt";
 import { MergeWithSchema } from "./mergeWithSchema";
 const nodemailer = require("nodemailer");
 
@@ -34,9 +34,8 @@ export const sendVerificationEmail = async (user) => {
     expiresIn: "1d",
   });
   const verifyLink = `${process.env.NEXTAUTH_URL}/auth/verify?token=${encodeURIComponent(token)}`;
-  const verificationRequestLink = `${
-    process.env.NEXTAUTH_URL
-  }/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
+  const verificationRequestLink = `${process.env.NEXTAUTH_URL
+    }/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
   await sendEmail({
     to: user.email,
     subject: "Welcome to Formbricks 🤍",
@@ -96,42 +95,57 @@ export const sendSubmissionEmail = async (
       event === "created"
         ? `You got a new submission for ${formLabel} 🎉`
         : event === "updated"
-        ? `Someone update a submission for ${formLabel}`
-        : event === "finished"
-        ? `A submission for ${formLabel} was completed ✅`
-        : `A submission for ${formLabel} was updated.`,
+          ? `Someone update a submission for ${formLabel}`
+          : event === "finished"
+            ? `A submission for ${formLabel} was completed ✅`
+            : `A submission for ${formLabel} was updated.`,
     replyTo: submission.customerEmail || process.env.MAIL_FROM,
-    html: withEmailTemplate(`${
-      event === "created"
-        ? `<h1>New submission</h1>Someone just started filling out your form "${formLabel}":`
-        : event === "updated"
+    html: withEmailTemplate(`${event === "created"
+      ? `<h1>New submission</h1>Someone just started filling out your form "${formLabel}":`
+      : event === "updated"
         ? `<h1>Submission Update</h1>A submission in "${formLabel}" just received an update.`
         : event === "finished"
-        ? `<h1>Form completed</h1>Someone just completed your form "${formLabel}":`
-        : ""
-    }<br/>
+          ? `<h1>Form completed</h1>Someone just completed your form "${formLabel}":`
+          : ""
+      }<br/>
 
     <hr/>
 
     ${Object.entries(MergeWithSchema(submission.data, schema))
-      .map(([key, value]) => `<p><strong>${key}</strong></p><p>${value}</p>`)
-      .join("")}
+        .map(([key, value]) => `<p><strong>${key}</strong></p><p>${value}</p>`)
+        .join("")}
 
    
     <hr/>
 
     <div class="tooltip">
     <p class='brandcolor'><strong>Did you know? 💡</strong></p>
-    ${
-      submission.customerEmail
+    ${submission.customerEmail
         ? "<p>You can reply to this email to start a conversation with this user.</p>"
         : "<p>You can add the user email to the submission and then simply hit 'Reply to' to start a conversation with your user. <a href='https://formbricks.com/docs/best-practices/feedback-box#add-user-email'>Here's how.</a></p>"
-    }
+      }
     </div>
     
-    <a class="button" href="${
-      process.env.NEXTAUTH_URL
-    }/organisations/${organisationId}/forms/${formId}/feedback">View submission</a>
+    <a class="button" href="${process.env.NEXTAUTH_URL
+      }/organisations/${organisationId}/forms/${formId}/feedback">View submission</a>
     `),
+  });
+};
+
+export const sendInviteMemberEmail = async (inviteId, inviterName, inviteeName, email) => {
+  const token = createInviteToken(inviteId, email, {
+    expiresIn: "7d",
+  });
+  const verifyLink = `${process.env.NEXTAUTH_URL}/api/v1/invite?token=${encodeURIComponent(token)}`;
+
+  await sendEmail({
+    to: email,
+    subject: `You're invited to collaborate on Formbricks!`,
+    html: withEmailTemplate(`Hey ${inviteeName},<br/><br/>
+    Your colleague ${inviterName} invited you to join them at Formbricks. To accept the invitation, please click the link below:<br/><br/>
+    <a class="button" href="${verifyLink}">Join team</a><br/>
+    <br/>
+    Have a great day!<br/>
+    The Formbricks Team!`),
   });
 };

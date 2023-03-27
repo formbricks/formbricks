@@ -2,8 +2,9 @@ import useSWR from "swr";
 import { fetcher } from "./fetcher";
 
 export const useTeam = (environmentId: string) => {
+    console.log("fetch team")
     const { data, isLoading, error, isValidating } = useSWR(
-        `/api/v1/teams/${environmentId}/members`,
+        `/api/v1/environments/${environmentId}/members/`,
         fetcher
     );
 
@@ -15,29 +16,40 @@ export const useTeam = (environmentId: string) => {
     };
 };
 
-
 export const removeMember = async (teamId: string, userId: string) => {
-    console.log("remove Member", userId, "from", teamId)
-    return
     try {
-        await fetch(`/api/v1/users/me/`, {
+        const result = await fetch(`/api/v1/teams/${teamId}/members/${userId}/`, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ teamId, userId }),
         });
+        return (result.status === 200)
     } catch (error) {
         console.error(error);
+        return false
+    }
+};
+
+export const deleteInvite = async (teamId: string, inviteId: string) => {
+    try {
+        const result = await fetch(`/api/v1/teams/${teamId}/invite/${inviteId}/`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+        });
+        return (result.status === 200)
+    } catch (error) {
+        console.error(error);
+        return false
     }
 };
 
 export const addMember = async (teamId: string, data: { name: string, email: string }) => {
     console.log("add Member", data.name, "to", teamId, "with email", data.email)
-    return
+
     try {
-        await fetch(`/api/v1/users/me/`, {
+        await fetch(`/api/v1/teams/${teamId}/invite/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ teamId, userId }),
+            body: JSON.stringify(data),
         });
     } catch (error) {
         console.error(error);
