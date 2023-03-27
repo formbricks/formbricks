@@ -21,7 +21,7 @@ export default function App({ config, survey, closeSurvey }: AppProps): VNode {
   };
 
   return (
-    <div className="tailwind-preflight">
+    <div id="fbjs">
       <Modal isOpen={isOpen} close={close}>
         <SurveyView config={config} survey={survey} close={close} brandColor={config.settings?.brandColor} />
       </Modal>

@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  important: true,
+  important: "#fbjs",
   corePlugins: {
     preflight: false,
   },
@@ -9,5 +9,5 @@ module.exports = {
     extend: {},
   },
   prefix: "fb-",
-  plugins: [require("./disable_preflight/tailwindSelectivePreflight.js")],
+  plugins: [],
 };

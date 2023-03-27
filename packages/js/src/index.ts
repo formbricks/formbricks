@@ -55,7 +55,7 @@ const refresh = (): void => {
 const formbricks = { init, setUserId, setEmail, setAttribute, track, logout, refresh };
 
 if (typeof window !== "undefined") {
-  (window as any).formbricks = { refresh };
+  (window as any).formbricks = formbricks;
 }
 
 export default formbricks;
