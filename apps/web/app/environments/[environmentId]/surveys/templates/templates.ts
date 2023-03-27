@@ -26,7 +26,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: "multipleChoiceSingle",
-          headline: "How disappointed would you be if you could no longer use this product?",
+          headline: "How disappointed would you be if you could no longer use {{productName}}?",
           subheader: "Please select one of the following options.",
           required: true,
           choices: [
@@ -669,7 +669,7 @@ export const templates: Template[] = [
           id: createId(),
           type: "openText",
           headline: "Which product would you like to integrate next?",
-          subheader: "We keep building integrations. Yous can be next:",
+          subheader: "We keep building integrations. Yours can be next:",
           required: false,
         },
       ],

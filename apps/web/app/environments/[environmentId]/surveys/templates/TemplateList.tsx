@@ -7,23 +7,28 @@ import type { Template } from "@formbricks/types/templates";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { createId } from "@paralleldrive/cuid2";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PreviewSurvey from "../PreviewSurvey";
 import TemplateMenuBar from "./TemplateMenuBar";
 import { templates } from "./templates";
 import { PaintBrushIcon } from "@heroicons/react/24/solid";
 import ErrorComponent from "@/components/ui/ErrorComponent";
+import { replacePresetPlaceholders } from "@/lib/templates";
 
 export default function TemplateList({ environmentId }: { environmentId: string }) {
-  const [activeTemplate, setActiveTemplate] = useState<Template | null>(
-    templates.length > 0 ? templates[0] : null
-  );
+  const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const categories = [
     "All",
     ...(Array.from(new Set(templates.map((template) => template.category))) as string[]),
   ];
+
+  useEffect(() => {
+    if (product && templates?.length) {
+      setActiveTemplate(replacePresetPlaceholders(templates[0], product));
+    }
+  }, [product]);
 
   if (isLoadingProduct) return <LoadingSpinner />;
   if (isErrorProduct) return <ErrorComponent />;
@@ -74,7 +79,7 @@ export default function TemplateList({ environmentId }: { environmentId: string 
               .map((template: Template) => (
                 <button
                   type="button"
-                  onClick={() => setActiveTemplate(template)}
+                  onClick={() => setActiveTemplate(replacePresetPlaceholders(template, product))}
                   key={template.name}
                   className={cn(
                     activeTemplate?.name === template.name && "ring-brand ring-2",

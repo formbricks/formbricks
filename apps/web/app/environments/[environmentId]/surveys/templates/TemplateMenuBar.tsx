@@ -12,6 +12,7 @@ interface TemplateMenuBarProps {
 
 export default function TemplateMenuBar({ activeTemplate, environmentId }: TemplateMenuBarProps) {
   const router = useRouter();
+
   const addSurvey = async (activeTemplate) => {
     const survey = await createSurvey(environmentId, activeTemplate.preset);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
