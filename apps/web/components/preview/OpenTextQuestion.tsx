@@ -34,7 +34,7 @@ export default function OpenTextQuestion({
           name={question.id}
           id={question.id}
           placeholder={question.placeholder}
-          required
+          required={question.required}
           className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>
       </div>
       <div className="mt-4 flex w-full justify-between">

@@ -51,10 +51,15 @@ export default function SurveyMenuBar({
           variant="secondary"
           className="mr-3"
           loading={isMutatingSurvey}
-          onClick={() => triggerSurveyMutate({ ...localSurvey })}>
+          onClick={() => {
+            triggerSurveyMutate({ ...localSurvey });
+            if (localSurvey.status !== "draft") {
+              router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
+            }
+          }}>
           Save changes
         </Button>
-        {audiencePrompt && (
+        {localSurvey.status === "draft" && audiencePrompt && (
           <Button
             variant="highlight"
             onClick={() => {
@@ -64,7 +69,7 @@ export default function SurveyMenuBar({
             <UserGroupIcon className="mr-1 h-4 w-4" /> Continue to Audience
           </Button>
         )}
-        {!audiencePrompt && (
+        {localSurvey.status === "draft" && !audiencePrompt && (
           <Button
             disabled={localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0}
             variant="highlight"
