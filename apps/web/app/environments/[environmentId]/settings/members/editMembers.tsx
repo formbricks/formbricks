@@ -34,8 +34,8 @@ export function EditMembers({ environmentId }) {
     }
     setDeleteMemberModalOpen(false);
   }
-  const handleResendInvite = async (userId: string) => {
-    await resendInvite(team.teamId, userId);
+  const handleResendInvite = async (inviteId) => {
+    await resendInvite(team.teamId, inviteId);
   }
 
   if (isLoadingTeam) {
@@ -85,7 +85,7 @@ export function EditMembers({ environmentId }) {
                   <Tooltip.TooltipProvider>
                     <Tooltip.Tooltip>
                       <Tooltip.TooltipTrigger asChild>
-                        <button onClick={() => handleResendInvite(member.userId)}>
+                        <button onClick={() => handleResendInvite(member.inviteId)}>
                           <SendIcon />
                         </button>
                       </Tooltip.TooltipTrigger>

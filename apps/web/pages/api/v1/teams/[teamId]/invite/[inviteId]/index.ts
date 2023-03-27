@@ -1,4 +1,5 @@
 import { getSessionOrUser } from "@/lib/apiHelper";
+import { sendInviteAcceptedEmail, sendInviteMemberEmail } from "@/lib/email";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -44,7 +45,84 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             },
         });
         return res.json(inviteToDelete);
+
     }
+    // POST /api/v1/teams/[teamId]/invite/[inviteId]
+    // Accept an invite
+    else if (req.method === "POST") {
+        // check if currentUser is invited user
+        const invite = await prisma.invite.findUnique({
+            where: {
+                id: inviteId,
+            },
+            include: {
+                creator: true,
+            }
+        });
+        if (!invite || inviteId !== currentUser.id) {
+            return res.status(403).json({ message: "You are not allowed to accept this invite" });
+        }
+
+        // accept invite
+        const membership = await prisma.membership.create({
+            data: {
+                team: {
+                    connect: {
+                        id: teamId,
+                    },
+                },
+                user: {
+                    connect: {
+                        id: currentUser.id,
+                    },
+                },
+                role: invite.role,
+            },
+        });
+
+        // delete invite
+        await prisma.invite.delete({
+            where: {
+                id: inviteId,
+            },
+        });
+
+        sendInviteAcceptedEmail(invite.creator.name, currentUser.name, invite.creator.email)
+
+        return res.json(membership);
+    }
+    // PUT /api/v1/teams/[teamId]/invite/[inviteId]
+    // Renew an invite
+    else if (req.method === "PUT") {
+        // resend invite mail to user and update invite expiration date
+        const invite = await prisma.invite.findUnique({
+            where: {
+                id: inviteId,
+            },
+            select: {
+                creator: true,
+                email: true,
+                name: true,
+            }
+        });
+
+        if (!invite) {
+            return res.status(403).json({ message: "You are not allowed to resend this invite" });
+        }
+        sendInviteMemberEmail(inviteId, invite?.creator.name, invite?.name, invite?.email);
+
+        const updatedInvite = await prisma.invite.update({
+            where: {
+                id: inviteId,
+            },
+            data: {
+                expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+            },
+        });
+
+        return res.status(200).json(updatedInvite)
+    }
+
 
     // Unknown HTTP Method
     else {

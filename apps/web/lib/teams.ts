@@ -43,29 +43,28 @@ export const deleteInvite = async (teamId: string, inviteId: string) => {
 };
 
 export const addMember = async (teamId: string, data: { name: string, email: string }) => {
-    console.log("add Member", data.name, "to", teamId, "with email", data.email)
-
     try {
-        await fetch(`/api/v1/teams/${teamId}/invite/`, {
+        const result = await fetch(`/api/v1/teams/${teamId}/invite/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
         });
+        return (result.status === 200)
     } catch (error) {
         console.error(error);
+        return false
     }
 };
 
-export const resendInvite = async (teamId: string, userId: string) => {
-    console.log("resend invite to", userId, "from", teamId)
-    return
+export const resendInvite = async (teamId: string, inviteId: string) => {
     try {
-        await fetch(`/api/v1/users/me/`, {
+        const result = await fetch(`/api/v1/teams/${teamId}/invite/${inviteId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ teamId, userId }),
         });
+        return (result.status === 200)
     } catch (error) {
         console.error(error);
+        return false
     }
 }

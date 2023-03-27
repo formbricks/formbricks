@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { prisma } from "@formbricks/database";
+import { decode } from "punycode";
 
 export function createToken(userId, userEmail, options = {}) {
   return jwt.sign({ id: userId }, process.env.NEXTAUTH_SECRET + userEmail, options);
@@ -23,16 +24,15 @@ export async function verifyToken(token, userEmail = "") {
   return jwt.verify(token, process.env.NEXTAUTH_SECRET + userEmail);
 }
 
-export const createInviteToken = (teamId: string, email: string, options = {}) => {
-  return jwt.sign({ teamId, email }, process.env.NEXTAUTH_SECRET, options);
+export const createInviteToken = (inviteId: string, email: string, options = {}) => {
+  return jwt.sign({ inviteId, email }, process.env.NEXTAUTH_SECRET, options);
 };
 
 export const verifyInviteToken = async (token: string) => {
   try {
     const decoded = jwt.decode(token);
-    console.log(decoded)
     return {
-      teamId: decoded.teamId,
+      inviteId: decoded.inviteId,
       email: decoded.email,
     };
   } catch (error) {
