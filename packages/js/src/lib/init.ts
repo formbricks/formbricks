@@ -42,6 +42,7 @@ export const initialize = async (c: InitConfig): Promise<void> => {
     // get person, session and settings from server
     const { person, session, settings } = await createPerson();
     config.update({ person, session: extendSession(session), settings });
+    trackEvent("New Session");
   }
   if (isExpired(config.get().session)) {
     // we need new session

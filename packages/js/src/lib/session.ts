@@ -1,6 +1,7 @@
 import type { Session, Settings } from "@formbricks/types/js";
 import { Logger } from "./logger";
 import { Config } from "./config";
+import { trackEvent } from "./event";
 
 const logger = Logger.getInstance();
 const config = Config.getInstance();
@@ -47,6 +48,7 @@ export const extendOrCreateSession = async (): Promise<void> => {
       throw Error("Error creating new session");
     }
     config.update({ session, settings });
+    trackEvent("New Session");
   }
   logger.debug("Session not expired, extending session");
   config.update({ session: extendSession(config.get().session) });
