@@ -11,6 +11,8 @@ const navigation = [
     title: "Getting Started",
     links: [
       { title: "Quickstart", href: "/docs/getting-started/quickstart" },
+      { title: "Setup with Next.js", href: "/docs/getting-started/nextjs" },
+      { title: "Setup with Vue.js", href: "/docs/getting-started/vuejs" },
       { title: "Identify users", href: "/docs/getting-started/identify-users" },
     ],
   },

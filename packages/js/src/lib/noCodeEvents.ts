@@ -1,10 +1,13 @@
 import type { MatchType } from "@formbricks/types/js";
 import { Config } from "./config";
 import { trackEvent } from "./event";
+import { Logger } from "./logger";
 
 const config = Config.getInstance();
+const logger = Logger.getInstance();
 
 export const checkPageUrl = (): void => {
+  logger.debug("checking page url");
   const pageUrlEvents = config
     .get()
     .settings?.noCodeEvents.filter((event) => event.noCodeConfig?.type === "pageUrl");
@@ -22,6 +25,16 @@ export const checkPageUrl = (): void => {
     if (match) {
       trackEvent(event.name);
     }
+  }
+};
+
+export const addPageUrlEventListeners = (): void => {
+  if (typeof window !== "undefined") {
+    window.addEventListener("hashchange", checkPageUrl);
+    window.addEventListener("popstate", checkPageUrl);
+    window.addEventListener("pushstate", checkPageUrl);
+    window.addEventListener("replacestate", checkPageUrl);
+    window.addEventListener("load", checkPageUrl);
   }
 };
 

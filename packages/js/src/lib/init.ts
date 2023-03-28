@@ -5,7 +5,7 @@ import { Logger } from "./logger";
 import { createPerson } from "./person";
 import { createSession, extendOrCreateSession, extendSession, isExpired } from "./session";
 import { trackEvent } from "./event";
-import { checkPageUrl } from "./noCodeEvents";
+import { addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
 import { addWidgetContainer } from "./widget";
 
 const config = Config.getInstance();
@@ -51,7 +51,7 @@ export const initialize = async (c: InitConfig): Promise<void> => {
     trackEvent("New Session");
   }
   addSessionEventListeners();
-  checkPageUrl();
+  addPageUrlEventListeners();
 };
 
 export const checkInitialized = (): void => {

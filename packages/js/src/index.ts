@@ -2,6 +2,7 @@ import { InitConfig } from "@formbricks/types/js";
 import { CommandQueue } from "./lib/commandQueue";
 import { trackEvent } from "./lib/event";
 import { checkInitialized, initialize } from "./lib/init";
+import { checkPageUrl } from "./lib/noCodeEvents";
 import { resetPerson, setPersonAttribute, setPersonUserId } from "./lib/person";
 import { refreshSettings } from "./lib/settings";
 
@@ -52,7 +53,15 @@ const refresh = (): void => {
   });
 };
 
-const formbricks = { init, setUserId, setEmail, setAttribute, track, logout, refresh };
+const registerRouteChange = (): void => {
+  console.log("fire!!!");
+  queue.add(async () => {
+    checkInitialized();
+    checkPageUrl();
+  });
+};
+
+const formbricks = { init, setUserId, setEmail, setAttribute, track, logout, refresh, registerRouteChange };
 
 if (typeof window !== "undefined") {
   (window as any).formbricks = formbricks;
