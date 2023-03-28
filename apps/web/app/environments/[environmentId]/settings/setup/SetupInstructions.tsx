@@ -6,10 +6,10 @@ import Link from "next/link";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";
 import { useEffect, useState } from "react";
-import { IoLogoHtml5, IoLogoReact } from "react-icons/io5";
+import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
 
 const tabs = [
-  { id: "react", label: "React", icon: <IoLogoReact /> },
+  { id: "npm", label: "NPM", icon: <IoLogoNpm /> },
   { id: "html", label: "HTML", icon: <IoLogoHtml5 /> },
 ];
 
@@ -24,10 +24,10 @@ export default function SetupInstructions({ environmentId }) {
     <div>
       <TabBar tabs={tabs} activeId={activeTab} setActiveId={setActiveTab} />
       <div className="px-6 py-5">
-        {activeTab === "react" ? (
+        {activeTab === "npm" ? (
           <div className="prose prose-slate">
             <p className="text-lg font-semibold text-slate-800">Step 1: NPM Install</p>
-            <CodeBlock language="js">npm install @formbricks/js</CodeBlock>
+            <CodeBlock language="sh">npm install @formbricks/js</CodeBlock>
             <p className="pt-4 text-lg font-semibold text-slate-800">Step 2: Initialize widget</p>
             <p>Import Formbricks and initialize the widget in your Component (e.g. App.tsx):</p>
             <CodeBlock language="js">{`import formbricks from "@formbricks/js";
@@ -57,6 +57,14 @@ if (typeof window !== "undefined") {
               <li>
                 <span className="font-semibold">Does your widget work? </span>
                 <span>Scroll to the top!</span>
+              </li>
+              <li>
+                <span className="font-semibold">
+                  Need a more detailed setup guide for React, Next.js or Vue.js?
+                </span>{" "}
+                <Link className="decoration-brand-dark" href="https://formbricks.com/docs" target="_blank">
+                  Check out the docs.
+                </Link>
               </li>
               <li>
                 <span className="font-semibold">Have a problem?</span>{" "}
