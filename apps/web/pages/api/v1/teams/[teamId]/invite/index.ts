@@ -18,7 +18,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     // POST /api/v1/teams/[teamId]/invite
     if (req.method === "POST") {
         //TODO: Check if user is admin of team
-        const { email, name } = req.body;
+        let { email, name } = req.body;
+        email = email.toLowerCase();
 
         const user = await prisma.user.findUnique({ where: { email } });
 

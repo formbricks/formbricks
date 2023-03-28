@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import { prisma } from "@formbricks/database";
-import { decode } from "punycode";
 
 export function createToken(userId, userEmail, options = {}) {
   return jwt.sign({ id: userId }, process.env.NEXTAUTH_SECRET + userEmail, options);

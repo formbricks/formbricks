@@ -1,4 +1,5 @@
-import { sendVerificationEmail } from "@/lib/email";
+import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/lib/email";
+import { verifyInviteToken } from "@/lib/jwt";
 import { populateEnvironment } from "@/lib/populate";
 import { capturePosthogEvent } from "@/lib/posthogServer";
 import { prisma } from "@formbricks/database";
@@ -8,49 +9,90 @@ export async function POST(request: Request) {
   if (process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1") {
     return NextResponse.json({ error: "Signup disabled" }, { status: 403 });
   }
-  let user = await request.json();
+  let { inviteToken, ...user } = await request.json();
   user = { ...user, ...{ email: user.email.toLowerCase() } };
 
-  // create user in database
+  let inviteId;
+
   try {
-    const userData = await prisma.user.create({
-      data: {
-        ...user,
-        memberships: {
-          create: [
-            {
+    let data;
+    let invite;
+
+    if (inviteId) {
+      let inviteTokenData = await verifyInviteToken(inviteToken);
+      inviteId = inviteTokenData?.inviteId;
+
+      invite = await prisma.invite.findUnique({ where: { id: inviteId } });
+
+      if (!invite) {
+        return NextResponse.json({ error: "Invalid invite ID" }, { status: 400 });
+      }
+
+      data = {
+        data: {
+          ...user,
+          memberships: {
+            create: {
               accepted: true,
-              role: "owner",
+              role: "member",
               team: {
-                create: {
-                  name: `${user.name}'s Team`,
-                  products: {
-                    create: [
-                      {
-                        name: "My Product",
-                        environments: {
-                          create: [
-                            {
-                              type: "production",
-                              ...populateEnvironment,
-                            },
-                            {
-                              type: "development",
-                              ...populateEnvironment,
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
+                connect: {
+                  id: invite.teamId,
                 },
               },
             },
-          ],
+          },
         },
-      },
-    });
+      };
+    } else {
+      data = {
+        data: {
+          ...user,
+          memberships: {
+            create: [
+              {
+                accepted: true,
+                role: "owner",
+                team: {
+                  create: {
+                    name: `${user.name}'s Team`,
+                    products: {
+                      create: [
+                        {
+                          name: "My Product",
+                          environments: {
+                            create: [
+                              {
+                                type: "production",
+                                ...populateEnvironment,
+                              },
+                              {
+                                type: "development",
+                                ...populateEnvironment,
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      };
+    }
+
+    const userData = await prisma.user.create(data);
+
+    if (inviteId) {
+      sendInviteAcceptedEmail(invite.creator.name, invite.acceptor.name, invite.creator.email)
+      await prisma.invite.delete({ where: { id: inviteId } });
+    }
+
     if (process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") await sendVerificationEmail(userData);
+
     // tracking
     capturePosthogEvent(userData.id, "user created");
     return NextResponse.json(userData);
