@@ -47,50 +47,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         return res.json(inviteToDelete);
 
     }
-    // POST /api/v1/teams/[teamId]/invite/[inviteId]
-    // Accept an invite
-    else if (req.method === "POST") {
-        // check if currentUser is invited user
-        const invite = await prisma.invite.findUnique({
-            where: {
-                id: inviteId,
-            },
-            include: {
-                creator: true,
-            }
-        });
-        if (!invite || inviteId !== currentUser.id) {
-            return res.status(403).json({ message: "You are not allowed to accept this invite" });
-        }
-
-        // accept invite
-        const membership = await prisma.membership.create({
-            data: {
-                team: {
-                    connect: {
-                        id: teamId,
-                    },
-                },
-                user: {
-                    connect: {
-                        id: currentUser.id,
-                    },
-                },
-                role: invite.role,
-            },
-        });
-
-        // delete invite
-        await prisma.invite.delete({
-            where: {
-                id: inviteId,
-            },
-        });
-
-        sendInviteAcceptedEmail(invite.creator.name, currentUser.name, invite.creator.email)
-
-        return res.json(membership);
-    }
     // PUT /api/v1/teams/[teamId]/invite/[inviteId]
     // Renew an invite
     else if (req.method === "PUT") {

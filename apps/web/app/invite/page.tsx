@@ -1,3 +1,4 @@
+import { sendInviteAcceptedEmail } from "@/lib/email";
 import { verifyInviteToken } from "@/lib/jwt";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth";
@@ -14,6 +15,7 @@ export default async function JoinTeam({ searchParams }) {
 
         const invite = await prisma?.invite.findUnique({
             where: { id: inviteId },
+            include: { creator: true },
         });
 
         if (!currentUser) {
@@ -30,6 +32,33 @@ export default async function JoinTeam({ searchParams }) {
         } else if (invite.accepted) {
             return <UsedContent />;
         } else {
+            // create membership
+            const membership = await prisma?.membership.create({
+                data: {
+                    team: {
+                        connect: {
+                            id: invite.teamId,
+                        },
+                    },
+                    user: {
+                        connect: {
+                            id: currentUser.user.id,
+                        },
+                    },
+                    role: invite.role,
+                    accepted: true,
+                },
+            });
+
+            // delete invite
+            await prisma?.invite.delete({
+                where: {
+                    id: inviteId,
+                },
+            });
+
+            sendInviteAcceptedEmail(invite.creator.name, currentUser.user.name, invite.creator.email)
+
             return <RightAccountContent />;
         }
     } catch (e) {

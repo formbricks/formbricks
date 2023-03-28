@@ -18,11 +18,16 @@ export async function POST(request: Request) {
     let data;
     let invite;
 
-    if (inviteId) {
+    if (inviteToken) {
       let inviteTokenData = await verifyInviteToken(inviteToken);
       inviteId = inviteTokenData?.inviteId;
 
-      invite = await prisma.invite.findUnique({ where: { id: inviteId } });
+      invite = await prisma.invite.findUnique({
+        where: { id: inviteId },
+        include: {
+          creator: true,
+        }
+      });
 
       if (!invite) {
         return NextResponse.json({ error: "Invalid invite ID" }, { status: 400 });
@@ -34,7 +39,7 @@ export async function POST(request: Request) {
           memberships: {
             create: {
               accepted: true,
-              role: "member",
+              role: invite.role,
               team: {
                 connect: {
                   id: invite.teamId,
@@ -87,7 +92,7 @@ export async function POST(request: Request) {
     const userData = await prisma.user.create(data);
 
     if (inviteId) {
-      sendInviteAcceptedEmail(invite.creator.name, invite.acceptor.name, invite.creator.email)
+      sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email)
       await prisma.invite.delete({ where: { id: inviteId } });
     }
 
