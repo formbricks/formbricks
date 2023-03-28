@@ -4,12 +4,11 @@ import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { ProfileAvatar } from "@/components/ui/Avatars";
 import Button from "@/components/ui/Button";
-import { SendIcon } from "@/components/ui/icons/SendIcon";
-import { TrashIcon } from "@/components/ui/icons/TrashIcon";
 import { addMember, deleteInvite, removeMember, resendInvite, useTeam } from "@/lib/teams";
 import * as Tooltip from "@/components/ui/Tooltip";
 import { useState } from "react";
 import AddMemberModal from "./AddMemberModal";
+import { PaperAirplaneIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 export function EditMembers({ environmentId }) {
 
@@ -82,7 +81,7 @@ export function EditMembers({ environmentId }) {
         </div>
         <div className="grid-cols-7">
           {[...team.members, ...team.invitees].map((member) => (
-            <div className="w-full grid h-12  py-2 grid-cols-7 content-center rounded-lg text-left text-sm text-slate-900 hover:bg-slate-100" key={member.userId}>
+            <div className="w-full grid h-12  py-2 grid-cols-7 content-center rounded-lg text-left text-sm text-slate-900 hover:bg-slate-100" key={member.email}>
               <div className="px-6 h-58 ">
                 <ProfileAvatar userId={member.userId} />
               </div>
@@ -92,15 +91,16 @@ export function EditMembers({ environmentId }) {
                 {!member.accepted && (
                   <p className="text-xs text-amber-500 bg-amber-50 border-amber-500 border-2 rounded-md px-2 py-px">Pending</p>
                 )}
-                <button onClick={e => handleOpenDeleteMemberModal(e, member)}>
-                  <TrashIcon />
-                </button>
+                {member.role !== "owner" && (
+                  <button onClick={e => handleOpenDeleteMemberModal(e, member)}>
+                    <TrashIcon className="text-black h-5 w-5" />
+                  </button>)}
                 {!member.accepted && (
                   <Tooltip.TooltipProvider>
                     <Tooltip.Tooltip>
                       <Tooltip.TooltipTrigger asChild>
                         <button onClick={() => handleResendInvite(member.inviteId)}>
-                          <SendIcon />
+                          <PaperAirplaneIcon className="text-black h-5 w-5" />
                         </button>
                       </Tooltip.TooltipTrigger>
                       <Tooltip.TooltipContent className="TooltipContent" sideOffset={5}>

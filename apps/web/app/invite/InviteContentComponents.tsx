@@ -17,6 +17,7 @@ const ContentLayout = ({ headline, description, children }) => {
 // TODO: replace support email
 
 export const NotLoggedInContent = ({ email, token, redirectUrl }) => {
+    email = encodeURIComponent(email);
     return (
         <ContentLayout
             headline="Happy to have you 🫶"
