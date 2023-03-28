@@ -2,6 +2,28 @@ import { getSessionOrUser } from "@/lib/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
+type Member = {
+    user?: {
+        name: string | null;
+        email: string;
+    };
+    accepted: boolean;
+    userId: string;
+    role: any;
+    name?: string;
+    email?: string;
+};
+
+type Invite = {
+    accepted: boolean;
+    id?: string;
+    inviteId?: string;
+    name: string | null;
+    email: string;
+    acceptorId: string | null;
+    role: any;
+};
+
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     // Check Authentication
     const user: any = await getSessionOrUser(req, res);
@@ -45,7 +67,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             });
         }
 
-        const members = await prisma.membership.findMany({
+        const members: Member[] = await prisma.membership.findMany({
             where: { teamId },
             select: {
                 user: {
@@ -59,8 +81,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 role: true,
             },
         });
+        members.forEach((member: Member) => {
+            member.name = member.user?.name || "";
+            member.email = member.user?.email || "";
+            delete member.user;
+        });
 
-        const invitees = await prisma.invite.findMany({
+        const invitees: Invite[] = await prisma.invite.findMany({
             where: { teamId, accepted: false },
             select: {
                 id: true,
@@ -71,13 +98,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 accepted: true,
             },
         });
-
-        members.forEach((member) => {
-            member.name = member.user.name;
-            member.email = member.user.email;
-            delete member.user;
-        });
-        invitees.forEach((invite) => {
+        invitees.forEach((invite: Invite) => {
             invite.inviteId = invite.id;
             delete invite.id;
         });

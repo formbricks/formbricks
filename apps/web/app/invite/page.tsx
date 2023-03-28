@@ -3,6 +3,7 @@ import { verifyInviteToken } from "@/lib/jwt";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth";
 import { env } from "process";
+import { prisma } from "@formbricks/database";
 import { NotLoggedInContent, WrongAccountContent, ExpiredContent, UsedContent, RightAccountContent } from "./InviteContentComponents";
 
 export default async function JoinTeam({ searchParams }) {
@@ -33,7 +34,7 @@ export default async function JoinTeam({ searchParams }) {
             return <UsedContent />;
         } else {
             // create membership
-            const membership = await prisma?.membership.create({
+            await prisma?.membership.create({
                 data: {
                     team: {
                         connect: {

@@ -1,5 +1,5 @@
 import { getSessionOrUser } from "@/lib/apiHelper";
-import { sendInviteAcceptedEmail, sendInviteMemberEmail } from "@/lib/email";
+import { sendInviteMemberEmail } from "@/lib/email";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 

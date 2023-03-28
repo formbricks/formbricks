@@ -6,14 +6,14 @@ import { ProfileAvatar } from "@/components/ui/Avatars";
 import Button from "@/components/ui/Button";
 import { SendIcon } from "@/components/ui/icons/SendIcon";
 import { TrashIcon } from "@/components/ui/icons/TrashIcon";
-import { addMember, deleteInvite, removeMember, resendInvite, useTeam } from "@/lib/teams";
+import { deleteInvite, removeMember, resendInvite, useTeam } from "@/lib/teams";
 import * as Tooltip from "@/components/ui/Tooltip";
 import { useState } from "react";
 import AddMemberModal from "./AddMemberModal";
 
 export function EditMembers({ environmentId }) {
 
-  const { team, isErrorTeam, isLoadingTeam, isValidatingTeam } =
+  const { team, isErrorTeam, isLoadingTeam } =
     useTeam(environmentId);
 
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
