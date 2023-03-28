@@ -6,20 +6,22 @@ import { ProfileAvatar } from "@/components/ui/Avatars";
 import Button from "@/components/ui/Button";
 import { SendIcon } from "@/components/ui/icons/SendIcon";
 import { TrashIcon } from "@/components/ui/icons/TrashIcon";
-import { deleteInvite, removeMember, resendInvite, useTeam } from "@/lib/teams";
+import { addMember, deleteInvite, removeMember, resendInvite, useTeam } from "@/lib/teams";
 import * as Tooltip from "@/components/ui/Tooltip";
 import { useState } from "react";
 import AddMemberModal from "./AddMemberModal";
 
 export function EditMembers({ environmentId }) {
 
-  const { team, isErrorTeam, isLoadingTeam } =
+  const { team, isErrorTeam, isLoadingTeam, mutateTeam } =
     useTeam(environmentId);
 
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
 
   const [activeMember, setActiveMember] = useState({} as any);
+
+
 
   const handleOpenDeleteMemberModal = (e, member) => {
     e.preventDefault();
@@ -33,10 +35,22 @@ export function EditMembers({ environmentId }) {
       await deleteInvite(team.teamId, activeMember.inviteId)
     }
     setDeleteMemberModalOpen(false);
+    mutateTeam();
   }
+
+
   const handleResendInvite = async (inviteId) => {
     await resendInvite(team.teamId, inviteId);
   }
+
+  const handleAddMember = async (data) => {
+    // TODO: handle http 409 user is already part of the team
+    await addMember(team.teamId, data);
+    mutateTeam();
+  }
+
+
+
 
   if (isLoadingTeam) {
     return <LoadingSpinner />;
@@ -102,9 +116,9 @@ export function EditMembers({ environmentId }) {
       </div>
 
       <AddMemberModal
-        teamId={team.teamId}
         open={isAddMemberModalOpen}
         setOpen={setAddMemberModalOpen}
+        onSubmit={handleAddMember}
       />
       <DeleteDialog
         open={isDeleteMemberModalOpen}

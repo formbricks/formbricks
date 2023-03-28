@@ -3,7 +3,7 @@ import { fetcher } from "./fetcher";
 
 export const useTeam = (environmentId: string) => {
     console.log("fetch team")
-    const { data, isLoading, error, isValidating } = useSWR(
+    const { data, isLoading, error, mutate, isValidating } = useSWR(
         `/api/v1/environments/${environmentId}/members/`,
         fetcher
     );
@@ -12,7 +12,8 @@ export const useTeam = (environmentId: string) => {
         team: data,
         isLoadingTeam: isLoading,
         isErrorTeam: error,
-        isValidatingTeam: isValidating
+        isValidatingTeam: isValidating,
+        mutateTeam: mutate,
     };
 };
 

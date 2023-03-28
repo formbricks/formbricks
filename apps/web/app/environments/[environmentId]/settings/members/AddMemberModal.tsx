@@ -5,25 +5,23 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { useForm } from "react-hook-form";
-import { addMember } from "@/lib/teams";
 
 interface MemberModalProps {
-    teamId: string;
     open: boolean;
     setOpen: (v: boolean) => void;
+    onSubmit: (data: { name: string, email: string }) => void;
 }
 
 export default function AddMemberModal({
-    teamId,
     open,
     setOpen,
+    onSubmit
 }: MemberModalProps) {
     const { register, getValues, handleSubmit, reset } = useForm<{ name: string, email: string }>();
 
     const submitEventClass = async () => {
         const data = getValues();
-        await addMember(teamId, data);
-        // TODO: handle http 409 user is already part of the team
+        onSubmit(data);
         setOpen(false);
         reset();
     };
