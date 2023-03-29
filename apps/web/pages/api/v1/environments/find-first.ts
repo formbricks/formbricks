@@ -1,6 +1,8 @@
 import { getSessionOrUser } from "@/lib/apiHelper";
+import { populateEnvironment } from "@/lib/populate";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { EnvironmentType } from "@prisma/client";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication
@@ -20,9 +22,58 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         teamId: true,
       },
     });
-    if (firstMembership === null) {
-      return res.status(404).json({ message: "No memberships found" });
+
+    if (!firstMembership) {
+      // create a new team and return environment
+      const membership = await prisma.membership.create({
+        data: {
+          accepted: true,
+          role: "owner",
+          user: { connect: { id: user.id } },
+          team: {
+            create: {
+              name: `${user.name}'s Team`,
+              products: {
+                create: {
+                  name: "My Product",
+                  environments: {
+                    create: [
+                      {
+                        type: EnvironmentType.production,
+                        ...populateEnvironment,
+                      },
+                      {
+                        type: EnvironmentType.development,
+                        ...populateEnvironment,
+                      },
+                    ],
+                  },
+                },
+
+              },
+            },
+          },
+        },
+        include: {
+          team: {
+            include: {
+              products: {
+                include: {
+                  environments: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const environment = membership.team.products[0].environments[0];
+
+      return res.json(environment);
+      // return res.status(404).json({ message: "No memberships found" });
     }
+
+
     const firstProduct = await prisma.product.findFirst({
       where: {
         teamId: firstMembership.teamId,
