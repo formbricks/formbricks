@@ -2,6 +2,7 @@ import type { AppProps } from "next/app";
 import formbricks from "@formbricks/js";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
+import "../styles/globals.css";
 
 if (typeof window !== "undefined") {
   if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {

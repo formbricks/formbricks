@@ -16,44 +16,6 @@ import { createId } from "@paralleldrive/cuid2";
 
 export const templates: Template[] = [
   {
-    name: "AI Template",
-    icon: AppPieChartIcon,
-    category: "Product Experience",
-    description: "Learn more about who signed up to your product and why.",
-    preset: {
-      name: "AI Template",
-      questions: [
-        {
-          id: "1",
-          type: "multipleChoiceSingle",
-          headline: "What is your favorite Korean food?",
-          required: true,
-          choices: [
-            { id: "a", label: "Bibimbap" },
-            { id: "b", label: "Kimchi" },
-            { id: "c", label: "Bulgogi" },
-            { id: "d", label: "Tteokbokki" },
-            { id: "e", label: "Japchae" },
-            { id: "f", label: "Other" },
-          ],
-        },
-        {
-          id: "2",
-          type: "multipleChoiceSingle",
-          headline: "What level of spiciness do you prefer for your Korean food?",
-          required: true,
-          choices: [
-            { id: "a", label: "Mild" },
-            { id: "b", label: "Medium" },
-            { id: "c", label: "Spicy" },
-            { id: "d", label: "Very spicy" },
-            { id: "e", label: "Extreme" },
-          ],
-        },
-      ],
-    },
-  },
-  {
     name: "Product Market Fit Survey",
     icon: PMFIcon,
     category: "Product Experience",
