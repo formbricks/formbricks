@@ -11,7 +11,7 @@ interface SecondNavbarProps {
 
 export function TabBar({ tabs, activeId, setActiveId }: SecondNavbarProps) {
   return (
-    <div className="flex h-14 w-full items-center justify-center rounded-lg border-b bg-slate-200">
+    <div className="flex h-14 items-center justify-center rounded-lg  bg-slate-200 dark:bg-slate-700">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
         {tabs.map((tab) => (
           <button
@@ -19,8 +19,8 @@ export function TabBar({ tabs, activeId, setActiveId }: SecondNavbarProps) {
             onClick={() => setActiveId(tab.id)}
             className={clsx(
               tab.id === activeId
-                ? " border-brand-dark border-b-2 font-semibold text-slate-900"
-                : "text-slate-500 hover:text-slate-700",
+                ? " border-brand-dark border-b-2 font-semibold text-slate-900 dark:text-slate-300"
+                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200",
               "flex h-full items-center px-3 text-sm font-medium"
             )}
             aria-current={tab.id === activeId ? "page" : undefined}>
@@ -44,7 +44,7 @@ export default function SetupInstructions({}) {
   return (
     <div>
       <TabBar tabs={tabs} activeId={activeTab} setActiveId={setActiveTab} />
-      <div className="h-80 max-w-lg  px-4">
+      <div className="h-80 max-w-xs px-4  sm:max-w-lg">
         {activeTab === "npm" ? (
           <>
             <CodeBlock>npm install @formbricks/js</CodeBlock>

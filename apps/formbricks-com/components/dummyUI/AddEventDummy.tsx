@@ -1,13 +1,13 @@
 import { Button } from "@formbricks/ui";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./Select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
 
 const DummyUI: React.FC = () => {
   const eventClasses = [
     { id: "1", name: "View Dashboard" },
-    { id: "2", name: "Subscribed to Premium" },
-    { id: "3", name: "Canceled plan" },
+    { id: "2", name: "Upgrade to Pro" },
+    { id: "3", name: "Cancel Plan" },
   ];
 
   const [triggers, setTriggers] = useState<string[]>([eventClasses[0].id]);
@@ -31,16 +31,23 @@ const DummyUI: React.FC = () => {
       {triggers.map((triggerEventClassId, idx) => (
         <div className="mt-2" key={idx}>
           <div className="inline-flex items-center">
-            <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
+            <p className="mr-2 w-14 text-right text-sm text-slate-800 dark:text-slate-300">
+              {idx === 0 ? "When" : "or"}
+            </p>
             <Select
               value={triggerEventClassId}
               onValueChange={(eventClassId) => setTriggerEvent(idx, eventClassId)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
+              <SelectTrigger className="w-[180px] text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
+                <SelectValue className="" />
               </SelectTrigger>
               <SelectContent>
                 {eventClasses.map((eventClass) => (
-                  <SelectItem value={eventClass.id}>{eventClass.name}</SelectItem>
+                  <SelectItem
+                    key={eventClass.id}
+                    className="py-1 px-0.5 text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
+                    value={eventClass.id}>
+                    {eventClass.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -53,6 +60,7 @@ const DummyUI: React.FC = () => {
       <div className="p-3">
         <Button
           variant="secondary"
+          className="dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
           onClick={() => {
             addTriggerEvent();
           }}>

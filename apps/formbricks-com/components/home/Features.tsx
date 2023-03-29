@@ -1,23 +1,23 @@
-import { TabletTouchIcon, UserDeveloperIcon, CodeFileIcon } from "@formbricks/ui";
+import { EyeIcon, HandPuzzleIcon, CodeFileIcon } from "@formbricks/ui";
 import HeadingCentered from "../shared/HeadingCentered";
 
 const features = [
   {
     id: "customizable",
-    name: "Customizable",
+    name: "Fully Customizable",
     description: "Full customizability and extendability. Integrate with your stack easily.",
-    icon: UserDeveloperIcon,
+    icon: HandPuzzleIcon,
   },
   {
     id: "compliance",
-    name: "Compliance Reviews",
+    name: "Smoothly Compliant",
     description: "Self-host the entire product and fly through privacy compliance reviews.",
-    icon: TabletTouchIcon,
+    icon: EyeIcon,
   },
   {
     id: "independent",
     name: "Stay independent",
-    description: "The code is freely available. Do with it what your organization needs.",
+    description: "The code is open-source. Do with it what your organization needs.",
     icon: CodeFileIcon,
   },
 ];

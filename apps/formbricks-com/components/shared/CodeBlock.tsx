@@ -13,9 +13,9 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ children }) => {
   }, [children]);
 
   return (
-    <div className="group relative mt-4 rounded-md font-light text-slate-200">
+    <div className="group relative mt-4 rounded-md text-sm font-light text-slate-200 sm:text-base">
       <pre>
-        <code className="language-js whitespace-pre-wrap">{children}</code>
+        <code className="language-js">{children}</code>
       </pre>
     </div>
   );

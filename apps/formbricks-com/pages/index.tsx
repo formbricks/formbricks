@@ -1,9 +1,8 @@
 import Layout from "@/components/shared/Layout";
 import Hero from "@/components/home/Hero";
 import Features from "@/components/home/Features";
-import Highlights from "@/components/home/Highlights";
-import InsightOppos from "@/components/shared/InsightOppos";
-import BreakerCTA from "@/components/shared/BreakerCTA";
+import Highlights from "@/components/home/Highlights"; /* 
+import BreakerCTA from "@/components/shared/BreakerCTA"; */
 import Steps from "@/components/home/Steps";
 
 const IndexPage = () => (

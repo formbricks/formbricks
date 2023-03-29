@@ -1,16 +1,19 @@
-import { AppPieChartIcon } from "../shared/icons/AppPieChartIcon";
-import { CancelSubscriptionIcon } from "../shared/icons/CancelSubscriptionIcon";
-import { CashCalculatorIcon } from "../shared/icons/CashCalculatorIcon";
-import { DashboardIcon } from "../shared/icons/DashboardIcon";
-import { DogChaserIcon } from "../shared/icons/DogChaserIcon";
-import { DoorIcon } from "../shared/icons/DoorIcon";
-import { FeedbackIcon } from "../shared/icons/FeedbackIcon";
-import { OnboardingIcon } from "../shared/icons/OnboardingIcon";
-import { PMFIcon } from "../shared/icons/PMFIcon";
-import { TaskListSearchIcon } from "../shared/icons/TaskListSearchIcon";
-import { BaseballIcon } from "../shared/icons/BaseballIcon";
-import { CheckMarkIcon } from "../shared/icons/CheckMarkIcon";
-import { ArrowRightCircleIcon } from "../shared/icons/ArrowRightCircleIcon";
+import {
+  AppPieChartIcon,
+  CancelSubscriptionIcon,
+  CashCalculatorIcon,
+  DashboardIcon,
+  DogChaserIcon,
+  DoorIcon,
+  FeedbackIcon,
+  OnboardingIcon,
+  PMFIcon,
+  TaskListSearchIcon,
+  BaseballIcon,
+  CheckMarkIcon,
+  ArrowRightCircleIcon,
+} from "@formbricks/ui";
+
 import type { Template } from "./templateTypes";
 import { createId } from "@paralleldrive/cuid2";
 

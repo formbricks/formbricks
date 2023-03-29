@@ -1,11 +1,9 @@
-"use client";
-
 import Modal from "../shared/Modal";
-import { Button } from "./Button";
-import { Input } from "./Input";
-import { Label } from "./Label";
-import { RadioGroup, RadioGroupItem } from "./RadioGroup";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./Select";
+import { Button } from "@formbricks/ui";
+import { Input } from "@formbricks/ui";
+import { Label } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 
 interface EventDetailModalProps {
@@ -37,7 +35,7 @@ export default function AddNoCodeEventModalDummy({ open, setOpen }: EventDetailM
             <div className="space-y-4">
               <div>
                 <Label>Select By</Label>
-                <RadioGroup className="grid grid-cols-3" defaultValue="pageUrl">
+                <RadioGroup className="grid grid-cols-2 gap-1 md:grid-cols-3" defaultValue="pageUrl">
                   <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
                     <RadioGroupItem value="pageUrl" id="pageUrl" className="bg-slate-50" />
                     <Label htmlFor="pageUrl" className="cursor-pointer">
@@ -52,7 +50,7 @@ export default function AddNoCodeEventModalDummy({ open, setOpen }: EventDetailM
                       Inner Text
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 rounded-lg bg-slate-50 p-3">
+                  <div className="hidden items-center space-x-2 rounded-lg bg-slate-50 p-3 md:flex">
                     <RadioGroupItem disabled value="cssSelector" id="cssSelector" className="bg-slate-50" />
                     <Label
                       htmlFor="cssSelector"
@@ -77,7 +75,10 @@ export default function AddNoCodeEventModalDummy({ open, setOpen }: EventDetailM
                   <Label>URL</Label>
 
                   <Select defaultValue="endsWith">
-                    <SelectTrigger className="w-[180px]" onClick={(e) => e.preventDefault()} disabled>
+                    <SelectTrigger
+                      className="w-[110px] md:w-[180px]"
+                      onClick={(e) => e.preventDefault()}
+                      disabled>
                       <SelectValue placeholder="Select match type" />
                     </SelectTrigger>
                     <SelectContent>
