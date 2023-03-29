@@ -36,6 +36,11 @@ const nextConfig = {
         permanent: false,
       },
       {
+        source: "/docs",
+        destination: "/docs/introduction/what-is-formbricks",
+        permanent: false,
+      },
+      {
         source: "/docs/formbricks-hq/self-hosting",
         destination: "/docs",
         permanent: false,
