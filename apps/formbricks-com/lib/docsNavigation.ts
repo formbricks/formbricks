@@ -8,86 +8,31 @@ const navigation = [
     ],
   },
   {
-    title: "Best Practices",
+    title: "Getting Started",
     links: [
-      {
-        title: "What are Best Practices?",
-        href: "/docs/best-practices/what-are-best-practices",
-      },
-      {
-        title: "Feedback Box",
-        href: "/docs/best-practices/feedback-box",
-      },
-      {
-        title: "Product-Market Fit Survey",
-        href: "/docs/best-practices/pmf-survey",
-      },
-      {
-        title: "Onboarding Segmentation",
-        href: "/docs/best-practices/onboarding-segmentation",
-      },
-      {
-        title: "Waitlist Survey",
-        href: "/docs/best-practices/waitlist-survey",
-      },
-      {
-        title: "Interview Prompt",
-        href: "/docs/best-practices/interview-prompt",
-      },
-      {
-        title: "Custom Survey",
-        href: "/docs/best-practices/custom-survey",
-      },
-    ],
-  },
-  {
-    title: "Wrappers",
-    links: [
-      {
-        title: "What are Wrappers?",
-        href: "/docs/wrappers/what-are-wrappers",
-      },
-      {
-        title: "In-app Pop-over",
-        href: "/docs/wrappers/pop-over",
-      },
-      {
-        title: "In-app Slide-out",
-        href: "/docs/wrappers/slide-out",
-      },
-      {
-        title: "Modal",
-        href: "/docs/wrappers/modal",
-      },
-      {
-        title: "Inline",
-        href: "/docs/wrappers/inline",
-      },
-      {
-        title: "Link",
-        href: "/docs/wrappers/link",
-      },
-      {
-        title: "Email",
-        href: "/docs/wrappers/email",
-      },
+      { title: "Quickstart", href: "/docs/getting-started/quickstart" },
+      { title: "Setup with Next.js", href: "/docs/getting-started/nextjs" },
+      { title: "Setup with Vue.js", href: "/docs/getting-started/vuejs" },
+      { title: "Identify users", href: "/docs/getting-started/identify-users" },
     ],
   },
   {
     title: "API",
     links: [
-      { title: "API Setup", href: "/docs/api/setup" },
-      { title: "Create Submission", href: "/docs/api/create-submission" },
-      { title: "Update Submission", href: "/docs/api/update-submission" },
-      { title: "Update Schema", href: "/docs/api/update-schema" },
+      { title: "Overview", href: "/docs/api/overview" },
+      { title: "API Key Setup", href: "/docs/api/api-key-setup" },
+    ],
+  },
+  {
+    title: "Client API",
+    links: [
+      { title: "Create Response", href: "/docs/api/create-response" },
+      { title: "Update Response", href: "/docs/api/update-response" },
     ],
   },
   {
     title: "Self-hosting",
-    links: [
-      { title: "Quick Start", href: "/docs/self-hosting/quick-start" },
-      { title: "Deployment", href: "/docs/self-hosting/deployment" },
-    ],
+    links: [{ title: "Deployment", href: "/docs/self-hosting/deployment" }],
   },
 ];
 

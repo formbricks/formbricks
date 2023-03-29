@@ -1,23 +1,23 @@
-import { TabletTouchIcon, UserDeveloperIcon, CodeFileIcon } from "@formbricks/ui";
+import { EyeIcon, HandPuzzleIcon, CodeFileIcon } from "@formbricks/ui";
 import HeadingCentered from "../shared/HeadingCentered";
 
 const features = [
   {
-    id: "devAttention",
-    name: "Minimal Dev Attention",
-    description: "All you want is building your product. Set it up once, keep insights flowing in.",
-    icon: UserDeveloperIcon,
+    id: "customizable",
+    name: "Fully Customizable",
+    description: "Full customizability and extendability. Integrate with your stack easily.",
+    icon: HandPuzzleIcon,
   },
   {
-    id: "nativeLookFeel",
-    name: "Native Look & Feel",
-    description: "No more UX clutter. Use headless forms or highly customizabale UI components.",
-    icon: TabletTouchIcon,
+    id: "compliance",
+    name: "Smoothly Compliant",
+    description: "Self-host the entire product and fly through privacy compliance reviews.",
+    icon: EyeIcon,
   },
   {
-    id: "openSourcer",
-    name: "Open Source",
-    description: "Own your data. Run Formbricks on your servers and comply with all regulation.",
+    id: "independent",
+    name: "Stay independent",
+    description: "The code is open-source. Do with it what your organization needs.",
     icon: CodeFileIcon,
   },
 ];
@@ -27,10 +27,9 @@ export default function Features() {
       <div className="relative mx-auto max-w-7xl">
         <HeadingCentered
           closer
-          teaser="Built for Product-minded founders"
-          heading="Hack your way to Product-Market Fit"
-          subheading="We redesigned experience management for SaaS founding teams:
-          Developer-first, native look & feel, private at heart."
+          teaser="DATA Privacy at heart"
+          heading="The only open-source solution"
+          subheading="Comply with all data privacy regulation with ease. Simply self-host."
         />
 
         <ul role="list" className="grid grid-cols-1 gap-4 pt-8 sm:grid-cols-2 md:grid-cols-3 lg:gap-10">

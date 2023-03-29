@@ -1,12 +1,12 @@
 import { useState, ChangeEvent } from "react";
-import { ChevronDownIcon, ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon, ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 
 interface APICallProps {
   method: "GET" | "POST";
   url: string;
   description: string;
-  queries: {
+  headers: {
     label: string;
     type: string;
     description: string;
@@ -26,7 +26,7 @@ interface APICallProps {
   example?: string;
 }
 
-export function APILayout({ method, url, description, queries, bodies, responses, example }: APICallProps) {
+export function APILayout({ method, url, description, headers, bodies, responses, example }: APICallProps) {
   const [switchState, setSwitchState] = useState(true);
   function handleOnChange() {
     setSwitchState(!switchState);
@@ -64,14 +64,17 @@ export function APILayout({ method, url, description, queries, bodies, responses
         <div className={clsx(switchState ? "block" : "hidden", "ml-8")}>
           <p className="mt-6 mb-2 text-lg font-semibold">Parameters</p>
           <div>
-            <div className="text-base">
-              <p className="not-prose -mb-1 pt-2 font-bold">Query</p>
-              <div>
-                {queries.map((q) => (
-                  <Parameter key={q.label} label={q.label} type={q.type} description={q.description} />
-                ))}
+            {headers.length > 0 && (
+              <div className="text-base">
+                <p className="not-prose -mb-1 pt-2 font-bold">Headers</p>
+                <div>
+                  {headers.map((q) => (
+                    <Parameter key={q.label} label={q.label} type={q.type} description={q.description} />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
             <div className="mt-4 text-base">
               <p className="not-prose -mb-1 pt-2 font-bold">Body</p>
               <div>

@@ -1,37 +1,16 @@
-/**
- * @type {import('next').NextConfig}
- */
-
-var path = require("path");
-const { withSentryConfig } = require("@sentry/nextjs");
-
-const withTM = require("next-transpile-modules")(["@formbricks/ee"]);
+/** @type {import('next').NextConfig} */
 
 const nextConfig = {
-  reactStrictMode: true,
-  output: "standalone",
   experimental: {
-    outputFileTracingRoot: path.join(__dirname, "../../"),
-    /* serverComponentsExternalPackages: ["@prisma/client"], */
+    appDir: true,
+    serverComponentsExternalPackages: ["@tremor/react"],
   },
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "avatars.githubusercontent.com",
-      },
-    ],
-  },
-  webpack: (config) => {
-    config.externals = [...(config.externals || []), "@prisma/client"];
-    // Important: return the modified config
-    return config;
-  },
+  transpilePackages: ["@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   async headers() {
     return [
       {
         // matching all API routes
-        source: "/api/:path*",
+        source: "/api/v1/client/:path*",
         headers: [
           { key: "Access-Control-Allow-Credentials", value: "true" },
           { key: "Access-Control-Allow-Origin", value: "*" },
@@ -45,29 +24,6 @@ const nextConfig = {
       },
     ];
   },
-  async redirects() {
-    return [
-      {
-        source: "/demo",
-        destination: "/demo/organisations/demo-organisation/forms/demo-pmf",
-        permanent: false,
-      },
-    ];
-  },
 };
 
-if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-  nextConfig.sentry = {
-    hideSourceMaps: true,
-  };
-}
-
-const sentryWebpackPluginOptions = {
-  silent: true, // Suppresses all logs
-};
-
-const moduleExports = () => [withTM].reduce((acc, next) => next(acc), nextConfig);
-
-module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig(moduleExports, sentryWebpackPluginOptions)
-  : moduleExports;
+module.exports = nextConfig;

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title><% preact.title %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+      .preview {
+        width: 100%;
+        max-width: 1100px;
+        margin: 80px auto;
+        border: 1px dashed rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+
+      .preview::before {
+        content: 'WIDGET PREVIEW';
+        position: absolute;
+        display: block;
+        top: -18px;
+        font-size: 11px;
+        color: rgba(0, 0, 0, 0.5);
+      }
+    </style>
+    <% preact.headEnd %>
+  </head>
+  <body>
+    <div data-widget-host="habitat" class="preview">
+      <script type="text/props">
+        { "color": "red" }
+      </script>
+    </div>
+    <% preact.bodyEnd %>
+  </body>
+</html>

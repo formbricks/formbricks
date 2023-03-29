@@ -35,6 +35,11 @@ export default function Header() {
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Blog <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
           </Link>
+          <Link
+            href="/docs"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Docs
+          </Link>
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />

@@ -1,0 +1,81 @@
+import { Layout } from "@/components/docs/Layout";
+
+export const meta = {
+  title: "Quickstart",
+};
+
+# Setting up Formbricks SDK with Vue.js
+
+In this guide, we will go through the steps to set up the Formbricks SDK in a Vue.js application. This will allow you to create and customize in-product micro-surveys to gather valuable feedback from your users and improve your product experience.
+
+## Introduction
+
+Integrating the Formbricks SDK with Vue.js is a straightforward process. We will make sure the SDK is only loaded and used on the client side, as it's not intended for server-side usage.
+
+## Prerequisites
+
+Before proceeding, ensure you have the following:
+
+1. A Vue.js application set up and ready to go.
+2. A Formbricks account with an `environmentId` and `apiHost` for your application. You can find these in the Setup Checklist in the Settings.
+
+## Installation
+
+To get started, install the Formbricks SDK using your preferred package manager:
+
+```bash
+npm install --save @formbricks/js
+# or
+yarn add @formbricks/js
+# or
+pnpm add @formbricks/js
+```
+
+## Integration
+
+1. Create a new file called \`formbricks.js\` inside the \`src\` folder of your Vue.js application, and add the following code to initialize the Formbricks SDK:
+
+```javascript
+import formbricks from "@formbricks/js";
+
+if (typeof window !== "undefined") {
+  formbricks.init({
+    environmentId: "your-environment-id",
+    apiHost: "your-api-host",
+  });
+}
+
+export default formbricks;
+```
+
+2. In your main.js or main.ts file, import the formbricks.js module:
+
+```javascript
+import formbricks from "@/formbricks";
+```
+
+3. To make sure Formbricks SDK registers every page change in your Vue.js application, add a global navigation guard to your Vue Router configuration:
+
+```javascript
+import Vue from "vue";
+import VueRouter from "vue-router";
+
+Vue.use(VueRouter);
+
+const router = new VueRouter({
+  // Your router configuration here
+});
+
+// Add a global navigation guard
+router.afterEach((to, from) => {
+  if (typeof formbricks !== "undefined") {
+    formbricks.registerRouteChange();
+  }
+});
+```
+
+Now, the Formbricks SDK is set up and ready to use in your Vue.js application. You can start creating and customizing in-product micro-surveys for your users.
+
+For more information on how to use Formbricks SDK, check the rest of the documentation.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

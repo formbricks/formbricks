@@ -1,6 +1,4 @@
 /** @type {import('tailwindcss').Config} */
-const colors = require("tailwindcss/colors");
-
 module.exports = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx}",
@@ -8,14 +6,7 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {
-      screens: {
-        xs: "430px",
-      },
-      colors: {
-        cyan: colors.cyan,
-      },
-    },
+    extend: {},
   },
   plugins: [require("@tailwindcss/forms")],
 };

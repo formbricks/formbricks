@@ -1,5 +1,5 @@
 import { Popover, Transition } from "@headlessui/react";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import {
   Bars3Icon,
   BoltIcon,
@@ -30,7 +30,7 @@ const creation = [
     status: true,
   },
   {
-    name: "No Code Builder",
+    name: "No-Code Builder",
     description: "Notion-like visual builder",
     href: "/visual-builder",
     icon: CursorArrowRaysIcon,

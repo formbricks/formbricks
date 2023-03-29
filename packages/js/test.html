@@ -1,0 +1,27 @@
+<head>
+  <!--   <script src="./dist/index.umd.js" charset="UTF-8"></script>
+  <script>
+    window.formbricks.init("clehf2m1d0001yz5vysjpn9qf", "http://localhost:3000");
+  </script> -->
+
+  <script type="text/javascript">
+    (function () {
+      var a = document.createElement("script");
+      a.type = "text/javascript";
+      a.async = !0;
+      a.src = "./dist/index.umd.js";
+      var b = document.getElementsByTagName("script")[0];
+      b.parentNode.insertBefore(a, b);
+      setTimeout(function () {
+        window.formbricks.init({
+          environmentId: "clfqjny0v0003yzgscnog1j9i",
+          apiHost: "http://localhost:3000",
+          debug: true,
+        });
+      }, 500);
+    })();
+  </script>
+</head>
+<body style="background-color: #fff">
+  <p>This is my sample page using the Formbricks JS javascript widget</p>
+</body>

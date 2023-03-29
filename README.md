@@ -25,35 +25,13 @@
 
 ## About Formbricks
 
-![formbricks-twitter-header-open source forms and survey tools_smaller](https://user-images.githubusercontent.com/72809645/201055057-0883bbcf-86f2-4ea1-83f0-3a190a12f6cd.png)
+<img width="1527" alt="formbricks-sneak" src="https://user-images.githubusercontent.com/675065/227726212-6ebf930e-6a20-4ffa-b966-56cd41bdf363.png">
 
-Formbricks productizes best practices for qualitative in-app user discovery. Feedback Management, Onboarding-Segmentation, Product-Market-Fit surveys and much more...
+Formbricks productizes best practices for qualitative in-app user discovery. Use micro-surveys to target the right users at the right time without making surveys annoying.
 
 ### Mission: Base your decisions on qualitative data.
 
-Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Use Formbricks to collect and manage feedback from your users; run a product market fit survey to know which audience to focus on and whether your value proposition is being recognized. Formrbicks guides you through the process and assists with data analysis and deriving decisions.
-
-## Our Toolbox
-
-Use Formbricks in your product on different touchpoints.
-
-### Feedback Survey
-
-Embed our feedback survey widget to give your users a channel to get in touch easily. Encourage them to report bugs and feature ideas while they are using their product and start a conversation from there.
-
-![image](https://user-images.githubusercontent.com/675065/212466794-e271546a-c8dd-4d13-b372-bfedd8cfd5ea.png)
-
-### Product Market Fit survey (coming soon)
-
-Formbrick's Product-Market-Fit survey based on the Superhuman-approach helps fast growing early-stage companies measuring their path towards an established company.
-
-Pre-Segmentation: Integrations for Segment, PostHog, Amplitude allow creating cohorts on usage data.
-
-Forms: Open source UI components to ask the right questions natively embedded for best possible conversion.
-
-Engine: Formbricks issues the survey, nudges and follows up on Data Analysis: Formbricks offers specific dashboards for each best practice to enhance understanding of the data to build conviction for product decisions.
-
-Actions: Formbricks facilitates acting on the insights e.g. by in-app interview prompts, templates to follow up on negative feedback, etc.
+Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Use Formbricks to collect and manage insights from your users; run a product market fit survey to know which audience to focus on and whether your value proposition is being recognized.
 
 ### Built With
 
@@ -65,7 +43,7 @@ Actions: Formbricks facilitates acting on the insights e.g. by in-app interview 
 
 ## Cloud vs. self-hosted
 
-Formbricks is available Open-Source under a permissive MIT license. You can host Formbricks on your own servers without a subscription. Check out our [docs](https://formbricks.com/docs/formbricks-hq/self-hosting) to see how to self-host Formbricks.
+Formbricks is available Open-Source under AGPLv3 license. You can host Formbricks on your own servers without a subscription. Check out our [docs](https://formbricks.com/docs/formbricks-hq/self-hosting) to see how to self-host Formbricks.
 We will soon offer a cloud version of Formbricks which saves you the hassle of maintaining your own servers. We will update this Readme once the cloud version is available.
 
 (In the future we may develop additional features that aren't in the free Open-Source version)
