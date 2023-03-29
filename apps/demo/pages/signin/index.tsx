@@ -9,6 +9,7 @@ export default function SiginPage() {
     e.preventDefault();
     formbricks.setEmail("matti@example.com");
     formbricks.setUserId("123456");
+    formbricks.setAttribute("Plan", "Premium");
     router.push("/app");
   };
   return (

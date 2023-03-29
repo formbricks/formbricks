@@ -1,5 +1,6 @@
 pre[class*="language-"] {
   color: theme("colors.slate.50");
+  border-radius: 8px;
 }
 
 .token.tag,

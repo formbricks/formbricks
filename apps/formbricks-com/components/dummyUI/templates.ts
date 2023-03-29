@@ -1,130 +1,27 @@
-import { AppPieChartIcon } from "@formbricks/ui";
-import { CancelSubscriptionIcon } from "@formbricks/ui";
-import { CashCalculatorIcon } from "@formbricks/ui";
-import { DashboardIcon } from "@formbricks/ui";
-import { DogChaserIcon } from "@formbricks/ui";
-import { DoorIcon } from "@formbricks/ui";
-import { FeedbackIcon } from "@formbricks/ui";
-import { OnboardingIcon } from "@formbricks/ui";
-import { PMFIcon } from "@formbricks/ui";
-import { TaskListSearchIcon } from "@formbricks/ui";
-import { BaseballIcon } from "@formbricks/ui";
-import { CheckMarkIcon } from "@formbricks/ui";
-import { ArrowRightCircleIcon } from "@formbricks/ui";
-import type { Template } from "@formbricks/types/templates";
+import {
+  AppPieChartIcon,
+  CancelSubscriptionIcon,
+  CashCalculatorIcon,
+  DashboardIcon,
+  DogChaserIcon,
+  DoorIcon,
+  FeedbackIcon,
+  OnboardingIcon,
+  PMFIcon,
+  TaskListSearchIcon,
+  BaseballIcon,
+  CheckMarkIcon,
+  ArrowRightCircleIcon,
+} from "@formbricks/ui";
+
+import type { Template } from "./templateTypes";
 import { createId } from "@paralleldrive/cuid2";
 
 export const templates: Template[] = [
   {
-    name: "AI Template",
-    icon: AppPieChartIcon,
-    category: "Product Experience",
-    description: "Learn more about who signed up to your product and why.",
-    preset: {
-      name: "AI Template",
-      questions: [
-        {
-          id: "1",
-          type: "multipleChoiceSingle",
-          headline: "What is your favorite Korean food?",
-          required: true,
-          choices: [
-            { id: "a", label: "Bibimbap" },
-            { id: "b", label: "Kimchi" },
-            { id: "c", label: "Bulgogi" },
-            { id: "d", label: "Tteokbokki" },
-            { id: "e", label: "Japchae" },
-            { id: "f", label: "Other" },
-          ],
-        },
-        {
-          id: "2",
-          type: "multipleChoiceSingle",
-          headline: "What level of spiciness do you prefer for your Korean food?",
-          required: true,
-          choices: [
-            { id: "a", label: "Mild" },
-            { id: "b", label: "Medium" },
-            { id: "c", label: "Spicy" },
-            { id: "d", label: "Very spicy" },
-            { id: "e", label: "Extreme" },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    name: "Product Market Fit Survey",
-    icon: PMFIcon,
-    category: "Product Experience",
-    description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
-    preset: {
-      name: "Product Market Fit Survey",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "How disappointed would you be if you could no longer use {{productName}}?",
-          subheader: "Please select one of the following options:",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Not at all disappointed",
-            },
-            {
-              id: createId(),
-              label: "Somewhat disappointed",
-            },
-            {
-              id: createId(),
-              label: "Very disappointed",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "What is your role?",
-          subheader: "Please select one of the following options:",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Founder",
-            },
-            {
-              id: createId(),
-              label: "Executive",
-            },
-            {
-              id: createId(),
-              label: "Product Manager",
-            },
-            {
-              id: createId(),
-              label: "Product Owner",
-            },
-            {
-              id: createId(),
-              label: "Software Engineer",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "How can we improve our service for you?",
-          subheader: "Please be as specific as possible.",
-          required: true,
-        },
-      ],
-    },
-  },
-  {
     name: "Onboarding Segmentation",
     icon: OnboardingIcon,
-    category: "Product Experience",
+    category: "Product Management",
     description: "Learn more about who signed up to your product and why.",
     preset: {
       name: "Onboarding Segmentation",
@@ -219,6 +116,207 @@ export const templates: Template[] = [
       ],
     },
   },
+  {
+    name: "Product Market Fit Survey",
+    icon: PMFIcon,
+    category: "Product Management",
+    description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
+    preset: {
+      name: "Product Market Fit Survey",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "How disappointed would you be if you could no longer use Formbricks?",
+          subheader: "Please select one of the following options:",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Not at all disappointed",
+            },
+            {
+              id: createId(),
+              label: "Somewhat disappointed",
+            },
+            {
+              id: createId(),
+              label: "Very disappointed",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "What is your role?",
+          subheader: "Please select one of the following options:",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Founder",
+            },
+            {
+              id: createId(),
+              label: "Executive",
+            },
+            {
+              id: createId(),
+              label: "Product Manager",
+            },
+            {
+              id: createId(),
+              label: "Product Owner",
+            },
+            {
+              id: createId(),
+              label: "Software Engineer",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "How can we improve our service for you?",
+          subheader: "Please be as specific as possible.",
+          required: true,
+        },
+      ],
+    },
+  },
+  {
+    name: "Pre-Churn Survey",
+    icon: CancelSubscriptionIcon,
+    category: "Increase Revenue",
+    description: "Find out why people cancel you. These insights are pure gold!",
+    preset: {
+      name: "Churn Survey",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "Why do you cancel your subscription?",
+          subheader: "We're sorry to see you leave. Please help us do better:",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "I don't get much value out of it",
+            },
+            {
+              id: createId(),
+              label: "It's too expensive",
+            },
+            {
+              id: createId(),
+              label: "I am missing a feature",
+            },
+            {
+              id: createId(),
+              label: "Poor customer service",
+            },
+            {
+              id: createId(),
+              label: "I just don't need you anymore",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "Is there something we can do to win you back?",
+          subheader: "Feel free to speak your mind, we do too.",
+          required: false,
+        },
+      ],
+    },
+  },
+  {
+    name: "Feature Chaser",
+    icon: DogChaserIcon,
+    category: "Product Management",
+    description: "Follow up with users who just used a specific feature.",
+    preset: {
+      name: "Feature Chaser",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "How easy was it to achieve your goal?",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Extremely difficult",
+            },
+            {
+              id: createId(),
+              label: "It took a while, but I got it",
+            },
+            {
+              id: createId(),
+              label: "It was alright",
+            },
+            {
+              id: createId(),
+              label: "Quite easy",
+            },
+            {
+              id: createId(),
+              label: "Very easy, love it!",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "Wanna add something?",
+          subheader: "This really helps us do better!",
+          required: false,
+        },
+      ],
+    },
+  },
+
+  {
+    name: "Feedback Box",
+    icon: FeedbackIcon,
+    category: "Product Management",
+    description: "Give your users the chance to seamlessly share what's on their minds.",
+    preset: {
+      name: "Feedback Box",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "What's on your mind, boss?",
+          subheader: "Thanks for sharing feedback. We'll get back to you asap.",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Bug report 🐞",
+            },
+            {
+              id: createId(),
+              label: "Feature Request 💡",
+            },
+            {
+              id: createId(),
+              label: "Share some love 🤍",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "Give us the juicy details:",
+          required: true,
+        },
+      ],
+    },
+  },
+
   {
     name: "Uncover Strengths & Weaknesses",
     icon: TaskListSearchIcon,
@@ -327,53 +425,7 @@ export const templates: Template[] = [
       ],
     },
   },
-  {
-    name: "Churn Survey",
-    icon: CancelSubscriptionIcon,
-    category: "Increase Revenue",
-    description: "Find out why people cancel their subscriptions. These insights are pure gold!",
-    preset: {
-      name: "Churn Survey",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "Why did you cancel your subscription?",
-          subheader: "We're sorry to see you leave. Please help us do better:",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "I didn't get much value out of it",
-            },
-            {
-              id: createId(),
-              label: "It's too expensive",
-            },
-            {
-              id: createId(),
-              label: "I am missing a feature",
-            },
-            {
-              id: createId(),
-              label: "Poor customer service",
-            },
-            {
-              id: createId(),
-              label: "I just didn't need it anymore",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "Is there something we can do to win you back?",
-          subheader: "Feel free to speak your mind, we do too.",
-          required: false,
-        },
-      ],
-    },
-  },
+
   {
     name: "Missed Trial Conversion",
     icon: BaseballIcon,
@@ -482,7 +534,7 @@ export const templates: Template[] = [
   {
     name: "Measure Task Accomplishment",
     icon: CheckMarkIcon,
-    category: "Product Experience",
+    category: "Product Management",
     description: "See if people get their 'Job To Be Done' done. Successful people are better customers.",
     preset: {
       name: "Measure Task Accomplishment",
@@ -519,7 +571,7 @@ export const templates: Template[] = [
   {
     name: "Identify Customer Goals",
     icon: ArrowRightCircleIcon,
-    category: "Product Experience",
+    category: "Product Management",
     description:
       "Better understand if your messaging creates the right expectations of the value your product provides.",
     preset: {
@@ -528,7 +580,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: "multipleChoiceSingle",
-          headline: "What's your primary goal for using {{productName}}?",
+          headline: "What's your primary goal for using Formbricks?",
           required: true,
           choices: [
             {
@@ -552,56 +604,11 @@ export const templates: Template[] = [
       ],
     },
   },
-  {
-    name: "Feature Chaser",
-    icon: DogChaserIcon,
-    category: "Product Experience",
-    description: "Follow up with users who just used a specific feature.",
-    preset: {
-      name: "Feature Chaser",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "How easy was it to achieve your goal?",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Extremely difficult",
-            },
-            {
-              id: createId(),
-              label: "It took a while, but I got it",
-            },
-            {
-              id: createId(),
-              label: "It was alright",
-            },
-            {
-              id: createId(),
-              label: "Quite easy",
-            },
-            {
-              id: createId(),
-              label: "Very easy, love it!",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "Wanna add something?",
-          subheader: "This really helps us do better!",
-          required: false,
-        },
-      ],
-    },
-  },
+
   {
     name: "Fake Door Follow-Up",
     icon: DoorIcon,
-    category: "Product Exploration",
+    category: "Product Management",
     description: "Follow up with users who ran into one of your Fake Door experiments.",
     preset: {
       name: "Fake Door Follow-Up",
@@ -629,48 +636,11 @@ export const templates: Template[] = [
       ],
     },
   },
-  {
-    name: "Feedback Box",
-    icon: FeedbackIcon,
-    category: "Product Experience",
-    description: "Give your users the chance to seamlessly share what's on their minds.",
-    preset: {
-      name: "Feedback Box",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "What's on your mind, boss?",
-          subheader: "Thanks for sharing feedback. We'll get back to you asap.",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Bug report 🐞",
-            },
-            {
-              id: createId(),
-              label: "Feature Request 💡",
-            },
-            {
-              id: createId(),
-              label: "Share some love 🤍",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "Give us the juicy details:",
-          required: true,
-        },
-      ],
-    },
-  },
+
   {
     name: "Integration usage survey",
     icon: DashboardIcon,
-    category: "Product Experience",
+    category: "Product Management",
     description: "Evaluate how easily users can add integrations to your product. Find blind spots.",
     preset: {
       name: "Integration Usage Survey",
