@@ -4,11 +4,12 @@ import { Button } from "@formbricks/ui";
 import { createUser } from "@/lib/users/users";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { GithubButton } from "./GithubButton";
 
 export const SignupForm = () => {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string>("");
   const [signingUp, setSigningUp] = useState(false);
@@ -20,7 +21,8 @@ export const SignupForm = () => {
       await createUser(
         e.target.elements.name.value,
         e.target.elements.email.value,
-        e.target.elements.password.value
+        e.target.elements.password.value,
+        searchParams?.get("inviteToken")
       );
       const url =
         process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED === "1"
@@ -77,6 +79,7 @@ export const SignupForm = () => {
               type="email"
               autoComplete="email"
               required
+              defaultValue={searchParams?.get("email") || ""}
               className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
             />
           </div>

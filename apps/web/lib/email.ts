@@ -1,5 +1,5 @@
 import { withEmailTemplate } from "./email-template";
-import { createToken } from "./jwt";
+import { createInviteToken, createToken } from "./jwt";
 const nodemailer = require("nodemailer");
 
 interface sendEmailData {
@@ -77,5 +77,37 @@ export const sendPasswordResetNotifyEmail = async (user) => {
     Your password has been changed successfully.<br/>
     <br/>
     Your Formbricks Team`),
+  });
+};
+
+export const sendInviteMemberEmail = async (inviteId, inviterName, inviteeName, email) => {
+  const token = createInviteToken(inviteId, email, {
+    expiresIn: "7d",
+  });
+  // const verifyLink = `${process.env.NEXTAUTH_URL}/api/v1/invite?token=${encodeURIComponent(token)}`;
+  const verifyLink = `${process.env.NEXTAUTH_URL}/invite?token=${encodeURIComponent(token)}`;
+
+  await sendEmail({
+    to: email,
+    subject: `You're invited to collaborate on Formbricks!`,
+    html: withEmailTemplate(`Hey ${inviteeName},<br/><br/>
+    Your colleague ${inviterName} invited you to join them at Formbricks. To accept the invitation, please click the link below:<br/><br/>
+    <a class="button" href="${verifyLink}">Join team</a><br/>
+    <br/>
+    Have a great day!<br/>
+    The Formbricks Team!`),
+  });
+};
+
+export const sendInviteAcceptedEmail = async (inviterName, inviteeName, email) => {
+  await sendEmail({
+    to: email,
+    subject: `You've got a new team member!`,
+    html: withEmailTemplate(`Hey ${inviterName},
+    <br/><br/>
+    Just letting you know that ${inviteeName} accepted your invitation. Have fun collaborating!
+    <br/><br/>
+    Have a great day!<br/>
+    The Formbricks Team!`),
   });
 };

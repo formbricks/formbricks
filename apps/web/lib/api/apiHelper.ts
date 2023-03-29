@@ -37,7 +37,7 @@ export const hasEnvironmentAccess = async (user, environmentId) => {
         select: {
           team: {
             select: {
-              members: {
+              memberships: {
                 select: {
                   userId: true,
                 },
@@ -48,7 +48,7 @@ export const hasEnvironmentAccess = async (user, environmentId) => {
       },
     },
   });
-  const environmentUsers = environment?.product.team.members.map((member) => member.userId) || [];
+  const environmentUsers = environment?.product.team.memberships.map((member) => member.userId) || [];
   if (environmentUsers.includes(user.id)) {
     return true;
   }

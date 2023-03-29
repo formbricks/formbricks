@@ -40,7 +40,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             team: {
               select: {
                 id: true,
-                members: {
+                memberships: {
                   select: {
                     userId: true,
                     role: true,
@@ -59,7 +59,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     const teamId = environment.product.team.id;
     // find team owner
-    const teamOwnerId = environment.product.team.members.find((m) => m.role === "owner")?.userId;
+    const teamOwnerId = environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
 
     // create new response
     const responseData = await prisma.response.create({

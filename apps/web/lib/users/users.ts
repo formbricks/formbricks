@@ -1,6 +1,11 @@
 import { hashPassword } from "../auth";
 
-export const createUser = async (name: string, email: string, password: string): Promise<any> => {
+export const createUser = async (
+  name: string,
+  email: string,
+  password: string,
+  inviteToken?: string | null
+): Promise<any> => {
   const hashedPassword = await hashPassword(password);
   try {
     const res = await fetch(`/api/v1/users`, {
@@ -10,6 +15,7 @@ export const createUser = async (name: string, email: string, password: string):
         name,
         email,
         password: hashedPassword,
+        inviteToken,
       }),
     });
     if (res.status !== 200) {

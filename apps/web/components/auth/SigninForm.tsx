@@ -52,6 +52,7 @@ export const SigninForm = () => {
               type="email"
               autoComplete="email"
               required
+              defaultValue={searchParams?.get("email") || ""}
               className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
             />
           </div>

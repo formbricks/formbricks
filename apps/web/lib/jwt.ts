@@ -22,3 +22,20 @@ export async function verifyToken(token, userEmail = "") {
 
   return jwt.verify(token, process.env.NEXTAUTH_SECRET + userEmail);
 }
+
+export const createInviteToken = (inviteId: string, email: string, options = {}) => {
+  return jwt.sign({ inviteId, email }, process.env.NEXTAUTH_SECRET, options);
+};
+
+export const verifyInviteToken = async (token: string) => {
+  try {
+    const decoded = jwt.decode(token);
+    return {
+      inviteId: decoded.inviteId,
+      email: decoded.email,
+    };
+  } catch (error) {
+    console.error("Error verifying invite token:", error);
+    throw new Error("Invalid or expired invite token");
+  }
+};
