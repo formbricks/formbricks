@@ -1,5 +1,4 @@
 import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -128,10 +127,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    capturePosthogEvent(user.id, "event class updated", {
-      eventClassId,
-    });
-
     return res.json(eventClass);
   }
 
@@ -152,9 +147,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     const prismaRes = await prisma.survey.delete({
       where: { id: eventClassId },
-    });
-    capturePosthogEvent(user.id, "eventClass deleted", {
-      eventClassId,
     });
     return res.json(prismaRes);
   }

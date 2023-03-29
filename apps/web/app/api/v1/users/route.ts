@@ -1,6 +1,5 @@
 import { sendVerificationEmail } from "@/lib/email";
 import { populateEnvironment } from "@/lib/populate";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
 
@@ -51,8 +50,6 @@ export async function POST(request: Request) {
       },
     });
     if (process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") await sendVerificationEmail(userData);
-    // tracking
-    capturePosthogEvent(userData.id, "user created");
     return NextResponse.json(userData);
   } catch (e) {
     if (e.code === "P2002") {

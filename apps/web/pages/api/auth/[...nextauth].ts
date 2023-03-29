@@ -1,4 +1,5 @@
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { verifyPassword } from "@/lib/auth";
+import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
 import { IdentityProvider } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -6,8 +7,6 @@ import type { NextAuthOptions } from "next-auth";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
-import { verifyPassword } from "@/lib/auth";
-import { verifyToken } from "@/lib/jwt";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -230,7 +229,7 @@ export const authOptions: NextAuthOptions = {
           return "/auth/error?error=use-email-login";
         }
 
-        const userData = await prisma.user.create({
+        await prisma.user.create({
           data: {
             name: user.name,
             email: user.email,
@@ -318,8 +317,6 @@ export const authOptions: NextAuthOptions = {
             },
           },
         });
-
-        capturePosthogEvent(userData.id, "user created");
 
         return true;
       }

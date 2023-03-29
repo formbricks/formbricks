@@ -1,5 +1,4 @@
 import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -117,9 +116,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   else if (req.method === "DELETE") {
     const prismaRes = await prisma.person.delete({
       where: { id: personId },
-    });
-    capturePosthogEvent(user.id, "person deleted", {
-      personId,
     });
     return res.json(prismaRes);
   }
