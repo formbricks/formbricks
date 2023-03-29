@@ -2,7 +2,11 @@ import { EventType } from "@prisma/client";
 export const populateEnvironment = {
   eventClasses: {
     create: [
-      { name: "New Session", description: "Gets fired when a new session is created", type: EventType.automatic },
+      {
+        name: "New Session",
+        description: "Gets fired when a new session is created",
+        type: EventType.automatic,
+      },
     ],
   },
   attributeClasses: {
