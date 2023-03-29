@@ -1,8 +1,8 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Button } from "@/components/ui/Button";
-import ErrorComponent from "@/components/ui/ErrorComponent";
+import { Button } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { QuestionMarkCircleIcon, TagIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";

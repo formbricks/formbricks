@@ -1,9 +1,9 @@
 "use client";
 
-import { Checkbox } from "@/components/ui/Checkbox";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
+import { Checkbox } from "@formbricks/ui";
+import { Input } from "@formbricks/ui";
+import { Label } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import type { Survey } from "@formbricks/types/surveys";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";

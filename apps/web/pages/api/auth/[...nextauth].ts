@@ -1,4 +1,4 @@
-import { capturePosthogEvent } from "@/lib/posthogServer";
+import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { prisma } from "@formbricks/database";
 import { IdentityProvider } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";

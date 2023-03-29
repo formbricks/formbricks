@@ -2,7 +2,7 @@
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
-import { cn } from "@/lib/utils";
+import { cn } from "@formbricks/lib/cn";
 import type { Template } from "@formbricks/types/templates";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { createId } from "@paralleldrive/cuid2";
@@ -12,7 +12,7 @@ import PreviewSurvey from "../PreviewSurvey";
 import TemplateMenuBar from "./TemplateMenuBar";
 import { templates } from "./templates";
 import { PaintBrushIcon } from "@heroicons/react/24/solid";
-import ErrorComponent from "@/components/ui/ErrorComponent";
+import { ErrorComponent } from "@formbricks/ui";
 import { replacePresetPlaceholders } from "@/lib/templates";
 
 export default function TemplateList({ environmentId }: { environmentId: string }) {

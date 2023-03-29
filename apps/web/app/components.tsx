@@ -1,6 +1,6 @@
 "use client";
 
-import { fetcher } from "@/lib/fetcher";
+import { fetcher } from "@formbricks/lib/fetcher";
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
 import useSWR from "swr";

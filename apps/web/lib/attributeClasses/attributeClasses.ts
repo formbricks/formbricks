@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { fetcher } from "../fetcher";
+import { fetcher } from "@formbricks/lib/fetcher";
 
 export const useAttributeClasses = (environmentId) => {
   const { data, isLoading, error, mutate, isValidating } = useSWR(

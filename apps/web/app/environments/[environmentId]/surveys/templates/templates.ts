@@ -1,20 +1,58 @@
-import { AppPieChartIcon } from "@/components/ui/icons/AppPieChartIcon";
-import { CancelSubscriptionIcon } from "@/components/ui/icons/CancelSubscriptionIcon";
-import { CashCalculatorIcon } from "@/components/ui/icons/CashCalculatorIcon";
-import { DashboardIcon } from "@/components/ui/icons/DashboardIcon";
-import { DogChaserIcon } from "@/components/ui/icons/DogChaserIcon";
-import { DoorIcon } from "@/components/ui/icons/DoorIcon";
-import { FeedbackIcon } from "@/components/ui/icons/FeedbackIcon";
-import { OnboardingIcon } from "@/components/ui/icons/OnboardingIcon";
-import { PMFIcon } from "@/components/ui/icons/PMFIcon";
-import { TaskListSearchIcon } from "@/components/ui/icons/TaskListSearchIcon";
-import { BaseballIcon } from "@/components/ui/icons/BaseballIcon";
-import { CheckMarkIcon } from "@/components/ui/icons/CheckMarkIcon";
-import { ArrowRightCircleIcon } from "@/components/ui/icons/ArrowRightCircleIcon";
+import { AppPieChartIcon } from "@formbricks/ui";
+import { CancelSubscriptionIcon } from "@formbricks/ui";
+import { CashCalculatorIcon } from "@formbricks/ui";
+import { DashboardIcon } from "@formbricks/ui";
+import { DogChaserIcon } from "@formbricks/ui";
+import { DoorIcon } from "@formbricks/ui";
+import { FeedbackIcon } from "@formbricks/ui";
+import { OnboardingIcon } from "@formbricks/ui";
+import { PMFIcon } from "@formbricks/ui";
+import { TaskListSearchIcon } from "@formbricks/ui";
+import { BaseballIcon } from "@formbricks/ui";
+import { CheckMarkIcon } from "@formbricks/ui";
+import { ArrowRightCircleIcon } from "@formbricks/ui";
 import type { Template } from "@formbricks/types/templates";
 import { createId } from "@paralleldrive/cuid2";
 
 export const templates: Template[] = [
+  {
+    name: "AI Template",
+    icon: AppPieChartIcon,
+    category: "Product Experience",
+    description: "Learn more about who signed up to your product and why.",
+    preset: {
+      name: "AI Template",
+      questions: [
+        {
+          id: "1",
+          type: "multipleChoiceSingle",
+          headline: "What is your favorite Korean food?",
+          required: true,
+          choices: [
+            { id: "a", label: "Bibimbap" },
+            { id: "b", label: "Kimchi" },
+            { id: "c", label: "Bulgogi" },
+            { id: "d", label: "Tteokbokki" },
+            { id: "e", label: "Japchae" },
+            { id: "f", label: "Other" },
+          ],
+        },
+        {
+          id: "2",
+          type: "multipleChoiceSingle",
+          headline: "What level of spiciness do you prefer for your Korean food?",
+          required: true,
+          choices: [
+            { id: "a", label: "Mild" },
+            { id: "b", label: "Medium" },
+            { id: "c", label: "Spicy" },
+            { id: "d", label: "Very spicy" },
+            { id: "e", label: "Extreme" },
+          ],
+        },
+      ],
+    },
+  },
   {
     name: "Product Market Fit Survey",
     icon: PMFIcon,

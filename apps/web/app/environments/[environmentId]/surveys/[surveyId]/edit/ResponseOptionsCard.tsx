@@ -1,11 +1,11 @@
 "use client";
 
-import { Label } from "@/components/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
+import { Label } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 
-import Badge from "@/components/ui/Badge";
+import { Badge } from "@formbricks/ui";
 import clsx from "clsx";
 import { useState } from "react";
 

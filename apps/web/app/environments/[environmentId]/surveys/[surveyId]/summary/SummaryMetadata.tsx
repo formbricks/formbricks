@@ -2,10 +2,10 @@
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import Button from "@/components/ui/Button";
-import ErrorComponent from "@/components/ui/ErrorComponent";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
+import { Button } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";

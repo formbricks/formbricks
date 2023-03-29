@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { Button } from "@formbricks/ui";
 
 export default function DocsSidebar() {
   return (

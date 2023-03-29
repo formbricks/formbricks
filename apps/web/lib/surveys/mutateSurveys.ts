@@ -1,5 +1,5 @@
 import useSWRMutation from "swr/mutation";
-import { updateRessource } from "../fetcher";
+import { updateRessource } from "@formbricks/lib/fetcher";
 
 export function useSurveyMutation(environmentId: string, surveyId: string) {
   const { trigger, isMutating } = useSWRMutation(

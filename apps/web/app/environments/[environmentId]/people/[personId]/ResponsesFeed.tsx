@@ -1,6 +1,6 @@
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { timeSince } from "@/lib/time";
+import { timeSince } from "@formbricks/lib/time";
 import Link from "next/link";
 
 export default function ResponseFeed({ person, sortByDate, environmentId }) {

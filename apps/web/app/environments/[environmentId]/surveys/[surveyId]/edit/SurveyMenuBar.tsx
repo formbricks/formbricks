@@ -1,7 +1,7 @@
 "use client";
 
-import Button from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { Button } from "@formbricks/ui";
+import { Input } from "@formbricks/ui";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import type { Survey } from "@formbricks/types/surveys";
 import { UserGroupIcon } from "@heroicons/react/24/solid";

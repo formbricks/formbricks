@@ -1,6 +1,6 @@
-import { Label } from "@/components/ui/Label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
-import { timeSince } from "@/lib/time";
+import { Label } from "@formbricks/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
+import { timeSince } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import {
   CodeBracketIcon,

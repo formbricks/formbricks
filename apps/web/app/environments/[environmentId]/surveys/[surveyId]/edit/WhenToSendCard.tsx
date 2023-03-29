@@ -1,8 +1,8 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import Button from "@/components/ui/Button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { Button } from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import type { Survey } from "@formbricks/types/surveys";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";

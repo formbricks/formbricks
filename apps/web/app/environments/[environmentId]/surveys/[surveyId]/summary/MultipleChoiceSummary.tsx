@@ -1,4 +1,4 @@
-import ProgressBar from "@/components/ui/ProgressBar";
+import { ProgressBar } from "@formbricks/ui";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";

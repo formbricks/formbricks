@@ -1,6 +1,6 @@
-import Card from "@/components/ui/Card";
-import { EmailIcon } from "@/components/ui/icons/EmailIcon";
-import PageTitle from "@/components/ui/PageTitle";
+import { Card } from "@formbricks/ui";
+import { EmailIcon } from "@formbricks/ui";
+import { PageTitle } from "@formbricks/ui";
 import SlackLogo from "@/images/slacklogo.png";
 import Image from "next/image";
 import Link from "next/link";

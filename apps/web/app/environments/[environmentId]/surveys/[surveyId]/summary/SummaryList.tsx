@@ -2,8 +2,8 @@
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Confetti } from "@/components/ui/Confetti";
-import ErrorComponent from "@/components/ui/ErrorComponent";
+import { Confetti } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
 import type { QuestionSummary } from "@formbricks/types/responses";

@@ -1,16 +1,16 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Confetti } from "@/components/ui/Confetti";
+import { Confetti } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useEnvironmentMutation } from "@/lib/environments/mutateEnvironments";
 import { useEvents } from "@/lib/events/events";
-import { timeSince } from "@/lib/time";
+import { timeSince } from "@formbricks/lib/time";
 import { ArrowDownIcon, CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ErrorComponent from "../ui/ErrorComponent";
+import { ErrorComponent } from "@formbricks/ui";
 
 interface WidgetStatusIndicatorProps {
   environmentId: string;

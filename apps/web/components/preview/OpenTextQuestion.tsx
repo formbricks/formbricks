@@ -1,4 +1,5 @@
 import type { OpenTextQuestion } from "@formbricks/types/questions";
+import { useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
@@ -15,14 +16,17 @@ export default function OpenTextQuestion({
   lastQuestion,
   brandColor,
 }: OpenTextQuestionProps) {
+  const [value, setValue] = useState<string>("");
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        console.log(e.currentTarget);
         const data = {
-          [question.id]: e.currentTarget[question.id].value,
+          [question.id]: value,
         };
-        e.currentTarget[question.id].value = "";
+        setValue("");
         onSubmit(data);
         // reset form
       }}>
@@ -33,6 +37,8 @@ export default function OpenTextQuestion({
           rows={3}
           name={question.id}
           id={question.id}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
           placeholder={question.placeholder}
           required={question.required}
           className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>

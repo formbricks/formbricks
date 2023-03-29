@@ -1,11 +1,11 @@
 "use client";
 
 import Modal from "@/components/shared/Modal";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { Button } from "@formbricks/ui";
+import { Input } from "@formbricks/ui";
+import { Label } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { testURLmatch } from "./testURLmatch";
