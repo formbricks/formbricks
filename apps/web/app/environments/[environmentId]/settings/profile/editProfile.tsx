@@ -1,32 +1,20 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ProfileAvatar } from "@/components/ui/Avatars";
-import Button from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
-import { PROFILE_API_ENDPOINT } from "@/lib/constants";
-import { fetchRessource, updateRessource } from "@/lib/fetcher";
+import { useProfileMutation } from "@/lib/profile/mutateProfile";
+import { useProfile } from "@/lib/profile/profile";
+import { Button } from "@formbricks/ui";
+import { ErrorComponent, Input, Label, ProfileAvatar } from "@formbricks/ui";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
-import useSWR from "swr";
-import useSWRMutation from "swr/mutation";
 import toast from "react-hot-toast";
-import ErrorComponent from "@/components/ui/ErrorComponent";
 
 export function EditName() {
   const { register, handleSubmit } = useForm();
-  const {
-    data: profile,
-    isLoading: isLoadingProfile,
-    error: isErrorProfile,
-  } = useSWR(PROFILE_API_ENDPOINT, fetchRessource);
+  const { profile, isLoadingProfile, isErrorProfile } = useProfile();
 
-  const { trigger: triggerProfileMutate, isMutating: isMutatingProfile } = useSWRMutation(
-    PROFILE_API_ENDPOINT,
-    updateRessource
-  );
+  const { triggerProfileMutate, isMutatingProfile } = useProfileMutation();
 
   if (isLoadingProfile) {
     return <LoadingSpinner />;

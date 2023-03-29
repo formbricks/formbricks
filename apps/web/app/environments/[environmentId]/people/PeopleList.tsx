@@ -2,8 +2,8 @@
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { PersonAvatar } from "@/components/ui/Avatars";
-import ErrorComponent from "@/components/ui/ErrorComponent";
+import { PersonAvatar } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui";
 import { usePeople } from "@/lib/people/people";
 import Link from "next/link";
 

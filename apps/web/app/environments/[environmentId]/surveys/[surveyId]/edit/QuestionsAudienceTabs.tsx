@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@formbricks/lib/cn";
 import { QuestionMarkCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 
 interface Tab {

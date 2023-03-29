@@ -6,7 +6,7 @@ export const replacePresetPlaceholders = (template: Template, product: any) => {
   preset.name = preset.name.replace("{{productName}}", product.name);
   preset.questions.forEach((question) => {
     question.headline = question.headline.replace("{{productName}}", product.name);
-    question.subheader = question.subheader.replace("{{productName}}", product.name);
+    question.subheader = question.subheader?.replace("{{productName}}", product.name);
   });
   return { ...template, preset };
 };

@@ -1,17 +1,17 @@
 "use client";
 
-import { ColorPicker } from "@/components/ui/ColorPicker";
+import { ColorPicker } from "@formbricks/ui";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import Button from "@/components/ui/Button";
-import { Label } from "@/components/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
-import { Switch } from "@/components/ui/Switch";
+import { Button } from "@formbricks/ui";
+import { Label } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { Switch } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useProduct } from "@/lib/products/products";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import ErrorComponent from "@/components/ui/ErrorComponent";
+import { ErrorComponent } from "@formbricks/ui";
 
 export function EditBrandColor({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);

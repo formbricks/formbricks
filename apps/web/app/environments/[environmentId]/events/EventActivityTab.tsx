@@ -1,8 +1,8 @@
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import ErrorComponent from "@/components/ui/ErrorComponent";
-import { Label } from "@/components/ui/Label";
+import { ErrorComponent } from "@formbricks/ui";
+import { Label } from "@formbricks/ui";
 import { useEventClass } from "@/lib/eventClasses/eventClasses";
-import { convertDateTimeStringShort } from "@/lib/time";
+import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
 

@@ -1,4 +1,4 @@
-import { BackIcon } from "@/components/ui/icons/BackIcon";
+import { BackIcon } from "@formbricks/ui";
 import { useRouter } from "next/navigation";
 
 export default function GoBackButton() {

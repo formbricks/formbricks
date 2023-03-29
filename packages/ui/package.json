@@ -1,42 +1,49 @@
 {
   "name": "@formbricks/ui",
-  "private": true,
-  "version": "0.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
-    },
-    "./styles.css": "./dist/styles.css"
-  },
-  "module": "dist/index.mjs",
   "sideEffects": false,
-  "license": "MIT",
+  "version": "0.0.0",
+  "main": "./index.tsx",
+  "exports": {
+    ".": "./index.tsx",
+    "./components/icon": "./components/icon/index.ts"
+  },
+  "types": "./index.tsx",
   "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts --external react",
-    "dev": "tsup src/index.tsx --format esm,cjs --dts --external react --watch",
+    "build": "tsup index.tsx --format esm,cjs --dts --external react",
+    "dev": "tsup index.tsx --format esm,cjs --dts --external react --watch",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "@types/react": "^18.0.25",
-    "@types/react-dom": "^18.0.8",
-    "concurrently": "^7.5.0",
-    "eslint": "^8.27.0",
+    "@types/react": "^18.0.31",
+    "@types/react-dom": "^18.0.11",
+    "concurrently": "^8.0.1",
+    "eslint": "^8.37.0",
     "eslint-config-formbricks": "workspace:*",
-    "postcss": "^8.4.19",
+    "postcss": "^8.4.21",
     "react": "^18.2.0",
-    "tsup": "^6.4.0",
-    "typescript": "^4.8.4"
+    "tsup": "^6.7.0",
+    "typescript": "^5.0.2"
   },
   "dependencies": {
+    "@formbricks/lib": "workspace:*",
+    "@heroicons/react": "^2.0.16",
+    "@radix-ui/react-checkbox": "^1.0.3",
+    "@radix-ui/react-dropdown-menu": "^2.0.4",
+    "@radix-ui/react-label": "^2.0.1",
+    "@radix-ui/react-popover": "^1.0.5",
+    "@radix-ui/react-radio-group": "^1.1.2",
+    "@radix-ui/react-select": "^1.2.1",
+    "@radix-ui/react-switch": "^1.0.2",
+    "@radix-ui/react-tooltip": "^1.0.5",
+    "boring-avatars": "^1.7.0",
     "clsx": "^1.2.1",
-    "next": "^13.0.2",
+    "lucide-react": "^0.129.0",
+    "next": "^13.2.4",
+    "react-colorful": "^5.6.1",
     "react-confetti": "^6.1.0",
     "react-dom": "^18.2.0",
+    "react-radio-group": "^3.0.3",
     "react-use": "^17.4.0"
   }
 }

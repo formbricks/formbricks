@@ -16,11 +16,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import ErrorComponent from "@/components/ui/ErrorComponent";
-import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
-import { FilterIcon } from "@/components/ui/icons/FilterIcon";
-import { FormIcon } from "@/components/ui/icons/FormIcon";
-import { SettingsIcon } from "@/components/ui/icons/SettingsIcon";
+import { ErrorComponent } from "@formbricks/ui";
+import { CustomersIcon } from "@formbricks/ui";
+import { FilterIcon, SettingsIcon } from "@formbricks/ui";
+import { FormIcon } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import {
@@ -42,7 +41,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ProfileAvatar } from "../../../components/ui/Avatars";
+import { ProfileAvatar } from "@formbricks/ui";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;

@@ -10,7 +10,7 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import ErrorComponent from "@/components/ui/ErrorComponent";
+import { ErrorComponent } from "@formbricks/ui";
 import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";

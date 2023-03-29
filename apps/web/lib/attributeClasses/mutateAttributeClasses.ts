@@ -1,5 +1,5 @@
 import useSWRMutation from "swr/mutation";
-import { updateRessource } from "../fetcher";
+import { updateRessource } from "@formbricks/lib/fetcher";
 
 export function useAttributeClassMutation(environmentId: string, attributeClassId: string) {
   const { trigger, isMutating } = useSWRMutation(

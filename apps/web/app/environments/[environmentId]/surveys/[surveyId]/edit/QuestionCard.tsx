@@ -1,9 +1,9 @@
 "use client";
 
-import { Label } from "@/components/ui/Label";
-import { Switch } from "@/components/ui/Switch";
+import { Label } from "@formbricks/ui";
+import { Switch } from "@formbricks/ui";
 import { getQuestionTypeName } from "@/lib/questions";
-import { cn } from "@/lib/utils";
+import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import { Bars4Icon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
