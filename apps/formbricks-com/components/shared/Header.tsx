@@ -43,9 +43,16 @@ export default function Header() {
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
-          <Button variant="highlight" className="ml-2" onClick={() => router.push("/waitlist")}>
-            Get Access
+          <Button
+            variant="secondary"
+            EndIcon={GitHubIcon}
+            endIconClassName="fill-slate-800 dark:fill-slate-200 ml-2"
+            onClick={() => router.push("https://github.com/formbricks/formbricks")}>
+            View on Github
           </Button>
+          {/* <Button variant="highlight" className="ml-2" onClick={() => router.push("/waitlist")}>
+            Get Access
+          </Button> */}
         </div>
       </div>
 
@@ -85,12 +92,12 @@ export default function Header() {
                   className="flex w-full justify-center fill-slate-800 dark:fill-slate-200">
                   View on Github
                 </Button>
-                <Button
+                {/* <Button
                   variant="primary"
                   onClick={() => router.push("/waitlist")}
                   className="flex w-full justify-center">
                   Get access
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>
