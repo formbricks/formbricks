@@ -132,6 +132,11 @@ export const authOptions: NextAuthOptions = {
         where: { email: token.email! },
         select: {
           id: true,
+          memberships: {
+            select: {
+              teamId: true,
+            },
+          },
           name: true,
         },
       });
@@ -140,14 +145,22 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
+      const additionalAttributs = {
+        id: existingUser.id,
+        teamId: existingUser.memberships.length > 0 ? existingUser.memberships[0].teamId : undefined,
+        name: existingUser.name,
+      };
+
       return {
         ...token,
-        ...existingUser,
+        ...additionalAttributs,
       };
     },
     async session({ session, token }) {
       // @ts-ignore
       session.user.id = token?.id;
+      // @ts-ignore
+      session.user.teamId = token?.teamId;
       session.user.name = token.name || "";
 
       return session;

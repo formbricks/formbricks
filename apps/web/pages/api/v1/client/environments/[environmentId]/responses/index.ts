@@ -1,5 +1,6 @@
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -46,6 +47,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         ...response,
       },
     });
+
+    captureTelemetry("response created");
 
     return res.json(responseData);
   }

@@ -1,6 +1,7 @@
 import { createSession } from "@/lib/api/clientSession";
 import { getSettings } from "@/lib/api/clientSettings";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -23,6 +24,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     const session = await createSession(personId);
     const settings = await getSettings(environmentId, personId);
+
+    captureTelemetry("session created");
 
     return res.json({ session, settings });
   }
