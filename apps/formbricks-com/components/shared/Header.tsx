@@ -46,7 +46,7 @@ export default function Header() {
           <Button
             variant="secondary"
             EndIcon={GitHubIcon}
-            endIconClassName="fill-slate-800 dark:fill-slate-200 ml-2"
+            endIconClassName="fill-slate-800 ml-2"
             onClick={() => router.push("https://github.com/formbricks/formbricks")}>
             View on Github
           </Button>
