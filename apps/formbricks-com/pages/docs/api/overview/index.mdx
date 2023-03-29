@@ -1,0 +1,27 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { APILayout } from "@/components/shared/APILayout.tsx";
+
+export const meta = {
+  title: "API Overview",
+};
+
+Formbricks offers two types of APIs: the Public Client API and the User API. Each API serves a different purpose, has different authentication requirements, and provides access to different data and settings.
+
+## Public Client API
+
+The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
+
+## User API
+
+The User API provides access to all data and settings that are visible in the Formbricks App. This API requires a personal API Key for authentication, which can be generated in the Settings section of the Formbricks App. With the User API, you can manage your Formbricks account programmatically, accessing and modifying data and settings as needed.
+
+**Auth:** Personal API Key
+
+API requests made to the User API are authorized using a personal API key. This key grants the same rights and access as if you were logged in at formbricks.com. It's essential to keep your API key secure and not share it with others.
+
+To generate, store, or delete an API key, follow the instructions provided on the following page [API Key](/docs/api/api-key-setup).
+
+By understanding the differences between these two APIs, you can choose the appropriate one for your needs, ensuring a secure and efficient integration with the Formbricks platform.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

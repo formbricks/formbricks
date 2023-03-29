@@ -1,7 +1,6 @@
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/lib/email";
 import { verifyInviteToken } from "@/lib/jwt";
 import { populateEnvironment } from "@/lib/populate";
-import { capturePosthogEvent } from "@/lib/posthogServer";
 import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
 
@@ -26,7 +25,7 @@ export async function POST(request: Request) {
         where: { id: inviteId },
         include: {
           creator: true,
-        }
+        },
       });
 
       if (!invite) {
@@ -92,14 +91,13 @@ export async function POST(request: Request) {
     const userData = await prisma.user.create(data);
 
     if (inviteId) {
-      sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email)
+      sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email);
       await prisma.invite.delete({ where: { id: inviteId } });
     }
 
-    if (process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") await sendVerificationEmail(userData);
-
-    // tracking
-    capturePosthogEvent(userData.id, "user created");
+    if (process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
+      await sendVerificationEmail(userData);
+    }
     return NextResponse.json(userData);
   } catch (e) {
     if (e.code === "P2002") {

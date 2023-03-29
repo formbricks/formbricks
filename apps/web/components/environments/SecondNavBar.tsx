@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@formbricks/lib/cn";
 import Link from "next/link";
 
 interface SecondNavbarProps {

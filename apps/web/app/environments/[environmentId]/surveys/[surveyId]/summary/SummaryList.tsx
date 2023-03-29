@@ -2,10 +2,11 @@
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Confetti } from "@/components/ui/Confetti";
+import { Confetti } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
-import { QuestionSummary } from "@/types/responses";
+import type { QuestionSummary } from "@formbricks/types/responses";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -56,7 +57,7 @@ export default function SummaryList({ environmentId, surveyId }) {
   }
 
   if (isErrorResponses || isErrorSurvey) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   return (

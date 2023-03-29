@@ -1,5 +1,5 @@
-import Card from "@/components/ui/Card";
-import PageTitle from "@/components/ui/PageTitle";
+import { Card } from "@formbricks/ui";
+import { PageTitle } from "@formbricks/ui";
 import JSLogo from "@/images/jslogo.png";
 import NPMLogo from "@/images/npmlogo.png";
 import Image from "next/image";

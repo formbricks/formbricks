@@ -1,0 +1,87 @@
+import { Layout } from "@/components/docs/Layout";
+
+export const meta = {
+  title: "Quickstart",
+};
+
+Welcome to Formbricks! In this quickstart guide, we'll walk you through the initial steps to get up and running with our in-product micro-surveys. Choose between self-hosted and cloud options, create an account, and set up the JavaScript widget. Let's dive in!
+
+## Step 1: Choose between self-hosted and cloud
+
+First, you need to decide whether you want to use the self-hosted or cloud version of Formbricks.
+
+- **Self-hosted**: If you prefer to host Formbricks on your own servers, check out the dedicated [Self-hosted Documentation](/docs/self-hosting/deployment) page.
+- **Cloud (coming soon)**: For a hassle-free experience, choose our cloud offering, which takes care of server maintenance and updates for you.
+
+## Step 2: Create an account
+
+1. Visit the Formbricks Sign up page.
+2. Enter your email address, choose a password, and click **Sign Up** to create your account. Alternatively you can sign up using your GitHub account.
+
+## Step 3: Switch to the Development Environment
+
+In Formbricks, you can work in different environments to manage your surveys and settings. We recommend using the **Development environment** for your local testing and staging environments to keep your Production environment and it's data clean. To get started, switch to the **Development Environment**:
+
+1. Log in to your Formbricks dashboard.
+2. Click the your profile picture in the top right corner and in the dropdown under your current Environment select **Development**.
+3. Select **Development** from the list.
+
+## Step 4: Set up the JavaScript widget
+
+You can find all the setup instructions as well as a check if your installation was successful in the **Setup Checklist** in the Formbricks settings.
+
+### HTML
+
+Add the following script to the `<head>` tag of your HTML file:
+
+```html
+<script type="text/javascript">
+  !(function () {
+    var t = document.createElement("script");
+    (t.type = "text/javascript"), (t.async = !0), (t.src = "https://formbricks.com/widget.js");
+    var e = document.getElementsByTagName("script")[0];
+    e.parentNode.insertBefore(t, e),
+      setTimeout(function () {
+        window.formbricks.init({
+          environmentId: "your-environment-id",
+          apiHost: "https://api.formbricks.com",
+        });
+      }, 500);
+  })();
+</script>
+```
+
+Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Setup Checklist** in the Formbricks settings.
+
+### Npm
+
+1. Install the Formbricks package using npm:
+
+```bash
+npm install @formbricks/js
+```
+
+2. Import Formbricks and initialize the widget in your main component (e.g., App.tsx or App.js):
+
+```javascript
+import formbricks from "@formbricks/js";
+
+if (typeof window !== "undefined") {
+  formbricks.init({
+    environmentId: "your-environment-id",
+    apiHost: "https://api.formbricks.com",
+  });
+}
+```
+
+Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Setup Checklist** in the Formbricks settings.
+
+For more detailed guides for different frameworks, check out our [Next.js](/docs/getting-started/nextjs) and [Vue.js](/docs/getting-started/vuejs) guides.
+
+## Step 5: Verify your setup
+
+After setting up the widget, head back to the Formbricks dashboard: 1. Navigate to **Settings** in the top menubar. 2. Check the **Setup Checklist** to ensure everything is working
+correctly. If all items in the checklist are marked as complete, congratulations! You've successfully set up
+Formbricks, and you're ready to start creating and customizing your in-product surveys.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

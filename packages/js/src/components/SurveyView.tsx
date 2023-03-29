@@ -3,13 +3,13 @@ import { useEffect, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
 import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
-import { Config, Survey } from "../types/types";
+import { JsConfig, Survey } from "@formbricks/types/js";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import Progress from "./Progress";
 
 interface SurveyViewProps {
-  config: Config;
+  config: JsConfig;
   survey: Survey;
   close: () => void;
   brandColor: string;

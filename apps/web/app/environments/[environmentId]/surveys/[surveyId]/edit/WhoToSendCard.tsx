@@ -1,7 +1,8 @@
 "use client";
 
-import { Label } from "@/components/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
+import { Badge } from "@formbricks/ui";
+import { Label } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import clsx from "clsx";
@@ -35,10 +36,10 @@ export default function WhoToSendToCard({}: WhoToSendToCardProps) {
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
-            <CheckCircleIcon className="h-8 w-8 text-teal-400" />
+            <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
-            <p className="text-lg font-semibold text-slate-800">Who to send to</p>
+            <p className="font-semibold text-slate-800">Who to send to</p>
             <p className="mt-1 truncate text-sm text-slate-500">
               Decide which group of you users can be surveyed.
             </p>
@@ -51,6 +52,7 @@ export default function WhoToSendToCard({}: WhoToSendToCardProps) {
           <RadioGroup value="all" className="flex flex-col space-y-3">
             {options.map((option) => (
               <Label
+                key={option.id}
                 htmlFor={option.id}
                 className={clsx(
                   "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
@@ -73,11 +75,7 @@ export default function WhoToSendToCard({}: WhoToSendToCardProps) {
                       )}>
                       {option.name}
                     </p>
-                    {option.disabled && (
-                      <span className="ml-2 inline-flex items-center rounded bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
-                        coming soon
-                      </span>
-                    )}
+                    {option.disabled && <Badge text="coming soon" size="normal" type="warning" />}
                   </div>
                   <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
                 </div>

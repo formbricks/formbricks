@@ -46,7 +46,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({ type, environmentId
     return (
       <div className="group space-y-4 rounded-lg bg-white p-6 ">
         <div className="flex items-center space-x-4">
-          <div className="h-12 w-12 rounded-full bg-slate-100"></div>
+          <div className="h-12 w-12 flex-shrink-0 rounded-full bg-slate-100"></div>
           <div className=" h-6 w-full rounded-full bg-slate-100"></div>
         </div>
         <div className="space-y-4">

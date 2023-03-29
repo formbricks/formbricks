@@ -1,6 +1,6 @@
-import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/apiHelper";
-import { capturePosthogEvent } from "@/lib/posthogServer";
+import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -54,9 +54,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         environment: { connect: { id: environmentId } },
       },
     });
-    capturePosthogEvent(user.id, "survey created", {
-      surveyId: result.id,
-    });
+
+    captureTelemetry("survey created");
+
     res.json(result);
   }
 

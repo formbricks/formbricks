@@ -115,22 +115,27 @@ enum SurveyType {
   web
 }
 
+enum displayOptions {
+  displayOnce
+  displayMultiple
+  respondMultiple
+}
+
 model Survey {
-  id                     String          @id @default(cuid())
-  createdAt              DateTime        @default(now()) @map(name: "created_at")
-  updatedAt              DateTime        @updatedAt @map(name: "updated_at")
-  name                   String
-  type                   String          @default("web")
-  environment            Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  environmentId          String
-  status                 SurveyStatus    @default(draft)
-  questions              Json            @default("[]")
-  responses              Response[]
-  allowMultipleDisplays  Boolean         @default(false)
-  allowMultipleResponses Boolean         @default(false)
-  recontactDays          Int?
-  triggers               SurveyTrigger[]
-  displays               Display[]
+  id            String          @id @default(cuid())
+  createdAt     DateTime        @default(now()) @map(name: "created_at")
+  updatedAt     DateTime        @updatedAt @map(name: "updated_at")
+  name          String
+  type          String          @default("web")
+  environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId String
+  status        SurveyStatus    @default(draft)
+  questions     Json            @default("[]")
+  responses     Response[]
+  displayOption displayOptions  @default(displayOnce)
+  recontactDays Int?
+  triggers      SurveyTrigger[]
+  displays      Display[]
 }
 
 model Event {
@@ -215,11 +220,11 @@ model Team {
   createdAt        DateTime     @default(now()) @map(name: "created_at")
   updatedAt        DateTime     @updatedAt @map(name: "updated_at")
   name             String
-  members          Membership[]
+  memberships      Membership[]
   products         Product[]
   plan             Plan         @default(free)
   stripeCustomerId String?
-  Invite           Invite[]
+  invites          Invite[]
 }
 
 enum MembershipRole {
@@ -308,6 +313,6 @@ model User {
   accounts                  Account[]
   apiKeys                   ApiKey[]
   groupId                   String?
-  inviteCreatedBy           Invite[]         @relation("inviteCreatedBy")
-  inviteAcceptedBy          Invite[]         @relation("inviteAcceptedBy")
+  invitesCreated            Invite[]         @relation("inviteCreatedBy")
+  invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
 }

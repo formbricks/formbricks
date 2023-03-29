@@ -1,61 +1,55 @@
-import type { Config, Session } from "../types/types";
+import type { Session, Settings } from "@formbricks/types/js";
+import { Logger } from "./logger";
+import { Config } from "./config";
+import { trackEvent } from "./event";
 
-export const createSession = async (config: Config): Promise<any> => {
-  if (!config.person) {
-    console.error("Formbricks: Unable to create session. No person found");
+const logger = Logger.getInstance();
+const config = Config.getInstance();
+
+export const createSession = async (): Promise<{ session: Session; settings: Settings }> => {
+  if (!config.get().person) {
+    logger.error("Formbricks: Unable to create session. No person found");
     return;
   }
   const response = await fetch(
-    `${config.apiHost}/api/v1/client/environments/${config.environmentId}/sessions`,
+    `${config.get().apiHost}/api/v1/client/environments/${config.get().environmentId}/sessions`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ personId: config.person.id }),
+      body: JSON.stringify({ personId: config.get().person.id }),
     }
   );
   if (!response.ok) {
-    console.error("Error creating session");
+    logger.error("Error creating session");
     return;
   }
-  let { session, settings } = await response.json();
-  session = extendSession(session); // also saves session to local storage
-  localStorage.setItem("formbricks__settings", JSON.stringify(settings));
-  return { session, settings };
+  return await response.json();
 };
 
 export const extendSession = (session: Session): Session => {
   const updatedSession = { ...session };
-  updatedSession.expiresAt = Date.now() + 1000 * 60 * 10; // extend session for 10 minutes
-  localStorage.setItem("formbricks__session", JSON.stringify(updatedSession));
+  updatedSession.expiresAt = Date.now() + 1000 * 60 * 60; // extend session for 60 minutes
   return updatedSession;
 };
 
-export const getLocalSession = (): Session | null => {
-  const sessionData = localStorage.getItem("formbricks__session");
-  if (sessionData) {
-    const session = JSON.parse(sessionData);
-    if (session.expiresAt > Date.now()) {
-      return session;
-    } else {
-      localStorage.removeItem("formbricks__session");
-      return null;
-    }
-  }
-  return null;
+export const isExpired = (session: Session): boolean => {
+  return session.expiresAt <= Date.now();
 };
 
-export const checkSession = async (config, initFunction) => {
-  await initFunction;
-  if (config.session.expiresAt <= Date.now()) {
-    const newSession = createSession(config);
-    if (!newSession) {
-      console.error("Error creating new session");
-      return;
+export const extendOrCreateSession = async (): Promise<void> => {
+  logger.debug("Checking session");
+  if (isExpired(config.get().session)) {
+    logger.debug("Session expired, creating new session");
+    const { session, settings } = await createSession();
+    if (!session || !settings) {
+      logger.error("Error creating new session");
+      throw Error("Error creating new session");
     }
-    config.session = newSession;
-  } else {
-    config.session = extendSession(config.session);
+    config.update({ session, settings });
+    trackEvent("New Session");
   }
+  logger.debug("Session not expired, extending session");
+  config.update({ session: extendSession(config.get().session) });
 };

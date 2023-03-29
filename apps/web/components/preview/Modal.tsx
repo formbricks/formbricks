@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@formbricks/lib/cn";
 import { ReactNode, useEffect, useState } from "react";
 
 export default function Modal({ children, isOpen }: { children: ReactNode; isOpen: boolean }) {

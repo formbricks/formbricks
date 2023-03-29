@@ -16,10 +16,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { CustomersIcon } from "@/components/ui/icons/CustomersIcon";
-import { FilterIcon } from "@/components/ui/icons/FilterIcon";
-import { FormIcon } from "@/components/ui/icons/FormIcon";
-import { SettingsIcon } from "@/components/ui/icons/SettingsIcon";
+import { ErrorComponent } from "@formbricks/ui";
+import { CustomersIcon } from "@formbricks/ui";
+import { FilterIcon, SettingsIcon } from "@formbricks/ui";
+import { FormIcon } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import {
@@ -41,7 +41,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ProfileAvatar } from "../../../components/ui/Avatars";
+import { ProfileAvatar } from "@formbricks/ui";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -128,7 +128,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           icon: CreditCardIcon,
           label: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
-          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1",
+          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
         },
         /*         {
           icon: RocketLaunchIcon,
@@ -172,7 +172,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
   }
 
   if (isErrorEnvironment) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   return (
@@ -271,8 +271,12 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       <DropdownMenuRadioGroup
                         value={environment?.type}
                         onValueChange={(v) => changeEnvironment(v)}>
-                        <DropdownMenuRadioItem value="production">Production</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="development">Development</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="production" className="cursor-pointer">
+                          Production
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="development" className="cursor-pointer">
+                          Development
+                        </DropdownMenuRadioItem>
                       </DropdownMenuRadioGroup>
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>

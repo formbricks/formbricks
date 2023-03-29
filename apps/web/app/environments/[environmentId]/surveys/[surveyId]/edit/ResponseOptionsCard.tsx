@@ -1,9 +1,11 @@
 "use client";
 
-import { Label } from "@/components/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
+import { Label } from "@formbricks/ui";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+
+import { Badge } from "@formbricks/ui";
 import clsx from "clsx";
 import { useState } from "react";
 
@@ -16,8 +18,8 @@ const options = [
   },
   {
     id: "limit",
-    name: "Collects a limited amount of responses",
-    description: "Stops collecting responses when limit is reached.",
+    name: "Limit responses",
+    description: "Stops collecting responses when number of responses is reached.",
     disabled: true,
   },
 ];
@@ -35,20 +37,27 @@ export default function ResponseOptionsCard({}: ResponseOptionsCardProps) {
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
-            <CheckCircleIcon className="h-8 w-8 text-teal-400" />
+            <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
-            <p className="text-lg font-semibold text-slate-800">Response Options</p>
-            <p className="mt-1 truncate text-sm text-slate-500">Decide when the survey should end.</p>
+            <p className="font-semibold text-slate-800">Response Options</p>
+            <p className="mt-1 truncate text-sm text-slate-500">
+              Decide how and how long people can respond.
+            </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
+          <div className="mb-4 ml-2">
+            <h3 className="font-semibold text-slate-700">Survey end</h3>
+            <p className="text-xs text-slate-500">How long can the survey collect responses?</p>
+          </div>
           <RadioGroup value="ongoing" className="flex flex-col space-y-3">
             {options.map((option) => (
               <Label
+                key={option.id}
                 htmlFor={option.id}
                 className={clsx(
                   "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
@@ -71,11 +80,7 @@ export default function ResponseOptionsCard({}: ResponseOptionsCardProps) {
                       )}>
                       {option.name}
                     </p>
-                    {option.disabled && (
-                      <span className="ml-2 inline-flex items-center rounded bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
-                        coming soon
-                      </span>
-                    )}
+                    {option.disabled && <Badge text="coming soon" size="normal" type="warning" />}
                   </div>
                   <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
                 </div>

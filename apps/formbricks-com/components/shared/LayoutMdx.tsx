@@ -1,4 +1,3 @@
-import { FeedbackButton } from "@/components/shared/FeedbackButton";
 import Footer from "./Footer";
 import Header from "./Header";
 import MetaInformation from "./MetaInformation";
@@ -17,7 +16,6 @@ export default function LayoutMdx({ meta, children }: Props) {
     <div className="flex h-screen flex-col justify-between">
       <MetaInformation title={meta.title} description={meta.description} />
       <Header />
-      <FeedbackButton />
       <main className="min-w-0 max-w-2xl flex-auto px-4 lg:max-w-none lg:pr-0 lg:pl-8 xl:px-16">
         <article className="mx-auto my-16 max-w-3xl px-2">
           {meta.title && (

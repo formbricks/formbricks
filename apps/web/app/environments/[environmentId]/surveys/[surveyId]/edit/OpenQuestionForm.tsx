@@ -1,6 +1,6 @@
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { OpenTextQuestion } from "@/types/questions";
+import { Input } from "@formbricks/ui";
+import { Label } from "@formbricks/ui";
+import type { OpenTextQuestion } from "@formbricks/types/questions";
 
 interface OpenQuestionFormProps {
   question: OpenTextQuestion;

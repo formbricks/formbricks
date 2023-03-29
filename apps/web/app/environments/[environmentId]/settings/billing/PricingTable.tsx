@@ -1,5 +1,5 @@
 "use client";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@formbricks/ui";
 
 export default function PricingTable() {
   return (

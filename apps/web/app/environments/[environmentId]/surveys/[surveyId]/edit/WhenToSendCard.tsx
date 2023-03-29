@@ -1,10 +1,10 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import Button from "@/components/ui/Button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { Button } from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
-import { Survey } from "@/types/surveys";
+import type { Survey } from "@formbricks/types/surveys";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
@@ -56,12 +56,12 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
             {localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
               <div className="h-7 w-7 rounded-full border border-slate-400" />
             ) : (
-              <CheckCircleIcon className="h-8 w-8 text-teal-400" />
+              <CheckCircleIcon className="h-8 w-8 text-green-400" />
             )}
           </div>
 
           <div>
-            <p className="text-lg font-semibold text-slate-800">When to send</p>
+            <p className="font-semibold text-slate-800">When to send</p>
             <p className="mt-1 truncate text-sm text-slate-500">
               Choose the events when you want the survey to trigger.
             </p>
@@ -71,7 +71,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
       <Collapsible.CollapsibleContent className="">
         <hr className="py-1 text-slate-600" />
         {localSurvey.triggers.map((triggerEventClassId, idx) => (
-          <div className="mt-2">
+          <div className="mt-2" key={idx}>
             <div className="inline-flex items-center">
               <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
               <Select

@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
-import type { MultipleChoiceSingleQuestion } from "@/types/questions";
+import { cn } from "@formbricks/lib/cn";
+import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import { useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";

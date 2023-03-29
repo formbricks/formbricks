@@ -1,6 +1,6 @@
 "use client";
 
-import { Survey } from "@/types/surveys";
+import type { Survey } from "@formbricks/types/surveys";
 import { DragDropContext } from "react-beautiful-dnd";
 import AddQuestionButton from "./AddQuestionButton";
 import QuestionCard from "./QuestionCard";

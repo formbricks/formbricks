@@ -1,9 +1,10 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import Button from "@/components/ui/Button";
+import { Button } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
-import { timeSinceConditionally } from "@/lib/time";
+import { timeSinceConditionally } from "@formbricks/lib/time";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import AddNoCodeEventModal from "./AddNoCodeEventModal";
@@ -23,7 +24,7 @@ export default function EventClassesList({ environmentId }) {
   }
 
   if (isErrorEventClasses) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   const handleOpenEventDetailModalClick = (e, eventClass) => {

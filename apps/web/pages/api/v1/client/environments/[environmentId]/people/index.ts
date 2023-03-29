@@ -1,4 +1,6 @@
-import { prisma } from "@formbricks/database";
+import { createPerson } from "@/lib/api/clientPerson";
+import { createSession } from "@/lib/api/clientSession";
+import { getSettings } from "@/lib/api/clientSettings";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -14,34 +16,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
   // POST
   else if (req.method === "POST") {
-    const { person } = req.body;
-    const personData = await prisma.person.create({
-      data: {
-        environment: {
-          connect: {
-            id: environmentId,
-          },
-          ...person,
-        },
-      },
-      select: {
-        id: true,
-        environmentId: true,
-        attributes: {
-          select: {
-            id: true,
-            value: true,
-            attributeClass: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    return res.json(personData);
+    const person = await createPerson(environmentId);
+    const session = await createSession(person.id);
+    const settings = await getSettings(environmentId, person.id);
+
+    return res.json({ person, session, settings });
   }
 
   // Unknown HTTP Method

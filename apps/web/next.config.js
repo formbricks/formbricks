@@ -5,7 +5,7 @@ const nextConfig = {
     appDir: true,
     serverComponentsExternalPackages: ["@tremor/react"],
   },
-  transpilePackages: ["@formbricks/ee"],
+  transpilePackages: ["@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   async headers() {
     return [
       {

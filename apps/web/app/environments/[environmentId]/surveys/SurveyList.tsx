@@ -10,12 +10,14 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import { ErrorComponent } from "@formbricks/ui";
 import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
@@ -38,6 +40,7 @@ export default function SurveysList({ environmentId }) {
       updatedsurveys.splice(surveyIdx, 1);
       mutateSurveys(updatedsurveys);
       setDeleteDialogOpen(false);
+      toast.success("Survey deleted successfully.");
     } catch (error) {
       console.error(error);
     }
@@ -48,7 +51,7 @@ export default function SurveysList({ environmentId }) {
   }
 
   if (isErrorSurveys) {
-    return <p>Error loading Surveys</p>;
+    return <ErrorComponent />;
   }
 
   return (

@@ -1,5 +1,4 @@
-import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/apiHelper";
-import { capturePosthogEvent } from "@/lib/posthogServer";
+import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -39,6 +38,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         updatedAt: true,
         responses: {
           select: {
+            id: true,
             createdAt: true,
             updatedAt: true,
             data: true,
@@ -56,6 +56,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           select: {
             events: {
               select: {
+                id: true,
                 createdAt: true,
                 eventClass: {
                   select: {
@@ -70,6 +71,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         attributes: {
           select: {
+            id: true,
             createdAt: true,
             updatedAt: true,
             value: true,
@@ -84,6 +86,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         displays: {
           select: {
+            id: true,
             createdAt: true,
             updatedAt: true,
             surveyId: true,
@@ -113,9 +116,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   else if (req.method === "DELETE") {
     const prismaRes = await prisma.person.delete({
       where: { id: personId },
-    });
-    capturePosthogEvent(user.id, "person deleted", {
-      personId,
     });
     return res.json(prismaRes);
   }

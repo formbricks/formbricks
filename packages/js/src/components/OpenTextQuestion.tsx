@@ -1,5 +1,5 @@
 import { h } from "preact";
-import type { OpenTextQuestion, Question } from "../types/types";
+import type { OpenTextQuestion, Question } from "@formbricks/types/js";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
@@ -35,7 +35,7 @@ export default function OpenTextQuestion({
           name={question.id}
           id={question.id}
           placeholder={question.placeholder}
-          required
+          required={question.required}
           className="fb-block fb-w-full fb-rounded-md fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm border-slate-100 bg-slate-50 focus:border-slate-500"></textarea>
       </div>
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">

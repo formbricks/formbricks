@@ -1,4 +1,4 @@
-import { getSessionOrUser, hashApiKey } from "@/lib/apiHelper";
+import { getSessionOrUser, hashApiKey } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import { randomBytes } from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";

@@ -1,6 +1,6 @@
 import DocsSidebar from "@/components/integrations/DocsSidebar";
 import IntegrationPageTitle from "@/components/integrations/IntegrationsPageTitle";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@formbricks/ui";
 import NPMLogo from "@/images/npmlogo.png";
 import Image from "next/image";
 

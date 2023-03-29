@@ -5,11 +5,11 @@ import OpenTextQuestion from "@/components/preview/OpenTextQuestion";
 import Progress from "@/components/preview/Progress";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Confetti } from "@/components/ui/Confetti";
-import { createResponse, updateResponse } from "@/lib/clientResponse/response";
+import { Confetti } from "@formbricks/ui";
+import { createResponse, updateResponse } from "@formbricks/lib/clientResponse/response";
 import { useLinkSurvey } from "@/lib/linkSurvey/linkSurvey";
-import { cn } from "@/lib/utils";
-import { Question } from "@/types/questions";
+import { cn } from "@formbricks/lib/cn";
+import type { Question } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 
 interface LinkSurveyProps {

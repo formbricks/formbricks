@@ -2,16 +2,15 @@ import { h, VNode } from "preact";
 import { useState } from "preact/hooks";
 import Modal from "./components/Modal";
 import SurveyView from "./components/SurveyView";
-import type { Config, Survey } from "./types/types";
+import type { JsConfig, Survey } from "@formbricks/types/js";
 
 interface AppProps {
-  config: Config;
+  config: JsConfig;
   survey: Survey;
-  closeSurvey: () => void;
-  brandColor: string;
+  closeSurvey: () => Promise<void>;
 }
 
-export default function App({ config, survey, closeSurvey, brandColor }: AppProps): VNode {
+export default function App({ config, survey, closeSurvey }: AppProps): VNode {
   const [isOpen, setIsOpen] = useState(true);
 
   const close = () => {
@@ -22,9 +21,9 @@ export default function App({ config, survey, closeSurvey, brandColor }: AppProp
   };
 
   return (
-    <div className="tailwind-preflight">
+    <div id="fbjs">
       <Modal isOpen={isOpen} close={close}>
-        <SurveyView config={config} survey={survey} close={close} brandColor={brandColor} />
+        <SurveyView config={config} survey={survey} close={close} brandColor={config.settings?.brandColor} />
       </Modal>
     </div>
   );

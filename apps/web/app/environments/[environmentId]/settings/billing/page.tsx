@@ -1,6 +1,6 @@
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@formbricks/ui";
 import PricingTable from "./PricingTable";
 
 const proPlan = false;

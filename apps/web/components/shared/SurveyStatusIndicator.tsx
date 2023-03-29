@@ -1,4 +1,4 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
 import { ArchiveBoxIcon, CheckIcon, PauseIcon } from "@heroicons/react/24/solid";
 
@@ -36,8 +36,8 @@ export default function SurveyStatusIndicator({
               </div>
             )}
             {status === "completed" && (
-              <div className=" rounded-full bg-green-200 p-1">
-                <CheckIcon className="h-3 w-3 text-green-600" />
+              <div className=" rounded-full bg-slate-200 p-1">
+                <CheckIcon className="h-3 w-3 text-slate-600" />
               </div>
             )}
             {status === "archived" && (
@@ -66,8 +66,8 @@ export default function SurveyStatusIndicator({
               ) : status === "completed" ? (
                 <div className="flex items-center space-x-2">
                   <span>Survey completed.</span>
-                  <div className=" rounded-full bg-green-200 p-1">
-                    <CheckIcon className="h-3 w-3 text-green-600" />
+                  <div className=" rounded-full bg-slate-200 p-1">
+                    <CheckIcon className="h-3 w-3 text-slate-600" />
                   </div>
                 </div>
               ) : status === "archived" ? (
@@ -98,8 +98,8 @@ export default function SurveyStatusIndicator({
           </div>
         )}
         {status === "completed" && (
-          <div className=" rounded-full bg-green-200 p-1">
-            <CheckIcon className="h-3 w-3 text-green-600" />
+          <div className=" rounded-full bg-slate-200 p-1">
+            <CheckIcon className="h-3 w-3 text-slate-600" />
           </div>
         )}
         {status === "archived" && (

@@ -6,6 +6,7 @@ import rehypePrism from "@mapbox/rehype-prism";
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  transpilePackages: ["@formbricks/ui"],
   pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
   async redirects() {
     return [
@@ -62,6 +63,11 @@ const nextConfig = {
       {
         source: "/demo",
         destination: "https://app.formbricks.com/demo",
+        permanent: false,
+      },
+      {
+        source: "/pmf",
+        destination: "/",
         permanent: false,
       },
     ];

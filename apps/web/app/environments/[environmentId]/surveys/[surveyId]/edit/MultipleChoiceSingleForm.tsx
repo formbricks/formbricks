@@ -1,9 +1,9 @@
-import Button from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { MultipleChoiceSingleQuestion } from "@/types/questions";
+import { Button } from "@formbricks/ui";
+import { Input } from "@formbricks/ui";
+import { Label } from "@formbricks/ui";
+import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import { createId } from "@paralleldrive/cuid2";
-import { Trash2Icon } from "lucide-react";
+import { TrashIcon } from "@heroicons/react/24/solid";
 
 interface OpenQuestionFormProps {
   question: MultipleChoiceSingleQuestion;
@@ -81,7 +81,7 @@ export default function MultipleChoiceSingleForm({
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
                 />
                 {question.choices && question.choices.length > 2 && (
-                  <Trash2Icon
+                  <TrashIcon
                     className="ml-2 h-4 w-4 text-slate-400"
                     onClick={() => deleteChoice(choiceIdx)}
                   />

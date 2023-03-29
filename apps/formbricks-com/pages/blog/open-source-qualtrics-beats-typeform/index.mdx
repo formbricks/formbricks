@@ -1,0 +1,169 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import Tellform from "./tellform.png";
+import Tripetto from "./tripetto.png";
+import Ohmyform from "./ohmyform.png";
+import Snoopforms from "./snoopforms-how-it-began.png";
+import FormbricksSneak from "./formbricks-sneak.png";
+import Wrestling from "./wrestling.jpg";
+import TypeformValue from "./typeform-value-prop.png";
+import ResponsiveEmbed from "react-responsive-embed";
+import { Callout } from "@/components/shared/Callout";
+
+export const meta = {
+  title: "Why Qualtrics beats Typeform, especially Open-Source",
+  description:
+    "We kicked it off with a Typeform open-source alternative. As we build and learn, our focus is shifting. Read why:",
+  date: "2023-03-24",
+};
+
+<Image src={Wrestling} alt="Why we do it" className="rounded-lg" />
+
+_In September, we kicked it off with a Typeform open-source alternative. As we build and learn, our focus is shifting. We talk about how we look at form and survey tools today, why experience management not only matters for enterprise and why the endgame looks a lot more like open-source Qualtrics. Qualtrics? What happened to Typeform?_
+
+Let’s dive in 👇
+
+## How it started
+
+<Image src={Snoopforms} alt="How it began - snoopforms landing page" className="rounded-lg" />
+
+Matti and I kicked off our work on [snoopForms](https://snoopforms.com) as the “Open source Typeform Alternative” - and we weren’t the first to try this:
+
+<Image src={Ohmyform} alt="Ohmyform" className="rounded-lg" />
+<Image src={Tellform} alt="Tellform" className="rounded-lg" />
+<Image src={Tripetto} alt="Tripetto" className="rounded-lg" />
+
+TellForm and OhMyForm were given up, Tripetto niched down to the WordPress ecosystem and are doing quite well selling $99 / year licenses.
+
+The snoopForms launch went pretty well: Within a month, we accumulated 1k+ ⭐ on GitHub, over 1k signups and stirred up quite some interest on [HackerNews](https://news.ycombinator.com/item?id=32303986) and [ProductHunt](https://www.producthunt.com/products/snoopforms). We sold several Early Bird Deals for $179 a piece granting Early Birds 2.500 free monthly submissions for a lifetime. Since the launch in September we have processed several thousand submissions with a ca. 50/50 split between self-hosted instances and our Cloud.
+
+# So what’s the problem?
+
+All of the above looks good. And yet, we decided to move away from a general purpose no-code form builder. To understand why we have to look at three aspects and how they interact: 1) The appeal of open-source ssoftware (OSS), 2) the people we attracted and 3) the value Typeform offers. Let’s lay out the facts first:
+
+1. **The appeal of “open source”**
+
+We wrote about that in more detail in [Open source forms will save the world](https://formbricks.com/blog/open-source-forms-will-save-the-world) but in short, there are three benefits for customers: Data privacy when self-hosting, full customizability & extendability and a weaker lock-in.
+
+2. **The people we attracted**
+
+We attracted two groups of people: No Coders and Coders.
+
+- For most No Coders “open source” means free. About 90% of the people we talked to in our Discord and in interviews find Typeform too expensive for what it does. They don’t care too much about data privacy or code-based customizability and are not really bothered about a lock-in as they usually operate in small organizations (1-10 people).
+- The more interesting group were the hackers and digital agencies taking snoopForms apart and building their own solutions with it. We had an agency building feedback functionality into an e-learning platform run by the State of Geneva (CH) and an online academy in Africa building an assessment center around forms. They loved that they could build their solutions in a fraction of the time, however it still required some custom development to achieve their goal.
+
+The first group isn’t a tempting cohort to build for: They are very price-sensitive and quick to jump ship in a commoditized space. The latter are a better target group but we would run into an incentive dilemma sooner than later: The better the OS offering, the wider the distribution but the harder it gets to monetize. More on why the play book for commercial open source wouldn’t play out well for the Typeform case later on.
+
+3. **The value of Typeform**
+
+Typeform makes forms look pretty and thereby claims to achieve a higher conversion rate than other form tools. Here is the key value proposition from typeform.com (24.03.23):
+
+<Image src={TypeformValue} alt="Why we do it" className="rounded-lg" />
+
+The average conversion rate of an emailed out Typeform is 5%. In-app surveys for example average out at [30% so 6x better.](https://news.ycombinator.com/item?id=30377349) Typeforms are the most pretty forms out there and likely to convert better than a Google Form but are by no means the best way to get insights from your audience.
+
+Secondly, according to our user interviews, the people using Typeform aren’t really happy with it. It's too expensive for a form builder and not specialized enough to solve a specific business problem. Rarely do product managers want “more pretty forms” but rather “understand what users think about their product” or “generate leads”. Typeform isn’t specifically built for that. Using Typeform it is still YOUR job to research and implement the best approach for getting the right insights from the right users. This means:
+
+- Coming up with the right set of questions
+- Create the form without leading answers
+- Identifying and reaching the correct user cohort
+- Analyzing and interpreting the data, preparing a report
+- Drawing the correct conclusions from the data to make a better decision
+
+Doing it once requires a lot of skill, knowledge and manual work. Doing it repeatedly and with consistency - especially in larger companies - is really hard.
+
+Typeform makes pretty forms and is kind of stuck doing so because they have to keep serving all kinds of different users building forms for different purposes. One-size fits all fits no one really.
+
+### Why OS Typeform can work as a business (but not at venture scale)
+
+The Commercial Open-Source Software playbook in a nutshell is this: Grow with community and then sell into enterprise bottom up. Let's look at how the Typeform case would do:
+
+**The first part is doable:** Grow a community with a largely free and open-source Typeform clone. We might even make money offering a hosted version for No Coders and people who don't want to self-host. It would be one of many form builders with a capped upside, when Tally.so offers 95% of Typeforms features for free - and then charges $29 / month.
+
+For coders to be able to hack around with the code, it needs to be largely MIT licensed. With AGPL it wouldn't be allowed to build a proprietary solution on top of it and monetize it. MIT is great for distribution but really hard to make money with.
+
+So you have to **monetize with enterprise or government licenses.** But why would an enterprise or government customer pay $$$ for a self-hosting license? They already have a generic form builder - it’s not as pretty, but does the same thing. And by the way, both Typeform and Jotform offer self-hosting for enterprise clients. What’s the differentiator that allows you to drive outsized returns to become the unicorn investors bet on?
+
+It certainly can be a nice lifestyle business to sustain a small team. It’s not a venture scale opportunity.
+
+# Bye Form Creation. Hola Experience Management?
+
+And yet, the yawning gap for an open-source form and survey tool kept us engaged. So we dug deeper. Before we zoom in, let’s zoom out for context:
+
+Broadly speaking, forms fall into two categories: 1) Processing information usually when digitizing a previously analog process. And 2) looking into your customers’ or employees' brains to make better business decisions.
+
+The first category is less interesting to us mostly because no one used snoopForms for it and only a handful of people named it as their objective in user interviews. Also, [anecdotal](https://medium.com/san-francisco-digital-services/how-to-make-a-form-d1d1b67d95d7) [evidence](https://medium.com/@jgee/what-i-learned-in-two-years-of-moving-government-forms-online-1edc4c2aa089) suggests that getting analog institutions to use digital tools doesn’t sound like fun.
+
+The second category is more broadly referred to as “Experience Management” (XM) popularized by Qualtrics. Qualtrics made $1.46B in revenue in 2022 (Typeform will make something between 100M and 120M). Both are impressive numbers **and** a good indicator that generic form creation does not create as much value as helping companies improve customer experiences to grow their business. Both tools are built on “forms”, so what’s the difference exactly?
+
+<Callout title="How Qualtrics is different" type="note">
+  Qualtrics took the business objective of their customers and productized an opinionated, research-based
+  solution that excels at analyzing large amounts of qualitative data in a way that guides decision-making.
+</Callout>
+
+Typeform makes pretty forms. It’s no surprise that especially large companies are willing to pay $5000+ / month for Qualtrics while you hear complaints about the $49 / month Typeform charges all too often.
+
+The conclusion is obvious: OS Qualtrics is the real opportunity here.
+
+## Qualtrics for the modern growth stack
+
+Coming up with such a vision is easy. But how do we get there? A wise man once compared a large, successful company with a hole which is both wide and deep:
+
+_So you have two choices about the shape of hole you start with. You can either dig a hole that's broad but shallow, or one that's narrow and deep, like a well. […] Nearly all good startup ideas are of the second type._ - [_Paul Graham_](http://paulgraham.com/startupideas.html)
+
+Experience management covers four areas of experiences: Customer, Employee, Product and Brand. To be able to digg deep, we decided to focus on Product Experiences first as the other three are less relevant when the product sucks.
+
+### Product analytics leave a blind spot
+
+To manage Product you constantly need data on things: What are people doing, and why are they doing it. Quantitative analytics tools like Amplitude or PostHog give a very good insight into what people are doing: You can track every click, watch users move through funnels, etc. But they leave a blind spot: Why are users doing what they do?
+
+To answer this question, product managers should talk to their customers. Everyone knows it, some do it. Especially in larger companies, it gets increasingly difficult. Other things become more important, customers grow more heterogeneous. Organizing who talks to which customers is hard, a lot of work is redundantly done in different teams, many survey or interview requests are untargeted and spammy.
+
+This is where Formbricks comes into play.
+
+## Take what’s good, update what’s old
+
+When we redesigned Formbricks, we came up with a set of characteristics the solution needs to pack:
+
+- Fits into modern product / growth stack: Sits between product analytics, CRM and messaging systems like customer.io
+- Easy to get started but mighty for power users
+- Value increases when the user base grows (revenue expansion)
+- Keep “qualitative data for better product decisions” at heart
+- Packs multiplayer mode from the start
+- Has moments of delight (surprise 🤫)
+- Has virality built in (survey links)
+- Allows simple generic form building (good for OS traction and sales argument to replace Typeform / SurveyMonkey / other form tool with self-hosted alternative)
+
+In a direct comparison to Qualtrics, this is how we position Formbricks:
+
+| The incumbent way                        | → The OS way                                      |
+| ---------------------------------------- | ------------------------------------------------- |
+| Make self-hosting impossible             | → Make self-hosting really easy                   |
+| Keeping business objective in mind       | → Keep, that’s gold                               |
+| Support managing analog experiences      | → Excel at digital experiences first              |
+| Limit customizability                    | → Enable 100% customizability                     |
+| Large set of extensions and integrations | → Same, working well                              |
+| Prohibitively expensive                  | → Give away for small teams use (make devs happy) |
+| Only has value when used in enterprise   | → Make useful for SMB as well                     |
+
+# What have we been building?
+
+We did sit a lot in our office, coding away quietly. During the launch of the previous iteration we learned that a limited product neither serves us nor our early adopters well: It doesn’t really help when the prototype is so inflexible that adjusting it to our customers' needs requires custom coding every single time.
+
+And we learned that the best developer experience is no developer experience. In other words: The less time a dev spends on implementing Formbricks, the better.
+
+So we built that. We built a visual form creator, event tracking, user attribute management and an analysis dashboard built for SaaS products. Users can implement Formbricks via NPM or by copying a snippet into the head of their products HTML. That's it.
+
+With the new Formbricks you can **trigger any micro-survey on any event in your web app.** Very soon you can **filter based on user attributes to survey exactly and only the segment of your user** base which offers signal instead of noise.
+
+You can create events either in your code base or with our No Code Event creator. Yep, even a non-technical person can copy the Formbricks code snippet into the `<head>` tag and use our UI to create events to granularly trigger surveys in the web app. **And they can do so in minutes.**
+
+There is so much you can do with it, here is a sneakpeek:
+
+<Image src={FormbricksSneak} alt="Formbricks Sneak Preview" className="rounded-lg" />
+
+What all of this looks like in action we’ll share in a product walkthrough video soon. We are super excited to get the new Formbricks into your hands asap.
+
+### Until then, enjoy your weekend!
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

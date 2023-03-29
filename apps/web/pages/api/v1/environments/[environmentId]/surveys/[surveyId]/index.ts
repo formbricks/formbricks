@@ -1,5 +1,4 @@
-import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/apiHelper";
-import { capturePosthogEvent } from "@/lib/posthogServer";
+import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -121,7 +120,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       ...body,
     };
 
+    // remove fields that are not in the survey model
     delete data.responseRate;
+    delete data.numDisplays;
 
     const prismaRes = await prisma.survey.update({
       where: { id: surveyId },
@@ -134,9 +135,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   else if (req.method === "DELETE") {
     const prismaRes = await prisma.survey.delete({
       where: { id: surveyId },
-    });
-    capturePosthogEvent(user.id, "survey deleted", {
-      surveyId,
     });
     return res.json(prismaRes);
   }

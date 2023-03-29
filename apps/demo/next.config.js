@@ -1,8 +1,14 @@
-module.exports = {
-  transpilePackages: ["ui"],
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true,
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/signin",
+        permanent: false,
+      },
+    ];
   },
   images: {
     remotePatterns: [
@@ -17,3 +23,5 @@ module.exports = {
     ],
   },
 };
+
+module.exports = nextConfig;

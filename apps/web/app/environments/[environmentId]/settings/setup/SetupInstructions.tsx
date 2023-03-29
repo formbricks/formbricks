@@ -1,14 +1,15 @@
 "use client";
 
-import TabBar from "@/components/ui/TabBar";
+import CodeBlock from "@/components/shared/CodeBlock";
+import { TabBar } from "@formbricks/ui";
 import Link from "next/link";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";
 import { useEffect, useState } from "react";
-import { IoLogoHtml5, IoLogoReact } from "react-icons/io5";
+import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
 
 const tabs = [
-  { id: "react", label: "React", icon: <IoLogoReact /> },
+  { id: "npm", label: "NPM", icon: <IoLogoNpm /> },
   { id: "html", label: "HTML", icon: <IoLogoHtml5 /> },
 ];
 
@@ -23,30 +24,21 @@ export default function SetupInstructions({ environmentId }) {
     <div>
       <TabBar tabs={tabs} activeId={activeTab} setActiveId={setActiveTab} />
       <div className="px-6 py-5">
-        {activeTab === "react" ? (
+        {activeTab === "npm" ? (
           <div className="prose prose-slate">
             <p className="text-lg font-semibold text-slate-800">Step 1: NPM Install</p>
-            <div className="mt-4 rounded-md font-light text-slate-200">
-              <pre>
-                <code className="language-js whitespace-pre-wrap">npm install @formbricks/js</code>
-              </pre>
-            </div>
+            <CodeBlock language="sh">npm install @formbricks/js</CodeBlock>
             <p className="pt-4 text-lg font-semibold text-slate-800">Step 2: Initialize widget</p>
             <p>Import Formbricks and initialize the widget in your Component (e.g. App.tsx):</p>
-            <div className="mt-4 rounded-md font-light text-slate-200">
-              <pre>
-                <code className="language-js whitespace-pre-wrap">
-                  {`import formbricks from "@formbricks/js";
+            <CodeBlock language="js">{`import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "${environmentId}",
     apiHost: "${window.location.protocol}//${window.location.host}",
   });
-}`}
-                </code>
-              </pre>
-            </div>
+}`}</CodeBlock>
+
             <ul className="list-disc">
               <li>
                 <span className="font-semibold">environmentId:</span> Used to identify the correct
@@ -65,6 +57,14 @@ if (typeof window !== "undefined") {
               <li>
                 <span className="font-semibold">Does your widget work? </span>
                 <span>Scroll to the top!</span>
+              </li>
+              <li>
+                <span className="font-semibold">
+                  Need a more detailed setup guide for React, Next.js or Vue.js?
+                </span>{" "}
+                <Link className="decoration-brand-dark" href="https://formbricks.com/docs" target="_blank">
+                  Check out the docs.
+                </Link>
               </li>
               <li>
                 <span className="font-semibold">Have a problem?</span>{" "}
@@ -95,13 +95,9 @@ if (typeof window !== "undefined") {
             <p>
               Insert this code into the <code>{`<head>`}</code> tag of your website:
             </p>
-            <div className="mt-4 rounded-md font-light text-slate-200">
-              <pre>
-                <code className="language-js whitespace-pre-wrap">{`<script type="text/javascript">
+            <CodeBlock language="js">{`<script type="text/javascript">
 !function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="./dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init("${environmentId}","${window.location.protocol}//${window.location.host}")},500)}();
-</script>`}</code>
-              </pre>
-            </div>
+</script>`}</CodeBlock>
             <p className="text-lg font-semibold text-slate-800">You&apos;re done 🎉</p>
             <p>
               Your app now communicates with Formbricks - sending events, and loading surveys automatically!

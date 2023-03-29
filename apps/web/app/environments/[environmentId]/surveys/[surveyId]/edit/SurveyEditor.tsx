@@ -1,9 +1,10 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { ErrorComponent } from "@formbricks/ui";
 import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
-import { Survey } from "@/types/surveys";
+import type { Survey } from "@formbricks/types/surveys";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
 import AudienceView from "./AudienceView";
@@ -41,7 +42,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
   }
 
   if (isErrorSurvey || isErrorProduct) {
-    return <div>Error</div>;
+    return <ErrorComponent />;
   }
 
   return (
@@ -50,6 +51,8 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
         setLocalSurvey={setLocalSurvey}
         localSurvey={localSurvey}
         environmentId={environmentId}
+        activeId={activeView}
+        setActiveId={setActiveView}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
@@ -65,9 +68,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             <AudienceView
               environmentId={environmentId}
               localSurvey={localSurvey}
-              /* triggers={localSurvey.triggers}
-              setLocalSurvey={setLocalSurvey}
-              showSetting={localSurvey.showSetting} */
               setLocalSurvey={setLocalSurvey}
             />
           )}

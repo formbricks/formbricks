@@ -1,4 +1,4 @@
-import { getSessionOrUser } from "@/lib/apiHelper";
+import { getSessionOrUser } from "@/lib/api/apiHelper";
 import { populateEnvironment } from "@/lib/populate";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -49,7 +49,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                     ],
                   },
                 },
-
               },
             },
           },
@@ -72,7 +71,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.json(environment);
       // return res.status(404).json({ message: "No memberships found" });
     }
-
 
     const firstProduct = await prisma.product.findFirst({
       where: {

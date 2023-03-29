@@ -1,5 +1,7 @@
-import { prisma } from "@formbricks/database";
+import { createSession } from "@/lib/api/clientSession";
+import { getSettings } from "@/lib/api/clientSettings";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -20,88 +22,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(400).json({ message: "Missing personId" });
     }
 
-    // create new session
-    const session = await prisma.session.create({
-      data: {
-        person: {
-          connect: {
-            id: personId,
-          },
-        },
-      },
-    });
+    const session = await createSession(personId);
+    const settings = await getSettings(environmentId, personId);
 
-    const surveys = await prisma.survey.findMany({
-      where: {
-        OR: [
-          {
-            environmentId,
-            type: "web",
-            status: "inProgress",
-            allowMultipleDisplays: true,
-            allowMultipleResponses: true,
-          },
-          {
-            environmentId,
-            type: "web",
-            status: "inProgress",
-            allowMultipleDisplays: false,
-            displays: { none: { personId } },
-          },
-          {
-            environmentId,
-            type: "web",
-            status: "inProgress",
-            allowMultipleDisplays: true,
-            allowMultipleResponses: false,
-            displays: { none: { personId, status: "responded" } },
-          },
-        ],
-      },
-      select: {
-        id: true,
-        questions: true,
-        triggers: {
-          select: {
-            id: true,
-            eventClass: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    captureTelemetry("session created");
 
-    const noCodeEvents = await prisma.eventClass.findMany({
-      where: {
-        environmentId,
-        type: "noCode",
-      },
-      select: {
-        name: true,
-        noCodeConfig: true,
-      },
-    });
-
-    const environmentProdut = await prisma.environment.findUnique({
-      where: {
-        id: environmentId,
-      },
-      select: {
-        product: {
-          select: {
-            brandColor: true,
-          },
-        },
-      },
-    });
-
-    const brandColor = environmentProdut?.product.brandColor;
-
-    return res.json({ session, settings: { surveys, noCodeEvents, brandColor } });
+    return res.json({ session, settings });
   }
 
   // Unknown HTTP Method

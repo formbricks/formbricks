@@ -1,7 +1,13 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@formbricks/lib/cn";
 import { QuestionMarkCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 
-const tabs = [
+interface Tab {
+  id: "questions" | "audience";
+  label: string;
+  icon: JSX.Element;
+}
+
+const tabs: Tab[] = [
   {
     id: "questions",
     label: "Questions",
@@ -14,7 +20,12 @@ const tabs = [
   },
 ];
 
-export default function QuestionsAudienceTabs({ activeId, setActiveId }) {
+interface QuestionsAudienceTabsProps {
+  activeId: "questions" | "audience";
+  setActiveId: (id: "questions" | "audience") => void;
+}
+
+export default function QuestionsAudienceTabs({ activeId, setActiveId }: QuestionsAudienceTabsProps) {
   return (
     <div className="flex h-14 w-full items-center justify-center border bg-white">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">

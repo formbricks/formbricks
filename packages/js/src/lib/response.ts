@@ -1,4 +1,4 @@
-import { Response, ResponseCreateRequest, ResponseUpdateRequest } from "../types/types";
+import { Response, ResponseCreateRequest, ResponseUpdateRequest } from "@formbricks/types/js";
 
 export const createResponse = async (responseRequest: ResponseCreateRequest, config): Promise<Response> => {
   const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/responses`, {

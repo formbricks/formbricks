@@ -2,25 +2,26 @@
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ProfileAvatar } from "@/components/ui/Avatars";
-import Button from "@/components/ui/Button";
 import { addMember, deleteInvite, removeMember, resendInvite, useTeam } from "@/lib/teams";
-import * as Tooltip from "@/components/ui/Tooltip";
+import {
+  Button,
+  ProfileAvatar,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@formbricks/ui";
+import { PaperAirplaneIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import AddMemberModal from "./AddMemberModal";
-import { PaperAirplaneIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 export function EditMembers({ environmentId }) {
-
-  const { team, isErrorTeam, isLoadingTeam, mutateTeam } =
-    useTeam(environmentId);
+  const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useTeam(environmentId);
 
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
 
   const [activeMember, setActiveMember] = useState({} as any);
-
-
 
   const handleOpenDeleteMemberModal = (e, member) => {
     e.preventDefault();
@@ -31,32 +32,28 @@ export function EditMembers({ environmentId }) {
     if (activeMember.accepted) {
       await removeMember(team.teamId, activeMember.userId);
     } else {
-      await deleteInvite(team.teamId, activeMember.inviteId)
+      await deleteInvite(team.teamId, activeMember.inviteId);
     }
     setDeleteMemberModalOpen(false);
     mutateTeam();
-  }
-
+  };
 
   const handleResendInvite = async (inviteId) => {
     await resendInvite(team.teamId, inviteId);
-  }
+  };
 
   const handleAddMember = async (data) => {
     // TODO: handle http 409 user is already part of the team
     await addMember(team.teamId, data);
     mutateTeam();
-  }
-
-
-
+  };
 
   if (isLoadingTeam) {
     return <LoadingSpinner />;
   }
 
   if (isErrorTeam) {
-    console.log(isErrorTeam)
+    console.log(isErrorTeam);
     return <div>Error</div>;
   }
 
@@ -67,8 +64,7 @@ export function EditMembers({ environmentId }) {
           variant="primary"
           onClick={() => {
             setAddMemberModalOpen(true);
-          }}
-        >
+          }}>
           Add Member
         </Button>
       </div>
@@ -81,33 +77,40 @@ export function EditMembers({ environmentId }) {
         </div>
         <div className="grid-cols-7">
           {[...team.members, ...team.invitees].map((member) => (
-            <div className="w-full grid h-12  py-2 grid-cols-7 content-center rounded-lg text-left text-sm text-slate-900 hover:bg-slate-100" key={member.email}>
-              <div className="px-6 h-58 ">
+            <div
+              className="grid h-12 w-full  grid-cols-7 content-center rounded-lg py-2 text-left text-sm text-slate-900 hover:bg-slate-100"
+              key={member.email}>
+              <div className="h-58 px-6 ">
                 <ProfileAvatar userId={member.userId} />
               </div>
-              <div className="col-span-2 flex flex-col justify-center"><p>{member.name}</p></div>
+              <div className="col-span-2 flex flex-col justify-center">
+                <p>{member.name}</p>
+              </div>
               <div className="col-span-2 flex flex-col justify-center">{member.email}</div>
-              <div className="col-span-2 flex justify-end gap-x-6 pr-6 items-center">
+              <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
                 {!member.accepted && (
-                  <p className="text-xs text-amber-500 bg-amber-50 border-amber-500 border-2 rounded-md px-2 py-px">Pending</p>
+                  <p className="rounded-md border-2 border-amber-500 bg-amber-50 px-2 py-px text-xs text-amber-500">
+                    Pending
+                  </p>
                 )}
                 {member.role !== "owner" && (
-                  <button onClick={e => handleOpenDeleteMemberModal(e, member)}>
-                    <TrashIcon className="text-black h-5 w-5" />
-                  </button>)}
+                  <button onClick={(e) => handleOpenDeleteMemberModal(e, member)}>
+                    <TrashIcon className="h-5 w-5 text-black" />
+                  </button>
+                )}
                 {!member.accepted && (
-                  <Tooltip.TooltipProvider>
-                    <Tooltip.Tooltip>
-                      <Tooltip.TooltipTrigger asChild>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                         <button onClick={() => handleResendInvite(member.inviteId)}>
-                          <PaperAirplaneIcon className="text-black h-5 w-5" />
+                          <PaperAirplaneIcon className="h-5 w-5 text-black" />
                         </button>
-                      </Tooltip.TooltipTrigger>
-                      <Tooltip.TooltipContent className="TooltipContent" sideOffset={5}>
+                      </TooltipTrigger>
+                      <TooltipContent className="TooltipContent" sideOffset={5}>
                         Resend Invitation Email
-                      </Tooltip.TooltipContent>
-                    </Tooltip.Tooltip>
-                  </Tooltip.TooltipProvider>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             </div>
