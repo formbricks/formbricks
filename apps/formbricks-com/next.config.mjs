@@ -65,6 +65,11 @@ const nextConfig = {
         destination: "https://app.formbricks.com/demo",
         permanent: false,
       },
+      {
+        source: "/pmf",
+        destination: "/",
+        permanent: false,
+      },
     ];
   },
 };

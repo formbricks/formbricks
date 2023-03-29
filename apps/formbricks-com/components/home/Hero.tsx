@@ -1,11 +1,8 @@
-import { Button } from "@formbricks/ui";
-import { useRouter } from "next/router";
 import TemplateList from "../dummyUI/TemplateList";
 
 interface Props {}
 
 export default function Hero({}: Props) {
-  const router = useRouter();
   return (
     <div className="relative">
       <div className="px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
