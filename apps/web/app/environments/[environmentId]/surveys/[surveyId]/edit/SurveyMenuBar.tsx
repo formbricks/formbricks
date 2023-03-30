@@ -73,6 +73,7 @@ export default function SurveyMenuBar({
           <Button
             disabled={localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0}
             variant="highlight"
+            loading={isMutatingSurvey}
             onClick={() => {
               triggerSurveyMutate({ ...localSurvey, status: "inProgress" });
               router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);

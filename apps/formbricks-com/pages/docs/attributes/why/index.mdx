@@ -1,0 +1,21 @@
+import { Layout } from "@/components/docs/Layout";
+
+export const meta = {
+  title: "What are attributes and why are they useful?",
+};
+
+Surveying your user base without segmentation leads to weak results and survey fatigue. Attributes help you segment your users into groups.
+
+## What are attributes?
+
+Attributes are key-value pairs that you can set for each person individually. For example, the attribute "Plan" can be set to "Free" or "Paid".
+
+## How do attributes work?
+
+Attributes are sent from your application to Formbricks and are associated with the current user. We store it in our database and allow you to use it the next time you create a survey.
+
+## Why are attributes useful?
+
+Attributes help show surveys to the right group of people. For example, you can show a survey to all users who have a "Plan" attribute set to "Paid".
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

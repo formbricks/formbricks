@@ -40,6 +40,7 @@
     "@types/prismjs": "^1.26.0",
     "@types/react": "18.0.28",
     "@types/react-dom": "18.0.11",
+    "@types/react-responsive-embed": "^2.1.0",
     "autoprefixer": "^10.4.14",
     "eslint": "8.36.0",
     "eslint-config-formbricks": "workspace:*",

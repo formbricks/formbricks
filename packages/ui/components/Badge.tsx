@@ -30,7 +30,7 @@ export function Badge({ text, type, size }: BadgeProps) {
   return (
     <span
       className={cn(
-        "ml-2 inline-flex items-center rounded-full font-medium",
+        "ml-2 inline-flex cursor-default items-center rounded-full font-medium",
         bgColor[type],
         textColor[type],
         padding[size],

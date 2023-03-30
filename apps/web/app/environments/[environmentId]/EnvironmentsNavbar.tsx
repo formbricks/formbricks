@@ -33,6 +33,7 @@ import {
   PaintBrushIcon,
   PlusIcon,
   UserCircleIcon,
+  UsersIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import type { Session } from "next-auth";
@@ -122,8 +123,8 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           icon: UserCircleIcon,
           label: "Profile",
           href: `/environments/${environmentId}/settings/profile`,
-        } /* 
-        { icon: UsersIcon, label: "Team", href: `/environments/${environmentId}/settings/team` }, */,
+        },
+        { icon: UsersIcon, label: "Team", href: `/environments/${environmentId}/settings/team` },
         {
           icon: CreditCardIcon,
           label: "Billing & Plan",

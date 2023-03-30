@@ -33,7 +33,10 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
   return (
     <>
       <div className="mb-6 text-right">
-        <Button variant="secondary" href="https://formbricks.com/docs" target="_blank">
+        <Button
+          variant="secondary"
+          href="http://formbricks.com/docs/attributes/custom-attributes"
+          target="_blank">
           <QuestionMarkCircleIcon className="mr-2 h-4 w-4" />
           How to add attributes
         </Button>

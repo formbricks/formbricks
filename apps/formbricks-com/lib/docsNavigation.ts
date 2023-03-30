@@ -13,7 +13,22 @@ const navigation = [
       { title: "Quickstart", href: "/docs/getting-started/quickstart" },
       { title: "Setup with Next.js", href: "/docs/getting-started/nextjs" },
       { title: "Setup with Vue.js", href: "/docs/getting-started/vuejs" },
-      { title: "Identify users", href: "/docs/getting-started/identify-users" },
+    ],
+  },
+  {
+    title: "Attributes",
+    links: [
+      { title: "Why Attributes?", href: "/docs/attributes/why" },
+      { title: "Custom Attributes", href: "/docs/attributes/custom-attributes" },
+      { title: "Identify users", href: "/docs/attributes/identify-users" },
+    ],
+  },
+  {
+    title: "Events",
+    links: [
+      { title: "Why Events?", href: "/docs/events/why" },
+      { title: "No-Code Events", href: "/docs/events/no-code" },
+      { title: "Code Events", href: "/docs/events/code" },
     ],
   },
   {

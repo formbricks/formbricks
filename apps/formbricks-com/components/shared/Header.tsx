@@ -46,8 +46,9 @@ export default function Header() {
           <Button
             variant="secondary"
             EndIcon={GitHubIcon}
-            endIconClassName="fill-slate-800 ml-2"
-            onClick={() => router.push("https://github.com/formbricks/formbricks")}>
+            endIconClassName="fill-slate-800 ml-2 dark:fill-slate-200"
+            href="https://github.com/formbricks/formbricks"
+            target="_blank">
             View on Github
           </Button>
           {/* <Button variant="highlight" className="ml-2" onClick={() => router.push("/waitlist")}>

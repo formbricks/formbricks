@@ -17,7 +17,7 @@ const ContentLayout = ({ headline, description, children }) => {
 export const NotLoggedInContent = ({ email, token, redirectUrl }) => {
   email = encodeURIComponent(email);
   return (
-    <ContentLayout headline="Happy to have you 🫶" description="Please create an account or login.">
+    <ContentLayout headline="Happy to have you 🤗" description="Please create an account or login.">
       <Button variant="secondary" href={`/auth/signup?inviteToken=${token}&email=${email}`}>
         Create account
       </Button>

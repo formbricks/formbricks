@@ -1,0 +1,47 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import FormbricksSneak from "./formbricks-sneak.png";
+import ResponsiveEmbed from "react-responsive-embed";
+
+export const meta = {
+  title: "Video: Walk-through of the new Formbricks",
+  description: "The new, powerful Formbricks is almost ready!",
+  date: "2023-03-30",
+};
+
+_The new, powerful Formbricks is almost ready!_
+
+<Image src={FormbricksSneak} alt="Sneakpeek into what the new Formbricks can do" className="rounded-lg" />
+
+We've been working hard on getting a revamped Formbricks ready - we're almost there!
+
+What you can do with it:
+
+1. Design **any survey** you want
+2. Trigger at any point in your app both **No Code** (page view, element click) and **Code** (hook `formbricks.track` into your event)
+3. Pass custom user attributes to Formbricks to **segment your user base**
+
+## Have a look:
+
+<ResponsiveEmbed
+  src="https://www.tella.tv/video/clfrymq2f00sk0fjqd9r6btf1/embed?b=0&title=0&a=1&loop=0&t=0&muted=0"
+  allowFullScreen
+  className="rounded-lg"
+/>
+
+Formbricks is a lot more powerful than ever before! :mechanical_arm:
+
+You can create:
+
+- Onboarding surveys,
+- PMF surveys,
+- Churn surveys,
+- Feature chaser,
+- Feedback box,
+- Identify customer goals,
+- Measure task completion,
+- etc, etc.
+
+## Stay tuned, Formbricks Cloud goes live soon!
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

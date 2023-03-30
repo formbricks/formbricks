@@ -14,6 +14,8 @@ import {
 import { PaperAirplaneIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import AddMemberModal from "./AddMemberModal";
+import { Badge } from "@formbricks/ui";
+import toast from "react-hot-toast";
 
 export function EditMemberships({ environmentId }) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useTeam(environmentId);
@@ -69,7 +71,7 @@ export function EditMemberships({ environmentId }) {
         </Button>
       </div>
       <div className="rounded-lg border border-slate-200">
-        <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+        <div className="grid h-12 grid-cols-7 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="px-6"></div>
           <div className="col-span-2  ">Fullname</div>
           <div className="col-span-2">Email</div>
@@ -78,7 +80,7 @@ export function EditMemberships({ environmentId }) {
         <div className="grid-cols-7">
           {[...team.members, ...team.invitees].map((member) => (
             <div
-              className="grid h-12 w-full  grid-cols-7 content-center rounded-lg py-2 text-left text-sm text-slate-900 hover:bg-slate-100"
+              className="grid h-12 w-full grid-cols-7 content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
               key={member.email}>
               <div className="h-58 px-6 ">
                 <ProfileAvatar userId={member.userId} />
@@ -88,22 +90,22 @@ export function EditMemberships({ environmentId }) {
               </div>
               <div className="col-span-2 flex flex-col justify-center">{member.email}</div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
-                {!member.accepted && (
-                  <p className="rounded-md border-2 border-amber-500 bg-amber-50 px-2 py-px text-xs text-amber-500">
-                    Pending
-                  </p>
-                )}
+                {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}
                 {member.role !== "owner" && (
                   <button onClick={(e) => handleOpenDeleteMemberModal(e, member)}>
-                    <TrashIcon className="h-5 w-5 text-black" />
+                    <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
                   </button>
                 )}
                 {!member.accepted && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button onClick={() => handleResendInvite(member.inviteId)}>
-                          <PaperAirplaneIcon className="h-5 w-5 text-black" />
+                        <button
+                          onClick={() => {
+                            handleResendInvite(member.inviteId);
+                            toast.success("Invitation sent once more.");
+                          }}>
+                          <PaperAirplaneIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent className="TooltipContent" sideOffset={5}>
