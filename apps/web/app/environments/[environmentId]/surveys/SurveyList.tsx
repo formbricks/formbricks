@@ -14,12 +14,7 @@ import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Button, ErrorComponent, ResponsiveVideo } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import {
-  EllipsisHorizontalIcon,
-  PencilSquareIcon,
-  TrashIcon,
-  QuestionMarkCircleIcon,
-} from "@heroicons/react/24/solid";
+import { EllipsisHorizontalIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
