@@ -10,19 +10,19 @@ No-Code events can be set up within Formbricks with just a few clicks. There are
 
 The page URL event is triggered, when a user visits a specific page in your application. There are several match conditions:
 
-- `exactMatch`: The value should exactly match the specified condition.
-- `contains`: The value should contain the specified condition as a substring.
-- `startsWith`: The value should start with the specified condition.
-- `endsWith`: The value should end with the specified condition.
-- `notMatch`: The value should not exactly match the specified condition.
-- `notContains`: The value should not contain the specified condition as a substring.
+- `exactMatch`: The URL should exactly match the provided string.
+- `contains`: The URL should contain the specified string as a substring.
+- `startsWith`: The URL should start with the specified string.
+- `endsWith`: The URL should end with the specified string.
+- `notMatch`: The URL should not match the specified condition.
+- `notContains`: The URL should not contain the specified string as a substring.
 
 ## innerText Event (coming soon)
 
-The innerText event checks if the `innerText` of a clicked HTML element matches a specific text.
+The innerText event checks if the `innerText` of a clicked HTML element matches a specific text, e.g. the label of a button.
 
 ## CSS Selector Event (coming soon)
 
-The CSS Selector event checks if the CSS selector matches the `id` of a clicked HTML element matches a specific text.
+The CSS Selector event checks if the provided CSS selector matches the selector of a clicked HTML element. The CSS selector can be a class, id or any other CSS selector within your website.
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

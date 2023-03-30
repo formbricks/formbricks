@@ -20,7 +20,7 @@ const navigation = [
     links: [
       { title: "Why Attributes?", href: "/docs/attributes/why" },
       { title: "Custom Attributes", href: "/docs/attributes/custom-attributes" },
-      { title: "Identify users", href: "/docs/getting-started/identify-users" },
+      { title: "Identify users", href: "/docs/attributes/identify-users" },
     ],
   },
   {

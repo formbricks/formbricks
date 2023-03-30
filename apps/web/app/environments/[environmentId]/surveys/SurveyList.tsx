@@ -76,7 +76,10 @@ export default function SurveysList({ environmentId }) {
               <source src="/video/lost-sw.mp4" type="video/mp4" />
               No GIF support
             </video>
-            <Button variant="secondary" onClick={() => setVideoDialogOpen(true)}>
+            <Button
+              variant="secondary"
+              onClick={() => setVideoDialogOpen(true)}
+              className="hover:bg-slate-300">
               Play video
             </Button>
 

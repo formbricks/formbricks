@@ -9,7 +9,9 @@ interface VideoWalkThroughProps {
 export default function VideoWalkThrough({ open, setOpen }: VideoWalkThroughProps) {
   return (
     <Modal open={open} setOpen={setOpen}>
-      <ResponsiveVideo src="/videos/walkthrough-v1.mp4" />
+      <div className="mt-5">
+        <ResponsiveVideo src="/videos/walkthrough-v1.mp4" />
+      </div>
     </Modal>
   );
 }
