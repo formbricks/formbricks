@@ -1,0 +1,25 @@
+import { Layout } from "@/components/docs/Layout";
+
+export const meta = {
+  title: "Setting attributes with code",
+};
+
+One way to send attributes to Formbricks is in your code. In Formbricks, there are two special attributes for [user identification](/docs/attributes/identify-users)(user ID & email) and custom attributes. An example:
+
+### Setting Custom User Attributes
+
+You can use the setAttribute function to set any custom attribute for the user (e.g. name, plan, etc.):
+
+```javascript
+formbricks.setAttribute("Plan", "Pro");
+```
+
+Generally speaking, the setAttribute function works like this:
+
+```javascript
+formbricks.setAttribute("attribute_key", "attribute_value");
+```
+
+Where `attributeName` is the name of the attribute you want to set, and `attributeValue` is the value of the attribute you want to set.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

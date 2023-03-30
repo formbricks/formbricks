@@ -34,3 +34,11 @@
   background-color: #cbd5e1;
   border: 3px solid #cbd5e1;
 }
+
+.DocSearch-Input {
+  @apply px-11 text-gray-900 bg-white;
+}
+
+.dark .DocSearch-Input {
+  @apply text-gray-200 bg-gray-800;
+}

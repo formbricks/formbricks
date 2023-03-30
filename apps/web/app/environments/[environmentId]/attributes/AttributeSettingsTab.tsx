@@ -70,7 +70,10 @@ export default function AttributeSettingsTab({
         </div>
         <div className="flex justify-between border-t border-slate-200 pt-6">
           <div>
-            <Button variant="secondary" href="https://formbricks.com/docs" target="_blank">
+            <Button
+              variant="secondary"
+              href="https://formbricks.com/docs/getting-started/identify-users"
+              target="_blank">
               Read Docs
             </Button>
           </div>

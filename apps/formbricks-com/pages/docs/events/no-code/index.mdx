@@ -1,0 +1,28 @@
+import { Layout } from "@/components/docs/Layout";
+
+export const meta = {
+  title: "No-Code Events",
+};
+
+No-Code events can be set up within Formbricks with just a few clicks. There are three types of No-Code events:
+
+## Page URL Event
+
+The page URL event is triggered, when a user visits a specific page in your application. There are several match conditions:
+
+- `exactMatch`: The value should exactly match the specified condition.
+- `contains`: The value should contain the specified condition as a substring.
+- `startsWith`: The value should start with the specified condition.
+- `endsWith`: The value should end with the specified condition.
+- `notMatch`: The value should not exactly match the specified condition.
+- `notContains`: The value should not contain the specified condition as a substring.
+
+## innerText Event (coming soon)
+
+The innerText event checks if the `innerText` of a clicked HTML element matches a specific text.
+
+## CSS Selector Event (coming soon)
+
+The CSS Selector event checks if the CSS selector matches the `id` of a clicked HTML element matches a specific text.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

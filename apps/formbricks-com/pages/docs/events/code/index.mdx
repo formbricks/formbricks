@@ -1,0 +1,23 @@
+import { Layout } from "@/components/docs/Layout";
+
+export const meta = {
+  title: "Code Events",
+};
+
+Events can also be set in the code base. You can fire an event using `formbricks.track()`
+
+```javascript
+formbricks.track("Event Name");
+```
+
+Here is an example of how to fire an event when a user clicks a button:
+
+```javascript
+const handleClick = () => {
+  formbricks.track("Button Clicked");
+};
+
+return <button onClick={handleClick}>Click Me</button>;
+```
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

@@ -62,7 +62,10 @@ if (typeof window !== "undefined") {
                 <span className="font-semibold">
                   Need a more detailed setup guide for React, Next.js or Vue.js?
                 </span>{" "}
-                <Link className="decoration-brand-dark" href="https://formbricks.com/docs" target="_blank">
+                <Link
+                  className="decoration-brand-dark"
+                  href="https://formbricks.com/docs/getting-started/quickstart"
+                  target="_blank">
                   Check out the docs.
                 </Link>
               </li>
@@ -83,7 +86,10 @@ if (typeof window !== "undefined") {
                 <span className="font-semibold">
                   Want to learn how to add user attributes, custom events and more?
                 </span>{" "}
-                <Link className="decoration-brand-dark" href="https://formbricks.com/docs" target="_blank">
+                <Link
+                  className="decoration-brand-dark"
+                  href="https://formbricks.com/docs/attributes/why"
+                  target="_blank">
                   Dive into the docs.
                 </Link>
               </li>
@@ -125,7 +131,10 @@ if (typeof window !== "undefined") {
                 <span className="font-semibold">
                   Want to learn how to add user attributes, custom events and more?
                 </span>{" "}
-                <Link className="decoration-brand-dark" href="https://formbricks.com/docs" target="_blank">
+                <Link
+                  className="decoration-brand-dark"
+                  href="https://formbricks.com/docs/attributes/why"
+                  target="_blank">
                   Dive into the docs.
                 </Link>
               </li>
