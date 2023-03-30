@@ -5,7 +5,8 @@ const nextConfig = {
     appDir: true,
     serverComponentsExternalPackages: ["@tremor/react"],
   },
-  transpilePackages: ["@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
+  output: "standalone",
+  transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
       {

@@ -7,7 +7,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
 
-  formbricks-hq:
+  formbricks:
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile
