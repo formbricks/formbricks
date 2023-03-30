@@ -30,6 +30,7 @@ export { PageTitle } from "./components/PageTitle";
 export { Popover, PopoverTrigger, PopoverContent } from "./components/Popover";
 export { ProgressBar } from "./components/ProgressBar";
 export { RadioGroup, RadioGroupItem } from "./components/RadioGroup";
+export { ResponsiveVideo } from "./components/ResponsiveVideo";
 export {
   Select,
   SelectGroup,
