@@ -41,7 +41,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
               </div>
               <div>
                 <Label>Email Adress</Label>
-                <Input placeholder="hans@wurst.com" {...register("email")} />
+                <Input type="email" placeholder="hans@wurst.com" {...register("email", { required: true })} />
               </div>
             </div>
           </div>
@@ -55,12 +55,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
                 }}>
                 Cancel
               </Button>
-              <Button
-                variant="primary"
-                type="submit"
-                onClick={() => {
-                  setOpen(false);
-                }}>
+              <Button variant="primary" type="submit">
                 Send Invitation
               </Button>
             </div>
