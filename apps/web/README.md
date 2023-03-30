@@ -1,38 +1,80 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Formbricks
 
-## Getting Started
+> still in development
 
-First, run the development server:
+Everything you always wanted (from a form tool)...
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+The days of scattered response data are counted. Manage all form data in one place. Analyze right here or pipe your data where you need it.
+
+### How to run locally (for development)
+
+To get the project running locally on your machine you need to have the following development tools installed:
+
+- Node.JS (we recommend v18)
+- [pnpm](https://pnpm.io/)
+- [Docker](https://www.docker.com/) (to run PostgreSQL / MailHog)
+
+1. Clone the project:
+
+   ```sh
+   git clone https://github.com/formbricks/formbricks
+   ```
+
+   and move into the directory
+
+   ```sh
+   cd formbricks
+   ```
+
+1. Install Node.JS packages via pnpm. Don't have pnpm? Get it [here](https://pnpm.io/installation)
+
+   ```sh
+   pnpm install
+   ```
+
+1. To make the process of installing a dev dependencies easier, we offer a [`docker-compose.yml`](https://docs.docker.com/compose/) with the following servers:
+
+   - a `postgres` container and environment variables preset to reach it,
+   - a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
+
+   ```sh
+   docker-compose -f docker-compose.dev.yml up -d
+   ```
+
+1. Create a `.env` file based on `.env.example` and change it according to your setup. If you are using a cloud based database or another mail server, you will need to update the `DATABASE_URL` and SMTP settings in your `.env` accordingly.
+
+   ```sh
+   cp .env.example .env
+   ```
+
+1. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
+
+   ```sh
+   pnpm dlx prisma migrate dev
+   ```
+
+1. Start the development server:
+
+   ```sh
+   pnpm dev
+   ```
+
+   **You can now access the app on [https://localhost:3000](https://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of formbricks, create a new account.
+
+   For viewing the confirmation email and other emails the system sends you, you can access mailhog at [https://localhost:8025](https://localhost:8025)
+
+### Build
+
+To build all apps and packages, run the following command:
+
+```sh
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Develop
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To develop all apps and packages, run the following command:
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```sh
+pnpm dev
+```

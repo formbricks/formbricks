@@ -1,5 +1,3 @@
-import { hashString } from "./hashString";
-
 /* We use this telemetry service to better understand how Formbricks is being used
    and how we can improve it. All data including the IP address is collected anonymously
    and we cannot trace anything back to you or your customers. If you still want to
@@ -9,7 +7,8 @@ export const captureTelemetry = async (eventName: string, properties = {}) => {
   if (
     process.env.TELEMETRY_DISABLED !== "1" &&
     process.env.NODE_ENV === "production" &&
-    process.env.NEXTAUTH_URL !== "http://localhost:3000"
+    process.env.NEXTAUTH_URL !== "http://localhost:3000" &&
+    process.env.INSTANCE_ID
   ) {
     try {
       await fetch("https://eu.posthog.com/capture/", {
@@ -19,7 +18,7 @@ export const captureTelemetry = async (eventName: string, properties = {}) => {
           api_key: "phc_6XBUthOJLVe0Ij9EYkwEKpV96fUbA1aXxnHDq5ryASk",
           event: eventName,
           properties: {
-            distinct_id: hashString(process.env.NEXTAUTH_URL || ""),
+            distinct_id: process.env.INSTANCE_ID,
             ...properties,
           },
           timestamp: new Date().toISOString(),

@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 
+const { createId } = require("@paralleldrive/cuid2");
+
 const nextConfig = {
   experimental: {
     appDir: true,
@@ -46,6 +48,9 @@ const nextConfig = {
         ],
       },
     ];
+  },
+  env: {
+    INSTANCE_ID: createId(),
   },
 };
 
