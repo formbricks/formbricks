@@ -5,7 +5,7 @@ module.exports = {
     "./pages/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
     // include packages if not transpiling
-    "../../packages/ui/src/**/*.{js,ts,jsx,tsx}",
+    "../../packages/ui/components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
