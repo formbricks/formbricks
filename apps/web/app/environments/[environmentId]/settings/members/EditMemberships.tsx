@@ -15,7 +15,7 @@ import { PaperAirplaneIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import AddMemberModal from "./AddMemberModal";
 
-export function EditMembers({ environmentId }) {
+export function EditMemberships({ environmentId }) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useTeam(environmentId);
 
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
@@ -53,7 +53,7 @@ export function EditMembers({ environmentId }) {
   }
 
   if (isErrorTeam) {
-    console.log(isErrorTeam);
+    console.error(isErrorTeam);
     return <div>Error</div>;
   }
 
