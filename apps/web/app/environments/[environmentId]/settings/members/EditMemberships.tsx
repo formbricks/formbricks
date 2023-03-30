@@ -17,7 +17,7 @@ import AddMemberModal from "./AddMemberModal";
 import { Badge } from "@formbricks/ui";
 import toast from "react-hot-toast";
 
-export function EditMembers({ environmentId }) {
+export function EditMemberships({ environmentId }) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useTeam(environmentId);
 
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
@@ -55,7 +55,7 @@ export function EditMembers({ environmentId }) {
   }
 
   if (isErrorTeam) {
-    console.log(isErrorTeam);
+    console.error(isErrorTeam);
     return <div>Error</div>;
   }
 
