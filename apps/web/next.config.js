@@ -6,6 +6,14 @@ const nextConfig = {
     serverComponentsExternalPackages: ["@tremor/react"],
   },
   transpilePackages: ["@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+      },
+    ],
+  },
   async headers() {
     return [
       {
