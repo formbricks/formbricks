@@ -64,9 +64,9 @@ function Header({ navigation }: any) {
           onClick={() => router.push("https://github.com/formbricks/formbricks")}>
           View on Github
         </Button>
-        <Button variant="highlight" className="ml-2" onClick={() => router.push("/waitlist")}>
+        {/*         <Button variant="highlight" className="ml-2" onClick={() => router.push("/waitlist")}>
           Get started
-        </Button>
+        </Button> */}
       </div>
     </header>
   );
