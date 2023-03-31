@@ -69,7 +69,11 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
 
   return (
     <div>
-      <div className={cn(loadingElement ? "fb-animate-pulse fb-opacity-60" : "", "fb-p-4")}>
+      <div
+        className={cn(
+          loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
+          "fb-p-4 fb-text-slate-800 fb-font-sans"
+        )}>
         {currentQuestion.type === "multipleChoiceSingle" ? (
           <MultipleChoiceSingleQuestion
             question={currentQuestion}
