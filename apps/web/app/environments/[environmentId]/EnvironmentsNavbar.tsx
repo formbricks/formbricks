@@ -124,7 +124,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           label: "Profile",
           href: `/environments/${environmentId}/settings/profile`,
         },
-        { icon: UsersIcon, label: "Team", href: `/environments/${environmentId}/settings/team` },
+        { icon: UsersIcon, label: "Team", href: `/environments/${environmentId}/settings/members` },
         {
           icon: CreditCardIcon,
           label: "Billing & Plan",
