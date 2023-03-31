@@ -38,13 +38,16 @@ Add the following script to the `<head>` tag of your HTML file:
 <script type="text/javascript">
   !(function () {
     var t = document.createElement("script");
-    (t.type = "text/javascript"), (t.async = !0), (t.src = "https://formbricks.com/widget.js");
+    (t.type = "text/javascript"),
+      (t.async = !0),
+      (t.src = "https://unpkg.com/@formbricks/js@0.1.2/dist/index.umd.js");
     var e = document.getElementsByTagName("script")[0];
     e.parentNode.insertBefore(t, e),
       setTimeout(function () {
+        window.formbricks = window.js;
         window.formbricks.init({
           environmentId: "your-environment-id",
-          apiHost: "https://api.formbricks.com",
+          apiHost: "https://app.formbricks.com",
         });
       }, 500);
   })();
@@ -69,7 +72,7 @@ import formbricks from "@formbricks/js";
 if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "your-environment-id",
-    apiHost: "https://api.formbricks.com",
+    apiHost: "https://app.formbricks.com",
   });
 }
 ```

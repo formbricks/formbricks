@@ -5,21 +5,20 @@
   </script> -->
 
   <script type="text/javascript">
-    (function () {
-      var a = document.createElement("script");
-      a.type = "text/javascript";
-      a.async = !0;
-      a.src = "./dist/index.umd.js";
-      var b = document.getElementsByTagName("script")[0];
-      b.parentNode.insertBefore(a, b);
-      setTimeout(function () {
-        window.formbricks = window.js;
-        window.formbricks.init({
-          environmentId: "clfqjny0v0003yzgscnog1j9i",
-          apiHost: "http://localhost:3000",
-          debug: true,
-        });
-      }, 500);
+    !(function () {
+      var t = document.createElement("script");
+      (t.type = "text/javascript"),
+        (t.async = !0),
+        (t.src = "https://unpkg.com/@formbricks/js@0.1.2/dist/index.umd.js");
+      var e = document.getElementsByTagName("script")[0];
+      e.parentNode.insertBefore(t, e),
+        setTimeout(function () {
+          window.formbricks = window.js;
+          window.formbricks.init({
+            environmentId: "clfv982hs003dyzhphibui8as",
+            apiHost: "http://localhost:3000",
+          });
+        }, 500);
     })();
   </script>
 </head>
