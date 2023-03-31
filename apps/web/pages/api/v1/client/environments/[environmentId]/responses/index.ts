@@ -22,12 +22,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (!surveyId) {
       return res.status(400).json({ message: "Missing surveyId" });
     }
-    if (!personId) {
-      return res.status(400).json({ message: "Missing personId" });
-    }
     if (!response) {
       return res.status(400).json({ message: "Missing data" });
     }
+    // personId can be null, e.g. for link surveys
 
     // get teamId from environment
     const environment = await prisma.environment.findUnique({
@@ -61,8 +59,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     // find team owner
     const teamOwnerId = environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
 
-    // create new response
-    const responseData = await prisma.response.create({
+    const createBody = {
       select: {
         id: true,
       },
@@ -72,14 +69,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             id: surveyId,
           },
         },
-        person: {
-          connect: {
-            id: personId,
-          },
-        },
         ...response,
       },
-    });
+    };
+
+    if (personId) {
+      createBody.data.person = {
+        connect: {
+          id: personId,
+        },
+      };
+    }
+
+    // create new response
+    const responseData = await prisma.response.create(createBody);
 
     captureTelemetry("response created");
     if (teamOwnerId) {
