@@ -9,10 +9,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import Modal from "@/components/shared/Modal";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
-import { Button, ErrorComponent, ResponsiveVideo } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -25,7 +24,6 @@ export default function SurveysList({ environmentId }) {
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isVideoDialogOpen, setVideoDialogOpen] = useState(false);
 
   const [activeSurvey, setActiveSurvey] = useState("" as any);
   const [activeSurveyIdx, setActiveSurveyIdx] = useState("" as any);
@@ -69,7 +67,7 @@ export default function SurveysList({ environmentId }) {
             </div>
           </li>
         </button>
-        {surveys.length === 0 && (
+        {/*  {surveys.length === 0 && (
           <div className="flex flex-col items-center justify-center space-y-4 rounded-lg border border-slate-200 bg-slate-100 p-2">
             <p className="text-center text-xs text-slate-500">Kinda lost?</p>
             <video width="100" height="120" loop autoPlay className="rounded">
@@ -87,7 +85,7 @@ export default function SurveysList({ environmentId }) {
               <ResponsiveVideo src="/video/walkthrough-v1.mp4" />
             </Modal>
           </div>
-        )}
+        )} */}
         {surveys
           .sort((a, b) => b.updatedAt - a.updatedAt)
           .map((survey, surveyIdx) => (

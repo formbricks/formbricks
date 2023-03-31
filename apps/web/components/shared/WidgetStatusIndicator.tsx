@@ -34,7 +34,7 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
       icon: ArrowDownIcon,
       color: "slate",
       title: "Not implemented yet.",
-      subtitle: "The Formbricks widget has not yet been implemented.",
+      subtitle: "Formbricks widget not yet implemented.",
     },
     running: { icon: CheckIcon, color: "green", title: "Receiving data.", subtitle: "Last event received:" },
     issue: {

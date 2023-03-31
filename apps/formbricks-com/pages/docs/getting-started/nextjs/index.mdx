@@ -31,17 +31,20 @@ pnpm add @formbricks/js
 
 ## Integrating Formbricks SDK with Next.js
 
-Update your App component in the \_app.ts file.
+Update your App component in the \_app.ts file like so:
 
 ```tsx
+import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
+import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "your-environment-id",
     apiHost: "your-api-host", // e.g. https://app.formbricks.com
+    logLevel: "debug", // remove when in production
   });
 }
 
@@ -62,8 +65,17 @@ export default function App({ Component, pageProps }: AppProps) {
 }
 ```
 
-First you need to initialize the Formbricks SDK, making sure it only runs on the client side. To connect the Next.js router to Formbricks and ensure the SDK can keep track of every page change, you need to register the route change event.
+**What are we doing here?**
+First we need to initialize the Formbricks SDK, making sure it only runs on the client side.
 
-That's it! 🎉 You have now successfully integrated the Formbricks SDK into your Next.js application. You can start creating and customizing in-product micro-surveys to gather valuable feedback from your users and improve your product experience.
+To connect the Next.js router to Formbricks and ensure the SDK can keep track of every page change, we are registering the route change event.
+
+That's it! 🎉
+
+You should now see that the Widget Status in the setup checklist updated accordingly:
+
+If it doesnt work, please [join our Discord](https://formbricks.com/discord) and let us know!
+
+You have now successfully integrated the Formbricks SDK into your Next.js application. You can start creating and customizing in-product micro-surveys to gather valuable feedback from your users and improve your product experience.
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
