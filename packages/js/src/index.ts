@@ -54,7 +54,6 @@ const refresh = (): void => {
 };
 
 const registerRouteChange = (): void => {
-  console.log("fire!!!");
   queue.add(async () => {
     checkInitialized();
     checkPageUrl();
@@ -62,9 +61,5 @@ const registerRouteChange = (): void => {
 };
 
 const formbricks = { init, setUserId, setEmail, setAttribute, track, logout, refresh, registerRouteChange };
-
-if (typeof window !== "undefined") {
-  (window as any).formbricks = formbricks;
-}
 
 export default formbricks;
