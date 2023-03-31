@@ -36,6 +36,7 @@ if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "${environmentId}",
     apiHost: "${window.location.protocol}//${window.location.host}",
+    logLevel: "debug", // remove when in production
   });
 }`}</CodeBlock>
 
