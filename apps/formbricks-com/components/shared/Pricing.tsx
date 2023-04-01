@@ -7,25 +7,37 @@ import EarlyBirdDeal from "./EarlyBirdDeal";
 const tiers = [
   {
     name: "Self-hosting",
-    href: "#",
-    priceMonthly: "tba",
+    href: "https://formbricks.com/github",
+    priceMonthly: "free",
     button: "secondary",
     discounted: false,
     highlight: false,
-    paymentRythm: "/month",
+    paymentRythm: "/always",
     description: "Host Formbricks on your own server.",
-    ctaName: "Contact us",
-    ctaAction: () => window.open("mailto:hola@formbricks.com"),
+    ctaName: "View Code",
+    ctaAction: () => window.open("https://formbricks.com/github"),
   },
   {
-    name: "Cloud",
-    href: "#",
-    priceMonthly: "$99",
+    name: "Free",
+    href: "https://app.formbricks.com/auth/signup",
+    priceMonthly: "$0",
     button: "highlight",
+    discounted: false,
+    highlight: false,
+    paymentRythm: "/month",
+    description: "All features. 30 responses per survey.",
+    ctaName: "Sign up now",
+    ctaAction: () => window.open("https://app.formbricks.com/auth/signup"),
+  },
+  {
+    name: "Pro",
+    href: "https://app.formbricks.com/auth/signup",
+    priceMonthly: "$99",
+    button: "secondary",
     discounted: true,
     highlight: true,
     paymentRythm: "/month",
-    description: "Use the managed cloud, gather insights immediately.",
+    description: "All features included. No limits.",
     ctaName: "Sign up now",
     ctaAction: () => window.open("https://app.formbricks.com/auth/signup"),
   },
@@ -35,17 +47,17 @@ export default function PricingPmf() {
   const router = useRouter();
   return (
     <div className="-mt-10 pb-20">
-      <div className="mx-auto max-w-7xl py-4 sm:px-6 sm:pb-6 lg:px-8 ">
+      <div className="mx-auto max-w-7xl py-4 sm:px-6 sm:pb-6 lg:px-8" id="pricing">
         <HeadingCentered heading="One price, unlimited usage." teaser="Pricing" />
 
-        <div className="mx-auto space-y-4 px-4 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0 md:px-0 lg:max-w-5xl">
+        <div className="mx-auto space-y-4 px-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 lg:px-0">
           {tiers.map((tier) => (
             <div
               key={tier.name}
               className={clsx(
                 `rounded-lg shadow-sm`,
                 tier.highlight
-                  ? "border border-slate-300 bg-slate-200 dark:border-slate-500 dark:bg-slate-600"
+                  ? "border border-slate-300 bg-slate-200 dark:border-slate-500 dark:bg-slate-800"
                   : "bg-slate-100 dark:bg-slate-700"
               )}>
               <div className="p-8">
@@ -94,7 +106,12 @@ export default function PricingPmf() {
                 {tier.ctaName && tier.ctaAction && (
                   <Button
                     onClick={tier.ctaAction}
-                    className="mt-6 w-full justify-center py-4 text-lg shadow-sm"
+                    className={clsx(
+                      "mt-6 w-full justify-center py-4 text-lg shadow-sm",
+                      tier.highlight
+                        ? ""
+                        : "bg-slate-300 hover:bg-slate-200 dark:bg-slate-600 dark:hover:bg-slate-500"
+                    )}
                     variant={tier.highlight ? "highlight" : "secondary"}>
                     {tier.ctaName}
                   </Button>
@@ -104,7 +121,7 @@ export default function PricingPmf() {
           ))}
         </div>
       </div>
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
         <EarlyBirdDeal />
       </div>
     </div>

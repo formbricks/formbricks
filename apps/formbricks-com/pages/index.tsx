@@ -4,6 +4,7 @@ import Features from "@/components/home/Features";
 import Highlights from "@/components/home/Highlights"; /* 
 import BreakerCTA from "@/components/shared/BreakerCTA"; */
 import Steps from "@/components/home/Steps";
+import Pricing from "@/components/shared/Pricing";
 
 const IndexPage = () => (
   <Layout
@@ -29,6 +30,7 @@ const IndexPage = () => (
       href="/waitlist"
       inverted
     /> */}
+    <Pricing />
   </Layout>
 );
 
