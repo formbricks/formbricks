@@ -108,11 +108,10 @@ export default function TemplateList() {
   };
 
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(onboardingSegmentation);
-  const [selectedFilter, setSelectedFilter] = useState("All");
-  const categories = [
-    "All",
-    ...(Array.from(new Set(templates.map((template) => template.category))) as string[]),
-  ];
+
+  const categories = [...(Array.from(new Set(templates.map((template) => template.category))) as string[])];
+
+  const [selectedFilter, setSelectedFilter] = useState(categories[0]);
 
   const customSurvey: Template = {
     name: "Custom Survey",
@@ -135,7 +134,7 @@ export default function TemplateList() {
 
   return (
     <div className="hidden h-full flex-col lg:flex">
-      <div className="relative z-0 flex flex-1 overflow-hidden">
+      <div className="z-0  flex min-h-[90vh] overflow-hidden">
         <main className="relative z-0 max-h-[90vh] flex-1 overflow-y-auto rounded-l-lg bg-slate-100 py-6 px-6 focus:outline-none dark:bg-slate-700">
           <div className="mb-6 flex space-x-2">
             {categories.map((category) => (

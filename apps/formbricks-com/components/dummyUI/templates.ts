@@ -21,7 +21,7 @@ export const templates: Template[] = [
   {
     name: "Onboarding Segmentation",
     icon: OnboardingIcon,
-    category: "Product Management",
+    category: "Popular",
     description: "Learn more about who signed up to your product and why.",
     preset: {
       name: "Onboarding Segmentation",
@@ -119,7 +119,7 @@ export const templates: Template[] = [
   {
     name: "Product Market Fit Survey",
     icon: PMFIcon,
-    category: "Product Management",
+    category: "Popular",
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       name: "Product Market Fit Survey",
@@ -187,7 +187,7 @@ export const templates: Template[] = [
   {
     name: "Pre-Churn Survey",
     icon: CancelSubscriptionIcon,
-    category: "Increase Revenue",
+    category: "Popular",
     description: "Find out why people cancel you. These insights are pure gold!",
     preset: {
       name: "Churn Survey",

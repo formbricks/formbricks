@@ -15,6 +15,7 @@
   }
 }
 
+/* Light mode (default) */
 /* Firefox */
 * {
   scrollbar-width: thin;
@@ -33,6 +34,27 @@
 *::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border: 3px solid #cbd5e1;
+}
+
+/* Dark mode */
+.dark * {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #2d3748 #4a5568;
+}
+
+.dark *::-webkit-scrollbar {
+  /* Chrome, Edge, and Safari */
+  width: 10px;
+}
+
+.dark *::-webkit-scrollbar-track {
+  background: #2d3748; /* slate-800 */
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background-color: #4a5568; /* slate-700 */
+  border: 3px solid #4a5568;
 }
 
 .DocSearch-Input {
