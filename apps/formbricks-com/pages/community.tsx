@@ -66,7 +66,7 @@ const CommunityPage = () => {
               Get support for anything your building - or just say hi 👋
             </p>
             <Button
-              className="mt-7 w-full justify-center font-bold"
+              className="mt-7 w-full justify-center"
               variant="highlight"
               onClick={() => router.push("/discord")}>
               Join Discord <ChatBubbleOvalLeftEllipsisIcon className="ml-1 inline h-5 w-5" />

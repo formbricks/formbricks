@@ -75,6 +75,11 @@ const nextConfig = {
         destination: "/",
         permanent: false,
       },
+      {
+        source: "/signup",
+        destination: "/auth/signup",
+        permanent: false,
+      },
     ];
   },
 };

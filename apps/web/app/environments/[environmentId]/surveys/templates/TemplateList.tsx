@@ -107,7 +107,7 @@ export default function TemplateList({ environmentId }: { environmentId: string 
           </div>
         </main>
         <aside className="group relative hidden h-full flex-1 flex-shrink-0 overflow-hidden border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">
-          <Link href={`/environments/${environmentId}/settings/lookandfeel`} target="_blank">
+          <Link href={`/environments/${environmentId}/settings/lookandfeel`}>
             <div className="absolute left-6  top-6 flex items-center rounded bg-slate-50 px-2 py-0.5 text-xs text-slate-500 opacity-0 transition-all delay-1000 duration-500 hover:bg-slate-100 group-hover:opacity-100">
               Update brand color <PaintBrushIcon className="ml-1.5 h-3 w-3" />
             </div>

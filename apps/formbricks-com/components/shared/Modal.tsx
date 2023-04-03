@@ -47,7 +47,7 @@ const Modal: React.FC<Modal> = ({
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                 <Dialog.Panel
                   className={clsx(
-                    "relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl ",
+                    "relative transform rounded-lg bg-slate-100 text-left shadow-xl transition-all dark:bg-slate-800 sm:my-8 sm:w-full sm:max-w-xl ",
                     `${noPadding ? "" : "px-4 pt-5 pb-4 sm:p-6"}`
                   )}>
                   <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
