@@ -2,12 +2,15 @@ import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { Button } from "@formbricks/ui";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
+import { PlayCircleIcon } from "@heroicons/react/24/solid";
+import VideoWalkThrough from "../home/VideoWalkThrough";
 
 export default function Header() {
+  const [videoModal, setVideoModal] = useState(false);
   const router = useRouter();
   return (
     <Popover className="relative" as="header">
@@ -30,11 +33,7 @@ export default function Header() {
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Community
           </Link>
-          <Link
-            href="/blog"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Blog <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
-          </Link>
+
           <Link
             href="#pricing"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
@@ -45,20 +44,32 @@ export default function Header() {
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Docs
           </Link>
+          <Link
+            href="/blog"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Blog{/*  <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p> */}
+          </Link>
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
-          <Button
+          <Button variant="secondary" className="px-2" onClick={() => setVideoModal(true)}>
+            <VideoWalkThrough open={videoModal} setOpen={() => setVideoModal(false)} />
+            <PlayCircleIcon className="h-6 w-6" />
+          </Button>
+          {/*           <Button
             variant="secondary"
             EndIcon={GitHubIcon}
             endIconClassName="fill-slate-800 ml-2 dark:fill-slate-200"
             href="https://github.com/formbricks/formbricks"
             target="_blank">
             View on Github
-          </Button>
-          {/* <Button variant="highlight" className="ml-2" onClick={() => router.push("/waitlist")}>
-            Get Access
           </Button> */}
+          <Button
+            variant="highlight"
+            className="ml-2"
+            onClick={() => router.push("https://app.formbricks.com/auth/signup")}>
+            Get started
+          </Button>
         </div>
       </div>
 
@@ -90,20 +101,22 @@ export default function Header() {
             <div className="px-5 py-6">
               <div className="flex flex-col space-y-5 text-center text-sm dark:text-slate-300">
                 <Link href="/community">Community</Link>
+                <Link href="#pricing">Pricing</Link>
+                <Link href="/docs">Docs</Link>
                 <Link href="/blog">Blog</Link>
-                <Button
+                {/*                 <Button
                   variant="secondary"
                   EndIcon={GitHubIcon}
                   onClick={() => router.push("https://github.com/formbricks/formbricks")}
                   className="flex w-full justify-center fill-slate-800 dark:fill-slate-200">
                   View on Github
-                </Button>
-                {/* <Button
-                  variant="primary"
-                  onClick={() => router.push("/waitlist")}
-                  className="flex w-full justify-center">
-                  Get access
                 </Button> */}
+                <Button
+                  variant="primary"
+                  onClick={() => router.push("https://app.formbricks.com/auth/signup")}
+                  className="flex w-full justify-center">
+                  Get started
+                </Button>
               </div>
             </div>
           </div>

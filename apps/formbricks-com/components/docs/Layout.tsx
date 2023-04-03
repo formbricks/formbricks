@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import clsx from "clsx";
-import { Hero } from "@/components/shared/Hero";
 import { FooterLogo, Logomark } from "@/components/shared/Logo";
 import { MobileNavigation } from "@/components/shared/MobileNavigation";
 import { Navigation } from "@/components/shared/Navigation";
@@ -64,9 +63,12 @@ function Header({ navigation }: any) {
           onClick={() => router.push("https://github.com/formbricks/formbricks")}>
           View on Github
         </Button>
-        {/*         <Button variant="highlight" className="ml-2" onClick={() => router.push("/waitlist")}>
+        <Button
+          variant="highlight"
+          className="ml-2"
+          onClick={() => router.push("https://app.formbricks.com/auth/signup")}>
           Get started
-        </Button> */}
+        </Button>
       </div>
     </header>
   );
@@ -92,11 +94,9 @@ export function Layout({ children, meta }: LayoutProps) {
     <>
       <MetaInformation
         title="Formbricks Documentation"
-        description="Modular, customizable, extendable. Take what you like, build on top what you need. Build your next big thing faster."
+        description="Open-source Experience Management for Digital Products."
       />
       <Header navigation={navigation} />
-
-      {isHomePage && <Hero />}
 
       <div className="max-w-8xl relative mx-auto flex justify-center sm:px-2 lg:px-8 xl:px-12">
         <div className="hidden lg:relative lg:block lg:flex-none">
