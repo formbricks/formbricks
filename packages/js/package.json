@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/js",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "",
   "source": "src/index.ts",
   "main": "./dist/index.cjs",

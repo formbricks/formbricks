@@ -36,13 +36,13 @@ export default function OpenTextQuestion({
           id={question.id}
           placeholder={question.placeholder}
           required={question.required}
-          className="fb-block fb-w-full fb-rounded-md fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm border-slate-100 bg-slate-50 focus:border-slate-500"></textarea>
+          className="fb-block fb-w-full fb-rounded-md fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm fb-bg-slate-50 fb-border-slate-100 focus:fb-border-slate-500"></textarea>
       </div>
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
         <div></div>
         <button
           type="submit"
-          className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 focus:ring-slate-500"
+          className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 focus:fb-ring-slate-500"
           style={{ backgroundColor: brandColor }}>
           {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
         </button>

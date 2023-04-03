@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   important: "#fbjs",
+  darkMode: "class",
   corePlugins: {
     preflight: false,
   },

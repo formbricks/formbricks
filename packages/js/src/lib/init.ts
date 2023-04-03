@@ -43,12 +43,14 @@ export const initialize = async (c: InitConfig): Promise<void> => {
     const { person, session, settings } = await createPerson();
     config.update({ person, session: extendSession(session), settings });
     trackEvent("New Session");
-  }
-  if (isExpired(config.get().session)) {
+  } else if (config.get().session && isExpired(config.get().session)) {
     // we need new session
     const { session, settings } = await createSession();
     config.update({ session: extendSession(session), settings });
     trackEvent("New Session");
+  } else if (!config.get().session) {
+    logger.error("Formbricks: Unable to initialize. No session found");
+    return;
   }
   addSessionEventListeners();
   addPageUrlEventListeners();
