@@ -10,7 +10,7 @@ export default function PricingTable() {
             <div className="p-8">
               <h2 className="inline-flex text-3xl font-bold text-slate-700">Free</h2>
               <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
-                Limited to 25 responses per survey.
+                Limited to 30 responses per survey.
               </p>
               <p className="mt-8">
                 <span className="text-slate-80 text-4xl font-light">free</span>

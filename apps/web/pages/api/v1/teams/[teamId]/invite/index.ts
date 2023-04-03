@@ -1,4 +1,4 @@
-import { getSessionOrUser } from "@/lib/api/apiHelper";
+import { getSessionOrUser, hasTeamAccess } from "@/lib/api/apiHelper";
 import { sendInviteMemberEmail } from "@/lib/email";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -15,9 +15,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(400).json({ message: "Missing teamId" });
   }
 
+  const hasAccess = await hasTeamAccess(currentUser, teamId);
+  if (hasAccess === false) {
+    return res.status(403).json({ message: "Not authorized" });
+  }
+  // TODO check if User is ADMIN or OWNER
+
   // POST /api/v1/teams/[teamId]/invite
   if (req.method === "POST") {
-    //TODO: Check if user is admin of team
     let { email, name } = req.body;
     email = email.toLowerCase();
 

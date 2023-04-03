@@ -9,6 +9,7 @@ declare module "next-auth" {
       /** The user's postal address. */
       id: string;
       teamId?: string;
+      plan?: string;
       email: string;
       name: string;
       finishedOnboarding: boolean;

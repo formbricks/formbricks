@@ -1,4 +1,4 @@
-import { getSessionOrUser } from "@/lib/api/apiHelper";
+import { getSessionOrUser, hasTeamAccess } from "@/lib/api/apiHelper";
 import { sendInviteMemberEmail } from "@/lib/email";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -32,7 +32,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
     });
-    if (membership?.role !== "owner") {
+    if (membership?.role !== "owner" || membership?.role !== "owner") {
       return res.status(403).json({ message: "You are not allowed to delete members from this team" });
     }
 

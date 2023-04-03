@@ -55,6 +55,21 @@ export const hasEnvironmentAccess = async (user, environmentId) => {
   return false;
 };
 
+export const hasTeamAccess = async (user, teamId) => {
+  const membership = await prisma.membership.findUnique({
+    where: {
+      userId_teamId: {
+        userId: user.id,
+        teamId: teamId,
+      },
+    },
+  });
+  if (membership) {
+    return true;
+  }
+  return false;
+};
+
 export const getSessionOrUser = async (req: NextApiRequest, res: NextApiResponse) => {
   // check for session (browser usage)
   let session: any = await getServerSession(req, res, authOptions);

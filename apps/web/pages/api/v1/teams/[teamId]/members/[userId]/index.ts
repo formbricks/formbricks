@@ -1,4 +1,4 @@
-import { getSessionOrUser } from "@/lib/api/apiHelper";
+import { getSessionOrUser, hasTeamAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -12,6 +12,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   const teamId = req.query.teamId?.toString();
   if (teamId === undefined) {
     return res.status(400).json({ message: "Missing teamId" });
+  }
+
+  const hasAccess = await hasTeamAccess(currentUser, teamId);
+  if (hasAccess === false) {
+    return res.status(403).json({ message: "Not authorized" });
   }
 
   const userId = req.query.userId?.toString();

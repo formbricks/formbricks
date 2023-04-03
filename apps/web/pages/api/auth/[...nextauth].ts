@@ -134,6 +134,11 @@ export const authOptions: NextAuthOptions = {
           memberships: {
             select: {
               teamId: true,
+              team: {
+                select: {
+                  plan: true,
+                },
+              },
             },
           },
           name: true,
@@ -147,6 +152,10 @@ export const authOptions: NextAuthOptions = {
       const additionalAttributs = {
         id: existingUser.id,
         teamId: existingUser.memberships.length > 0 ? existingUser.memberships[0].teamId : undefined,
+        plan:
+          existingUser.memberships.length > 0 && existingUser.memberships[0].team
+            ? existingUser.memberships[0].team.plan
+            : undefined,
         name: existingUser.name,
       };
 
@@ -160,6 +169,8 @@ export const authOptions: NextAuthOptions = {
       session.user.id = token?.id;
       // @ts-ignore
       session.user.teamId = token?.teamId;
+      // @ts-ignore
+      session.user.plan = token?.plan;
       session.user.name = token.name || "";
 
       return session;
