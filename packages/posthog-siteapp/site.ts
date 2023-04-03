@@ -1,5 +1,4 @@
 export function inject({ config, posthog }) {
-  console.log(posthog?.sessionManager?.session);
   const shadow = createShadow();
   const formbricksScript = document.createElement("script");
   formbricksScript.type = "text/javascript";
