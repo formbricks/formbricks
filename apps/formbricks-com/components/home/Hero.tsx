@@ -34,43 +34,47 @@ export default function Hero({}: Props) {
         </p>
 
         <div className="mx-auto mt-5 max-w-lg items-center space-x-8 sm:flex sm:justify-center md:mt-8">
-          <p className="whitespace-nowrap text-sm text-slate-400 dark:text-slate-500">Used by</p>
-          <Image
-            src={CalLogoLight}
-            alt="Cal Logo"
-            className="block rounded-lg opacity-50 hover:opacity-100 dark:hidden"
-            width={170}
-          />
-          <Image
-            src={CalLogoDark}
-            alt="Cal Logo"
-            className="hidden rounded-lg opacity-50 hover:opacity-100 dark:block"
-            width={170}
-          />
-          <Image
-            src={CrowdLogoLight}
-            alt="Cal Logo"
-            className="block rounded-lg pb-1 opacity-50 hover:opacity-100 dark:hidden"
-            width={200}
-          />
-          <Image
-            src={CrowdLogoDark}
-            alt="Cal Logo"
-            className="hidden rounded-lg pb-1 opacity-50 hover:opacity-100 dark:block"
-            width={200}
-          />
-                    <Image
-            src={StackOceanLogoLight}
-            alt="Cal Logo"
-            className="block rounded-lg pb-1 opacity-50 hover:opacity-100 dark:hidden"
-            width={200}
-          />
-          <Image
-            src={StackOceanLogoDark}
-            alt="Cal Logo"
-            className="hidden rounded-lg pb-1 opacity-50 hover:opacity-100 dark:block"
-            width={200}
-          />
+          <p className="hidden whitespace-nowrap text-sm text-slate-400 dark:text-slate-500 md:block">
+            Used by
+          </p>
+          <div className="grid grid-cols-3 gap-8 pt-2">
+            <Image
+              src={CalLogoLight}
+              alt="Cal Logo"
+              className="block rounded-lg opacity-50 hover:opacity-100 dark:hidden"
+              width={170}
+            />
+            <Image
+              src={CalLogoDark}
+              alt="Cal Logo"
+              className="hidden rounded-lg opacity-50 hover:opacity-100 dark:block"
+              width={170}
+            />
+            <Image
+              src={CrowdLogoLight}
+              alt="Cal Logo"
+              className="block rounded-lg pb-1 opacity-50 hover:opacity-100 dark:hidden"
+              width={200}
+            />
+            <Image
+              src={CrowdLogoDark}
+              alt="Cal Logo"
+              className="hidden rounded-lg pb-1 opacity-50 hover:opacity-100 dark:block"
+              width={200}
+            />
+            <Image
+              src={StackOceanLogoLight}
+              alt="Cal Logo"
+              className="block rounded-lg pb-1 opacity-50 hover:opacity-100 dark:hidden"
+              width={200}
+            />
+            <Image
+              src={StackOceanLogoDark}
+              alt="Cal Logo"
+              className="hidden rounded-lg pb-1 opacity-50 hover:opacity-100 dark:block"
+              width={200}
+            />
+          </div>
           {/*           <Button
             variant="secondary"
             className="mr-3 px-6"
