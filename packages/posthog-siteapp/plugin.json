@@ -1,0 +1,25 @@
+{
+  "name": "Formbricks",
+  "config": [
+    {
+      "markdown": "## MANUAL STEP NOTICE: This app needs to injects code into your website through posthog-js. You need to **opt-in** on your site to enable this behaviour.\n\n```\nposthog.init(\"api_key\", {\n  \"api_host\": \"https://app.posthog.com\",\n  \"opt_in_site_apps\": true,\n})\n```"
+    },
+    {
+      "key": "environmentId",
+      "name": "Environment ID",
+      "type": "string",
+      "hint": "Can be found in the Setup Checklist in the Formbricks Settings",
+      "default": "clfwl2u460003qo0hnmw4lihk",
+      "required": true,
+      "site": true
+    },
+    {
+      "key": "formbricksHost",
+      "name": "Formbricks Host",
+      "type": "string",
+      "default": "https://app.formbricks.com",
+      "required": true,
+      "site": true
+    }
+  ]
+}

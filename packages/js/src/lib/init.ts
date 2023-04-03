@@ -49,11 +49,12 @@ export const initialize = async (c: InitConfig): Promise<void> => {
     config.update({ session: extendSession(session), settings });
     trackEvent("New Session");
   } else if (!config.get().session) {
-    logger.error("Formbricks: Unable to initialize. No session found");
+    logger.error("Unable to initialize. No session found");
     return;
   }
   addSessionEventListeners();
   addPageUrlEventListeners();
+  logger.debug("Initialized");
 };
 
 export const checkInitialized = (): void => {
