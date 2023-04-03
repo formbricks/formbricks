@@ -35,7 +35,7 @@ export default function Hero({}: Props) {
 
         <div className="mx-auto mt-5 max-w-lg items-center space-x-8 sm:flex sm:justify-center md:mt-8">
           <p className="hidden whitespace-nowrap text-sm text-slate-400 dark:text-slate-500 md:block">
-            Used by
+            Trusted by
           </p>
           <div className="grid grid-cols-3 gap-8 pt-2">
             <Image

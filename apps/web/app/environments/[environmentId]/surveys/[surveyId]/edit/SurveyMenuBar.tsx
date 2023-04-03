@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
+import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import type { Survey } from "@formbricks/types/surveys";
+import { Button, Input } from "@formbricks/ui";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -35,16 +35,25 @@ export default function SurveyMenuBar({
 
   return (
     <div className="border-b border-slate-200 bg-white py-3 px-5 sm:flex sm:items-center sm:justify-between">
-      <Input
-        defaultValue={localSurvey.name}
-        onChange={(e) => {
-          const updatedSurvey = { ...localSurvey, name: e.target.value };
-          setLocalSurvey(updatedSurvey);
-        }}
-        className="max-w-md"
-      />
+      <div className="flex space-x-2 whitespace-nowrap">
+        <Input
+          defaultValue={localSurvey.name}
+          onChange={(e) => {
+            const updatedSurvey = { ...localSurvey, name: e.target.value };
+            setLocalSurvey(updatedSurvey);
+          }}
+          className="min-w-sm max-w-md"
+        />
+        <div className="flex items-center">
+          <SurveyStatusIndicator status={localSurvey.status} environmentId={environmentId} />
+          <span className="mr-3 italic text-slate-500">
+            {localSurvey.status === "draft" && "Survey drafted"}
+            {localSurvey.status === "archived" && "Survey archived"}
+          </span>
+        </div>
+      </div>
       <div className="mt-3 flex sm:mt-0 sm:ml-4">
-        <Button variant="minimal" className="mr-3" href={`/environments/${environmentId}/surveys/`}>
+        <Button variant="minimal" className="mr-3" onClick={() => router.back()}>
           Cancel
         </Button>
         <Button

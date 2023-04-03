@@ -8,6 +8,7 @@ import type { Survey } from "@formbricks/types/surveys";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
+import { cn } from "@formbricks/lib/cn";
 
 interface WhenToSendCardProps {
   localSurvey: Survey;
@@ -49,7 +50,10 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className="w-full space-y-2 rounded-lg border border-slate-300 bg-white">
+      className={cn(
+        open ? "" : "hover:bg-slate-50",
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+      )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">

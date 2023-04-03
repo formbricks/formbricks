@@ -290,7 +290,7 @@ export const templates: Template[] = [
           id: createId(),
           type: "multipleChoiceSingle",
           headline: "What's on your mind, boss?",
-          subheader: "Thanks for sharing feedback. We'll get back to you asap.",
+          subheader: "Thanks for sharing. We'll get back to you asap.",
           required: true,
           choices: [
             {
@@ -300,10 +300,6 @@ export const templates: Template[] = [
             {
               id: createId(),
               label: "Feature Request 💡",
-            },
-            {
-              id: createId(),
-              label: "Share some love 🤍",
             },
           ],
         },

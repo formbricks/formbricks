@@ -1,8 +1,8 @@
 // components/ui/CodeBlock.tsx
-import React, { useEffect } from "react";
+import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";
-import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
+import React, { useEffect } from "react";
 import toast from "react-hot-toast";
 
 interface CodeBlockProps {
@@ -16,7 +16,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ children, language }) => {
   }, [children]);
 
   return (
-    <div className="group relative mt-4 rounded-md font-light text-slate-200">
+    <div className="group relative mt-4 rounded-md text-sm  text-slate-200">
       <DocumentDuplicateIcon
         className="absolute top-4 right-4 z-20 h-5 w-5 cursor-pointer text-slate-600 opacity-0 transition-all duration-150 group-hover:opacity-60"
         onClick={() => {
