@@ -1,4 +1,4 @@
-import { getSessionOrUser, hasTeamAccess } from "@/lib/api/apiHelper";
+import { getSessionOrUser } from "@/lib/api/apiHelper";
 import { sendInviteMemberEmail } from "@/lib/email";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
