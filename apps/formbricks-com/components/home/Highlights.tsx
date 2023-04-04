@@ -51,7 +51,7 @@ export default function Highlights({}) {
               <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
                 ‘Spray and pray’ never worked.
                 <br />
-                <span className="font-light">Segment users, granularly.</span>
+                <span className="font-light">Pre-segment users, granularly.</span>
               </h2>
               <p className="text-md mt-6 max-w-md leading-7 text-slate-500 dark:text-slate-400">
                 Pre-segment who sees your survey based on custom attributes. Keep the signal, cancel out the

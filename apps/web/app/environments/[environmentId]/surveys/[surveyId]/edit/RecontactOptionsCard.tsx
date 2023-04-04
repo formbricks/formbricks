@@ -20,18 +20,18 @@ interface DisplayOption {
 const displayOptions: DisplayOption[] = [
   {
     id: "displayOnce",
-    name: "Show once",
-    description: "If person doesn't respond the survey won't be shown again.",
+    name: "Only once, even if they do not respond",
+    description: "The survey won't be shown again, if person doesn't respond.",
   },
   {
     id: "displayMultiple",
-    name: "Display until responded",
+    name: "Until they submit a response",
     description: "If you really want that answer, ask until you get it.",
   },
   {
     id: "respondMultiple",
-    name: "Always display when conditions match",
-    description: "This is useful for e.g. Feedback Boxes. Can cause survey fatigue.",
+    name: "Always, when the conditions match",
+    description: "Even after they submitted a response (e.g. Feedback Box)",
   },
 ];
 

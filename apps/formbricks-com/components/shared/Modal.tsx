@@ -53,7 +53,7 @@ const Modal: React.FC<Modal> = ({
                   <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
                     <button
                       type="button"
-                      className="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 focus:ring-offset-2"
+                      className="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 focus:ring-offset-2 dark:bg-slate-900"
                       onClick={() => setOpen(false)}>
                       <span className="sr-only">Close</span>
                       <XMarkIcon className="h-6 w-6" aria-hidden="true" />

@@ -21,7 +21,7 @@ export default function BreakerCTA({ inverted = false, teaser, headline, subhead
         inverted
           ? "from-slate-800 via-slate-800 to-slate-700 dark:from-slate-200  dark:to-slate-300"
           : "from-slate-200 to-slate-300 dark:from-slate-800 dark:via-slate-800  dark:to-slate-700",
-        "xs:mx-auto xs:w-full mx-4 my-4 max-w-6xl rounded-xl bg-gradient-to-br md:mb-0 "
+        "xs:mx-auto xs:w-full mx-4 my-4 mt-28 max-w-6xl rounded-xl bg-gradient-to-br md:mb-0 "
       )}>
       <div className="relative px-4 py-8 sm:px-6 sm:pt-8 sm:pb-12 lg:px-8 lg:pt-12">
         <div className="xs:block xs:absolute xs:right-10 hidden md:top-1/2 md:-translate-y-1/2">

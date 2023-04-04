@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@formbricks/ui";
 import { CheckCircleIcon, PauseCircleIcon, PlayCircleIcon } from "@heroicons/react/24/solid";
+import toast from "react-hot-toast";
 
 export default function SurveyStatusDropdown({
   surveyId,
@@ -47,7 +48,22 @@ export default function SurveyStatusDropdown({
       ) : (
         <Select
           onValueChange={(value) => {
-            triggerSurveyMutate({ status: value });
+            triggerSurveyMutate({ status: value })
+              .then(() => {
+                toast.success(
+                  value === "inProgress"
+                    ? "Survey live"
+                    : value === "paused"
+                    ? "Survey paused"
+                    : value === "completed"
+                    ? "Survey completed"
+                    : ""
+                );
+              })
+              .catch((error) => {
+                toast.error(`Error: ${error.message}`);
+              });
+
             if (updateLocalSurveyStatus)
               updateLocalSurveyStatus(value as "draft" | "inProgress" | "paused" | "completed" | "archived");
           }}>
