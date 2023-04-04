@@ -22,9 +22,9 @@
     "nuke": "rm -r node_modules; for d in **/node_modules; do echo $d; rm -r $d; done"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.22.0",
+    "@changesets/cli": "^2.26.1",
     "prettier": "latest",
-    "tsx": "^3.7.1",
+    "tsx": "^3.12.6",
     "turbo": "latest"
   },
   "engines": {

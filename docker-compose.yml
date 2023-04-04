@@ -1,5 +1,6 @@
 version: "3.3"
 services:
+  restart: unless-stopped
   postgres:
     image: postgres:15-alpine
     volumes:
@@ -8,6 +9,7 @@ services:
       - POSTGRES_PASSWORD=postgres
 
   formbricks:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile
