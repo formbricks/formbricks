@@ -20,9 +20,11 @@ export const renderWidget = (survey: Survey) => {
 };
 
 export const closeSurvey = async (): Promise<void> => {
+  console.log("close survey called");
   // remove container element from DOM
   const container = document.getElementById(containerId);
-  container.innerHTML = "";
+  container.remove();
+  addWidgetContainer();
   const settings = await getSettings();
   config.update({ settings });
   surveyRunning = false;

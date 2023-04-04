@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/router";
 import "../styles/globals.css";
 
+declare const window: any;
+
 if (typeof window !== "undefined") {
   if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
     formbricks.init({
@@ -11,6 +13,7 @@ if (typeof window !== "undefined") {
       apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
       logLevel: "debug",
     });
+    window.formbricks = formbricks;
   }
 }
 

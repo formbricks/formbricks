@@ -99,6 +99,10 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       } else if (survey.recontactDays !== null) {
         // if recontactDays is set on survey, use that
         const lastDisplaySurvey = survey.displays[0];
+        if (!lastDisplaySurvey) {
+          // no display yet - always display
+          return true;
+        }
         const lastDisplayDate = new Date(lastDisplaySurvey.createdAt);
         const currentDate = new Date();
         const diffTime = Math.abs(currentDate.getTime() - lastDisplayDate.getTime());

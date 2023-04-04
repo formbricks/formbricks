@@ -52,7 +52,7 @@ export default function MultipleChoiceSingleQuestion({
                       id={choice.id}
                       name={question.id}
                       value={choice.label}
-                      className="fb-h-4 fb-w-4 fb-border fb-border-slate-300 fb-accent-slate-800 fb-bg-white focus:fb-ring-0 focus:fb-ring-offset-0"
+                      className="fb-h-4 fb-w-4 fb-border fb-border-slate-300 focus:fb-ring-0 focus:fb-ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
                       onChange={(e) => {
                         setSelectedChoice(e.currentTarget.value);

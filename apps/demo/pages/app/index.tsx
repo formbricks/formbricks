@@ -10,6 +10,7 @@ import {
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/solid";
 import Image from "next/image";
+import formbricks from "@formbricks/js";
 
 const cards = [{ name: "Account balance", href: "#", icon: ScaleIcon, amount: "$30,659.45" }];
 const transactions = [
@@ -64,7 +65,11 @@ export default function AppPage({}) {
             </form>
           </div>
           <div className="ml-4 flex items-center md:ml-6">
-            <button className="mr-2 flex max-w-xs items-center rounded-full bg-white text-sm  font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 lg:rounded-md lg:p-2 lg:hover:bg-slate-50">
+            <button
+              className="mr-2 flex max-w-xs items-center rounded-full bg-white text-sm  font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 lg:rounded-md lg:p-2 lg:hover:bg-slate-50"
+              onClick={() => {
+                formbricks.track("Feedback Button Click");
+              }}>
               Feedback
             </button>
             <button
