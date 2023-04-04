@@ -1,17 +1,24 @@
 "use client";
 
 import Modal from "@/components/shared/Modal";
-import { Button } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
-import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
-import { testURLmatch } from "./testURLmatch";
-import clsx from "clsx";
-import { useForm, Controller } from "react-hook-form";
 import { createEventClass } from "@/lib/eventClasses/eventClasses";
+import {
+  Button,
+  Input,
+  Label,
+  RadioGroup,
+  RadioGroupItem,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui";
+import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import clsx from "clsx";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { testURLmatch } from "./testURLmatch";
 
 interface EventDetailModalProps {
   environmentId: string;

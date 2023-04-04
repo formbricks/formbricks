@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
 import useSWR from "swr";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 export function HomeRedirect() {
   const { data, error } = useSWR(`/api/v1/environments/find-first`, fetcher);
@@ -24,5 +25,9 @@ export function HomeRedirect() {
     return <div>There was an error with your current Session. You are getting redirected to the login.</div>;
   }
 
-  return <div>Loading environment...</div>;
+  return (
+    <div>
+      <LoadingSpinner />
+    </div>
+  );
 }

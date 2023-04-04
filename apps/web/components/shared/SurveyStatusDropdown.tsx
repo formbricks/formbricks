@@ -17,9 +17,11 @@ import { CheckCircleIcon, PauseCircleIcon, PlayCircleIcon } from "@heroicons/rea
 export default function SurveyStatusDropdown({
   surveyId,
   environmentId,
+  updateLocalSurveyStatus,
 }: {
   surveyId: string;
   environmentId: string;
+  updateLocalSurveyStatus?: (status: "draft" | "inProgress" | "paused" | "completed" | "archived") => void;
 }) {
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
   const { triggerSurveyMutate } = useSurveyMutation(environmentId, surveyId);
@@ -43,7 +45,12 @@ export default function SurveyStatusDropdown({
           </span>
         </div>
       ) : (
-        <Select onValueChange={(value) => triggerSurveyMutate({ status: value })}>
+        <Select
+          onValueChange={(value) => {
+            triggerSurveyMutate({ status: value });
+            if (updateLocalSurveyStatus)
+              updateLocalSurveyStatus(value as "draft" | "inProgress" | "paused" | "completed" | "archived");
+          }}>
           <SelectTrigger className="w-[200px] bg-white py-1.5">
             <SelectValue>
               <div className="flex items-center">

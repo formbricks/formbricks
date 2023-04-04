@@ -14,7 +14,7 @@ import {
 } from "@formbricks/ui";
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import SurveyStatusDropdown from "../SurveyStatusDropdown";
+import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 
 export default function SummaryMetadata({ surveyId, environmentId }) {
   const { responses, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);

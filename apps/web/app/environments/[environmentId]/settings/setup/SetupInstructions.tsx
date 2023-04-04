@@ -102,9 +102,11 @@ if (typeof window !== "undefined") {
             <p>
               Insert this code into the <code>{`<head>`}</code> tag of your website:
             </p>
-            <CodeBlock language="js">{`<script type="text/javascript">
+            <CodeBlock language="js">{`<!-- START Formbricks Surveys -->
+<script type="text/javascript">
 !function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@0.1.2/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks=window.js;window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
-</script>`}</CodeBlock>
+</script>
+<!-- END Formbricks Surveys -->`}</CodeBlock>
             <p className="text-lg font-semibold text-slate-800">You&apos;re done 🎉</p>
             <p>
               Your app now communicates with Formbricks - sending events, and loading surveys automatically!
