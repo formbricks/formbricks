@@ -196,6 +196,7 @@ model Environment {
   people               Person[]
   eventClasses         EventClass[]
   attributeClasses     AttributeClass[]
+  apiKeys              ApiKey[]
 }
 
 model Product {
@@ -265,13 +266,13 @@ model Invite {
 }
 
 model ApiKey {
-  id         String    @id @unique @default(cuid())
-  createdAt  DateTime  @default(now())
-  lastUsedAt DateTime?
-  label      String?
-  hashedKey  String    @unique()
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
+  id            String    @id @unique @default(cuid())
+  createdAt     DateTime  @default(now())
+  lastUsedAt    DateTime?
+  label         String?
+  hashedKey     String    @unique()
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId String
 }
 
 enum IdentityProvider {
@@ -311,7 +312,6 @@ model User {
   identityProviderAccountId String?
   memberships               Membership[]
   accounts                  Account[]
-  apiKeys                   ApiKey[]
   groupId                   String?
   invitesCreated            Invite[]         @relation("inviteCreatedBy")
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")

@@ -1,14 +1,8 @@
-import { getSessionOrUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
+import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
-  // Check Authentication
-  const user: any = await getSessionOrUser(req, res);
-  if (!user) {
-    return res.status(401).json({ message: "Not authenticated" });
-  }
-
   const environmentId = req.query.environmentId?.toString();
   const surveyId = req.query.surveyId?.toString();
 
@@ -19,8 +13,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(400).json({ message: "Missing surveyId" });
   }
 
-  const hasAccess = await hasEnvironmentAccess(user, environmentId);
-  if (hasAccess === false) {
+  const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
+  if (!hasAccess) {
     return res.status(403).json({ message: "Not authorized" });
   }
 

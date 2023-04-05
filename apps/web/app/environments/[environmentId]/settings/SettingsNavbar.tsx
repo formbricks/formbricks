@@ -10,6 +10,7 @@ import {
   PaintBrushIcon,
   UserCircleIcon,
   UsersIcon,
+  KeyIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
@@ -52,6 +53,13 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           href: `/environments/${environmentId}/settings/lookandfeel`,
           icon: PaintBrushIcon,
           current: pathname?.includes("/lookandfeel"),
+          hidden: false,
+        },
+        {
+          name: "API Keys",
+          href: `/environments/${environmentId}/settings/api-keys`,
+          icon: KeyIcon,
+          current: pathname?.includes("/api-keys"),
           hidden: false,
         },
       ],

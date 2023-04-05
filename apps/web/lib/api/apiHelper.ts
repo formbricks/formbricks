@@ -6,28 +6,26 @@ import { getServerSession } from "next-auth";
 
 export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 
-export const hasOwnership = async (model, session, id) => {
-  try {
-    const entity = await prisma[model].findUnique({
-      where: { id: id },
-      include: {
-        user: {
-          select: { email: true },
-        },
-      },
-    });
-    if (entity.user.email === session.email) {
-      return true;
-    } else {
+export const hasEnvironmentAccess = async (req, res, environmentId) => {
+  if (req.headers["x-api-key"]) {
+    const ownership = await hasApiEnvironmentAccess(req.headers["x-api-key"].toString(), environmentId);
+    if (!ownership) {
       return false;
     }
-  } catch (e) {
-    console.error(`can't verify ownership: ${e}`);
-    return false;
+  } else {
+    const user = await getSessionUser(req, res);
+    if (!user) {
+      return false;
+    }
+    const ownership = await hasUserEnvironmentAccess(user, environmentId);
+    if (!ownership) {
+      return false;
+    }
   }
+  return true;
 };
 
-export const hasEnvironmentAccess = async (user, environmentId) => {
+export const hasUserEnvironmentAccess = async (user, environmentId) => {
   const environment = await prisma.environment.findUnique({
     where: {
       id: environmentId,
@@ -55,6 +53,23 @@ export const hasEnvironmentAccess = async (user, environmentId) => {
   return false;
 };
 
+export const hasApiEnvironmentAccess = async (apiKey, environmentId) => {
+  // write function to check if the API Key has access to the environment
+  const apiKeyData = await prisma.apiKey.findUnique({
+    where: {
+      hashedKey: hashApiKey(apiKey),
+    },
+    select: {
+      environmentId: true,
+    },
+  });
+
+  if (apiKeyData?.environmentId === environmentId) {
+    return true;
+  }
+  return false;
+};
+
 export const hasTeamAccess = async (user, teamId) => {
   const membership = await prisma.membership.findUnique({
     where: {
@@ -70,22 +85,8 @@ export const hasTeamAccess = async (user, teamId) => {
   return false;
 };
 
-export const getSessionOrUser = async (req: NextApiRequest, res: NextApiResponse) => {
+export const getSessionUser = async (req: NextApiRequest, res: NextApiResponse) => {
   // check for session (browser usage)
   let session: any = await getServerSession(req, res, authOptions);
   if (session && "user" in session) return session.user;
-  // check for api key
-  if (req.headers["x-api-key"]) {
-    const apiKey = await prisma.apiKey.findUnique({
-      where: {
-        hashedKey: hashApiKey(req.headers["x-api-key"].toString()),
-      },
-      include: {
-        user: true,
-      },
-    });
-    if (apiKey && apiKey.user) {
-      return apiKey.user;
-    }
-  }
 };
