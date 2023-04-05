@@ -5,7 +5,7 @@ import { Logger } from "./logger";
 import { createPerson } from "./person";
 import { createSession, extendOrCreateSession, extendSession, isExpired } from "./session";
 import { trackEvent } from "./event";
-import { addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
+import { addClickEventListener, addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
 import { addWidgetContainer } from "./widget";
 
 const config = Config.getInstance();
@@ -54,6 +54,7 @@ export const initialize = async (c: InitConfig): Promise<void> => {
   }
   addSessionEventListeners();
   addPageUrlEventListeners();
+  addClickEventListener();
   logger.debug("Initialized");
 };
 

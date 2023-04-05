@@ -6,11 +6,14 @@ import { Logger } from "./logger";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
+const { settings } = config.get();
+const innerHtmlEvents = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "innerHtml");
+const cssSelectorEvents = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "cssSelector");
+const pageUrlEvents = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
+
 export const checkPageUrl = (): void => {
   logger.debug("checking page url");
-  const pageUrlEvents = config
-    .get()
-    .settings?.noCodeEvents.filter((event) => event.noCodeConfig?.type === "pageUrl");
+
   if (pageUrlEvents.length === 0) {
     return;
   }
@@ -29,13 +32,13 @@ export const checkPageUrl = (): void => {
 };
 
 export const addPageUrlEventListeners = (): void => {
-  if (typeof window !== "undefined") {
-    window.addEventListener("hashchange", checkPageUrl);
-    window.addEventListener("popstate", checkPageUrl);
-    window.addEventListener("pushstate", checkPageUrl);
-    window.addEventListener("replacestate", checkPageUrl);
-    window.addEventListener("load", checkPageUrl);
-  }
+  if (typeof window === "undefined") return;
+
+  window.addEventListener("hashchange", checkPageUrl);
+  window.addEventListener("popstate", checkPageUrl);
+  window.addEventListener("pushstate", checkPageUrl);
+  window.addEventListener("replacestate", checkPageUrl);
+  window.addEventListener("load", checkPageUrl);
 };
 
 export function checkUrlMatch(url: string, pageUrlValue: string, pageUrlRule: MatchType): boolean {
@@ -56,3 +59,27 @@ export function checkUrlMatch(url: string, pageUrlValue: string, pageUrlRule: Ma
       throw new Error("Invalid match type");
   }
 }
+
+export const checkClickMatch = (event: MouseEvent) => {
+  const targetElement = event.target as HTMLElement;
+
+  innerHtmlEvents.forEach((e) => {
+    const innerHtml = e.noCodeConfig?.innerHtml;
+    if (innerHtml && targetElement.innerHTML === innerHtml.value) {
+      trackEvent(e.name);
+    }
+  });
+
+  cssSelectorEvents.forEach((e) => {
+    const cssSelector = e.noCodeConfig?.cssSelector;
+    if (cssSelector && targetElement.matches(cssSelector.value)) {
+      trackEvent(e.name);
+    }
+  });
+};
+
+export const addClickEventListener = (): void => {
+  if (typeof window === "undefined") return;
+
+  document.addEventListener("click", checkClickMatch);
+};
