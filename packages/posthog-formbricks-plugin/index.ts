@@ -23,7 +23,7 @@ export async function runEveryHour({ cache, storage, global, config }) {
   let lastSyncedAt = await storage.get("formbricks-lastSyncedAt", null);
   if (config.import === "Yes") {
     const response = await fetch(
-      `${config.formbricksHost}/api/v1/environemnts/${config.environmentId}/posthog/out`,
+      `${config.formbricksHost}/api/v1/environemnts/${config.environmentId}/posthog/export`,
       {
         method: "POST",
         headers: {
@@ -63,7 +63,7 @@ export async function runEveryHour({ cache, storage, global, config }) {
         }
       }
     }
-    await fetch(`${config.formbricksHost}/api/v1/environemnts/${config.environmentId}/posthog/in`, {
+    await fetch(`${config.formbricksHost}/api/v1/environemnts/${config.environmentId}/posthog/import`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

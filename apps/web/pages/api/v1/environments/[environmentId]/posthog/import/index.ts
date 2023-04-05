@@ -44,6 +44,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             },
           },
         },
+        select: {
+          id: true,
+          attributes: {
+            select: {
+              id: true,
+              value: true,
+              attributeClass: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
       });
 
       if (!existingUser) {
@@ -83,53 +97,58 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           },
         });
       } else {
-        // user already exists, update attributes
+        // user already exists, loop through attributes and update or create them
         const attributeType: "noCode" = "noCode";
-        await prisma.person.update({
-          where: {
-            id: existingUser.id,
-          },
-          data: {
-            attributes: {
-              upsert: Object.keys(user.attributes).map((key) => ({
-                where: {
-                  attributeClassId_personId: {
-                    attributeClassId: {
-                      name: key,
-                      environmentId,
-                    },
-                    personId: existingUser.id,
-                  },
-                },
-                update: {
-                  value: user.attributes[key],
-                },
-                create: {
-                  value: user.attributes[key],
-                  attributeClass: {
-                    connectOrCreate: {
-                      where: {
-                        name_environmentId: {
-                          name: key,
-                          environmentId,
-                        },
-                      },
-                      create: {
+        for (const key of Object.keys(user.attributes)) {
+          const existingAttribute = existingUser.attributes.find(
+            (attribute) => attribute.attributeClass.name === key
+          );
+          if (existingAttribute) {
+            // skip if value is the same
+            if (existingAttribute.value === user.attributes[key]) {
+              continue;
+            }
+            await prisma.attribute.update({
+              where: {
+                id: existingAttribute.id,
+              },
+              data: {
+                value: user.attributes[key],
+              },
+            });
+          } else {
+            // create attribute
+            await prisma.attribute.create({
+              data: {
+                value: user.attributes[key],
+                attributeClass: {
+                  connectOrCreate: {
+                    where: {
+                      name_environmentId: {
                         name: key,
-                        type: attributeType,
-                        environment: {
-                          connect: {
-                            id: environmentId,
-                          },
+                        environmentId,
+                      },
+                    },
+                    create: {
+                      name: key,
+                      type: attributeType,
+                      environment: {
+                        connect: {
+                          id: environmentId,
                         },
                       },
                     },
                   },
                 },
-              })),
-            },
-          },
-        });
+                person: {
+                  connect: {
+                    id: existingUser.id,
+                  },
+                },
+              },
+            });
+          }
+        }
       }
     }
 
