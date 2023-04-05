@@ -5,7 +5,6 @@ const { createId } = require("@paralleldrive/cuid2");
 const nextConfig = {
   experimental: {
     appDir: true,
-    serverComponentsExternalPackages: ["@tremor/react"],
   },
   output: "standalone",
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],

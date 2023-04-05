@@ -9,6 +9,7 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { useState } from "react";
+import { cn } from "@formbricks/lib/cn";
 
 interface DisplayOption {
   id: "displayOnce" | "displayMultiple" | "respondMultiple";
@@ -19,18 +20,18 @@ interface DisplayOption {
 const displayOptions: DisplayOption[] = [
   {
     id: "displayOnce",
-    name: "Show once",
-    description: "If person doesn't respond the survey won't be shown again.",
+    name: "Only once, even if they do not respond",
+    description: "The survey won't be shown again, if person doesn't respond.",
   },
   {
     id: "displayMultiple",
-    name: "Display until responded",
+    name: "Until they submit a response",
     description: "If you really want that answer, ask until you get it.",
   },
   {
     id: "respondMultiple",
-    name: "Always display when conditions match",
-    description: "This is useful for e.g. Feedback Boxes. Can cause survey fatigue.",
+    name: "Always, when the conditions match",
+    description: "Even after they submitted a response (e.g. Feedback Box)",
   },
 ];
 
@@ -73,7 +74,10 @@ export default function RecontactOptionsCard({
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className=" w-full space-y-2 rounded-lg border border-slate-300 bg-white">
+      className={cn(
+        open ? "" : "hover:bg-slate-50",
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+      )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">

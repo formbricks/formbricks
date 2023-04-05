@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@formbricks/lib/cn";
 import { Badge } from "@formbricks/ui";
 import { Label } from "@formbricks/ui";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
@@ -11,7 +12,6 @@ import {
   LinkIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import clsx from "clsx";
 import { useState } from "react";
 
 const options = [
@@ -48,20 +48,23 @@ const options = [
 interface HowToSendCardProps {}
 
 export default function HowToSendCard({}: HowToSendCardProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   return (
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className="w-full space-y-2 rounded-lg border border-slate-300 bg-white">
+      className={cn(
+        open ? "" : "hover:bg-slate-50",
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+      )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">How to send</p>
+            <p className="font-semibold text-slate-800">How to ask</p>
             <p className="mt-1 truncate text-sm text-slate-500">
               Choose how you want to reach your audience.
             </p>
@@ -76,7 +79,7 @@ export default function HowToSendCard({}: HowToSendCardProps) {
               <Label
                 key={option.id}
                 htmlFor={option.id}
-                className={clsx(
+                className={cn(
                   "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
                   option.comingSoon
                     ? "border-slate-200 bg-slate-50/50"
@@ -93,7 +96,7 @@ export default function HowToSendCard({}: HowToSendCardProps) {
                   <div>
                     <div className="inline-flex items-center">
                       <p
-                        className={clsx(
+                        className={cn(
                           "font-semibold",
                           option.comingSoon ? "text-slate-500" : "text-slate-800"
                         )}>

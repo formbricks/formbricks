@@ -13,16 +13,18 @@ interface EventDetailModalProps {
 
 export default function AddNoCodeEventModalDummy({ open, setOpen }: EventDetailModalProps) {
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false}>
-      <div className="flex h-full flex-col rounded-lg">
-        <div className="rounded-t-lg bg-slate-100">
+    <Modal open={open} setOpen={setOpen} noPadding>
+      <div className="flex h-full flex-col rounded-lg bg-slate-50 dark:bg-slate-800">
+        <div className="rounded-t-lg bg-slate-100 dark:bg-slate-700">
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="mr-1.5 h-6 w-6 text-slate-500">
                 <CursorArrowRaysIcon />
               </div>
               <div>
-                <div className="text-xl font-medium text-slate-700">Add No-Code Event</div>
+                <div className="text-xl font-medium text-slate-700 dark:text-slate-300">
+                  Add No-Code Event
+                </div>
                 <div className="text-sm text-slate-500">
                   Create a new no-code event to filter your user base with.
                 </div>
@@ -36,21 +38,21 @@ export default function AddNoCodeEventModalDummy({ open, setOpen }: EventDetailM
               <div>
                 <Label>Select By</Label>
                 <RadioGroup className="grid grid-cols-2 gap-1 md:grid-cols-3" defaultValue="pageUrl">
-                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
+                  <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3 dark:border-slate-500">
                     <RadioGroupItem value="pageUrl" id="pageUrl" className="bg-slate-50" />
-                    <Label htmlFor="pageUrl" className="cursor-pointer">
+                    <Label htmlFor="pageUrl" className="cursor-pointer dark:text-slate-200">
                       Page URL
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 rounded-lg bg-slate-50 p-3">
+                  <div className="flex items-center space-x-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-600">
                     <RadioGroupItem disabled value="innerHtml" id="innerHtml" className="bg-slate-50" />
                     <Label
                       htmlFor="innerHtml"
-                      className="flex cursor-not-allowed items-center text-slate-500">
+                      className="flex cursor-not-allowed items-center text-slate-500 dark:text-slate-400">
                       Inner Text
                     </Label>
                   </div>
-                  <div className="hidden items-center space-x-2 rounded-lg bg-slate-50 p-3 md:flex">
+                  <div className="hidden items-center space-x-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-600 md:flex">
                     <RadioGroupItem disabled value="cssSelector" id="cssSelector" className="bg-slate-50" />
                     <Label
                       htmlFor="cssSelector"
@@ -73,10 +75,9 @@ export default function AddNoCodeEventModalDummy({ open, setOpen }: EventDetailM
               <div className="grid w-full grid-cols-3 gap-x-8">
                 <div className="col-span-1">
                   <Label>URL</Label>
-
                   <Select defaultValue="endsWith">
                     <SelectTrigger
-                      className="w-[110px] md:w-[180px]"
+                      className="w-[110px] dark:text-slate-200 md:w-[180px]"
                       onClick={(e) => e.preventDefault()}
                       disabled>
                       <SelectValue placeholder="Select match type" />
@@ -98,7 +99,7 @@ export default function AddNoCodeEventModalDummy({ open, setOpen }: EventDetailM
               </div>
             </div>
           </div>
-          <div className="flex justify-end border-t border-slate-200 p-6">
+          <div className="flex justify-end border-t border-slate-200 p-6 dark:border-slate-700">
             <div className="flex space-x-2">
               <Button
                 variant="minimal"

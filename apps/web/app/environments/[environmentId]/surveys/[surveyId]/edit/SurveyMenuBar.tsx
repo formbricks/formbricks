@@ -1,12 +1,13 @@
 "use client";
 
-import { Button } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
+import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import type { Survey } from "@formbricks/types/surveys";
+import { Button, Input } from "@formbricks/ui";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
@@ -33,18 +34,33 @@ export default function SurveyMenuBar({
     }
   }, [activeId, audiencePrompt]);
 
+  // write a function which updates the local survey status
+  const updateLocalSurveyStatus = (status: Survey["status"]) => {
+    const updatedSurvey = { ...localSurvey, status };
+    setLocalSurvey(updatedSurvey);
+  };
+
   return (
     <div className="border-b border-slate-200 bg-white py-3 px-5 sm:flex sm:items-center sm:justify-between">
-      <Input
-        defaultValue={localSurvey.name}
-        onChange={(e) => {
-          const updatedSurvey = { ...localSurvey, name: e.target.value };
-          setLocalSurvey(updatedSurvey);
-        }}
-        className="max-w-md"
-      />
+      <div className="flex space-x-2 whitespace-nowrap">
+        <Input
+          defaultValue={localSurvey.name}
+          onChange={(e) => {
+            const updatedSurvey = { ...localSurvey, name: e.target.value };
+            setLocalSurvey(updatedSurvey);
+          }}
+          className="min-w-sm max-w-md"
+        />
+        <div className="flex items-center">
+          <SurveyStatusDropdown
+            surveyId={localSurvey.id}
+            environmentId={environmentId}
+            updateLocalSurveyStatus={updateLocalSurveyStatus}
+          />
+        </div>
+      </div>
       <div className="mt-3 flex sm:mt-0 sm:ml-4">
-        <Button variant="minimal" className="mr-3" href={`/environments/${environmentId}/surveys/`}>
+        <Button variant="minimal" className="mr-3" onClick={() => router.back()}>
           Cancel
         </Button>
         <Button
@@ -52,12 +68,18 @@ export default function SurveyMenuBar({
           className="mr-3"
           loading={isMutatingSurvey}
           onClick={() => {
-            triggerSurveyMutate({ ...localSurvey });
+            triggerSurveyMutate({ ...localSurvey })
+              .then(() => {
+                toast.success("Changes saved.");
+              })
+              .catch((error) => {
+                toast.error(`Error: ${error.message}`);
+              });
             if (localSurvey.status !== "draft") {
-              router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
+              router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary`);
             }
           }}>
-          Save changes
+          Save Changes
         </Button>
         {localSurvey.status === "draft" && audiencePrompt && (
           <Button

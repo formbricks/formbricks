@@ -4,8 +4,7 @@ import remarkGfm from "remark-gfm";
 import rehypePrism from "@mapbox/rehype-prism";
 
 const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
+  output: "standalone",
   transpilePackages: ["@formbricks/ui"],
   pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
   async redirects() {

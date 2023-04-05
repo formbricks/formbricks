@@ -5,7 +5,7 @@ import { Label } from "@formbricks/ui";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import clsx from "clsx";
+import { cn } from "@formbricks/lib/cn";
 import { useState } from "react";
 
 const options = [
@@ -32,14 +32,17 @@ export default function WhoToSendToCard({}: WhoToSendToCardProps) {
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className="w-full space-y-2 rounded-lg border border-slate-300 bg-white">
+      className={cn(
+        open ? "" : "hover:bg-slate-50",
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+      )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pr-5 pl-2">
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Who to send to</p>
+            <p className="font-semibold text-slate-800">Who to ask</p>
             <p className="mt-1 truncate text-sm text-slate-500">
               Decide which group of you users can be surveyed.
             </p>
@@ -54,7 +57,7 @@ export default function WhoToSendToCard({}: WhoToSendToCardProps) {
               <Label
                 key={option.id}
                 htmlFor={option.id}
-                className={clsx(
+                className={cn(
                   "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
                   option.disabled
                     ? "border-slate-200 bg-slate-50/50"
@@ -68,11 +71,7 @@ export default function WhoToSendToCard({}: WhoToSendToCardProps) {
                 />
                 <div>
                   <div className="inline-flex items-center">
-                    <p
-                      className={clsx(
-                        "font-semibold",
-                        option.disabled ? "text-slate-500" : "text-slate-800"
-                      )}>
+                    <p className={cn("font-semibold", option.disabled ? "text-slate-500" : "text-slate-800")}>
                       {option.name}
                     </p>
                     {option.disabled && <Badge text="coming soon" size="normal" type="warning" />}
