@@ -53,12 +53,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           data: {
             attributes: {
               create: Object.keys(user.attributes).map((key) => ({
-                value: "test",
+                value: user.attributes[key],
                 attributeClass: {
                   connectOrCreate: {
                     where: {
                       name_environmentId: {
-                        name: "key",
+                        name: key,
                         environmentId,
                       },
                     },
@@ -93,11 +93,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             attributes: {
               upsert: Object.keys(user.attributes).map((key) => ({
                 where: {
-                  attributeClass: {
-                    name_environmentId: {
+                  attributeClassId_personId: {
+                    attributeClassId: {
                       name: key,
                       environmentId,
                     },
+                    personId: existingUser.id,
                   },
                 },
                 update: {
