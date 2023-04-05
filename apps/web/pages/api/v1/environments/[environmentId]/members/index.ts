@@ -1,10 +1,10 @@
-import { getSessionOrUser } from "@/lib/api/apiHelper";
+import { getSessionUser } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication
-  const user: any = await getSessionOrUser(req, res);
+  const user: any = await getSessionUser(req, res);
   if (!user) {
     return res.status(401).json({ message: "Not authenticated" });
   }

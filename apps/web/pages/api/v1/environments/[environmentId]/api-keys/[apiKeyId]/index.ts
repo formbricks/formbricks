@@ -4,26 +4,25 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
+  const apiKeyId = req.query.apiKeyId?.toString();
 
-  if (!environmentId) {
-    return res.status(400).json({ message: "Missing environmentId" });
+  if (!apiKeyId || !environmentId) {
+    return res.status(400).json({ message: "Missing apiKeyId or environmentId" });
   }
 
   if (!(await hasEnvironmentAccess(req, res, environmentId))) {
     return res.status(401).json({ message: "Not authenticated" });
   }
 
-  // GET
-  if (req.method === "GET") {
-    const attributeClasses = await prisma.attributeClass.findMany({
-      where: {
-        environment: {
-          id: environmentId,
-        },
-      },
+  // DELETE /api/environments/:environmentId/api-keys/:apiKeyId
+  // Deletes an existing API Key
+  // Required fields in body: environmentId, apiKeyId
+  // Optional fields in body: -
+  if (req.method === "DELETE") {
+    const prismaRes = await prisma.apiKey.delete({
+      where: { id: apiKeyId },
     });
-
-    return res.json(attributeClasses);
+    return res.json(prismaRes);
   }
 
   // Unknown HTTP Method

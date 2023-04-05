@@ -83,7 +83,7 @@ export function EditMemberships({ environmentId }) {
               className="grid h-12 w-full grid-cols-7 content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
               key={member.email}>
               <div className="h-58 px-6 ">
-                <ProfileAvatar userId={member.userId} />
+                <ProfileAvatar userId={member.userId || member.email} />
               </div>
               <div className="col-span-2 flex flex-col justify-center">
                 <p>{member.name}</p>
