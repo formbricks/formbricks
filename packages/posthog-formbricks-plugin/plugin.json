@@ -2,24 +2,51 @@
   "name": "Formbricks",
   "config": [
     {
-      "markdown": "## MANUAL STEP NOTICE: This app needs to injects code into your website through posthog-js. You need to **opt-in** on your site to enable this behaviour.\n\n```\nposthog.init(\"api_key\", {\n  \"api_host\": \"https://app.posthog.com\",\n  \"opt_in_site_apps\": true,\n})\n```"
+      "key": "formbricksHost",
+      "name": "Formbricks Host",
+      "type": "string",
+      "default": "https://app.formbricks.com",
+      "required": true
     },
     {
       "key": "environmentId",
       "name": "Environment ID",
       "type": "string",
       "hint": "Can be found in the Setup Checklist in the Formbricks Settings",
-      "default": "clfwl2u460003qo0hnmw4lihk",
-      "required": true,
-      "site": true
+      "required": true
     },
     {
-      "key": "formbricksHost",
-      "name": "Formbricks Host",
+      "key": "formbricksApiKey",
+      "name": "Formbricks API Key",
       "type": "string",
-      "default": "https://app.formbricks.com",
-      "required": true,
-      "site": true
+      "secret": true,
+      "hint": "You can generate a new API Key in the Formbricks Settings",
+      "required": true
+    },
+    {
+      "key": "import",
+      "name": "Enable Import",
+      "type": "choice",
+      "hint": "Do you want to import display events and responses from Formbricks?",
+      "default": "Yes",
+      "choices": ["Yes", "No"]
+    },
+    {
+      "key": "export",
+      "name": "Enable Export",
+      "type": "choice",
+      "hint": "Do you want to send Posthog users and their attributes to Formbricks?",
+      "default": "Yes",
+      "choices": ["Yes", "No"]
+    },
+    {
+      "key": "resetStorage",
+      "name": "Reset",
+      "type": "choice",
+      "choices": ["No", "Yes"],
+      "hint": "**Advanced** - Reset the plugin's storage. This will catch up all events from the beginning of time.",
+      "required": false,
+      "default": "No"
     }
   ]
 }
