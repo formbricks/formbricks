@@ -8,17 +8,17 @@
   "main": "index.ts",
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "@types/react": "^18.0.25",
-    "@types/react-dom": "^18.0.8",
-    "concurrently": "^7.5.0",
-    "eslint": "^8.27.0",
+    "@types/react": "^18.0.33",
+    "@types/react-dom": "^18.0.11",
+    "concurrently": "^8.0.1",
+    "eslint": "^8.37.0",
     "eslint-config-formbricks": "workspace:*",
-    "postcss": "^8.4.19",
+    "postcss": "^8.4.21",
     "react": "^18.2.0",
-    "typescript": "^4.8.4"
+    "typescript": "^5.0.3"
   },
   "dependencies": {
     "@formbricks/database": "workspace:*",
-    "next": "^13.1.6"
+    "next": "^13.2.4"
   }
 }

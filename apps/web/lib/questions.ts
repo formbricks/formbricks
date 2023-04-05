@@ -1,7 +1,15 @@
 import { Bars4Icon, ListBulletIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 
-export const questionTypes = [
+export type QuestionType = {
+  id: string;
+  label: string;
+  description: string;
+  icon: any;
+  defaults: any;
+};
+
+export const questionTypes: QuestionType[] = [
   {
     id: "openText",
     label: "Open text",
