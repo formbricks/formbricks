@@ -1,4 +1,5 @@
 import type { MatchType } from "@formbricks/types/js";
+import type { Event } from "@formbricks/types/events";
 import { Config } from "./config";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
@@ -7,9 +8,11 @@ const config = Config.getInstance();
 const logger = Logger.getInstance();
 
 const { settings } = config.get();
-const innerHtmlEvents = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "innerHtml");
-const cssSelectorEvents = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "cssSelector");
-const pageUrlEvents = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
+const innerHtmlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "innerHtml");
+const cssSelectorEvents: Event[] = settings?.noCodeEvents.filter(
+  (e) => e.noCodeConfig?.type === "cssSelector"
+);
+const pageUrlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
 
 export const checkPageUrl = (): void => {
   logger.debug("checking page url");
@@ -24,7 +27,7 @@ export const checkPageUrl = (): void => {
     if (!pageUrl) {
       continue;
     }
-    const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule);
+    const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule as MatchType);
     if (match) {
       trackEvent(event.name);
     }

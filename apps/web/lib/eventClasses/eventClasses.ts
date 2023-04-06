@@ -1,5 +1,6 @@
 import useSWR from "swr";
 import { fetcher } from "@formbricks/lib/fetcher";
+import type { Event } from "@formbricks/types/events";
 
 export const useEventClasses = (environmentId) => {
   const { data, isLoading, error, mutate, isValidating } = useSWR(
@@ -31,7 +32,7 @@ export const useEventClass = (environmentId, eventClassId) => {
   };
 };
 
-export const createEventClass = async (environmentId, eventClass) => {
+export const createEventClass = async (environmentId, eventClass: Event) => {
   const response = await fetch(`/api/v1/environments/${environmentId}/event-classes`, {
     method: "POST",
     headers: {

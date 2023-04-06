@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui";
+import type { NoCodeConfig, Event } from "@formbricks/types/events";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { useState } from "react";
@@ -33,11 +34,29 @@ export default function AddNoCodeEventModal({
   setOpen,
   mutateEventClasses,
 }: EventDetailModalProps) {
-  const { register, control, handleSubmit, watch } = useForm();
+  const { register, control, handleSubmit, watch, reset } = useForm();
 
-  const submitEventClass = async (data) => {
-    await createEventClass(environmentId, { ...data, type: "noCode" });
+  // clean up noCodeConfig before submitting by removing unnecessary fields
+  const filterNoCodeConfig = (noCodeConfig: NoCodeConfig): NoCodeConfig => {
+    const { type } = noCodeConfig;
+    return {
+      type,
+      [type]: noCodeConfig[type],
+    };
+  };
+
+  const submitEventClass = async (data: Partial<Event>): Promise<void> => {
+    const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as NoCodeConfig);
+
+    const updatedData: Event = {
+      ...data,
+      noCodeConfig: filteredNoCodeConfig,
+      type: "noCode",
+    } as Event;
+
+    await createEventClass(environmentId, updatedData);
     mutateEventClasses();
+    reset();
     setOpen(false);
   };
 
@@ -80,8 +99,8 @@ export default function AddNoCodeEventModal({
                   name="noCodeConfig.type"
                   defaultValue={"pageUrl"}
                   control={control}
-                  render={({ field: { onChange, ...props } }) => (
-                    <RadioGroup className="flex" onValueChange={onChange} {...props}>
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <RadioGroup className="flex" onValueChange={onChange} onBlur={onBlur} value={value}>
                       <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
                         <RadioGroupItem value="pageUrl" id="pageUrl" className="bg-slate-50" />
                         <Label htmlFor="pageUrl" className="flex cursor-pointer items-center">
@@ -196,50 +215,32 @@ export default function AddNoCodeEventModal({
                 </>
               )}
               {watch("noCodeConfig.type") === "innerHtml" && (
-                <>
-                  <div className="grid w-full grid-cols-3 gap-x-8">
-                    <div className="col-span-1">
-                      <Label>Inner Text</Label>
-                      <Controller
-                        name="noCodeConfig.pageUrl.rule"
-                        defaultValue={"exactMatch"}
-                        control={control}
-                        render={() => <></>}
-                      />
-                    </div>
-
-                    <div className="col-span-3 flex w-full items-end">
-                      <Input
-                        type="text"
-                        placeholder="e.g. 'Install App'"
-                        {...register("noCodeConfig.[pageUrl].value", { required: true })}
-                      />
-                    </div>
+                <div className="grid w-full grid-cols-3 gap-x-8">
+                  <div className="col-span-1">
+                    <Label>Inner Text</Label>
                   </div>
-                </>
+                  <div className="col-span-3 flex w-full items-end">
+                    <Input
+                      type="text"
+                      placeholder="e.g. 'Install App'"
+                      {...register("noCodeConfig.innerHtml.value", { required: true })}
+                    />
+                  </div>
+                </div>
               )}
               {watch("noCodeConfig.type") === "cssSelector" && (
-                <>
-                  <div className="grid w-full grid-cols-3 gap-x-8">
-                    <div className="col-span-1">
-                      <Label>CSS Tag</Label>
-                      <Controller
-                        name="noCodeConfig.pageUrl.rule"
-                        defaultValue={"exactMatch"}
-                        control={control}
-                        render={() => <></>}
-                      />
-                    </div>
-
-                    <div className="col-span-3 flex w-full items-end">
-                      <Input
-                        type="text"
-                        placeholder="e.g. #install-button"
-                        {...register("noCodeConfig.[pageUrl].value", { required: true })}
-                      />
-                    </div>
+                <div className="grid w-full grid-cols-3 gap-x-8">
+                  <div className="col-span-1">
+                    <Label>CSS Tag</Label>
                   </div>
-                </>
+                  <div className="col-span-3 flex w-full items-end">
+                    <Input
+                      type="text"
+                      placeholder="e.g. #install-button"
+                      {...register("noCodeConfig.cssSelector.value", { required: true })}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>
