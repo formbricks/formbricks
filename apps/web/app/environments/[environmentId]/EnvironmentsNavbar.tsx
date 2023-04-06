@@ -43,6 +43,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ProfileAvatar } from "@formbricks/ui";
+import AddProductModal from "./AddProductModal";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -55,6 +56,8 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
   const pathname = usePathname();
 
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
+
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -200,7 +203,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   item.current
                     ? "bg-slate-100 text-slate-900"
                     : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
-                  "inline-flex items-center rounded-md py-1 px-2 text-sm font-medium"
+                  "inline-flex items-center rounded-md px-2 py-1 text-sm font-medium"
                 )}
                 aria-current={item.current ? "page" : undefined}>
                 <item.icon className="mr-3 h-5 w-5" />
@@ -252,7 +255,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem disabled>
+                      <DropdownMenuItem onClick={() => setShowAddProductModal(true)}>
                         <PlusIcon className="mr-2 h-4 w-4" />
                         <span>Add product</span>
                       </DropdownMenuItem>
@@ -324,6 +327,11 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           </div>
         </div>
       </div>
+      <AddProductModal
+        open={showAddProductModal}
+        setOpen={(val) => setShowAddProductModal(val)}
+        environmentId={environmentId}
+      />
     </nav>
   );
 }
