@@ -7,14 +7,10 @@ import { Logger } from "./logger";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
-const { settings } = config.get();
-const innerHtmlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "innerHtml");
-const cssSelectorEvents: Event[] = settings?.noCodeEvents.filter(
-  (e) => e.noCodeConfig?.type === "cssSelector"
-);
-const pageUrlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
-
 export const checkPageUrl = (): void => {
+  const { settings } = config.get();
+  const pageUrlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
+
   logger.debug("checking page url");
 
   if (pageUrlEvents.length === 0) {
@@ -64,6 +60,12 @@ export function checkUrlMatch(url: string, pageUrlValue: string, pageUrlRule: Ma
 }
 
 export const checkClickMatch = (event: MouseEvent) => {
+  const { settings } = config.get();
+  const innerHtmlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "innerHtml");
+  const cssSelectorEvents: Event[] = settings?.noCodeEvents.filter(
+    (e) => e.noCodeConfig?.type === "cssSelector"
+  );
+
   const targetElement = event.target as HTMLElement;
 
   innerHtmlEvents.forEach((e) => {
