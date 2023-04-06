@@ -2,7 +2,6 @@ import useSWR from "swr";
 import { fetcher } from "@formbricks/lib/fetcher";
 
 export const useTeam = (environmentId: string) => {
-  console.log("fetch team");
   const { data, isLoading, error, mutate, isValidating } = useSWR(
     `/api/v1/environments/${environmentId}/members/`,
     fetcher
