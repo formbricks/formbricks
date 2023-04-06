@@ -3,7 +3,7 @@
 import Modal from "@/components/shared/Modal";
 import { createProduct } from "@/lib/products/products";
 import { Button, Input, Label } from "@formbricks/ui";
-import { InboxArrowDownIcon } from "@heroicons/react/24/solid";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
@@ -29,8 +29,8 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
-              <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <InboxArrowDownIcon />
+              <div className="mr-1.5 h-10 w-10 text-slate-500">
+                <PlusCircleIcon />
               </div>
               <div>
                 <div className="text-xl font-medium text-slate-700">Add Product</div>
