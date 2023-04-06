@@ -171,6 +171,12 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     router.push(`/environments/${newEnvironmentId}/`);
   };
 
+  const changeEnvironmentByProduct = (productId: string) => {
+    const product = environment.availableProducts.find((p) => p.id === productId);
+    const newEnvironmentId = product?.environments[0]?.id;
+    router.push(`/environments/${newEnvironmentId}/`);
+  };
+
   if (isLoadingEnvironment) {
     return <LoadingSpinner />;
   }
@@ -250,9 +256,18 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
-                      <DropdownMenuItem>
-                        <span>{environment?.product?.name}</span>
-                      </DropdownMenuItem>
+                      <DropdownMenuRadioGroup
+                        value={environment?.product.id}
+                        onValueChange={changeEnvironmentByProduct}>
+                        {environment?.availableProducts?.map((product) => (
+                          <DropdownMenuRadioItem
+                            value={product.id}
+                            className="cursor-pointer"
+                            key={product.id}>
+                            {product.name}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
 
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => setShowAddProductModal(true)}>

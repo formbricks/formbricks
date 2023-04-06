@@ -19,6 +19,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       include: {
         product: {
           select: {
+            id: true,
             name: true,
             teamId: true,
             brandColor: true,
@@ -27,10 +28,31 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
     });
+
     if (environment === null) {
       return res.status(404).json({ message: "This environment doesn't exist" });
     }
-    return res.json(environment);
+
+    const products = await prisma.product.findMany({
+      where: {
+        teamId: environment.product.teamId,
+      },
+      select: {
+        id: true,
+        name: true,
+        brandColor: true,
+        environments: {
+          where: {
+            type: "production",
+          },
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    return res.json({ ...environment, availableProducts: products });
   }
 
   if (req.method === "PUT") {
