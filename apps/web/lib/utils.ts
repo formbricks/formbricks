@@ -15,6 +15,7 @@ export const parseUserAgent = (userAgent: string) => {
 
 // write a function that takes a string and truncates it to the specified length
 export const truncate = (str: string, length: number) => {
+  if (!str) return "";
   if (str.length > length) {
     return str.substring(0, length) + "...";
   }
