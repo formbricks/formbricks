@@ -1,11 +1,9 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { TrophyIcon } from "@heroicons/react/24/outline";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState } from "react";
-import { Input, Label, Switch } from "@formbricks/ui";
 import type { Survey } from "@formbricks/types/surveys";
+import { Input, Label, Switch } from "@formbricks/ui";
+import * as Collapsible from "@radix-ui/react-collapsible";
 
 interface EditThankYouCardProps {
   localSurvey: Survey;
@@ -47,7 +45,7 @@ export default function EditThankYouCard({
           open ? "bg-slate-600" : "bg-slate-500",
           "flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-bl-none"
         )}>
-        <TrophyIcon className="h-5 w-5 text-white" />
+        <p>🙏</p>
       </div>
       <Collapsible.Root
         open={open}
@@ -60,27 +58,25 @@ export default function EditThankYouCard({
             <div className="inline-flex">
               <div>
                 <p className="text-sm font-semibold">Thank You Card</p>
-                {!open && localSurvey?.thankYouCard?.enabled && (
+                {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
-                    {localSurvey?.thankYouCard?.enabled && "Enabled"}
+                    {localSurvey?.thankYouCard?.enabled ? "Shown" : "Hidden"}
                   </p>
                 )}
               </div>
             </div>
-            {open && (
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="airplane-mode">Enable</Label>
-                <Switch
-                  id="airplane-mode"
-                  //   value={localSurvey?.thankYouCard?.enabled}
-                  checked={localSurvey?.thankYouCard?.enabled}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    updateSurvey({ enabled: !localSurvey.thankYouCard.enabled });
-                  }}
-                />
-              </div>
-            )}
+
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="thank-you-toggle">Show</Label>
+              <Switch
+                id="thank-you-toggle"
+                checked={localSurvey?.thankYouCard?.enabled}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateSurvey({ enabled: !localSurvey.thankYouCard.enabled });
+                }}
+              />
+            </div>
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-4">
@@ -100,7 +96,7 @@ export default function EditThankYouCard({
             </div>
 
             <div className="mt-3">
-              <Label htmlFor="subheader">Subheader</Label>
+              <Label htmlFor="subheader">Description</Label>
               <div className="mt-2">
                 <Input
                   id="subheader"

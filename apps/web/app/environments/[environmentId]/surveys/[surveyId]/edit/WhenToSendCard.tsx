@@ -7,7 +7,7 @@ import type { Survey } from "@formbricks/types/surveys";
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AddNoCodeEventModal from "../../../events/AddNoCodeEventModal";
 
 interface WhenToSendCardProps {
@@ -21,14 +21,6 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
   const { eventClasses, isLoadingEventClasses, isErrorEventClasses, mutateEventClasses } =
     useEventClasses(environmentId);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
-
-  if (isLoadingEventClasses) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorEventClasses) {
-    return <div>Error</div>;
-  }
 
   const addTriggerEvent = () => {
     const updatedSurvey = { ...localSurvey };
@@ -48,14 +40,23 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     setLocalSurvey(updatedSurvey);
   };
 
-  /*      // If there are no trigger events, set default to first event class in the eventClasses object
-  if (localSurvey.triggers.length === 0 && eventClasses.length > 0) {
-    setTriggerEvent(0, eventClasses[0].id);
-  }  */
+  //create new empty trigger on page load, remove one click for user
+  useEffect(() => {
+    if (localSurvey.triggers.length === 0) {
+      addTriggerEvent();
+    }
+  }, []);
+
+  if (isLoadingEventClasses) {
+    return <LoadingSpinner />;
+  }
+
+  if (isErrorEventClasses) {
+    return <div>Error</div>;
+  }
 
   return (
     <>
-      {" "}
       <Collapsible.Root
         open={open}
         onOpenChange={setOpen}
@@ -65,7 +66,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
         )}>
         <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
           <div className="inline-flex px-4 py-6">
-            <div className="flex items-center pr-5 pl-2">
+            <div className="flex items-center pl-2 pr-5">
               {localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
                 <div className="h-7 w-7 rounded-full border border-slate-400" />
               ) : (
@@ -97,6 +98,15 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                     {eventClasses.map((eventClass) => (
                       <SelectItem value={eventClass.id}>{eventClass.name}</SelectItem>
                     ))}
+                    <button
+                      className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500  "
+                      value="none"
+                      onClick={() => {
+                        setAddEventModalOpen(true);
+                      }}>
+                      <PlusIcon className="mr-1 h-5 w-5" />
+                      Create Event
+                    </button>
                   </SelectContent>
                 </Select>
                 <p className="mx-2 text-sm">event is triggered</p>
@@ -106,7 +116,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
               </div>
             </div>
           ))}
-          <div className="p-3">
+          <div className="ml-14 p-3">
             <Button
               variant="secondary"
               onClick={() => {
@@ -114,13 +124,6 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
               }}>
               <PlusIcon className="mr-2 h-4 w-4" />
               Add condition
-            </Button>
-            <Button
-              variant="minimal"
-              onClick={() => {
-                setAddEventModalOpen(true);
-              }}>
-              Create event
             </Button>
           </div>
         </Collapsible.CollapsibleContent>

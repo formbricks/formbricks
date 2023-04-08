@@ -5,7 +5,7 @@ import { Switch } from "@formbricks/ui";
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
-import { Bars4Icon } from "@heroicons/react/24/solid";
+import { Bars3BottomLeftIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Draggable } from "react-beautiful-dnd";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
@@ -58,7 +58,7 @@ export default function QuestionCard({
               className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
               <div>
                 <div className="inline-flex">
-                  <Bars4Icon className="-ml-0.5 mr-2 h-5 w-5 text-slate-400" />
+                  <Bars3BottomLeftIcon className="-ml-0.5 mr-2 h-5 w-5 text-slate-400" />
                   <div>
                     <p className="text-sm font-semibold">
                       {question.headline || getQuestionTypeName(question.type)}
@@ -70,20 +70,23 @@ export default function QuestionCard({
                     )}
                   </div>
                 </div>
-                {open && (
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor="airplane-mode">Required</Label>
-                    <Switch
-                      id="airplane-mode"
-                      checked={question.required}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateQuestion(questionIdx, { required: !question.required });
-                      }}
-                    />
-                    <QuestionDropdown deleteQuestion={deleteQuestion} questionIdx={questionIdx} />
-                  </div>
-                )}
+
+                <div className="flex items-center space-x-2">
+                  {open && (
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor="required-toggle">Required</Label>
+                      <Switch
+                        id="required-toggle"
+                        checked={question.required}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateQuestion(questionIdx, { required: !question.required });
+                        }}
+                      />
+                    </div>
+                  )}
+                  <QuestionDropdown deleteQuestion={deleteQuestion} questionIdx={questionIdx} />
+                </div>
               </div>
             </Collapsible.CollapsibleTrigger>
             <Collapsible.CollapsibleContent className="px-4 pb-4">

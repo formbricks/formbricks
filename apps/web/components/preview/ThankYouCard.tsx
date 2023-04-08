@@ -34,14 +34,14 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
       </div>
 
       <span
-        className="mb-[10px] mt-[35px] inline-block h-[2px] w-4/5"
+        className="mb-[10px] mt-[35px] inline-block h-[2px] w-4/5 rounded-full opacity-25"
         style={{ backgroundColor: brandColor }}></span>
 
       <div>
-        <p className="text-xs">
+        <p className="text-xs text-slate-500">
           Powered by{" "}
           <b>
-            <a href="https://formbricks.com" target="_blank">
+            <a href="https://formbricks.com" target="_blank" className="hover:text-slate-700">
               Formbricks
             </a>
           </b>

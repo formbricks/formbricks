@@ -39,10 +39,10 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
         style={{ backgroundColor: brandColor }}></span>
 
       <div>
-        <p className="fb-text-xs">
+        <p className="fb-text-xs fb-text-slate-500">
           Powered by{" "}
           <b>
-            <a href="https://formbricks.com" target="_blank">
+            <a href="https://formbricks.com" target="_blank" className="fb-hover:text-slate-700">
               Formbricks
             </a>
           </b>
