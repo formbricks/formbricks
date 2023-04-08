@@ -147,8 +147,8 @@ model Address {
   commune   String
   ville     String
   province  Province
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int             @unique
+  user      User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int?            @unique
 }
 
 model User {
