@@ -1,5 +1,6 @@
 "use client";
 
+import type { Survey } from "@formbricks/types/surveys";
 import { cn } from "@formbricks/lib/cn";
 import { Badge } from "@formbricks/ui";
 import { Label } from "@formbricks/ui";
@@ -27,7 +28,7 @@ const options = [
     name: "Standalone Survey (Link)",
     icon: LinkIcon,
     description: "Create personalized survey links to share around.",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     id: "mobile",
@@ -45,10 +46,20 @@ const options = [
   },
 ];
 
-interface HowToSendCardProps {}
+interface HowToSendCardProps {
+  localSurvey: Survey;
+  setLocalSurvey: (survey: Survey) => void;
+}
 
-export default function HowToSendCard({}: HowToSendCardProps) {
+export default function HowToSendCard({ localSurvey, setLocalSurvey }: HowToSendCardProps) {
   const [open, setOpen] = useState(true);
+
+  const setSurveyType = (type: string) => {
+    setLocalSurvey({
+      ...localSurvey,
+      type,
+    });
+  };
 
   return (
     <Collapsible.Root
@@ -74,7 +85,12 @@ export default function HowToSendCard({}: HowToSendCardProps) {
       <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
-          <RadioGroup defaultValue="web" className="flex flex-col space-y-3">
+          <RadioGroup
+            defaultValue="web"
+            value={localSurvey.type}
+            onValueChange={setSurveyType}
+            className="flex flex-col space-y-3"
+            disabled={localSurvey.status !== "draft"}>
             {options.map((option) => (
               <Label
                 key={option.id}
