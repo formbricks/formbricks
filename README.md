@@ -42,6 +42,7 @@ Formbricks helps you apply best practices from data-driven work and experience m
 ## Cloud vs. self-hosted
 
 Formbricks is available Open-Source under AGPLv3 license. You can host Formbricks on your own servers without a subscription. Check out our [docs](https://formbricks.com/docs/self-hosting/deployment) to see how to self-host Formbricks.
-We will soon offer a cloud version of Formbricks which saves you the hassle of maintaining your own servers. We will update this Readme once the cloud version is available.
+
+We also have a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. For more information, please visit [formbricks.com](https://formbricks.com)
 
 (In the future we may develop additional features that aren't in the free Open-Source version)
