@@ -16,12 +16,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ErrorComponent } from "@formbricks/ui";
-import { CustomersIcon } from "@formbricks/ui";
-import { FilterIcon, SettingsIcon } from "@formbricks/ui";
-import { FormIcon } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import {
+  CustomersIcon,
+  ErrorComponent,
+  FilterIcon,
+  FormIcon,
+  ProfileAvatar,
+  SettingsIcon,
+} from "@formbricks/ui";
 import {
   AdjustmentsVerticalIcon,
   ArrowRightOnRectangleIcon,
@@ -42,7 +46,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ProfileAvatar } from "@formbricks/ui";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -131,7 +134,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           href: `/environments/${environmentId}/settings/billing`,
           hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
         },
-        /*         {
+        /*  {
           icon: RocketLaunchIcon,
           label: "Upgrade account",
           href: `/environments/${environmentId}/settings/billing`,
@@ -200,7 +203,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   item.current
                     ? "bg-slate-100 text-slate-900"
                     : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
-                  "inline-flex items-center rounded-md py-1 px-2 text-sm font-medium"
+                  "inline-flex items-center rounded-md px-2 py-1 text-sm font-medium"
                 )}
                 aria-current={item.current ? "page" : undefined}>
                 <item.icon className="mr-3 h-5 w-5" />

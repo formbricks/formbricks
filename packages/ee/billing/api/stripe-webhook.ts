@@ -1,6 +1,7 @@
 //import { buffer } from "micro";
-import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@formbricks/database";
+import { NextApiRequest, NextApiResponse } from "next";
+import type { Readable } from "stream";
 
 import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -17,8 +18,8 @@ export const config = {
   },
 };
 
-async function buffer(readable: any) {
-  const chunks = [];
+async function buffer(readable: Readable): Promise<Buffer> {
+  const chunks: Buffer[] = [];
   for await (const chunk of readable) {
     chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
   }
@@ -46,18 +47,38 @@ const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
     // Cast event data to Stripe object.
     if (event.type === "checkout.session.completed") {
       const checkoutSession = event.data.object as Stripe.Checkout.Session;
-      const organisationId = checkoutSession.client_reference_id;
-      if (!organisationId) {
-        console.error("No organisationId found in checkout session");
-        return res.json({ message: "skipping, no organisationId found" });
+      const teamId = checkoutSession.client_reference_id;
+      if (!teamId) {
+        console.error("No teamId found in checkout session");
+        return res.json({ message: "skipping, no teamId found" });
       }
       const stripeCustomerId = checkoutSession.customer as string;
       const plan = "pro";
-      await prisma.organisation.update({
-        where: { id: organisationId },
+      await prisma.team.update({
+        where: { id: teamId },
         data: {
           stripeCustomerId,
           plan,
+        },
+      });
+      // add teamId to subscription metadata in Stripe
+      const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription as string);
+      await stripe.subscriptions.update(subscription.id, {
+        metadata: {
+          teamId,
+        },
+      });
+    } else if (event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object as Stripe.Subscription;
+      const teamId = subscription.metadata.teamId;
+      if (!teamId) {
+        console.error("No teamId found in subscription");
+        return res.json({ message: "skipping, no teamId found" });
+      }
+      await prisma.team.update({
+        where: { id: teamId },
+        data: {
+          plan: "free",
         },
       });
     } else {
