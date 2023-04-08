@@ -1,16 +1,26 @@
+import { Survey } from "@formbricks/types/surveys";
 import Modal from "@/components/preview/Modal";
 import MultipleChoiceSingleQuestion from "@/components/preview/MultipleChoiceSingleQuestion";
 import OpenTextQuestion from "@/components/preview/OpenTextQuestion";
+import ThankYouCard from "@/components/preview/ThankYouCard";
 import type { Question } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 
 interface PreviewSurveyProps {
+  setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
   questions: Question[];
   brandColor: string;
+  localSurvey: Survey;
 }
 
-export default function PreviewSurvey({ activeQuestionId, questions, brandColor }: PreviewSurveyProps) {
+export default function PreviewSurvey({
+  setActiveQuestionId,
+  activeQuestionId,
+  questions,
+  brandColor,
+  localSurvey,
+}: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
 
@@ -20,6 +30,8 @@ export default function PreviewSurvey({ activeQuestionId, questions, brandColor 
         setCurrentQuestion(questions.find((q) => q.id === activeQuestionId) || null);
         return;
       }
+      if (activeQuestionId === "thank-you-card") return;
+
       setIsModalOpen(false);
       setTimeout(() => {
         setCurrentQuestion(questions.find((q) => q.id === activeQuestionId) || null);
@@ -30,7 +42,7 @@ export default function PreviewSurvey({ activeQuestionId, questions, brandColor 
         setCurrentQuestion(questions[0]);
       }
     }
-  }, [activeQuestionId, questions]);
+  }, [activeQuestionId, currentQuestion, questions]);
 
   const gotoNextQuestion = () => {
     if (currentQuestion) {
@@ -39,11 +51,12 @@ export default function PreviewSurvey({ activeQuestionId, questions, brandColor 
         setCurrentQuestion(questions[currentIndex + 1]);
       } else {
         // start over
-        setIsModalOpen(false);
-        setTimeout(() => {
-          setCurrentQuestion(questions[0]);
-          setIsModalOpen(true);
-        }, 500);
+        setActiveQuestionId("thank-you-card");
+        // setIsModalOpen(false);
+        // setTimeout(() => {
+        //   setCurrentQuestion(questions[0]);
+        //   setIsModalOpen(true);
+        // }, 500);
       }
     }
   };
@@ -56,7 +69,13 @@ export default function PreviewSurvey({ activeQuestionId, questions, brandColor 
 
   return (
     <Modal isOpen={isModalOpen}>
-      {currentQuestion.type === "openText" ? (
+      {activeQuestionId == "thank-you-card" ? (
+        <ThankYouCard
+          brandColor={brandColor}
+          headline={localSurvey?.thankYouCard?.headline}
+          subheader={localSurvey?.thankYouCard?.subheader}
+        />
+      ) : currentQuestion.type === "openText" ? (
         <OpenTextQuestion
           question={currentQuestion}
           onSubmit={() => gotoNextQuestion()}

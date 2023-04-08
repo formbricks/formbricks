@@ -7,6 +7,7 @@ import { JsConfig, Survey } from "@formbricks/types/js";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import Progress from "./Progress";
+import ThankYouCard from "./ThankYouCard";
 
 interface SurveyViewProps {
   config: JsConfig;
@@ -14,6 +15,12 @@ interface SurveyViewProps {
   close: () => void;
   brandColor: string;
 }
+
+const thankYouCard = {
+  enabled: true,
+  headline: "Thank you for your feedback!",
+  subheader: "We appreciate your time.",
+};
 
 export default function SurveyView({ config, survey, close, brandColor }: SurveyViewProps) {
   const [currentQuestion, setCurrentQuestion] = useState(survey.questions[0]);
@@ -63,7 +70,14 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
       setCurrentQuestion(survey.questions[questionIdx + 1]);
     } else {
       setProgress(100);
-      close();
+
+      if (thankYouCard.enabled) {
+        setTimeout(() => {
+          close();
+        }, 2000);
+      } else {
+        close();
+      }
     }
   };
 
@@ -74,7 +88,13 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
           loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
           "fb-p-4 fb-text-slate-800 fb-font-sans"
         )}>
-        {currentQuestion.type === "multipleChoiceSingle" ? (
+        {progress === 100 && thankYouCard.enabled ? (
+          <ThankYouCard
+            headline={thankYouCard.headline}
+            subheader={thankYouCard.subheader}
+            brandColor={config.settings?.brandColor}
+          />
+        ) : currentQuestion.type === "multipleChoiceSingle" ? (
           <MultipleChoiceSingleQuestion
             question={currentQuestion}
             onSubmit={submitResponse}
