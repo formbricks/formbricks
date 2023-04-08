@@ -20,6 +20,7 @@ import clsx from "clsx";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { testURLmatch } from "./testURLmatch";
+import toast from "react-hot-toast";
 
 interface EventDetailModalProps {
   environmentId: string;
@@ -70,6 +71,8 @@ export default function AddNoCodeEventModal({
       watch("noCodeConfig.[pageUrl].rule")
     );
     setIsMatch(match);
+    if (match === "yes") toast.success("Your survey would be shown on this URL.");
+    if (match === "no") toast.error("Your survey would not be shown.");
   };
 
   return (
@@ -82,9 +85,9 @@ export default function AddNoCodeEventModal({
                 <CursorArrowRaysIcon />
               </div>
               <div>
-                <div className="text-xl font-medium text-slate-700">Add No-Code Event</div>
+                <div className="text-xl font-medium text-slate-700">Add Trigger Event</div>
                 <div className="text-sm text-slate-500">
-                  Create a new no-code event to filter your user base with.
+                  Create a new trigger event to show the survey at a specific point in the user journey.
                 </div>
               </div>
             </div>
