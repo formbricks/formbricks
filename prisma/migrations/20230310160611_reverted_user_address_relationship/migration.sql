@@ -10,7 +10,17 @@
 ALTER TABLE "users" DROP CONSTRAINT "users_addressId_fkey";
 
 -- AlterTable
-ALTER TABLE "Address" ADD COLUMN     "userId" INTEGER NOT NULL;
+ALTER TABLE "Address" ADD COLUMN     "userId" INTEGER;
+
+DO $$DECLARE temp_user record;
+BEGIN
+  FOR temp_user IN (SELECT "id", "addressId" FROM public."users" WHERE public."users"."addressId" IS NOT NULL)
+  LOOP
+    UPDATE public."Address" SET "userId"=temp_user."id" WHERE "id"=temp_user."addressId";
+  END LOOP;
+END$$;
+
+ALTER TABLE "Address" ALTER COLUMN "userId" SET NOT NULL;
 
 -- AlterTable
 ALTER TABLE "users" DROP COLUMN "addressId";
