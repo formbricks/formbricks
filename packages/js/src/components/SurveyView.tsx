@@ -16,12 +16,6 @@ interface SurveyViewProps {
   brandColor: string;
 }
 
-const thankYouCard = {
-  enabled: true,
-  headline: "Thank you for your feedback!",
-  subheader: "We appreciate your time.",
-};
-
 export default function SurveyView({ config, survey, close, brandColor }: SurveyViewProps) {
   const [currentQuestion, setCurrentQuestion] = useState(survey.questions[0]);
   const [progress, setProgress] = useState(0); // [0, 1]
@@ -71,7 +65,7 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
     } else {
       setProgress(100);
 
-      if (thankYouCard.enabled) {
+      if (survey.thankYouCard.enabled) {
         setTimeout(() => {
           close();
         }, 2000);
@@ -88,10 +82,10 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
           loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
           "fb-p-4 fb-text-slate-800 fb-font-sans"
         )}>
-        {progress === 100 && thankYouCard.enabled ? (
+        {progress === 100 && survey.thankYouCard.enabled ? (
           <ThankYouCard
-            headline={thankYouCard.headline}
-            subheader={thankYouCard.subheader}
+            headline={survey.thankYouCard.headline}
+            subheader={survey.thankYouCard.subheader}
             brandColor={config.settings?.brandColor}
           />
         ) : currentQuestion.type === "multipleChoiceSingle" ? (
