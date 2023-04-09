@@ -1,10 +1,9 @@
 import { Survey } from "@formbricks/types/surveys";
 import Modal from "@/components/preview/Modal";
-import MultipleChoiceSingleQuestion from "@/components/preview/MultipleChoiceSingleQuestion";
-import OpenTextQuestion from "@/components/preview/OpenTextQuestion";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import type { Question } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
+import QuestionConditional from "@/components/preview/QuestionConditional";
 
 interface PreviewSurveyProps {
   localSurvey?: Survey;
@@ -26,7 +25,7 @@ export default function PreviewSurvey({
 
   useEffect(() => {
     const currentIndex = questions.findIndex((q) => q.id === currentQuestion?.id);
-    if (currentIndex < questions.length && currentIndex >= 0) return;
+    if (currentIndex < questions.length && currentIndex >= 0 && !localSurvey) return;
 
     if (activeQuestionId) {
       if (currentQuestion && currentQuestion.id === activeQuestionId) {
@@ -45,13 +44,14 @@ export default function PreviewSurvey({
         setCurrentQuestion(questions[0]);
       }
     }
-  }, [activeQuestionId, currentQuestion, questions]);
+  }, [activeQuestionId, currentQuestion, localSurvey, questions]);
 
   const gotoNextQuestion = () => {
     if (currentQuestion) {
       const currentIndex = questions.findIndex((q) => q.id === currentQuestion.id);
       if (currentIndex < questions.length - 1) {
         setCurrentQuestion(questions[currentIndex + 1]);
+        setActiveQuestionId(questions[currentIndex + 1].id);
       } else {
         setActiveQuestionId("thank-you-card");
       }
@@ -72,21 +72,14 @@ export default function PreviewSurvey({
           headline={localSurvey?.thankYouCard?.headline || "Thank you for your help!"}
           subheader={localSurvey?.thankYouCard?.subheader || "Thanks for helping to make our product better!"}
         />
-      ) : currentQuestion.type === "openText" ? (
-        <OpenTextQuestion
-          question={currentQuestion}
-          onSubmit={() => gotoNextQuestion()}
-          lastQuestion={lastQuestion}
+      ) : (
+        <QuestionConditional
+          currentQuestion={currentQuestion}
           brandColor={brandColor}
-        />
-      ) : currentQuestion.type === "multipleChoiceSingle" ? (
-        <MultipleChoiceSingleQuestion
-          question={currentQuestion}
-          onSubmit={() => gotoNextQuestion()}
           lastQuestion={lastQuestion}
-          brandColor={brandColor}
+          onSubmit={gotoNextQuestion}
         />
-      ) : null}
+      )}
     </Modal>
   );
 }
