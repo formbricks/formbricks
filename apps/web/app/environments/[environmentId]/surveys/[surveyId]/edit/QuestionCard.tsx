@@ -11,6 +11,7 @@ import { Draggable } from "react-beautiful-dnd";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionDropdown";
+import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 
 interface QuestionCardProps {
   question: Question;
@@ -99,6 +100,13 @@ export default function QuestionCard({
                 />
               ) : question.type === "multipleChoiceSingle" ? (
                 <MultipleChoiceSingleForm
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                />
+              ) : question.type === "multipleChoiceMulti" ? (
+                <MultipleChoiceMultiForm
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}

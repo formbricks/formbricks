@@ -1,7 +1,5 @@
 "use client";
 
-import MultipleChoiceSingleQuestion from "@/components/preview/MultipleChoiceSingleQuestion";
-import OpenTextQuestion from "@/components/preview/OpenTextQuestion";
 import Progress from "@/components/preview/Progress";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
@@ -11,6 +9,7 @@ import { useLinkSurvey } from "@/lib/linkSurvey/linkSurvey";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
+import QuestionConditional from "@/components/preview/QuestionConditional";
 
 interface LinkSurveyProps {
   surveyId: string;
@@ -110,21 +109,14 @@ export default function LinkSurvey({ surveyId }: LinkSurveyProps) {
               <h1 className="text-2xl font-bold">Thank you for your time!</h1>
               <p className="mt-4">You have completed the survey.</p>
             </div>
-          ) : currentQuestion.type === "openText" ? (
-            <OpenTextQuestion
-              question={currentQuestion}
-              onSubmit={submitResponse}
-              lastQuestion={lastQuestion}
+          ) : (
+            <QuestionConditional
+              currentQuestion={currentQuestion}
               brandColor={survey.brandColor}
-            />
-          ) : currentQuestion.type === "multipleChoiceSingle" ? (
-            <MultipleChoiceSingleQuestion
-              question={currentQuestion}
-              onSubmit={submitResponse}
               lastQuestion={lastQuestion}
-              brandColor={survey.brandColor}
+              onSubmit={submitResponse}
             />
-          ) : null}
+          )}
         </ContentWrapper>
       </div>
       <div className="top-0 z-10 w-full border-b">
