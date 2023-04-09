@@ -8,6 +8,7 @@ import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import Progress from "./Progress";
 import ThankYouCard from "./ThankYouCard";
+import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
 
 interface SurveyViewProps {
   config: JsConfig;
@@ -99,6 +100,15 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
           />
         ) : currentQuestion.type === "openText" ? (
           <OpenTextQuestion
+            question={currentQuestion}
+            onSubmit={submitResponse}
+            lastQuestion={
+              survey.questions.findIndex((e) => e.id === currentQuestion.id) === survey.questions.length - 1
+            }
+            brandColor={brandColor}
+          />
+        ) : currentQuestion.type === "multipleChoiceMulti" ? (
+          <MultipleChoiceMultiQuestion
             question={currentQuestion}
             onSubmit={submitResponse}
             lastQuestion={

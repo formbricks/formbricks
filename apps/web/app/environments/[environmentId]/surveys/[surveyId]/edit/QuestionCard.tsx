@@ -9,9 +9,9 @@ import { Bars3BottomLeftIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Draggable } from "react-beautiful-dnd";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
+import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionDropdown";
-import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 
 interface QuestionCardProps {
   question: Question;
