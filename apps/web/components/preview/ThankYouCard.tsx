@@ -15,12 +15,12 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
-          stroke-width="1.5"
+          strokeWidth="1.5"
           stroke="currentColor"
           className="h-24 w-24">
           <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
@@ -29,11 +29,11 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
       <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-slate-300"></span>
 
       <div>
-        <Headline headline={headline} questionId="thankYouCard" style={{ "margin-right": 0 }} />
+        <Headline headline={headline} questionId="thankYouCard" />
         <Subheader subheader={subheader} questionId="thankYouCard" />
       </div>
 
-      <span
+      {/* <span
         className="mb-[10px] mt-[35px] inline-block h-[2px] w-4/5 rounded-full opacity-25"
         style={{ backgroundColor: brandColor }}></span>
 
@@ -46,7 +46,7 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
             </a>
           </b>
         </p>
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -7,24 +7,27 @@ import type { Question } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 
 interface PreviewSurveyProps {
+  localSurvey?: Survey;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
   questions: Question[];
   brandColor: string;
-  localSurvey: Survey;
 }
 
 export default function PreviewSurvey({
+  localSurvey,
   setActiveQuestionId,
   activeQuestionId,
   questions,
   brandColor,
-  localSurvey,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
 
   useEffect(() => {
+    const currentIndex = questions.findIndex((q) => q.id === currentQuestion?.id);
+    if (currentIndex < questions.length && currentIndex >= 0) return;
+
     if (activeQuestionId) {
       if (currentQuestion && currentQuestion.id === activeQuestionId) {
         setCurrentQuestion(questions.find((q) => q.id === activeQuestionId) || null);
@@ -50,13 +53,7 @@ export default function PreviewSurvey({
       if (currentIndex < questions.length - 1) {
         setCurrentQuestion(questions[currentIndex + 1]);
       } else {
-        // start over
         setActiveQuestionId("thank-you-card");
-        // setIsModalOpen(false);
-        // setTimeout(() => {
-        //   setCurrentQuestion(questions[0]);
-        //   setIsModalOpen(true);
-        // }, 500);
       }
     }
   };
@@ -72,8 +69,8 @@ export default function PreviewSurvey({
       {activeQuestionId == "thank-you-card" ? (
         <ThankYouCard
           brandColor={brandColor}
-          headline={localSurvey?.thankYouCard?.headline}
-          subheader={localSurvey?.thankYouCard?.subheader}
+          headline={localSurvey?.thankYouCard?.headline || "Thank you for your help!"}
+          subheader={localSurvey?.thankYouCard?.subheader || "Thanks for helping to make our product better!"}
         />
       ) : currentQuestion.type === "openText" ? (
         <OpenTextQuestion

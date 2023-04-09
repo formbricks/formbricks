@@ -73,7 +73,7 @@ export default function EditThankYouCard({
                 checked={localSurvey?.thankYouCard?.enabled}
                 onClick={(e) => {
                   e.stopPropagation();
-                  updateSurvey({ enabled: !localSurvey.thankYouCard.enabled });
+                  updateSurvey({ enabled: !localSurvey.thankYouCard?.enabled });
                 }}
               />
             </div>

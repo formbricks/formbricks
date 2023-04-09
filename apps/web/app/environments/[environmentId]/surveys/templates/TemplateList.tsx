@@ -17,6 +17,9 @@ import { replacePresetPlaceholders } from "@/lib/templates";
 
 export default function TemplateList({ environmentId }: { environmentId: string }) {
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
+
+  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const categories = [
@@ -79,17 +82,20 @@ export default function TemplateList({ environmentId }: { environmentId: string 
               .map((template: Template) => (
                 <button
                   type="button"
-                  onClick={() => setActiveTemplate(replacePresetPlaceholders(template, product))}
+                  onClick={() => {
+                    setActiveQuestionId(null);
+                    setActiveTemplate(replacePresetPlaceholders(template, product));
+                  }}
                   key={template.name}
                   className={cn(
                     activeTemplate?.name === template.name && "ring-brand ring-2",
                     "duration-120  group  relative rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105"
                   )}>
-                  <div className="absolute top-6 right-6 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500">
+                  <div className="absolute right-6 top-6 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500">
                     {template.category}
                   </div>
                   <template.icon className="h-8 w-8" />
-                  <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700">{template.name}</h3>
+                  <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
                   <p className="text-left text-xs text-slate-600">{template.description}</p>
                 </button>
               ))}
@@ -101,7 +107,7 @@ export default function TemplateList({ environmentId }: { environmentId: string 
                 "duration-120 hover:border-brand-dark group relative rounded-lg border-2 border-dashed border-slate-300 bg-transparent p-8 transition-colors duration-150"
               )}>
               <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
-              <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700 ">{customSurvey.name}</h3>
+              <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 ">{customSurvey.name}</h3>
               <p className="text-left text-xs text-slate-600 ">{customSurvey.description}</p>
             </button>
           </div>
@@ -114,9 +120,10 @@ export default function TemplateList({ environmentId }: { environmentId: string 
           </Link>
           {activeTemplate && (
             <PreviewSurvey
-              activeQuestionId={null}
+              activeQuestionId={activeQuestionId}
               questions={activeTemplate.preset.questions}
               brandColor={product.brandColor}
+              setActiveQuestionId={setActiveQuestionId}
             />
           )}
         </aside>
