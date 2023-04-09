@@ -1,5 +1,3 @@
-import { ThankYouCard } from "./surveys";
-
 export interface ResponseCreateRequest {
   surveyId: string;
   personId: string;
@@ -68,17 +66,17 @@ export interface Person {
   environmentId: string;
 }
 
-export interface ThankYouCard {
-  enabled: boolean;
-  headline: string;
-  subheader: string;
-}
-
 export interface Survey {
   id: string;
   questions: Question[];
   triggers: Trigger[];
   thankYouCard: ThankYouCard;
+}
+
+export interface ThankYouCard {
+  enabled: boolean;
+  headline?: string;
+  subheader?: string;
 }
 
 export type Question = OpenTextQuestion | MultipleChoiceSingleQuestion;

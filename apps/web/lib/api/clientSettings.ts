@@ -20,7 +20,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
     throw new Error("Product not found");
   }
 
-  // get all surveys that meed the displayOption criteria
+  // get all surveys that meet the displayOption criteria
   const potentialSurveys = await prisma.survey.findMany({
     where: {
       OR: [
@@ -60,8 +60,8 @@ export const getSettings = async (environmentId: string, personId: string): Prom
             },
           },
         },
+        // last display
       },
-      // last display
       displays: {
         where: {
           personId,
@@ -74,6 +74,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
           createdAt: true,
         },
       },
+      thankYouCard: true,
     },
   });
 
@@ -125,6 +126,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
         id: survey.id,
         questions: JSON.parse(JSON.stringify(survey.questions)),
         triggers: survey.triggers,
+        thankYouCard: JSON.parse(JSON.stringify(survey.thankYouCard)),
       };
     });
 

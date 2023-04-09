@@ -34,7 +34,7 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
         <Subheader subheader={subheader} questionId="thankYouCard" />
       </div>
 
-      <span
+      {/* <span
         className="fb-inline-block fb-w-4/5 fb-h-[2px] fb-mt-[35px] fb-mb-[10px]"
         style={{ backgroundColor: brandColor }}></span>
 
@@ -47,7 +47,7 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
             </a>
           </b>
         </p>
-      </div>
+      </div> */}
     </div>
   );
 }
