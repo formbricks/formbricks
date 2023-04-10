@@ -39,18 +39,22 @@ export default function EditThankYouCard({
   };
 
   return (
-    <div className="flex flex-row rounded-lg bg-white shadow-lg">
+    <div
+      className={cn(
+        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
+        "flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
+      )}>
       <div
         className={cn(
-          open ? "bg-slate-600" : "bg-slate-500",
-          "flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-bl-none"
+          open ? "bg-slate-700" : "bg-slate-400",
+          "flex w-10 items-center justify-center rounded-l-lg hover:bg-slate-600 group-aria-expanded:rounded-bl-none"
         )}>
         <p>🙏</p>
       </div>
       <Collapsible.Root
         open={open}
         onOpenChange={setOpen}
-        className="flex-1 rounded-r-lg border border-slate-200">
+        className="flex-1 rounded-r-lg border border-slate-200 transition-all duration-300 ease-in-out">
         <Collapsible.CollapsibleTrigger
           asChild
           className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">

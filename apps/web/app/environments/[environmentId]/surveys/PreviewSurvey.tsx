@@ -69,8 +69,8 @@ export default function PreviewSurvey({
       {activeQuestionId == "thank-you-card" ? (
         <ThankYouCard
           brandColor={brandColor}
-          headline={localSurvey?.thankYouCard?.headline || "Thank you for your help!"}
-          subheader={localSurvey?.thankYouCard?.subheader || "Thanks for helping to make our product better!"}
+          headline={localSurvey?.thankYouCard?.headline || "Thank you!"}
+          subheader={localSurvey?.thankYouCard?.subheader || "We appreciate your time and insight."}
         />
       ) : (
         <QuestionConditional

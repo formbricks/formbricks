@@ -1,5 +1,6 @@
 import { cn } from "@formbricks/lib/cn";
 import { ReactNode, useEffect, useState } from "react";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
 
 export default function Modal({ children, isOpen }: { children: ReactNode; isOpen: boolean }) {
   const [show, setShow] = useState(false);
@@ -7,12 +8,16 @@ export default function Modal({ children, isOpen }: { children: ReactNode; isOpe
   useEffect(() => {
     setShow(isOpen);
   }, [isOpen]);
+
   return (
     <div
       aria-live="assertive"
       className="pointer-events-none absolute inset-0 flex items-end px-4 py-6 sm:p-6">
       <div className="flex w-full flex-col items-center  sm:items-end">
-        <div className="mr-6 rounded-t bg-amber-400 px-3 text-sm font-semibold text-white">Preview</div>
+        <div className="mr-6 flex items-center rounded-t bg-amber-500 px-3 text-sm font-semibold text-white hover:cursor-pointer">
+          <ArrowPathIcon className="mr-1.5 mt-0.5 h-4 w-4 " />
+          Preview
+        </div>
         <div
           className={cn(
             show ? "translate-x-0 opacity-100" : "translate-x-28 opacity-0",
