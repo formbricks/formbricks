@@ -24,6 +24,19 @@ export default function PreviewSurvey({
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
 
   useEffect(() => {
+    if (!localSurvey?.thankYouCard.enabled) {
+      if (activeQuestionId === "thank-you-card") {
+        setIsModalOpen(false);
+        setTimeout(() => {
+          setCurrentQuestion(questions[0]);
+          setActiveQuestionId(questions[0].id);
+          setIsModalOpen(true);
+        }, 500);
+      }
+    }
+  }, [localSurvey]);
+
+  useEffect(() => {
     const currentIndex = questions.findIndex((q) => q.id === currentQuestion?.id);
     if (currentIndex < questions.length && currentIndex >= 0 && !localSurvey) return;
 
