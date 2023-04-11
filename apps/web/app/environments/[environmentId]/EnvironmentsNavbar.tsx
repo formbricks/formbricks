@@ -16,12 +16,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ErrorComponent } from "@formbricks/ui";
-import { CustomersIcon } from "@formbricks/ui";
-import { FilterIcon, SettingsIcon } from "@formbricks/ui";
-import { FormIcon } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import {
+  CustomersIcon,
+  ErrorComponent,
+  FilterIcon,
+  FormIcon,
+  ProfileAvatar,
+  SettingsIcon,
+} from "@formbricks/ui";
 import {
   AdjustmentsVerticalIcon,
   ArrowRightOnRectangleIcon,
@@ -42,7 +46,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ProfileAvatar } from "@formbricks/ui";
 import AddProductModal from "./AddProductModal";
 
 interface EnvironmentsNavbarProps {
@@ -134,7 +137,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           href: `/environments/${environmentId}/settings/billing`,
           hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
         },
-        /*         {
+        /*  {
           icon: RocketLaunchIcon,
           label: "Upgrade account",
           href: `/environments/${environmentId}/settings/billing`,

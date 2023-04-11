@@ -2,10 +2,13 @@ import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 import { Button } from "@formbricks/ui";
 import PricingTable from "./PricingTable";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 const proPlan = false;
 
-export default function ProfileSettingsPage() {
+export default async function ProfileSettingsPage({ params }) {
+  const session = await getServerSession(authOptions);
   return (
     <div>
       <SettingsTitle title="Billing & Plan" />
@@ -16,7 +19,7 @@ export default function ProfileSettingsPage() {
           <Button variant="primary">Billing Portal</Button>
         </SettingsCard>
       ) : (
-        <PricingTable />
+        <PricingTable environmentId={params.environmentId} session={session} />
       )}
     </div>
   );

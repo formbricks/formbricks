@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui";
+import type { NoCodeConfig, Event } from "@formbricks/types/events";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { useState } from "react";
@@ -33,11 +34,29 @@ export default function AddNoCodeEventModal({
   setOpen,
   mutateEventClasses,
 }: EventDetailModalProps) {
-  const { register, control, handleSubmit, watch } = useForm();
+  const { register, control, handleSubmit, watch, reset } = useForm();
 
-  const submitEventClass = async (data) => {
-    await createEventClass(environmentId, { ...data, type: "noCode" });
+  // clean up noCodeConfig before submitting by removing unnecessary fields
+  const filterNoCodeConfig = (noCodeConfig: NoCodeConfig): NoCodeConfig => {
+    const { type } = noCodeConfig;
+    return {
+      type,
+      [type]: noCodeConfig[type],
+    };
+  };
+
+  const submitEventClass = async (data: Partial<Event>): Promise<void> => {
+    const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as NoCodeConfig);
+
+    const updatedData: Event = {
+      ...data,
+      noCodeConfig: filteredNoCodeConfig,
+      type: "noCode",
+    } as Event;
+
+    await createEventClass(environmentId, updatedData);
     mutateEventClasses();
+    reset();
     setOpen(false);
   };
 
@@ -57,7 +76,7 @@ export default function AddNoCodeEventModal({
     <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false}>
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
-          <div className="flex items-center justify-between p-6">
+          <div className="flex w-full items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="mr-1.5 h-6 w-6 text-slate-500">
                 <CursorArrowRaysIcon />
@@ -73,39 +92,30 @@ export default function AddNoCodeEventModal({
         </div>
         <form onSubmit={handleSubmit(submitEventClass)}>
           <div className="flex justify-between rounded-lg p-6">
-            <div className="space-y-4">
+            <div className="w-full space-y-4">
               <div>
                 <Label>Select By</Label>
                 <Controller
                   name="noCodeConfig.type"
                   defaultValue={"pageUrl"}
                   control={control}
-                  render={({ field }) => (
-                    <RadioGroup className="flex" {...field}>
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <RadioGroup className="flex" onValueChange={onChange} onBlur={onBlur} value={value}>
                       <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
                         <RadioGroupItem value="pageUrl" id="pageUrl" className="bg-slate-50" />
                         <Label htmlFor="pageUrl" className="flex cursor-pointer items-center">
                           Page URL
                         </Label>
                       </div>
-                      <div className="flex items-center space-x-2 rounded-lg bg-slate-50 p-3">
-                        <RadioGroupItem disabled value="innerHtml" id="innerHtml" className="bg-slate-50" />
-                        <Label
-                          htmlFor="innerHtml"
-                          className="flex cursor-not-allowed items-center text-slate-500">
+                      <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
+                        <RadioGroupItem value="innerHtml" id="innerHtml" className="bg-slate-50" />
+                        <Label htmlFor="innerHtml" className="flex cursor-pointer items-center">
                           Inner Text
                         </Label>
                       </div>
-                      <div className="flex items-center space-x-2 rounded-lg bg-slate-50 p-3">
-                        <RadioGroupItem
-                          disabled
-                          value="cssSelector"
-                          id="cssSelector"
-                          className="bg-slate-50"
-                        />
-                        <Label
-                          htmlFor="cssSelector"
-                          className="flex cursor-not-allowed items-center text-slate-500">
+                      <div className="flex items-center space-x-2 rounded-lg border border-slate-200 p-3">
+                        <RadioGroupItem value="cssSelector" id="cssSelector" className="bg-slate-50" />
+                        <Label htmlFor="cssSelector" className="flex cursor-pointer items-center">
                           CSS Selector
                         </Label>
                       </div>
@@ -113,92 +123,125 @@ export default function AddNoCodeEventModal({
                   )}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-x-2">
-                <div>
+              <div className="grid w-full grid-cols-2 gap-x-8">
+                <div className="col-span-1">
                   <Label>Name</Label>
                   <Input placeholder="e.g. Dashboard Page View" {...register("name", { required: true })} />
                 </div>
-                <div>
+                <div className="col-span-1">
                   <Label>Description</Label>
                   <Input placeholder="e.g. User visited dashboard" {...register("description")} />
                 </div>
               </div>
-              <div className="grid w-full grid-cols-3 gap-x-8">
-                <div className="col-span-1">
-                  <Label>URL</Label>
-                  <Controller
-                    name="noCodeConfig.pageUrl.rule"
-                    defaultValue={"exactMatch"}
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        onValueChange={field.onChange}
-                        /* onValueChange={(e) => {
-                          setMatchType(e as MatchType);
-                          setIsMatch("default");
-                        }} */
-                        {...field}>
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Select match type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="exactMatch">Exactly matches</SelectItem>
-                          <SelectItem value="contains">Contains</SelectItem>
-                          <SelectItem value="startsWith">Starts with</SelectItem>
-                          <SelectItem value="endsWith">Ends with</SelectItem>
-                          <SelectItem value="notMatch">Does not exactly match</SelectItem>
-                          <SelectItem value="notContains">Does not contain</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
+              {(watch("noCodeConfig.type") === "pageUrl" || !watch("noCodeConfig.type")) && (
+                <>
+                  <div className="grid w-full grid-cols-3 gap-x-8">
+                    <div className="col-span-1">
+                      <Label>URL</Label>
+                      <Controller
+                        name="noCodeConfig.pageUrl.rule"
+                        defaultValue={"exactMatch"}
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={field.onChange}
+                            /* onValueChange={(e) => {
+                            setMatchType(e as MatchType);
+                            setIsMatch("default");
+                          }} */
+                            {...field}>
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Select match type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="exactMatch">Exactly matches</SelectItem>
+                              <SelectItem value="contains">Contains</SelectItem>
+                              <SelectItem value="startsWith">Starts with</SelectItem>
+                              <SelectItem value="endsWith">Ends with</SelectItem>
+                              <SelectItem value="notMatch">Does not exactly match</SelectItem>
+                              <SelectItem value="notContains">Does not contain</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
 
-                <div className="col-span-2 flex w-full items-end">
-                  <Input
-                    type="text"
-                    placeholder="e.g. https://app.formbricks.com/dashboard"
-                    {...register("noCodeConfig.[pageUrl].value", { required: true })}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label className="mb-2 block">Test Your URL</Label>
-                <div className=" rounded bg-slate-50 p-4">
-                  <Label className="font-normal text-slate-500">
-                    Enter a URL to see if it matches your event URL
-                  </Label>
-                  <div className="mt-1 flex">
+                    <div className="col-span-2 flex w-full items-end">
+                      <Input
+                        type="text"
+                        placeholder="e.g. https://app.formbricks.com/dashboard"
+                        {...register("noCodeConfig.[pageUrl].value", { required: true })}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="mb-2 block">Test Your URL</Label>
+                    <div className=" rounded bg-slate-50 p-4">
+                      <Label className="font-normal text-slate-500">
+                        Enter a URL to see if it matches your event URL
+                      </Label>
+                      <div className="mt-1 flex">
+                        <Input
+                          type="text"
+                          value={testUrl}
+                          onChange={(e) => {
+                            setTestUrl(e.target.value);
+                            setIsMatch("default");
+                          }}
+                          className={clsx(
+                            isMatch === "yes"
+                              ? "border-green-500 bg-green-50"
+                              : isMatch === "no"
+                              ? "border-red-200 bg-red-50"
+                              : isMatch === "default"
+                              ? "border-slate-200 bg-white"
+                              : null
+                          )}
+                          placeholder="Paste the URL you want the event to trigger on"
+                        />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="ml-2 whitespace-nowrap"
+                          onClick={() => {
+                            handleMatchClick();
+                          }}>
+                          Test Match
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+              {watch("noCodeConfig.type") === "innerHtml" && (
+                <div className="grid w-full grid-cols-3 gap-x-8">
+                  <div className="col-span-1">
+                    <Label>Inner Text</Label>
+                  </div>
+                  <div className="col-span-3 flex w-full items-end">
                     <Input
                       type="text"
-                      value={testUrl}
-                      onChange={(e) => {
-                        setTestUrl(e.target.value);
-                        setIsMatch("default");
-                      }}
-                      className={clsx(
-                        isMatch === "yes"
-                          ? "border-green-500 bg-green-50"
-                          : isMatch === "no"
-                          ? "border-red-200 bg-red-50"
-                          : isMatch === "default"
-                          ? "border-slate-200 bg-white"
-                          : null
-                      )}
-                      placeholder="Paste the URL you want the event to trigger on"
+                      placeholder="e.g. 'Install App'"
+                      {...register("noCodeConfig.innerHtml.value", { required: true })}
                     />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="ml-2 whitespace-nowrap"
-                      onClick={() => {
-                        handleMatchClick();
-                      }}>
-                      Test Match
-                    </Button>
                   </div>
                 </div>
-              </div>
+              )}
+              {watch("noCodeConfig.type") === "cssSelector" && (
+                <div className="grid w-full grid-cols-3 gap-x-8">
+                  <div className="col-span-1">
+                    <Label>CSS Tag</Label>
+                  </div>
+                  <div className="col-span-3 flex w-full items-end">
+                    <Input
+                      type="text"
+                      placeholder="e.g. #install-button"
+                      {...register("noCodeConfig.cssSelector.value", { required: true })}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">

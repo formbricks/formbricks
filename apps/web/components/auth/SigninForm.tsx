@@ -82,7 +82,7 @@ export const SigninForm = () => {
           <div>
             <Link
               href="/auth/forgot-password"
-              className="text-sky mt-3 grid grid-cols-1 space-y-2 text-center text-xs hover:text-sky-600">
+              className="hover:text-brand-dark mt-3 grid grid-cols-1 space-y-2 text-center text-xs text-slate-700">
               Forgot your password?
             </Link>
           </div>

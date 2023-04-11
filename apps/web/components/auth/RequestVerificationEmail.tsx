@@ -20,7 +20,7 @@ export const RequestVerificationEmail = ({ email }: RequestEmailVerificationProp
   };
   return (
     <>
-      <Button onClick={requestVerificationEmail} className="w-full justify-center">
+      <Button variant="secondary" onClick={requestVerificationEmail} className="w-full justify-center">
         Request a new verification mail
       </Button>
     </>

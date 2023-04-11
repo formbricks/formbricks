@@ -28,7 +28,6 @@ export default function SlackAlertPage({ params }) {
   };
 
   const deleteEmailAlert = async () => {
-    console.log("Delete email alert");
     setDeleteDialogOpen(false);
   };
 
