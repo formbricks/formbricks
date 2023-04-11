@@ -41,7 +41,7 @@ export const sendVerificationEmail = async (user) => {
     subject: "Welcome to Formbricks 🤍",
     html: withEmailTemplate(`<h1>Welcome!</h1>
     To start using Formbricks please verify your email by clicking the button below:<br/><br/>
-    <a class="button" href="${verifyLink}">Verify email</a><br/>
+    <a class="button" href="${verifyLink}">Confirm email</a><br/>
     <br/>
     <strong>The link is valid for 24h.</strong><br/><br/>If it has expired please request a new token here:
     <a href="${verificationRequestLink}">Request new verification</a><br/>

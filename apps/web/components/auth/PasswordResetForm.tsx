@@ -56,10 +56,10 @@ export const PasswordResetForm = ({}) => {
 
         <div>
           <Button type="submit" className="w-full justify-center">
-            Send password reset email
+            Reset password
           </Button>
           <div className="mt-3 text-center">
-            <Button variant="secondary" href="/auth/login" className="w-full justify-center">
+            <Button variant="minimal" href="/auth/login" className="w-full justify-center">
               Back to login
             </Button>
           </div>

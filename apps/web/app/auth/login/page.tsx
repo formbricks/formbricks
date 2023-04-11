@@ -9,7 +9,7 @@ export default function SignInPage() {
         <div>
           <Link
             href="/auth/signup"
-            className="text-sky mt-3 grid grid-cols-1 space-y-2 text-center text-xs hover:text-teal-600">
+            className="hover:text-brand-dark mt-3 grid grid-cols-1 space-y-2 text-center text-xs text-slate-700">
             Create an account
           </Link>
         </div>
