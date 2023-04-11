@@ -91,6 +91,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                     },
                     create: {
                       name: key,
+                      description: "Created by Posthog Import",
                       type: attributeType,
                       environment: {
                         connect: {
