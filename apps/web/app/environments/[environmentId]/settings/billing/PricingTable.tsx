@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 
 const stripeURl =
   process.env.NODE_ENV === "production"
-    ? "https://buy.stripe.com/test_9AQfZw5CL9hmcXSdQQ"
+    ? "https://buy.stripe.com/28o00R4GDf9qdfa5kp"
     : "https://buy.stripe.com/test_9AQfZw5CL9hmcXSdQQ";
 
 interface PricingTableProps {
