@@ -70,6 +70,8 @@ export default function RecontactOptionsCard({
     setLocalSurvey(updatedSurvey);
   };
 
+  console.log(JSON.stringify(localSurvey, null, 2));
+
   return (
     <Collapsible.Root
       open={open}
@@ -173,7 +175,7 @@ export default function RecontactOptionsCard({
                   htmlFor="newDays"
                   className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                   <RadioGroupItem
-                    value={inputDays.toString()}
+                    value={inputDays === 0 ? "1" : inputDays.toString()} //Fixes that both radio buttons are checked when inputDays is 0
                     id="newDays"
                     className="aria-checked:border-brand-dark mx-5 disabled:border-slate-400 aria-checked:border-2"
                   />
@@ -184,7 +186,7 @@ export default function RecontactOptionsCard({
                         type="number"
                         min="1"
                         id="inputDays"
-                        value={inputDays}
+                        value={inputDays === 0 ? 1 : inputDays}
                         onChange={handleRecontactDaysChange}
                         className="ml-2 mr-2 inline w-16 text-center text-sm"
                       />
@@ -192,7 +194,7 @@ export default function RecontactOptionsCard({
                     </p>
 
                     <p className="mt-2 text-xs font-normal text-slate-600">
-                      Overwrites waiting period between surveys to {inputDays} day(s).
+                      Overwrites waiting period between surveys to {inputDays === 0 ? 1 : inputDays} day(s).
                     </p>
                   </div>
                 </label>
