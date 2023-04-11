@@ -56,43 +56,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       });
 
-      if (!existingUser) {
-        const attributeType: "noCode" = "noCode";
-        // create user with this attributes (create or connect attribute with the same attributeClass name)
-        await prisma.person.create({
-          data: {
-            attributes: {
-              create: Object.keys(user.attributes).map((key) => ({
-                value: user.attributes[key],
-                attributeClass: {
-                  connectOrCreate: {
-                    where: {
-                      name_environmentId: {
-                        name: key,
-                        environmentId,
-                      },
-                    },
-                    create: {
-                      name: key,
-                      type: attributeType,
-                      environment: {
-                        connect: {
-                          id: environmentId,
-                        },
-                      },
-                    },
-                  },
-                },
-              })),
-            },
-            environment: {
-              connect: {
-                id: environmentId,
-              },
-            },
-          },
-        });
-      } else {
+      if (existingUser) {
         // user already exists, loop through attributes and update or create them
         const attributeType: "noCode" = "noCode";
         for (const key of Object.keys(user.attributes)) {
@@ -109,7 +73,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 id: existingAttribute.id,
               },
               data: {
-                value: user.attributes[key],
+                value: user.attributes[key].toString(),
               },
             });
           } else {
