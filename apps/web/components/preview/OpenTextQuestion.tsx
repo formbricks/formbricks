@@ -22,7 +22,7 @@ export default function OpenTextQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        console.log(e.currentTarget);
+
         const data = {
           [question.id]: value,
         };

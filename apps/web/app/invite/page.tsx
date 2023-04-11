@@ -14,7 +14,6 @@ import {
 
 export default async function JoinTeam({ searchParams }) {
   const currentUser = await getServerSession(authOptions);
-  console.log("user", currentUser);
 
   try {
     const { inviteId, email } = await verifyInviteToken(searchParams.token);
@@ -27,7 +26,7 @@ export default async function JoinTeam({ searchParams }) {
     if (!currentUser) {
       const redirectUrl = env.NEXTAUTH_URL + "/invite?token=" + searchParams.token;
       return <NotLoggedInContent email={email} token={searchParams.token} redirectUrl={redirectUrl} />;
-    } else if (currentUser.user.email !== email) {
+    } else if (currentUser.user?.email !== email) {
       return <WrongAccountContent />;
     } else if (!invite) {
       return <ExpiredContent />;
@@ -44,7 +43,7 @@ export default async function JoinTeam({ searchParams }) {
           },
           user: {
             connect: {
-              id: currentUser.user.id,
+              id: currentUser.user?.id,
             },
           },
           role: invite.role,
@@ -59,7 +58,7 @@ export default async function JoinTeam({ searchParams }) {
         },
       });
 
-      sendInviteAcceptedEmail(invite.creator.name, currentUser.user.name, invite.creator.email);
+      sendInviteAcceptedEmail(invite.creator.name, currentUser.user?.name, invite.creator.email);
 
       return <RightAccountContent />;
     }

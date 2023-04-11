@@ -25,7 +25,7 @@ export default function MultipleChoiceSingleQuestion({
         const data = {
           [question.id]: e.currentTarget[question.id].value,
         };
-        console.log(data);
+
         e.currentTarget[question.id].value = "";
         onSubmit(data);
         // reset form
