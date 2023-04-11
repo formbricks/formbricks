@@ -58,6 +58,15 @@ export default function PreviewSurvey({
     }
   };
 
+  const resetPreview = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setCurrentQuestion(questions[0]);
+      setActiveQuestionId(questions[0].id);
+      setIsModalOpen(true);
+    }, 500);
+  };
+
   if (!currentQuestion) {
     return null;
   }
@@ -65,7 +74,7 @@ export default function PreviewSurvey({
   const lastQuestion = currentQuestion.id === questions[questions.length - 1].id;
 
   return (
-    <Modal isOpen={isModalOpen}>
+    <Modal isOpen={isModalOpen} reset={resetPreview}>
       {activeQuestionId == "thank-you-card" ? (
         <ThankYouCard
           brandColor={brandColor}
