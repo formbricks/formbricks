@@ -46,6 +46,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import AddProductModal from "./AddProductModal";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -58,6 +59,8 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
   const pathname = usePathname();
 
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
+
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -171,6 +174,12 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     router.push(`/environments/${newEnvironmentId}/`);
   };
 
+  const changeEnvironmentByProduct = (productId: string) => {
+    const product = environment.availableProducts.find((p) => p.id === productId);
+    const newEnvironmentId = product?.environments[0]?.id;
+    router.push(`/environments/${newEnvironmentId}/`);
+  };
+
   if (isLoadingEnvironment) {
     return <LoadingSpinner />;
   }
@@ -250,12 +259,21 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
-                      <DropdownMenuItem>
-                        <span>{environment?.product?.name}</span>
-                      </DropdownMenuItem>
+                      <DropdownMenuRadioGroup
+                        value={environment?.product.id}
+                        onValueChange={changeEnvironmentByProduct}>
+                        {environment?.availableProducts?.map((product) => (
+                          <DropdownMenuRadioItem
+                            value={product.id}
+                            className="cursor-pointer"
+                            key={product.id}>
+                            {product.name}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
 
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem disabled>
+                      <DropdownMenuItem onClick={() => setShowAddProductModal(true)}>
                         <PlusIcon className="mr-2 h-4 w-4" />
                         <span>Add product</span>
                       </DropdownMenuItem>
@@ -327,6 +345,11 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           </div>
         </div>
       </div>
+      <AddProductModal
+        open={showAddProductModal}
+        setOpen={(val) => setShowAddProductModal(val)}
+        environmentId={environmentId}
+      />
     </nav>
   );
 }
