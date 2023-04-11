@@ -55,6 +55,7 @@ interface EnvironmentsNavbarProps {
 
 export default function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
   const pathname = usePathname();
 
@@ -180,7 +181,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     router.push(`/environments/${newEnvironmentId}/`);
   };
 
-  if (isLoadingEnvironment) {
+  if (isLoadingEnvironment || loading) {
     return <LoadingSpinner />;
   }
 
@@ -328,12 +329,9 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <div className="flex items-center">
                       <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
                       <button
-                        onClick={async () => {
-                          try {
-                            await signOut();
-                          } catch (error) {
-                            console.error("Failed to sign out:", error);
-                          }
+                        onClick={() => {
+                          signOut();
+                          setLoading(true);
                         }}>
                         Logout
                       </button>

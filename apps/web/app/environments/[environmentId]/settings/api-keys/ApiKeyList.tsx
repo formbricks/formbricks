@@ -33,7 +33,5 @@ export default function ApiKeyList({
 
   const environmentTypeId = findEnvironmentByType(product?.environments, environmentType);
 
-  console.log(environmentTypeId);
-
   return <EditApiKeys environmentTypeId={environmentTypeId} environmentType={environmentType} />;
 }
