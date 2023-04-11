@@ -53,7 +53,16 @@ export default function PreviewSurvey({
         setCurrentQuestion(questions[currentIndex + 1]);
         setActiveQuestionId(questions[currentIndex + 1].id);
       } else {
-        setActiveQuestionId("thank-you-card");
+        if (localSurvey?.thankYouCard?.enabled) {
+          setActiveQuestionId("thank-you-card");
+        } else {
+          setIsModalOpen(false);
+          setTimeout(() => {
+            setCurrentQuestion(questions[0]);
+            setActiveQuestionId(questions[0].id);
+            setIsModalOpen(true);
+          }, 500);
+        }
       }
     }
   };

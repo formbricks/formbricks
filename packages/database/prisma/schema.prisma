@@ -131,7 +131,7 @@ model Survey {
   environmentId String
   status        SurveyStatus    @default(draft)
   questions     Json            @default("[]")
-  thankYouCard  Json            @default("{\"enabled\": false}")
+  thankYouCard  Json            @default("{\"enabled\": true}")
   responses     Response[]
   displayOption displayOptions  @default(displayOnce)
   recontactDays Int?
