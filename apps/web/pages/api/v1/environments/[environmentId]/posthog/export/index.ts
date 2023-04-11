@@ -94,7 +94,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     const events = [
       ...displays.map((display) => ({
-        name: "formbricks_display_created",
+        name: "formbricks_survey_displayed",
         timestamp: display.createdAt,
         userId: display.person?.attributes?.find((attr) => attr.attributeClass.name === "userId")?.value,
       })),
