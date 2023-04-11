@@ -24,6 +24,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     // lastSyncedAt is the last time the environment was synced (iso string)
     const { users }: { users: FormbricksUser[] } = req.body;
 
+    console.log(users);
+
     for (const user of users) {
       // check if user with this userId as attribute already exists
       const existingUser = await prisma.person.findFirst({
