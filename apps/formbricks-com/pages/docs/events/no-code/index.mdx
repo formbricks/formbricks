@@ -2,6 +2,8 @@ import { Layout } from "@/components/docs/Layout";
 
 export const meta = {
   title: "No-Code Events",
+  description:
+    "Utilize Formbricks' No-Code Events like Page URL, innerText, and CSS Selector for easy survey triggers and enhanced user insights.",
 };
 
 No-Code events can be set up within Formbricks with just a few clicks. There are three types of No-Code events:
@@ -17,12 +19,12 @@ The page URL event is triggered, when a user visits a specific page in your appl
 - `notMatch`: The URL should not match the specified condition.
 - `notContains`: The URL should not contain the specified string as a substring.
 
-## innerText Event (coming soon)
+## innerText Event
 
-The innerText event checks if the `innerText` of a clicked HTML element matches a specific text, e.g. the label of a button.
+The innerText event checks if the `innerText` of a clicked HTML element matches a specific text, e.g. the label of a button. Display a survey on any button click!
 
-## CSS Selector Event (coming soon)
+## CSS Selector Event
 
-The CSS Selector event checks if the provided CSS selector matches the selector of a clicked HTML element. The CSS selector can be a class, id or any other CSS selector within your website.
+The CSS Selector event checks if the provided CSS selector matches the selector of a clicked HTML element. The CSS selector can be a class, id or any other CSS selector within your website. Display a survey on any element click!
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

@@ -3,21 +3,6 @@ import clsx from "clsx";
 import { FooterLogo } from "./Logo";
 
 const navigation = {
-  /*   creation: [
-    { name: "React Form Builder", href: "/react-form-library", status: true },
-    { name: "No-Code Builder", href: "/visual-builder", status: false },
-    { name: "Templates", href: "#", status: false },
-  ],
-  pipelines: [
-    { name: "Core API", href: "/core-api", status: true },
-    { name: "Webhooks", href: "/webhooks", status: true },
-    { name: "Email", href: "/email", status: true },
-    { name: "Integrations", href: "#", status: false },
-  ],
-  insights: [
-    { name: "Formbricks HQ", href: "/formbricks-hq", status: true },
-    { name: "Reports", href: "#", status: false },
-  ], */
   other: [
     { name: "Community", href: "/community", status: true },
     { name: "Blog", href: "/blog", status: true },
@@ -58,7 +43,7 @@ export default function Footer() {
       <h2 id="footer-heading" className="sr-only">
         Footer
       </h2>
-      <div className="mx-auto flex max-w-7xl flex-col space-y-6 px-4 py-12 text-center sm:px-6 lg:py-16 lg:px-8">
+      <div className="mx-auto flex max-w-7xl flex-col space-y-6 px-4 py-12 text-center sm:px-6 lg:px-8 lg:py-16">
         <Link href="/">
           <span className="sr-only">Formbricks</span>
           <FooterLogo className="mx-auto h-8 w-auto sm:h-10" />

@@ -5,6 +5,8 @@ import { Callout } from "@/components/shared/Callout";
 
 export const meta = {
   title: "API Key Setup",
+  description:
+    "Generate, store, and delete personal API keys for secure Formbricks access. Ensure safekeeping to prevent unauthorized account control.",
 };
 
 ## Auth: Personal API key
@@ -13,10 +15,10 @@ The API requests are authorized with a personal API key. This API key gives you 
 
 ### How to generate an API key
 
-1. Go to your profile at [app.formbricks.com](https://app.formbricks.com/app/me/settings).
-2. Select “Add key”.
-3. Label it (this is just for you).
-4. Copy the key. You won’t be able to see it again.
+1. Go to your settings on [app.formbricks.com](https://app.formbricks.com/app/me/settings).
+2. Go to page “API keys”.
+3. Create a key for the development or production environment.
+4. Copy the key immediately. You won’t be able to see it again.
 
 <Callout title="Store API key safely" type="warning">
   Anyone who has your API key has full control over your account. For security reasons, you cannot view the
@@ -25,8 +27,9 @@ The API requests are authorized with a personal API key. This API key gives you 
 
 ### Delete a personal API key
 
-1. Go to your profile at [app.formbricks.com](https://app.formbricks.com/app/me/settings).
-2. Find the key you wish to revoke and select “Delete”.
-3. Your API key will stop working immediately.
+1. Go to settings on [app.formbricks.com](https://app.formbricks.com/app/me/settings).
+2. Go to page “API keys”.
+3. Find the key you wish to revoke and select “Delete”.
+4. Your API key will stop working immediately.
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

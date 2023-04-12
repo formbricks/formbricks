@@ -12,57 +12,57 @@ const nextConfig = {
       {
         source: "/discord",
         destination: "https://discord.gg/3YFcABF2Ts",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/roadmap",
         destination: "https://github.com/orgs/formbricks/projects/1",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/github",
         destination: "https://github.com/formbricks/formbricks",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/privacy",
         destination: "/privacy-policy",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/form-hq",
-        destination: "/formbricks-hq",
-        permanent: false,
+        destination: "/",
+        permanent: true,
       },
       {
         source: "/docs",
         destination: "/docs/introduction/what-is-formbricks",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/docs/formbricks-hq/self-hosting",
         destination: "/docs",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/docs/react-form-library/getting-started",
         destination: "/docs",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/docs/react-form-library/work-with-components",
         destination: "/docs",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/docs/react-form-library/introduction",
         destination: "/docs",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/docs/formbricks-hq/schema",
         destination: "/docs",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/demo",
@@ -72,12 +72,12 @@ const nextConfig = {
       {
         source: "/pmf",
         destination: "/",
-        permanent: false,
+        permanent: true,
       },
       {
         source: "/signup",
         destination: "/auth/signup",
-        permanent: false,
+        permanent: true,
       },
     ];
   },
