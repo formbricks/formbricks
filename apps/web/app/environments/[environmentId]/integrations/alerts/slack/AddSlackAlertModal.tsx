@@ -19,10 +19,10 @@ const AddEmailAlertModal: React.FC<AddEmailAlertModalProps> = ({ open, setOpen }
   ];
 
   const onTest = () => {
-    console.log("Test button clicked!");
+    throw Error("not implemented");
   };
   const onSave = () => {
-    console.log("Save button clicked!");
+    throw Error("not implemented");
   };
 
   return (
