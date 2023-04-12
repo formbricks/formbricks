@@ -94,7 +94,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
               </p>
               <p className="mt-8">
                 <span className="text-2xl font-bold text-slate-800">
-                  <span className="mr-2 font-light line-through">$249</span>49$
+                  <span className="mr-2 font-light line-through">$99</span>49$
                 </span>
 
                 <span className="text-base font-medium text-slate-400">/ month</span>
