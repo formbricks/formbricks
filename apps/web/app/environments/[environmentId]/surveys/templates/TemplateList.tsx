@@ -5,12 +5,11 @@ import { useProduct } from "@/lib/products/products";
 import { cn } from "@formbricks/lib/cn";
 import type { Template } from "@formbricks/types/templates";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
-import { createId } from "@paralleldrive/cuid2";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../PreviewSurvey";
 import TemplateMenuBar from "./TemplateMenuBar";
-import { templates } from "./templates";
+import { templates, customSurvey } from "./templates";
 import { PaintBrushIcon } from "@heroicons/react/24/solid";
 import { ErrorComponent } from "@formbricks/ui";
 import { replacePresetPlaceholders } from "@/lib/templates";
@@ -35,25 +34,6 @@ export default function TemplateList({ environmentId }: { environmentId: string 
 
   if (isLoadingProduct) return <LoadingSpinner />;
   if (isErrorProduct) return <ErrorComponent />;
-
-  const customSurvey: Template = {
-    name: "Custom Survey",
-    description: "Create your survey from scratch.",
-    icon: null,
-    preset: {
-      name: "New Survey",
-      questions: [
-        {
-          id: createId(),
-          type: "openText",
-          headline: "What's poppin?",
-          subheader: "This can help us improve your experience.",
-          placeholder: "Type your answer here...",
-          required: true,
-        },
-      ],
-    },
-  };
 
   return (
     <div className="flex h-full flex-col">

@@ -14,6 +14,12 @@ import { ArrowRightCircleIcon } from "@formbricks/ui";
 import type { Template } from "@formbricks/types/templates";
 import { createId } from "@paralleldrive/cuid2";
 
+const thankYouCardDefault = {
+  enabled: false,
+  headline: "Thank you!",
+  subheader: "We appreciate your time and insight.",
+};
+
 export const templates: Template[] = [
   {
     name: "Product Market Fit Survey",
@@ -81,6 +87,7 @@ export const templates: Template[] = [
           required: true,
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -179,6 +186,7 @@ export const templates: Template[] = [
           ],
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -247,6 +255,7 @@ export const templates: Template[] = [
           required: false,
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -287,6 +296,7 @@ export const templates: Template[] = [
           ],
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -334,6 +344,7 @@ export const templates: Template[] = [
           required: false,
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -380,6 +391,7 @@ export const templates: Template[] = [
           required: false,
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -439,6 +451,7 @@ export const templates: Template[] = [
           ],
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -476,6 +489,7 @@ export const templates: Template[] = [
           required: false,
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -512,6 +526,7 @@ export const templates: Template[] = [
           ],
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -558,6 +573,7 @@ export const templates: Template[] = [
           required: false,
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -589,6 +605,7 @@ export const templates: Template[] = [
           ],
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -623,6 +640,7 @@ export const templates: Template[] = [
           required: true,
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   {
@@ -669,6 +687,7 @@ export const templates: Template[] = [
           required: false,
         },
       ],
+      thankYouCard: thankYouCardDefault,
     },
   },
   /*  {
@@ -690,3 +709,23 @@ export const templates: Template[] = [
     },s
   }, */
 ];
+
+export const customSurvey: Template = {
+  name: "Custom Survey",
+  description: "Create your survey from scratch.",
+  icon: null,
+  preset: {
+    name: "New Survey",
+    questions: [
+      {
+        id: createId(),
+        type: "openText",
+        headline: "What's poppin?",
+        subheader: "This can help us improve your experience.",
+        placeholder: "Type your answer here...",
+        required: true,
+      },
+    ],
+    thankYouCard: thankYouCardDefault,
+  },
+};

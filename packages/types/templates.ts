@@ -8,5 +8,10 @@ export interface Template {
   preset: {
     name: string;
     questions: Question[];
+    thankYouCard: {
+      enabled: boolean;
+      headline: string;
+      subheader: string;
+    };
   };
 }
