@@ -16,12 +16,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ErrorComponent } from "@formbricks/ui";
-import { CustomersIcon } from "@formbricks/ui";
-import { FilterIcon, SettingsIcon } from "@formbricks/ui";
-import { FormIcon } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import {
+  CustomersIcon,
+  ErrorComponent,
+  FilterIcon,
+  FormIcon,
+  ProfileAvatar,
+  SettingsIcon,
+} from "@formbricks/ui";
 import {
   AdjustmentsVerticalIcon,
   ArrowRightOnRectangleIcon,
@@ -42,7 +46,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ProfileAvatar } from "@formbricks/ui";
+import AddProductModal from "./AddProductModal";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -51,10 +55,13 @@ interface EnvironmentsNavbarProps {
 
 export default function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
   const pathname = usePathname();
 
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
+
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -131,7 +138,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           href: `/environments/${environmentId}/settings/billing`,
           hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
         },
-        /*         {
+        /*  {
           icon: RocketLaunchIcon,
           label: "Upgrade account",
           href: `/environments/${environmentId}/settings/billing`,
@@ -168,7 +175,13 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     router.push(`/environments/${newEnvironmentId}/`);
   };
 
-  if (isLoadingEnvironment) {
+  const changeEnvironmentByProduct = (productId: string) => {
+    const product = environment.availableProducts.find((p) => p.id === productId);
+    const newEnvironmentId = product?.environments[0]?.id;
+    router.push(`/environments/${newEnvironmentId}/`);
+  };
+
+  if (isLoadingEnvironment || loading) {
     return <LoadingSpinner />;
   }
 
@@ -200,7 +213,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   item.current
                     ? "bg-slate-100 text-slate-900"
                     : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
-                  "inline-flex items-center rounded-md py-1 px-2 text-sm font-medium"
+                  "inline-flex items-center rounded-md px-2 py-1 text-sm font-medium"
                 )}
                 aria-current={item.current ? "page" : undefined}>
                 <item.icon className="mr-3 h-5 w-5" />
@@ -247,12 +260,21 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
-                      <DropdownMenuItem>
-                        <span>{environment?.product?.name}</span>
-                      </DropdownMenuItem>
+                      <DropdownMenuRadioGroup
+                        value={environment?.product.id}
+                        onValueChange={changeEnvironmentByProduct}>
+                        {environment?.availableProducts?.map((product) => (
+                          <DropdownMenuRadioItem
+                            value={product.id}
+                            className="cursor-pointer"
+                            key={product.id}>
+                            {product.name}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
 
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem disabled>
+                      <DropdownMenuItem onClick={() => setShowAddProductModal(true)}>
                         <PlusIcon className="mr-2 h-4 w-4" />
                         <span>Add product</span>
                       </DropdownMenuItem>
@@ -307,12 +329,9 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <div className="flex items-center">
                       <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
                       <button
-                        onClick={async () => {
-                          try {
-                            await signOut();
-                          } catch (error) {
-                            console.error("Failed to sign out:", error);
-                          }
+                        onClick={() => {
+                          signOut();
+                          setLoading(true);
                         }}>
                         Logout
                       </button>
@@ -324,6 +343,11 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           </div>
         </div>
       </div>
+      <AddProductModal
+        open={showAddProductModal}
+        setOpen={(val) => setShowAddProductModal(val)}
+        environmentId={environmentId}
+      />
     </nav>
   );
 }

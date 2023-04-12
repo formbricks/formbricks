@@ -39,7 +39,6 @@ export default function EditAPIKeys({
   };
 
   const handleAddAPIKey = async (data) => {
-    console.log(data);
     const apiKey = await createApiKey(environmentTypeId, { label: data.label });
     mutateApiKeys([...JSON.parse(JSON.stringify(apiKeys)), apiKey], false);
     setOpenAddAPIKeyModal(false);

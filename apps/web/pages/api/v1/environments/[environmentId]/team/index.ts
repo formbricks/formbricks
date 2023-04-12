@@ -9,61 +9,39 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   if (!hasAccess) {
     return res.status(403).json({ message: "Not authorized" });
   }
-
   // GET
   if (req.method === "GET") {
     const environment = await prisma.environment.findUnique({
       where: {
         id: environmentId,
       },
-      include: {
+      select: {
         product: {
           select: {
-            id: true,
-            name: true,
             teamId: true,
-            brandColor: true,
-            environments: true,
           },
         },
       },
     });
-
     if (environment === null) {
       return res.status(404).json({ message: "This environment doesn't exist" });
     }
-
-    const products = await prisma.product.findMany({
+    const team = await prisma.team.findUnique({
       where: {
-        teamId: environment.product.teamId,
+        id: environment.product.teamId,
       },
       select: {
         id: true,
         name: true,
-        brandColor: true,
-        environments: {
-          where: {
-            type: "production",
-          },
-          select: {
-            id: true,
-          },
-        },
+        stripeCustomerId: true,
       },
     });
 
-    return res.json({ ...environment, availableProducts: products });
+    if (team === null) {
+      return res.status(404).json({ message: "This product doesn't exist" });
+    }
+    return res.json(team);
   }
-
-  if (req.method === "PUT") {
-    const data = { ...req.body, updatedAt: new Date() };
-    const prismaRes = await prisma.environment.update({
-      where: { id: environmentId },
-      data,
-    });
-    return res.json(prismaRes);
-  }
-
   // Unknown HTTP Method
   else {
     throw new Error(`The HTTP ${req.method} method is not supported by this route.`);

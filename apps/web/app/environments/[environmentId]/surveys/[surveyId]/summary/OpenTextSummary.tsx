@@ -37,15 +37,23 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
               key={response.id}
               className="grid  grid-cols-4 items-center border-b border-slate-100 py-2 text-slate-800">
               <div className="pl-6">
-                <Link
-                  className="group flex items-center"
-                  href={`/environments/${environmentId}/people/${response.personId}`}>
-                  <PersonAvatar personId={response.personId} />
+                {response.personId ? (
+                  <Link
+                    className="group flex items-center"
+                    href={`/environments/${environmentId}/people/${response.personId}`}>
+                    <PersonAvatar personId={response.personId} />
 
-                  <p className="ml-2 text-slate-600 group-hover:underline">
-                    {truncate(response.personId, 16)}
-                  </p>
-                </Link>
+                    <p className="ml-2 text-slate-600 group-hover:underline">
+                      {truncate(response.personId, 16)}
+                    </p>
+                  </Link>
+                ) : (
+                  <div className="group flex items-center">
+                    <PersonAvatar personId="anonymous" />
+
+                    <p className="ml-2 text-slate-600">Anonymous</p>
+                  </div>
+                )}
               </div>
               <div className="col-span-2 whitespace-pre-wrap pl-6 font-semibold">{response.value}</div>
               <div className="px-6 text-slate-500">{timeSince(response.updatedAt)}</div>

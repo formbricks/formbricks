@@ -2,7 +2,7 @@
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { addMember, deleteInvite, removeMember, resendInvite, useTeam } from "@/lib/teams";
+import { addMember, deleteInvite, removeMember, resendInvite, useMembers } from "@/lib/members";
 import {
   Button,
   ProfileAvatar,
@@ -18,7 +18,7 @@ import { Badge } from "@formbricks/ui";
 import toast from "react-hot-toast";
 
 export function EditMemberships({ environmentId }) {
-  const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useTeam(environmentId);
+  const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useMembers(environmentId);
 
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
