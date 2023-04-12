@@ -5,6 +5,7 @@ import { PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
+import { cn } from "@formbricks/lib/cn";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
@@ -16,7 +17,10 @@ export default function AddQuestionButton({ addQuestion }: AddQuestionButtonProp
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className=" w-full space-y-2 rounded-lg border border-dashed border-slate-300 bg-white hover:cursor-pointer">
+      className={cn(
+        open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
+        "w-full space-y-2 rounded-lg border border-dashed border-slate-300 bg-white transition-transform duration-300 ease-in-out hover:cursor-pointer"
+      )}>
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
         <div className="inline-flex">
           <div className="bg-brand-dark flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-bl-none">
@@ -33,7 +37,7 @@ export default function AddQuestionButton({ addQuestion }: AddQuestionButtonProp
         {questionTypes.map((questionType) => (
           <button
             key={questionType.id}
-            className="inline-flex items-center py-2 px-4 text-sm font-medium text-slate-700 last:mb-2 hover:bg-slate-100"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 last:mb-2 hover:bg-slate-100"
             onClick={() => {
               addQuestion({
                 id: createId(),

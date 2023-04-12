@@ -5,6 +5,7 @@ import { DragDropContext } from "react-beautiful-dnd";
 import AddQuestionButton from "./AddQuestionButton";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
+import EditThankYouCard from "./EditThankYouCard";
 
 interface QuestionsViewProps {
   localSurvey: Survey;
@@ -80,6 +81,14 @@ export default function QuestionsView({
         </div>
       </DragDropContext>
       <AddQuestionButton addQuestion={addQuestion} />
+      <div className="mt-5">
+        <EditThankYouCard
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          setActiveQuestionId={setActiveQuestionId}
+          activeQuestionId={activeQuestionId}
+        />
+      </div>
     </div>
   );
 }

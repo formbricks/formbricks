@@ -1,4 +1,4 @@
-import { Bars4Icon, ListBulletIcon } from "@heroicons/react/24/solid";
+import { Bars3BottomLeftIcon, ListBulletIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 
 export type QuestionType = {
@@ -14,7 +14,7 @@ export const questionTypes: QuestionType[] = [
     id: "openText",
     label: "Open text",
     description: "A single line of text",
-    icon: Bars4Icon,
+    icon: Bars3BottomLeftIcon,
     defaults: {
       placeholder: "Type your answer here...",
     },

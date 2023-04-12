@@ -38,8 +38,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   else if (req.method === "POST") {
     const eventClass = req.body;
 
-    console.log(eventClass);
-
     if (eventClass.type === "automatic") {
       res.status(400).json({ message: "You are not allowed to create new automatic events" });
     }

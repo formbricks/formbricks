@@ -7,6 +7,7 @@ import { JsConfig, Survey } from "@formbricks/types/js";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import Progress from "./Progress";
+import ThankYouCard from "./ThankYouCard";
 
 interface SurveyViewProps {
   config: JsConfig;
@@ -63,7 +64,14 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
       setCurrentQuestion(survey.questions[questionIdx + 1]);
     } else {
       setProgress(100);
-      close();
+
+      if (survey.thankYouCard.enabled) {
+        setTimeout(() => {
+          close();
+        }, 2000);
+      } else {
+        close();
+      }
     }
   };
 
@@ -74,7 +82,13 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
           loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
           "fb-p-4 fb-text-slate-800 fb-font-sans"
         )}>
-        {currentQuestion.type === "multipleChoiceSingle" ? (
+        {progress === 100 && survey.thankYouCard.enabled ? (
+          <ThankYouCard
+            headline={survey.thankYouCard.headline}
+            subheader={survey.thankYouCard.subheader}
+            brandColor={config.settings?.brandColor}
+          />
+        ) : currentQuestion.type === "multipleChoiceSingle" ? (
           <MultipleChoiceSingleQuestion
             question={currentQuestion}
             onSubmit={submitResponse}

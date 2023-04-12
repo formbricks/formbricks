@@ -70,6 +70,13 @@ export interface Survey {
   id: string;
   questions: Question[];
   triggers: Trigger[];
+  thankYouCard: ThankYouCard;
+}
+
+export interface ThankYouCard {
+  enabled: boolean;
+  headline?: string;
+  subheader?: string;
 }
 
 export type Question = OpenTextQuestion | MultipleChoiceSingleQuestion;

@@ -83,8 +83,10 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
         <aside className="relative hidden h-full flex-1 flex-shrink-0 overflow-hidden border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">
           <PreviewSurvey
             activeQuestionId={activeQuestionId}
+            setActiveQuestionId={setActiveQuestionId}
             questions={localSurvey.questions}
             brandColor={product.brandColor}
+            localSurvey={localSurvey}
           />
         </aside>
       </div>

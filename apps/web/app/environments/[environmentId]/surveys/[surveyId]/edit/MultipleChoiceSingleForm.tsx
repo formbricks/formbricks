@@ -44,7 +44,7 @@ export default function MultipleChoiceSingleForm({
   return (
     <form>
       <div className="mt-3">
-        <Label htmlFor="headline">Headline</Label>
+        <Label htmlFor="headline">Question</Label>
         <div className="mt-2">
           <Input
             id="headline"
@@ -56,7 +56,7 @@ export default function MultipleChoiceSingleForm({
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="subheader">Subheader</Label>
+        <Label htmlFor="subheader">Description</Label>
         <div className="mt-2">
           <Input
             id="subheader"

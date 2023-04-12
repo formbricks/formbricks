@@ -10,7 +10,7 @@ export function EditTeamName() {
       <Label htmlFor="teamname">Team Name</Label>
       <Input type="text" id="teamname" />
 
-      <Button type="submit" className="mt-4" onClick={(e) => console.log(e)}>
+      <Button type="submit" className="mt-4" onClick={() => new Error("Not implemented yet")}>
         Update
       </Button>
     </div>
