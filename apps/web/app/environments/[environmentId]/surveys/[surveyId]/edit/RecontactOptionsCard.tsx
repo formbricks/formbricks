@@ -5,7 +5,7 @@ import { Input } from "@formbricks/ui";
 import { Label } from "@formbricks/ui";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import type { Survey } from "@formbricks/types/surveys";
-import { CheckCircleIcon, ChevronRightIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { useState } from "react";
@@ -47,7 +47,6 @@ export default function RecontactOptionsCard({
   environmentId,
 }: RecontactOptionsCardProps) {
   const [open, setOpen] = useState(false);
-  const [advSettingsOpen, setAdvSettingsOpen] = useState(false);
   const ignoreWaiting = localSurvey.recontactDays !== null;
   const [inputDays, setInputDays] = useState(
     localSurvey.recontactDays !== null ? localSurvey.recontactDays : 1
