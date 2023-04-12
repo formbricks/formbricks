@@ -1,7 +1,12 @@
 {
   "name": "@formbricks/js",
-  "version": "0.1.6",
-  "description": "",
+  "version": "0.1.8",
+  "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
+  "keywords": [
+    "Formbricks",
+    "surveys",
+    "experience management"
+  ],
   "source": "src/index.ts",
   "main": "./dist/index.js",
   "module": "./dist/index.module.js",
