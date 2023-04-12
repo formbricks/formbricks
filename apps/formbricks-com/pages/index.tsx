@@ -8,7 +8,7 @@ import Pricing from "@/components/shared/Pricing";
 
 const IndexPage = () => (
   <Layout
-    title="Formbricks | Natively embedded user research for B2B SaaS"
+    title="Formbricks | Embedded User Research"
     description="Build qualitative user research into your product. Leverage Best practices to increase Product-Market Fit.">
     <Hero />
     <Highlights />
