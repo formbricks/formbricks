@@ -6,7 +6,7 @@ import { Fragment, useState } from "react";
 import { Button } from "@formbricks/ui";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
-import { PlayCircleIcon } from "@heroicons/react/24/solid";
+import { PlayCircleIcon, StarIcon } from "@heroicons/react/24/solid";
 import VideoWalkThrough from "../home/VideoWalkThrough";
 
 export default function Header() {
@@ -52,10 +52,18 @@ export default function Header() {
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
-          <Button variant="secondary" className="px-2" onClick={() => setVideoModal(true)}>
+          <Button
+            variant="secondary"
+            className="group px-2"
+            href="https://formbricks.com/github"
+            target="_blank">
+            <StarIcon className="h-6 w-6 text-amber-500 group-hover:text-amber-400" />
+          </Button>
+          <Button variant="secondary" className="ml-2 px-2" onClick={() => setVideoModal(true)}>
             <VideoWalkThrough open={videoModal} setOpen={() => setVideoModal(false)} />
             <PlayCircleIcon className="h-6 w-6" />
           </Button>
+
           {/*           <Button
             variant="secondary"
             EndIcon={GitHubIcon}
@@ -85,7 +93,7 @@ export default function Header() {
           focus
           className="absolute inset-x-0 top-0 z-20 origin-top-right transform p-2 transition md:hidden">
           <div className="dark:divide-slate divide-y-2 divide-slate-100 rounded-lg bg-slate-200 shadow-lg ring-1 ring-black ring-opacity-5 dark:divide-slate-700 dark:bg-slate-800">
-            <div className="px-5 pt-5 pb-6">
+            <div className="px-5 pb-6 pt-5">
               <div className="flex items-center justify-between">
                 <div>
                   <FooterLogo className="h-8 w-auto" />
