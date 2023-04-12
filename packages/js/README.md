@@ -1,25 +1,36 @@
-# widget
+# Formbricks Browser JS Library
 
-## CLI Commands
+[![npm package](https://img.shields.io/npm/v/@formbricks/js?style=flat-square)](https://www.npmjs.com/package/@formbricks/js)
+[![MIT License](https://img.shields.io/badge/License-MIT-red.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+
+Please see [Formbricks Docs](https://formbricks.com/docs).
+Specifically, [Quickstart/Implementation details](https://formbricks.com/docs/getting-started/quickstart).
+
+## What is Formbricks
+
+Formbricks is your go-to solution for in-product micro-surveys that will supercharge your product experience! 🚀 For more information please check out [formbricks.com](https://formbricks.com).
+
+## How to use this library
+
+1. Install the Formbricks package inside your project using npm:
 
 ```bash
-# install dependencies
-npm install
-
-# serve demo with hot reload at localhost:8080
-npm run dev
-
-# build npm ready bundles to be consumed by other Preact web apps
-npm run build:widget
-
-# build npm ready bundles to be used as a component library
-npm run build:lib
-
-# lint the project with eslint to find code style issues
-npm run lint
-
-# run tests with jest and enzyme
-npm run test
+npm install -s @formbricks/js
 ```
 
-For detailed explanation on how things work, checkout the [CLI Readme](https://github.com/preactjs/preact-cli/blob/master/README.md).
+2. Import Formbricks and initialize the widget in your main component (e.g., App.tsx or App.js):
+
+```javascript
+import formbricks from "@formbricks/js";
+
+if (typeof window !== "undefined") {
+  formbricks.init({
+    environmentId: "your-environment-id",
+    apiHost: "https://app.formbricks.com",
+  });
+}
+```
+
+Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Setup Checklist** in the Formbricks settings.
+
+For more detailed guides for different frameworks, check out our [Next.js](https://formbricks.com/docs/getting-started/nextjs) and [Vue.js](https://formbricks.com/docs/getting-started/vuejs) guides.
