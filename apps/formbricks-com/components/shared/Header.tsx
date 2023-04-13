@@ -8,9 +8,11 @@ import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
 import { PlayCircleIcon, StarIcon } from "@heroicons/react/24/solid";
 import VideoWalkThrough from "../home/VideoWalkThrough";
+import { usePlausible } from "next-plausible";
 
 export default function Header() {
   const [videoModal, setVideoModal] = useState(false);
+  const plausible = usePlausible();
   const router = useRouter();
   return (
     <Popover className="relative" as="header">
@@ -75,7 +77,10 @@ export default function Header() {
           <Button
             variant="highlight"
             className="ml-2"
-            onClick={() => router.push("https://app.formbricks.com/auth/signup")}>
+            onClick={() => {
+              router.push("https://app.formbricks.com/auth/signup");
+              plausible("getStarted");
+            }}>
             Get started
           </Button>
         </div>

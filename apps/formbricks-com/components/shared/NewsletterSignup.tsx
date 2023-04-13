@@ -46,7 +46,7 @@ export default function WaitlistForm() {
                 value="e0084486-8751-43e4-8cfb-58b7c3f5f318"
                 readOnly
               />
-              <label htmlFor="e0084">Build in public</label>
+              <label htmlFor="e0084">Stay in the loop</label>
             </div>
             <Button type="submit" className="mt-5 w-full justify-center">
               Subscribe
