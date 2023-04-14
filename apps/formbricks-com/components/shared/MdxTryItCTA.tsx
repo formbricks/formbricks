@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 export default function HeadingCentered() {
   const router = useRouter();
   return (
-    <div className="mx-auto grid grid-cols-1 content-center gap-10 pt-24 pb-12 md:grid-cols-2">
+    <div className="mx-auto grid grid-cols-1 content-center gap-10 pb-12 pt-24 md:grid-cols-2">
       <div className="">
         <p className="text-md text-brand-dark dark:text-brand-light font-semibold uppercase">
           What are you waiting for?

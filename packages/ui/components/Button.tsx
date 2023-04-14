@@ -109,14 +109,14 @@ export const Button: React.ForwardRefExoticComponent<
         <StartIcon
           className={cn(
             "inline",
-            size === "icon" ? "h-4 w-4 " : "-ml-1 h-4 w-4 ltr:mr-2 rtl:ml-2 rtl:-mr-1",
+            size === "icon" ? "h-4 w-4 " : "-ml-1 h-4 w-4 ltr:mr-2 rtl:-mr-1 rtl:ml-2",
             startIconClassName || ""
           )}
         />
       )}
       {props.children}
       {loading && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform">
           <svg
             className={cn(
               "mx-4 h-5 w-5 animate-spin",

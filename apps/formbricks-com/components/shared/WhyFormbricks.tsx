@@ -43,7 +43,7 @@ const features = [
 export default function FeatureTable({}) {
   return (
     <div className="mt-32 rounded-xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 dark:from-slate-200  dark:to-slate-300 lg:mt-56">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:pt-8 sm:pb-12 lg:max-w-7xl lg:px-8 lg:pt-12">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:pb-12 sm:pt-8 lg:max-w-7xl lg:px-8 lg:pt-12">
         <p className="text-md dark:text-brand-dark text-brand-light mb-3 max-w-2xl font-semibold uppercase sm:mt-4">
           Why Formbricks?
         </p>

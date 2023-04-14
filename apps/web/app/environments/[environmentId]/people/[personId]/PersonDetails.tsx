@@ -72,7 +72,7 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
   return (
     <>
       <GoBackButton />
-      <div className="flex items-baseline justify-between border-b border-slate-200 pt-4 pb-6">
+      <div className="flex items-baseline justify-between border-b border-slate-200 pb-6 pt-4">
         <h1 className="text-4xl font-bold tracking-tight text-slate-900">
           {personEmail ? <span>{personEmail.value}</span> : <span>{person.id}</span>}
         </h1>
@@ -85,7 +85,7 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
           </button>
         </div>
       </div>
-      <section className="pt-6 pb-24">
+      <section className="pb-24 pt-6">
         <div className="grid grid-cols-1 gap-x-8  md:grid-cols-4">
           <div className="space-y-6">
             <h2 className="text-lg font-bold text-slate-700">Attributes</h2>

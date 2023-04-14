@@ -95,7 +95,7 @@ export default function ActivityFeed({
           {unifiedList.map((activityItem) => (
             <li key={activityItem.id} className="list-none">
               <div className="relative pb-12">
-                <span className="absolute top-4 left-6 -ml-px h-full w-0.5 bg-slate-200" aria-hidden="true" />
+                <span className="absolute left-6 top-4 -ml-px h-full w-0.5 bg-slate-200" aria-hidden="true" />
                 <div className="relative">
                   <ActivityItemPopover activityItem={activityItem} responses={responses}>
                     <div className="flex space-x-3 text-left">

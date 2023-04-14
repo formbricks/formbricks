@@ -44,7 +44,7 @@ const DummyUI: React.FC = () => {
                 {eventClasses.map((eventClass) => (
                   <SelectItem
                     key={eventClass.id}
-                    className="py-1 px-0.5 text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
+                    className="px-0.5 py-1 text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
                     value={eventClass.id}>
                     {eventClass.name}
                   </SelectItem>

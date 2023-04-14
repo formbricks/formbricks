@@ -41,7 +41,7 @@ export default function SurveyMenuBar({
   };
 
   return (
-    <div className="border-b border-slate-200 bg-white py-3 px-5 sm:flex sm:items-center sm:justify-between">
+    <div className="border-b border-slate-200 bg-white px-5 py-3 sm:flex sm:items-center sm:justify-between">
       <div className="flex space-x-2 whitespace-nowrap">
         <Input
           defaultValue={localSurvey.name}
@@ -59,7 +59,7 @@ export default function SurveyMenuBar({
           />
         </div>
       </div>
-      <div className="mt-3 flex sm:mt-0 sm:ml-4">
+      <div className="mt-3 flex sm:ml-4 sm:mt-0">
         <Button variant="minimal" className="mr-3" onClick={() => router.back()}>
           Cancel
         </Button>

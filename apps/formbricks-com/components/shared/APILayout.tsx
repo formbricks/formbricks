@@ -59,10 +59,10 @@ export function APILayout({ method, url, description, headers, bodies, responses
         http://localhost:300
         <span className="font-bold text-black dark:text-slate-300">{url}</span>
       </div>
-      <div className="mt-4 ml-8 font-bold dark:text-slate-400">{description}</div>
+      <div className="ml-8 mt-4 font-bold dark:text-slate-400">{description}</div>
       <div>
         <div className={clsx(switchState ? "block" : "hidden", "ml-8")}>
-          <p className="mt-6 mb-2 text-lg font-semibold">Parameters</p>
+          <p className="mb-2 mt-6 text-lg font-semibold">Parameters</p>
           <div>
             {headers.length > 0 && (
               <div className="text-base">

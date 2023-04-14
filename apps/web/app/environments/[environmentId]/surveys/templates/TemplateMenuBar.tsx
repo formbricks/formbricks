@@ -21,9 +21,9 @@ export default function TemplateMenuBar({ activeTemplate, environmentId }: Templ
   };
 
   return (
-    <div className="border-b border-slate-200 bg-white py-3 px-5 sm:flex sm:items-center sm:justify-between">
+    <div className="border-b border-slate-200 bg-white px-5 py-3 sm:flex sm:items-center sm:justify-between">
       <h1 className="font-slate-700 text-lg font-semibold">Start with a template</h1>
-      <div className="mt-3 flex sm:mt-0 sm:ml-4">
+      <div className="mt-3 flex sm:ml-4 sm:mt-0">
         <Button variant="secondary" className="mr-3" onClick={() => router.back()}>
           Cancel
         </Button>
