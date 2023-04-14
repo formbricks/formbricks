@@ -18,7 +18,7 @@ export default function Modal({
   }, [isOpen]);
 
   return (
-    <div aria-live="assertive" className="absolute inset-0 flex cursor-pointer items-end px-4 py-6 sm:p-6">
+    <div aria-live="assertive" className="absolute inset-0 flex cursor-pointer items-end">
       <div className="flex w-full flex-col items-center  sm:items-end">
         <div
           className={cn(

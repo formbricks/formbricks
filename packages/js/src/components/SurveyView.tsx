@@ -80,7 +80,7 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
       <div
         className={cn(
           loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
-          "fb-p-4 fb-text-slate-800 fb-font-sans"
+          "fb-text-slate-800 fb-font-sans fb-px-4 fb-py-6 sm:fb-p-6"
         )}>
         {progress === 100 && survey.thankYouCard.enabled ? (
           <ThankYouCard
@@ -108,9 +108,7 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
           />
         ) : null}
       </div>
-      <div className="fb-mt-2">
-        <Progress progress={progress} brandColor={brandColor} />
-      </div>
+      <Progress progress={progress} brandColor={brandColor} />
     </div>
   );
 }
