@@ -93,7 +93,7 @@ export default function PreviewSurvey({
     return null;
   }
 
-  const lastQuestion = currentQuestion.id === questions[questions.length - 1].id;
+  const lastQuestion = questions.length > 0 && currentQuestion.id === questions[questions.length - 1].id;
 
   return (
     <Modal isOpen={isModalOpen} reset={resetPreview}>
