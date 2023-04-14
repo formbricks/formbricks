@@ -325,16 +325,14 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <div className="flex items-center">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      signOut();
+                      setLoading(true);
+                    }}>
+                    <div className="flex h-full w-full items-center">
                       <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
-                      <button
-                        onClick={() => {
-                          signOut();
-                          setLoading(true);
-                        }}>
-                        Logout
-                      </button>
+                      Logout
                     </div>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
