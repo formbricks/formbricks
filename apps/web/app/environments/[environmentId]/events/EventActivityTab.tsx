@@ -42,14 +42,18 @@ export default function EventActivityTab({ environmentId, eventClassId }: Activi
           <Label className="text-slate-500">Active surveys</Label>
           {eventClass.activeSurveys.length === 0 && <p className="text-sm text-slate-900">-</p>}
           {eventClass.activeSurveys.map((surveyName) => (
-            <p className="text-sm text-slate-900">{surveyName}</p>
+            <p key={surveyName} className="text-sm text-slate-900">
+              {surveyName}
+            </p>
           ))}
         </div>
         <div>
           <Label className="text-slate-500">Inactive surveys</Label>
           {eventClass.inactiveSurveys.length === 0 && <p className="text-sm text-slate-900">-</p>}
           {eventClass.inactiveSurveys.map((surveyName) => (
-            <p className="text-sm text-slate-900">{surveyName}</p>
+            <p key={surveyName} className="text-sm text-slate-900">
+              {surveyName}
+            </p>
           ))}
         </div>
       </div>
