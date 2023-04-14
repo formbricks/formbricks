@@ -73,6 +73,20 @@ export default function AppPage({}) {
               Feedback
             </button>
             <button
+              className="mr-2 flex max-w-xs items-center rounded-full bg-white text-sm  font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 lg:rounded-md lg:p-2 lg:hover:bg-slate-50"
+              onClick={() => {
+                formbricks.setEmail("test@web.com");
+              }}>
+              Set Email
+            </button>
+            <button
+              className="mr-2 flex max-w-xs items-center rounded-full bg-white text-sm  font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 lg:rounded-md lg:p-2 lg:hover:bg-slate-50"
+              onClick={() => {
+                formbricks.setUserId("ASDASDAAAAAASSSSSSSASDASD");
+              }}>
+              Set Long UserID
+            </button>
+            <button
               type="button"
               className="rounded-full bg-white p-1 text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
               <span className="sr-only">View notifications</span>
