@@ -151,7 +151,7 @@ export default function AppPage({}) {
                   </div>
                 </div>
               </div>
-              <div className="mt-6 flex space-x-3 md:mt-0 md:ml-4">
+              <div className="mt-6 flex space-x-3 md:ml-4 md:mt-0">
                 <button
                   type="button"
                   className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">

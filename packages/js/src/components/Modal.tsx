@@ -22,7 +22,7 @@ export default function Modal({
   return (
     <div
       aria-live="assertive"
-      className="fb-pointer-events-none fb-fixed fb-inset-0 fb-flex fb-items-end fb-px-4 fb-py-6 sm:fb-p-6">
+      className="fb-pointer-events-none fb-fixed fb-inset-0 fb-flex fb-items-end fb-px-4 fb-py-6 sm:fb-p-6 z-50">
       <div className="fb-flex fb-w-full fb-flex-col fb-items-center fb-space-y-4 sm:fb-items-end">
         <div
           className={cn(
