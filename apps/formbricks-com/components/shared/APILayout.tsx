@@ -1,6 +1,6 @@
-import { useState, ChangeEvent } from "react";
-import { ChevronDownIcon, ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { useState } from "react";
 
 interface APICallProps {
   method: "GET" | "POST";

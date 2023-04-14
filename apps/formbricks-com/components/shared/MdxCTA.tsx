@@ -1,6 +1,5 @@
 import { Button } from "@formbricks/ui";
 import { useRouter } from "next/router";
-import HeadingCentered from "./HeadingCentered";
 
 export default function CTA() {
   const router = useRouter();

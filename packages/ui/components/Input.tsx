@@ -1,8 +1,12 @@
 import * as React from "react";
 import { cn } from "@formbricks/lib/cn";
 
-export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "crossOrigin"> {
+export interface InputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "crossOrigin" | "dangerouslySetInnerHTML"> {
   crossOrigin?: "" | "anonymous" | "use-credentials" | undefined;
+  dangerouslySetInnerHTML?: {
+    __html: string;
+  };
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, ...props }, ref) => {

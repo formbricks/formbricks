@@ -1,19 +1,22 @@
 {
   "extends": "@formbricks/tsconfig/nextjs.json",
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "../../packages/types/*.d.ts"],
-  "exclude": ["node_modules"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "../../packages/types/*.d.ts"
+  ],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      /* "@ui/*": ["../../packages/ui/src/*"], */
-      "@/*": ["./*"],
-      "@prisma/client/*": ["@formbricks/database/client/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@prisma/client/*": [
+        "@formbricks/database/client/*"
+      ]
     },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
     "strictNullChecks": true
   }
 }

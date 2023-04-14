@@ -1,6 +1,6 @@
-import Link, { LinkProps } from "next/link";
-import React, { forwardRef } from "react";
 import { cn } from "@formbricks/lib/cn";
+import Link, { LinkProps } from "next/link";
+import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, forwardRef } from "react";
 
 type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
 
@@ -16,10 +16,12 @@ export type ButtonBaseProps = {
   endIconClassName?: string;
   shallow?: boolean;
 };
-export type ButtonProps = ButtonBaseProps &
+type ButtonBasePropsWithTarget = ButtonBaseProps & { target?: string };
+
+export type ButtonProps = ButtonBasePropsWithTarget &
   (
-    | (Omit<JSX.IntrinsicElements["a"], "href" | "onClick"> & LinkProps)
-    | (Omit<JSX.IntrinsicElements["button"], "onClick"> & { href?: never })
+    | (Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "onClick" | "target"> & LinkProps)
+    | (Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "target"> & { href?: never })
   );
 
 export const Button: React.ForwardRefExoticComponent<
