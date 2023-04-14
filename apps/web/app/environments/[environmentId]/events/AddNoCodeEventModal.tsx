@@ -85,9 +85,9 @@ export default function AddNoCodeEventModal({
                 <CursorArrowRaysIcon />
               </div>
               <div>
-                <div className="text-xl font-medium text-slate-700">Add Trigger Event</div>
+                <div className="text-xl font-medium text-slate-700">Add Action</div>
                 <div className="text-sm text-slate-500">
-                  Create a new trigger event to show the survey at a specific point in the user journey.
+                  Track a user action to display surveys when it&apos;s performed.
                 </div>
               </div>
             </div>
@@ -258,7 +258,7 @@ export default function AddNoCodeEventModal({
                 Cancel
               </Button>
               <Button variant="primary" type="submit">
-                Add event
+                Add Action
               </Button>
             </div>
           </div>

@@ -113,7 +113,7 @@ export default function Steps() {
                     setAddEventModalOpen(true);
                   }}>
                   <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
-                  Add No-Code Event
+                  Add Actions
                 </Button>
               </div>
             </div>

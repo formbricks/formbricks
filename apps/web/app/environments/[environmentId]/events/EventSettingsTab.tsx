@@ -62,15 +62,15 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
           />
         </div>
         <div className="my-6">
-          <Label>Event Type</Label>
+          <Label>Action Type</Label>
           {eventClass.type === "code" ? (
             <p className="text-sm text-slate-600">
-              This is a code event. Please make changes in your code base.
+              This is a code action. Please make changes in your code base.
             </p>
           ) : eventClass.type === "noCode" ? (
             <div>
               <Label className="mb-3 mt-1 block font-normal text-slate-500">
-                You cannot change the event type. Please add a new event instead.
+                You cannot change the action type. Please add a new action instead.
               </Label>
               <RadioGroup defaultValue={eventClass.noCodeConfig.type} className="flex">
                 <div className="flex items-center space-x-2 rounded-lg  bg-slate-50 p-3">
@@ -95,7 +95,7 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
             </div>
           ) : eventClass.type === "automatic" ? (
             <p className="text-sm text-slate-600">
-              This event was created automatically. You cannot make changes to it.
+              This action was created automatically. You cannot make changes to it.
             </p>
           ) : null}
         </div>

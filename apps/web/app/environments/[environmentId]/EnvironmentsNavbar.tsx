@@ -86,7 +86,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         current: pathname?.includes("/people"),
       },
       {
-        name: "Events & Attributes",
+        name: "Actions & Attributes",
         href: `/environments/${environmentId}/events`,
         icon: FilterIcon,
         current: pathname?.includes("/events") || pathname?.includes("/attributes"),

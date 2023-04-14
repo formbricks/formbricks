@@ -77,7 +77,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
             <div>
               <p className="font-semibold text-slate-800">When to ask</p>
               <p className="mt-1 truncate text-sm text-slate-500">
-                Choose the events which trigger the survey.
+                Choose the actions which trigger the survey.
               </p>
             </div>
           </div>
@@ -99,17 +99,17 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                       <SelectItem value={eventClass.id}>{eventClass.name}</SelectItem>
                     ))}
                     <button
-                      className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500  "
+                      className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
                       value="none"
                       onClick={() => {
                         setAddEventModalOpen(true);
                       }}>
                       <PlusIcon className="mr-1 h-5 w-5" />
-                      Create Event
+                      Add Action
                     </button>
                   </SelectContent>
                 </Select>
-                <p className="mx-2 text-sm">event is triggered</p>
+                <p className="mx-2 text-sm">action is performed</p>
                 <button onClick={() => removeTriggerEvent(idx)}>
                   <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
                 </button>
