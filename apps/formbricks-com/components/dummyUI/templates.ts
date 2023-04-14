@@ -538,7 +538,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: "multipleChoiceSingle",
-          headline: "Were you able to 'accomplish what you came here to do today'?",
+          headline: "Were you able to accomplish what you came here to do today?",
           required: true,
           choices: [
             {

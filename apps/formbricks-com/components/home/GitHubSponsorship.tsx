@@ -17,14 +17,14 @@ export default function GitHubSponsorship() {
           alt="GitHub Sponsors Formbricks badge"
           width={100}
           height={100}
-          className="mr-12 block dark:hidden md:mr-4 lg:animate-pulse"
+          className="mr-12 block dark:hidden md:mr-4 "
         />
         <Image
           src={GitHubMarkWhite}
           alt="GitHub Sponsors Formbricks badge"
           width={100}
           height={100}
-          className="mr-12 hidden dark:block md:mr-4 lg:animate-pulse "
+          className="mr-12 hidden dark:block md:mr-4  "
         />
       </div>
       <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 lg:text-2xl">

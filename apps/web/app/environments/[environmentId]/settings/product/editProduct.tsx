@@ -35,7 +35,7 @@ export function EditProductName({ environmentId }) {
             toast.error(`Error: ${error.message}`);
           });
       })}>
-      <Label htmlFor="fullname">Full Name</Label>
+      <Label htmlFor="fullname">What&apos;s your product called?</Label>
       <Input type="text" id="fullname" defaultValue={product.name} {...register("name")} />
 
       <Button type="submit" className="mt-4" loading={isMutatingProduct}>
