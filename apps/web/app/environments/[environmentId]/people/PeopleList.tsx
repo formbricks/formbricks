@@ -18,8 +18,6 @@ export default function PeopleList({ environmentId }: { environmentId: string })
     return <ErrorComponent />;
   }
 
-  console.log(JSON.stringify(people, null, 2));
-
   const getAttributeValue = (person, attributeName) => {
     return person.attributes.find((a) => a.attributeClass.name === attributeName)?.value;
   };

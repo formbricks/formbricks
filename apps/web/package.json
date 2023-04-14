@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@formbricks/ee": "workspace:*",
+    "@formbricks/js": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@heroicons/react": "^2.0.17",

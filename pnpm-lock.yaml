@@ -177,6 +177,9 @@ importers:
       '@formbricks/ee':
         specifier: workspace:*
         version: link:../../packages/ee
+      '@formbricks/js':
+        specifier: workspace:*
+        version: link:../../packages/js
       '@formbricks/lib':
         specifier: workspace:*
         version: link:../../packages/lib
