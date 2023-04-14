@@ -1,11 +1,9 @@
-import { useRouter } from "next/router";
-import { Button } from "@formbricks/ui";
-import Image from "next/image";
 import EarlyBird from "@/images/early bird deal for open source jotform alternative typeform and surveymonkey_v2.svg";
+import { Button } from "@formbricks/ui";
 import { usePlausible } from "next-plausible";
+import Image from "next/image";
 
 export default function EarlyBirdDeal() {
-  const router = useRouter();
   const plausible = usePlausible();
   return (
     <div className="bg-brand-dark relative mx-4 max-w-7xl overflow-hidden rounded-xl p-6 pb-16 sm:p-8 sm:pb-16 md:px-12 md:py-8 lg:mx-0 lg:flex lg:items-center">

@@ -9,10 +9,12 @@ import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useEnvironment } from "@/lib/environments/environments";
 
 export function EditProductName({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { isMutatingProduct, triggerProductMutate } = useProductMutation(environmentId);
+  const { mutateEnvironment } = useEnvironment(environmentId);
 
   const { register, handleSubmit } = useForm();
 
@@ -30,6 +32,7 @@ export function EditProductName({ environmentId }) {
         triggerProductMutate(data)
           .then(() => {
             toast.success("Product name updated successfully.");
+            mutateEnvironment();
           })
           .catch((error) => {
             toast.error(`Error: ${error.message}`);

@@ -1,14 +1,9 @@
-import { Button } from "@formbricks/ui";
-import { useRouter } from "next/router";
-import { usePlausible } from "next-plausible";
-import Link from "next/link";
-import Image from "next/image";
-import GitHubMarkDark from "@/images/github-mark.svg";
 import GitHubMarkWhite from "@/images/github-mark-white.svg";
+import GitHubMarkDark from "@/images/github-mark.svg";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function GitHubSponsorship() {
-  const router = useRouter();
-  const plausible = usePlausible();
   return (
     <div className="xs:mx-auto xs:w-full relative mx-auto my-4 mb-12 mt-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 px-4 py-8 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700  sm:px-6 sm:pb-12 sm:pt-8  md:max-w-none lg:mt-6 lg:px-8 lg:pt-8 ">
       <div className="right-10 lg:absolute">

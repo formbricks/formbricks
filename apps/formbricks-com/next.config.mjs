@@ -1,12 +1,14 @@
+/** @type {import('next').NextConfig} */
+
 import nextMDX from "@next/mdx";
 import { withPlausibleProxy } from "next-plausible";
 import remarkGfm from "remark-gfm";
 import rehypePrism from "@mapbox/rehype-prism";
 
 const nextConfig = {
-  output: "standalone",
-  transpilePackages: ["@formbricks/ui"],
+  reactStrictMode: true,
   pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
+  transpilePackages: ["@formbricks/ui"],
   async redirects() {
     return [
       {

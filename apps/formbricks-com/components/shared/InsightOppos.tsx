@@ -1,16 +1,14 @@
-import clsx from "clsx";
 import {
-  OnboardingIcon,
-  PMFIcon,
-  DogChaserIcon,
+  AngryBirdRageIcon,
   CancelSubscriptionIcon,
-  InterviewPromptIcon,
+  DogChaserIcon,
   DoorIcon,
   FeedbackIcon,
-  BugBlueIcon,
-  AngryBirdRageIcon,
-  FeatureRequestIcon,
+  InterviewPromptIcon,
+  OnboardingIcon,
+  PMFIcon,
 } from "@formbricks/ui";
+import clsx from "clsx";
 
 const BestPractices = [
   {

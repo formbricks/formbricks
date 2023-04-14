@@ -12,6 +12,6 @@ export const useEnvironment = (environmentId: string) => {
     isLoadingEnvironment: isLoading,
     isErrorEnvironment: error,
     isValidatingEnvironment: isValidating,
-    mutateOrganisation: mutate,
+    mutateEnvironment: mutate,
   };
 };
