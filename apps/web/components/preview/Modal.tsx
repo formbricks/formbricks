@@ -21,7 +21,10 @@ export default function Modal({
     <div aria-live="assertive" className="absolute inset-0 flex cursor-pointer items-end px-4 py-6 sm:p-6">
       <div className="flex w-full flex-col items-center  sm:items-end">
         <div
-          className="mr-6 flex items-center rounded-t bg-amber-500 px-3 text-sm font-semibold text-white hover:cursor-pointer"
+          className={cn(
+            show ? "opacity-100" : "opacity-0",
+            "mr-6 flex items-center rounded-t bg-amber-500 px-3 text-sm font-semibold text-white transition-all duration-500 ease-in-out hover:cursor-pointer"
+          )}
           onClick={reset}>
           <ArrowPathIcon className="mr-1.5 mt-0.5 h-4 w-4 " />
           Preview
