@@ -17,9 +17,11 @@ import { useMemo } from "react";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 
 export default function SummaryMetadata({ surveyId, environmentId }) {
-  const { responses, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
+  const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
+
+  const responses = responsesData?.responses;
 
   const completionRate = useMemo(() => {
     if (!responses) return 0;
