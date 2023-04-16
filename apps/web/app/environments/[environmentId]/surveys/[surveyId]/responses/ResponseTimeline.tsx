@@ -9,8 +9,10 @@ import { useMemo } from "react";
 import SingleResponse from "./SingleResponse";
 
 export default function ResponseTimeline({ environmentId, surveyId }) {
-  const { responses, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
+  const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
+
+  const responses = responsesData?.responses;
 
   const matchQandA = useMemo(() => {
     if (survey && responses) {

@@ -24,6 +24,19 @@ export default function PreviewSurvey({
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
 
   useEffect(() => {
+    if (!localSurvey?.thankYouCard.enabled) {
+      if (activeQuestionId === "thank-you-card") {
+        setIsModalOpen(false);
+        setTimeout(() => {
+          setCurrentQuestion(questions[0]);
+          setActiveQuestionId(questions[0].id);
+          setIsModalOpen(true);
+        }, 500);
+      }
+    }
+  }, [localSurvey]);
+
+  useEffect(() => {
     const currentIndex = questions.findIndex((q) => q.id === currentQuestion?.id);
     if (currentIndex < questions.length && currentIndex >= 0 && !localSurvey) return;
 
@@ -53,24 +66,42 @@ export default function PreviewSurvey({
         setCurrentQuestion(questions[currentIndex + 1]);
         setActiveQuestionId(questions[currentIndex + 1].id);
       } else {
-        setActiveQuestionId("thank-you-card");
+        if (localSurvey?.thankYouCard?.enabled) {
+          setActiveQuestionId("thank-you-card");
+        } else {
+          setIsModalOpen(false);
+          setTimeout(() => {
+            setCurrentQuestion(questions[0]);
+            setActiveQuestionId(questions[0].id);
+            setIsModalOpen(true);
+          }, 500);
+        }
       }
     }
+  };
+
+  const resetPreview = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setCurrentQuestion(questions[0]);
+      setActiveQuestionId(questions[0].id);
+      setIsModalOpen(true);
+    }, 500);
   };
 
   if (!currentQuestion) {
     return null;
   }
 
-  const lastQuestion = currentQuestion.id === questions[questions.length - 1].id;
+  const lastQuestion = questions.length > 0 && currentQuestion.id === questions[questions.length - 1].id;
 
   return (
-    <Modal isOpen={isModalOpen}>
+    <Modal isOpen={isModalOpen} reset={resetPreview}>
       {activeQuestionId == "thank-you-card" ? (
         <ThankYouCard
           brandColor={brandColor}
-          headline={localSurvey?.thankYouCard?.headline || "Thank you for your help!"}
-          subheader={localSurvey?.thankYouCard?.subheader || "Thanks for helping to make our product better!"}
+          headline={localSurvey?.thankYouCard?.headline || ""}
+          subheader={localSurvey?.thankYouCard?.subheader || ""}
         />
       ) : (
         <QuestionConditional

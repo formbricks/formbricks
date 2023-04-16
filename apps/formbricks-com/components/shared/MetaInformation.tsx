@@ -6,7 +6,7 @@ interface Props {
 }
 
 export default function MetaInformation({ title, description }: Props) {
-  const pageTitle = `${title} | Open Source Forms & Surveys by Formbricks`;
+  const pageTitle = `${title} | Open-Source Survey Software`;
   return (
     <Head>
       <title>{pageTitle}</title>

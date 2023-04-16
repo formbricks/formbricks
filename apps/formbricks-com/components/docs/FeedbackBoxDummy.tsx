@@ -73,7 +73,7 @@ export default function FeedbackButton() {
             {isOpen ? "Close" : "Feedback"}
           </button>
           <div
-            className="xs:rounded-bl-lg xs:rounded-tr-none h-full w-full  overflow-hidden rounded-bl-none rounded-tr-lg rounded-tl-lg  bg-slate-50 shadow-lg"
+            className="xs:rounded-bl-lg xs:rounded-tr-none h-full w-full  overflow-hidden rounded-bl-none rounded-tl-lg rounded-tr-lg  bg-slate-50 shadow-lg"
             id="formbricks-feedback-wrapper"></div>
         </div>
       </div>

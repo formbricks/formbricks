@@ -62,7 +62,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (!invite) {
       return res.status(403).json({ message: "You are not allowed to resend this invite" });
     }
-    sendInviteMemberEmail(inviteId, invite?.creator.name, invite?.name, invite?.email);
+    await sendInviteMemberEmail(inviteId, invite?.creator.name, invite?.name, invite?.email);
 
     const updatedInvite = await prisma.invite.update({
       where: {

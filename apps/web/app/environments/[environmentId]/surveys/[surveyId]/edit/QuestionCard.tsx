@@ -37,14 +37,17 @@ export default function QuestionCard({
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
         <div
-          className="flex flex-row rounded-lg bg-white shadow-lg"
+          className={cn(
+            open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
+            "flex flex-row rounded-lg bg-white transition-all duration-300 ease-in-out"
+          )}
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}>
           <div
             className={cn(
-              open ? "bg-slate-600" : "bg-slate-500",
-              "top-0 w-10 cursor-grabbing rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-700"
+              open ? "bg-slate-700" : "bg-slate-400",
+              "top-0 w-10 cursor-move rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-600"
             )}>
             {questionIdx + 1}
           </div>

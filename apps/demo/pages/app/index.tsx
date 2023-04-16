@@ -73,6 +73,20 @@ export default function AppPage({}) {
               Feedback
             </button>
             <button
+              className="mr-2 flex max-w-xs items-center rounded-full bg-white text-sm  font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 lg:rounded-md lg:p-2 lg:hover:bg-slate-50"
+              onClick={() => {
+                formbricks.setEmail("test@web.com");
+              }}>
+              Set Email
+            </button>
+            <button
+              className="mr-2 flex max-w-xs items-center rounded-full bg-white text-sm  font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 lg:rounded-md lg:p-2 lg:hover:bg-slate-50"
+              onClick={() => {
+                formbricks.setUserId("ASDASDAAAAAASSSSSSSASDASD");
+              }}>
+              Set Long UserID
+            </button>
+            <button
               type="button"
               className="rounded-full bg-white p-1 text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
               <span className="sr-only">View notifications</span>
@@ -151,7 +165,7 @@ export default function AppPage({}) {
                   </div>
                 </div>
               </div>
-              <div className="mt-6 flex space-x-3 md:mt-0 md:ml-4">
+              <div className="mt-6 flex space-x-3 md:ml-4 md:mt-0">
                 <button
                   type="button"
                   className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">

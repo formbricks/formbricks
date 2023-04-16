@@ -135,7 +135,7 @@ export default function TemplateList() {
   return (
     <div className="hidden h-full flex-col lg:flex">
       <div className="z-0  flex min-h-[90vh] overflow-hidden">
-        <main className="relative z-0 max-h-[90vh] flex-1 overflow-y-auto rounded-l-lg bg-slate-100 py-6 px-6 focus:outline-none dark:bg-slate-700">
+        <main className="relative z-0 max-h-[90vh] flex-1 overflow-y-auto rounded-l-lg bg-slate-100 px-6 py-6 focus:outline-none dark:bg-slate-700">
           <div className="mb-6 flex space-x-2">
             {categories.map((category) => (
               <button
@@ -164,11 +164,11 @@ export default function TemplateList() {
                     activeTemplate?.name === template.name && "ring-brand ring-2",
                     "duration-120  group  relative rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105 dark:bg-slate-600"
                   )}>
-                  <div className="absolute top-6 right-6 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                  <div className="absolute right-6 top-6 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-300">
                     {template.category}
                   </div>
                   <template.icon className="h-8 w-8" />
-                  <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700 dark:text-slate-200">
+                  <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 dark:text-slate-200">
                     {template.name}
                   </h3>
                   <p className="text-left text-xs text-slate-600 dark:text-slate-400">
@@ -184,7 +184,7 @@ export default function TemplateList() {
                 "duration-120 hover:border-brand-dark group relative rounded-lg border-2 border-dashed border-slate-300 bg-transparent p-8 transition-colors duration-150"
               )}>
               <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
-              <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700 dark:text-slate-200">
+              <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 dark:text-slate-200">
                 {customSurvey.name}
               </h3>
               <p className="text-left text-xs text-slate-600 dark:text-slate-400">

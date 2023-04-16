@@ -2,6 +2,8 @@ import { Layout } from "@/components/docs/Layout";
 
 export const meta = {
   title: "Quickstart",
+  description:
+    "Get started with Formbricks: Choose self-hosted or cloud, create an account, and follow our quickstart guide to set up in-product micro-surveys with ease.",
 };
 
 Welcome to Formbricks! In this quickstart guide, we'll walk you through the initial steps to get up and running with our in-product micro-surveys. Choose between self-hosted and cloud options, create an account, and set up the JavaScript widget. Let's dive in!
@@ -11,7 +13,7 @@ Welcome to Formbricks! In this quickstart guide, we'll walk you through the init
 First, you need to decide whether you want to use the self-hosted or cloud version of Formbricks.
 
 - **Self-hosted**: If you prefer to host Formbricks on your own servers, check out the dedicated [Self-hosted Documentation](/docs/self-hosting/deployment) page.
-- **Cloud (coming soon)**: For a hassle-free experience, choose our cloud offering, which takes care of server maintenance and updates for you.
+- **Cloud**: For a hassle-free experience, choose our cloud offering, which takes care of server maintenance and updates for you. [Sign Up now.](https://app.formbricks.com/auth/signup)
 
 ## Step 2: Create an account
 
@@ -40,7 +42,7 @@ Add the following script to the `<head>` tag of your HTML file:
     var t = document.createElement("script");
     (t.type = "text/javascript"),
       (t.async = !0),
-      (t.src = "https://unpkg.com/@formbricks/js@0.1.2/dist/index.umd.js");
+      (t.src = "https://unpkg.com/@formbricks/js@^0.1.6/dist/index.umd.js");
     var e = document.getElementsByTagName("script")[0];
     e.parentNode.insertBefore(t, e),
       setTimeout(function () {
@@ -61,7 +63,7 @@ Replace your-environment-id with your actual environment ID. You can find your e
 1. Install the Formbricks package using npm:
 
 ```bash
-npm install @formbricks/js
+npm install -s @formbricks/js
 ```
 
 2. Import Formbricks and initialize the widget in your main component (e.g., App.tsx or App.js):

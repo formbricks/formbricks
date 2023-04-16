@@ -1,0 +1,37 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import TitleImage from "./formbricks-sponsored-by-github-accelerator-2023.webp";
+import NewsletterSignup from "@/components/shared/NewsletterSignup";
+
+export const meta = {
+  title: "Formbricks Joins GitHub Accelerator's Inaugural Cohort 💃",
+  description:
+    "We're getting ready to take our open-source experience management platform to new heights, thanks to being part of the first-ever GitHub Accelerator program!",
+  date: "2023-04-13",
+};
+
+_We're getting ready to take our open-source experience management platform to new heights, thanks to being part of the first-ever GitHub Accelerator program!_
+
+<Image
+  src={TitleImage}
+  alt="GitHub sponsors Formbricks to join their open-source accelerator program"
+  className="rounded-lg"
+/>
+
+## Hey there,
+
+fellow open-source enthusiasts! We've got some fantastic news: Formbricks has been chosen for the inaugural GitHub Accelerator program!
+
+Launched in November 2022, the GitHub Accelerator program is all about fostering a sustainable open-source ecosystem and helping projects like ours turn into full-time careers. We're stoked to be **one of the 20 projects in the 2023 cohort, chosen from a whopping 1,000+ applications.**
+
+As part of the GitHub Accelerator, we'll be attending weekly sessions with open-source gurus, diving into topics like licensing, governance, funding goals, sponsorships, and a whole lot more. Once we've soaked up all that knowledge, we'll share our learnings and experiences with the ever-growing open-source community.
+
+This opportunity is a game-changer for Formbricks, as the support from the GitHub Accelerator will help us level up our platform even more. It's a massive win for everyone who loves open-source experience management solutions, and we can't wait to see where this journey takes us!
+
+[Read GitHub announcement](https://github.blog/2023-04-12-github-accelerator-our-first-cohort-and-whats-next/)
+
+### From now on, we're official sponsored by GitHub! 🎉
+
+<NewsletterSignup />
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

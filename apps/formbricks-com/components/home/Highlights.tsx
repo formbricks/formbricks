@@ -7,11 +7,11 @@ import Image from "next/image";
 export default function Highlights({}) {
   return (
     <>
-      <div className="mx-auto mt-8 mb-12 max-w-lg md:mt-32 md:mb-0 md:max-w-none">
+      <div className="mx-auto mb-12 mt-8 max-w-lg md:mb-0 md:mt-32 md:max-w-none">
         <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
             <div className="pb-8 md:pb-0">
-              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200">
+              <h2 className="xs:text-3xl text-2xl font-bold leading-7 tracking-tight text-slate-800 dark:text-slate-200">
                 Ask at the right moment,
                 <br />
                 <span className="font-light">get the data you need.</span>
@@ -36,7 +36,7 @@ export default function Highlights({}) {
           </div>
         </div>
       </div>
-      <div className="mx-auto mt-8 mb-12 max-w-lg md:mt-32 md:mb-0  md:max-w-none">
+      <div className="mx-auto mb-12 mt-8 max-w-lg md:mb-0 md:mt-32  md:max-w-none">
         <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
             <div className="order-last rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:p-8 md:order-first">
@@ -48,10 +48,10 @@ export default function Highlights({}) {
               <Image src={ImageAttributesDark} alt="react library" className="hidden rounded-lg dark:block" />
             </div>
             <div className="pb-8 md:pb-0">
-              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
-                ‘Spray and pray’ never worked.
+              <h2 className="xs:text-3xl text-2xl font-bold leading-7 tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
+                Dont&apos; ‘Spray and pray’.
                 <br />
-                <span className="font-light">Pre-segment users, granularly.</span>
+                <span className="font-light">Pre-segment granularly.</span>
               </h2>
               <p className="text-md mt-6 max-w-md leading-7 text-slate-500 dark:text-slate-400">
                 Pre-segment who sees your survey based on custom attributes. Keep the signal, cancel out the

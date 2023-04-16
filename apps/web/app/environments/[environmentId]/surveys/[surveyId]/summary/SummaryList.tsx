@@ -14,10 +14,12 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import OpenTextSummary from "./OpenTextSummary";
 
 export default function SummaryList({ environmentId, surveyId }) {
-  const { responses, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
+  const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
   const [confetti, setConfetti] = useState(false);
   const searchParams = useSearchParams();
+
+  const responses = responsesData?.responses;
 
   useEffect(() => {
     if (searchParams) {

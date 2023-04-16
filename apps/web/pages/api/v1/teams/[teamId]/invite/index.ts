@@ -53,7 +53,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    sendInviteMemberEmail(invite.id, currentUser.name, name, email);
+    await sendInviteMemberEmail(invite.id, currentUser.name, name, email);
 
     return res.status(201).json(invite);
   }

@@ -1,4 +1,4 @@
-import { Template } from "@/../../packages/types/templates";
+import type { Template } from "@formbricks/types/templates";
 
 // replace all occurences of productName with the actual product name in the current template
 export const replacePresetPlaceholders = (template: Template, product: any) => {

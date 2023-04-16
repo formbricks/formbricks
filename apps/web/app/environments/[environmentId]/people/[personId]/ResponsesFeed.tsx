@@ -22,7 +22,7 @@ export default function ResponseFeed({ person, sortByDate, environmentId }) {
                 <div className="relative pb-8">
                   {responseIdx !== person.responses.length - 1 ? (
                     <span
-                      className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200"
+                      className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-slate-200"
                       aria-hidden="true"
                     />
                   ) : null}
@@ -35,7 +35,7 @@ export default function ResponseFeed({ person, sortByDate, environmentId }) {
                               {timeSince(response.createdAt)}
                             </time>
                           </div>
-                          <div className="flex items-center justify-center space-x-2  rounded-full bg-slate-50 py-1 px-3 text-sm text-slate-600">
+                          <div className="flex items-center justify-center space-x-2  rounded-full bg-slate-50 px-3 py-1 text-sm text-slate-600">
                             <Link
                               className="hover:underline"
                               href={`environments/${environmentId}/surveys/${response.survey.id}/summary`}>

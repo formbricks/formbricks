@@ -25,7 +25,7 @@ export default function MultipleChoiceSingleQuestion({
         const data = {
           [question.id]: e.currentTarget[question.id].value,
         };
-        console.log(data);
+
         e.currentTarget[question.id].value = "";
         onSubmit(data);
         // reset form
@@ -37,7 +37,7 @@ export default function MultipleChoiceSingleQuestion({
           <legend className="sr-only">Choices</legend>
           <div className="relative space-y-2 rounded-md">
             {question.choices &&
-              question.choices.map((choice) => (
+              question.choices.map((choice, idx) => (
                 <label
                   key={choice.id}
                   className={cn(
@@ -56,6 +56,7 @@ export default function MultipleChoiceSingleQuestion({
                         setSelectedChoice(e.currentTarget.value);
                       }}
                       style={{ borderColor: brandColor, color: brandColor }}
+                      required={question.required && idx === 0}
                     />
                     <span id={`${choice.id}-label`} className="ml-3 font-medium">
                       {choice.label}

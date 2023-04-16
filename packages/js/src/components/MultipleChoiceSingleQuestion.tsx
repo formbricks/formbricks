@@ -37,7 +37,7 @@ export default function MultipleChoiceSingleQuestion({
           <legend className="fb-sr-only">Choices</legend>
           <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white">
             {question.choices &&
-              question.choices.map((choice) => (
+              question.choices.map((choice, idx) => (
                 <label
                   key={choice.id}
                   className={cn(
@@ -58,6 +58,7 @@ export default function MultipleChoiceSingleQuestion({
                         setSelectedChoice(e.currentTarget.value);
                       }}
                       style={{ borderColor: brandColor, color: brandColor }}
+                      required={question.required && idx === 0}
                     />
                     <span id={`${choice.id}-label`} className="fb-ml-3 fb-font-medium">
                       {choice.label}

@@ -23,15 +23,15 @@ export default function EventActivityTab({ environmentId, eventClassId }: Activi
         <div>
           <Label className="text-slate-500">Ocurrances</Label>
           <div className="mt-1 grid w-fit grid-cols-3 rounded-lg border-slate-100 bg-slate-50">
-            <div className="border-r border-slate-200 py-2 px-4 text-center">
+            <div className="border-r border-slate-200 px-4 py-2 text-center">
               <p className="font-bold text-slate-800">{eventClass.numEventsLastHour}</p>
               <p className="text-xs text-slate-500">last hour</p>
             </div>
-            <div className="border-r border-slate-200 py-2 px-4 text-center">
+            <div className="border-r border-slate-200 px-4 py-2 text-center">
               <p className="font-bold text-slate-800">{eventClass.numEventsLast24Hours}</p>
               <p className="text-xs text-slate-500">last 24 hours</p>
             </div>
-            <div className="py-2 px-4 text-center">
+            <div className="px-4 py-2 text-center">
               <p className="font-bold text-slate-800">{eventClass.numEventsLast7Days}</p>
               <p className="text-xs text-slate-500">last week</p>
             </div>
@@ -42,14 +42,18 @@ export default function EventActivityTab({ environmentId, eventClassId }: Activi
           <Label className="text-slate-500">Active surveys</Label>
           {eventClass.activeSurveys.length === 0 && <p className="text-sm text-slate-900">-</p>}
           {eventClass.activeSurveys.map((surveyName) => (
-            <p className="text-sm text-slate-900">{surveyName}</p>
+            <p key={surveyName} className="text-sm text-slate-900">
+              {surveyName}
+            </p>
           ))}
         </div>
         <div>
           <Label className="text-slate-500">Inactive surveys</Label>
           {eventClass.inactiveSurveys.length === 0 && <p className="text-sm text-slate-900">-</p>}
           {eventClass.inactiveSurveys.map((surveyName) => (
-            <p className="text-sm text-slate-900">{surveyName}</p>
+            <p key={surveyName} className="text-sm text-slate-900">
+              {surveyName}
+            </p>
           ))}
         </div>
       </div>

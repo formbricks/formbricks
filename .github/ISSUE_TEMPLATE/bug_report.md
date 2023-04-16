@@ -1,12 +1,10 @@
 ---
 name: Bug report
-about: Something not working as expected? Let us look into it
-title: ""
+about: "Found a bug? Please fill out the sections below. \U0001F44D"
+title: "[BUG]"
 labels: bug
 assignees: ""
 ---
-
-Found a bug? Please fill out the sections below. 👍
 
 ### Issue Summary
 
@@ -18,27 +16,36 @@ A summary of the issue. This needs to be a clear detailed-rich summary.
 
 ### Steps to Reproduce
 
-<!--
 1. (for example) Went to ...
 2. Clicked on...
 3. ...
 
-Any other relevant information. For example, why do you consider this a bug and what did you expect to happen instead?
--->
+### Expected behavior
 
-(Write your answer here.)
+A clear and concise description of what you expected to happen.
 
-## Environment
+### Other information
+
+#### Screenshots
+
+If applicable, add screenshots to help explain your problem.
+
+#### Environment
 
 - [ ] Formbricks Cloud (app.formbricks.com)
-- [ ] self-hosted snoopForms, version/commit: [please provide]
+- [ ] self-hosted Formbricks, version/commit: [please provide]
 
-### Additional Context
+#### Desktop (please complete the following information):
 
-<!--
-- Browser version, screen recording, console logs, network requests: You can make a recording with [Bird Eats Bug](https://birdeatsbug.com/).
-- Node.js version
-- Anything else that you think could be an issue.
--->
+- OS: [e.g. iOS]
+- Browser [e.g. chrome, safari]
+- Version [e.g. 22]
 
-(Write your answer here.)
+#### Node.JS version
+
+[e.g. v18.15.0]
+
+#### Anything else?
+
+- Screen recording, console logs, network requests: You can make a recording with [Bird Eats Bug](https://birdeatsbug.com/).
+- Anything else that you think could be an issue?

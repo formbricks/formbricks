@@ -1,10 +1,9 @@
-import Head from "next/head";
 import { Card } from "@/components/shared/Card";
-import Link from "next/link";
+import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
 import { getAllArticles } from "@/lib/articles";
 import { formatDate } from "@/lib/utils";
-import HeroTitle from "@/components/shared/HeroTitle";
+import Link from "next/link";
 
 function Article({ article }: any) {
   return (

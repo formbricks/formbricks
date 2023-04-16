@@ -27,7 +27,7 @@ const secondaryNavigation = [
 
 export default function Sidebar({}) {
   return (
-    <div className="flex flex-grow flex-col overflow-y-auto bg-cyan-700 pt-5 pb-4">
+    <div className="flex flex-grow flex-col overflow-y-auto bg-cyan-700 pb-4 pt-5">
       <nav
         className="mt-5 flex flex-1 flex-col divide-y divide-cyan-800 overflow-y-auto"
         aria-label="Sidebar">

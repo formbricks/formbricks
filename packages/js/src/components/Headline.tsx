@@ -12,7 +12,7 @@ export default function Headline({
   return (
     <label
       htmlFor={questionId}
-      className="fb-block fb-text-base fb-font-semibold fb-leading-6 fb-mr-8 text-slate-900"
+      className="fb-mb-1.5  fb-block fb-text-base fb-font-semibold fb-leading-6 fb-mr-8 text-slate-900"
       style={style}>
       {headline}
     </label>

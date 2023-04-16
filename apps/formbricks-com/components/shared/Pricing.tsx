@@ -1,8 +1,7 @@
-import { useRouter } from "next/router";
-import HeadingCentered from "./HeadingCentered";
-import clsx from "clsx";
 import { Button } from "@formbricks/ui";
+import clsx from "clsx";
 import EarlyBirdDeal from "./EarlyBirdDeal";
+import HeadingCentered from "./HeadingCentered";
 
 const tiers = [
   {
@@ -44,7 +43,6 @@ const tiers = [
 ];
 
 export default function PricingPmf() {
-  const router = useRouter();
   return (
     <div className="-mt-10 pb-20">
       <div className="mx-auto max-w-7xl py-4 sm:px-6 sm:pb-6 lg:px-8" id="pricing">

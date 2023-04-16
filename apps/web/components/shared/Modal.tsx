@@ -50,9 +50,9 @@ const Modal: React.FC<Modal> = ({
                 <Dialog.Panel
                   className={clsx(
                     "relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl ",
-                    `${noPadding ? "" : "px-4 pt-5 pb-4 sm:p-6"}`
+                    `${noPadding ? "" : "px-4 pb-4 pt-5 sm:p-6"}`
                   )}>
-                  <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
+                  <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                     <button
                       type="button"
                       className="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 focus:ring-offset-2"
