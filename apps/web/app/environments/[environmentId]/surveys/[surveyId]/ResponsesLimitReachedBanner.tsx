@@ -2,7 +2,7 @@
 
 import { RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
 import { useResponses } from "@/lib/responses/responses";
-import Link from "next/Link";
+import Link from "next/link";
 
 export default function ResponsesLimitReachedBanner({ environmentId, surveyId }) {
   const { responsesData } = useResponses(environmentId, surveyId);
