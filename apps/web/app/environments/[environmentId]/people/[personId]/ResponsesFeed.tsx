@@ -52,7 +52,9 @@ export default function ResponseFeed({ person, sortByDate, environmentId }) {
                             <div key={question.id}>
                               <p className="text-sm text-slate-500">{question.headline}</p>
                               <p className="my-1 text-lg font-semibold text-slate-700">
-                                {response.data[question.id]}
+                                {response.data[question.id] instanceof Array
+                                  ? response.data[question.id].join(", ")
+                                  : response.data[question.id]}
                               </p>
                             </div>
                           ))}

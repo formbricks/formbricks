@@ -36,7 +36,6 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
         }
         return { ...response, responses: updatedResponse };
       });
-
       return updatedResponses;
     }
     return [];

@@ -18,12 +18,8 @@ export default function MultipleChoiceMultiQuestion({
   lastQuestion,
   brandColor,
 }: MultipleChoiceMultiProps) {
-  const [selectedChoices, setSelectedChoices] = useState(
-    question.choices?.reduce((acc, choice) => {
-      acc[choice.id] = false;
-      return acc;
-    }, {})
-  );
+  const [selectedChoices, setSelectedChoices] = useState([]);
+
   return (
     <form
       onSubmit={(e) => {
@@ -31,7 +27,7 @@ export default function MultipleChoiceMultiQuestion({
         const data = {
           [question.id]: selectedChoices,
         };
-        console.log(data);
+        console.log("data", data);
         // e.currentTarget[question.id].value = "";
         onSubmit(data);
         // reset form
@@ -47,24 +43,27 @@ export default function MultipleChoiceMultiQuestion({
                 <label
                   key={choice.id}
                   className={cn(
-                    selectedChoices === choice.label
+                    choice.label in selectedChoices
                       ? "fb-z-10 fb-bg-slate-50 fb-border-slate-400"
                       : "fb-border-gray-200",
                     "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-rounded-md fb-border fb-p-4 focus:fb-outline-none hover:bg-slate-50"
                   )}>
                   <span className="fb-flex fb-items-center fb-text-sm">
                     <input
-                      type="radio"
+                      type="checkbox"
                       id={choice.id}
                       name={question.id}
                       value={choice.label}
                       className="fb-h-4 fb-w-4 fb-border fb-border-slate-300 focus:fb-ring-0 focus:fb-ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
                       onChange={(e) => {
-                        setSelectedChoices({
-                          ...selectedChoices,
-                          [e.currentTarget.id]: e.currentTarget.checked,
-                        });
+                        if (e.currentTarget.checked) {
+                          setSelectedChoices([...selectedChoices, e.currentTarget.value]);
+                        } else {
+                          setSelectedChoices(
+                            selectedChoices.filter((label) => label !== e.currentTarget.value)
+                          );
+                        }
                       }}
                       style={{ borderColor: brandColor, color: brandColor }}
                     />
