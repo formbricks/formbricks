@@ -39,6 +39,18 @@ Formbricks helps you apply best practices from data-driven work and experience m
 - [TailwindCSS](https://tailwindcss.com/)
 - [Prisma](https://prisma.io/)
 
+### Upcoming Features
+
+|     | Feature                                       |
+| --- | --------------------------------------------- |
+| 👷  | Multiple-Choice Multi-Select Question Type    |
+| 👷  | NPS Question Type                             |
+| 🗒️  | Rating Scale (Numbers + Emojis) Question Type |
+| 🗒️  | Filter Audience by Attributes                 |
+| 🗒️  | Share Surveys via Link                        |
+
+_👷 In Progress | 🗒️ Up Next_
+
 ## Cloud vs. self-hosted
 
 Formbricks is available Open-Source under AGPLv3 license. You can host Formbricks on your own servers without a subscription. Check out our [docs](https://formbricks.com/docs/self-hosting/deployment) to see how to self-host Formbricks.
@@ -46,3 +58,9 @@ Formbricks is available Open-Source under AGPLv3 license. You can host Formbrick
 We also have a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. For more information, please visit [formbricks.com](https://formbricks.com)
 
 (In the future we may develop additional features that aren't in the free Open-Source version)
+
+## Contributing
+
+We are very happy if you are interested in contributing to Formbricks 🤗
+
+There are many ways to contribute to Formbricks with writing Issues, fixing bugs, building new features or updating the docs. Please check out [our contribution guide](https://formbricks.com/docs/contributing/introduction) for more information.

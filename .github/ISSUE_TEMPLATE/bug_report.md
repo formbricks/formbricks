@@ -47,5 +47,5 @@ If applicable, add screenshots to help explain your problem.
 
 #### Anything else?
 
-- Screen recording, console logs, network requests: You can make a recording with [Bird Eats Bug](https://birdeatsbug.com/).
+- Screen recording, console logs, network requests: You can make a recording with [Loom](https://www.loom.com).
 - Anything else that you think could be an issue?
