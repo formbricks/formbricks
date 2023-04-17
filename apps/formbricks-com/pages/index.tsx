@@ -17,6 +17,7 @@ const IndexPage = () => (
       <GitHubSponsorship />
     </div>
     <BestPractices />
+    <Features />
     <Highlights />
     <div className="block lg:hidden">
       <GitHubSponsorship />
@@ -26,17 +27,18 @@ const IndexPage = () => (
         teaser="READY?"
         headline="It's free to get started."
         subheadline="Don’t take our word for it, try it yourself."
-        cta="Start for free"
+        cta="Create surveys"
         href="https://app.formbricks.com/auth/signup"
       />
     </div>
-    <Features />
+    <div className="pb-16">&nbsp;</div>
     <Steps />
+
     <BreakerCTA
       teaser="Curious?"
       headline="Give it a squeeze 🍋"
       subheadline="Formbricks is free to get started. Give it a go!"
-      cta="Get started"
+      cta="Start for free"
       href="https://app.formbricks.com/auth/signup"
       inverted
     />

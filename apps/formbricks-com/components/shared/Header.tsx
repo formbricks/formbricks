@@ -1,17 +1,17 @@
 import { Button } from "@formbricks/ui";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { PlayCircleIcon, StarIcon } from "@heroicons/react/24/solid";
+import { StarIcon } from "@heroicons/react/24/solid";
 import { usePlausible } from "next-plausible";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
-import VideoWalkThrough from "../home/VideoWalkThrough";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
 
 export default function Header() {
-  const [videoModal, setVideoModal] = useState(false);
+  /* 
+  const [videoModal, setVideoModal] = useState(false); */
   const plausible = usePlausible();
   const router = useRouter();
   return (
@@ -61,10 +61,10 @@ export default function Header() {
             target="_blank">
             <StarIcon className="h-6 w-6 text-amber-500 group-hover:text-amber-400" />
           </Button>
-          <Button variant="secondary" className="ml-2 px-2" onClick={() => setVideoModal(true)}>
+          {/*           <Button variant="secondary" className="ml-2 px-2" onClick={() => setVideoModal(true)}>
             <VideoWalkThrough open={videoModal} setOpen={() => setVideoModal(false)} />
             <PlayCircleIcon className="h-6 w-6" />
-          </Button>
+          </Button> */}
 
           {/*           <Button
             variant="secondary"
