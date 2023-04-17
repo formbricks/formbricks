@@ -2,58 +2,77 @@ import { Button } from "@formbricks/ui";
 import clsx from "clsx";
 import EarlyBirdDeal from "./EarlyBirdDeal";
 import HeadingCentered from "./HeadingCentered";
+import { CheckIcon } from "@heroicons/react/24/outline";
 
 const tiers = [
   {
     name: "Self-hosting",
-    href: "https://formbricks.com/github",
     priceMonthly: "free",
+    paymentRythm: "/always",
     button: "secondary",
     discounted: false,
     highlight: false,
-    paymentRythm: "/always",
     description: "Host Formbricks on your own server.",
-    ctaName: "View Code",
-    ctaAction: () => window.open("https://formbricks.com/github"),
+    features: [
+      "All Free feautres",
+      "Easy self-hosting (Docker)",
+      "Unlimited surveys",
+      "Unlimited responses",
+      "Unlimited team members",
+    ],
+    ctaName: "Read Docs",
+    ctaAction: () => window.open("/docs/self-hosting/deployment"),
   },
   {
     name: "Free",
     href: "https://app.formbricks.com/auth/signup",
     priceMonthly: "$0",
+    paymentRythm: "/month",
     button: "highlight",
     discounted: false,
-    highlight: false,
-    paymentRythm: "/month",
-    description: "All features. 30 responses per survey.",
-    ctaName: "Sign up now",
+    highlight: true,
+    description: "Always free. Giving back to the community.",
+    features: [
+      "Unlimited surveys",
+      "50 responses per survey",
+      "Unlimited team members",
+      "Granular targeting",
+      "In-product surveys",
+      "Link surveys",
+      "30+ templates",
+      "API access",
+      "Integrations (Slack, PostHog, Zapier)",
+    ],
+    ctaName: "Get started",
     ctaAction: () => window.open("https://app.formbricks.com/auth/signup"),
   },
   {
     name: "Pro",
     href: "https://app.formbricks.com/auth/signup",
     priceMonthly: "$99",
+    paymentRythm: "/month",
     button: "secondary",
     discounted: true,
-    highlight: true,
-    paymentRythm: "/month",
-    description: "All features included. No limits.",
+    highlight: false,
+    description: "All features included. Unlimited usage.",
+    features: ["All features of Free plan", "Unlimited responses", "Multi-language support (soon)"],
     ctaName: "Sign up now",
     ctaAction: () => window.open("https://app.formbricks.com/auth/signup"),
   },
 ];
 
-export default function PricingPmf() {
+export default function Pricing() {
   return (
     <div className="-mt-10 pb-20">
       <div className="mx-auto max-w-7xl py-4 sm:px-6 sm:pb-6 lg:px-8" id="pricing">
         <HeadingCentered heading="One price, unlimited usage." teaser="Pricing" />
 
-        <div className="mx-auto space-y-4 px-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 lg:px-0">
+        <div className="mx-auto  space-y-4 px-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 lg:px-0">
           {tiers.map((tier) => (
             <div
               key={tier.name}
               className={clsx(
-                `rounded-lg shadow-sm`,
+                `h-fit rounded-lg shadow-sm`,
                 tier.highlight
                   ? "border border-slate-300 bg-slate-200 dark:border-slate-500 dark:bg-slate-800"
                   : "bg-slate-100 dark:bg-slate-700"
@@ -68,15 +87,19 @@ export default function PricingPmf() {
                   )}>
                   {tier.name}
                 </h2>
-                <p
-                  className={clsx(
-                    "mt-4 whitespace-pre-wrap text-sm",
-                    tier.highlight
-                      ? "text-slate-600 dark:text-slate-300"
-                      : "text-slate-500 dark:text-slate-300"
-                  )}>
+                <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
                   {tier.description}
                 </p>
+                <ul className="mt-4 space-y-4">
+                  {tier.features.map((feature, index) => (
+                    <li key={index} className="flex items-start">
+                      <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
+                        <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
+                      </div>
+                      <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
                 <p className="mt-8">
                   <span
                     className={clsx(
@@ -113,6 +136,9 @@ export default function PricingPmf() {
                     variant={tier.highlight ? "highlight" : "secondary"}>
                     {tier.ctaName}
                   </Button>
+                )}
+                {tier.name === "Free" && (
+                  <p className="mt-1.5 text-center text-xs text-slate-500">No Creditcard required.</p>
                 )}
               </div>
             </div>
