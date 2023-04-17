@@ -57,6 +57,9 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey }: HowToSend
   const setSurveyType = (type: string) => {
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.type = type;
+    if (type === "standalone") {
+      updatedSurvey.thankYouCard.enabled = true;
+    }
     setLocalSurvey(updatedSurvey);
   };
 
