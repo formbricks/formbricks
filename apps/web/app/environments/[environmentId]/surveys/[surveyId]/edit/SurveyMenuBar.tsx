@@ -93,7 +93,10 @@ export default function SurveyMenuBar({
         )}
         {localSurvey.status === "draft" && !audiencePrompt && (
           <Button
-            disabled={localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0}
+            disabled={
+              localSurvey.type === "web" &&
+              (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
+            }
             variant="highlight"
             loading={isMutatingSurvey}
             onClick={() => {

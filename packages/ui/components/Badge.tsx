@@ -2,21 +2,24 @@ import { cn } from "@formbricks/lib/cn";
 
 interface BadgeProps {
   text: string;
-  type: "warning" | "success" | "error";
+  type: "warning" | "success" | "error" | "gray";
   size: "tiny" | "normal" | "large";
+  className?: string;
 }
 
-export function Badge({ text, type, size }: BadgeProps) {
+export function Badge({ text, type, size, className }: BadgeProps) {
   const bgColor = {
     warning: "bg-amber-100",
     success: "bg-green-100",
     error: "bg-red-100",
+    gray: "bg-slate-100",
   };
 
   const textColor = {
     warning: "text-amber-800",
     success: "text-green-800",
     error: "text-red-800",
+    gray: "text-slate-600",
   };
 
   const padding = {
@@ -30,11 +33,12 @@ export function Badge({ text, type, size }: BadgeProps) {
   return (
     <span
       className={cn(
-        "ml-2 inline-flex cursor-default items-center rounded-full font-medium",
+        "inline-flex cursor-default items-center rounded-full font-medium",
         bgColor[type],
         textColor[type],
         padding[size],
-        textSize
+        textSize,
+        className
       )}>
       {text}
     </span>

@@ -31,7 +31,7 @@ interface WhoToSendToCardProps {
 export default function WhoToSendToCard({ localSurvey }: WhoToSendToCardProps) {
   const [open, setOpen] = useState(false);
 
-  if (localSurvey.type !== "web") {
+  if (localSurvey.type === "standalone") {
     return null;
   }
 

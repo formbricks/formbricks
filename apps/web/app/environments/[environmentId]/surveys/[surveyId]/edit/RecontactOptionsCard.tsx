@@ -70,6 +70,10 @@ export default function RecontactOptionsCard({
     setLocalSurvey(updatedSurvey);
   };
 
+  if (localSurvey.type === "standalone") {
+    return null;
+  }
+
   return (
     <Collapsible.Root
       open={open}

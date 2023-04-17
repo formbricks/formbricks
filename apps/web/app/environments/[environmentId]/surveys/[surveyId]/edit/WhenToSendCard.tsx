@@ -55,7 +55,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     return <div>Error</div>;
   }
 
-  if (localSurvey.type === "link") {
+  if (localSurvey.type === "standalone") {
     return null;
   }
 

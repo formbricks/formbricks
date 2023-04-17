@@ -24,7 +24,7 @@ const options = [
     comingSoon: false,
   },
   {
-    id: "link",
+    id: "standalone",
     name: "Standalone Survey (Link)",
     icon: LinkIcon,
     description: "Create personalized survey links to share around.",
@@ -55,10 +55,9 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey }: HowToSend
   const [open, setOpen] = useState(true);
 
   const setSurveyType = (type: string) => {
-    setLocalSurvey({
-      ...localSurvey,
-      type,
-    });
+    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    updatedSurvey.type = type;
+    setLocalSurvey(updatedSurvey);
   };
 
   return (
@@ -99,7 +98,9 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey }: HowToSend
                   "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
                   option.comingSoon
                     ? "border-slate-200 bg-slate-50/50"
-                    : "border-brand-dark cursor-pointer bg-slate-50"
+                    : option.id === localSurvey.type
+                    ? "border-brand-dark cursor-pointer bg-slate-50"
+                    : "cursor-pointer bg-slate-50"
                 )}>
                 <RadioGroupItem
                   value={option.id}
@@ -118,7 +119,9 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey }: HowToSend
                         )}>
                         {option.name}
                       </p>
-                      {option.comingSoon && <Badge text="coming soon" size="normal" type="warning" />}
+                      {option.comingSoon && (
+                        <Badge text="coming soon" size="normal" type="warning" className="ml-2" />
+                      )}
                     </div>
                     <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
                   </div>

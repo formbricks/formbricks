@@ -16,7 +16,7 @@ export default function AudienceView({ environmentId, localSurvey, setLocalSurve
     <div className="space-y-3 p-5">
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
-      <WhoToSendCard />
+      <WhoToSendCard localSurvey={localSurvey} />
 
       <WhenToSendCard
         localSurvey={localSurvey}

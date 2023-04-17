@@ -11,7 +11,7 @@ import {
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
-import { ErrorComponent } from "@formbricks/ui";
+import { Badge, ErrorComponent } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { EllipsisHorizontalIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -92,7 +92,7 @@ export default function SurveysList({ environmentId }) {
             <li key={survey.id} className="relative col-span-1 h-56">
               <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
                 <div className="p-6">
-                  <p className="line-clamp-3 text-lg">{survey.name}</p>
+                  <p className="mb-2 line-clamp-3 text-lg">{survey.name}</p>
                 </div>
                 <Link
                   href={
@@ -102,6 +102,19 @@ export default function SurveysList({ environmentId }) {
                   }
                   className="absolute h-full w-full"></Link>
                 <div className="divide-y divide-slate-100 ">
+                  <div className="flex w-full justify-start p-3">
+                    {" "}
+                    <Badge
+                      text={
+                        survey.type === "standalone"
+                          ? "Standalone"
+                          : survey.type === "web"
+                          ? "In-Product"
+                          : ""
+                      }
+                      type="gray"
+                      size={"tiny"}></Badge>
+                  </div>
                   <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                     <div className="flex items-center">
                       {survey.status !== "draft" && (

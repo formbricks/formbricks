@@ -110,7 +110,7 @@ model SurveyTrigger {
 
 enum SurveyType {
   email
-  link
+  standalone
   mobile
   web
 }

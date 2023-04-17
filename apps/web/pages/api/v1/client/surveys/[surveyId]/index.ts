@@ -18,7 +18,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const survey = await prisma.survey.findFirst({
       where: {
         id: surveyId,
-        type: "link",
+        type: "standalone",
         status: "inProgress",
       },
       select: {
