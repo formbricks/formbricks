@@ -34,7 +34,7 @@ const tiers = [
     description: "Always free. Giving back to the community.",
     features: [
       "Unlimited surveys",
-      "50 responses per survey",
+      "100 responses per survey",
       "Unlimited team members",
       "Granular targeting",
       "In-product surveys",
@@ -55,7 +55,7 @@ const tiers = [
     discounted: true,
     highlight: false,
     description: "All features included. Unlimited usage.",
-    features: ["All features of Free plan", "Unlimited responses", "Multi-language support (soon)"],
+    features: ["All features of Free plan", "Unlimited responses", "Remove branding"],
     ctaName: "Sign up now",
     ctaAction: () => window.open("https://app.formbricks.com/auth/signup"),
   },

@@ -5,6 +5,7 @@ import { useTeam } from "@/lib/teams";
 import { Badge, Button, ErrorComponent } from "@formbricks/ui";
 import type { Session } from "next-auth";
 import { useRouter } from "next/navigation";
+import { CheckIcon } from "@heroicons/react/24/outline";
 
 const stripeURl =
   process.env.NODE_ENV === "production"
@@ -45,6 +46,20 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
     router.push(sessionUrl);
   };
 
+  const freeFeatures = [
+    "Unlimited surveys",
+    "Unlimited team members",
+    "100 responses per survey",
+    "Granular targeting",
+    "In-product surveys",
+    "Link surveys",
+    "30+ templates",
+    "API access",
+    "Integrations (Slack, PostHog, Zapier)",
+  ];
+
+  const proFeatures = ["All features of Free plan", "Unlimited responses", "Remove branding"];
+
   return (
     <div className="relative">
       {loadingCustomerPortal && (
@@ -59,12 +74,20 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
               <h2 className="inline-flex text-3xl font-bold text-slate-700">Free</h2>
               {session.user?.plan === "free" && <Badge text="Current Plan" size="normal" type="success" />}
               <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
-                Limited to 30 responses per survey.
+                Always free. Giving back to the community.
               </p>
-              <p className="mt-8">
-                <span className="text-slate-80 text-2xl font-light">free</span>
-
-                <span className="text-base font-medium text-slate-400 ">/ month</span>
+              <ul className="mt-4 space-y-4">
+                {freeFeatures.map((feature, index) => (
+                  <li key={index} className="flex items-start">
+                    <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
+                      <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
+                    </div>
+                    <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-6 text-3xl">
+                <span className="text-slate-80 font-light">Always free</span>
               </p>
               {session.user?.plan === "free" ? (
                 <Button variant="minimal" disabled className="mt-6 w-full justify-center py-4 shadow-sm">
@@ -90,10 +113,20 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
               <h2 className="inline-flex text-3xl font-bold text-slate-700">Pro</h2>
               {session.user?.plan === "pro" && <Badge text="Current Plan" size="normal" type="success" />}
               <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
-                Unlimited surveys and responses.
+                All features included. Unlimited usage.
               </p>
-              <p className="mt-8">
-                <span className="text-2xl font-bold text-slate-800">
+              <ul className="mt-4 space-y-4">
+                {proFeatures.map((feature, index) => (
+                  <li key={index} className="flex items-start">
+                    <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
+                      <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
+                    </div>
+                    <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-6">
+                <span className="text-3xl font-bold text-slate-800">
                   <span className="mr-2 font-light line-through">$99</span>49$
                 </span>
 
@@ -128,9 +161,9 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
               <Button
                 variant="secondary"
                 className="mt-6 justify-center py-4 shadow-sm"
-                href="https://formbricks.com/github"
+                href="https://formbricks.com/docs/self-hosting/deployment"
                 target="_blank">
-                Learn more on GitHub
+                Read Deployment Docs
               </Button>
             </div>
           </div>
