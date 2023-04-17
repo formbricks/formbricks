@@ -45,9 +45,11 @@ Formbricks helps you apply best practices from data-driven work and experience m
 | --- | --------------------------------------------- |
 | 👷  | Multiple-Choice Multi-Select Question Type    |
 | 👷  | NPS Question Type                             |
+| 👷  | Filter Audience by Attributes                 |
+| 👷  | Share Surveys via Link                        |
 | 🗒️  | Rating Scale (Numbers + Emojis) Question Type |
-| 🗒️  | Filter Audience by Attributes                 |
-| 🗒️  | Share Surveys via Link                        |
+| 🗒️  | Advanced Response Filtering & Analysis        |
+| 🗒️  | Zapier, Slack & Posthog Integration           |
 
 _👷 In Progress | 🗒️ Up Next_
 

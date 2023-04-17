@@ -6,6 +6,8 @@ import AddQuestionButton from "./AddQuestionButton";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 import EditThankYouCard from "./EditThankYouCard";
+import { createId } from "@paralleldrive/cuid2";
+import { useMemo } from "react";
 
 interface QuestionsViewProps {
   localSurvey: Survey;
@@ -20,6 +22,13 @@ export default function QuestionsView({
   localSurvey,
   setLocalSurvey,
 }: QuestionsViewProps) {
+  const internalQuestionIdMap = useMemo(() => {
+    return localSurvey.questions.reduce((acc, question) => {
+      acc[question.id] = createId();
+      return acc;
+    }, {});
+  }, []);
+
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions[questionIdx] = {
@@ -27,12 +36,20 @@ export default function QuestionsView({
       ...updatedAttributes,
     };
     setLocalSurvey(updatedSurvey);
+    if ("id" in updatedAttributes) {
+      // relink the question to internal Id
+      internalQuestionIdMap[updatedAttributes.id] =
+        internalQuestionIdMap[localSurvey.questions[questionIdx].id];
+      delete internalQuestionIdMap[localSurvey.questions[questionIdx].id];
+      setActiveQuestionId(updatedAttributes.id);
+    }
   };
 
   const deleteQuestion = (questionIdx: number) => {
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions.splice(questionIdx, 1);
     setLocalSurvey(updatedSurvey);
+    delete internalQuestionIdMap[localSurvey.questions[questionIdx].id];
   };
 
   const addQuestion = (question: any) => {
@@ -40,6 +57,7 @@ export default function QuestionsView({
     updatedSurvey.questions.push(question);
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
+    internalQuestionIdMap[question.id] = createId();
   };
 
   const onDragEnd = (result) => {
@@ -64,7 +82,8 @@ export default function QuestionsView({
                 {localSurvey.questions.map((question, questionIdx) => (
                   // display a question form
                   <QuestionCard
-                    key={question.id}
+                    key={internalQuestionIdMap[question.id]}
+                    localSurvey={localSurvey}
                     question={question}
                     questionIdx={questionIdx}
                     updateQuestion={updateQuestion}
