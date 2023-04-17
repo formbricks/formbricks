@@ -83,7 +83,7 @@ export default function InsightOppos() {
           {BestPractices.map((bestPractice) => (
             <div
               key={bestPractice.title}
-              className="drop-shadow-card duration-120 relative cursor-pointer rounded-lg bg-slate-100 p-8 transition-all ease-in-out hover:scale-105 dark:bg-slate-800">
+              className="drop-shadow-card duration-120 relative rounded-lg bg-slate-100 p-8 transition-all ease-in-out hover:scale-105 dark:bg-slate-800">
               <div
                 className={clsx(
                   // base styles independent what type of button it is
@@ -108,6 +108,9 @@ export default function InsightOppos() {
             </div>
           ))}
         </div>
+      </div>
+      <div className="mx-auto mt-4 w-fit rounded-full bg-slate-100 px-4 py-2 text-center text-slate-700">
+        <p>and many more...</p>
       </div>
     </div>
   );

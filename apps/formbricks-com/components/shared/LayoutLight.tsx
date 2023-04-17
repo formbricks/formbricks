@@ -1,5 +1,6 @@
 import Footer from "./Footer";
 import MetaInformation from "./MetaInformation";
+import HeaderLight from "./HeaderLight";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ export default function Layout({ title, description, children }: LayoutProps) {
   return (
     <div className="flex h-screen flex-col justify-between">
       <MetaInformation title={title} description={description} />
+      <HeaderLight />
       {
         <main className="max-w-8xl relative mx-auto mb-auto flex w-full flex-col justify-center sm:px-2 lg:px-8 xl:px-12">
           {children}

@@ -6,6 +6,7 @@ import BreakerCTA from "@/components/shared/BreakerCTA";
 import Steps from "@/components/home/Steps";
 import Pricing from "@/components/shared/Pricing";
 import GitHubSponsorship from "@/components/home/GitHubSponsorship";
+import BestPractices from "@/components/shared/BestPractices";
 
 const IndexPage = () => (
   <Layout
@@ -15,6 +16,7 @@ const IndexPage = () => (
     <div className="hidden lg:block">
       <GitHubSponsorship />
     </div>
+    <BestPractices />
     <Highlights />
     <div className="block lg:hidden">
       <GitHubSponsorship />

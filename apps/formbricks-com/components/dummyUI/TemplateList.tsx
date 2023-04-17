@@ -109,7 +109,10 @@ export default function TemplateList() {
 
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(onboardingSegmentation);
 
-  const categories = [...(Array.from(new Set(templates.map((template) => template.category))) as string[])];
+  const categories = [
+    "All",
+    ...(Array.from(new Set(templates.map((template) => template.category))) as string[]),
+  ];
 
   const [selectedFilter, setSelectedFilter] = useState(categories[0]);
 
@@ -133,75 +136,80 @@ export default function TemplateList() {
   };
 
   return (
-    <div className="hidden h-full flex-col lg:flex">
-      <div className="z-0  flex min-h-[90vh] overflow-hidden">
-        <main className="relative z-0 max-h-[90vh] flex-1 overflow-y-auto rounded-l-lg bg-slate-100 px-6 py-6 focus:outline-none dark:bg-slate-700">
-          <div className="mb-6 flex space-x-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                type="button"
-                onClick={() => setSelectedFilter(category)}
-                className={clsx(
-                  selectedFilter === category
-                    ? "text-brand-dark border-brand-dark font-semibold"
-                    : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-400",
-                  "rounded border  bg-slate-50 px-3 py-1 text-xs transition-all duration-150 dark:bg-slate-800 "
-                )}>
-                {category}
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 gap-4  sm:grid-cols-2">
-            {templates
-              .filter((template) => selectedFilter === "All" || template.category === selectedFilter)
-              .map((template: Template) => (
+    <div>
+      <div className="mt-6 hidden flex-col md:flex">
+        <div className="z-0 flex min-h-[90vh] overflow-hidden">
+          <main className="relative z-0 max-h-[90vh] flex-1 overflow-y-auto px-6 pb-6 focus:outline-none dark:bg-slate-700">
+            <div className="mb-6 flex space-x-2">
+              {categories.map((category) => (
                 <button
+                  key={category}
                   type="button"
-                  onClick={() => setActiveTemplate(template)}
-                  key={template.name}
+                  onClick={() => setSelectedFilter(category)}
                   className={clsx(
-                    activeTemplate?.name === template.name && "ring-brand ring-2",
-                    "duration-120  group  relative rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105 dark:bg-slate-600"
+                    selectedFilter === category
+                      ? "text-brand-dark border-brand-dark font-semibold"
+                      : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-400",
+                    "rounded border  bg-slate-50 px-3 py-1 text-xs transition-all duration-150 dark:bg-slate-800 "
                   )}>
-                  <div className="absolute right-6 top-6 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                    {template.category}
-                  </div>
-                  <template.icon className="h-8 w-8" />
-                  <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 dark:text-slate-200">
-                    {template.name}
-                  </h3>
-                  <p className="text-left text-xs text-slate-600 dark:text-slate-400">
-                    {template.description}
-                  </p>
+                  {category}
                 </button>
               ))}
-            <button
-              type="button"
-              onClick={() => setActiveTemplate(customSurvey)}
-              className={clsx(
-                activeTemplate?.name === customSurvey.name && "ring-brand ring-2",
-                "duration-120 hover:border-brand-dark group relative rounded-lg border-2 border-dashed border-slate-300 bg-transparent p-8 transition-colors duration-150"
-              )}>
-              <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
-              <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 dark:text-slate-200">
-                {customSurvey.name}
-              </h3>
-              <p className="text-left text-xs text-slate-600 dark:text-slate-400">
-                {customSurvey.description}
-              </p>
-            </button>
-          </div>
-        </main>
-        <aside className="group relative hidden max-h-[90vh] flex-1 flex-shrink-0 overflow-hidden rounded-r-lg border-l border-slate-200 bg-slate-200 shadow-inner dark:border-slate-700 dark:bg-slate-800 md:flex md:flex-col">
-          {activeTemplate && (
-            <PreviewSurvey
-              activeQuestionId={null}
-              questions={activeTemplate.preset.questions}
-              brandColor="#00C4B8"
-            />
-          )}
-        </aside>
+            </div>
+            <div className="grid grid-cols-1 gap-4  lg:grid-cols-2">
+              {templates
+                .filter((template) => selectedFilter === "All" || template.category === selectedFilter)
+                .map((template: Template) => (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTemplate(template)}
+                    key={template.name}
+                    className={clsx(
+                      activeTemplate?.name === template.name && "ring-brand ring-2",
+                      "duration-120  group  relative rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105 dark:bg-slate-600"
+                    )}>
+                    <div className="absolute right-6 top-6 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                      {template.category}
+                    </div>
+                    <template.icon className="h-8 w-8" />
+                    <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 dark:text-slate-200">
+                      {template.name}
+                    </h3>
+                    <p className="text-left text-xs text-slate-600 dark:text-slate-400">
+                      {template.description}
+                    </p>
+                  </button>
+                ))}
+              <button
+                type="button"
+                onClick={() => setActiveTemplate(customSurvey)}
+                className={clsx(
+                  activeTemplate?.name === customSurvey.name && "ring-brand ring-2",
+                  "duration-120 hover:border-brand-dark group relative rounded-lg border-2 border-dashed border-slate-300 bg-transparent p-8 transition-colors duration-150"
+                )}>
+                <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
+                <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 dark:text-slate-200">
+                  {customSurvey.name}
+                </h3>
+                <p className="text-left text-xs text-slate-600 dark:text-slate-400">
+                  {customSurvey.description}
+                </p>
+              </button>
+            </div>
+          </main>
+          <aside className="group relative hidden max-h-[90vh] flex-1 flex-shrink-0 overflow-hidden rounded-r-lg border-l border-slate-200 bg-slate-200 shadow-inner dark:border-slate-700 dark:bg-slate-800 md:flex md:flex-col">
+            {activeTemplate && (
+              <PreviewSurvey
+                activeQuestionId={null}
+                questions={activeTemplate.preset.questions}
+                brandColor="#00C4B8"
+              />
+            )}
+          </aside>
+        </div>
+      </div>
+      <div className="flex items-center justify-center pt-36 text-slate-600 md:hidden">
+        This demo is not yet optimized for smartphones.
       </div>
     </div>
   );
