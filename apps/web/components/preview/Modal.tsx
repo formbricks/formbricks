@@ -19,7 +19,7 @@ export default function Modal({
 
   return (
     <div aria-live="assertive" className="absolute inset-0 flex cursor-pointer items-end">
-      <div className="flex w-full flex-col items-center  sm:items-end">
+      <div className="flex w-full flex-col items-center  p-4 sm:items-end">
         <div
           className={cn(
             show ? "opacity-100" : "opacity-0",
@@ -32,7 +32,7 @@ export default function Modal({
         <div
           className={cn(
             show ? "translate-x-0 opacity-100" : "translate-x-28 opacity-0",
-            "pointer-events-auto w-full max-w-sm  overflow-hidden rounded-lg border-2  border-amber-400 bg-white px-4 py-6 shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out sm:p-6"
+            "pointer-events-auto w-full  max-w-sm overflow-hidden rounded-lg  border-2 border-amber-400 bg-white px-4 py-6 shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out sm:p-6"
           )}>
           {children}
         </div>
