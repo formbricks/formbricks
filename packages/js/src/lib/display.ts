@@ -1,22 +1,25 @@
-import { Response, DisplayCreateRequest } from "@formbricks/types/js";
+import { DisplayCreateRequest, Response } from "@formbricks/types/js";
+import { Result, err, ok } from "./errors";
 
 export const createDisplay = async (
   displayCreateRequest: DisplayCreateRequest,
   config
-): Promise<Response> => {
+): Promise<Result<Response, string>> => {
   const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(displayCreateRequest),
   });
   if (!res.ok) {
-    console.error(res.text);
-    throw new Error("Could not create display");
+    return err("Could not create display");
   }
-  return await res.json();
+
+  const response = (await res.json()) as Response;
+
+  return ok(response);
 };
 
-export const markDisplayResponded = async (displayId, config): Promise<void> => {
+export const markDisplayResponded = async (displayId, config): Promise<Result<void, string>> => {
   const res = await fetch(
     `${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays/${displayId}/responded`,
     {
@@ -25,7 +28,7 @@ export const markDisplayResponded = async (displayId, config): Promise<void> => 
     }
   );
   if (!res.ok) {
-    throw new Error("Could not update display");
+    return err("Could not update display");
   }
   return;
 };

@@ -16,7 +16,12 @@ export const renderWidget = (survey: Survey) => {
     return;
   }
   surveyRunning = true;
-  render(h(App, { config: config.get(), survey, closeSurvey }), document.getElementById(containerId));
+  const errorHandler = config.errorHandler;
+
+  render(
+    h(App, { config: config.get(), survey, closeSurvey, errorHandler }),
+    document.getElementById(containerId)
+  );
 };
 
 export const closeSurvey = async (): Promise<void> => {

@@ -1,11 +1,11 @@
 import { InitConfig } from "@formbricks/types/js";
-import { addStylesToDom } from "./styles";
 import { Config } from "./config";
+import { trackEvent } from "./event";
 import { Logger } from "./logger";
+import { addClickEventListener, addPageUrlEventListeners } from "./noCodeEvents";
 import { createPerson } from "./person";
 import { createSession, extendOrCreateSession, extendSession, isExpired } from "./session";
-import { trackEvent } from "./event";
-import { addClickEventListener, addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
+import { addStylesToDom } from "./styles";
 import { addWidgetContainer } from "./widget";
 
 const config = Config.getInstance();

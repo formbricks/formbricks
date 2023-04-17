@@ -39,7 +39,11 @@ export interface InitConfig {
   environmentId: string;
   apiHost: string;
   logLevel?: "debug" | "error";
+  errorHandler?: ErrorHandler;
 }
+
+//TODO: add type to error
+export type ErrorHandler = (error: any) => void;
 
 export interface Settings {
   surveys?: Survey[];

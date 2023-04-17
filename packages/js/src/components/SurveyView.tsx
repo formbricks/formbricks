@@ -1,11 +1,12 @@
+import { JsConfig, Survey } from "@formbricks/types/js";
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
+import { ErrorHandler } from "../lib/errors";
 import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
-import { JsConfig, Survey } from "@formbricks/types/js";
-import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
+import OpenTextQuestion from "./OpenTextQuestion";
 import Progress from "./Progress";
 import ThankYouCard from "./ThankYouCard";
 
@@ -14,9 +15,10 @@ interface SurveyViewProps {
   survey: Survey;
   close: () => void;
   brandColor: string;
+  errorHandler: ErrorHandler;
 }
 
-export default function SurveyView({ config, survey, close, brandColor }: SurveyViewProps) {
+export default function SurveyView({ config, survey, close, brandColor, errorHandler }: SurveyViewProps) {
   const [currentQuestion, setCurrentQuestion] = useState(survey.questions[0]);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [responseId, setResponseId] = useState(null);
@@ -27,9 +29,10 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
     initDisplay();
     async function initDisplay() {
       const displayId = await createDisplay({ surveyId: survey.id, personId: config.person.id }, config);
-      setDisplayId(displayId.id);
+
+      displayId.ok === true ? setDisplayId(displayId.value) : errorHandler(displayId.error);
     }
-  }, [config, survey]);
+  }, [config, survey, errorHandler]);
 
   useEffect(() => {
     setProgress(calculateProgress());
@@ -55,7 +58,8 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
         createResponse(responseRequest, config),
         markDisplayResponded(displayId, config),
       ]);
-      setResponseId(response.id);
+
+      response.ok === true ? setResponseId(response.value) : errorHandler(response.error);
     } else {
       await updateResponse(responseRequest, responseId, config);
     }
