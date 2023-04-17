@@ -24,14 +24,17 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
 
       // Replace question IDs with question headlines in response data
       const updatedResponses = responses.map((response) => {
-        const updatedData: Array<{ question: string; answer: string }> = []; // Specify the type of updatedData
-        for (const [questionId, answer] of Object.entries(response.data)) {
-          const questionHeadline = questionIdToHeadline[questionId];
-          if (questionHeadline) {
-            updatedData.push({ question: questionHeadline, answer: answer as string });
+        const updatedResponse: Array<{ question: string; answer: string }> = []; // Specify the type of updatedData
+        // iterate over survey questions and build the updated response
+        for (const question of survey.questions) {
+          const questionId = question.id;
+          const questionHeadline = question.headline;
+          const answer = response.data[questionId];
+          if (answer) {
+            updatedResponse.push({ question: questionHeadline, answer: answer as string });
           }
         }
-        return { ...response, data: updatedData };
+        return { ...response, responses: updatedResponse };
       });
 
       return updatedResponses;

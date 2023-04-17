@@ -1,10 +1,21 @@
-import { PersonAvatar } from "@formbricks/ui";
 import { timeSince } from "@formbricks/lib/time";
-import Link from "next/link";
+import { PersonAvatar } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
 
 interface OpenTextSummaryProps {
-  data: any;
+  data: {
+    id: string;
+    personId: string;
+    value: string;
+    updatedAt: string;
+    finished: boolean;
+    responses: {
+      id: string;
+      question: string;
+      answer: string;
+    }[];
+  };
   environmentId: string;
 }
 
@@ -42,7 +53,7 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
         </div>
       </div>
       <div className="space-y-6 rounded-b-lg bg-white p-6">
-        {data.data.map((response) => {
+        {data.responses.map((response) => {
           return (
             <div key={response.id}>
               <p className="text-sm text-slate-500">{response.question}</p>
