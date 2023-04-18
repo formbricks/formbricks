@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/js";
 import Headline from "./Headline";
@@ -18,17 +18,22 @@ export default function MultipleChoiceMultiQuestion({
   lastQuestion,
   brandColor,
 }: MultipleChoiceMultiProps) {
-  const [selectedChoices, setSelectedChoices] = useState([]);
+  const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
+
+  const isAtLeastOneChecked = () => {
+    return selectedChoices.length > 0;
+  };
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        if (!isAtLeastOneChecked() && question.required) return;
+
         const data = {
           [question.id]: selectedChoices,
         };
-        console.log("data", data);
-        // e.currentTarget[question.id].value = "";
+
         onSubmit(data);
         // reset form
       }}>
@@ -43,10 +48,10 @@ export default function MultipleChoiceMultiQuestion({
                 <label
                   key={choice.id}
                   className={cn(
-                    choice.label in selectedChoices
-                      ? "fb-z-10 fb-bg-slate-50 fb-border-slate-400"
+                    selectedChoices.includes(choice.label)
+                      ? "fb-z-10 fb-border-slate-400 fb-bg-slate-50"
                       : "fb-border-gray-200",
-                    "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-rounded-md fb-border fb-p-4 focus:fb-outline-none hover:bg-slate-50"
+                    "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-rounded-md fb-border fb-p-4 hover:fb-bg-slate-50 focus:fb-outline-none"
                   )}>
                   <span className="fb-flex fb-items-center fb-text-sm">
                     <input
@@ -76,6 +81,12 @@ export default function MultipleChoiceMultiQuestion({
           </div>
         </fieldset>
       </div>
+      <input
+        type="text"
+        className="clip-[rect(0,0,0,0)] fb-absolute fb-m-[-1px] fb-h-1 fb-w-1 fb-overflow-hidden fb-whitespace-nowrap fb-border-0 fb-p-0 fb-text-transparent fb-caret-transparent focus:fb-border-transparent focus:fb-ring-0"
+        required={question.required}
+        value={isAtLeastOneChecked() ? "checked" : ""}
+      />
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
         <div></div>
         <button

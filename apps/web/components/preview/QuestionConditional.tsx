@@ -4,35 +4,35 @@ import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
 
 interface QuestionConditionalProps {
-  currentQuestion: Question;
+  question: Question;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
 
 export default function QuestionConditional({
-  currentQuestion,
+  question,
   onSubmit,
   lastQuestion,
   brandColor,
 }: QuestionConditionalProps) {
-  return currentQuestion.type === "openText" ? (
+  return question.type === "openText" ? (
     <OpenTextQuestion
-      question={currentQuestion}
+      question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : currentQuestion.type === "multipleChoiceSingle" ? (
+  ) : question.type === "multipleChoiceSingle" ? (
     <MultipleChoiceSingleQuestion
-      question={currentQuestion}
+      question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : currentQuestion.type === "multipleChoiceMulti" ? (
+  ) : question.type === "multipleChoiceMulti" ? (
     <MultipleChoiceMultiQuestion
-      question={currentQuestion}
+      question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}

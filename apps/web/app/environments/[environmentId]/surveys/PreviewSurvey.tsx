@@ -21,14 +21,13 @@ export default function PreviewSurvey({
   brandColor,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
 
   useEffect(() => {
     if (!localSurvey?.thankYouCard.enabled) {
       if (activeQuestionId === "thank-you-card") {
         setIsModalOpen(false);
         setTimeout(() => {
-          setCurrentQuestion(questions[0]);
+          // setCurrentQuestion(questions[0]);
           setActiveQuestionId(questions[0].id);
           setIsModalOpen(true);
         }, 500);
@@ -36,46 +35,19 @@ export default function PreviewSurvey({
     }
   }, [localSurvey]);
 
-  useEffect(() => {
-    const currentIndex = questions.findIndex((q) => q.id === currentQuestion?.id);
-    if (currentIndex < questions.length && currentIndex >= 0 && !localSurvey) return;
-
-    if (activeQuestionId) {
-      if (currentQuestion && currentQuestion.id === activeQuestionId) {
-        setCurrentQuestion(questions.find((q) => q.id === activeQuestionId) || null);
-        return;
-      }
-      if (activeQuestionId === "thank-you-card") return;
-
-      setIsModalOpen(false);
-      setTimeout(() => {
-        setCurrentQuestion(questions.find((q) => q.id === activeQuestionId) || null);
-        setIsModalOpen(true);
-      }, 300);
-    } else {
-      if (questions && questions.length > 0) {
-        setCurrentQuestion(questions[0]);
-      }
-    }
-  }, [activeQuestionId, currentQuestion, localSurvey, questions]);
-
   const gotoNextQuestion = () => {
-    if (currentQuestion) {
-      const currentIndex = questions.findIndex((q) => q.id === currentQuestion.id);
-      if (currentIndex < questions.length - 1) {
-        setCurrentQuestion(questions[currentIndex + 1]);
-        setActiveQuestionId(questions[currentIndex + 1].id);
+    const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentIndex < questions.length - 1) {
+      setActiveQuestionId(questions[currentIndex + 1].id);
+    } else {
+      if (localSurvey?.thankYouCard?.enabled) {
+        setActiveQuestionId("thank-you-card");
       } else {
-        if (localSurvey?.thankYouCard?.enabled) {
-          setActiveQuestionId("thank-you-card");
-        } else {
-          setIsModalOpen(false);
-          setTimeout(() => {
-            setCurrentQuestion(questions[0]);
-            setActiveQuestionId(questions[0].id);
-            setIsModalOpen(true);
-          }, 500);
-        }
+        setIsModalOpen(false);
+        setTimeout(() => {
+          setActiveQuestionId(questions[0].id);
+          setIsModalOpen(true);
+        }, 500);
       }
     }
   };
@@ -83,33 +55,36 @@ export default function PreviewSurvey({
   const resetPreview = () => {
     setIsModalOpen(false);
     setTimeout(() => {
-      setCurrentQuestion(questions[0]);
       setActiveQuestionId(questions[0].id);
       setIsModalOpen(true);
     }, 500);
   };
 
-  if (!currentQuestion) {
+  if (!activeQuestionId) {
     return null;
   }
 
-  const lastQuestion = questions.length > 0 && currentQuestion.id === questions[questions.length - 1].id;
-
   return (
     <Modal isOpen={isModalOpen} reset={resetPreview}>
-      {activeQuestionId == "thank-you-card" ? (
+      {activeQuestionId === "thank-you-card" ? (
         <ThankYouCard
           brandColor={brandColor}
           headline={localSurvey?.thankYouCard?.headline || ""}
           subheader={localSurvey?.thankYouCard?.subheader || ""}
         />
       ) : (
-        <QuestionConditional
-          currentQuestion={currentQuestion}
-          brandColor={brandColor}
-          lastQuestion={lastQuestion}
-          onSubmit={gotoNextQuestion}
-        />
+        questions.map(
+          (question, idx) =>
+            activeQuestionId === question.id && (
+              <QuestionConditional
+                key={question.id}
+                question={question}
+                brandColor={brandColor}
+                lastQuestion={idx === questions.length - 1}
+                onSubmit={gotoNextQuestion}
+              />
+            )
+        )
       )}
     </Modal>
   );
