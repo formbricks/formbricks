@@ -49,7 +49,7 @@ export const createResponse = async (
 
 export const updateResponse = async (
   responseRequest: ResponseUpdateRequest,
-  responseId,
+  responseId: string,
   apiHost: string,
   environmentId: string
 ): Promise<Response> => {

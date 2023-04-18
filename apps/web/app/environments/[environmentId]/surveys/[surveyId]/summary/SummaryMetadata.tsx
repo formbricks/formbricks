@@ -1,25 +1,50 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
 import {
   Button,
+  Confetti,
   ErrorComponent,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@formbricks/ui";
+import { ShareIcon } from "@heroicons/react/24/outline";
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
-import { useMemo } from "react";
-import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import LinkSurveyModal from "./LinkSurveyModal";
 
 export default function SummaryMetadata({ surveyId, environmentId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
+  const [confetti, setConfetti] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams && survey) {
+      const newSurveyParam = searchParams.get("success");
+      if (newSurveyParam === "true") {
+        setConfetti(true);
+        toast.success("Congrats! Your survey is live 🎉", {
+          duration: 4000,
+          position: "bottom-right",
+        });
+        if (survey.type === "link") {
+          setShowLinkModal(true);
+        }
+      }
+    }
+  }, [searchParams, survey]);
 
   const responses = responsesData?.responses;
 
@@ -93,6 +118,14 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
       <div className="col-span-3 flex flex-col justify-between">
         <div className=""></div>
         <div className="flex justify-end">
+          {survey.type === "link" && (
+            <Button
+              variant="secondary"
+              className="mr-1.5 h-full border border-slate-300 bg-white hover:bg-slate-100 focus:bg-slate-100"
+              onClick={() => setShowLinkModal(true)}>
+              <ShareIcon className="h-5 w-5" />
+            </Button>
+          )}
           {environment.widgetSetupCompleted && (
             <SurveyStatusDropdown surveyId={surveyId} environmentId={environmentId} />
           )}
@@ -101,6 +134,8 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
           </Button>
         </div>
       </div>
+      {showLinkModal && <LinkSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />}
+      {confetti && <Confetti />}
     </div>
   );
 }

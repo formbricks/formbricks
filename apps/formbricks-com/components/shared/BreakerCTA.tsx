@@ -28,7 +28,7 @@ export default function BreakerCTA({ inverted = false, teaser, headline, subhead
           <Button
             variant="highlight"
             onClick={() => {
-              plausible("getStarted");
+              plausible("Breaker_CTAs");
               router.push(`${href}`);
             }}>
             {cta}

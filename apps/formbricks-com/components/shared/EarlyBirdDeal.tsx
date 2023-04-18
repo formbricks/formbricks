@@ -23,10 +23,10 @@ export default function EarlyBirdDeal() {
             variant="secondary"
             className="dark:bg-slate-200 dark:text-slate-700 dark:hover:bg-slate-300"
             onClick={() => {
-              plausible("openEarlyBird");
+              plausible("Pricing_CTA_EarlyBird");
               window.open("https://app.formbricks.com/auth/signup", "_blank")?.focus();
             }}>
-            Get Early Bird Deal
+            Get Early Bird deal
           </Button>
         </div>
         <p className="mb-24 mt-2 max-w-3xl text-xs tracking-tight text-slate-200 md:mb-0 md:max-w-sm lg:max-w-none">

@@ -1,20 +1,23 @@
 "use client";
 
-import { Label } from "@formbricks/ui";
-import { Switch } from "@formbricks/ui";
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
+import type { Survey } from "@formbricks/types/surveys";
+import { Label, Switch } from "@formbricks/ui";
 import { Bars3BottomLeftIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionDropdown";
 import NPSQuestionForm from "./NPSQuestionForm";
+import UpdateQuestionId from "./UpdateQuestionId";
 
 interface QuestionCardProps {
+  localSurvey: Survey;
   question: Question;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -25,6 +28,7 @@ interface QuestionCardProps {
 }
 
 export default function QuestionCard({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
@@ -34,6 +38,7 @@ export default function QuestionCard({
   lastQuestion,
 }: QuestionCardProps) {
   const open = activeQuestionId === question.id;
+  const [openAdvanced, setOpenAdvanced] = useState(false);
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
@@ -124,6 +129,24 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                 />
               ) : null}
+              <div className="mt-4 border-t border-slate-200">
+                <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-3">
+                  <Collapsible.CollapsibleTrigger className="text-sm text-slate-800">
+                    {openAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
+                  </Collapsible.CollapsibleTrigger>
+
+                  <Collapsible.CollapsibleContent className="space-y-2">
+                    <div className="mt-3">
+                      <UpdateQuestionId
+                        question={question}
+                        questionIdx={questionIdx}
+                        localSurvey={localSurvey}
+                        updateQuestion={updateQuestion}
+                      />
+                    </div>
+                  </Collapsible.CollapsibleContent>
+                </Collapsible.Root>
+              </div>
             </Collapsible.CollapsibleContent>
           </Collapsible.Root>
         </div>
