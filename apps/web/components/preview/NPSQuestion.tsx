@@ -45,6 +45,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
                   value={number}
                   className="absolute h-full w-full cursor-pointer opacity-0"
                   onChange={() => setSelectedChoice(number)}
+                  required={question.required}
                 />
                 {number}
               </label>

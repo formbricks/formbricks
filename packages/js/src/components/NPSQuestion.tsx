@@ -46,6 +46,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
                   value={number}
                   className="fb-absolute fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
                   onChange={() => setSelectedChoice(number)}
+                  required={question.required}
                 />
                 {number}
               </label>
