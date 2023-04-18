@@ -20,12 +20,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (!surveyId) {
       return res.status(400).json({ message: "Missing surveyId" });
     }
-    if (!personId) {
-      return res.status(400).json({ message: "Missing personId" });
-    }
 
-    // create new display
-    const displayData = await prisma.display.create({
+    const createBody: any = {
       select: {
         id: true,
       },
@@ -36,13 +32,19 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             id: surveyId,
           },
         },
-        person: {
-          connect: {
-            id: personId,
-          },
-        },
       },
-    });
+    };
+
+    if (personId) {
+      createBody.data.person = {
+        connect: {
+          id: personId,
+        },
+      };
+    }
+
+    // create new display
+    const displayData = await prisma.display.create(createBody);
 
     return res.json(displayData);
   }

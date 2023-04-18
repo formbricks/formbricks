@@ -39,7 +39,8 @@ export default function PreviewSurvey({
   }, [currentQuestion, localSurvey]);
 
   useEffect(() => {
-    if (!localSurvey?.thankYouCard.enabled) {
+    // close modal if there are no questions left
+    if (localSurvey?.type === "web" && !localSurvey?.thankYouCard.enabled) {
       if (activeQuestionId === "thank-you-card") {
         setIsModalOpen(false);
         setTimeout(() => {
@@ -49,7 +50,7 @@ export default function PreviewSurvey({
         }, 500);
       }
     }
-  }, [localSurvey]);
+  }, [activeQuestionId, localSurvey, questions, setActiveQuestionId]);
 
   useEffect(() => {
     const currentIndex = questions.findIndex((q) => q.id === currentQuestion?.id);
@@ -83,6 +84,7 @@ export default function PreviewSurvey({
       } else {
         if (localSurvey?.thankYouCard?.enabled) {
           setActiveQuestionId("thank-you-card");
+          setProgress(1);
         } else {
           setIsModalOpen(false);
           setTimeout(() => {
@@ -112,24 +114,7 @@ export default function PreviewSurvey({
 
   return (
     <>
-      {localSurvey?.type === "web" ? (
-        <Modal isOpen={isModalOpen} reset={resetPreview}>
-          {activeQuestionId == "thank-you-card" ? (
-            <ThankYouCard
-              brandColor={brandColor}
-              headline={localSurvey?.thankYouCard?.headline || ""}
-              subheader={localSurvey?.thankYouCard?.subheader || ""}
-            />
-          ) : (
-            <QuestionConditional
-              currentQuestion={currentQuestion}
-              brandColor={brandColor}
-              lastQuestion={lastQuestion}
-              onSubmit={gotoNextQuestion}
-            />
-          )}
-        </Modal>
-      ) : localSurvey?.type === "standalone" ? (
+      {localSurvey?.type === "link" ? (
         <div className="relative flex h-full flex-1 flex-shrink-0 flex-col overflow-hidden border border-amber-400">
           <div
             className="absolute right-3 mr-6 flex items-center rounded-b bg-amber-500 px-3 text-sm font-semibold text-white opacity-100 transition-all duration-500 ease-in-out hover:cursor-pointer"
@@ -138,7 +123,7 @@ export default function PreviewSurvey({
             Preview
           </div>
           <div className="flex h-full flex-1 items-center overflow-y-auto bg-white">
-            <ContentWrapper>
+            <ContentWrapper className="max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-3xl">
               {activeQuestionId == "thank-you-card" ? (
                 <ThankYouCard
                   brandColor={brandColor}
@@ -161,7 +146,24 @@ export default function PreviewSurvey({
             </div>
           </div>
         </div>
-      ) : null}
+      ) : (
+        <Modal isOpen={isModalOpen} reset={resetPreview}>
+          {activeQuestionId == "thank-you-card" ? (
+            <ThankYouCard
+              brandColor={brandColor}
+              headline={localSurvey?.thankYouCard?.headline || ""}
+              subheader={localSurvey?.thankYouCard?.subheader || ""}
+            />
+          ) : (
+            <QuestionConditional
+              currentQuestion={currentQuestion}
+              brandColor={brandColor}
+              lastQuestion={lastQuestion}
+              onSubmit={gotoNextQuestion}
+            />
+          )}
+        </Modal>
+      )}
     </>
   );
 }

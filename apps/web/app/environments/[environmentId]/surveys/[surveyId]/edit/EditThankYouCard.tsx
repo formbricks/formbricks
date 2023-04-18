@@ -70,7 +70,7 @@ export default function EditThankYouCard({
               </div>
             </div>
 
-            {localSurvey.type !== "standalone" && (
+            {localSurvey.type !== "link" && (
               <div className="flex items-center space-x-2">
                 <Label htmlFor="thank-you-toggle">Show</Label>
 

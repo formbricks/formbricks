@@ -91,8 +91,8 @@ model Display {
   updatedAt DateTime      @updatedAt @map(name: "updated_at")
   survey    Survey        @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId  String
-  person    Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId  String
+  person    Person?       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId  String?
   status    DisplayStatus @default(seen)
 }
 
@@ -110,7 +110,7 @@ model SurveyTrigger {
 
 enum SurveyType {
   email
-  standalone
+  link
   mobile
   web
 }

@@ -49,7 +49,7 @@ export default function SurveyMenuBar({
             const updatedSurvey = { ...localSurvey, name: e.target.value };
             setLocalSurvey(updatedSurvey);
           }}
-          className="min-w-sm max-w-md"
+          className="w-72"
         />
         <div className="flex items-center">
           <SurveyStatusDropdown

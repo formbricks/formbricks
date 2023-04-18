@@ -18,12 +18,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const survey = await prisma.survey.findFirst({
       where: {
         id: surveyId,
-        type: "standalone",
+        type: "link",
         status: "inProgress",
       },
       select: {
         id: true,
         questions: true,
+        thankYouCard: true,
         environmentId: true,
       },
     });

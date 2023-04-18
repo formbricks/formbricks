@@ -67,32 +67,17 @@ export default function SurveysList({ environmentId }) {
             </div>
           </li>
         </button>
-        {/*  {surveys.length === 0 && (
-          <div className="flex flex-col items-center justify-center space-y-4 rounded-lg border border-slate-200 bg-slate-100 p-2">
-            <p className="text-center text-xs text-slate-500">Kinda lost?</p>
-            <video width="100" height="120" loop autoPlay className="rounded">
-              <source src="/video/lost-sw.mp4" type="video/mp4" />
-              No GIF support
-            </video>
-            <Button
-              variant="secondary"
-              onClick={() => setVideoDialogOpen(true)}
-              className="hover:bg-slate-300">
-              Play video
-            </Button>
-
-            <Modal open={isVideoDialogOpen} setOpen={setVideoDialogOpen}>
-              <ResponsiveVideo src="/video/walkthrough-v1.mp4" />
-            </Modal>
-          </div>
-        )} */}
         {surveys
           .sort((a, b) => b.updatedAt - a.updatedAt)
           .map((survey, surveyIdx) => (
             <li key={survey.id} className="relative col-span-1 h-56">
               <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
-                <div className="p-6">
-                  <p className="mb-2 line-clamp-3 text-lg">{survey.name}</p>
+                <div className="px-6 py-4">
+                  <Badge
+                    text={survey.type === "link" ? "Link" : survey.type === "web" ? "In-Product" : ""}
+                    type="gray"
+                    size={"tiny"}></Badge>
+                  <p className="my-2 line-clamp-3 text-lg">{survey.name}</p>
                 </div>
                 <Link
                   href={
@@ -101,20 +86,7 @@ export default function SurveysList({ environmentId }) {
                       : `/environments/${environmentId}/surveys/${survey.id}/summary`
                   }
                   className="absolute h-full w-full"></Link>
-                <div className="divide-y divide-slate-100 ">
-                  <div className="flex w-full justify-start p-3">
-                    {" "}
-                    <Badge
-                      text={
-                        survey.type === "standalone"
-                          ? "Standalone"
-                          : survey.type === "web"
-                          ? "In-Product"
-                          : ""
-                      }
-                      type="gray"
-                      size={"tiny"}></Badge>
-                  </div>
+                <div className="divide-y divide-slate-100">
                   <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                     <div className="flex items-center">
                       {survey.status !== "draft" && (

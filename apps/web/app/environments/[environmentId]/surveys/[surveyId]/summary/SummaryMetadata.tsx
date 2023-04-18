@@ -1,6 +1,7 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
@@ -13,11 +14,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@formbricks/ui";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { ShareIcon } from "@heroicons/react/24/outline";
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
-import { useEffect, useMemo, useState } from "react";
-import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import LinkSurveyModal from "./LinkSurveyModal";
 
@@ -39,7 +39,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
           duration: 4000,
           position: "bottom-right",
         });
-        if (survey.type === "standalone") {
+        if (survey.type === "link") {
           setShowLinkModal(true);
         }
       }
@@ -118,12 +118,12 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
       <div className="col-span-3 flex flex-col justify-between">
         <div className=""></div>
         <div className="flex justify-end">
-          {survey.type === "standalone" && (
+          {survey.type === "link" && (
             <Button
               variant="secondary"
               className="mr-1.5 h-full border border-slate-300 bg-white hover:bg-slate-100 focus:bg-slate-100"
               onClick={() => setShowLinkModal(true)}>
-              <InformationCircleIcon className="h-5 w-5" />
+              <ShareIcon className="h-5 w-5" />
             </Button>
           )}
           {environment.widgetSetupCompleted && (

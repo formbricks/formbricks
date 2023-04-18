@@ -12,6 +12,7 @@ import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Confetti } from "@formbricks/ui";
 import { useEffect, useState } from "react";
+import { createDisplay, markDisplayResponded } from "@formbricks/lib/clientDisplay/display";
 
 type EnhancedSurvey = Survey & {
   brandColor: string;
@@ -19,19 +20,27 @@ type EnhancedSurvey = Survey & {
 
 interface LinkSurveyProps {
   survey: EnhancedSurvey;
-  preview?: boolean;
 }
 
-export default function LinkSurvey({ survey, preview = false }: LinkSurveyProps) {
+export default function LinkSurvey({ survey }: LinkSurveyProps) {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [finished, setFinished] = useState(false);
   const [loadingElement, setLoadingElement] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
+  const [displayId, setDisplayId] = useState<string | null>(null);
 
   useEffect(() => {
     if (survey) {
       setCurrentQuestion(survey.questions[0]);
+      // create display
+      createDisplay(
+        { surveyId: survey.id },
+        `${window.location.protocol}//${window.location.host}`,
+        survey.environmentId
+      ).then((display) => {
+        setDisplayId(display.id);
+      });
     }
   }, [survey]);
 
@@ -50,28 +59,33 @@ export default function LinkSurvey({ survey, preview = false }: LinkSurveyProps)
     setLoadingElement(true);
     const questionIdx = survey.questions.findIndex((e) => e.id === currentQuestion?.id);
 
-    if (!preview) {
-      const finished = questionIdx === survey.questions.length - 1;
-      // build response
-      const responseRequest = {
-        surveyId: survey.id,
-        response: { finished, data },
-      };
-      if (!responseId) {
-        const response = await createResponse(
-          responseRequest,
-          `${window.location.protocol}//${window.location.host}`,
-          survey.environmentId
-        );
-        setResponseId(response.id);
-      } else {
-        await updateResponse(
-          responseRequest,
-          responseId,
+    const finished = questionIdx === survey.questions.length - 1;
+    // build response
+    const responseRequest = {
+      surveyId: survey.id,
+      response: { finished, data },
+    };
+    if (!responseId) {
+      const response = await createResponse(
+        responseRequest,
+        `${window.location.protocol}//${window.location.host}`,
+        survey.environmentId
+      );
+      if (displayId) {
+        markDisplayResponded(
+          displayId,
           `${window.location.protocol}//${window.location.host}`,
           survey.environmentId
         );
       }
+      setResponseId(response.id);
+    } else {
+      await updateResponse(
+        responseRequest,
+        responseId,
+        `${window.location.protocol}//${window.location.host}`,
+        survey.environmentId
+      );
     }
 
     setLoadingElement(false);
@@ -100,13 +114,13 @@ export default function LinkSurvey({ survey, preview = false }: LinkSurveyProps)
           loadingElement && "fb-animate-pulse fb-opacity-60",
           "flex h-full flex-1 items-center overflow-y-auto bg-white"
         )}>
-        <ContentWrapper>
+        <ContentWrapper className="max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-3xl">
           {finished ? (
             <div>
               <Confetti colors={[survey.brandColor, "#eee"]} />
               <ThankYouCard
-                headline="Thank you for your time!"
-                subheader="You have completed the survey."
+                headline={survey.thankYouCard.headline || "Thank you!"}
+                subheader={survey.thankYouCard.subheader || "Your response has been recorded."}
                 brandColor={survey.brandColor}
               />
             </div>

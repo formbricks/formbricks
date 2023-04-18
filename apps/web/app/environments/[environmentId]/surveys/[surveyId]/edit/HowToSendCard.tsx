@@ -24,10 +24,10 @@ const options = [
     comingSoon: false,
   },
   {
-    id: "standalone",
-    name: "Standalone Survey (Link)",
+    id: "link",
+    name: "Shareable Link",
     icon: LinkIcon,
-    description: "Create personalized survey links to share around.",
+    description: "Creates a personalized survey link to share around.",
     comingSoon: false,
   },
   {
@@ -57,7 +57,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey }: HowToSend
   const setSurveyType = (type: string) => {
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.type = type;
-    if (type === "standalone") {
+    if (type === "link") {
       updatedSurvey.thankYouCard.enabled = true;
     }
     setLocalSurvey(updatedSurvey);

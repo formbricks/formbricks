@@ -70,7 +70,7 @@ export default function RecontactOptionsCard({
     setLocalSurvey(updatedSurvey);
   };
 
-  if (localSurvey.type === "standalone") {
+  if (localSurvey.type === "link") {
     return null;
   }
 

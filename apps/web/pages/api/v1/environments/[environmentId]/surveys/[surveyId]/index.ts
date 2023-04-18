@@ -70,7 +70,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const body = { ...req.body };
 
     // delete unused fields for link surveys
-    if (body.type === "standalone") {
+    if (body.type === "link") {
       delete body.triggers;
       delete body.recontactDays;
     }
