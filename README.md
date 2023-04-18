@@ -27,9 +27,21 @@
 
 Formbricks productizes best practices for qualitative in-app user discovery. Use micro-surveys to target the right users at the right time without making surveys annoying.
 
+**Try it out in the cloud at [formbricks.com](https://formbricks.com)**
+
 ### Mission: Base your decisions on qualitative data.
 
 Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Use Formbricks to collect and manage insights from your users; run a product market fit survey to know which audience to focus on and whether your value proposition is being recognized.
+
+### Features
+
+- 📲 Create in-product surveys with our no code editor with multiple question types
+- 📚 Choose from a variety of best-practice templates
+- 👩🏻 Launch and target your surveys to specific user groups without changing your application code
+- 🔗 Create shareable link surveys
+- 👨‍👩‍👦 Invite your team members to collaborate on your surveys
+- 🔌 Integrate Formbricks with Slack, Posthog, Zapier and more
+- 🔒 All open source, transparent and self-hostable
 
 ### Built With
 
@@ -46,7 +58,6 @@ Formbricks helps you apply best practices from data-driven work and experience m
 | 👷  | Multiple-Choice Multi-Select Question Type    |
 | 👷  | NPS Question Type                             |
 | 👷  | Filter Audience by Attributes                 |
-| 👷  | Share Surveys via Link                        |
 | 🗒️  | Rating Scale (Numbers + Emojis) Question Type |
 | 🗒️  | Advanced Response Filtering & Analysis        |
 | 🗒️  | Zapier, Slack & Posthog Integration           |
