@@ -68,11 +68,21 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
     let data: any = { updatedAt: new Date() };
     const body = { ...req.body };
+
+    // delete unused fields for link surveys
+    if (body.type === "link") {
+      delete body.triggers;
+      delete body.recontactDays;
+    }
+
     if (body.triggers) {
       const newTriggers: string[] = [];
       const removedTriggers: string[] = [];
       // find removed triggers
       for (const eventClassId of body.triggers) {
+        if (!eventClassId) {
+          continue;
+        }
         if (currentTriggers.find((t) => t.eventClassId === eventClassId)) {
           continue;
         } else {

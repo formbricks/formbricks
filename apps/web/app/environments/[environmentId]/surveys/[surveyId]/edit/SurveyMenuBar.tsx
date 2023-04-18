@@ -49,7 +49,7 @@ export default function SurveyMenuBar({
             const updatedSurvey = { ...localSurvey, name: e.target.value };
             setLocalSurvey(updatedSurvey);
           }}
-          className="min-w-sm max-w-md"
+          className="w-72"
         />
         <div className="flex items-center">
           <SurveyStatusDropdown
@@ -93,7 +93,10 @@ export default function SurveyMenuBar({
         )}
         {localSurvey.status === "draft" && !audiencePrompt && (
           <Button
-            disabled={localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0}
+            disabled={
+              localSurvey.type === "web" &&
+              (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
+            }
             variant="highlight"
             loading={isMutatingSurvey}
             onClick={() => {
