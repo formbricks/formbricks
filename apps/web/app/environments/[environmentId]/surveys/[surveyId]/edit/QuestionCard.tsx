@@ -12,6 +12,7 @@ import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionDropdown";
+import NPSQuestionForm from "./NPSQuestionForm";
 
 interface QuestionCardProps {
   question: Question;
@@ -110,6 +111,13 @@ export default function QuestionCard({
                 />
               ) : question.type === "multipleChoiceMulti" ? (
                 <MultipleChoiceMultiForm
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                />
+              ) : question.type === "nps" ? (
+                <NPSQuestionForm
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}

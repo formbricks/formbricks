@@ -1,4 +1,4 @@
-import { Bars3BottomLeftIcon, ListBulletIcon } from "@heroicons/react/24/solid";
+import { Bars3BottomLeftIcon, ChartPieIcon, ListBulletIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 
 export type QuestionType = {
@@ -41,6 +41,16 @@ export const questionTypes: QuestionType[] = [
         { id: createId(), label: "" },
         { id: createId(), label: "" },
       ],
+    },
+  },
+  {
+    id: "nps",
+    label: "Net Promoter Score (NPS)",
+    description: "Rate satisfaction on a 0-10 scale",
+    icon: ChartPieIcon,
+    defaults: {
+      lowerLabel: "Not at all likely",
+      upperLabel: "Extremely likely",
     },
   },
 ];
