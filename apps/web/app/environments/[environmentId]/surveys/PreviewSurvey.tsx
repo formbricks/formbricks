@@ -24,7 +24,6 @@ export default function PreviewSurvey({
   brandColor,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
-  // const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [progress, setProgress] = useState(0); // [0, 1]
 
   useEffect(() => {
@@ -44,7 +43,6 @@ export default function PreviewSurvey({
       if (activeQuestionId === "thank-you-card") {
         setIsModalOpen(false);
         setTimeout(() => {
-          // setCurrentQuestion(questions[0]);
           setActiveQuestionId(questions[0].id);
           setIsModalOpen(true);
         }, 500);
