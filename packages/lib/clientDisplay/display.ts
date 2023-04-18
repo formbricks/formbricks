@@ -1,10 +1,11 @@
-import { Response, DisplayCreateRequest, JsConfig } from "@formbricks/types/js";
+import { DisplayCreateRequest } from "@formbricks/types/js";
 
 export const createDisplay = async (
   displayCreateRequest: DisplayCreateRequest,
-  config: JsConfig
-): Promise<Response> => {
-  const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays`, {
+  apiHost: string,
+  environmentId: string
+): Promise<{ id: string }> => {
+  const res = await fetch(`${apiHost}/api/v1/client/environments/${environmentId}/displays`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(displayCreateRequest),
@@ -16,9 +17,13 @@ export const createDisplay = async (
   return await res.json();
 };
 
-export const markDisplayResponded = async (displayId: string, config: JsConfig): Promise<void> => {
+export const markDisplayResponded = async (
+  displayId: string,
+  apiHost: string,
+  environmentId: string
+): Promise<void> => {
   const res = await fetch(
-    `${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays/${displayId}/responded`,
+    `${apiHost}/api/v1/client/environments/${environmentId}/displays/${displayId}/responded`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

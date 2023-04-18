@@ -23,7 +23,7 @@ const features = [
 ];
 export default function Features() {
   return (
-    <div className="relative px-4 pb-20 sm:px-6 lg:px-8 lg:pb-28 lg:pt-24">
+    <div className="relative px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14 lg:pt-24">
       <div className="relative mx-auto max-w-7xl">
         <HeadingCentered
           closer

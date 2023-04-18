@@ -70,17 +70,20 @@ export default function EditThankYouCard({
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="thank-you-toggle">Show</Label>
-              <Switch
-                id="thank-you-toggle"
-                checked={localSurvey?.thankYouCard?.enabled}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateSurvey({ enabled: !localSurvey.thankYouCard?.enabled });
-                }}
-              />
-            </div>
+            {localSurvey.type !== "link" && (
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="thank-you-toggle">Show</Label>
+
+                <Switch
+                  id="thank-you-toggle"
+                  checked={localSurvey?.thankYouCard?.enabled}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateSurvey({ enabled: !localSurvey.thankYouCard?.enabled });
+                  }}
+                />
+              </div>
+            )}
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-4">

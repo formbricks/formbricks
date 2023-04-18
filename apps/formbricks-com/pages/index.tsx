@@ -6,6 +6,7 @@ import BreakerCTA from "@/components/shared/BreakerCTA";
 import Steps from "@/components/home/Steps";
 import Pricing from "@/components/shared/Pricing";
 import GitHubSponsorship from "@/components/home/GitHubSponsorship";
+import BestPractices from "@/components/shared/BestPractices";
 
 const IndexPage = () => (
   <Layout
@@ -15,6 +16,8 @@ const IndexPage = () => (
     <div className="hidden lg:block">
       <GitHubSponsorship />
     </div>
+    <BestPractices />
+    <Features />
     <Highlights />
     <div className="block lg:hidden">
       <GitHubSponsorship />
@@ -22,19 +25,20 @@ const IndexPage = () => (
     <div className="hidden lg:block">
       <BreakerCTA
         teaser="READY?"
-        headline="It's free to get started."
+        headline="Create surveys in minutes."
         subheadline="Don’t take our word for it, try it yourself."
-        cta="Start for free"
+        cta="Create survey"
         href="https://app.formbricks.com/auth/signup"
       />
     </div>
-    <Features />
+    <div className="pb-16">&nbsp;</div>
     <Steps />
+
     <BreakerCTA
       teaser="Curious?"
       headline="Give it a squeeze 🍋"
-      subheadline="Formbricks is free to get started. Give it a go!"
-      cta="Get started"
+      subheadline="All 'Pro' features are free on Formbricks. Give it a go!"
+      cta="Start for free"
       href="https://app.formbricks.com/auth/signup"
       inverted
     />
