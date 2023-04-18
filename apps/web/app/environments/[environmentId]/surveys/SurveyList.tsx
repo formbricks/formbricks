@@ -13,7 +13,13 @@ import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Badge, ErrorComponent } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { EllipsisHorizontalIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
+import {
+  ComputerDesktopIcon,
+  EllipsisHorizontalIcon,
+  LinkIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -74,9 +80,18 @@ export default function SurveysList({ environmentId }) {
               <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
                 <div className="px-6 py-4">
                   <Badge
-                    text={survey.type === "link" ? "Link" : survey.type === "web" ? "In-Product" : ""}
+                    StartIcon={survey.type === "link" ? LinkIcon : ComputerDesktopIcon}
+                    startIconClassName="mr-2"
+                    text={
+                      survey.type === "link"
+                        ? "Link Survey"
+                        : survey.type === "web"
+                        ? "In-Product Survey"
+                        : ""
+                    }
                     type="gray"
-                    size={"tiny"}></Badge>
+                    size={"tiny"}
+                    className="font-base"></Badge>
                   <p className="my-2 line-clamp-3 text-lg">{survey.name}</p>
                 </div>
                 <Link

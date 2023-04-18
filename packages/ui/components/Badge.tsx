@@ -1,13 +1,17 @@
 import { cn } from "@formbricks/lib/cn";
 
+type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
+
 interface BadgeProps {
   text: string;
   type: "warning" | "success" | "error" | "gray";
   size: "tiny" | "normal" | "large";
+  StartIcon?: SVGComponent;
+  startIconClassName?: string;
   className?: string;
 }
 
-export function Badge({ text, type, size, className }: BadgeProps) {
+export function Badge({ text, type, size, StartIcon, startIconClassName, className }: BadgeProps) {
   const bgColor = {
     warning: "bg-amber-100",
     success: "bg-green-100",
@@ -40,6 +44,11 @@ export function Badge({ text, type, size, className }: BadgeProps) {
         textSize,
         className
       )}>
+      {StartIcon && (
+        <StartIcon
+          className={cn("inline", "h-3 w-3 ltr:mr-2 rtl:-mr-1 rtl:ml-2", startIconClassName || "")}
+        />
+      )}
       {text}
     </span>
   );
