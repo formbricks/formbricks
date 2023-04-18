@@ -5,7 +5,7 @@
   <h3 align="center">Formbricks</h3>
 
   <p align="center">
-    The Open Source Experience Management solution for fast growing companies
+    The Open Source Survey & Experience Management solution for fast growing companies
     <br />
     <a href="https://formbricks.com/">Website</a>  |  <a href="https://formbricks.com/discord">Join Discord community</a>
   </p>
@@ -18,8 +18,6 @@
 </p>
 
 <br/>
-
-> :octocat: Are you looking for snoopForms - the Open Source Typeform Alternative? We're building the next stage of the snoopForms evolution here with Formbricks - focused on experience management for fast growing companies. If you still are looking for the code of snoopForms you can find it in the [snoopforms branch](https://github.com/formbricks/formbricks/tree/snoopforms).
 
 ## About Formbricks
 
