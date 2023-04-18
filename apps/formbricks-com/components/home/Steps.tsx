@@ -113,18 +113,18 @@ export default function Steps() {
                     setAddEventModalOpen(true);
                   }}>
                   <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
-                  Add Actions
+                  Add Action
                 </Button>
               </div>
             </div>
             <div className="pb-8 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 2</h4>
               <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
-                Setup No-Code events
+                No-Code: Track User Actions
               </h2>
               <p className="text-md mt-6 max-w-lg leading-7 text-slate-500 dark:text-slate-400">
-                Set up an event which can trigger your survey - without writing a single line of code. Surveys
-                can be triggered on specific pages or after an element is clicked.
+                Set up user actions which can trigger your survey without writing a single line of code.
+                Surveys can be triggered on specific pages or after an element is clicked.
               </p>
             </div>
           </div>
@@ -163,9 +163,8 @@ export default function Steps() {
                 Set segment and trigger
               </h2>
               <p className="text-md mt-6 max-w-lg leading-7 text-slate-500 dark:text-slate-400">
-                Create a custom segment for each survey. Use attributes and past events to only survey the
-                people who have answers. Trigger your survey on any event in your application. Context
-                matters.
+                Create a custom segment for each survey. Use attributes and past user actions to only survey
+                the people who have answers. Trigger your survey on any user action in your app.
               </p>
             </div>
           </div>

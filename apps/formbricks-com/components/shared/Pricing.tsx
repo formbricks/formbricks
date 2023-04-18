@@ -3,6 +3,8 @@ import clsx from "clsx";
 import EarlyBirdDeal from "./EarlyBirdDeal";
 import HeadingCentered from "./HeadingCentered";
 import { CheckIcon } from "@heroicons/react/24/outline";
+import { usePlausible } from "next-plausible";
+import { useRouter } from "next/router";
 
 const tiers = [
   {
@@ -20,8 +22,9 @@ const tiers = [
       "Unlimited responses",
       "Unlimited team members",
     ],
-    ctaName: "Read Docs",
-    ctaAction: () => window.open("/docs/self-hosting/deployment"),
+    ctaName: "Read docs",
+    plausibleGoal: "Pricing_CTA_SelfHosting",
+    href: "/docs/self-hosting/deployment",
   },
   {
     name: "Free",
@@ -31,10 +34,9 @@ const tiers = [
     button: "highlight",
     discounted: false,
     highlight: true,
-    description: "Always free. Giving back to the community.",
+    description: "All Pro features included.",
     features: [
       "Unlimited surveys",
-      "100 responses per survey",
       "Unlimited team members",
       "Granular targeting",
       "In-product surveys",
@@ -42,9 +44,10 @@ const tiers = [
       "30+ templates",
       "API access",
       "Integrations (Slack, PostHog, Zapier)",
+      "100 responses per survey",
     ],
-    ctaName: "Get started",
-    ctaAction: () => window.open("https://app.formbricks.com/auth/signup"),
+    ctaName: "Start for free",
+    plausibleGoal: "Pricing_CTA_FreePlan",
   },
   {
     name: "Pro",
@@ -57,11 +60,14 @@ const tiers = [
     description: "All features included. Unlimited usage.",
     features: ["All features of Free plan", "Unlimited responses", "Remove branding"],
     ctaName: "Sign up now",
-    ctaAction: () => window.open("https://app.formbricks.com/auth/signup"),
+    plausibleGoal: "Pricing_CTA_ProPlan",
   },
 ];
 
 export default function Pricing() {
+  const plausible = usePlausible();
+  const router = useRouter();
+
   return (
     <div className="-mt-10 pb-20">
       <div className="mx-auto max-w-7xl py-4 sm:px-6 sm:pb-6 lg:px-8" id="pricing">
@@ -124,19 +130,22 @@ export default function Pricing() {
                     {tier.paymentRythm}
                   </span>
                 </p>
-                {tier.ctaName && tier.ctaAction && (
-                  <Button
-                    onClick={tier.ctaAction}
-                    className={clsx(
-                      "mt-6 w-full justify-center py-4 text-lg shadow-sm",
-                      tier.highlight
-                        ? ""
-                        : "bg-slate-300 hover:bg-slate-200 dark:bg-slate-600 dark:hover:bg-slate-500"
-                    )}
-                    variant={tier.highlight ? "highlight" : "secondary"}>
-                    {tier.ctaName}
-                  </Button>
-                )}
+
+                <Button
+                  onClick={() => {
+                    plausible(`${tier.plausibleGoal}`);
+                    router.push(`${tier.href}`);
+                  }}
+                  className={clsx(
+                    "mt-6 w-full justify-center py-4 text-lg shadow-sm",
+                    tier.highlight
+                      ? ""
+                      : "bg-slate-300 hover:bg-slate-200 dark:bg-slate-600 dark:hover:bg-slate-500"
+                  )}
+                  variant={tier.highlight ? "highlight" : "secondary"}>
+                  {tier.ctaName}
+                </Button>
+
                 {tier.name === "Free" && (
                   <p className="mt-1.5 text-center text-xs text-slate-500">No Creditcard required.</p>
                 )}
