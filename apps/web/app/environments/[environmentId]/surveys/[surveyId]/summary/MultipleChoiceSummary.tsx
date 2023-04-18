@@ -74,15 +74,17 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
         {results.map((result: any, resultsIdx) => (
           <div key={result.label}>
             <div className="text flex justify-between px-2 pb-2">
-              <div className="flex space-x-1">
+              <div className="mr-8 flex space-x-1">
                 <p className="font-semibold text-slate-700">
                   {results.length - resultsIdx} - {result.label}
                 </p>
-                <div className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                  {Math.round(result.percentage * 100)}%
+                <div>
+                  <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
+                    {Math.round(result.percentage * 100)}%
+                  </p>
                 </div>
               </div>
-              <p className="text-slate-600">
+              <p className="flex w-32 items-end justify-end text-slate-600">
                 {result.count} {result.count === 1 ? "response" : "responses"}
               </p>
             </div>

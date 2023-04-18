@@ -7,6 +7,7 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { cn } from "@formbricks/lib/cn";
 import { useState } from "react";
+import type { Survey } from "@formbricks/types/surveys";
 
 const options = [
   {
@@ -23,10 +24,16 @@ const options = [
   },
 ];
 
-interface WhoToSendToCardProps {}
+interface WhoToSendToCardProps {
+  localSurvey: Survey;
+}
 
-export default function WhoToSendToCard({}: WhoToSendToCardProps) {
+export default function WhoToSendToCard({ localSurvey }: WhoToSendToCardProps) {
   const [open, setOpen] = useState(false);
+
+  if (localSurvey.type === "link") {
+    return null;
+  }
 
   return (
     <Collapsible.Root
