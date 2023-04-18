@@ -2,37 +2,19 @@
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Confetti } from "@formbricks/ui";
-import { ErrorComponent } from "@formbricks/ui";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { ErrorComponent } from "@formbricks/ui";
+import { useMemo } from "react";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import OpenTextSummary from "./OpenTextSummary";
 
 export default function SummaryList({ environmentId, surveyId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
-  const [confetti, setConfetti] = useState(false);
-  const searchParams = useSearchParams();
 
   const responses = responsesData?.responses;
-
-  useEffect(() => {
-    if (searchParams) {
-      const newSurveyParam = searchParams.get("success");
-      if (newSurveyParam === "true") {
-        setConfetti(true);
-        toast.success("Congrats! Your survey is live 🎉", {
-          duration: 4000,
-          position: "bottom-right",
-        });
-      }
-    }
-  }, [searchParams]);
 
   const summaryData: QuestionSummary[] = useMemo(() => {
     if (survey && responses) {
@@ -91,7 +73,6 @@ export default function SummaryList({ environmentId, surveyId }) {
             })}
           </>
         )}
-        {confetti && <Confetti />}
       </div>
     </>
   );

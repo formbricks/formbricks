@@ -91,8 +91,8 @@ model Display {
   updatedAt DateTime      @updatedAt @map(name: "updated_at")
   survey    Survey        @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId  String
-  person    Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId  String
+  person    Person?       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId  String?
   status    DisplayStatus @default(seen)
 }
 
@@ -126,7 +126,7 @@ model Survey {
   createdAt     DateTime        @default(now()) @map(name: "created_at")
   updatedAt     DateTime        @updatedAt @map(name: "updated_at")
   name          String
-  type          String          @default("web")
+  type          SurveyType      @default(web)
   environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
   status        SurveyStatus    @default(draft)

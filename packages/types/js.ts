@@ -20,7 +20,7 @@ export interface ResponseUpdateRequest {
 
 export interface DisplayCreateRequest {
   surveyId: string;
-  personId: string;
+  personId?: string;
 }
 
 export interface Response {

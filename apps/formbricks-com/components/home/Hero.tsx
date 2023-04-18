@@ -7,6 +7,7 @@ import StackOceanLogoLight from "@/images/clients/stack-ocean-light.png";
 import AnimationFallback from "@/public/animations/fallback-image-open-source-feedback-software.jpg";
 import { Button } from "@formbricks/ui";
 import { usePlausible } from "next-plausible";
+import ClovyrLogo from "@/images/clients/clovyr-logo.svg";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import HeroAnimation from "./HeroAnimation";
@@ -37,11 +38,11 @@ export default function Hero({}: Props) {
           </span>
         </p>
 
-        <div className="mx-auto mt-5 max-w-lg items-center space-x-8 sm:flex sm:justify-center md:mt-8">
-          <p className="hidden whitespace-nowrap pt-1 text-sm text-slate-400 dark:text-slate-500 md:block">
+        <div className="mx-auto mt-5 max-w-2xl items-center space-x-8 sm:flex sm:justify-center md:mt-8">
+          <p className="hidden whitespace-nowrap pt-1 text-xs text-slate-400 dark:text-slate-500 md:block">
             Trusted by
           </p>
-          <div className="grid grid-cols-3 gap-8 pt-2">
+          <div className="grid grid-cols-4 gap-8 pt-2">
             <Image
               src={CalLogoLight}
               alt="Cal Logo"
@@ -56,25 +57,31 @@ export default function Hero({}: Props) {
             />
             <Image
               src={CrowdLogoLight}
-              alt="Cal Logo"
+              alt="Crowd.dev Logo"
               className="block rounded-lg pb-1 opacity-50 hover:opacity-100 dark:hidden"
               width={200}
             />
             <Image
               src={CrowdLogoDark}
-              alt="Cal Logo"
+              alt="Crowd.dev Logo"
               className="hidden rounded-lg pb-1 opacity-50 hover:opacity-100 dark:block"
               width={200}
             />
             <Image
+              src={ClovyrLogo}
+              alt="Clovyr Logo"
+              className="rounded-lg pb-1 opacity-50 hover:opacity-100"
+              width={200}
+            />
+            <Image
               src={StackOceanLogoLight}
-              alt="Cal Logo"
+              alt="StackOcean Logo"
               className="block rounded-lg pb-1 opacity-50 hover:opacity-100 dark:hidden"
               width={200}
             />
             <Image
               src={StackOceanLogoDark}
-              alt="Cal Logo"
+              alt="StakcOcean Logo"
               className="hidden rounded-lg pb-1 opacity-50 hover:opacity-100 dark:block"
               width={200}
             />

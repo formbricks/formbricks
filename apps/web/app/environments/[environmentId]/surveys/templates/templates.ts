@@ -15,7 +15,7 @@ import type { Template } from "@formbricks/types/templates";
 import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {
-  enabled: false,
+  enabled: true,
   headline: "Thank you!",
   subheader: "We appreciate your time and insight.",
 };

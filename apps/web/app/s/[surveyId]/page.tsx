@@ -1,5 +1,5 @@
-import LinkSurvey from "./LinkSurvey";
+import SurveyPage from "./SurveyPage";
 
 export default function LinkSurveyPage({ params }) {
-  return <LinkSurvey surveyId={params.surveyId} />;
+  return <SurveyPage surveyId={params.surveyId} />;
 }
