@@ -23,7 +23,7 @@ export default function HeaderLight() {
             variant="secondary"
             onClick={() => {
               router.push("https://cal.com/johannes/onboarding");
-              plausible("Demo_talkToUs");
+              plausible("Demo_CTA_TalkToUs");
             }}>
             Talk to us
           </Button>
@@ -32,9 +32,9 @@ export default function HeaderLight() {
             className="ml-2"
             onClick={() => {
               router.push("https://app.formbricks.com/auth/signup");
-              plausible("Demo_getStarted");
+              plausible("Demo_CTA_TryForFree");
             }}>
-            Create survey (it&apos;s free)
+            Create surveys for free
           </Button>
         </div>
       </div>

@@ -5,7 +5,7 @@ import { StarIcon } from "@heroicons/react/24/solid";
 import { usePlausible } from "next-plausible";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
 
@@ -78,10 +78,10 @@ export default function Header() {
             variant="highlight"
             className="ml-2"
             onClick={() => {
-              router.push("https://app.formbricks.com/auth/signup");
-              plausible("getStarted");
+              router.push("https://app.formbricks.com");
+              plausible("NavBar_CTA_Login");
             }}>
-            Get started
+            Login
           </Button>
         </div>
       </div>

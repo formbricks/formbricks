@@ -25,9 +25,9 @@ const IndexPage = () => (
     <div className="hidden lg:block">
       <BreakerCTA
         teaser="READY?"
-        headline="It's free to get started."
+        headline="Create surveys in minutes."
         subheadline="Don’t take our word for it, try it yourself."
-        cta="Create surveys"
+        cta="Create survey"
         href="https://app.formbricks.com/auth/signup"
       />
     </div>
@@ -37,7 +37,7 @@ const IndexPage = () => (
     <BreakerCTA
       teaser="Curious?"
       headline="Give it a squeeze 🍋"
-      subheadline="Formbricks is free to get started. Give it a go!"
+      subheadline="All 'Pro' features are free on Formbricks. Give it a go!"
       cta="Start for free"
       href="https://app.formbricks.com/auth/signup"
       inverted

@@ -1,5 +1,6 @@
 import {
   AngryBirdRageIcon,
+  Button,
   CancelSubscriptionIcon,
   DogChaserIcon,
   DoorIcon,
@@ -9,6 +10,8 @@ import {
   PMFIcon,
 } from "@formbricks/ui";
 import clsx from "clsx";
+import { usePlausible } from "next-plausible";
+import { useRouter } from "next/router";
 
 const BestPractices = [
   {
@@ -65,6 +68,8 @@ const BestPractices = [
 ];
 
 export default function InsightOppos() {
+  const plausible = usePlausible();
+  const router = useRouter();
   return (
     <div className="pb-10 pt-12 md:pt-20">
       <div className="px-4 py-20 text-center sm:px-6 lg:px-8" id="best-practices">
@@ -109,8 +114,15 @@ export default function InsightOppos() {
           ))}
         </div>
       </div>
-      <div className="mx-auto mt-4 w-fit rounded-full bg-slate-100 px-4 py-2 text-center text-slate-700">
-        <p>and many more...</p>
+      <div className="mx-auto mt-4 w-fit px-4 py-2 text-center">
+        <Button
+          variant="highlight"
+          onClick={() => {
+            router.push("/demo");
+            plausible("subPractices_CTA_LaunchDemo");
+          }}>
+          Launch Live Demo
+        </Button>
       </div>
     </div>
   );

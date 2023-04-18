@@ -4,10 +4,12 @@ import CrowdLogoDark from "@/images/clients/crowd-logo-dark.svg";
 import CrowdLogoLight from "@/images/clients/crowd-logo-light.svg";
 import StackOceanLogoDark from "@/images/clients/stack-ocean-dark.png";
 import StackOceanLogoLight from "@/images/clients/stack-ocean-light.png";
+import AnimationFallback from "@/public/animations/fallback-image-open-source-feedback-software.jpg";
 import { Button } from "@formbricks/ui";
 import { usePlausible } from "next-plausible";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import HeroAnimation from "./HeroAnimation";
 
 interface Props {}
 
@@ -84,7 +86,7 @@ export default function Hero({}: Props) {
             className="mr-3 px-6"
             onClick={() => {
               router.push("https://app.formbricks.com/auth/signup");
-              plausible("Hero_CTA_createSurvey");
+              plausible("Hero_CTA_CreateSurvey");
             }}>
             Create survey
           </Button>
@@ -93,13 +95,15 @@ export default function Hero({}: Props) {
             className="px-6"
             onClick={() => {
               router.push("/demo");
-              plausible("Demo_CTA_talkToUs");
+              plausible("Hero_CTA_LaunchDemo");
             }}>
-            Live Demo
+            Live demo
           </Button>
         </div>
       </div>
-      {/* Add animation */}
+      <div className="relative">
+        <HeroAnimation fallbackImage={AnimationFallback} />
+      </div>
     </div>
   );
 }
