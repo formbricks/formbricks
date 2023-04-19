@@ -17,6 +17,7 @@ interface Result {
 }
 
 export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
+  console.log(questionSummary);
   const percentage = (count, total) => {
     return count / total;
   };
@@ -32,7 +33,7 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
 
     for (let response of questionSummary.responses) {
       const value = response.value;
-      if (!value || typeof value !== "number") continue;
+      if (typeof value !== "number") continue;
 
       data.total++;
       if (value >= 9) {

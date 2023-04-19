@@ -59,8 +59,11 @@ export default function QuestionCard({
           </div>
           <Collapsible.Root
             open={open}
-            onOpenChange={(open) => {
-              setActiveQuestionId(open ? question.id : null);
+            onOpenChange={() => {
+              if (activeQuestionId !== question.id) {
+                // only be able to open other question
+                setActiveQuestionId(question.id);
+              }
             }}
             className="flex-1 rounded-r-lg border border-slate-200">
             <Collapsible.CollapsibleTrigger

@@ -5,8 +5,12 @@ export const replaceQuestionPresetPlaceholders = (question: Question, product) =
   if (!question) return;
   if (!product) return question;
   const newQuestion = JSON.parse(JSON.stringify(question));
-  newQuestion.headline = newQuestion.headline.replace("{{productName}}", product.name);
-  newQuestion.subheader = newQuestion.subheader?.replace("{{productName}}", product.name);
+  if (newQuestion.headline) {
+    newQuestion.headline = newQuestion.headline.replace("{{productName}}", product.name);
+  }
+  if (newQuestion.subheader) {
+    newQuestion.subheader = newQuestion.subheader?.replace("{{productName}}", product.name);
+  }
   return newQuestion;
 };
 
