@@ -14,8 +14,8 @@ export const replaceQuestionPresetPlaceholders = (question: Question, product) =
 export const replacePresetPlaceholders = (template: Template, product: any) => {
   const preset = JSON.parse(JSON.stringify(template.preset));
   preset.name = preset.name.replace("{{productName}}", product.name);
-  preset.questions.forEach((question) => {
-    question = replaceQuestionPresetPlaceholders(question, product);
+  preset.questions = preset.questions.map((question) => {
+    return replaceQuestionPresetPlaceholders(question, product);
   });
   return { ...template, preset };
 };
