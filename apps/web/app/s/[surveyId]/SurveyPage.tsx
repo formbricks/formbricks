@@ -1,6 +1,7 @@
 "use client";
 
-import LinkSurvey from "@/components/LinkSurvey";
+import LinkSurvey from "@/app/s/[surveyId]/LinkSurvey";
+import LegalFooter from "@/components/shared/LegalFooter";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useLinkSurvey } from "@/lib/linkSurvey/linkSurvey";
 
@@ -27,5 +28,10 @@ export default function SurveyPage({ surveyId }: SurveyPageProps) {
     );
   }
 
-  return <LinkSurvey survey={survey} />;
+  return (
+    <>
+      <LinkSurvey survey={survey} />
+      <LegalFooter />
+    </>
+  );
 }
