@@ -33,7 +33,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
         <fieldset>
           <legend className="fb-sr-only">Choices</legend>
           <div className="fb-flex">
-            {Array.from({ length: 10 }, (_, i) => i + 1).map((number) => (
+            {Array.from({ length: 11 }, (_, i) => i).map((number) => (
               <label
                 key={number}
                 className={cn(

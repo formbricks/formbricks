@@ -71,6 +71,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
               setLocalSurvey={setLocalSurvey}
               activeQuestionId={activeQuestionId}
               setActiveQuestionId={setActiveQuestionId}
+              environmentId={environmentId}
             />
           ) : (
             <AudienceView

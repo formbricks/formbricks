@@ -14,6 +14,7 @@ interface QuestionsViewProps {
   setLocalSurvey: (survey: Survey) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
+  environmentId: string;
 }
 
 export default function QuestionsView({
@@ -21,6 +22,7 @@ export default function QuestionsView({
   setActiveQuestionId,
   localSurvey,
   setLocalSurvey,
+  environmentId,
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -99,7 +101,7 @@ export default function QuestionsView({
           </StrictModeDroppable>
         </div>
       </DragDropContext>
-      <AddQuestionButton addQuestion={addQuestion} />
+      <AddQuestionButton addQuestion={addQuestion} environmentId={environmentId} />
       <div className="mt-5">
         <EditThankYouCard
           localSurvey={localSurvey}
