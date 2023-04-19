@@ -37,7 +37,7 @@ export default function MultipleChoiceMultiQuestion({
           [question.id]: selectedChoices,
         };
         onSubmit(data);
-        // reset form
+        setSelectedChoices([]); // reset value
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -63,6 +63,7 @@ export default function MultipleChoiceMultiQuestion({
                       value={choice.label}
                       className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
+                      checked={selectedChoices.includes(choice.label)}
                       onChange={(e) => {
                         if (e.currentTarget.checked) {
                           setSelectedChoices([...selectedChoices, e.currentTarget.value]);

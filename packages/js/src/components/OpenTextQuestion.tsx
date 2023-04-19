@@ -23,7 +23,7 @@ export default function OpenTextQuestion({
         const data = {
           [question.id]: e.currentTarget[question.id].value,
         };
-        e.currentTarget[question.id].value = "";
+        e.currentTarget[question.id].value = ""; // reset value
         onSubmit(data);
         // reset form
       }}>
