@@ -10,6 +10,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
+import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionDropdown";
 import UpdateQuestionId from "./UpdateQuestionId";
@@ -107,6 +108,13 @@ export default function QuestionCard({
                 />
               ) : question.type === "multipleChoiceSingle" ? (
                 <MultipleChoiceSingleForm
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                />
+              ) : question.type === "multipleChoiceMulti" ? (
+                <MultipleChoiceMultiForm
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}

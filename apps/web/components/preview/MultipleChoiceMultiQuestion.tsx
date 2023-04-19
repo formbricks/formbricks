@@ -1,62 +1,79 @@
+import { useState, useEffect } from "react";
 import { cn } from "@formbricks/lib/cn";
-import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { useState } from "react";
+import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
-interface MultipleChoiceSingleProps {
-  question: MultipleChoiceSingleQuestion;
+interface MultipleChoiceMultiProps {
+  question: MultipleChoiceMultiQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
 
-export default function MultipleChoiceSingleQuestion({
+export default function MultipleChoiceMultiQuestion({
   question,
   onSubmit,
   lastQuestion,
   brandColor,
-}: MultipleChoiceSingleProps) {
-  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+}: MultipleChoiceMultiProps) {
+  const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
+  const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
+
+  useEffect(() => {
+    setIsAtLeastOneChecked(selectedChoices.length > 0);
+  }, [selectedChoices]);
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const data = {
-          [question.id]: e.currentTarget[question.id].value,
-        };
 
+        if (question.required && selectedChoices.length <= 0) {
+          return;
+        }
+
+        const data = {
+          [question.id]: selectedChoices,
+        };
         onSubmit(data);
-        setSelectedChoice(null); // reset form
+        setSelectedChoices([]); // reset value
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Choices</legend>
-          <div className="relative space-y-2 rounded-md">
+          <div className="relative space-y-2 rounded-md bg-white">
             {question.choices &&
-              question.choices.map((choice, idx) => (
+              question.choices.map((choice) => (
                 <label
                   key={choice.id}
                   className={cn(
-                    selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
+                    selectedChoices.includes(choice.label)
+                      ? "z-10 border-slate-400 bg-slate-50"
+                      : "border-gray-200",
                     "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
                   )}>
                   <span className="flex items-center text-sm">
                     <input
-                      type="radio"
+                      type="checkbox"
                       id={choice.id}
                       name={question.id}
                       value={choice.label}
-                      className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
+                      className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
+                      checked={selectedChoices.includes(choice.label)}
                       onChange={(e) => {
-                        setSelectedChoice(e.currentTarget.value);
+                        if (e.currentTarget.checked) {
+                          setSelectedChoices([...selectedChoices, e.currentTarget.value]);
+                        } else {
+                          setSelectedChoices(
+                            selectedChoices.filter((label) => label !== e.currentTarget.value)
+                          );
+                        }
                       }}
-                      checked={selectedChoice === choice.label}
                       style={{ borderColor: brandColor, color: brandColor }}
-                      required={question.required && idx === 0}
                     />
                     <span id={`${choice.id}-label`} className="ml-3 font-medium">
                       {choice.label}
@@ -67,6 +84,13 @@ export default function MultipleChoiceSingleQuestion({
           </div>
         </fieldset>
       </div>
+      <input
+        type="text"
+        className="clip-[rect(0,0,0,0)] absolute m-[-1px] h-1 w-1 overflow-hidden whitespace-nowrap border-0 p-0 text-transparent caret-transparent focus:border-transparent focus:ring-0"
+        required={question.required}
+        value={isAtLeastOneChecked ? "checked" : ""}
+        onChange={() => {}}
+      />
       <div className="mt-4 flex w-full justify-between">
         <div></div>
         <button

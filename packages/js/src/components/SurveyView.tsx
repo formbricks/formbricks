@@ -4,10 +4,9 @@ import { createDisplay, markDisplayResponded } from "../lib/display";
 import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
 import { JsConfig, Survey } from "@formbricks/types/js";
-import OpenTextQuestion from "./OpenTextQuestion";
-import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import Progress from "./Progress";
 import ThankYouCard from "./ThankYouCard";
+import QuestionConditional from "./QuestionConditional";
 
 interface SurveyViewProps {
   config: JsConfig;
@@ -17,7 +16,7 @@ interface SurveyViewProps {
 }
 
 export default function SurveyView({ config, survey, close, brandColor }: SurveyViewProps) {
-  const [currentQuestion, setCurrentQuestion] = useState(survey.questions[0]);
+  const [activeQuestionId, setActiveQuestionId] = useState(survey.questions[0].id);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [responseId, setResponseId] = useState(null);
   const [displayId, setDisplayId] = useState(null);
@@ -29,20 +28,21 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
       const displayId = await createDisplay({ surveyId: survey.id, personId: config.person.id }, config);
       setDisplayId(displayId.id);
     }
+    console.log(survey);
   }, [config, survey]);
 
   useEffect(() => {
     setProgress(calculateProgress());
 
     function calculateProgress() {
-      const elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id);
+      const elementIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
       return elementIdx / survey.questions.length;
     }
-  }, [currentQuestion, survey]);
+  }, [activeQuestionId, survey]);
 
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
-    const questionIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id);
+    const questionIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
     const finished = questionIdx === survey.questions.length - 1;
     // build response
     const responseRequest = {
@@ -61,7 +61,7 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
     }
     setLoadingElement(false);
     if (!finished) {
-      setCurrentQuestion(survey.questions[questionIdx + 1]);
+      setActiveQuestionId(survey.questions[questionIdx + 1].id);
     } else {
       setProgress(100);
 
@@ -88,25 +88,20 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
             subheader={survey.thankYouCard.subheader}
             brandColor={config.settings?.brandColor}
           />
-        ) : currentQuestion.type === "multipleChoiceSingle" ? (
-          <MultipleChoiceSingleQuestion
-            question={currentQuestion}
-            onSubmit={submitResponse}
-            lastQuestion={
-              survey.questions.findIndex((e) => e.id === currentQuestion.id) === survey.questions.length - 1
-            }
-            brandColor={brandColor}
-          />
-        ) : currentQuestion.type === "openText" ? (
-          <OpenTextQuestion
-            question={currentQuestion}
-            onSubmit={submitResponse}
-            lastQuestion={
-              survey.questions.findIndex((e) => e.id === currentQuestion.id) === survey.questions.length - 1
-            }
-            brandColor={brandColor}
-          />
-        ) : null}
+        ) : (
+          survey.questions.map(
+            (question, idx) =>
+              activeQuestionId === question.id && (
+                <QuestionConditional
+                  key={question.id}
+                  brandColor={brandColor}
+                  lastQuestion={idx === survey.questions.length - 1}
+                  onSubmit={submitResponse}
+                  question={question}
+                />
+              )
+          )
+        )}
       </div>
       <Progress progress={progress} brandColor={brandColor} />
     </div>

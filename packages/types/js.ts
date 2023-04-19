@@ -79,7 +79,13 @@ export interface ThankYouCard {
   subheader?: string;
 }
 
-export type Question = OpenTextQuestion | MultipleChoiceSingleQuestion;
+export interface ThankYouCard {
+  enabled: boolean;
+  headline?: string;
+  subheader?: string;
+}
+
+export type Question = OpenTextQuestion | MultipleChoiceSingleQuestion | MultipleChoiceMultiQuestion;
 
 export interface OpenTextQuestion {
   id: string;
@@ -94,6 +100,16 @@ export interface OpenTextQuestion {
 export interface MultipleChoiceSingleQuestion {
   id: string;
   type: "multipleChoiceSingle";
+  headline: string;
+  subheader?: string;
+  required: boolean;
+  buttonLabel?: string;
+  choices?: Choice[];
+}
+
+export interface MultipleChoiceMultiQuestion {
+  id: string;
+  type: "multipleChoiceMulti";
   headline: string;
   subheader?: string;
   required: boolean;

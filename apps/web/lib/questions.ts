@@ -31,6 +31,18 @@ export const questionTypes: QuestionType[] = [
       ],
     },
   },
+  {
+    id: "multipleChoiceMulti",
+    label: "Multiple Choice Multi-Select",
+    description: "Number of choices from a list of options (checkboxes)",
+    icon: ListBulletIcon,
+    defaults: {
+      choices: [
+        { id: createId(), label: "" },
+        { id: createId(), label: "" },
+      ],
+    },
+  },
 ];
 
 export const universalQuestionDefaults = {

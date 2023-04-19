@@ -14,6 +14,8 @@ interface ChoiceResult {
 }
 
 export default function MultipleChoiceSummary({ questionSummary }: MultipleChoiceSummaryProps) {
+  const isSingleChoice = questionSummary.question.type === "multipleChoiceSingle";
+
   const results: ChoiceResult[] = useMemo(() => {
     if (!("choices" in questionSummary.question)) return [];
     // build a dictionary of choices
@@ -27,9 +29,16 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
     }
     // count the responses
     for (const response of questionSummary.responses) {
-      // only add responses that are in the choices
-      if (response.value in resultsDict) {
+      // if single choice, only add responses that are in the choices
+      if (isSingleChoice && response.value in resultsDict) {
         resultsDict[response.value].count += 1;
+      } else {
+        // if multi choice add all responses
+        for (const choice of response.value) {
+          if (choice in resultsDict) {
+            resultsDict[choice].count += 1;
+          }
+        }
       }
     }
     // add the percentage
@@ -59,7 +68,11 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
           <h3 className="pb-1 text-xl font-semibold text-slate-900">{questionSummary.question.headline}</h3>
         </div>
         <div className="flex space-x-2 font-semibold text-slate-600">
-          <div className="rounded-lg bg-slate-100 p-2 text-sm">Multiple-Choice Single Select Question</div>
+          <div className="rounded-lg bg-slate-100 p-2 text-sm">
+            {isSingleChoice
+              ? "Multiple-Choice Single Select Question"
+              : "Multiple-Choice Multi Select Question"}
+          </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2 text-sm">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {totalResponses} responses

@@ -1,7 +1,5 @@
 "use client";
 
-import MultipleChoiceSingleQuestion from "@/components/preview/MultipleChoiceSingleQuestion";
-import OpenTextQuestion from "@/components/preview/OpenTextQuestion";
 import Progress from "@/components/preview/Progress";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import ContentWrapper from "@/components/shared/ContentWrapper";
@@ -12,6 +10,7 @@ import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Confetti } from "@formbricks/ui";
 import { useEffect, useState } from "react";
+import QuestionConditional from "@/components/preview/QuestionConditional";
 import { createDisplay, markDisplayResponded } from "@formbricks/lib/clientDisplay/display";
 
 type EnhancedSurvey = Survey & {
@@ -124,21 +123,14 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
                 brandColor={survey.brandColor}
               />
             </div>
-          ) : currentQuestion.type === "openText" ? (
-            <OpenTextQuestion
+          ) : (
+            <QuestionConditional
               question={currentQuestion}
-              onSubmit={submitResponse}
-              lastQuestion={lastQuestion}
               brandColor={survey.brandColor}
-            />
-          ) : currentQuestion.type === "multipleChoiceSingle" ? (
-            <MultipleChoiceSingleQuestion
-              question={currentQuestion}
-              onSubmit={submitResponse}
               lastQuestion={lastQuestion}
-              brandColor={survey.brandColor}
+              onSubmit={submitResponse}
             />
-          ) : null}
+          )}
         </ContentWrapper>
       </div>
       <div className="top-0 z-10 w-full border-b bg-white">

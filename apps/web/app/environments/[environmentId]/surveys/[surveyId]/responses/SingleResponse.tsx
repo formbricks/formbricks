@@ -13,7 +13,7 @@ interface OpenTextSummaryProps {
     responses: {
       id: string;
       question: string;
-      answer: string;
+      answer: string | any[];
     }[];
   };
   environmentId: string;
@@ -53,14 +53,16 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
         </div>
       </div>
       <div className="space-y-6 rounded-b-lg bg-white p-6">
-        {data.responses.map((response) => {
-          return (
-            <div key={response.id}>
-              <p className="text-sm text-slate-500">{response.question}</p>
+        {data.responses.map((response, idx) => (
+          <div key={`${response.id}-${idx}`}>
+            <p className="text-sm text-slate-500">{response.question}</p>
+            {typeof response.answer === "string" ? (
               <p className="my-1 font-semibold text-slate-700">{response.answer}</p>
-            </div>
-          );
-        })}
+            ) : (
+              <p className="my-1 font-semibold text-slate-700">{response.answer.join(", ")}</p>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

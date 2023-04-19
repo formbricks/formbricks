@@ -61,7 +61,10 @@ export default function SummaryList({ environmentId, surveyId }) {
                   />
                 );
               }
-              if (questionSummary.question.type === "multipleChoiceSingle") {
+              if (
+                questionSummary.question.type === "multipleChoiceSingle" ||
+                questionSummary.question.type === "multipleChoiceMulti"
+              ) {
                 return (
                   <MultipleChoiceSummary
                     key={questionSummary.question.id}
