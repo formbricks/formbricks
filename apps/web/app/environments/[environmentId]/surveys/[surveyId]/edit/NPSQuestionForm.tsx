@@ -1,9 +1,5 @@
-import { Button } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
 import type { NPSQuestion } from "@formbricks/types/questions";
-import { createId } from "@paralleldrive/cuid2";
-import { TrashIcon } from "@heroicons/react/24/solid";
+import { Input, Label } from "@formbricks/ui";
 
 interface NPSQuestionFormProps {
   question: NPSQuestion;
@@ -18,18 +14,6 @@ export default function NPSQuestionForm({
   updateQuestion,
   lastQuestion,
 }: NPSQuestionFormProps) {
-  const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
-    const newChoices = !question.choices
-      ? []
-      : question.choices.map((choice, idx) => {
-          if (idx === choiceIdx) {
-            return { ...choice, ...updatedAttributes };
-          }
-          return choice;
-        });
-    updateQuestion(questionIdx, { choices: newChoices });
-  };
-
   return (
     <form>
       <div className="mt-3">
