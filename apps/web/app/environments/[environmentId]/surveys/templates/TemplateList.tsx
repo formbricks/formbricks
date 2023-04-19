@@ -28,7 +28,9 @@ export default function TemplateList({ environmentId }: { environmentId: string 
 
   useEffect(() => {
     if (product && templates?.length) {
-      setActiveTemplate(replacePresetPlaceholders(templates[0], product));
+      const newTemplate = replacePresetPlaceholders(templates[0], product);
+      setActiveTemplate(newTemplate);
+      setActiveQuestionId(newTemplate.preset.questions[0].id);
     }
   }, [product]);
 
@@ -63,8 +65,9 @@ export default function TemplateList({ environmentId }: { environmentId: string 
                 <button
                   type="button"
                   onClick={() => {
-                    setActiveQuestionId(null);
-                    setActiveTemplate(replacePresetPlaceholders(template, product));
+                    const newTemplate = replacePresetPlaceholders(template, product);
+                    setActiveTemplate(newTemplate);
+                    setActiveQuestionId(newTemplate.preset.questions[0].id);
                   }}
                   key={template.name}
                   className={cn(
@@ -81,7 +84,11 @@ export default function TemplateList({ environmentId }: { environmentId: string 
               ))}
             <button
               type="button"
-              onClick={() => setActiveTemplate(customSurvey)}
+              onClick={() => {
+                const newTemplate = replacePresetPlaceholders(customSurvey, product);
+                setActiveTemplate(newTemplate);
+                setActiveQuestionId(newTemplate.preset.questions[0].id);
+              }}
               className={cn(
                 activeTemplate?.name === customSurvey.name && "ring-brand ring-2",
                 "duration-120 hover:border-brand-dark group relative rounded-lg border-2 border-dashed border-slate-300 bg-transparent p-8 transition-colors duration-150"

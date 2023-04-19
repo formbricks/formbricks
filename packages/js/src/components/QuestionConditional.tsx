@@ -3,6 +3,7 @@ import type { Question } from "@formbricks/types/js";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
+import NPSQuestion from "./NPSQuestion";
 
 interface QuestionConditionalProps {
   question: Question;
@@ -33,6 +34,13 @@ export default function QuestionConditional({
     />
   ) : question.type === "multipleChoiceMulti" ? (
     <MultipleChoiceMultiQuestion
+      question={question}
+      onSubmit={onSubmit}
+      lastQuestion={lastQuestion}
+      brandColor={brandColor}
+    />
+  ) : question.type === "nps" ? (
+    <NPSQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
