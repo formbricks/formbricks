@@ -35,7 +35,7 @@ export default function MultipleChoiceMultiQuestion({
         };
 
         onSubmit(data);
-        // reset form
+        setSelectedChoices([]); // reset value
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -70,6 +70,7 @@ export default function MultipleChoiceMultiQuestion({
                           );
                         }
                       }}
+                      checked={selectedChoices.includes(choice.label)}
                       style={{ borderColor: brandColor, color: brandColor }}
                     />
                     <span id={`${choice.id}-label`} className="fb-ml-3 fb-font-medium">
