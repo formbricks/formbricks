@@ -4,5 +4,6 @@ const base = require("../../packages/tailwind-config/tailwind.config");
 module.exports = {
   ...base,
   content: [...base.content],
+  safelist: [{ pattern: /max-w-./, variants: "sm" }],
   darkMode: "class", // Set dark mode to use the 'class' strategy
 };
