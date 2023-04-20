@@ -163,6 +163,7 @@ export default function SurveysList({ environmentId }) {
         open={isDeleteDialogOpen}
         setOpen={setDeleteDialogOpen}
         onDelete={() => deleteSurveyAction(activeSurvey, activeSurveyIdx)}
+        text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
       />
     </>
   );
