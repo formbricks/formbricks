@@ -49,7 +49,11 @@ export default function SummaryList({ environmentId, surveyId }) {
     <>
       <div className="mt-10 space-y-8">
         {responses.length === 0 ? (
-          <EmptySpaceFiller type="response" environmentId={environmentId} />
+          <EmptySpaceFiller
+            type="response"
+            environmentId={environmentId}
+            noWidgetRequired={survey.type === "link"}
+          />
         ) : (
           <>
             {summaryData.map((questionSummary) => {
