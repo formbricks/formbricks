@@ -80,7 +80,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const displayData = await prisma.display.create(createBody);
 
     if (teamOwnerId) {
-      await capturePosthogEvent(teamOwnerId, "response created", teamId, {
+      await capturePosthogEvent(teamOwnerId, "display created", teamId, {
         surveyId,
       });
     } else {
