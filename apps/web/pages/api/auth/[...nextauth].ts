@@ -245,6 +245,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name,
             email: user.email,
             emailVerified: new Date(Date.now()),
+            onboardingDisplayed: false,
             identityProvider: provider,
             identityProviderAccountId: user.id as string,
             accounts: {
