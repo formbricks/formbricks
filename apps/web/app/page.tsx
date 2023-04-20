@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "pages/api/auth/[...nextauth]";
 import { HomeRedirect } from "./components";
+import { PosthogClientWrapper } from "./PosthogClientWrapper";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -10,9 +11,11 @@ export default async function Home() {
     redirect("/auth/login");
   }
   return (
-    <div>
-      <HomeRedirect />
-      <LoadingSpinner />
-    </div>
+    <PosthogClientWrapper>
+      <div>
+        <HomeRedirect />
+        <LoadingSpinner />
+      </div>
+    </PosthogClientWrapper>
   );
 }

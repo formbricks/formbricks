@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "pages/api/auth/[...nextauth]";
 import PosthogIdentify from "./PosthogIdentify";
 import FormbricksClient from "./FormbricksClient";
+import { PosthogClientWrapper } from "../../PosthogClientWrapper";
 
 export default async function EnvironmentLayout({ children, params }) {
   const session = await getServerSession(authOptions);
@@ -18,10 +19,12 @@ export default async function EnvironmentLayout({ children, params }) {
       <FormbricksClient session={session} />
       <ToasterClient />
       <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
-      <main className="h-full flex-1 overflow-y-auto bg-slate-50">
-        {children}
-        <main />
-      </main>
+      <PosthogClientWrapper>
+        <main className="h-full flex-1 overflow-y-auto bg-slate-50">
+          {children}
+          <main />
+        </main>
+      </PosthogClientWrapper>
     </>
   );
 }
