@@ -43,11 +43,11 @@ export default function PeopleList({ environmentId }: { environmentId: string })
                 <div className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
                   <div className="col-span-3 flex items-center pl-6 text-sm">
                     <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
+                      <div className="ph-no-capture h-10 w-10 flex-shrink-0">
                         <PersonAvatar personId={person.id} />
                       </div>
                       <div className="ml-4">
-                        <div className="font-medium text-slate-900">
+                        <div className="ph-no-capture font-medium text-slate-900">
                           {getAttributeValue(person, "email") ? (
                             <span>{getAttributeValue(person, "email")}</span>
                           ) : (
@@ -58,14 +58,14 @@ export default function PeopleList({ environmentId }: { environmentId: string })
                     </div>
                   </div>
                   <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
-                    <div className="text-slate-900">
+                    <div className="ph-no-capture text-slate-900">
                       {truncateMiddle(getAttributeValue(person, "userId"), 24)}
                     </div>
                   </div>
-                  <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
+                  <div className="ph-no-capture my-auto whitespace-nowrap text-center text-sm text-slate-500">
                     <div className="text-slate-900">{getAttributeValue(person, "email")}</div>
                   </div>
-                  <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
+                  <div className="ph-no-capture my-auto whitespace-nowrap text-center text-sm text-slate-500">
                     <div className="text-slate-900">{person._count?.sessions}</div>
                   </div>
                 </div>

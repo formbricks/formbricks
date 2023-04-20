@@ -29,7 +29,7 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
               className="group flex items-center"
               href={`/environments/${environmentId}/people/${data.personId}`}>
               <PersonAvatar personId={data.personId} />
-              <h3 className="ml-4 pb-1 font-semibold text-slate-600 group-hover:underline">
+              <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 group-hover:underline">
                 {data.personId}
               </h3>
             </Link>
@@ -57,9 +57,9 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
           <div key={`${response.id}-${idx}`}>
             <p className="text-sm text-slate-500">{response.question}</p>
             {typeof response.answer === "string" ? (
-              <p className="my-1 font-semibold text-slate-700">{response.answer}</p>
+              <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer}</p>
             ) : (
-              <p className="my-1 font-semibold text-slate-700">{response.answer.join(", ")}</p>
+              <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer.join(", ")}</p>
             )}
           </div>
         ))}

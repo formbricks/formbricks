@@ -230,7 +230,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       src={session.user.image}
                       width="100"
                       height="100"
-                      className="h-9 w-9 rounded-full"
+                      className="ph-no-capture h-9 w-9 rounded-full"
                       alt="Profile picture"
                     />
                   ) : (
@@ -238,7 +238,9 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   )}
 
                   <div>
-                    <p className="-mb-0.5 text-sm font-bold text-slate-700">{environment?.product?.name}</p>
+                    <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
+                      {environment?.product?.name}
+                    </p>
                     <p className="text-sm text-slate-500">{capitalizeFirstLetter(environment?.type)}</p>
                   </div>
                   <ChevronDownIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
@@ -246,7 +248,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56">
                 <DropdownMenuLabel>
-                  <span className="font-normal">Signed in as</span> {session.user.name}
+                  <span className="ph-no-capture font-normal">Signed in as</span> {session.user.name}
                 </DropdownMenuLabel>
 
                 <DropdownMenuSeparator />
@@ -254,7 +256,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <div>
-                      <p>{environment?.product?.name}</p>
+                      <p className="ph-no-capture">{environment?.product?.name}</p>
                       <p className=" block text-xs text-slate-500">Product</p>
                     </div>
                   </DropdownMenuSubTrigger>
