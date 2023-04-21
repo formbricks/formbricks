@@ -19,8 +19,8 @@ export default function CTASummary({ questionSummary }: CTASummaryProps) {
     const clickedAbs = questionSummary.responses.filter((response) => response.value === "clicked").length;
 
     return {
-      count: clickedAbs,
-      percentage: questionSummary.responses.length / clickedAbs,
+      count: questionSummary.responses.length,
+      percentage: clickedAbs / questionSummary.responses.length,
     };
   }, [questionSummary]);
 
@@ -34,7 +34,7 @@ export default function CTASummary({ questionSummary }: CTASummaryProps) {
           <div className="rounded-lg bg-slate-100 p-2 text-sm">Call-to-Action</div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2 text-sm">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
-            {questionSummary.responses.length} responses
+            {ctr.count} responses
           </div>
         </div>
       </div>

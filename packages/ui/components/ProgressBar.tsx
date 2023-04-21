@@ -27,7 +27,7 @@ export function HalfCircle({ value }: { value: number }) {
       </div>
       <div className="flex justify-between text-sm leading-10 text-slate-600">
         <p>-100</p>
-        <p className="text-4xl text-black">{value}</p>
+        <p className="text-4xl text-black">{Math.round(value)}</p>
         <p>100</p>
       </div>
     </div>
