@@ -56,7 +56,6 @@ export interface CTAQuestion {
   buttonUrl?: string;
   buttonExternal: boolean;
   dismissButtonLabel?: string;
-  dismissButtonEnabled: boolean;
 }
 
 export interface Choice {
