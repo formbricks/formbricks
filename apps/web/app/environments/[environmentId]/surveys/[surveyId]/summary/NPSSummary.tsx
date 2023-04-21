@@ -17,7 +17,6 @@ interface Result {
 }
 
 export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
-  console.log(questionSummary);
   const percentage = (count, total) => {
     const result = count / total;
     return result || 0;
