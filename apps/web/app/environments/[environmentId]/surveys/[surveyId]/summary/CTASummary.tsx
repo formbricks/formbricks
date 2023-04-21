@@ -9,11 +9,11 @@ interface CTASummaryProps {
 
 interface ChoiceResult {
   count: number;
-  percentage?: number;
+  percentage: number;
 }
 
 export default function CTASummary({ questionSummary }: CTASummaryProps) {
-  const ctr = useMemo(() => {
+  const ctr: ChoiceResult = useMemo(() => {
     const clickedAbs = questionSummary.responses.filter((response) => response.value === "clicked").length;
 
     return {
