@@ -1,7 +1,8 @@
-import { Survey } from "@formbricks/types/js";
+import { Settings, Survey } from "@formbricks/types/js";
 import { h, render } from "preact";
 import App from "../App";
 import { Config } from "./config";
+import { NetworkError, match } from "./errors";
 import { Logger } from "./logger";
 import { getSettings } from "./settings";
 
@@ -28,9 +29,18 @@ export const closeSurvey = async (): Promise<void> => {
   // remove container element from DOM
   document.getElementById(containerId).remove();
   addWidgetContainer();
+
   const settings = await getSettings();
-  config.update({ settings });
-  surveyRunning = false;
+
+  match<Settings, NetworkError>({
+    Ok(value) {
+      config.update({ settings: value });
+      surveyRunning = false;
+    },
+    Err(error) {
+      config.errorHandler(error);
+    },
+  })(settings);
 };
 
 export const addWidgetContainer = (): void => {

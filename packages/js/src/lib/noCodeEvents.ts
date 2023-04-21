@@ -1,5 +1,5 @@
-import type { MatchType } from "@formbricks/types/js";
 import type { Event } from "@formbricks/types/events";
+import type { MatchType } from "@formbricks/types/js";
 import { Config } from "./config";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
@@ -8,10 +8,9 @@ const config = Config.getInstance();
 const logger = Logger.getInstance();
 
 export const checkPageUrl = (): void => {
+  logger.debug("checking page url");
   const { settings } = config.get();
   const pageUrlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
-
-  logger.debug("checking page url");
 
   if (pageUrlEvents.length === 0) {
     return;

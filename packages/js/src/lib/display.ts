@@ -1,17 +1,28 @@
-import { DisplayCreateRequest, Response } from "@formbricks/types/js";
-import { Result, err, ok } from "./errors";
+import { DisplayCreateRequest, JsConfig, Response } from "@formbricks/types/js";
+import { NetworkError, Result, err, ok } from "./errors";
 
 export const createDisplay = async (
   displayCreateRequest: DisplayCreateRequest,
-  config
-): Promise<Result<Response, string>> => {
-  const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays`, {
+  config: JsConfig
+): Promise<Result<Response, NetworkError>> => {
+  const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays`;
+
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(displayCreateRequest),
   });
+
   if (!res.ok) {
-    return err("Could not create display");
+    const jsonRes = await res.json();
+
+    return err({
+      code: "NETWORK_ERROR",
+      message: "Could not create display",
+      status: res.status,
+      url,
+      responseMessage: jsonRes.message,
+    });
   }
 
   const response = (await res.json()) as Response;
@@ -19,16 +30,23 @@ export const createDisplay = async (
   return ok(response);
 };
 
-export const markDisplayResponded = async (displayId, config): Promise<Result<void, string>> => {
-  const res = await fetch(
-    `${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays/${displayId}/responded`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+export const markDisplayResponded = async (displayId, config): Promise<Result<void, NetworkError>> => {
+  const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays/${displayId}/responded`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
   if (!res.ok) {
-    return err("Could not update display");
+    const jsonRes = await res.json();
+
+    return err({
+      code: "NETWORK_ERROR",
+      message: "Could not mark display as responded",
+      status: res.status,
+      url,
+      responseMessage: jsonRes.message,
+    });
   }
   return;
 };

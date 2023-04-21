@@ -1,5 +1,6 @@
 import { InitConfig } from "@formbricks/types/js";
 import { Config } from "./config";
+import { InitializationError, MissingFieldError, Result, err } from "./errors";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
 import { addClickEventListener, addPageUrlEventListeners } from "./noCodeEvents";
@@ -24,22 +25,45 @@ const addSessionEventListeners = (): void => {
   }
 };
 
-export const initialize = async (c: InitConfig): Promise<void> => {
+export const initialize = async (
+  c: InitConfig
+): Promise<Result<void, InitializationError | MissingFieldError>> => {
+  logger.debug("Start initialize");
+
   if (!c.environmentId) {
-    throw Error("Formbricks: environmentId is required");
+    logger.debug("No environmentId provided");
+    return err({
+      code: "MISSING_FIELD",
+      field: "environmentId",
+    });
   }
+
   if (!c.apiHost) {
-    throw Error("Formbricks: apiHost is required");
+    logger.debug("No apiHost provided");
+
+    return err({
+      code: "MISSING_FIELD",
+      field: "apiHost",
+    });
   }
+
   if (c.logLevel) {
+    logger.debug(`Setting log level to ${c.logLevel}`);
     logger.configure({ logLevel: c.logLevel });
   }
+
+  logger.debug("Adding widget container to DOM");
   addWidgetContainer();
+
+  logger.debug("Adding styles to DOM");
   addStylesToDom();
+
   if (!config || config.get().environmentId !== c.environmentId || config.get().apiHost !== c.apiHost) {
+    logger.debug("New config required");
     // we need new config
     config.update({ environmentId: c.environmentId, apiHost: c.apiHost });
-    // get person, session and settings from server
+
+    logger.debug("Get person, session and settings from server");
     const { person, session, settings } = await createPerson();
     config.update({ person, session: extendSession(session), settings });
     trackEvent("New Session");
@@ -49,16 +73,26 @@ export const initialize = async (c: InitConfig): Promise<void> => {
     config.update({ session: extendSession(session), settings });
     trackEvent("New Session");
   } else if (!config.get().session) {
-    logger.error("Unable to initialize. No session found");
-    return;
+    return err({
+      code: "INITIALIZATION_ERROR",
+      message: "No session found",
+    });
   }
+
+  logger.debug("Add session event listeners");
   addSessionEventListeners();
+
+  logger.debug("Add page url event listeners");
   addPageUrlEventListeners();
+
+  logger.debug("Add click event listeners");
   addClickEventListener();
+
   logger.debug("Initialized");
 };
 
 export const checkInitialized = (): void => {
+  logger.debug("Check if initialized");
   if (
     !config.get().apiHost ||
     !config.get().environmentId ||

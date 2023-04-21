@@ -1,4 +1,5 @@
 import { JsConfig } from "@formbricks/types/js";
+import { Result, wrapThrows } from "./errors";
 import { Logger } from "./logger";
 
 export class Config {
@@ -54,7 +55,7 @@ export class Config {
     };
   }
 
-  private saveToLocalStorage(): void {
-    localStorage.setItem("config", JSON.stringify(this.config));
+  private saveToLocalStorage(): Result<void, Error> {
+    return wrapThrows(() => localStorage.setItem("config", JSON.stringify(this.config)))();
   }
 }

@@ -14,14 +14,16 @@ export const wrap =
   (result: Result<T>): Result<R> =>
     result.ok === true ? { ok: true, value: fn(result.value) } : result;
 
-export interface Match<T, E extends Error, F1, F2> {
+export interface Match<T, E, F1, F2> {
   Ok(value: T): F1;
   Err(error: E): F2;
 }
 
 export const match =
-  <T, E extends Error, F1, F2>(matchers: Match<T, E, F1, F2>) =>
+  <T, E, F1 = void, F2 = void>(matchers: Match<T, E, F1, F2>) =>
   (result: Result<T, E>) => {
+    console.log("matchers", matchers);
+    console.log(result);
     if (result.ok === true) {
       return matchers.Ok(result.value);
     }
@@ -57,3 +59,21 @@ export const wrapThrows =
       };
     }
   };
+
+export interface NetworkError {
+  code: "NETWORK_ERROR";
+  status: number;
+  message: string;
+  url: string;
+  responseMessage: string;
+}
+
+export interface MissingFieldError {
+  code: "MISSING_FIELD";
+  field: string;
+}
+
+export interface InitializationError {
+  code: "INITIALIZATION_ERROR";
+  message: string;
+}

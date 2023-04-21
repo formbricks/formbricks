@@ -1,17 +1,27 @@
 import { Response, ResponseCreateRequest, ResponseUpdateRequest } from "@formbricks/types/js";
-import { Result, err, ok } from "./errors";
+import { NetworkError, Result, err, ok } from "./errors";
 
 export const createResponse = async (
   responseRequest: ResponseCreateRequest,
   config
-): Promise<Result<Response, string>> => {
-  const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/responses`, {
+): Promise<Result<Response, NetworkError>> => {
+  const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/responses`;
+
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(responseRequest),
   });
   if (!res.ok) {
-    return err("Could not create response");
+    const jsonRes = await res.json();
+
+    return err({
+      code: "NETWORK_ERROR",
+      message: "Could not create response",
+      status: res.status,
+      url,
+      responseMessage: jsonRes.message,
+    });
   }
 
   const response = (await res.json()) as Response;
