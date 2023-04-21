@@ -13,8 +13,6 @@ interface ChoiceResult {
 }
 
 export default function CTASummary({ questionSummary }: CTASummaryProps) {
-  console.log(questionSummary);
-
   const ctr = useMemo(() => {
     const clickedAbs = questionSummary.responses.filter((response) => response.value === "clicked").length;
 
