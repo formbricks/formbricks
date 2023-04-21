@@ -21,7 +21,7 @@ export default function CTAQuestion({ question, onSubmit, lastQuestion, brandCol
           <button
             type="button"
             onClick={() => {
-              onSubmit({ [question.id]: false });
+              onSubmit({ [question.id]: "clicked" });
             }}
             className="flex items-center rounded-md border border-slate-500 px-3 py-3 text-base font-medium leading-4 text-slate-500 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:border-slate-400 dark:text-slate-400">
             {question.dismissButtonLabel || "Dismiss"}
@@ -33,7 +33,7 @@ export default function CTAQuestion({ question, onSubmit, lastQuestion, brandCol
             if (question.buttonExternal && question.buttonUrl) {
               window?.open(question.buttonUrl, "_blank")?.focus();
             }
-            onSubmit({ [question.id]: true });
+            onSubmit({ [question.id]: "dismissed" });
           }}
           className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
           style={{ backgroundColor: brandColor }}>
