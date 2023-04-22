@@ -8,7 +8,7 @@ export class Config {
 
   // default error handler
   private errHandler = (error: any) => {
-    Logger.getInstance().error(error);
+    Logger.getInstance().error(JSON.stringify(error));
   };
 
   private constructor(errHandler?: (error: any) => void) {

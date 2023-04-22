@@ -30,7 +30,10 @@ export const createDisplay = async (
   return ok(response);
 };
 
-export const markDisplayResponded = async (displayId, config): Promise<Result<void, NetworkError>> => {
+export const markDisplayResponded = async (
+  displayId: string,
+  config: JsConfig
+): Promise<Result<void, NetworkError>> => {
   const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays/${displayId}/responded`;
 
   const res = await fetch(url, {

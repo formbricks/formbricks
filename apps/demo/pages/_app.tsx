@@ -1,7 +1,7 @@
-import type { AppProps } from "next/app";
 import formbricks from "@formbricks/js";
-import { useEffect } from "react";
+import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
+import { useEffect } from "react";
 import "../styles/globals.css";
 
 declare const window: any;

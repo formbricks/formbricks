@@ -8,7 +8,7 @@ const logger = Logger.getInstance();
 
 export class CommandQueue {
   private queue: {
-    command: (args: any) => Promise<Result<any, any>> | Result<any, any>;
+    command: (args: any) => Promise<Result<void, any>> | Result<void, any>;
     checkInitialized: boolean;
     commandArgs: any[];
   }[] = [];
@@ -20,7 +20,7 @@ export class CommandQueue {
     command: (...args: A[]) => Promise<Result<any, any>> | Result<any, any>,
     ...args: A[]
   ) {
-    logger.debug(`Add command to queue: ${command.name}(${args})`);
+    logger.debug(`Add command to queue: ${command.name}(${JSON.stringify(args)})`);
     this.queue.push({ command, checkInitialized, commandArgs: args });
 
     if (!this.running) {
@@ -34,11 +34,21 @@ export class CommandQueue {
       const currentItem = this.queue.shift();
 
       // make sure formbricks is initialized
-      const initResult = checkInitialized();
+      if (currentItem.checkInitialized) {
+        const initResult = checkInitialized();
 
-      if (initResult.ok !== true) this.errorHandler(initResult.error);
+        if (initResult && initResult.ok !== true) this.errorHandler(initResult.error);
+      }
 
-      const result = await currentItem.command(currentItem.commandArgs);
+      const result = await currentItem.command.apply(null, currentItem.commandArgs);
+
+      logger.debug(
+        `Command result: ${result === undefined ? "OK" : "Something went really wrong"}, ${
+          currentItem.command.name
+        }`
+      );
+
+      if (!result) continue;
 
       if (result.ok !== true) this.errorHandler(result.error);
     }

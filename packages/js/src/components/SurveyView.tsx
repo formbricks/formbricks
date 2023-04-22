@@ -3,6 +3,7 @@ import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
 import { ErrorHandler } from "../lib/errors";
+import { Logger } from "../lib/logger";
 import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
 import Progress from "./Progress";
@@ -20,16 +21,21 @@ interface SurveyViewProps {
 export default function SurveyView({ config, survey, close, brandColor, errorHandler }: SurveyViewProps) {
   const [activeQuestionId, setActiveQuestionId] = useState(survey.questions[0].id);
   const [progress, setProgress] = useState(0); // [0, 1]
-  const [responseId, setResponseId] = useState(null);
-  const [displayId, setDisplayId] = useState(null);
+  const [responseId, setResponseId] = useState<string | null>(null);
+  const [displayId, setDisplayId] = useState<string | null>(null);
   const [loadingElement, setLoadingElement] = useState(false);
 
   useEffect(() => {
     initDisplay();
     async function initDisplay() {
-      const displayId = await createDisplay({ surveyId: survey.id, personId: config.person.id }, config);
+      const createDisplayResult = await createDisplay(
+        { surveyId: survey.id, personId: config.person.id },
+        config
+      );
 
-      displayId.ok === true ? setDisplayId(displayId.value) : errorHandler(displayId.error);
+      createDisplayResult.ok === true
+        ? setDisplayId(createDisplayResult.value.id)
+        : errorHandler(createDisplayResult.error);
     }
   }, [config, survey, errorHandler]);
 
@@ -58,11 +64,15 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
         markDisplayResponded(displayId, config),
       ]);
 
-      response.ok === true ? setResponseId(response.value) : errorHandler(response.error);
+      response.ok === true ? setResponseId(response.value.id) : errorHandler(response.error);
     } else {
       const result = await updateResponse(responseRequest, responseId, config);
 
-      result.ok === false && errorHandler(result.error);
+      if (result.ok !== true) {
+        errorHandler(result.error);
+      } else if (responseRequest.response.finished) {
+        Logger.getInstance().debug("Submitted response");
+      }
     }
     setLoadingElement(false);
     if (!finished) {

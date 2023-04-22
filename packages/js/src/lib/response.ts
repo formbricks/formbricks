@@ -12,9 +12,10 @@ export const createResponse = async (
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(responseRequest),
   });
-  if (!res.ok) {
-    const jsonRes = await res.json();
 
+  const jsonRes = await res.json();
+
+  if (!res.ok) {
     return err({
       code: "network_error",
       message: "Could not create response",
@@ -24,9 +25,7 @@ export const createResponse = async (
     });
   }
 
-  const response = (await res.json()) as Response;
-
-  return ok(response);
+  return ok(jsonRes as Response);
 };
 
 export const updateResponse = async (
@@ -54,5 +53,5 @@ export const updateResponse = async (
     });
   }
 
-  return ok((await res.json()) as Response);
+  return ok(resJson as Response);
 };

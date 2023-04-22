@@ -32,7 +32,7 @@ export const createPerson = async (): Promise<
     });
   }
 
-  return ok((await res.json()) as { session: Session; person: Person; settings: Settings });
+  return ok(jsonRes as { session: Session; person: Person; settings: Settings });
 };
 
 export const updatePersonUserId = async (
@@ -68,7 +68,7 @@ export const updatePersonUserId = async (
     });
   }
 
-  return ok((await res.json()) as { person: Person; settings: Settings });
+  return ok(jsonRes as { person: Person; settings: Settings });
 };
 
 export const updatePersonAttribute = async (
@@ -166,10 +166,6 @@ export const setPersonAttribute = async (
   match(
     result,
     ({ person, settings }) => {
-      if (!person || !settings) {
-        logger.error("Error updating attribute");
-        throw new Error("Formbricks: Error updating attribute");
-      }
       config.update({ person, settings });
     },
     (err) => {
