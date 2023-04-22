@@ -63,7 +63,9 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
 
       response.ok === true ? setResponseId(response.value) : errorHandler(response.error);
     } else {
-      await updateResponse(responseRequest, responseId, config);
+      const result = await updateResponse(responseRequest, responseId, config);
+
+      result.ok === false && errorHandler(result.error);
     }
     setLoadingElement(false);
     if (!finished) {
