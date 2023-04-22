@@ -1,14 +1,14 @@
 import type { Event } from "@formbricks/types/events";
 import type { MatchType } from "@formbricks/types/js";
 import { Config } from "./config";
-import { InvalidMatchTypeError, Result, err, match, ok } from "./errors";
+import { InvalidMatchTypeError, NetworkError, Result, err, match, ok } from "./errors";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
-export const checkPageUrl = (): void => {
+export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError | NetworkError>> => {
   logger.debug("checking page url");
   const { settings } = config.get();
   const pageUrlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
@@ -24,9 +24,12 @@ export const checkPageUrl = (): void => {
       continue;
     }
     const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule as MatchType);
-    if (match) {
-      trackEvent(event.name);
-    }
+
+    if (match.ok !== true) return err(match.error);
+
+    const trackResult = await trackEvent(event.name);
+
+    if (trackResult.ok !== true) return err(trackResult.error);
   }
 };
 

@@ -1,6 +1,6 @@
 import type { Settings } from "@formbricks/types/js";
 import { Config } from "./config";
-import { NetworkError, Result, err, match, ok } from "./errors";
+import { NetworkError, Result, err, ok } from "./errors";
 import { Logger } from "./logger";
 
 const logger = Logger.getInstance();
@@ -31,19 +31,12 @@ export const getSettings = async (): Promise<Result<Settings, NetworkError>> => 
   return ok((await response.json()) as Settings);
 };
 
-export const refreshSettings = async (): Promise<void> => {
+export const refreshSettings = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Refreshing - getting settings from backend");
   const settings = await getSettings();
 
-  match(
-    settings,
-    (value) => {
-      logger.debug(JSON.stringify(value));
-      logger.debug("Settings refreshed");
-      config.update({ settings: value });
-    },
-    (error) => {
-      config.errorHandler(error);
-    }
-  );
+  if (settings.ok !== true) return err(settings.error);
+
+  logger.debug("Settings refreshed");
+  config.update({ settings: settings.value });
 };

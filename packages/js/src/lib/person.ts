@@ -35,28 +35,40 @@ export const createPerson = async (): Promise<
   return ok((await res.json()) as { session: Session; person: Person; settings: Settings });
 };
 
-export const updatePersonUserId = async (userId: string): Promise<{ person: Person; settings: Settings }> => {
-  if (!config.get().person || !config.get().person.id) {
-    console.error("Formbricks: Unable to update userId. No person set.");
-    return;
-  }
-  const res = await fetch(
-    `${config.get().apiHost}/api/v1/client/environments/${config.get().environmentId}/people/${
-      config.get().person.id
-    }/user-id`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId, sessionId: config.get().session.id }),
-    }
-  );
+export const updatePersonUserId = async (
+  userId: string
+): Promise<Result<{ person: Person; settings: Settings }, NetworkError | MissingPersonError>> => {
+  if (!config.get().person || !config.get().person.id)
+    return err({
+      code: "missing_person",
+      message: "Unable to update userId. No person set.",
+    });
+
+  const url = `${config.get().apiHost}/api/v1/client/environments/${config.get().environmentId}/people/${
+    config.get().person.id
+  }/user-id`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ userId, sessionId: config.get().session.id }),
+  });
+
+  const jsonRes = await res.json();
+
   if (!res.ok) {
-    logger.error("Formbricks: Error updating person");
-    throw Error("Error updating person");
+    return err({
+      code: "network_error",
+      message: "Error updating person",
+      status: res.status,
+      url,
+      responseMessage: jsonRes.message,
+    });
   }
-  return await res.json();
+
+  return ok((await res.json()) as { person: Person; settings: Settings });
 };
 
 export const updatePersonAttribute = async (
@@ -114,7 +126,9 @@ export const attributeAlreadyExists = (key: string): boolean => {
   return false;
 };
 
-export const setPersonUserId = async (userId: string): Promise<void> => {
+export const setPersonUserId = async (
+  userId: string
+): Promise<Result<void, NetworkError | MissingPersonError>> => {
   logger.debug("setting userId: " + userId);
   // check if attribute already exists with this value
   if (attributeAlreadySet("userId", userId)) {
@@ -125,7 +139,12 @@ export const setPersonUserId = async (userId: string): Promise<void> => {
     logger.error("userId cannot be changed after it has been set. You need to reset first");
     return;
   }
-  const { person, settings } = await updatePersonUserId(userId);
+  const result = await updatePersonUserId(userId);
+
+  if (result.ok !== true) return err(result.error);
+
+  const { person, settings } = result.value;
+
   config.update({ person, settings });
 };
 
