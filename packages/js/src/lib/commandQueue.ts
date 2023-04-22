@@ -1,6 +1,12 @@
+import { Config } from "./config";
+import { Result } from "./errors";
+
+const config = Config.getInstance();
+
 export class CommandQueue {
-  private queue: (() => Promise<any>)[] = [];
+  private queue: (() => Promise<Result<any, any>>)[] = [];
   private running: boolean = false;
+  private errorHandler = config.errorHandler;
 
   public add(command: () => Promise<any>) {
     this.queue.push(command);
@@ -13,11 +19,10 @@ export class CommandQueue {
     this.running = true;
     while (this.queue.length > 0) {
       const command = this.queue.shift();
-      try {
-        await command();
-      } catch (error) {
-        console.error(error);
-      }
+
+      const result = await command();
+
+      if (result.ok !== true) this.errorHandler(result.error);
     }
     this.running = false;
   }

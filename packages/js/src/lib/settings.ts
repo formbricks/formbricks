@@ -20,7 +20,7 @@ export const getSettings = async (): Promise<Result<Settings, NetworkError>> => 
     const jsonRes = await response.json();
 
     return err({
-      code: "NETWORK_ERROR",
+      code: "network_error",
       status: response.status,
       message: "Error getting settings",
       url,
@@ -35,14 +35,15 @@ export const refreshSettings = async (): Promise<void> => {
   logger.debug("Refreshing - getting settings from backend");
   const settings = await getSettings();
 
-  match<Settings, NetworkError>({
-    Ok(value) {
+  match(
+    settings,
+    (value) => {
       logger.debug(JSON.stringify(value));
       logger.debug("Settings refreshed");
       config.update({ settings: value });
     },
-    Err(error) {
+    (error) => {
       config.errorHandler(error);
-    },
-  })(settings);
+    }
+  );
 };

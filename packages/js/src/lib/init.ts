@@ -1,6 +1,14 @@
 import { InitConfig } from "@formbricks/types/js";
 import { Config } from "./config";
-import { InitializationError, MissingFieldError, Result, err } from "./errors";
+import {
+  MissingFieldError,
+  MissingPersonError,
+  MissingSessionError,
+  NetworkError,
+  NotInitializedError,
+  Result,
+  err,
+} from "./errors";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
 import { addClickEventListener, addPageUrlEventListeners } from "./noCodeEvents";
@@ -27,13 +35,13 @@ const addSessionEventListeners = (): void => {
 
 export const initialize = async (
   c: InitConfig
-): Promise<Result<void, InitializationError | MissingFieldError>> => {
+): Promise<Result<void, MissingSessionError | MissingFieldError | NetworkError | MissingPersonError>> => {
   logger.debug("Start initialize");
 
   if (!c.environmentId) {
     logger.debug("No environmentId provided");
     return err({
-      code: "MISSING_FIELD",
+      code: "missing_field",
       field: "environmentId",
     });
   }
@@ -42,7 +50,7 @@ export const initialize = async (
     logger.debug("No apiHost provided");
 
     return err({
-      code: "MISSING_FIELD",
+      code: "missing_field",
       field: "apiHost",
     });
   }
@@ -64,17 +72,34 @@ export const initialize = async (
     config.update({ environmentId: c.environmentId, apiHost: c.apiHost });
 
     logger.debug("Get person, session and settings from server");
-    const { person, session, settings } = await createPerson();
+    const result = await createPerson();
+
+    if (result.ok !== true) {
+      return err(result.error);
+    }
+
+    const { person, session, settings } = result.value;
+
     config.update({ person, session: extendSession(session), settings });
     trackEvent("New Session");
   } else if (config.get().session && isExpired(config.get().session)) {
     // we need new session
-    const { session, settings } = await createSession();
+    const createSessionResult = await createSession();
+
+    if (createSessionResult.ok !== true) return err(createSessionResult.error);
+
+    const { session, settings } = createSessionResult.value;
+
     config.update({ session: extendSession(session), settings });
-    trackEvent("New Session");
+
+    const trackEventResult = await trackEvent("New Session");
+
+    if (trackEventResult.ok !== true) return err(trackEventResult.error);
+
+    return;
   } else if (!config.get().session) {
     return err({
-      code: "INITIALIZATION_ERROR",
+      code: "missing_session",
       message: "No session found",
     });
   }
@@ -91,7 +116,7 @@ export const initialize = async (
   logger.debug("Initialized");
 };
 
-export const checkInitialized = (): void => {
+export const checkInitialized = (): Result<void, NotInitializedError> => {
   logger.debug("Check if initialized");
   if (
     !config.get().apiHost ||
@@ -100,6 +125,9 @@ export const checkInitialized = (): void => {
     !config.get().session ||
     !config.get().settings
   ) {
-    throw Error("Formbricks: Formbricks not initialized. Call initialize() first.");
+    return err({
+      code: "not_initialized",
+      message: "Formbricks not initialized. Call initialize() first.",
+    });
   }
 };

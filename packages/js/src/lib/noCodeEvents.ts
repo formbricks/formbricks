@@ -1,6 +1,7 @@
 import type { Event } from "@formbricks/types/events";
 import type { MatchType } from "@formbricks/types/js";
 import { Config } from "./config";
+import { InvalidMatchTypeError, Result, err, match, ok } from "./errors";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
 
@@ -39,23 +40,39 @@ export const addPageUrlEventListeners = (): void => {
   window.addEventListener("load", checkPageUrl);
 };
 
-export function checkUrlMatch(url: string, pageUrlValue: string, pageUrlRule: MatchType): boolean {
+export function checkUrlMatch(
+  url: string,
+  pageUrlValue: string,
+  pageUrlRule: MatchType
+): Result<boolean, InvalidMatchTypeError> {
+  let result: boolean;
+  let error: Result<never, InvalidMatchTypeError>;
+
   switch (pageUrlRule) {
     case "exactMatch":
-      return url === pageUrlValue;
+      result = url === pageUrlValue;
     case "contains":
-      return url.includes(pageUrlValue);
+      result = url.includes(pageUrlValue);
     case "startsWith":
-      return url.startsWith(pageUrlValue);
+      result = url.startsWith(pageUrlValue);
     case "endsWith":
-      return url.endsWith(pageUrlValue);
+      result = url.endsWith(pageUrlValue);
     case "notMatch":
-      return url !== pageUrlValue;
+      result = url !== pageUrlValue;
     case "notContains":
-      return !url.includes(pageUrlValue);
+      result = !url.includes(pageUrlValue);
     default:
-      throw new Error("Invalid match type");
+      error = err({
+        code: "invalid_match_type",
+        message: "Invalid match type",
+      });
   }
+
+  if (error) {
+    return error;
+  }
+
+  return ok(result);
 }
 
 export const checkClickMatch = (event: MouseEvent) => {
@@ -70,14 +87,30 @@ export const checkClickMatch = (event: MouseEvent) => {
   innerHtmlEvents.forEach((e) => {
     const innerHtml = e.noCodeConfig?.innerHtml;
     if (innerHtml && targetElement.innerHTML === innerHtml.value) {
-      trackEvent(e.name);
+      trackEvent(e.name).then((res) => {
+        match(
+          res,
+          (_value) => {},
+          (err) => {
+            config.errorHandler(err);
+          }
+        );
+      });
     }
   });
 
   cssSelectorEvents.forEach((e) => {
     const cssSelector = e.noCodeConfig?.cssSelector;
     if (cssSelector && targetElement.matches(cssSelector.value)) {
-      trackEvent(e.name);
+      trackEvent(e.name).then((res) => {
+        match(
+          res,
+          (_value) => {},
+          (err) => {
+            config.errorHandler(err);
+          }
+        );
+      });
     }
   });
 };

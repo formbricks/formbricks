@@ -14,22 +14,17 @@ export const wrap =
   (result: Result<T>): Result<R> =>
     result.ok === true ? { ok: true, value: fn(result.value) } : result;
 
-export interface Match<T, E, F1, F2> {
-  Ok(value: T): F1;
-  Err(error: E): F2;
+export function match<TSuccess, TError, TReturn>(
+  result: Result<TSuccess, TError>,
+  onSuccess: (value: TSuccess) => TReturn,
+  onError: (error: TError) => TReturn
+) {
+  if (result.ok === true) {
+    return onSuccess(result.value);
+  }
+
+  return onError(result.error);
 }
-
-export const match =
-  <T, E, F1 = void, F2 = void>(matchers: Match<T, E, F1, F2>) =>
-  (result: Result<T, E>) => {
-    console.log("matchers", matchers);
-    console.log(result);
-    if (result.ok === true) {
-      return matchers.Ok(result.value);
-    }
-
-    return matchers.Err(result.error);
-  };
 
 /* 
 Usage: 
@@ -60,20 +55,35 @@ export const wrapThrows =
     }
   };
 
-export interface NetworkError {
-  code: "NETWORK_ERROR";
+export type NetworkError = {
+  code: "network_error";
   status: number;
   message: string;
   url: string;
   responseMessage: string;
-}
+};
 
-export interface MissingFieldError {
-  code: "MISSING_FIELD";
+export type MissingFieldError = {
+  code: "missing_field";
   field: string;
-}
+};
 
-export interface InitializationError {
-  code: "INITIALIZATION_ERROR";
+export type MissingSessionError = {
+  code: "missing_session";
   message: string;
-}
+};
+
+export type InvalidMatchTypeError = {
+  code: "invalid_match_type";
+  message: string;
+};
+
+export type MissingPersonError = {
+  code: "missing_person";
+  message: string;
+};
+
+export type NotInitializedError = {
+  code: "not_initialized";
+  message: string;
+};

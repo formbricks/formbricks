@@ -17,7 +17,7 @@ export const createDisplay = async (
     const jsonRes = await res.json();
 
     return err({
-      code: "NETWORK_ERROR",
+      code: "network_error",
       message: "Could not create display",
       status: res.status,
       url,
@@ -41,7 +41,7 @@ export const markDisplayResponded = async (displayId, config): Promise<Result<vo
     const jsonRes = await res.json();
 
     return err({
-      code: "NETWORK_ERROR",
+      code: "network_error",
       message: "Could not mark display as responded",
       status: res.status,
       url,

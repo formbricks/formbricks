@@ -30,7 +30,7 @@ export const trackEvent = async (
     const error = await res.json();
 
     return err({
-      code: "NETWORK_ERROR",
+      code: "network_error",
       message: `Error tracking event: ${JSON.stringify(error)}`,
       status: res.status,
       url: res.url,
