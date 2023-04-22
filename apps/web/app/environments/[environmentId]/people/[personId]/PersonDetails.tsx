@@ -73,7 +73,7 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
     <>
       <GoBackButton />
       <div className="flex items-baseline justify-between border-b border-slate-200 pb-6 pt-4">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900">
+        <h1 className="ph-no-capture text-4xl font-bold tracking-tight text-slate-900">
           {personEmail ? <span>{personEmail.value}</span> : <span>{person.id}</span>}
         </h1>
         <div className="flex items-center space-x-3">
@@ -91,7 +91,7 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
             <h2 className="text-lg font-bold text-slate-700">Attributes</h2>
             <div>
               <dt className="text-sm font-medium text-slate-500">Email</dt>
-              <dd className="mt-1 text-sm text-slate-900">
+              <dd className="ph-no-capture mt-1 text-sm text-slate-900">
                 {personEmail ? (
                   <span>{personEmail?.value}</span>
                 ) : (
@@ -101,7 +101,7 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
             </div>
             <div>
               <dt className="text-sm font-medium text-slate-500">User Id</dt>
-              <dd className="mt-1 text-sm text-slate-900">
+              <dd className="ph-no-capture mt-1 text-sm text-slate-900">
                 {personUserId ? (
                   <span>{personUserId?.value}</span>
                 ) : (
@@ -111,7 +111,7 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
             </div>
             <div>
               <dt className="text-sm font-medium text-slate-500">Formbricks Id (internal)</dt>
-              <dd className="mt-1 text-sm text-slate-900">{person.id}</dd>
+              <dd className="ph-no-capture mt-1 text-sm text-slate-900">{person.id}</dd>
             </div>
 
             <div>

@@ -39,3 +39,5 @@ yarn-error.log*
 
 # nixos stuff
 .direnv
+
+Zone.Identifier

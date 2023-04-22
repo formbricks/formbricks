@@ -6,12 +6,13 @@ interface DeleteDialogProps {
   setOpen: (open: boolean) => void;
   deleteWhat: string;
   onDelete: () => void;
+  text?: string;
 }
 
-export default function DeleteDialog({ open, setOpen, deleteWhat, onDelete }: DeleteDialogProps) {
+export default function DeleteDialog({ open, setOpen, deleteWhat, onDelete, text }: DeleteDialogProps) {
   return (
     <Modal open={open} setOpen={setOpen} title={`Delete ${deleteWhat}`}>
-      <p>Are you sure? This action cannot be undone.</p>
+      <p>{text || "Are you sure? This action cannot be undone."}</p>
       <div className="my-4 space-x-2 text-right">
         <Button
           variant="secondary"

@@ -1,3 +1,6 @@
+import { Question } from "./questions";
+import { ThankYouCard } from "./surveys";
+
 export interface ResponseCreateRequest {
   surveyId: string;
   personId: string;
@@ -20,7 +23,7 @@ export interface ResponseUpdateRequest {
 
 export interface DisplayCreateRequest {
   surveyId: string;
-  personId: string;
+  personId?: string;
 }
 
 export interface Response {
@@ -75,39 +78,6 @@ export interface Survey {
   questions: Question[];
   triggers: Trigger[];
   thankYouCard: ThankYouCard;
-}
-
-export interface ThankYouCard {
-  enabled: boolean;
-  headline?: string;
-  subheader?: string;
-}
-
-export type Question = OpenTextQuestion | MultipleChoiceSingleQuestion;
-
-export interface OpenTextQuestion {
-  id: string;
-  type: "openText";
-  headline: string;
-  subheader?: string;
-  placeholder?: string;
-  buttonLabel?: string;
-  required: boolean;
-}
-
-export interface MultipleChoiceSingleQuestion {
-  id: string;
-  type: "multipleChoiceSingle";
-  headline: string;
-  subheader?: string;
-  required: boolean;
-  buttonLabel?: string;
-  choices?: Choice[];
-}
-
-export interface Choice {
-  id: string;
-  label: string;
 }
 
 export interface Trigger {

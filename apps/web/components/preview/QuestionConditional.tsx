@@ -1,30 +1,46 @@
 import type { Question } from "@formbricks/types/questions";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
+import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
+import NPSQuestion from "./NPSQuestion";
 
 interface QuestionConditionalProps {
-  currentQuestion: Question;
+  question: Question;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
 
 export default function QuestionConditional({
-  currentQuestion,
+  question,
   onSubmit,
   lastQuestion,
   brandColor,
 }: QuestionConditionalProps) {
-  return currentQuestion.type === "openText" ? (
+  return question.type === "openText" ? (
     <OpenTextQuestion
-      question={currentQuestion}
+      question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : currentQuestion.type === "multipleChoiceSingle" ? (
+  ) : question.type === "multipleChoiceSingle" ? (
     <MultipleChoiceSingleQuestion
-      question={currentQuestion}
+      question={question}
+      onSubmit={onSubmit}
+      lastQuestion={lastQuestion}
+      brandColor={brandColor}
+    />
+  ) : question.type === "multipleChoiceMulti" ? (
+    <MultipleChoiceMultiQuestion
+      question={question}
+      onSubmit={onSubmit}
+      lastQuestion={lastQuestion}
+      brandColor={brandColor}
+    />
+  ) : question.type === "nps" ? (
+    <NPSQuestion
+      question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}

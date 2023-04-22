@@ -42,13 +42,13 @@ export default function EventClassesList({ environmentId }) {
             setAddEventModalOpen(true);
           }}>
           <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
-          Add No-Code Event
+          Add Action
         </Button>
       </div>
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-4 pl-6 ">Name</div>
-          <div className="text-center"># events</div>
+          <div className="col-span-4 pl-6 ">User Actions</div>
+          <div className="text-center"># Reps</div>
           <div className="text-center">Created</div>
           <div className="text-center">
             <span className="sr-only">Edit</span>

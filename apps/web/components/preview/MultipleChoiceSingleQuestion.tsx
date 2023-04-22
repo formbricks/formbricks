@@ -26,9 +26,8 @@ export default function MultipleChoiceSingleQuestion({
           [question.id]: e.currentTarget[question.id].value,
         };
 
-        e.currentTarget[question.id].value = "";
         onSubmit(data);
-        // reset form
+        setSelectedChoice(null); // reset form
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -55,6 +54,7 @@ export default function MultipleChoiceSingleQuestion({
                       onChange={(e) => {
                         setSelectedChoice(e.currentTarget.value);
                       }}
+                      checked={selectedChoice === choice.label}
                       style={{ borderColor: brandColor, color: brandColor }}
                       required={question.required && idx === 0}
                     />

@@ -1,10 +1,21 @@
-import { PersonAvatar } from "@formbricks/ui";
 import { timeSince } from "@formbricks/lib/time";
-import Link from "next/link";
+import { PersonAvatar } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
 
 interface OpenTextSummaryProps {
-  data: any;
+  data: {
+    id: string;
+    personId: string;
+    value: string;
+    updatedAt: string;
+    finished: boolean;
+    responses: {
+      id: string;
+      question: string;
+      answer: string | any[];
+    }[];
+  };
   environmentId: string;
 }
 
@@ -18,7 +29,7 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
               className="group flex items-center"
               href={`/environments/${environmentId}/people/${data.personId}`}>
               <PersonAvatar personId={data.personId} />
-              <h3 className="ml-4 pb-1 font-semibold text-slate-600 group-hover:underline">
+              <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 group-hover:underline">
                 {data.personId}
               </h3>
             </Link>
@@ -42,14 +53,16 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
         </div>
       </div>
       <div className="space-y-6 rounded-b-lg bg-white p-6">
-        {data.data.map((response) => {
-          return (
-            <div key={response.id}>
-              <p className="text-sm text-slate-500">{response.question}</p>
-              <p className="my-1 font-semibold text-slate-700">{response.answer}</p>
-            </div>
-          );
-        })}
+        {data.responses.map((response, idx) => (
+          <div key={`${response.id}-${idx}`}>
+            <p className="text-sm text-slate-500">{response.question}</p>
+            {typeof response.answer === "string" ? (
+              <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer}</p>
+            ) : (
+              <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer.join(", ")}</p>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

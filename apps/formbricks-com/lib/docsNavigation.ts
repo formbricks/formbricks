@@ -49,6 +49,13 @@ const navigation = [
     title: "Self-hosting",
     links: [{ title: "Deployment", href: "/docs/self-hosting/deployment" }],
   },
+  {
+    title: "Contributing",
+    links: [
+      { title: "Introduction", href: "/docs/contributing/introduction" },
+      { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
+    ],
+  },
 ];
 
 export default navigation;

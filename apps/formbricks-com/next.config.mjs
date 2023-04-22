@@ -67,18 +67,8 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: "/demo",
-        destination: "https://app.formbricks.com/",
-        permanent: false,
-      },
-      {
         source: "/pmf",
         destination: "/",
-        permanent: true,
-      },
-      {
-        source: "/signup",
-        destination: "/auth/signup",
         permanent: true,
       },
     ];

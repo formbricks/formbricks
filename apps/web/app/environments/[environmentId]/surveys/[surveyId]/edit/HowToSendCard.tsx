@@ -1,5 +1,6 @@
 "use client";
 
+import type { Survey } from "@formbricks/types/surveys";
 import { cn } from "@formbricks/lib/cn";
 import { Badge } from "@formbricks/ui";
 import { Label } from "@formbricks/ui";
@@ -24,10 +25,10 @@ const options = [
   },
   {
     id: "link",
-    name: "Standalone Survey (Link)",
+    name: "Shareable Link",
     icon: LinkIcon,
-    description: "Create personalized survey links to share around.",
-    comingSoon: true,
+    description: "Creates a personalized survey link to share around.",
+    comingSoon: false,
   },
   {
     id: "mobile",
@@ -45,10 +46,22 @@ const options = [
   },
 ];
 
-interface HowToSendCardProps {}
+interface HowToSendCardProps {
+  localSurvey: Survey;
+  setLocalSurvey: (survey: Survey) => void;
+}
 
-export default function HowToSendCard({}: HowToSendCardProps) {
+export default function HowToSendCard({ localSurvey, setLocalSurvey }: HowToSendCardProps) {
   const [open, setOpen] = useState(true);
+
+  const setSurveyType = (type: string) => {
+    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    updatedSurvey.type = type;
+    if (type === "link") {
+      updatedSurvey.thankYouCard.enabled = true;
+    }
+    setLocalSurvey(updatedSurvey);
+  };
 
   return (
     <Collapsible.Root
@@ -74,7 +87,12 @@ export default function HowToSendCard({}: HowToSendCardProps) {
       <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
-          <RadioGroup defaultValue="web" className="flex flex-col space-y-3">
+          <RadioGroup
+            defaultValue="web"
+            value={localSurvey.type}
+            onValueChange={setSurveyType}
+            className="flex flex-col space-y-3"
+            disabled={localSurvey.status !== "draft"}>
             {options.map((option) => (
               <Label
                 key={option.id}
@@ -83,7 +101,9 @@ export default function HowToSendCard({}: HowToSendCardProps) {
                   "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
                   option.comingSoon
                     ? "border-slate-200 bg-slate-50/50"
-                    : "border-brand-dark cursor-pointer bg-slate-50"
+                    : option.id === localSurvey.type
+                    ? "border-brand-dark cursor-pointer bg-slate-50"
+                    : "cursor-pointer bg-slate-50"
                 )}>
                 <RadioGroupItem
                   value={option.id}
@@ -102,7 +122,9 @@ export default function HowToSendCard({}: HowToSendCardProps) {
                         )}>
                         {option.name}
                       </p>
-                      {option.comingSoon && <Badge text="coming soon" size="normal" type="warning" />}
+                      {option.comingSoon && (
+                        <Badge text="coming soon" size="normal" type="warning" className="ml-2" />
+                      )}
                     </div>
                     <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
                   </div>

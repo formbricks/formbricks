@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { capturePosthogEvent } from "@/../../packages/lib/posthogServer";
+import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();

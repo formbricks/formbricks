@@ -36,12 +36,12 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
       title: "Not implemented yet.",
       subtitle: "Formbricks widget not yet implemented.",
     },
-    running: { icon: CheckIcon, color: "green", title: "Receiving data.", subtitle: "Last event received:" },
+    running: { icon: CheckIcon, color: "green", title: "Receiving data.", subtitle: "Last action received:" },
     issue: {
       icon: ExclamationTriangleIcon,
       color: "amber",
       title: "There might be an issue.",
-      subtitle: "Last event received:",
+      subtitle: "Last action received:",
     },
   };
 
