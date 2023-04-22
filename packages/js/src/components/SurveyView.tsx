@@ -5,12 +5,9 @@ import { createDisplay, markDisplayResponded } from "../lib/display";
 import { ErrorHandler } from "../lib/errors";
 import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
-import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
-import OpenTextQuestion from "./OpenTextQuestion";
-import { JsConfig, Survey } from "@formbricks/types/js";
 import Progress from "./Progress";
-import ThankYouCard from "./ThankYouCard";
 import QuestionConditional from "./QuestionConditional";
+import ThankYouCard from "./ThankYouCard";
 
 interface SurveyViewProps {
   config: JsConfig;
@@ -21,7 +18,7 @@ interface SurveyViewProps {
 }
 
 export default function SurveyView({ config, survey, close, brandColor, errorHandler }: SurveyViewProps) {
-  const [currentQuestionId, setCurrentQuestionId] = useState(survey.questions[0].id);
+  const [activeQuestionId, setActiveQuestionId] = useState(survey.questions[0].id);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [responseId, setResponseId] = useState(null);
   const [displayId, setDisplayId] = useState(null);
