@@ -2,35 +2,20 @@
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Confetti } from "@formbricks/ui";
-import { ErrorComponent } from "@formbricks/ui";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { ErrorComponent } from "@formbricks/ui";
+import { useMemo } from "react";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import OpenTextSummary from "./OpenTextSummary";
+import NPSSummary from "./NPSSummary";
 
 export default function SummaryList({ environmentId, surveyId }) {
-  const { responses, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
+  const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
-  const [confetti, setConfetti] = useState(false);
-  const searchParams = useSearchParams();
 
-  useEffect(() => {
-    if (searchParams) {
-      const newSurveyParam = searchParams.get("success");
-      if (newSurveyParam === "true") {
-        setConfetti(true);
-        toast.success("Congrats! Your survey is live 🎉", {
-          duration: 4000,
-          position: "bottom-right",
-        });
-      }
-    }
-  }, [searchParams]);
+  const responses = responsesData?.responses;
 
   const summaryData: QuestionSummary[] = useMemo(() => {
     if (survey && responses) {
@@ -64,7 +49,11 @@ export default function SummaryList({ environmentId, surveyId }) {
     <>
       <div className="mt-10 space-y-8">
         {responses.length === 0 ? (
-          <EmptySpaceFiller type="response" environmentId={environmentId} />
+          <EmptySpaceFiller
+            type="response"
+            environmentId={environmentId}
+            noWidgetRequired={survey.type === "link"}
+          />
         ) : (
           <>
             {summaryData.map((questionSummary) => {
@@ -77,7 +66,10 @@ export default function SummaryList({ environmentId, surveyId }) {
                   />
                 );
               }
-              if (questionSummary.question.type === "multipleChoiceSingle") {
+              if (
+                questionSummary.question.type === "multipleChoiceSingle" ||
+                questionSummary.question.type === "multipleChoiceMulti"
+              ) {
                 return (
                   <MultipleChoiceSummary
                     key={questionSummary.question.id}
@@ -85,11 +77,13 @@ export default function SummaryList({ environmentId, surveyId }) {
                   />
                 );
               }
+              if (questionSummary.question.type === "nps") {
+                return <NPSSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+              }
               return null;
             })}
           </>
         )}
-        {confetti && <Confetti />}
       </div>
     </>
   );

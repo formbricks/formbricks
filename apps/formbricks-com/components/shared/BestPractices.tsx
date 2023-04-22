@@ -1,16 +1,17 @@
-import clsx from "clsx";
 import {
-  OnboardingIcon,
-  PMFIcon,
-  DogChaserIcon,
+  AngryBirdRageIcon,
+  Button,
   CancelSubscriptionIcon,
-  InterviewPromptIcon,
+  DogChaserIcon,
   DoorIcon,
   FeedbackIcon,
-  BugBlueIcon,
-  AngryBirdRageIcon,
-  FeatureRequestIcon,
+  InterviewPromptIcon,
+  OnboardingIcon,
+  PMFIcon,
 } from "@formbricks/ui";
+import clsx from "clsx";
+import { usePlausible } from "next-plausible";
+import { useRouter } from "next/router";
 
 const BestPractices = [
   {
@@ -67,8 +68,10 @@ const BestPractices = [
 ];
 
 export default function InsightOppos() {
+  const plausible = usePlausible();
+  const router = useRouter();
   return (
-    <div className="pt-12 pb-10 md:pt-20">
+    <div className="pb-10 pt-12 md:pt-20">
       <div className="px-4 py-20 text-center sm:px-6 lg:px-8" id="best-practices">
         <h1 className="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
           Get started with{" "}
@@ -85,11 +88,11 @@ export default function InsightOppos() {
           {BestPractices.map((bestPractice) => (
             <div
               key={bestPractice.title}
-              className="drop-shadow-card duration-120 relative cursor-pointer rounded-lg bg-slate-100 p-8 transition-all ease-in-out hover:scale-105 dark:bg-slate-800">
+              className="drop-shadow-card duration-120 relative rounded-lg bg-slate-100 p-8 transition-all ease-in-out hover:scale-105 dark:bg-slate-800">
               <div
                 className={clsx(
                   // base styles independent what type of button it is
-                  "absolute right-10 rounded-full py-1 px-3",
+                  "absolute right-10 rounded-full px-3 py-1",
                   // different styles depending on type
                   bestPractice.category === "Boost Retention" &&
                     "bg-pink-100 text-pink-500 dark:bg-pink-800 dark:text-pink-200",
@@ -103,13 +106,23 @@ export default function InsightOppos() {
               <div className="h-12 w-12">
                 <bestPractice.icon className="h-12 w-12 " />
               </div>
-              <h3 className="mt-3 mb-1 text-xl font-bold text-slate-700 dark:text-slate-200">
+              <h3 className="mb-1 mt-3 text-xl font-bold text-slate-700 dark:text-slate-200">
                 {bestPractice.title}
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">{bestPractice.description}</p>
             </div>
           ))}
         </div>
+      </div>
+      <div className="mx-auto mt-4 w-fit px-4 py-2 text-center">
+        <Button
+          variant="highlight"
+          onClick={() => {
+            router.push("/demo");
+            plausible("subPractices_CTA_LaunchDemo");
+          }}>
+          Launch Live Demo
+        </Button>
       </div>
     </div>
   );

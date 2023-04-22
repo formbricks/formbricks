@@ -24,6 +24,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       select: {
         id: true,
         questions: true,
+        thankYouCard: true,
         environmentId: true,
       },
     });

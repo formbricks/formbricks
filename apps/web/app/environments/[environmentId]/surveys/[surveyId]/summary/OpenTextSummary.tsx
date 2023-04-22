@@ -39,11 +39,11 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
               <div className="pl-6">
                 {response.personId ? (
                   <Link
-                    className="group flex items-center"
+                    className="ph-no-capture group flex items-center"
                     href={`/environments/${environmentId}/people/${response.personId}`}>
                     <PersonAvatar personId={response.personId} />
 
-                    <p className="ml-2 text-slate-600 group-hover:underline">
+                    <p className="ph-no-capture ml-2 text-slate-600 group-hover:underline">
                       {truncate(response.personId, 16)}
                     </p>
                   </Link>
@@ -55,7 +55,9 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
                   </div>
                 )}
               </div>
-              <div className="col-span-2 whitespace-pre-wrap pl-6 font-semibold">{response.value}</div>
+              <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
+                {response.value}
+              </div>
               <div className="px-6 text-slate-500">{timeSince(response.updatedAt)}</div>
             </div>
           );

@@ -25,12 +25,14 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
           />
         </svg>
       </div>
+
       <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-slate-300"></span>
 
       <div>
         <Headline headline={headline} questionId="thankYouCard" />
         <Subheader subheader={subheader} questionId="thankYouCard" />
       </div>
+
       {/* <span
         className="mb-[10px] mt-[35px] inline-block h-[2px] w-4/5 rounded-full opacity-25"
         style={{ backgroundColor: brandColor }}></span>

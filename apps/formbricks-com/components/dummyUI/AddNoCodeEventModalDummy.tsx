@@ -22,11 +22,9 @@ export default function AddNoCodeEventModalDummy({ open, setOpen }: EventDetailM
                 <CursorArrowRaysIcon />
               </div>
               <div>
-                <div className="text-xl font-medium text-slate-700 dark:text-slate-300">
-                  Add No-Code Event
-                </div>
+                <div className="text-xl font-medium text-slate-700 dark:text-slate-300">Add Action</div>
                 <div className="text-sm text-slate-500">
-                  Create a new no-code event to filter your user base with.
+                  Create a new user action to display surveys when it&apos;s triggered.
                 </div>
               </div>
             </div>

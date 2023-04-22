@@ -1,14 +1,12 @@
-import { useRouter } from "next/router";
-import { Button } from "@formbricks/ui";
-import Image from "next/image";
 import EarlyBird from "@/images/early bird deal for open source jotform alternative typeform and surveymonkey_v2.svg";
+import { Button } from "@formbricks/ui";
 import { usePlausible } from "next-plausible";
+import Image from "next/image";
 
 export default function EarlyBirdDeal() {
-  const router = useRouter();
   const plausible = usePlausible();
   return (
-    <div className="bg-brand-dark relative mx-4 max-w-7xl overflow-hidden rounded-xl p-6 pb-16 sm:p-8 sm:pb-16 md:py-8 md:px-12 lg:mx-0 lg:flex lg:items-center">
+    <div className="bg-brand-dark relative mx-4 max-w-7xl overflow-hidden rounded-xl p-6 pb-16 sm:p-8 sm:pb-16 md:px-12 md:py-8 lg:mx-0 lg:flex lg:items-center">
       <div className="lg:w-0 lg:flex-1 ">
         <h2
           className="mb-1 text-2xl font-bold tracking-tight text-white sm:text-2xl"
@@ -25,16 +23,16 @@ export default function EarlyBirdDeal() {
             variant="secondary"
             className="dark:bg-slate-200 dark:text-slate-700 dark:hover:bg-slate-300"
             onClick={() => {
-              plausible("openEarlyBird");
+              plausible("Pricing_CTA_EarlyBird");
               window.open("https://app.formbricks.com/auth/signup", "_blank")?.focus();
             }}>
-            Get Early Bird Deal
+            Get Early Bird deal
           </Button>
         </div>
-        <p className="mt-2 mb-24 max-w-3xl text-xs tracking-tight text-slate-200 md:mb-0 md:max-w-sm lg:max-w-none">
+        <p className="mb-24 mt-2 max-w-3xl text-xs tracking-tight text-slate-200 md:mb-0 md:max-w-sm lg:max-w-none">
           This saves you $588 every year.
         </p>
-        <div className="absolute -right-20 -bottom-36 mx-auto h-96 w-96 scale-75 sm:-right-10">
+        <div className="absolute -bottom-36 -right-20 mx-auto h-96 w-96 scale-75 sm:-right-10">
           <Image src={EarlyBird} fill alt="formbricks favicon open source forms typeform alternative" />
         </div>
       </div>

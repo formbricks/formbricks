@@ -159,7 +159,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
             <p className="mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
               {item.title}
             </p>
-            <div className="mt-1 ml-2 space-y-1">
+            <div className="ml-2 mt-1 space-y-1">
               {item.links
                 .filter((l) => !l.hidden)
                 .map((link) => (

@@ -43,7 +43,7 @@ const CommunityPage = () => {
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             The leader board of the Formbricks community contributors 🙌
           </p>
-          <ol className="mt-10 ml-4 list-decimal">
+          <ol className="ml-4 mt-10 list-decimal">
             {topContributors.map((MVP) => (
               <li
                 key={MVP.name}
@@ -58,7 +58,7 @@ const CommunityPage = () => {
           </ol>
         </div>
         <div>
-          <div className="rounded-lg bg-gradient-to-b from-slate-200 to-slate-300 px-10 pt-6 pb-12 dark:from-slate-800 dark:to-slate-700">
+          <div className="rounded-lg bg-gradient-to-b from-slate-200 to-slate-300 px-10 pb-12 pt-6 dark:from-slate-800 dark:to-slate-700">
             <h3 className="mt-7 text-3xl font-bold text-slate-800 dark:text-slate-200 xl:text-4xl">
               Community Discord
             </h3>

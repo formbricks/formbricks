@@ -7,7 +7,7 @@ export function ResponsiveVideo({ src, title }: ResponsiveVideoProps) {
   return (
     <div className="relative" style={{ paddingTop: "56.25%" }}>
       <iframe
-        className="absolute top-0 left-0 h-full w-full rounded"
+        className="absolute left-0 top-0 h-full w-full rounded"
         src={src}
         title={title}
         frameBorder="0"

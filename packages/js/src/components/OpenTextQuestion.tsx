@@ -1,5 +1,5 @@
+import type { OpenTextQuestion } from "@formbricks/types/questions";
 import { h } from "preact";
-import type { OpenTextQuestion, Question } from "@formbricks/types/js";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
@@ -23,7 +23,7 @@ export default function OpenTextQuestion({
         const data = {
           [question.id]: e.currentTarget[question.id].value,
         };
-        e.currentTarget[question.id].value = "";
+        e.currentTarget[question.id].value = ""; // reset value
         onSubmit(data);
         // reset form
       }}>

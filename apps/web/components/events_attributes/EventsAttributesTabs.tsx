@@ -10,7 +10,7 @@ export default function EventsAttributesTabs({ activeId, environmentId }: Events
   const tabs = [
     {
       id: "events",
-      label: "Events",
+      label: "Actions",
       icon: <CursorArrowRaysIcon />,
       href: `/environments/${environmentId}/events`,
     },

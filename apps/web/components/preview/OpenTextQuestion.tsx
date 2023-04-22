@@ -26,9 +26,8 @@ export default function OpenTextQuestion({
         const data = {
           [question.id]: value,
         };
-        setValue("");
+        setValue(""); // reset value
         onSubmit(data);
-        // reset form
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />

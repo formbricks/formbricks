@@ -83,15 +83,15 @@ export default function SurveyStatusDropdown({
           </SelectTrigger>
           <SelectContent className="bg-white">
             <SelectItem className="group  font-normal hover:text-slate-900" value="inProgress">
-              <PlayCircleIcon className="mr-1 -mt-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
+              <PlayCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
               Collect insights
             </SelectItem>
             <SelectItem className="group  font-normal hover:text-slate-900" value="paused">
-              <PauseCircleIcon className="mr-1 -mt-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
+              <PauseCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
               Pause Survey
             </SelectItem>
             <SelectItem className="group  font-normal hover:text-slate-900" value="completed">
-              <CheckCircleIcon className="mr-1 -mt-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
+              <CheckCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
               Complete Survey
             </SelectItem>
           </SelectContent>

@@ -73,7 +73,7 @@ export function EditMemberships({ environmentId }) {
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-7 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="px-6"></div>
-          <div className="col-span-2  ">Fullname</div>
+          <div className="col-span-2">Fullname</div>
           <div className="col-span-2">Email</div>
           <div className=""></div>
         </div>
@@ -85,10 +85,10 @@ export function EditMemberships({ environmentId }) {
               <div className="h-58 px-6 ">
                 <ProfileAvatar userId={member.userId || member.email} />
               </div>
-              <div className="col-span-2 flex flex-col justify-center">
+              <div className="ph-no-capture col-span-2 flex flex-col justify-center">
                 <p>{member.name}</p>
               </div>
-              <div className="col-span-2 flex flex-col justify-center">{member.email}</div>
+              <div className="ph-no-capture col-span-2 flex flex-col justify-center">{member.email}</div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
                 {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}
                 {member.role !== "owner" && (

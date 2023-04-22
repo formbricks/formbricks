@@ -18,7 +18,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ children, language }) => {
   return (
     <div className="group relative mt-4 rounded-md text-sm  text-slate-200">
       <DocumentDuplicateIcon
-        className="absolute top-4 right-4 z-20 h-5 w-5 cursor-pointer text-slate-600 opacity-0 transition-all duration-150 group-hover:opacity-60"
+        className="absolute right-4 top-4 z-20 h-5 w-5 cursor-pointer text-slate-600 opacity-0 transition-all duration-150 group-hover:opacity-60"
         onClick={() => {
           const childText = children?.toString() || "";
           navigator.clipboard.writeText(childText);

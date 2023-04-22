@@ -53,6 +53,36 @@ export const hasUserEnvironmentAccess = async (user, environmentId) => {
   return false;
 };
 
+export const getPlan = async (req, res) => {
+  if (req.headers["x-api-key"]) {
+    const apiKey = req.headers["x-api-key"].toString();
+    const apiKeyData = await prisma.apiKey.findUnique({
+      where: {
+        hashedKey: hashApiKey(apiKey),
+      },
+      select: {
+        environment: {
+          select: {
+            product: {
+              select: {
+                team: {
+                  select: {
+                    plan: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    return apiKeyData?.environment.product.team.plan || "free";
+  } else {
+    const user = await getSessionUser(req, res);
+    return user ? user.plan : "free";
+  }
+};
+
 export const hasApiEnvironmentAccess = async (apiKey, environmentId) => {
   // write function to check if the API Key has access to the environment
   const apiKeyData = await prisma.apiKey.findUnique({

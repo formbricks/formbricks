@@ -4,6 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { Fragment } from "react";
 import clsx from "clsx";
+import { cn } from "@formbricks/lib/cn";
 
 type Modal = {
   open: boolean;
@@ -11,6 +12,7 @@ type Modal = {
   children: React.ReactNode;
   title?: string;
   noPadding?: boolean;
+  blur?: boolean;
   closeOnOutsideClick?: boolean;
 };
 
@@ -20,6 +22,7 @@ const Modal: React.FC<Modal> = ({
   children,
   title,
   noPadding,
+  blur = true,
   closeOnOutsideClick = true,
 }) => {
   return (
@@ -34,7 +37,12 @@ const Modal: React.FC<Modal> = ({
             leave="ease-in duration-200"
             leaveFrom="opacity-100"
             leaveTo="opacity-0">
-            <div className="fixed inset-0 bg-slate-500 bg-opacity-30 backdrop-blur-md transition-opacity" />
+            <div
+              className={cn(
+                blur && "backdrop-blur-md",
+                "fixed inset-0 bg-slate-500 bg-opacity-30 transition-opacity"
+              )}
+            />
           </Transition.Child>
 
           <div className="fixed inset-0 z-10 overflow-y-auto">
@@ -50,9 +58,9 @@ const Modal: React.FC<Modal> = ({
                 <Dialog.Panel
                   className={clsx(
                     "relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl ",
-                    `${noPadding ? "" : "px-4 pt-5 pb-4 sm:p-6"}`
+                    `${noPadding ? "" : "px-4 pb-4 pt-5 sm:p-6"}`
                   )}>
-                  <div className="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
+                  <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                     <button
                       type="button"
                       className="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 focus:ring-offset-2"

@@ -1,7 +1,7 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
-import type { MultipleChoiceSingleQuestion } from "@formbricks/types/js";
+import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
@@ -26,9 +26,8 @@ export default function MultipleChoiceSingleQuestion({
         const data = {
           [question.id]: e.currentTarget[question.id].value,
         };
-        e.currentTarget[question.id].value = "";
         onSubmit(data);
-        // reset form
+        setSelectedChoice(null); // reset form
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -57,6 +56,7 @@ export default function MultipleChoiceSingleQuestion({
                       onChange={(e) => {
                         setSelectedChoice(e.currentTarget.value);
                       }}
+                      checked={selectedChoice === choice.label}
                       style={{ borderColor: brandColor, color: brandColor }}
                       required={question.required && idx === 0}
                     />

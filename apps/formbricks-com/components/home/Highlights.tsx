@@ -17,8 +17,8 @@ export default function Highlights({}) {
                 <span className="font-light">get the data you need.</span>
               </h2>
               <p className="text-md mt-6 max-w-lg leading-7 text-slate-500 dark:text-slate-400">
-                Follow up emails are so 2010. Ask users as they experience your product - and leverage a 3x
-                higher conversion rate.
+                Follow up emails are so 2010. Ask users as they experience your product - and leverage a
+                significantly higher conversion rate.
               </p>
             </div>
             <div className="rounded-lg bg-slate-100 py-6 pr-4 dark:bg-slate-800 sm:py-16 sm:pr-8">

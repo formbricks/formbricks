@@ -38,7 +38,7 @@ export default function ResponseOptionsCard({}: ResponseOptionsCardProps) {
       )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-6">
-          <div className="flex items-center pr-5 pl-2">
+          <div className="flex items-center pl-2 pr-5">
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
@@ -78,7 +78,9 @@ export default function ResponseOptionsCard({}: ResponseOptionsCardProps) {
                     <p className={cn("font-semibold", option.disabled ? "text-slate-500" : "text-slate-800")}>
                       {option.name}
                     </p>
-                    {option.disabled && <Badge text="coming soon" size="normal" type="warning" />}
+                    {option.disabled && (
+                      <Badge text="coming soon" size="normal" type="warning" className="ml-2" />
+                    )}
                   </div>
                   <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
                 </div>
