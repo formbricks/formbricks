@@ -2,7 +2,8 @@ export type Question =
   | OpenTextQuestion
   | MultipleChoiceSingleQuestion
   | MultipleChoiceMultiQuestion
-  | NPSQuestion;
+  | NPSQuestion
+  | CTAQuestion;
 
 export interface OpenTextQuestion {
   id: string;
@@ -43,6 +44,18 @@ export interface NPSQuestion {
   buttonLabel?: string;
   lowerLabel: string;
   upperLabel: string;
+}
+
+export interface CTAQuestion {
+  id: string;
+  type: "cta";
+  headline: string;
+  html?: string;
+  required: boolean;
+  buttonLabel?: string;
+  buttonUrl?: string;
+  buttonExternal: boolean;
+  dismissButtonLabel?: string;
 }
 
 export interface Choice {

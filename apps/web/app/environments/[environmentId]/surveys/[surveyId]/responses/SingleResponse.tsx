@@ -56,7 +56,7 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
         {data.responses.map((response, idx) => (
           <div key={`${response.id}-${idx}`}>
             <p className="text-sm text-slate-500">{response.question}</p>
-            {typeof response.answer === "string" ? (
+            {typeof response.answer !== "object" ? (
               <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer}</p>
             ) : (
               <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer.join(", ")}</p>

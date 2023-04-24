@@ -23,6 +23,7 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
 } from "./components/DropdownMenu";
+export { Editor, AddVariablesDropdown } from "./components/editor";
 export { ErrorComponent } from "./components/ErrorComponent";
 export { Input } from "./components/Input";
 export { Label } from "./components/Label";
