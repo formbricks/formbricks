@@ -17,7 +17,7 @@ export class CommandQueue {
 
   public add<A>(
     checkInitialized: boolean = true,
-    command: (...args: A[]) => Promise<Result<any, any>> | Result<any, any>,
+    command: (...args: A[]) => Promise<Result<void, any>> | Result<void, any>,
     ...args: A[]
   ) {
     logger.debug(`Add command to queue: ${command.name}(${JSON.stringify(args)})`);

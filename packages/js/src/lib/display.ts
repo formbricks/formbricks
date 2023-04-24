@@ -1,5 +1,5 @@
 import { DisplayCreateRequest, JsConfig, Response } from "@formbricks/types/js";
-import { NetworkError, Result, err, ok } from "./errors";
+import { NetworkError, Result, err, ok, okVoid } from "./errors";
 
 export const createDisplay = async (
   displayCreateRequest: DisplayCreateRequest,
@@ -51,5 +51,6 @@ export const markDisplayResponded = async (
       responseMessage: jsonRes.message,
     });
   }
-  return;
+
+  return okVoid();
 };

@@ -3,11 +3,11 @@ import { Config } from "./config";
 import {
   MissingFieldError,
   MissingPersonError,
-  MissingSessionError,
   NetworkError,
   NotInitializedError,
   Result,
   err,
+  okVoid,
 } from "./errors";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
@@ -35,7 +35,7 @@ const addSessionEventListeners = (): void => {
 
 export const initialize = async (
   c: InitConfig
-): Promise<Result<void, MissingSessionError | MissingFieldError | NetworkError | MissingPersonError>> => {
+): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   logger.debug("Start initialize");
 
   if (!c.environmentId) {
@@ -82,7 +82,10 @@ export const initialize = async (
       const { session, settings } = createSessionResult.value;
 
       config.update({ session: extendSession(session), settings });
-      trackEvent("New Session");
+
+      const trackEventResult = await trackEvent("New Session");
+
+      if (trackEventResult.ok !== true) return err(trackEventResult.error);
     } else {
       logger.debug("Session valid. Extending session.");
       config.update({ session: extendSession(existingSession) });
@@ -102,7 +105,10 @@ export const initialize = async (
     const { person, session, settings } = result.value;
 
     config.update({ person, session: extendSession(session), settings });
-    trackEvent("New Session");
+
+    const trackEventResult = await trackEvent("New Session");
+
+    if (trackEventResult.ok !== true) return err(trackEventResult.error);
   }
 
   logger.debug("Add session event listeners");
@@ -115,6 +121,8 @@ export const initialize = async (
   addClickEventListener();
 
   logger.debug("Initialized");
+
+  return okVoid();
 };
 
 export const checkInitialized = (): Result<void, NotInitializedError> => {
@@ -131,4 +139,6 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
       message: "Formbricks not initialized. Call initialize() first.",
     });
   }
+
+  return okVoid();
 };

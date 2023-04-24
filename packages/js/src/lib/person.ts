@@ -1,7 +1,7 @@
 import type { Person } from "@formbricks/types/js";
 import { Session, Settings } from "@formbricks/types/js";
 import { Config } from "./config";
-import { MissingPersonError, NetworkError, Result, err, match, ok } from "./errors";
+import { MissingPersonError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
 import { Logger } from "./logger";
 
 const config = Config.getInstance();
@@ -146,6 +146,8 @@ export const setPersonUserId = async (
   const { person, settings } = result.value;
 
   config.update({ person, settings });
+
+  return okVoid();
 };
 
 export const setPersonAttribute = async (
@@ -156,7 +158,7 @@ export const setPersonAttribute = async (
   // check if attribute already exists with this value
   if (attributeAlreadySet(key, value)) {
     logger.debug("attribute already set to this value. Skipping update.");
-    return;
+    return okVoid();
   }
 
   const result = await updatePersonAttribute(key, value);
@@ -177,6 +179,8 @@ export const setPersonAttribute = async (
   if (error) {
     return err(error);
   }
+
+  return okVoid();
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
@@ -199,4 +203,6 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   if (error) {
     return err(error);
   }
+
+  return okVoid();
 };

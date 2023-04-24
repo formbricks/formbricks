@@ -1,7 +1,7 @@
 import type { Event } from "@formbricks/types/events";
 import type { MatchType } from "@formbricks/types/js";
 import { Config } from "./config";
-import { InvalidMatchTypeError, NetworkError, Result, err, match, ok } from "./errors";
+import { InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
 
@@ -14,8 +14,9 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
   const pageUrlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
 
   if (pageUrlEvents.length === 0) {
-    return;
+    return okVoid();
   }
+
   for (const event of pageUrlEvents) {
     const {
       noCodeConfig: { pageUrl },
@@ -31,6 +32,8 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
 
     if (trackResult.ok !== true) return err(trackResult.error);
   }
+
+  return okVoid();
 };
 
 export const addPageUrlEventListeners = (): void => {

@@ -1,6 +1,6 @@
 import type { Session, Settings } from "@formbricks/types/js";
 import { Config } from "./config";
-import { MissingPersonError, NetworkError, Result, err, ok } from "./errors";
+import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "./errors";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
 
@@ -66,8 +66,10 @@ export const extendOrCreateSession = async (): Promise<Result<void, NetworkError
 
     if (trackResult.ok !== true) return err(trackResult.error);
 
-    return;
+    return okVoid();
   }
   logger.debug("Session not expired, extending session");
   config.update({ session: extendSession(config.get().session) });
+
+  return okVoid();
 };

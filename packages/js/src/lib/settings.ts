@@ -1,6 +1,6 @@
 import type { Settings } from "@formbricks/types/js";
 import { Config } from "./config";
-import { NetworkError, Result, err, ok } from "./errors";
+import { NetworkError, Result, err, ok, okVoid } from "./errors";
 import { Logger } from "./logger";
 
 const logger = Logger.getInstance();
@@ -39,4 +39,6 @@ export const refreshSettings = async (): Promise<Result<void, NetworkError>> => 
 
   logger.debug("Settings refreshed");
   config.update({ settings: settings.value });
+
+  return okVoid();
 };

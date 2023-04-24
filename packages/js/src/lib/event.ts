@@ -1,5 +1,5 @@
 import { Config } from "./config";
-import { NetworkError, Result, err } from "./errors";
+import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { renderWidget } from "./widget";
 
@@ -40,6 +40,8 @@ export const trackEvent = async (
 
   logger.debug(`Formbricks: Event "${eventName}" tracked`);
   triggerSurvey(eventName);
+
+  return okVoid()
 };
 
 export const triggerSurvey = (eventName: string): void => {
