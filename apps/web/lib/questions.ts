@@ -67,7 +67,7 @@ export const questionTypes: QuestionType[] = [
     icon: ArrowRightOnRectangleIcon,
     preset: {
       buttonExternal: false,
-      dismissButtonLabel: "Dismiss",
+      dismissButtonLabel: "Skip",
     },
   },
 ];

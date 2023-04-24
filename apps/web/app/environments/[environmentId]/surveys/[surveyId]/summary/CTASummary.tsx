@@ -39,7 +39,7 @@ export default function CTASummary({ questionSummary }: CTASummaryProps) {
       <div className="space-y-5 rounded-b-lg bg-white px-6 pb-6 pt-4">
         <div className="text flex justify-between px-2 pb-2">
           <div className="mr-8 flex space-x-1">
-            <p className="font-semibold text-slate-700">CTR</p>
+            <p className="font-semibold text-slate-700">Clickthrough Rate (CTR)</p>
             <div>
               <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
                 {Math.round(ctr.percentage * 100)}%
