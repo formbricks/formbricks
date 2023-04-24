@@ -40,10 +40,10 @@ export class CommandQueue {
         if (initResult && initResult.ok !== true) this.errorHandler(initResult.error);
       }
 
-      const result = await currentItem.command.apply(null, currentItem.commandArgs);
+      const result = (await currentItem.command.apply(null, currentItem.commandArgs)) as Result<void, any>;
 
       logger.debug(
-        `Command result: ${result === undefined ? "OK" : "Something went really wrong"}, ${
+        `Command result: ${result.ok === true ? "OK" : "Something went really wrong"}, ${
           currentItem.command.name
         }`
       );
