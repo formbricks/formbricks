@@ -65,9 +65,30 @@ export const initialize = async (
 
   logger.debug("Adding styles to DOM");
   addStylesToDom();
+  if (
+    config.get().session &&
+    config.get().environmentId === c.environmentId &&
+    config.get().apiHost === c.apiHost
+  ) {
+    logger.debug("Found existing configuration. Checking session.");
+    const existingSession = config.get().session;
+    if (isExpired(existingSession)) {
+      logger.debug("Session expired. Creating new session.");
 
-  if (!config || config.get().environmentId !== c.environmentId || config.get().apiHost !== c.apiHost) {
-    logger.debug("New config required");
+      const createSessionResult = await createSession();
+
+      if (createSessionResult.ok !== true) return err(createSessionResult.error);
+
+      const { session, settings } = createSessionResult.value;
+
+      config.update({ session: extendSession(session), settings });
+      trackEvent("New Session");
+    } else {
+      logger.debug("Session valid. Extending session.");
+      config.update({ session: extendSession(existingSession) });
+    }
+  } else {
+    logger.debug("No valid session found. Creating new config.");
     // we need new config
     config.update({ environmentId: c.environmentId, apiHost: c.apiHost });
 
@@ -82,28 +103,6 @@ export const initialize = async (
 
     config.update({ person, session: extendSession(session), settings });
     trackEvent("New Session");
-  } else if (config.get().session && isExpired(config.get().session)) {
-    // we need new session
-    const createSessionResult = await createSession();
-
-    if (createSessionResult.ok !== true) return err(createSessionResult.error);
-
-    const { session, settings } = createSessionResult.value;
-
-    config.update({ session: extendSession(session), settings });
-
-    const trackEventResult = await trackEvent("New Session");
-
-    if (!trackEventResult) return;
-
-    if (trackEventResult.ok !== true) return err(trackEventResult.error);
-
-    return;
-  } else if (!config.get().session) {
-    return err({
-      code: "missing_session",
-      message: "No session found",
-    });
   }
 
   logger.debug("Add session event listeners");

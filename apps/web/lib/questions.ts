@@ -1,4 +1,9 @@
-import { Bars3BottomLeftIcon, ChartPieIcon, ListBulletIcon } from "@heroicons/react/24/solid";
+import {
+  Bars3BottomLeftIcon,
+  ChartPieIcon,
+  ListBulletIcon,
+  ArrowRightOnRectangleIcon,
+} from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
@@ -53,6 +58,16 @@ export const questionTypes: QuestionType[] = [
       headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
       lowerLabel: "Not at all likely",
       upperLabel: "Extremely likely",
+    },
+  },
+  {
+    id: "cta",
+    label: "Call-to-Action",
+    description: "Ask your users to perform an action",
+    icon: ArrowRightOnRectangleIcon,
+    preset: {
+      buttonExternal: false,
+      dismissButtonLabel: "Skip",
     },
   },
 ];

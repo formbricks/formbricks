@@ -44,7 +44,7 @@ export class Config {
 
   private loadFromLocalStorage(): JsConfig {
     if (typeof window !== "undefined") {
-      const savedConfig = localStorage.getItem("config");
+      const savedConfig = localStorage.getItem("formbricksConfig");
       if (savedConfig) {
         return JSON.parse(savedConfig);
       }
@@ -56,6 +56,6 @@ export class Config {
   }
 
   private saveToLocalStorage(): Result<void, Error> {
-    return wrapThrows(() => localStorage.setItem("config", JSON.stringify(this.config)))();
+    return wrapThrows(() => localStorage.setItem("formbricksConfig", JSON.stringify(this.config)))();
   }
 }

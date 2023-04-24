@@ -1,8 +1,9 @@
 import { cn } from "@formbricks/lib/cn";
+import { LucideIcon } from "lucide-react";
 import Link, { LinkProps } from "next/link";
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, forwardRef } from "react";
 
-type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
+type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>> | LucideIcon;
 
 export type ButtonBaseProps = {
   variant?: "highlight" | "primary" | "secondary" | "minimal" | "warn" | "alert";

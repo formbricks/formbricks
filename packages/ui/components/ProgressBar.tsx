@@ -19,6 +19,7 @@ export function HalfCircle({ value }: { value: number }) {
   return (
     <div className="w-fit">
       <div className="relative flex h-28 w-52 items-end justify-center overflow-hidden">
+        <div className="absolute h-24 w-48 origin-bottom rounded-tl-full rounded-tr-full bg-slate-200"></div>
         <div
           className="bg-brand absolute h-24 w-48 origin-bottom rounded-tl-full rounded-tr-full"
           style={{ rotate: mappedValue }}></div>
@@ -26,7 +27,7 @@ export function HalfCircle({ value }: { value: number }) {
       </div>
       <div className="flex justify-between text-sm leading-10 text-slate-600">
         <p>-100</p>
-        <p className="text-4xl text-black">{value}</p>
+        <p className="text-4xl text-black">{Math.round(value)}</p>
         <p>100</p>
       </div>
     </div>

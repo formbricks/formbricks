@@ -1,11 +1,12 @@
 import css from "../style.css";
 import preflight from "../preflight.css";
+import editorCss from "../../../ui/components/editor/stylesEditorFrontend.css";
 
 export const addStylesToDom = () => {
   if (document.getElementById("formbricks__css") === null) {
     const styleElement = document.createElement("style");
     styleElement.id = "formbricks__css";
-    styleElement.innerHTML = preflight + css;
+    styleElement.innerHTML = preflight + css + editorCss;
     document.head.appendChild(styleElement);
   }
 };
