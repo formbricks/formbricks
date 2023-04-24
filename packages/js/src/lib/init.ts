@@ -94,6 +94,8 @@ export const initialize = async (
 
     const trackEventResult = await trackEvent("New Session");
 
+    if (!trackEventResult) return;
+
     if (trackEventResult.ok !== true) return err(trackEventResult.error);
 
     return;
