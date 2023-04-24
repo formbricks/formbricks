@@ -37,11 +37,7 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
         ? setDisplayId(createDisplayResult.value.id)
         : errorHandler(createDisplayResult.error);
     }
-<<<<<<< HEAD
   }, [config, survey, errorHandler]);
-=======
-  }, [config, survey]);
->>>>>>> upstream/main
 
   useEffect(() => {
     setProgress(calculateProgress());
