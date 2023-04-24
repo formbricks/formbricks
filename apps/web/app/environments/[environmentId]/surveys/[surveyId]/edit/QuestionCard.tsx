@@ -15,6 +15,7 @@ import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionDropdown";
 import NPSQuestionForm from "./NPSQuestionForm";
 import UpdateQuestionId from "./UpdateQuestionId";
+import CTAQuestionForm from "./CTAQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: Survey;
@@ -126,6 +127,13 @@ export default function QuestionCard({
                 />
               ) : question.type === "nps" ? (
                 <NPSQuestionForm
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                />
+              ) : question.type === "cta" ? (
+                <CTAQuestionForm
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}

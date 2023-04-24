@@ -3,6 +3,7 @@ import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
 import NPSQuestion from "./NPSQuestion";
+import CTAQuestion from "./CTAQuestion";
 
 interface QuestionConditionalProps {
   question: Question;
@@ -40,6 +41,13 @@ export default function QuestionConditional({
     />
   ) : question.type === "nps" ? (
     <NPSQuestion
+      question={question}
+      onSubmit={onSubmit}
+      lastQuestion={lastQuestion}
+      brandColor={brandColor}
+    />
+  ) : question.type === "cta" ? (
+    <CTAQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}

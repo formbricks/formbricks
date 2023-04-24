@@ -29,6 +29,13 @@
   "dependencies": {
     "@formbricks/lib": "workspace:*",
     "@heroicons/react": "^2.0.17",
+    "@lexical/code": "^0.10.0",
+    "@lexical/link": "^0.10.0",
+    "@lexical/list": "^0.10.0",
+    "@lexical/markdown": "^0.10.0",
+    "@lexical/react": "^0.10.0",
+    "@lexical/rich-text": "^0.10.0",
+    "@lexical/table": "^0.10.0",
     "@radix-ui/react-checkbox": "^1.0.3",
     "@radix-ui/react-dropdown-menu": "^2.0.4",
     "@radix-ui/react-label": "^2.0.1",
