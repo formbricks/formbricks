@@ -42,13 +42,13 @@ export class CommandQueue {
 
       const result = (await currentItem.command.apply(null, currentItem.commandArgs)) as Result<void, any>;
 
+      if (!result) continue;
+
       logger.debug(
         `Command result: ${result.ok === true ? "OK" : "Something went really wrong"}, ${
           currentItem.command.name
         }`
       );
-
-      if (!result) continue;
 
       if (result.ok !== true) this.errorHandler(result.error);
     }
