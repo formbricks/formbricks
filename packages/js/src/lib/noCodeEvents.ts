@@ -54,16 +54,22 @@ export function checkUrlMatch(
   switch (pageUrlRule) {
     case "exactMatch":
       result = url === pageUrlValue;
+      break;
     case "contains":
       result = url.includes(pageUrlValue);
+      break;
     case "startsWith":
       result = url.startsWith(pageUrlValue);
+      break;
     case "endsWith":
       result = url.endsWith(pageUrlValue);
+      break;
     case "notMatch":
       result = url !== pageUrlValue;
+      break;
     case "notContains":
       result = !url.includes(pageUrlValue);
+      break;
     default:
       error = err({
         code: "invalid_match_type",
