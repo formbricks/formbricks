@@ -1,7 +1,16 @@
 import type { Person } from "@formbricks/types/js";
 import { Session, Settings } from "@formbricks/types/js";
 import { Config } from "./config";
-import { MissingPersonError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
+import {
+  AttributeAlreadyExistsError,
+  MissingPersonError,
+  NetworkError,
+  Result,
+  err,
+  match,
+  ok,
+  okVoid,
+} from "./errors";
 import { Logger } from "./logger";
 
 const config = Config.getInstance();
@@ -128,16 +137,18 @@ export const attributeAlreadyExists = (key: string): boolean => {
 
 export const setPersonUserId = async (
   userId: string
-): Promise<Result<void, NetworkError | MissingPersonError>> => {
+): Promise<Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>> => {
   logger.debug("setting userId: " + userId);
   // check if attribute already exists with this value
   if (attributeAlreadySet("userId", userId)) {
     logger.debug("userId already set to this value. Skipping update.");
-    return;
+    return okVoid();
   }
   if (attributeAlreadyExists("userId")) {
-    logger.error("userId cannot be changed after it has been set. You need to reset first");
-    return;
+    return err({
+      code: "attribute_already_exists",
+      message: "userId cannot be changed after it has been set. You need to reset first",
+    });
   }
   const result = await updatePersonUserId(userId);
 

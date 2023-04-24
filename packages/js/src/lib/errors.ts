@@ -84,3 +84,8 @@ export type NotInitializedError = {
   code: "not_initialized";
   message: string;
 };
+
+export type AttributeAlreadyExistsError = {
+  code: "attribute_already_exists";
+  message: string;
+};
