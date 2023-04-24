@@ -4,6 +4,7 @@ import { ListItemNode, ListNode } from "@lexical/list";
 import { TRANSFORMERS } from "@lexical/markdown";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
@@ -84,7 +85,7 @@ export const Editor = (props: TextEditorProps) => {
             <RichTextPlugin
               contentEditable={<ContentEditable style={{ height: props.height }} className="editor-input" />}
               placeholder={<div className="text-muted -mt-11 p-3 text-sm">{props.placeholder || ""}</div>}
-              ErrorBoundary={null}
+              ErrorBoundary={LexicalErrorBoundary}
             />
             <ListPlugin />
             <LinkPlugin />
