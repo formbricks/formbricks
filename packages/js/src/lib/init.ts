@@ -36,21 +36,30 @@ export const initialize = async (c: InitConfig): Promise<void> => {
   }
   addWidgetContainer();
   addStylesToDom();
-  if (!config || config.get().environmentId !== c.environmentId || config.get().apiHost !== c.apiHost) {
+  if (
+    config.get().session &&
+    config.get().environmentId === c.environmentId &&
+    config.get().apiHost === c.apiHost
+  ) {
+    logger.debug("Found existing configuration. Checking session.");
+    const existingSession = config.get().session;
+    if (isExpired(existingSession)) {
+      logger.debug("Session expired. Creating new session.");
+      const { session, settings } = await createSession();
+      config.update({ session: extendSession(session), settings });
+      trackEvent("New Session");
+    } else {
+      logger.debug("Session valid. Extending session.");
+      config.update({ session: extendSession(existingSession) });
+    }
+  } else {
+    logger.debug("No valid session found. Creating new config.");
     // we need new config
     config.update({ environmentId: c.environmentId, apiHost: c.apiHost });
     // get person, session and settings from server
     const { person, session, settings } = await createPerson();
     config.update({ person, session: extendSession(session), settings });
     trackEvent("New Session");
-  } else if (config.get().session && isExpired(config.get().session)) {
-    // we need new session
-    const { session, settings } = await createSession();
-    config.update({ session: extendSession(session), settings });
-    trackEvent("New Session");
-  } else if (!config.get().session) {
-    logger.error("Unable to initialize. No session found");
-    return;
   }
   addSessionEventListeners();
   addPageUrlEventListeners();

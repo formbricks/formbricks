@@ -29,13 +29,13 @@ export const createSession = async (): Promise<{ session: Session; settings: Set
 };
 
 export const extendSession = (session: Session): Session => {
-  logger.debug("Session expired. Creating new session.");
   const updatedSession = { ...session };
   updatedSession.expiresAt = Date.now() + 1000 * 60 * 60; // extend session for 60 minutes
   return updatedSession;
 };
 
 export const isExpired = (session: Session): boolean => {
+  if (!session) return true;
   return session.expiresAt <= Date.now();
 };
 
