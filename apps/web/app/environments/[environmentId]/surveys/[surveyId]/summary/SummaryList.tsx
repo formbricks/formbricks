@@ -18,6 +18,8 @@ export default function SummaryList({ environmentId, surveyId }) {
 
   const responses = responsesData?.responses;
 
+  console.log(responses);
+
   const summaryData: QuestionSummary[] = useMemo(() => {
     if (survey && responses) {
       return survey.questions.map((question) => {
@@ -28,6 +30,7 @@ export default function SummaryList({ environmentId, surveyId }) {
             value: r.data[question.id],
             updatedAt: r.updatedAt,
             personId: r.personId,
+            person: r.person,
           }));
         return {
           question,

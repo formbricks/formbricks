@@ -71,7 +71,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             value: true,
             attributeClass: {
               select: {
-                id: true,
                 name: true,
                 description: true,
               },

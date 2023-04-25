@@ -10,6 +10,11 @@ interface OpenTextSummaryProps {
   environmentId: string;
 }
 
+function findEmail(person) {
+  const emailAttribute = person.attributes.find((attr) => attr.attributeClass.name === "email");
+  return emailAttribute ? emailAttribute.value : null;
+}
+
 export default function OpenTextSummary({ questionSummary, environmentId }: OpenTextSummaryProps) {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -32,6 +37,8 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
           <div className="px-6">Time</div>
         </div>
         {questionSummary.responses.map((response) => {
+          const email = response.person && findEmail(response.person);
+          const displayIdentifier = email || truncate(response.personId, 16);
           return (
             <div
               key={response.id}
@@ -44,13 +51,12 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
                     <PersonAvatar personId={response.personId} />
 
                     <p className="ph-no-capture ml-2 text-slate-600 group-hover:underline">
-                      {truncate(response.personId, 16)}
+                      {displayIdentifier}
                     </p>
                   </Link>
                 ) : (
                   <div className="group flex items-center">
                     <PersonAvatar personId="anonymous" />
-
                     <p className="ml-2 text-slate-600">Anonymous</p>
                   </div>
                 )}

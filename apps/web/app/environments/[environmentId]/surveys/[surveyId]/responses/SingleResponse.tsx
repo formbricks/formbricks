@@ -7,6 +7,13 @@ interface OpenTextSummaryProps {
   data: {
     id: string;
     personId: string;
+    person: {
+      id: string;
+      createdAt: string;
+      updatedAt: string;
+      environmentId: string;
+      attributes: [];
+    };
     value: string;
     updatedAt: string;
     finished: boolean;
@@ -19,7 +26,15 @@ interface OpenTextSummaryProps {
   environmentId: string;
 }
 
+function findEmail(person) {
+  const emailAttribute = person.attributes.find((attr) => attr.attributeClass.name === "email");
+  return emailAttribute ? emailAttribute.value : null;
+}
+
 export default function SingleResponse({ data, environmentId }: OpenTextSummaryProps) {
+  const email = data.person && findEmail(data.person);
+  const displayIdentifier = email || data.personId;
+
   return (
     <div className=" my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-6 pb-5 pt-6">
@@ -30,7 +45,7 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
               href={`/environments/${environmentId}/people/${data.personId}`}>
               <PersonAvatar personId={data.personId} />
               <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 group-hover:underline">
-                {data.personId}
+                {displayIdentifier}
               </h3>
             </Link>
           ) : (
