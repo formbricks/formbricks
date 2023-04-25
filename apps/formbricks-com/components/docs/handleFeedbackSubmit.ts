@@ -8,12 +8,12 @@ export const handleFeedbackSubmit = async (YesNo, pageUrl) => {
 
   const payload = {
     response: response_data,
-    surveyId: "clgwcyg7n000qof0g6y92ct2v",
+    surveyId: process.env.NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID,
   };
 
   try {
     const res = await fetch(
-      "https://app.formbricks.com/api/v1/client/environments/clgwcwp50000spf0hamsb0jo8/responses",
+      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/environments/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID}/responses`,
       {
         method: "POST",
         headers: {
@@ -52,7 +52,7 @@ export const updateFeedback = async (freeText, responseId) => {
 
   try {
     const res = await fetch(
-      `https://app.formbricks.com/api/v1/client/environments/clgwcwp50000spf0hamsb0jo8/responses/${responseId}`,
+      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/environments/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID}/responses/${responseId}`,
       {
         method: "PUT",
         headers: {
