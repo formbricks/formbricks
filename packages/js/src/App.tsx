@@ -3,13 +3,13 @@ import { VNode, h } from "preact";
 import { useState } from "preact/hooks";
 import Modal from "./components/Modal";
 import SurveyView from "./components/SurveyView";
-import { ErrorHandler } from "./lib/errors";
+import { IErrorHandler } from "./lib/errors";
 
 interface AppProps {
   config: JsConfig;
   survey: Survey;
   closeSurvey: () => Promise<void>;
-  errorHandler: ErrorHandler;
+  errorHandler: IErrorHandler;
 }
 
 export default function App({ config, survey, closeSurvey, errorHandler }: AppProps): VNode {

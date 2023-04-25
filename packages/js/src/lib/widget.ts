@@ -2,13 +2,14 @@ import { Survey } from "@formbricks/types/js";
 import { h, render } from "preact";
 import App from "../App";
 import { Config } from "./config";
-import { match } from "./errors";
+import { ErrorHandler, match } from "./errors";
 import { Logger } from "./logger";
 import { getSettings } from "./settings";
 
 const containerId = "formbricks-web-container";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
+const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 
 export const renderWidget = (survey: Survey) => {
@@ -17,10 +18,9 @@ export const renderWidget = (survey: Survey) => {
     return;
   }
   surveyRunning = true;
-  const errorHandler = config.errorHandler;
 
   render(
-    h(App, { config: config.get(), survey, closeSurvey, errorHandler }),
+    h(App, { config: config.get(), survey, closeSurvey, errorHandler: errorHandler.handle }),
     document.getElementById(containerId)
   );
 };
@@ -39,7 +39,7 @@ export const closeSurvey = async (): Promise<void> => {
       surveyRunning = false;
     },
     (error) => {
-      config.errorHandler(error);
+      errorHandler.handle(error);
     }
   );
 };

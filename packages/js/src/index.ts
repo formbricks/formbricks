@@ -1,5 +1,6 @@
 import { InitConfig } from "@formbricks/types/js";
 import { CommandQueue } from "./lib/commandQueue";
+import { ErrorHandler } from "./lib/errors";
 import { trackEvent } from "./lib/event";
 import { initialize } from "./lib/init";
 import { Logger } from "./lib/logger";
@@ -13,6 +14,7 @@ logger.debug("Create command queue");
 const queue = new CommandQueue();
 
 const init = (initConfig: InitConfig) => {
+  ErrorHandler.init(initConfig.errorHandler);
   queue.add(false, initialize, initConfig);
 };
 

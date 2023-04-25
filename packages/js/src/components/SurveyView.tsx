@@ -2,7 +2,7 @@ import { JsConfig, Survey } from "@formbricks/types/js";
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
-import { ErrorHandler } from "../lib/errors";
+import { IErrorHandler } from "../lib/errors";
 import { Logger } from "../lib/logger";
 import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
@@ -15,7 +15,7 @@ interface SurveyViewProps {
   survey: Survey;
   close: () => void;
   brandColor: string;
-  errorHandler: ErrorHandler;
+  errorHandler: IErrorHandler;
 }
 
 export default function SurveyView({ config, survey, close, brandColor, errorHandler }: SurveyViewProps) {

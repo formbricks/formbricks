@@ -1,12 +1,13 @@
 import type { Event } from "@formbricks/types/events";
 import type { MatchType } from "@formbricks/types/js";
 import { Config } from "./config";
-import { InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
+import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
+const errorHandler = ErrorHandler.getInstance();
 
 export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError | NetworkError>> => {
   logger.debug("checking page url");
@@ -106,7 +107,7 @@ export const checkClickMatch = (event: MouseEvent) => {
           res,
           (_value) => {},
           (err) => {
-            config.errorHandler(err);
+            errorHandler.handle(err);
           }
         );
       });
@@ -121,7 +122,7 @@ export const checkClickMatch = (event: MouseEvent) => {
           res,
           (_value) => {},
           (err) => {
-            config.errorHandler(err);
+            errorHandler.handle(err);
           }
         );
       });

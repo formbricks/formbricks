@@ -1,21 +1,9 @@
 import { JsConfig } from "@formbricks/types/js";
 import { Result, wrapThrows } from "./errors";
-import { Logger } from "./logger";
 
 export class Config {
   private static instance: Config | undefined;
   private config: JsConfig = this.loadFromLocalStorage();
-
-  // default error handler
-  private errHandler = (error: any) => {
-    Logger.getInstance().error(JSON.stringify(error));
-  };
-
-  private constructor(errHandler?: (error: any) => void) {
-    if (errHandler) {
-      this.errHandler = errHandler;
-    }
-  }
 
   static getInstance(): Config {
     if (!Config.instance) {
@@ -36,10 +24,6 @@ export class Config {
 
   public get(): JsConfig {
     return this.config;
-  }
-
-  public get errorHandler(): (error: any) => void {
-    return this.errHandler;
   }
 
   private loadFromLocalStorage(): JsConfig {

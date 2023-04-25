@@ -1,4 +1,6 @@
-export { ErrorHandler } from "@formbricks/types/js";
+import { Logger } from "./logger";
+
+export { ErrorHandler as IErrorHandler } from "@formbricks/types/js";
 
 export type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
 
@@ -89,3 +91,41 @@ export type AttributeAlreadyExistsError = {
   code: "attribute_already_exists";
   message: string;
 };
+
+const logger = Logger.getInstance();
+
+export class ErrorHandler {
+  private static instance: ErrorHandler | null;
+  private handleError: (error: any) => void;
+  public static initialized = false;
+
+  private constructor(errorHandler?: (error: any) => void) {
+    if (errorHandler) {
+      this.handleError = errorHandler;
+    } else {
+      this.handleError = (err) => Logger.getInstance().error(JSON.stringify(err));
+    }
+  }
+
+  static getInstance(): ErrorHandler {
+    if (!ErrorHandler.instance) {
+      ErrorHandler.instance = new ErrorHandler();
+    }
+
+    return ErrorHandler.instance;
+  }
+
+  static init(errorHandler?: (error: any) => void): void {
+    this.initialized = true;
+
+    // for some reason, Logger.getInstance().debug didnt work here
+    console.log("Formbricks - initializing error handler");
+    console.log("Custom error handler: ", typeof errorHandler === "function" ? "yes" : "no");
+
+    ErrorHandler.instance = new ErrorHandler(errorHandler);
+  }
+
+  public handle(error: any): void {
+    this.handleError(error);
+  }
+}
