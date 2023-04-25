@@ -24,7 +24,6 @@ export const handleFeedbackSubmit = async (YesNo, pageUrl) => {
     );
 
     if (res.ok) {
-      console.log("Form submitted successfully");
       const responseJson = await res.json();
       return responseJson.id; // Return the response ID
     } else {
@@ -62,9 +61,7 @@ export const updateFeedback = async (freeText, responseId) => {
       }
     );
 
-    if (res.ok) {
-      console.log("Response updated successfully.");
-    } else {
+    if (!res.ok) {
       console.error("Error updating response");
     }
   } catch (error) {
