@@ -1,6 +1,7 @@
 import { InitConfig } from "@formbricks/types/js";
 import { Config } from "./config";
 import {
+  ErrorHandler,
   MissingFieldError,
   MissingPersonError,
   NetworkError,
@@ -132,7 +133,8 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
     !config.get().environmentId ||
     !config.get().person ||
     !config.get().session ||
-    !config.get().settings
+    !config.get().settings ||
+    !ErrorHandler.initialized
   ) {
     return err({
       code: "not_initialized",
