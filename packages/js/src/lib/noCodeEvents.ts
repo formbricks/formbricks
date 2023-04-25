@@ -28,6 +28,8 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
 
     if (match.ok !== true) return err(match.error);
 
+    if (match.value === false) continue;
+
     const trackResult = await trackEvent(event.name);
 
     if (trackResult.ok !== true) return err(trackResult.error);

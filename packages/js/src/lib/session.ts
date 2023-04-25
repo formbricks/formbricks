@@ -38,7 +38,7 @@ export const createSession = async (): Promise<
     });
   }
 
-  return ok((await response.json()) as { session: Session; settings: Settings });
+  return ok(resJson as { session: Session; settings: Settings });
 };
 
 export const extendSession = (session: Session): Session => {
