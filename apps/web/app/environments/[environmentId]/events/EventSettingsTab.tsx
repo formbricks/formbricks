@@ -4,7 +4,7 @@ import { ErrorComponent } from "@formbricks/ui";
 import { Input } from "@formbricks/ui";
 import { Label } from "@formbricks/ui";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
-import { useEventClass, useEventClasses } from "@/lib/eventClasses/eventClasses";
+import { deleteEventClass, useEventClass, useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { useEventClassMutation } from "@/lib/eventClasses/mutateEventClasses";
 import { Controller, useForm } from "react-hook-form";
 import type { NoCodeConfig, Event } from "@formbricks/types/events";
@@ -12,6 +12,8 @@ import { testURLmatch } from "./testURLmatch";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import clsx from "clsx";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import DeleteDialog from "@/components/shared/DeleteDialog";
 
 interface EventSettingsTabProps {
   environmentId: string;
@@ -21,6 +23,7 @@ interface EventSettingsTabProps {
 
 export default function EventSettingsTab({ environmentId, eventClassId, setOpen }: EventSettingsTabProps) {
   const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, eventClassId);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
   const { register, handleSubmit, control, watch } = useForm({
     defaultValues: {
@@ -255,6 +258,17 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
         </div>
         <div className="flex justify-between border-t border-slate-200 py-6">
           <div>
+            {eventClass.type !== "automatic" && (
+              <Button
+                type="button"
+                variant="warn"
+                onClick={() => setOpenDeleteDialog(true)}
+                StartIcon={TrashIcon}
+                className="mr-3">
+                Delete
+              </Button>
+            )}
+
             <Button variant="secondary" href="https://formbricks.com/docs" target="_blank">
               Read Docs
             </Button>
@@ -268,6 +282,22 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
           )}
         </div>
       </form>
+      <DeleteDialog
+        open={openDeleteDialog}
+        setOpen={setOpenDeleteDialog}
+        deleteWhat={"Action"}
+        text="Are you sure you want to delete this action? This also removes this action as a trigger from all your surveys."
+        onDelete={async () => {
+          setOpen(false);
+          try {
+            await deleteEventClass(environmentId, eventClass.id);
+            mutateEventClasses();
+            toast.success("Action deleted successfully");
+          } catch (error) {
+            toast.error("Something went wrong. Please try again.");
+          }
+        }}
+      />
     </div>
   );
 }

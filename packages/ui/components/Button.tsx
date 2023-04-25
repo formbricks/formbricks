@@ -111,8 +111,8 @@ export const Button: React.ForwardRefExoticComponent<
       {StartIcon && (
         <StartIcon
           className={cn(
-            "inline",
-            size === "icon" ? "h-4 w-4 " : "-ml-1 h-4 w-4 ltr:mr-2 rtl:-mr-1 rtl:ml-2",
+            "flex",
+            size === "icon" ? "h-4 w-4 " : "-ml-1 mr-1 h-3 w-3",
             startIconClassName || ""
           )}
         />
