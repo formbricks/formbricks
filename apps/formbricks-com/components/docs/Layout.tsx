@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import MetaInformation from "../shared/MetaInformation";
+import DocsFeedback from "./DocsFeedback";
 
 function GitHubIcon(props: any) {
   return (
@@ -56,6 +57,7 @@ function Header({ navigation }: any) {
       </div>
       <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0">
         <ThemeSelector className="relative z-10 mr-5" />
+
         <Button
           variant="secondary"
           EndIcon={GitHubIcon}
@@ -127,6 +129,7 @@ export function Layout({ children, meta }: LayoutProps) {
             )}
             <Prose className="">{children}</Prose>
           </article>
+          <DocsFeedback />
           <dl className="mt-12 flex border-t border-slate-200 pt-6 dark:border-slate-800">
             {previousPage && (
               <div>
