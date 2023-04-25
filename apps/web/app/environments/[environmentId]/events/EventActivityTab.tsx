@@ -61,13 +61,13 @@ export default function EventActivityTab({ environmentId, eventClassId }: Activi
         <div>
           <Label className="text-xs font-normal text-slate-500">Created on</Label>
           <p className=" text-xs text-slate-700">
-            {convertDateTimeStringShort(eventClass.createdAt.toString())}
+            {convertDateTimeStringShort(eventClass.createdAt?.toString())}
           </p>
         </div>{" "}
         <div>
           <Label className=" text-xs font-normal text-slate-500">Last updated</Label>
           <p className=" text-xs text-slate-700">
-            {convertDateTimeStringShort(eventClass.updatedAt.toString())}
+            {convertDateTimeStringShort(eventClass.updatedAt?.toString())}
           </p>
         </div>
         <div>

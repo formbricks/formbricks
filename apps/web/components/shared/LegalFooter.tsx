@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 export default function LegalFooter() {
+  if (!process.env.NEXT_PUBLIC_IMPRINT_URL && !process.env.NEXT_PUBLIC_PRIVACY_URL) return null;
   return (
     <div className="top-0 z-10 w-full border-b bg-white">
       <div className="mx-auto max-w-lg p-3 text-center text-sm text-slate-400">

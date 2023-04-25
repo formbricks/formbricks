@@ -41,5 +41,26 @@ export const createEventClass = async (environmentId, eventClass: Event) => {
     body: JSON.stringify(eventClass),
   });
 
+  if (!response.ok) {
+    if (response.status === 409) {
+      throw Error("Action with this name already exists");
+    }
+    throw Error(`Unable to create Action: ${response.statusText}`);
+  }
+
   return response.json();
+};
+
+export const deleteEventClass = async (environmentId: string, eventClassId: string) => {
+  try {
+    const res = await fetch(`/api/v1/environments/${environmentId}/event-classes/${eventClassId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      throw Error(`deleteEventClass: unable to delete eventClass: ${res.statusText}`);
+    }
+  } catch (error) {
+    console.error(error);
+    throw Error(`deleteEventClass: unable to delete eventClass: ${error.message}`);
+  }
 };

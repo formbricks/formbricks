@@ -1,5 +1,5 @@
 import Modal from "@/components/shared/Modal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ModalWithTabsProps {
   open: boolean;
@@ -21,6 +21,12 @@ export default function ModalWithTabs({ open, setOpen, tabs, icon, label, descri
   const handleTabClick = (index: number) => {
     setActiveTab(index);
   };
+
+  useEffect(() => {
+    if (!open) {
+      setActiveTab(0);
+    }
+  }, [open]);
 
   return (
     <Modal open={open} setOpen={setOpen} noPadding>
