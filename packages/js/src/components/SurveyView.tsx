@@ -1,34 +1,43 @@
+import { JsConfig, Survey } from "@formbricks/types/js";
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
+import { IErrorHandler } from "../lib/errors";
+import { Logger } from "../lib/logger";
 import { createResponse, updateResponse } from "../lib/response";
 import { cn } from "../lib/utils";
-import { JsConfig, Survey } from "@formbricks/types/js";
 import Progress from "./Progress";
-import ThankYouCard from "./ThankYouCard";
 import QuestionConditional from "./QuestionConditional";
+import ThankYouCard from "./ThankYouCard";
 
 interface SurveyViewProps {
   config: JsConfig;
   survey: Survey;
   close: () => void;
   brandColor: string;
+  errorHandler: IErrorHandler;
 }
 
-export default function SurveyView({ config, survey, close, brandColor }: SurveyViewProps) {
+export default function SurveyView({ config, survey, close, brandColor, errorHandler }: SurveyViewProps) {
   const [activeQuestionId, setActiveQuestionId] = useState(survey.questions[0].id);
   const [progress, setProgress] = useState(0); // [0, 1]
-  const [responseId, setResponseId] = useState(null);
-  const [displayId, setDisplayId] = useState(null);
+  const [responseId, setResponseId] = useState<string | null>(null);
+  const [displayId, setDisplayId] = useState<string | null>(null);
   const [loadingElement, setLoadingElement] = useState(false);
 
   useEffect(() => {
     initDisplay();
     async function initDisplay() {
-      const displayId = await createDisplay({ surveyId: survey.id, personId: config.person.id }, config);
-      setDisplayId(displayId.id);
+      const createDisplayResult = await createDisplay(
+        { surveyId: survey.id, personId: config.person.id },
+        config
+      );
+
+      createDisplayResult.ok === true
+        ? setDisplayId(createDisplayResult.value.id)
+        : errorHandler(createDisplayResult.error);
     }
-  }, [config, survey]);
+  }, [config, survey, errorHandler]);
 
   useEffect(() => {
     setProgress(calculateProgress());
@@ -54,9 +63,16 @@ export default function SurveyView({ config, survey, close, brandColor }: Survey
         createResponse(responseRequest, config),
         markDisplayResponded(displayId, config),
       ]);
-      setResponseId(response.id);
+
+      response.ok === true ? setResponseId(response.value.id) : errorHandler(response.error);
     } else {
-      await updateResponse(responseRequest, responseId, config);
+      const result = await updateResponse(responseRequest, responseId, config);
+
+      if (result.ok !== true) {
+        errorHandler(result.error);
+      } else if (responseRequest.response.finished) {
+        Logger.getInstance().debug("Submitted response");
+      }
     }
     setLoadingElement(false);
     if (!finished) {

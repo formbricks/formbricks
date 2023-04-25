@@ -1,16 +1,18 @@
-import { h, VNode } from "preact";
+import type { JsConfig, Survey } from "@formbricks/types/js";
+import { VNode, h } from "preact";
 import { useState } from "preact/hooks";
 import Modal from "./components/Modal";
 import SurveyView from "./components/SurveyView";
-import type { JsConfig, Survey } from "@formbricks/types/js";
+import { IErrorHandler } from "./lib/errors";
 
 interface AppProps {
   config: JsConfig;
   survey: Survey;
   closeSurvey: () => Promise<void>;
+  errorHandler: IErrorHandler;
 }
 
-export default function App({ config, survey, closeSurvey }: AppProps): VNode {
+export default function App({ config, survey, closeSurvey, errorHandler }: AppProps): VNode {
   const [isOpen, setIsOpen] = useState(true);
 
   const close = () => {
@@ -23,7 +25,13 @@ export default function App({ config, survey, closeSurvey }: AppProps): VNode {
   return (
     <div id="fbjs">
       <Modal isOpen={isOpen} close={close}>
-        <SurveyView config={config} survey={survey} close={close} brandColor={config.settings?.brandColor} />
+        <SurveyView
+          config={config}
+          survey={survey}
+          close={close}
+          brandColor={config.settings?.brandColor}
+          errorHandler={errorHandler}
+        />
       </Modal>
     </div>
   );

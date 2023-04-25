@@ -1,31 +1,44 @@
 import type { Session, Settings } from "@formbricks/types/js";
-import { Logger } from "./logger";
 import { Config } from "./config";
+import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "./errors";
 import { trackEvent } from "./event";
+import { Logger } from "./logger";
 
 const logger = Logger.getInstance();
 const config = Config.getInstance();
 
-export const createSession = async (): Promise<{ session: Session; settings: Settings }> => {
+export const createSession = async (): Promise<
+  Result<{ session: Session; settings: Settings }, NetworkError | MissingPersonError>
+> => {
   if (!config.get().person) {
-    logger.error("Formbricks: Unable to create session. No person found");
-    return;
+    return err({
+      code: "missing_person",
+      message: "Unable to create session. No person found",
+    });
   }
-  const response = await fetch(
-    `${config.get().apiHost}/api/v1/client/environments/${config.get().environmentId}/sessions`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ personId: config.get().person.id }),
-    }
-  );
+
+  const url = `${config.get().apiHost}/api/v1/client/environments/${config.get().environmentId}/sessions`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ personId: config.get().person.id }),
+  });
+
+  const resJson = await response.json();
+
   if (!response.ok) {
-    logger.error("Error creating session");
-    return;
+    return err({
+      code: "network_error",
+      message: "Error creating session",
+      status: response.status,
+      url,
+      responseMessage: resJson.message,
+    });
   }
-  return await response.json();
+
+  return ok(resJson as { session: Session; settings: Settings });
 };
 
 export const extendSession = (session: Session): Session => {
@@ -39,18 +52,24 @@ export const isExpired = (session: Session): boolean => {
   return session.expiresAt <= Date.now();
 };
 
-export const extendOrCreateSession = async (): Promise<void> => {
+export const extendOrCreateSession = async (): Promise<Result<void, NetworkError | MissingPersonError>> => {
   logger.debug("Checking session");
   if (isExpired(config.get().session)) {
     logger.debug("Session expired, creating new session");
-    const { session, settings } = await createSession();
-    if (!session || !settings) {
-      logger.error("Error creating new session");
-      throw Error("Error creating new session");
-    }
+    const result = await createSession();
+
+    if (result.ok !== true) return err(result.error);
+
+    const { session, settings } = result.value;
     config.update({ session, settings });
-    trackEvent("New Session");
+    const trackResult = await trackEvent("New Session");
+
+    if (trackResult.ok !== true) return err(trackResult.error);
+
+    return okVoid();
   }
   logger.debug("Session not expired, extending session");
   config.update({ session: extendSession(config.get().session) });
+
+  return okVoid();
 };

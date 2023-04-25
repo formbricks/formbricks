@@ -1,33 +1,57 @@
-import { Response, ResponseCreateRequest, ResponseUpdateRequest } from "@formbricks/types/js";
+import { JsConfig, Response, ResponseCreateRequest, ResponseUpdateRequest } from "@formbricks/types/js";
+import { NetworkError, Result, err, ok } from "./errors";
 
-export const createResponse = async (responseRequest: ResponseCreateRequest, config): Promise<Response> => {
-  const res = await fetch(`${config.apiHost}/api/v1/client/environments/${config.environmentId}/responses`, {
+export const createResponse = async (
+  responseRequest: ResponseCreateRequest,
+  config
+): Promise<Result<Response, NetworkError>> => {
+  const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/responses`;
+
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(responseRequest),
   });
+
+  const jsonRes = await res.json();
+
   if (!res.ok) {
-    console.error(res.text);
-    throw new Error("Could not create response");
+    return err({
+      code: "network_error",
+      message: "Could not create response",
+      status: res.status,
+      url,
+      responseMessage: jsonRes.message,
+    });
   }
-  return await res.json();
+
+  return ok(jsonRes as Response);
 };
 
 export const updateResponse = async (
   responseRequest: ResponseUpdateRequest,
-  responseId,
-  config
-): Promise<Response> => {
-  const res = await fetch(
-    `${config.apiHost}/api/v1/client/environments/${config.environmentId}/responses/${responseId}`,
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(responseRequest),
-    }
-  );
+  responseId: string,
+  config: JsConfig
+): Promise<Result<Response, NetworkError>> => {
+  const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/responses/${responseId}`;
+
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(responseRequest),
+  });
+
+  const resJson = await res.json();
+
   if (!res.ok) {
-    throw new Error("Could not update response");
+    return err({
+      code: "network_error",
+      message: "Could not update response",
+      status: res.status,
+      url,
+      responseMessage: resJson.message,
+    });
   }
-  return await res.json();
+
+  return ok(resJson as Response);
 };

@@ -1,11 +1,21 @@
 import { InitConfig } from "@formbricks/types/js";
-import { addStylesToDom } from "./styles";
 import { Config } from "./config";
+import {
+  ErrorHandler,
+  MissingFieldError,
+  MissingPersonError,
+  NetworkError,
+  NotInitializedError,
+  Result,
+  err,
+  okVoid,
+} from "./errors";
+import { trackEvent } from "./event";
 import { Logger } from "./logger";
+import { addClickEventListener, addPageUrlEventListeners } from "./noCodeEvents";
 import { createPerson } from "./person";
 import { createSession, extendOrCreateSession, extendSession, isExpired } from "./session";
-import { trackEvent } from "./event";
-import { addClickEventListener, addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
+import { addStylesToDom } from "./styles";
 import { addWidgetContainer } from "./widget";
 
 const config = Config.getInstance();
@@ -24,17 +34,37 @@ const addSessionEventListeners = (): void => {
   }
 };
 
-export const initialize = async (c: InitConfig): Promise<void> => {
+export const initialize = async (
+  c: InitConfig
+): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
+  logger.debug("Start initialize");
+
   if (!c.environmentId) {
-    throw Error("Formbricks: environmentId is required");
+    logger.debug("No environmentId provided");
+    return err({
+      code: "missing_field",
+      field: "environmentId",
+    });
   }
+
   if (!c.apiHost) {
-    throw Error("Formbricks: apiHost is required");
+    logger.debug("No apiHost provided");
+
+    return err({
+      code: "missing_field",
+      field: "apiHost",
+    });
   }
+
   if (c.logLevel) {
+    logger.debug(`Setting log level to ${c.logLevel}`);
     logger.configure({ logLevel: c.logLevel });
   }
+
+  logger.debug("Adding widget container to DOM");
   addWidgetContainer();
+
+  logger.debug("Adding styles to DOM");
   addStylesToDom();
   if (
     config.get().session &&
@@ -45,9 +75,18 @@ export const initialize = async (c: InitConfig): Promise<void> => {
     const existingSession = config.get().session;
     if (isExpired(existingSession)) {
       logger.debug("Session expired. Creating new session.");
-      const { session, settings } = await createSession();
+
+      const createSessionResult = await createSession();
+
+      if (createSessionResult.ok !== true) return err(createSessionResult.error);
+
+      const { session, settings } = createSessionResult.value;
+
       config.update({ session: extendSession(session), settings });
-      trackEvent("New Session");
+
+      const trackEventResult = await trackEvent("New Session");
+
+      if (trackEventResult.ok !== true) return err(trackEventResult.error);
     } else {
       logger.debug("Session valid. Extending session.");
       config.update({ session: extendSession(existingSession) });
@@ -56,25 +95,52 @@ export const initialize = async (c: InitConfig): Promise<void> => {
     logger.debug("No valid session found. Creating new config.");
     // we need new config
     config.update({ environmentId: c.environmentId, apiHost: c.apiHost });
-    // get person, session and settings from server
-    const { person, session, settings } = await createPerson();
+
+    logger.debug("Get person, session and settings from server");
+    const result = await createPerson();
+
+    if (result.ok !== true) {
+      return err(result.error);
+    }
+
+    const { person, session, settings } = result.value;
+
     config.update({ person, session: extendSession(session), settings });
-    trackEvent("New Session");
+
+    const trackEventResult = await trackEvent("New Session");
+
+    if (trackEventResult.ok !== true) return err(trackEventResult.error);
   }
+
+  logger.debug("Add session event listeners");
   addSessionEventListeners();
+
+  logger.debug("Add page url event listeners");
   addPageUrlEventListeners();
+
+  logger.debug("Add click event listeners");
   addClickEventListener();
+
   logger.debug("Initialized");
+
+  return okVoid();
 };
 
-export const checkInitialized = (): void => {
+export const checkInitialized = (): Result<void, NotInitializedError> => {
+  logger.debug("Check if initialized");
   if (
     !config.get().apiHost ||
     !config.get().environmentId ||
     !config.get().person ||
     !config.get().session ||
-    !config.get().settings
+    !config.get().settings ||
+    !ErrorHandler.initialized
   ) {
-    throw Error("Formbricks: Formbricks not initialized. Call initialize() first.");
+    return err({
+      code: "not_initialized",
+      message: "Formbricks not initialized. Call initialize() first.",
+    });
   }
+
+  return okVoid();
 };

@@ -1,10 +1,9 @@
 import { JsConfig } from "@formbricks/types/js";
+import { Result, wrapThrows } from "./errors";
 
 export class Config {
   private static instance: Config | undefined;
   private config: JsConfig = this.loadFromLocalStorage();
-
-  private constructor() {}
 
   static getInstance(): Config {
     if (!Config.instance) {
@@ -40,7 +39,7 @@ export class Config {
     };
   }
 
-  private saveToLocalStorage(): void {
-    localStorage.setItem("formbricksConfig", JSON.stringify(this.config));
+  private saveToLocalStorage(): Result<void, Error> {
+    return wrapThrows(() => localStorage.setItem("formbricksConfig", JSON.stringify(this.config)))();
   }
 }
