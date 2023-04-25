@@ -41,6 +41,13 @@ export const createEventClass = async (environmentId, eventClass: Event) => {
     body: JSON.stringify(eventClass),
   });
 
+  if (!response.ok) {
+    if (response.status === 409) {
+      throw Error("Action with this name already exists");
+    }
+    throw Error(`Unable to create Action: ${response.statusText}`);
+  }
+
   return response.json();
 };
 

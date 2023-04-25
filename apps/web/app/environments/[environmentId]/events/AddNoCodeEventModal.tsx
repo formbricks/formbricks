@@ -55,10 +55,16 @@ export default function AddNoCodeEventModal({
       type: "noCode",
     } as Event;
 
-    await createEventClass(environmentId, updatedData);
-    mutateEventClasses();
-    reset();
-    setOpen(false);
+    try {
+      await createEventClass(environmentId, updatedData);
+      mutateEventClasses();
+      reset();
+      setOpen(false);
+      toast.success("Action added successfully.");
+    } catch (e) {
+      toast.error(e.message);
+      return;
+    }
   };
 
   const [testUrl, setTestUrl] = useState("");
