@@ -58,6 +58,18 @@ export interface CTAQuestion {
   dismissButtonLabel?: string;
 }
 
+export interface RatingQuestion {
+  id: string;
+  type: "rating";
+  headline: string;
+  subheader?: string;
+  required: boolean;
+  scale: "number" | "smiley" | "star";
+  range: 5 | 3 | 4 | 7 | 10;
+  lowerLabel: string;
+  upperLabel: string;
+}
+
 export interface Choice {
   id: string;
   label: string;

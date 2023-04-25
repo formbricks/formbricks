@@ -3,6 +3,7 @@ import {
   ChartPieIcon,
   ListBulletIcon,
   ArrowRightOnRectangleIcon,
+  StarIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -68,6 +69,18 @@ export const questionTypes: QuestionType[] = [
     preset: {
       buttonExternal: false,
       dismissButtonLabel: "Dismiss",
+    },
+  },
+  {
+    id: "rating",
+    label: "Rating",
+    description: "Ask your users to rate something",
+    icon: StarIcon,
+    preset: {
+      scale: "number",
+      range: 5,
+      lowerLabel: "Very dissatisfied",
+      upperLabel: "Very satisfied",
     },
   },
 ];
