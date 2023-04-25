@@ -690,6 +690,46 @@ export const templates: Template[] = [
       thankYouCard: thankYouCardDefault,
     },
   },
+  {
+    name: "Docs Feedback",
+    icon: DashboardIcon,
+    category: "Product Experience",
+    description: "Measure how clear each page of your developer documentation is.",
+    preset: {
+      name: "{{productName}} Docs Feedback",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "Was this page helpful?",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Yes 👍",
+            },
+            {
+              id: createId(),
+              label: "No 👎",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "Please elaborate:",
+          required: false,
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "Page URL",
+          required: false,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
   /*  {
     name: "In-app Interview Prompt",
     icon: OnboardingIcon,
