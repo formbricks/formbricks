@@ -227,6 +227,23 @@ importers:
       tailwindcss: 3.3.2
       tailwindcss-animate: 1.0.5_tailwindcss@3.3.2
 
+  packages/api:
+    specifiers:
+      '@formbricks/errors': workspace:*
+      '@formbricks/tsconfig': workspace:*
+      eslint: ^8.39.0
+      eslint-config-formbricks: workspace:*
+      rimraf: ^4.4.1
+      tsup: ^6.7.0
+    dependencies:
+      '@formbricks/errors': link:../errors
+    devDependencies:
+      '@formbricks/tsconfig': link:../tsconfig
+      eslint: 8.39.0
+      eslint-config-formbricks: link:../eslint-config-formbricks
+      rimraf: 4.4.1
+      tsup: 6.7.0
+
   packages/database:
     specifiers:
       '@formbricks/tsconfig': workspace:*
