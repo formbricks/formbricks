@@ -79,7 +79,7 @@ export const questionTypes: QuestionType[] = [
     preset: {
       scale: "number",
       range: 5,
-      lowerLabel: "Very dissatisfied",
+      lowerLabel: "Very unsatisfied",
       upperLabel: "Very satisfied",
     },
   },

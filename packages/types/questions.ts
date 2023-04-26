@@ -3,7 +3,8 @@ export type Question =
   | MultipleChoiceSingleQuestion
   | MultipleChoiceMultiQuestion
   | NPSQuestion
-  | CTAQuestion;
+  | CTAQuestion
+  | RatingQuestion;
 
 export interface OpenTextQuestion {
   id: string;
@@ -68,6 +69,7 @@ export interface RatingQuestion {
   range: 5 | 3 | 4 | 7 | 10;
   lowerLabel: string;
   upperLabel: string;
+  buttonLabel?: string;
 }
 
 export interface Choice {
