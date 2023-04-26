@@ -51,7 +51,7 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
     // sort by count and transform to array
     const results = Object.values(resultsDict).sort((a: any, b: any) => b.count - a.count);
     return results;
-  }, [questionSummary]);
+  }, [questionSummary, isSingleChoice]);
 
   const totalResponses = useMemo(() => {
     let total = 0;

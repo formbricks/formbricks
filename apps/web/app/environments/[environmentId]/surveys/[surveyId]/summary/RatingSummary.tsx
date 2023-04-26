@@ -82,7 +82,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
         </div>
       </div>
       <div className="space-y-5 rounded-b-lg bg-white px-6 pb-6 pt-4">
-        {results.map((result: any, resultsIdx) => (
+        {results.map((result: any) => (
           <div key={result.label}>
             <div className="text flex justify-between px-2 pb-2">
               <div className="mr-8 flex space-x-1">
