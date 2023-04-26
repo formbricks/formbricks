@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 
 type Option = {
   label: string;
   icon?: any;
   value: string | number;
+  disabled?: boolean;
 };
 
 type DropdownProps = {
@@ -18,6 +19,7 @@ const DropdownMenu = ({ options, defaultValue, onSelect }: DropdownProps) => {
   const [selectedOption, setSelectedOption] = useState<Option>(
     options.filter((option) => option.value === defaultValue)[0] || options[0]
   );
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSelect = (option) => {
     setSelectedOption(option);
@@ -25,13 +27,25 @@ const DropdownMenu = ({ options, defaultValue, onSelect }: DropdownProps) => {
     setIsOpen(false);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
+
   return (
-    <div className="relative z-50 inline-block w-full text-left">
+    <div ref={dropdownRef} className="relative z-50 inline-block w-full text-left">
       <button
         type="button"
         className="focus:border-brand flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300"
-        onClick={() => setIsOpen(!isOpen)}
-        onBlur={() => setIsOpen(false)}>
+        onClick={() => setIsOpen(!isOpen)}>
         <span className="flex flex-1">
           {selectedOption.icon && <selectedOption.icon className="mr-3 h-5 w-5" />}
           <span>{selectedOption ? selectedOption.label : "Select an option"}</span>
@@ -47,8 +61,10 @@ const DropdownMenu = ({ options, defaultValue, onSelect }: DropdownProps) => {
             {options.map((option) => (
               <button
                 key={option.value}
-                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                onClick={() => handleSelect(option)}>
+                type="button"
+                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900  disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => handleSelect(option)}
+                disabled={option.disabled}>
                 {option.icon && <option.icon className="mr-3 h-5 w-5" />}
                 {option.label}
               </button>

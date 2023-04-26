@@ -50,8 +50,8 @@ export default function RatingQuestionForm({
             <DropdownMenu
               options={[
                 { label: "Number", value: "number", icon: HashtagIcon },
-                { label: "Star", value: "star", icon: StarIcon },
-                { label: "Smiley", value: "smiley", icon: FaceSmileIcon },
+                { label: "Star", value: "star", icon: StarIcon, disabled: true },
+                { label: "Smiley", value: "smiley", icon: FaceSmileIcon, disabled: true },
               ]}
               defaultValue={question.scale || "number"}
               onSelect={(option) => updateQuestion(questionIdx, { scale: option.value })}
