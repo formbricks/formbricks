@@ -119,8 +119,8 @@ export class ErrorHandler {
     this.initialized = true;
 
     // for some reason, Logger.getInstance().debug didnt work here
-    console.log("Formbricks - initializing error handler");
-    console.log("Custom error handler: ", typeof errorHandler === "function" ? "yes" : "no");
+    console.log("🧱 Formbricks - initializing error handler");
+    console.log("🧱 Formbricks - Custom error handler: ", typeof errorHandler === "function" ? "yes" : "no");
 
     ErrorHandler.instance = new ErrorHandler(errorHandler);
   }
