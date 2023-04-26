@@ -18,20 +18,49 @@ const options = [
     id: "filter",
     name: "Filter based on attributes",
     description: "Only people with specific attributes can be surveyed.",
-    disabled: true,
+    disabled: false,
   },
 ];
 
 interface WhoToSendToCardProps {
   localSurvey: Survey;
+  setLocalSurvey: (survey: Survey) => void;
 }
 
-export default function WhoToSendToCard({ localSurvey }: WhoToSendToCardProps) {
+export default function WhoToSendToCard({ localSurvey, setLocalSurvey }: WhoToSendToCardProps) {
   const [open, setOpen] = useState(false);
 
   if (localSurvey.type === "link") {
     return null;
   }
+
+  /*  const addAttributeFilter = () => {
+    const updatedSurvey = { ...localSurvey };
+    updatedSurvey.attributeFilters = [...localSurvey.triggers, ""];
+    setLocalSurvey(updatedSurvey);
+  };
+
+  const setAttributeFilter = (idx: number, eventClassId: string) => {
+    const updatedSurvey = { ...localSurvey };
+    updatedSurvey.triggers[idx] = eventClassId;
+    setLocalSurvey(updatedSurvey);
+  };
+
+  const removeAttributeFilter = (idx: number) => {
+    const updatedSurvey = { ...localSurvey };
+    updatedSurvey.triggers = [...localSurvey.triggers.slice(0, idx), ...localSurvey.triggers.slice(idx + 1)];
+    setLocalSurvey(updatedSurvey);
+  }; */
+
+  const changeRadioSelection = (value: string) => {
+    const updatedSurvey = { ...localSurvey };
+    if (value === "all") {
+      updatedSurvey.attributeFilters = null;
+    } else {
+      updatedSurvey.attributeFilters = [];
+    }
+    setLocalSurvey(updatedSurvey);
+  };
 
   return (
     <Collapsible.Root
@@ -55,7 +84,11 @@ export default function WhoToSendToCard({ localSurvey }: WhoToSendToCardProps) {
       <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
-          <RadioGroup value="all" className="flex flex-col space-y-3">
+          <RadioGroup
+            className="flex flex-col space-y-3"
+            defaultValue="all"
+            value={localSurvey.attributeFilters === null ? "all" : "filter"}
+            onValueChange={changeRadioSelection}>
             {options.map((option) => (
               <Label
                 key={option.id}

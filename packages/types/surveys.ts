@@ -20,4 +20,5 @@ export interface Survey {
   numDisplays: number;
   responseRate: number;
   displayOption: "displayOnce" | "displayMultiple" | "respondMultiple";
+  attributeFilters: string[] | null;
 }
