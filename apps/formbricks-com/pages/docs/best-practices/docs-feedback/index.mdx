@@ -21,7 +21,7 @@ Docs Feedback allows you to measure how clear your documentation is.
 
 ## Purpose
 
-Unlike yourself, your users don't send 5-7 days per week thinking about your product. To fight the "Curse of Knowledge" you have to measure how clear your docs are.
+Unlike yourself, your users don't spend 5-7 days per week thinking about your product. To fight the "Curse of Knowledge" you have to measure how clear your docs are.
 
 ## Preview
 
@@ -40,36 +40,36 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 
 1. To get started, create an account for the [Formbricks Cloud](https://app.formbricks.com/auth/signup).
 
-2. In the Menu (top right) you see that you can switch between a “Development” and a “Production” environment. These are two separate environemtns so your test data doesn’t mess up the insights from prod. Switch to “Development”:
+2. In the Menu (top right) you see that you can switch between a “Development” and a “Production” environment. These are two separate environments so your test data doesn’t mess up the insights from prod. Switch to “Development”:
 
-<Image src={SwitchToDev} alt="switch to dev environment" quality="100" />
+<Image src={SwitchToDev} alt="switch to dev environment" quality="100" className="rounded" />
 
 3. Then, create a survey using the template “Docs Feedback”:
 
-<Image src={DocsTemplate} alt="select docs template" quality="100" />
+<Image src={DocsTemplate} alt="select docs template" quality="100" className="rounded" />
 
-4. Change the Internal Question ID of the first question to **“isHelpful”** to make your life easier 😉 (see img)
+4. Change the Internal Question ID of the first question to **“isHelpful”** to make your life easier 😉
+
+<Image src={ChangeId} alt="switch to dev environment" quality="100" className="rounded" />
+
+5. In the same way, you can change the Internal Question ID of the _Please elaborate_ question to **“additionalFeedback”** and the one of the _Page URL_ question to **“pageUrl”**.
 
 <Callout title="Answers need to be identical" type="note">
   If you want different answers than “Yes 👍” and “No 👎” you need update the choices accordingly. They have
   to be identical to the frontend we're building in the next step.
 </Callout>
 
-5. In the same way, you can change the Internal Question ID of the _Please elaborate_ question to **“additionalFeedback”** and the one of the _Page URL_ question to **“pageUrl”**.
+6. Click on “Continue to Audience” or select the audience tab manually. Scroll down to “When to ask” and create a new Action:
 
-<Image src={ChangeId} alt="switch to dev environment" quality="100" />
-
-6. Click on “Continue to Audience” or select the audience tab manually. Scroll down to “When to ask” and create a new Action.
-
-<Image src={WhenToAsk} alt="set up when to ask card" quality="100" />
+<Image src={WhenToAsk} alt="set up when to ask card" quality="100" className="rounded" />
 
 7. Our goal is to create an event that never fires. This is a bit nonsensical because it is a workaround. Stick with me 😃 Fill the action out like on the screenshot:
 
-<Image src={AddAction} alt="add action" quality="100" />
+<Image src={AddAction} alt="add action" quality="100" className="rounded" />
 
 8. Select the Non-Event in the dropdown. Now you see that the “Publish survey” button is active. Publish your survey 🤝
 
-<Image src={SelectNonevent} alt="select nonevent" quality="100" />
+<Image src={SelectNonevent} alt="select nonevent" quality="100" className="rounded" />
 
 **You’re all setup in Formbricks Cloud for now 👍**
 
@@ -80,9 +80,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
   illustrate what you should consider building yours 😊
 </Callout>
 
-Before he start, **here is what we're going to do:**
-
-The Docs Feedback widget works like this:
+Before we start, lets talk about the widget. It works like this:
 
 - Once the user selects yes/no, a partial response is created in Formbricks. It includes the feedback and the current page url.
 - Then the user is presented with an additional open text field to further explain their choice. Once it's submitted, the previous response is updated with the additional feedback.
@@ -95,9 +93,9 @@ This allows us to capture and analyze partial feedback where the user is not wil
 
 2. Likely, you have a template file or similar which renders the navigation at the bottom of the page:
 
-<Image src={DocsNavi} alt="doc navigation" quality="100" />
+<Image src={DocsNavi} alt="doc navigation" quality="100" className="rounded" />
 
-Locate that file. We are using the [Tailwind Template “Syntax”](https://tailwindui.com/templates/syntax) for our docs. Here is our [Layout.tsx](https://github.com/formbricks/formbricks/blob/main/apps/formbricks-com/components/docs/Layout.tsx) file.) for our docs.
+Locate that file. We are using the [Tailwind Template “Syntax”](https://tailwindui.com/templates/syntax) for our docs. Here is our [Layout.tsx](https://github.com/formbricks/formbricks/blob/main/apps/formbricks-com/components/docs/Layout.tsx) file.
 
 3. Write the frontend code for the widget. Here is the full component (we break it down right below):
 
@@ -174,7 +172,9 @@ export default function DocsFeedback() {
 }
 ```
 
-**Let’s break it down:**
+**Let’s break it down!**
+
+Setting the local states and getting the current URL:
 
 ```tsx
 const router = useRouter(); // to get the URL of the current docs page
@@ -198,7 +198,7 @@ if (
 }
 ```
 
-The actual frontend:
+The actual frontend (read comments):
 
 ```tsx
 return (
@@ -253,7 +253,7 @@ return (
 }
 ```
 
-### Connecting to the Formbricks API
+## 3. Connecting to the Formbricks API
 
 The last step is to hook up your sparkling new frontend to the Formbricks API. To do so, we followed the “[Create Response](https://formbricks.com/docs/api/create-response)” and “[Update Response](https://formbricks.com/docs/api/update-response)” pages in our docs.
 
@@ -339,16 +339,16 @@ export const updateFeedback = async (freeText, responseId) => {
 
 That’s almost it! 🤸
 
-### Setting it up for testing
+## 4. Setting it up for testing
 
 Before you roll it out in production, you want to test it. To do so, you need two things:
 
-1. Environment ID (1) of the Development environment on app.formbricks.com
-2. Survey ID (2) of your testing survey
+1. Environment ID (1) of the development environment on app.formbricks.com
+2. Survey ID (2) of your test survey
 
 When you are on the survey detail page, you’ll find both of them in the URL:
 
-<Image src={CopyIds} alt="copy IDs" quality="100" />
+<Image src={CopyIds} alt="copy IDs" quality="100" className="rounded" />
 
 Now, you have to replace the IDs and the API host accordingly in your `handleFeedbackSubmit`:
 
