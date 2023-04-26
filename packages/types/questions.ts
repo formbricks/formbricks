@@ -70,6 +70,7 @@ export interface RatingQuestion {
   lowerLabel: string;
   upperLabel: string;
   buttonLabel?: string;
+  choices?: Choice[];
 }
 
 export interface Choice {
