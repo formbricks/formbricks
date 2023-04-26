@@ -20,6 +20,7 @@
     "@formbricks/errors": "workspace:*"
   },
   "devDependencies": {
+    "@formbricks/types": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "eslint": "^8.39.0",
     "eslint-config-formbricks": "workspace:*",

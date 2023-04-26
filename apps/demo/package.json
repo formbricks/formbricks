@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@formbricks/api": "workspace:*",
     "@formbricks/js": "workspace:*",
     "@heroicons/react": "^2.0.17",
     "@types/node": "18.15.11",

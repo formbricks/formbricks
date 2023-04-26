@@ -1,3 +1,4 @@
+import { run as tryApiClient } from "@formbricks/api";
 import formbricks from "@formbricks/js";
 import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
@@ -15,6 +16,8 @@ if (typeof window !== "undefined") {
     });
     window.formbricks = formbricks;
   }
+
+  window.tryNewApiClient = tryApiClient;
 }
 
 export default function App({ Component, pageProps }: AppProps) {
