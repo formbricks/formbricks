@@ -24,7 +24,7 @@ export default function CTAQuestion({ question, onSubmit, lastQuestion, brandCol
             onClick={() => {
               onSubmit({ [question.id]: "dismissed" });
             }}
-            className="fb-flex fb-items-center fb-border-slate-500 fb-text-slate-500 dark:fb-border-slate-400 dark:fb-text-slate-400 fb-rounded-md fb-border fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-shadow-sm fb-hover:opacity-90 fb-focus:outline-none fb-focus:ring-2 fb-focus:ring-slate-500 fb-focus:ring-offset-2">
+            className="fb-flex fb-items-center fb-border-slate-500 fb-text-slate-500 dark:fb-border-slate-400 dark:fb-text-slate-400 fb-rounded-md fb-border fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
             {question.dismissButtonLabel || "Dismiss"}
           </button>
         )}
@@ -36,7 +36,7 @@ export default function CTAQuestion({ question, onSubmit, lastQuestion, brandCol
             }
             onSubmit({ [question.id]: "clicked" });
           }}
-          className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm fb-hover:opacity-90 fb-focus:outline-none fb-focus:ring-2 fb-focus:ring-slate-500 fb-focus:ring-offset-2"
+          className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
           style={{ backgroundColor: brandColor }}>
           {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
         </button>
