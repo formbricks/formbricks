@@ -72,6 +72,9 @@ export default function AppPage({}) {
               }}>
               Feedback
             </button>
+            <button className="mr-2 flex max-w-xs items-center rounded-full bg-white text-sm  font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 lg:rounded-md lg:p-2 lg:hover:bg-slate-50">
+              No Code Feedback Btn Click
+            </button>
             <button
               className="mr-2 flex max-w-xs items-center rounded-full bg-white text-sm  font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 lg:rounded-md lg:p-2 lg:hover:bg-slate-50"
               onClick={() => {
@@ -344,8 +347,9 @@ export default function AppPage({}) {
                     <div className="flex flex-1 justify-between sm:justify-end">
                       <a
                         href="#"
+                        id="test-css"
                         className="relative inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                        Previous
+                        CSS ID Test
                       </a>
                       <a
                         href="#"

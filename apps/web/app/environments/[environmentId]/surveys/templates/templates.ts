@@ -1,17 +1,20 @@
-import { AppPieChartIcon } from "@formbricks/ui";
-import { CancelSubscriptionIcon } from "@formbricks/ui";
-import { CashCalculatorIcon } from "@formbricks/ui";
-import { DashboardIcon } from "@formbricks/ui";
-import { DogChaserIcon } from "@formbricks/ui";
-import { DoorIcon } from "@formbricks/ui";
-import { FeedbackIcon } from "@formbricks/ui";
-import { OnboardingIcon } from "@formbricks/ui";
-import { PMFIcon } from "@formbricks/ui";
-import { TaskListSearchIcon } from "@formbricks/ui";
-import { BaseballIcon } from "@formbricks/ui";
-import { CheckMarkIcon } from "@formbricks/ui";
-import { ArrowRightCircleIcon } from "@formbricks/ui";
 import type { Template } from "@formbricks/types/templates";
+import {
+  AppPieChartIcon,
+  ArrowRightCircleIcon,
+  BaseballIcon,
+  CancelSubscriptionIcon,
+  CashCalculatorIcon,
+  CheckMarkIcon,
+  CodeBookIcon,
+  DashboardIcon,
+  DogChaserIcon,
+  DoorIcon,
+  FeedbackIcon,
+  OnboardingIcon,
+  PMFIcon,
+  TaskListSearchIcon,
+} from "@formbricks/ui";
 import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {
@@ -692,7 +695,7 @@ export const templates: Template[] = [
   },
   {
     name: "Docs Feedback",
-    icon: DashboardIcon,
+    icon: CodeBookIcon,
     category: "Product Experience",
     description: "Measure how clear each page of your developer documentation is.",
     preset: {
