@@ -1,0 +1,23 @@
+import { Layout } from "@/components/docs/Layout";
+
+export const meta = {
+  title: "What are actions and why are they useful?",
+  description:
+    "Actions in Formbricks enable targeted survey displays during specific user journey moments. Enhance user segmentation by tracking actions for granular surveying.",
+};
+
+You want to understand what your users think and feel during specific moments in the user journey. To be able to ask at exactly the right point in time, you need actions.
+
+## What are actions?
+
+Actions are a little notification sent from your application to Formbricks. You decide which actions are sent either in your [Code](/docs/actions/code) or by setting up a [No-Code](/docs/actions/no-code) action within Formbricks.
+
+## How do actions work?
+
+When a predefined action happens in your app, the Formbricks widget notices. This action can then trigger a survey to be shown to the user and is stored in the database.
+
+## Why are actions useful?
+
+Actions help you to display your surveys at the right time. Later on, you will be able to segment your users based on the actions they have triggered in the past. This way, you can create much more granular user segments, e.g. only target users that already have used a specific feature.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
