@@ -1,8 +1,8 @@
 import type { RatingQuestion } from "@formbricks/types/questions";
 import { Input, Label } from "@formbricks/ui";
-import { HashtagIcon, StarIcon, FaceSmileIcon } from "@heroicons/react/24/solid";
+import { HashtagIcon, StarIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
 
-import DropdownMenu from "./RatingTypeDropdown";
+import Dropdown from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {
   question: RatingQuestion;
@@ -47,7 +47,7 @@ export default function RatingQuestionForm({
         <div className="flex-1">
           <Label htmlFor="subheader">Scale</Label>
           <div className="mt-2">
-            <DropdownMenu
+            <Dropdown
               options={[
                 { label: "Number", value: "number", icon: HashtagIcon },
                 { label: "Star", value: "star", icon: StarIcon, disabled: true },
@@ -61,7 +61,7 @@ export default function RatingQuestionForm({
         <div className="flex-1">
           <Label htmlFor="subheader">Range</Label>
           <div className="mt-2">
-            <DropdownMenu
+            <Dropdown
               options={[
                 { label: "5 points (recommended)", value: "5" },
                 { label: "3 points", value: "3" },
