@@ -16,6 +16,14 @@ const navigation = [
     ],
   },
   {
+    title: "Best Practices",
+    links: [
+      /*       { title: "Feedback Box", href: "/docs/best-practices/feedback-box" }, */
+      { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
+      /*       { title: "In-app Interview Prompt", href: "/docs/best-practices/interview-prompt" }, */
+    ],
+  },
+  {
     title: "Attributes",
     links: [
       { title: "Why Attributes?", href: "/docs/attributes/why" },
@@ -24,11 +32,11 @@ const navigation = [
     ],
   },
   {
-    title: "Events",
+    title: "Actions",
     links: [
-      { title: "Why Events?", href: "/docs/events/why" },
-      { title: "No-Code Events", href: "/docs/events/no-code" },
-      { title: "Code Events", href: "/docs/events/code" },
+      { title: "Why Actions?", href: "/docs/actions/why" },
+      { title: "No-Code Actions", href: "/docs/actions/no-code" },
+      { title: "Code Actions", href: "/docs/actions/code" },
     ],
   },
   {
