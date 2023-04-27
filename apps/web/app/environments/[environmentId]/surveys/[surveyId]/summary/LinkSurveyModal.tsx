@@ -1,6 +1,5 @@
 import Modal from "@/components/shared/Modal";
 import { Survey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { ClipboardDocumentIcon } from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
@@ -25,7 +24,9 @@ export default function LinkSurveyModal({ survey, open, setOpen }: LinkSurveyMod
             <p className="relative mt-3 w-full rounded-lg border border-teal-300 bg-teal-50 p-3 text-center text-slate-800">
               {`${window.location.protocol}//${window.location.host}/s/${survey.id}`}
               <ClipboardDocumentIcon
-                className="absolute right-3 top-1/3 h-4 w-4 cursor-pointer text-slate-500 hover:text-slate-700"
+                className="absolute right-3 top-1/3 h-5 w-5 cursor-pointer text-slate-700 hover:text-slate-900"
+                title="Copy survey link to clipboard"
+                aria-label="Copy survey link to clipboard"
                 onClick={() => {
                   navigator.clipboard.writeText(
                     `${window.location.protocol}//${window.location.host}/s/${survey.id}`
@@ -36,11 +37,6 @@ export default function LinkSurveyModal({ survey, open, setOpen }: LinkSurveyMod
             </p>
           </div>
         </div>
-      </div>
-      <div className="mt-5 sm:mt-6">
-        <Button variant="primary" onClick={() => setOpen(false)} className="w-full justify-center">
-          Close
-        </Button>
       </div>
     </Modal>
   );

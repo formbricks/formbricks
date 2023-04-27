@@ -31,7 +31,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="fb-my-4">
         <fieldset>
-          <legend className="fb-sr-only">Choices</legend>
+          <legend className="fb-sr-only">Options</legend>
           <div className="fb-flex">
             {Array.from({ length: 11 }, (_, i) => i).map((number) => (
               <label

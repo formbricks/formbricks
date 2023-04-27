@@ -5,7 +5,13 @@ import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Label, Switch } from "@formbricks/ui";
-import { Bars3BottomLeftIcon } from "@heroicons/react/24/solid";
+import {
+  ListBulletIcon,
+  ChatBubbleBottomCenterTextIcon,
+  CursorArrowRippleIcon,
+  PresentationChartBarIcon,
+  QueueListIcon,
+} from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
@@ -72,7 +78,19 @@ export default function QuestionCard({
               className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
               <div>
                 <div className="inline-flex">
-                  <Bars3BottomLeftIcon className="-ml-0.5 mr-2 h-5 w-5 text-slate-400" />
+                  <div className="-ml-0.5 mr-2 h-5 w-5 text-slate-400">
+                    {question.type === "openText" ? (
+                      <ChatBubbleBottomCenterTextIcon />
+                    ) : question.type === "multipleChoiceSingle" ? (
+                      <QueueListIcon />
+                    ) : question.type === "multipleChoiceMulti" ? (
+                      <ListBulletIcon />
+                    ) : question.type === "nps" ? (
+                      <PresentationChartBarIcon />
+                    ) : question.type === "cta" ? (
+                      <CursorArrowRippleIcon />
+                    ) : null}
+                  </div>
                   <div>
                     <p className="text-sm font-semibold">
                       {question.headline || getQuestionTypeName(question.type)}

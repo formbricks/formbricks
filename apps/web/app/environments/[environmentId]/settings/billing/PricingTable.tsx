@@ -105,7 +105,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
           </div>
         </div>
         <div className="">
-          <div className="float-right -mt-2 mr-6 animate-bounce rounded-full bg-slate-700 px-3 py-1 text-xs font-semibold text-slate-50">
+          <div className="float-right -mt-2 mr-6 rounded-full bg-slate-700 px-3 py-1 text-xs font-semibold text-slate-50">
             Limited Early Bird Deal
           </div>
           <div className="rounded-lg border border-slate-300 bg-slate-100 shadow-sm">

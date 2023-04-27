@@ -33,7 +33,7 @@ export default function MultipleChoiceSingleQuestion({
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="fb-mt-4">
         <fieldset>
-          <legend className="fb-sr-only">Choices</legend>
+          <legend className="fb-sr-only">Options</legend>
           <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white">
             {question.choices &&
               question.choices.map((choice, idx) => (
