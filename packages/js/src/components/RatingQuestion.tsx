@@ -26,6 +26,7 @@ export default function RatingQuestion({
       onSubmit({
         [question.id]: number,
       });
+      setSelectedChoice(null); // reset choice
     }
   };
 
@@ -37,6 +38,8 @@ export default function RatingQuestion({
         const data = {
           [question.id]: selectedChoice,
         };
+
+        setSelectedChoice(null); // reset choice
 
         onSubmit(data);
       }}>

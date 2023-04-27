@@ -25,6 +25,7 @@ export default function RatingQuestion({
       onSubmit({
         [question.id]: number,
       });
+      setSelectedChoice(null); // reset choice
     }
   };
 
@@ -36,6 +37,8 @@ export default function RatingQuestion({
         const data = {
           [question.id]: selectedChoice,
         };
+
+        setSelectedChoice(null); // reset choice
 
         onSubmit(data);
       }}>
@@ -54,7 +57,7 @@ export default function RatingQuestion({
                 )}>
                 <input
                   type="radio"
-                  name="nps"
+                  name="rating"
                   value={number}
                   className="absolute h-full w-full cursor-pointer opacity-0"
                   onChange={() => handleSelect(number)}
