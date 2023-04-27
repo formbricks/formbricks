@@ -10,7 +10,7 @@ interface RatingSummaryProps {
 interface ChoiceResult {
   label: string;
   count: number;
-  percentage?: number;
+  percentage: number;
 }
 
 export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
@@ -40,23 +40,27 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
       }
     }
 
-    if (!questionSummary.question.required) {
-      resultsDict["dismissed"] = {
-        count: 0,
-        label: "Dismissed",
-        percentage: 0,
-      };
-      for (const response of questionSummary.responses) {
-        if (!response.value) {
-          resultsDict["dismissed"].count += 1;
-        }
-      }
-      resultsDict["dismissed"].percentage = resultsDict["dismissed"].count / total;
-    }
     // sort by count and transform to array
     const results = Object.values(resultsDict).sort((a: any, b: any) => a.label - b.label);
 
     return results;
+  }, [questionSummary]);
+
+  const dismissed: ChoiceResult = useMemo(() => {
+    if (questionSummary.question.required) return { count: 0, label: "Dismissed", percentage: 0 };
+
+    const total = questionSummary.responses.length;
+    let count = 0;
+    for (const response of questionSummary.responses) {
+      if (!response.value) {
+        count += 1;
+      }
+    }
+    return {
+      count,
+      label: "Dismissed",
+      percentage: count / total,
+    };
   }, [questionSummary]);
 
   const totalResponses = useMemo(() => {
@@ -81,7 +85,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
           </div>
         </div>
       </div>
-      <div className="space-y-5 rounded-b-lg bg-white px-6 pb-6 pt-4">
+      <div className="space-y-5 bg-white px-6 pb-6 pt-4">
         {results.map((result: any) => (
           <div key={result.label}>
             <div className="text flex justify-between px-2 pb-2">
@@ -101,6 +105,26 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
           </div>
         ))}
       </div>
+      {dismissed.count > 0 && (
+        <div className="rounded-b-lg border-t bg-white px-6 pb-6 pt-4">
+          <div key={dismissed.label}>
+            <div className="text flex justify-between px-2 pb-2">
+              <div className="mr-8 flex space-x-1">
+                <p className="font-semibold text-slate-700">{dismissed.label}</p>
+                <div>
+                  <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
+                    {Math.round(dismissed.percentage * 100)}%
+                  </p>
+                </div>
+              </div>
+              <p className="flex w-32 items-end justify-end text-slate-600">
+                {dismissed.count} {dismissed.count === 1 ? "response" : "responses"}
+              </p>
+            </div>
+            <ProgressBar barColor="bg-slate-600" progress={dismissed.percentage} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
