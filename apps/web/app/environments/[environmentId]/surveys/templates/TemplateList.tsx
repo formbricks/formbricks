@@ -59,6 +59,23 @@ export default function TemplateList({ environmentId }: { environmentId: string 
             ))}
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => {
+                const newTemplate = replacePresetPlaceholders(customSurvey, product);
+                setActiveTemplate(newTemplate);
+                setActiveQuestionId(newTemplate.preset.questions[0].id);
+              }}
+              className={cn(
+                activeTemplate?.name === customSurvey.name
+                  ? "ring-brand border-transparent ring-2"
+                  : "hover:border-brand-dark  border-dashed border-slate-300",
+                "duration-120  group relative rounded-lg border-2  bg-transparent p-8 transition-colors duration-150"
+              )}>
+              <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
+              <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 ">{customSurvey.name}</h3>
+              <p className="text-left text-xs text-slate-600 ">{customSurvey.description}</p>
+            </button>
             {templates
               .filter((template) => selectedFilter === "All" || template.category === selectedFilter)
               .map((template: Template) => (
@@ -82,21 +99,6 @@ export default function TemplateList({ environmentId }: { environmentId: string 
                   <p className="text-left text-xs text-slate-600">{template.description}</p>
                 </button>
               ))}
-            <button
-              type="button"
-              onClick={() => {
-                const newTemplate = replacePresetPlaceholders(customSurvey, product);
-                setActiveTemplate(newTemplate);
-                setActiveQuestionId(newTemplate.preset.questions[0].id);
-              }}
-              className={cn(
-                activeTemplate?.name === customSurvey.name && "ring-brand ring-2",
-                "duration-120 hover:border-brand-dark group relative rounded-lg border-2 border-dashed border-slate-300 bg-transparent p-8 transition-colors duration-150"
-              )}>
-              <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
-              <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 ">{customSurvey.name}</h3>
-              <p className="text-left text-xs text-slate-600 ">{customSurvey.description}</p>
-            </button>
           </div>
         </main>
         <aside className="group relative hidden h-full flex-1 flex-shrink-0 overflow-hidden border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">

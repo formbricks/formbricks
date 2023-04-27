@@ -44,7 +44,11 @@ export default function CTAQuestionForm({
             onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
           /> */}
           <Editor
-            getText={() => md.render(question.html || "")}
+            getText={() =>
+              md.render(
+                question.html || "We would love to talk to you and learn more about how you use our product."
+              )
+            }
             setText={(value: string) => {
               updateQuestion(questionIdx, { html: value });
             }}

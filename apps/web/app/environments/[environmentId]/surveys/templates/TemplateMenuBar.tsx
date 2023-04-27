@@ -1,8 +1,9 @@
 "use client";
 
-import { Button } from "@formbricks/ui";
-import type { Template } from "@formbricks/types/templates";
 import { createSurvey } from "@/lib/surveys/surveys";
+import type { Template } from "@formbricks/types/templates";
+import { Button } from "@formbricks/ui";
+import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -22,16 +23,19 @@ export default function TemplateMenuBar({ activeTemplate, environmentId }: Templ
 
   return (
     <div className="border-b border-slate-200 bg-white px-5 py-3 sm:flex sm:items-center sm:justify-between">
-      <h1 className="font-slate-700 text-lg font-semibold">Start with a template</h1>
-      <div className="mt-3 flex sm:ml-4 sm:mt-0">
-        <Button variant="secondary" className="mr-3" onClick={() => router.back()}>
-          Cancel
+      <div className="flex items-center space-x-4">
+        <Button variant="minimal" className="px-0" onClick={() => router.back()}>
+          <ArrowLeftIcon className="h-5 w-5 text-slate-700" />
         </Button>
+        <h1 className="font-slate-700 text-lg font-semibold">Start with a template</h1>
+      </div>
+      <div className="mt-3 flex sm:ml-4 sm:mt-0">
         <Button
           variant="highlight"
           disabled={activeTemplate === null}
           loading={loading}
-          onClick={() => addSurvey(activeTemplate)}>
+          onClick={() => addSurvey(activeTemplate)}
+          EndIcon={ArrowRightIcon}>
           Create Survey
         </Button>
       </div>

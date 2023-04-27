@@ -137,9 +137,7 @@ export const Button: React.ForwardRefExoticComponent<
           </svg>
         </div>
       )}
-      {EndIcon && (
-        <EndIcon className={cn("-mr-1 inline h-5 w-5 ltr:ml-2 rtl:mr-2", endIconClassName || "")} />
-      )}
+      {EndIcon && <EndIcon className={cn("-mr-1 ml-2 inline h-5 w-5 rtl:mr-2", endIconClassName || "")} />}
     </>
   );
   return props.href ? (

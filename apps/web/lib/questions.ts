@@ -1,8 +1,9 @@
 import {
-  Bars3BottomLeftIcon,
-  ChartPieIcon,
   ListBulletIcon,
-  ArrowRightOnRectangleIcon,
+  ChatBubbleBottomCenterTextIcon,
+  CursorArrowRippleIcon,
+  PresentationChartBarIcon,
+  QueueListIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -18,42 +19,46 @@ export type QuestionType = {
 export const questionTypes: QuestionType[] = [
   {
     id: "openText",
-    label: "Open text",
+    label: "Free text",
     description: "A single line of text",
-    icon: Bars3BottomLeftIcon,
+    icon: ChatBubbleBottomCenterTextIcon,
     preset: {
       placeholder: "Type your answer here...",
     },
   },
   {
     id: "multipleChoiceSingle",
-    label: "Multiple Choice Single-Select",
+    label: "Single-Select",
     description: "A single choice from a list of options (radio buttons)",
-    icon: ListBulletIcon,
+    icon: QueueListIcon,
     preset: {
+      headline: "What do you do?",
+      subheader: "Can't do both.",
       choices: [
-        { id: createId(), label: "" },
-        { id: createId(), label: "" },
+        { id: createId(), label: "Eat the cake 🍰" },
+        { id: createId(), label: "Have the cake 🎂" },
       ],
     },
   },
   {
     id: "multipleChoiceMulti",
-    label: "Multiple Choice Multi-Select",
+    label: "Multi-Select",
     description: "Number of choices from a list of options (checkboxes)",
     icon: ListBulletIcon,
     preset: {
+      headline: "What's important on vacay?",
       choices: [
-        { id: createId(), label: "" },
-        { id: createId(), label: "" },
+        { id: createId(), label: "Sun ☀️" },
+        { id: createId(), label: "Ocean 🌊" },
+        { id: createId(), label: "Palms 🌴" },
       ],
     },
   },
   {
     id: "nps",
-    label: "Net Promoter Score (NPS)",
+    label: "Net Promoter Score® (NPS)",
     description: "Rate satisfaction on a 0-10 scale",
-    icon: ChartPieIcon,
+    icon: PresentationChartBarIcon,
     preset: {
       headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
       lowerLabel: "Not at all likely",
@@ -64,8 +69,10 @@ export const questionTypes: QuestionType[] = [
     id: "cta",
     label: "Call-to-Action",
     description: "Ask your users to perform an action",
-    icon: ArrowRightOnRectangleIcon,
+    icon: CursorArrowRippleIcon,
     preset: {
+      headline: "You are one of our power users!",
+      buttonLabel: "Book interview",
       buttonExternal: false,
       dismissButtonLabel: "Skip",
     },
