@@ -11,6 +11,7 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import NPSSummary from "./NPSSummary";
 import CTASummary from "./CTASummary";
+import RatingSummary from "./RatingSummary";
 
 export default function SummaryList({ environmentId, surveyId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
@@ -86,6 +87,9 @@ export default function SummaryList({ environmentId, surveyId }) {
               }
               if (questionSummary.question.type === "cta") {
                 return <CTASummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+              }
+              if (questionSummary.question.type === "rating") {
+                return <RatingSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
               }
               return null;
             })}

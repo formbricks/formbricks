@@ -29,7 +29,7 @@ interface WhoToSendToCardProps {
 }
 
 export default function WhoToSendToCard({ localSurvey }: WhoToSendToCardProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   if (localSurvey.type === "link") {
     return null;
@@ -50,9 +50,7 @@ export default function WhoToSendToCard({ localSurvey }: WhoToSendToCardProps) {
           </div>
           <div>
             <p className="font-semibold text-slate-800">Who to ask</p>
-            <p className="mt-1 truncate text-sm text-slate-500">
-              Decide which group of you users can be surveyed.
-            </p>
+            <p className="mt-1 truncate text-sm text-slate-500">Filter your users based on attributes.</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>

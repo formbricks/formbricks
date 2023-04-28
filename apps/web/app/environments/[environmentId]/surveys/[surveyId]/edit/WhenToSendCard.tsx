@@ -4,7 +4,15 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
+import {
+  Button,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectSeparator,
+} from "@formbricks/ui";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
@@ -99,9 +107,6 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {eventClasses.map((eventClass) => (
-                      <SelectItem value={eventClass.id}>{eventClass.name}</SelectItem>
-                    ))}
                     <button
                       className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
                       value="none"
@@ -111,6 +116,10 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                       <PlusIcon className="mr-1 h-5 w-5" />
                       Add Action
                     </button>
+                    <SelectSeparator />
+                    {eventClasses.map((eventClass) => (
+                      <SelectItem value={eventClass.id}>{eventClass.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <p className="mx-2 text-sm">action is performed</p>

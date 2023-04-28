@@ -66,7 +66,7 @@ const editorConfig = {
 export const Editor = (props: TextEditorProps) => {
   const editable = props.editable ?? true;
   return (
-    <div className="editor rounded-md">
+    <div className="editor cursor-text rounded-md">
       <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
         <div className="editor-container rounded-md p-0">
           <ToolbarPlugin
@@ -84,7 +84,9 @@ export const Editor = (props: TextEditorProps) => {
             style={{ height: props.height }}>
             <RichTextPlugin
               contentEditable={<ContentEditable style={{ height: props.height }} className="editor-input" />}
-              placeholder={<div className="text-muted -mt-11 p-3 text-sm">{props.placeholder || ""}</div>}
+              placeholder={
+                <div className="text-muted -mt-11 cursor-text p-3 text-sm">{props.placeholder || ""}</div>
+              }
               ErrorBoundary={LexicalErrorBoundary}
             />
             <ListPlugin />

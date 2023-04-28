@@ -3,7 +3,8 @@ export type Question =
   | MultipleChoiceSingleQuestion
   | MultipleChoiceMultiQuestion
   | NPSQuestion
-  | CTAQuestion;
+  | CTAQuestion
+  | RatingQuestion;
 
 export interface OpenTextQuestion {
   id: string;
@@ -56,6 +57,19 @@ export interface CTAQuestion {
   buttonUrl?: string;
   buttonExternal: boolean;
   dismissButtonLabel?: string;
+}
+
+export interface RatingQuestion {
+  id: string;
+  type: "rating";
+  headline: string;
+  subheader?: string;
+  required: boolean;
+  scale: "number" | "smiley" | "star";
+  range: 5 | 3 | 4 | 7 | 10;
+  lowerLabel: string;
+  upperLabel: string;
+  buttonLabel?: string;
 }
 
 export interface Choice {

@@ -33,8 +33,8 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
     notImplemented: {
       icon: ArrowDownIcon,
       color: "slate",
-      title: "Not implemented yet.",
-      subtitle: "Formbricks widget not yet implemented.",
+      title: "Connect Formbricks to your app.",
+      subtitle: "You have not yet connected Formbricks to your app. Follow setup guide.",
     },
     running: { icon: CheckIcon, color: "green", title: "Receiving data.", subtitle: "Last action received:" },
     issue: {

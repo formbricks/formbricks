@@ -1,5 +1,6 @@
 "use client";
 
+import FaveIcon from "@/app/favicon.ico";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,8 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEnvironment } from "@/lib/environments/environments";
+import { useMemberships } from "@/lib/memberships";
+import { useTeam } from "@/lib/teams/teams";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import {
   CustomersIcon,
@@ -47,8 +50,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
-import { useMemberships } from "@/lib/memberships";
-import { useTeam } from "@/lib/teams/teams";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -126,7 +127,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
       links: [
         {
           icon: AdjustmentsVerticalIcon,
-          label: "Survey Settings",
+          label: "Product Settings",
           href: `/environments/${environmentId}/settings/product`,
         },
         {
@@ -151,11 +152,6 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           href: `/environments/${environmentId}/settings/billing`,
           hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
         },
-        /*  {
-          icon: RocketLaunchIcon,
-          label: "Upgrade account",
-          href: `/environments/${environmentId}/settings/billing`,
-        }, */
       ],
     },
     {
@@ -227,9 +223,10 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         <div className="flex h-14 justify-between">
           <div className="flex  space-x-4 py-2">
             <Link
-              href={`/environments/${environmentId}/surveys/templates`}
-              className="from-brand-light to-brand-dark my-1 flex items-center justify-center rounded-md bg-gradient-to-b px-1 text-white transition-all ease-in-out hover:scale-105">
-              <PlusIcon className="h-6 w-6" />
+              href={`/environments/${environmentId}/surveys/`}
+              className=" flex items-center justify-center rounded-md bg-gradient-to-b text-white transition-all ease-in-out hover:scale-105">
+              {/* <PlusIcon className="h-6 w-6" /> */}
+              <Image src={FaveIcon} width={30} height={30} alt="faveicon" />
             </Link>
             {navigation.map((item) => (
               <Link

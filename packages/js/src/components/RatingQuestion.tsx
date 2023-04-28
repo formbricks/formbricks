@@ -1,18 +1,23 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
-import type { NPSQuestion } from "@formbricks/types/questions";
+import type { RatingQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
-interface NPSQuestionProps {
-  question: NPSQuestion;
+interface RatingQuestionProps {
+  question: RatingQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
 
-export default function NPSQuestion({ question, onSubmit, lastQuestion, brandColor }: NPSQuestionProps) {
+export default function RatingQuestion({
+  question,
+  onSubmit,
+  lastQuestion,
+  brandColor,
+}: RatingQuestionProps) {
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
 
   const handleSelect = (number: number) => {
@@ -21,6 +26,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
       onSubmit({
         [question.id]: number,
       });
+      setSelectedChoice(null); // reset choice
     }
   };
 
@@ -33,16 +39,17 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
           [question.id]: selectedChoice,
         };
 
+        setSelectedChoice(null); // reset choice
+
         onSubmit(data);
-        // reset form
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="fb-my-4">
         <fieldset>
-          <legend className="fb-sr-only">Options</legend>
+          <legend className="fb-sr-only">Choices</legend>
           <div className="fb-flex">
-            {Array.from({ length: 11 }, (_, i) => i).map((number) => (
+            {Array.from({ length: question.range }, (_, i) => i + 1).map((number) => (
               <label
                 key={number}
                 className={cn(
@@ -72,7 +79,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
           <div></div>
           <button
             type="submit"
-            className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 focus:fb-ring-slate-500"
+            className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-slate-500 focus:fb-ring-offset-2"
             style={{ backgroundColor: brandColor }}>
             {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
           </button>

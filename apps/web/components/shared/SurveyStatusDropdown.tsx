@@ -12,8 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui";
-import { CheckCircleIcon, PauseCircleIcon, PlayCircleIcon } from "@heroicons/react/24/solid";
+import {
+  CheckCircleIcon,
+  PauseCircleIcon,
+  PlayCircleIcon,
+  PencilSquareIcon,
+  ArchiveBoxIcon,
+} from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
+import { Badge } from "@formbricks/ui";
 
 export default function SurveyStatusDropdown({
   surveyId,
@@ -40,10 +47,24 @@ export default function SurveyStatusDropdown({
       {survey.status === "draft" || survey.status === "archived" ? (
         <div className="flex items-center">
           <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
-          <span className="mr-3 italic text-slate-500">
-            {survey.status === "draft" && "Survey drafted"}
-            {survey.status === "archived" && "Survey archived"}
-          </span>
+          {survey.status === "draft" && (
+            <Badge
+              text="Draft"
+              type="gray"
+              size="normal"
+              StartIcon={PencilSquareIcon}
+              startIconClassName="mr-2"
+            />
+          )}
+          {survey.status === "archived" && (
+            <Badge
+              text="Archived"
+              type="gray"
+              size="normal"
+              StartIcon={ArchiveBoxIcon}
+              startIconClassName="mr-2"
+            />
+          )}
         </div>
       ) : (
         <Select
@@ -72,7 +93,7 @@ export default function SurveyStatusDropdown({
               <div className="flex items-center">
                 <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
                 <span className="ml-2 text-sm text-slate-700">
-                  {survey.status === "draft" && "Survey drafted"}
+                  {survey.status === "draft" && "Survey draft"}
                   {survey.status === "inProgress" && "Collecting insights"}
                   {survey.status === "paused" && "Survey paused"}
                   {survey.status === "completed" && "Survey complete"}
