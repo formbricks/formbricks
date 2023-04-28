@@ -22,6 +22,7 @@ import QuestionDropdown from "./QuestionDropdown";
 import NPSQuestionForm from "./NPSQuestionForm";
 import UpdateQuestionId from "./UpdateQuestionId";
 import CTAQuestionForm from "./CTAQuestionForm";
+import RatingQuestionForm from "./RatingQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: Survey;
@@ -152,6 +153,13 @@ export default function QuestionCard({
                 />
               ) : question.type === "cta" ? (
                 <CTAQuestionForm
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                />
+              ) : question.type === "rating" ? (
+                <RatingQuestionForm
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}

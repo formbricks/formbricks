@@ -1,9 +1,10 @@
 import {
-  ListBulletIcon,
+  ArrowRightOnRectangleIcon,
   ChatBubbleBottomCenterTextIcon,
-  CursorArrowRippleIcon,
+  ListBulletIcon,
   PresentationChartBarIcon,
   QueueListIcon,
+  StarIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -69,12 +70,24 @@ export const questionTypes: QuestionType[] = [
     id: "cta",
     label: "Call-to-Action",
     description: "Ask your users to perform an action",
-    icon: CursorArrowRippleIcon,
+    icon: ArrowRightOnRectangleIcon,
     preset: {
       headline: "You are one of our power users!",
       buttonLabel: "Book interview",
       buttonExternal: false,
       dismissButtonLabel: "Skip",
+    },
+  },
+  {
+    id: "rating",
+    label: "Rating",
+    description: "Ask your users to rate something",
+    icon: StarIcon,
+    preset: {
+      scale: "number",
+      range: 5,
+      lowerLabel: "Very unsatisfied",
+      upperLabel: "Very satisfied",
     },
   },
 ];

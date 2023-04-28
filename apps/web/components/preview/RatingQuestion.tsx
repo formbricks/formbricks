@@ -1,18 +1,22 @@
-import { h } from "preact";
-import { useState } from "preact/hooks";
-import { cn } from "../lib/utils";
-import type { NPSQuestion } from "@formbricks/types/questions";
+import { useState } from "react";
+import { cn } from "@formbricks/lib/cn";
+import type { RatingQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
-interface NPSQuestionProps {
-  question: NPSQuestion;
+interface RatingQuestionProps {
+  question: RatingQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
 
-export default function NPSQuestion({ question, onSubmit, lastQuestion, brandColor }: NPSQuestionProps) {
+export default function RatingQuestion({
+  question,
+  onSubmit,
+  lastQuestion,
+  brandColor,
+}: RatingQuestionProps) {
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
 
   const handleSelect = (number: number) => {
@@ -21,6 +25,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
       onSubmit({
         [question.id]: number,
       });
+      setSelectedChoice(null); // reset choice
     }
   };
 
@@ -33,27 +38,28 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
           [question.id]: selectedChoice,
         };
 
+        setSelectedChoice(null); // reset choice
+
         onSubmit(data);
-        // reset form
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
-      <div className="fb-my-4">
+      <div className="my-4">
         <fieldset>
-          <legend className="fb-sr-only">Options</legend>
-          <div className="fb-flex">
-            {Array.from({ length: 11 }, (_, i) => i).map((number) => (
+          <legend className="sr-only">Choices</legend>
+          <div className="flex">
+            {Array.from({ length: question.range }, (_, i) => i + 1).map((number) => (
               <label
                 key={number}
                 className={cn(
-                  selectedChoice === number ? "fb-z-10 fb-border-slate-400 fb-bg-slate-50" : "",
-                  "fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-border fb-bg-white fb-text-center fb-text-sm fb-leading-10 first:fb-rounded-l-md last:fb-rounded-r-md hover:fb-bg-gray-100 focus:fb-outline-none"
+                  selectedChoice === number ? "z-10 border-slate-400 bg-slate-50" : "",
+                  "relative h-10 flex-1 cursor-pointer border bg-white text-center text-sm  leading-10 first:rounded-l-md last:rounded-r-md hover:bg-gray-100 focus:outline-none"
                 )}>
                 <input
                   type="radio"
-                  name="nps"
+                  name="rating"
                   value={number}
-                  className="fb-absolute fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+                  className="absolute h-full w-full cursor-pointer opacity-0"
                   onChange={() => handleSelect(number)}
                   required={question.required}
                 />
@@ -61,18 +67,18 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
               </label>
             ))}
           </div>
-          <div className="fb-flex fb-justify-between fb-text-sm fb-font-semibold fb-leading-6">
+          <div className="flex justify-between text-sm font-semibold leading-6">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>
         </fieldset>
       </div>
       {!question.required && (
-        <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
+        <div className="mt-4 flex w-full justify-between">
           <div></div>
           <button
             type="submit"
-            className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 focus:fb-ring-slate-500"
+            className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
             style={{ backgroundColor: brandColor }}>
             {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
           </button>
