@@ -51,7 +51,7 @@ export interface CTAQuestion {
   id: string;
   type: "cta";
   headline: string;
-  subheader?: string;
+  html?: string;
   required: boolean;
   buttonLabel?: string;
   buttonUrl?: string;

@@ -34,7 +34,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
             updatedResponse.push({ question: questionHeadline, answer: answer as string });
           }
         }
-        return { ...response, responses: updatedResponse };
+        return { ...response, responses: updatedResponse, person: response.person };
       });
       return updatedResponses;
     }

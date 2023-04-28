@@ -4,8 +4,16 @@ export interface QuestionSummary {
   question: Question;
   responses: {
     id: string;
+    personId: string;
     value: string;
     updatedAt: string;
-    personId: string;
+    person?: {
+      attributes: {
+        attributeClass: {
+          name: string;
+        };
+        value: string;
+      };
+    };
   }[];
 }

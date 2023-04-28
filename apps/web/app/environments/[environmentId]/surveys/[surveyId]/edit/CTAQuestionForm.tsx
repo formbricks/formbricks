@@ -1,6 +1,10 @@
+"use client";
+
 import type { CTAQuestion } from "@formbricks/types/questions";
-import { Input, Label } from "@formbricks/ui";
+import { Editor, Input, Label } from "@formbricks/ui";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { useState } from "react";
+import { md } from "@formbricks/lib/markdownIt";
 
 interface CTAQuestionFormProps {
   question: CTAQuestion;
@@ -15,6 +19,7 @@ export default function CTAQuestionForm({
   updateQuestion,
   lastQuestion,
 }: CTAQuestionFormProps) {
+  const [firstRender, setFirstRender] = useState(true);
   return (
     <form>
       <div className="mt-3">
@@ -32,11 +37,19 @@ export default function CTAQuestionForm({
       <div className="mt-3">
         <Label htmlFor="subheader">Description</Label>
         <div className="mt-2">
-          <Input
-            id="subheader"
-            name="subheader"
-            value={question.subheader}
-            onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
+          <Editor
+            getText={() =>
+              md.render(
+                question.html || "We would love to talk to you and learn more about how you use our product."
+              )
+            }
+            setText={(value: string) => {
+              updateQuestion(questionIdx, { html: value });
+            }}
+            excludedToolbarItems={["blockType"]}
+            disableLists
+            firstRender={firstRender}
+            setFirstRender={setFirstRender}
           />
         </div>
       </div>
@@ -92,13 +105,13 @@ export default function CTAQuestionForm({
       <div className="mt-3">
         {!question.required && (
           <div className="flex-1">
-            <Label htmlFor="buttonLabel">Dismiss Button Label</Label>
+            <Label htmlFor="buttonLabel">Skip Button Label</Label>
             <div className="mt-2">
               <Input
                 id="dismissButtonLabel"
                 name="dismissButtonLabel"
                 value={question.dismissButtonLabel}
-                placeholder="Dismiss"
+                placeholder="Skip"
                 onChange={(e) => updateQuestion(questionIdx, { dismissButtonLabel: e.target.value })}
               />
             </div>

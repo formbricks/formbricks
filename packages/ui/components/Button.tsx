@@ -1,8 +1,9 @@
 import { cn } from "@formbricks/lib/cn";
+import { LucideIcon } from "lucide-react";
 import Link, { LinkProps } from "next/link";
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, forwardRef } from "react";
 
-type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
+type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>> | LucideIcon;
 
 export type ButtonBaseProps = {
   variant?: "highlight" | "primary" | "secondary" | "minimal" | "warn" | "alert";
@@ -110,8 +111,8 @@ export const Button: React.ForwardRefExoticComponent<
       {StartIcon && (
         <StartIcon
           className={cn(
-            "inline",
-            size === "icon" ? "h-4 w-4 " : "-ml-1 h-4 w-4 ltr:mr-2 rtl:-mr-1 rtl:ml-2",
+            "flex",
+            size === "icon" ? "h-4 w-4 " : "-ml-1 mr-1 h-3 w-3",
             startIconClassName || ""
           )}
         />
@@ -136,9 +137,7 @@ export const Button: React.ForwardRefExoticComponent<
           </svg>
         </div>
       )}
-      {EndIcon && (
-        <EndIcon className={cn("-mr-1 inline h-5 w-5 ltr:ml-2 rtl:mr-2", endIconClassName || "")} />
-      )}
+      {EndIcon && <EndIcon className={cn("-mr-1 ml-2 inline h-5 w-5 rtl:mr-2", endIconClassName || "")} />}
     </>
   );
   return props.href ? (

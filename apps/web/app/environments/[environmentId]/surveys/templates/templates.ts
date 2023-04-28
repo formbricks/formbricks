@@ -1,17 +1,20 @@
-import { AppPieChartIcon } from "@formbricks/ui";
-import { CancelSubscriptionIcon } from "@formbricks/ui";
-import { CashCalculatorIcon } from "@formbricks/ui";
-import { DashboardIcon } from "@formbricks/ui";
-import { DogChaserIcon } from "@formbricks/ui";
-import { DoorIcon } from "@formbricks/ui";
-import { FeedbackIcon } from "@formbricks/ui";
-import { OnboardingIcon } from "@formbricks/ui";
-import { PMFIcon } from "@formbricks/ui";
-import { TaskListSearchIcon } from "@formbricks/ui";
-import { BaseballIcon } from "@formbricks/ui";
-import { CheckMarkIcon } from "@formbricks/ui";
-import { ArrowRightCircleIcon } from "@formbricks/ui";
 import type { Template } from "@formbricks/types/templates";
+import {
+  AppPieChartIcon,
+  ArrowRightCircleIcon,
+  BaseballIcon,
+  CancelSubscriptionIcon,
+  CashCalculatorIcon,
+  CheckMarkIcon,
+  CodeBookIcon,
+  DashboardIcon,
+  DogChaserIcon,
+  DoorIcon,
+  FeedbackIcon,
+  OnboardingIcon,
+  PMFIcon,
+  TaskListSearchIcon,
+} from "@formbricks/ui";
 import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {
@@ -684,6 +687,46 @@ export const templates: Template[] = [
           type: "openText",
           headline: "Which product would you like to integrate next?",
           subheader: "We keep building integrations. Yours can be next:",
+          required: false,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Docs Feedback",
+    icon: CodeBookIcon,
+    category: "Product Experience",
+    description: "Measure how clear each page of your developer documentation is.",
+    preset: {
+      name: "{{productName}} Docs Feedback",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "Was this page helpful?",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Yes 👍",
+            },
+            {
+              id: createId(),
+              label: "No 👎",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "Please elaborate:",
+          required: false,
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "Page URL",
           required: false,
         },
       ],

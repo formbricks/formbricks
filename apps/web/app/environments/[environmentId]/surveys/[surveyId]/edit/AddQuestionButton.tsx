@@ -33,7 +33,7 @@ export default function AddQuestionButton({ addQuestion, environmentId }: AddQue
       )}>
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
         <div className="inline-flex">
-          <div className="bg-brand-dark flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-bl-none">
+          <div className="bg-brand-dark flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-bl-none group-aria-expanded:rounded-br">
             <PlusIcon className="h-6 w-6 text-white" />
           </div>
           <div className="px-4 py-3">
@@ -47,7 +47,7 @@ export default function AddQuestionButton({ addQuestion, environmentId }: AddQue
         {questionTypes.map((questionType) => (
           <button
             key={questionType.id}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 last:mb-2 hover:bg-slate-100"
+            className="mx-2 inline-flex items-center rounded p-0.5 px-4 py-2 font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
             onClick={() => {
               addQuestion({
                 id: createId(),

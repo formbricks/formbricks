@@ -1,9 +1,25 @@
+import { ErrorHandler, Result } from "./errors";
+import { checkInitialized } from "./init";
+import { Logger } from "./logger";
+
+const logger = Logger.getInstance();
+
 export class CommandQueue {
-  private queue: (() => Promise<any>)[] = [];
+  private queue: {
+    command: (args: any) => Promise<Result<void, any>> | Result<void, any>;
+    checkInitialized: boolean;
+    commandArgs: any[];
+  }[] = [];
   private running: boolean = false;
 
-  public add(command: () => Promise<any>) {
-    this.queue.push(command);
+  public add<A>(
+    checkInitialized: boolean = true,
+    command: (...args: A[]) => Promise<Result<void, any>> | Result<void, any>,
+    ...args: A[]
+  ) {
+    logger.debug(`Add command to queue: ${command.name}(${JSON.stringify(args)})`);
+    this.queue.push({ command, checkInitialized, commandArgs: args });
+
     if (!this.running) {
       this.run();
     }
@@ -12,12 +28,27 @@ export class CommandQueue {
   private async run() {
     this.running = true;
     while (this.queue.length > 0) {
-      const command = this.queue.shift();
-      try {
-        await command();
-      } catch (error) {
-        console.error(error);
+      const errorHandler = ErrorHandler.getInstance();
+      const currentItem = this.queue.shift();
+
+      // make sure formbricks is initialized
+      if (currentItem.checkInitialized) {
+        const initResult = checkInitialized();
+
+        if (initResult && initResult.ok !== true) errorHandler.handle(initResult.error);
       }
+
+      const result = (await currentItem.command.apply(null, currentItem.commandArgs)) as Result<void, any>;
+
+      if (!result) continue;
+
+      logger.debug(
+        `Command result: ${result.ok === true ? "OK" : "Something went really wrong"}, ${
+          currentItem.command.name
+        }`
+      );
+
+      if (result.ok !== true) errorHandler.handle(result.error);
     }
     this.running = false;
   }

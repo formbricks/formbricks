@@ -33,6 +33,23 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           createdAt: "desc",
         },
       ],
+      include: {
+        person: {
+          include: {
+            attributes: {
+              select: {
+                attributeClass: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+                value: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1") {

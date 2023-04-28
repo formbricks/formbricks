@@ -23,6 +23,7 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
 } from "./components/DropdownMenu";
+export { Editor, AddVariablesDropdown } from "./components/editor";
 export { ErrorComponent } from "./components/ErrorComponent";
 export { Input } from "./components/Input";
 export { Label } from "./components/Label";
@@ -61,6 +62,7 @@ export { CancelSubscriptionIcon } from "./components/icons/CancelSubscriptionIco
 export { CashCalculatorIcon } from "./components/icons/CashCalculatorIcon";
 export { CheckMarkIcon } from "./components/icons/CheckMarkIcon";
 export { ClockIcon } from "./components/icons/ClockIcon";
+export { CodeBookIcon } from "./components/icons/CodeBookIcon";
 export { CodeFileIcon } from "./components/icons/CodeFileIcon";
 export { ComplimentIcon } from "./components/icons/ComplimentIcon";
 export { CrossMarkIcon } from "./components/icons/CrossMarkIcon";

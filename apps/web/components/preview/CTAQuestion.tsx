@@ -1,6 +1,6 @@
 import type { CTAQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
-import Subheader from "./Subheader";
+import HtmlBody from "./HtmlBody";
 
 interface CTAQuestionProps {
   question: CTAQuestion;
@@ -13,9 +13,9 @@ export default function CTAQuestion({ question, onSubmit, lastQuestion, brandCol
   return (
     <div>
       <Headline headline={question.headline} questionId={question.id} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <HtmlBody htmlString={question.html || ""} questionId={question.id} />
 
-      <div className="mt-4 flex w-full justify-between">
+      <div className="mt-4 flex w-full justify-end">
         <div></div>
         {!question.required && (
           <button
@@ -23,8 +23,8 @@ export default function CTAQuestion({ question, onSubmit, lastQuestion, brandCol
             onClick={() => {
               onSubmit({ [question.id]: "dismissed" });
             }}
-            className="flex items-center rounded-md border border-slate-500 px-3 py-3 text-base font-medium leading-4 text-slate-500 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:border-slate-400 dark:text-slate-400">
-            {question.dismissButtonLabel || "Dismiss"}
+            className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 text-slate-500 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:border-slate-400 dark:text-slate-400">
+            {question.dismissButtonLabel || "Skip"}
           </button>
         )}
         <button

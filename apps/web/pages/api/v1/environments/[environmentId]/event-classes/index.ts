@@ -41,6 +41,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       res.status(400).json({ message: "You are not allowed to create new automatic events" });
     }
 
+    // check if eventClass already exists
+    const existingEventClass = await prisma.eventClass.findFirst({
+      where: {
+        name: eventClass.name,
+        environment: {
+          id: environmentId,
+        },
+      },
+    });
+
+    if (existingEventClass) {
+      return res.status(409).json({ message: "EventClass already exists" });
+    }
+
     // create eventClass in db
     const result = await prisma.eventClass.create({
       data: {

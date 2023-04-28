@@ -1,21 +1,23 @@
-import type { MatchType } from "@formbricks/types/js";
 import type { Event } from "@formbricks/types/events";
+import type { MatchType } from "@formbricks/types/js";
 import { Config } from "./config";
+import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
+const errorHandler = ErrorHandler.getInstance();
 
-export const checkPageUrl = (): void => {
+export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError | NetworkError>> => {
+  logger.debug("checking page url");
   const { settings } = config.get();
   const pageUrlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
 
-  logger.debug("checking page url");
-
   if (pageUrlEvents.length === 0) {
-    return;
+    return okVoid();
   }
+
   for (const event of pageUrlEvents) {
     const {
       noCodeConfig: { pageUrl },
@@ -24,10 +26,17 @@ export const checkPageUrl = (): void => {
       continue;
     }
     const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule as MatchType);
-    if (match) {
-      trackEvent(event.name);
-    }
+
+    if (match.ok !== true) return err(match.error);
+
+    if (match.value === false) continue;
+
+    const trackResult = await trackEvent(event.name);
+
+    if (trackResult.ok !== true) return err(trackResult.error);
   }
+
+  return okVoid();
 };
 
 export const addPageUrlEventListeners = (): void => {
@@ -40,23 +49,45 @@ export const addPageUrlEventListeners = (): void => {
   window.addEventListener("load", checkPageUrl);
 };
 
-export function checkUrlMatch(url: string, pageUrlValue: string, pageUrlRule: MatchType): boolean {
+export function checkUrlMatch(
+  url: string,
+  pageUrlValue: string,
+  pageUrlRule: MatchType
+): Result<boolean, InvalidMatchTypeError> {
+  let result: boolean;
+  let error: Result<never, InvalidMatchTypeError>;
+
   switch (pageUrlRule) {
     case "exactMatch":
-      return url === pageUrlValue;
+      result = url === pageUrlValue;
+      break;
     case "contains":
-      return url.includes(pageUrlValue);
+      result = url.includes(pageUrlValue);
+      break;
     case "startsWith":
-      return url.startsWith(pageUrlValue);
+      result = url.startsWith(pageUrlValue);
+      break;
     case "endsWith":
-      return url.endsWith(pageUrlValue);
+      result = url.endsWith(pageUrlValue);
+      break;
     case "notMatch":
-      return url !== pageUrlValue;
+      result = url !== pageUrlValue;
+      break;
     case "notContains":
-      return !url.includes(pageUrlValue);
+      result = !url.includes(pageUrlValue);
+      break;
     default:
-      throw new Error("Invalid match type");
+      error = err({
+        code: "invalid_match_type",
+        message: "Invalid match type",
+      });
   }
+
+  if (error) {
+    return error;
+  }
+
+  return ok(result);
 }
 
 export const checkClickMatch = (event: MouseEvent) => {
@@ -71,14 +102,30 @@ export const checkClickMatch = (event: MouseEvent) => {
   innerHtmlEvents.forEach((e) => {
     const innerHtml = e.noCodeConfig?.innerHtml;
     if (innerHtml && targetElement.innerHTML === innerHtml.value) {
-      trackEvent(e.name);
+      trackEvent(e.name).then((res) => {
+        match(
+          res,
+          (_value) => {},
+          (err) => {
+            errorHandler.handle(err);
+          }
+        );
+      });
     }
   });
 
   cssSelectorEvents.forEach((e) => {
     const cssSelector = e.noCodeConfig?.cssSelector;
     if (cssSelector && targetElement.matches(cssSelector.value)) {
-      trackEvent(e.name);
+      trackEvent(e.name).then((res) => {
+        match(
+          res,
+          (_value) => {},
+          (err) => {
+            errorHandler.handle(err);
+          }
+        );
+      });
     }
   });
 };

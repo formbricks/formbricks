@@ -2,12 +2,14 @@ import { Survey } from "@formbricks/types/js";
 import { h, render } from "preact";
 import App from "../App";
 import { Config } from "./config";
+import { ErrorHandler, match } from "./errors";
 import { Logger } from "./logger";
 import { getSettings } from "./settings";
 
 const containerId = "formbricks-web-container";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
+const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 
 export const renderWidget = (survey: Survey) => {
@@ -16,16 +18,30 @@ export const renderWidget = (survey: Survey) => {
     return;
   }
   surveyRunning = true;
-  render(h(App, { config: config.get(), survey, closeSurvey }), document.getElementById(containerId));
+
+  render(
+    h(App, { config: config.get(), survey, closeSurvey, errorHandler: errorHandler.handle }),
+    document.getElementById(containerId)
+  );
 };
 
 export const closeSurvey = async (): Promise<void> => {
   // remove container element from DOM
   document.getElementById(containerId).remove();
   addWidgetContainer();
+
   const settings = await getSettings();
-  config.update({ settings });
-  surveyRunning = false;
+
+  match(
+    settings,
+    (value) => {
+      config.update({ settings: value });
+      surveyRunning = false;
+    },
+    (error) => {
+      errorHandler.handle(error);
+    }
+  );
 };
 
 export const addWidgetContainer = (): void => {
