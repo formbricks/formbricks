@@ -120,25 +120,24 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
         </div>
         <div className="flex flex-col justify-between lg:col-span-1">
           <div className=""></div>
-          <div className="flex justify-center sm:justify-end">
+          <div className="flex justify-end gap-x-1.5">
             {survey.type === "link" && (
               <Button
                 variant="secondary"
-                className="mr-1.5 h-full border border-slate-300 bg-white px-2 hover:bg-slate-100 focus:bg-slate-100 lg:px-6"
+                className="h-full border border-slate-300 bg-white px-2 hover:bg-slate-100 focus:bg-slate-100 lg:px-6"
                 onClick={() => setShowLinkModal(true)}>
                 <ShareIcon className="h-5 w-5" />
               </Button>
             )}
-            <div className="flex w-full">
-              {environment.widgetSetupCompleted ||
-                (survey.type === "link" && (
-                  <SurveyStatusDropdown surveyId={surveyId} environmentId={environmentId} />
-                ))}
-            </div>
+            {environment.widgetSetupCompleted ||
+              (survey.type === "link" && (
+                <SurveyStatusDropdown surveyId={surveyId} environmentId={environmentId} />
+              ))}
             <Button
-              className="ml-1.5 h-full w-full px-3 lg:px-6"
+              className="h-full w-full px-3 lg:px-6"
               href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>
-              <PencilSquareIcon className="mr-2 h-5  w-5 text-white" /> Edit Survey
+              <PencilSquareIcon className="mr-2 h-5  w-5 text-white" />
+              Edit Survey
             </Button>
           </div>
         </div>
