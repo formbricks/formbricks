@@ -4,6 +4,7 @@ import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
 import NPSQuestion from "./NPSQuestion";
 import CTAQuestion from "./CTAQuestion";
+import RatingQuestion from "./RatingQuestion";
 
 interface QuestionConditionalProps {
   question: Question;
@@ -48,6 +49,13 @@ export default function QuestionConditional({
     />
   ) : question.type === "cta" ? (
     <CTAQuestion
+      question={question}
+      onSubmit={onSubmit}
+      lastQuestion={lastQuestion}
+      brandColor={brandColor}
+    />
+  ) : question.type === "rating" ? (
+    <RatingQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}

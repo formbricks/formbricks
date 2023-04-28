@@ -129,10 +129,10 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
                 <ShareIcon className="h-5 w-5" />
               </Button>
             )}
-            {environment.widgetSetupCompleted ||
-              (survey.type === "link" && (
-                <SurveyStatusDropdown surveyId={surveyId} environmentId={environmentId} />
-              ))}
+
+            {environment.widgetSetupCompleted && (
+              <SurveyStatusDropdown surveyId={surveyId} environmentId={environmentId} />
+            )}
             <Button
               className="h-full w-full px-3 lg:px-6"
               href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>

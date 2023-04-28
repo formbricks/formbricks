@@ -65,18 +65,20 @@ export default function NPSQuestionForm({
         </div>
       </div>
 
-      <div className="mt-3">
-        <Label htmlFor="buttonLabel">Button Label</Label>
-        <div className="mt-2">
-          <Input
-            id="buttonLabel"
-            name="buttonLabel"
-            value={question.buttonLabel}
-            placeholder={lastQuestion ? "Finish" : "Next"}
-            onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
-          />
+      {!question.required && (
+        <div className="mt-3">
+          <Label htmlFor="buttonLabel">Button Label</Label>
+          <div className="mt-2">
+            <Input
+              id="buttonLabel"
+              name="buttonLabel"
+              value={question.buttonLabel}
+              placeholder={lastQuestion ? "Finish" : "Next"}
+              onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </form>
   );
 }

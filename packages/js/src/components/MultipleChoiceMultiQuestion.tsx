@@ -41,7 +41,7 @@ export default function MultipleChoiceMultiQuestion({
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="fb-mt-4">
         <fieldset>
-          <legend className="fb-sr-only">Choices</legend>
+          <legend className="fb-sr-only">Options</legend>
           <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white">
             {question.choices &&
               question.choices.map((choice) => (
@@ -92,7 +92,7 @@ export default function MultipleChoiceMultiQuestion({
         <div></div>
         <button
           type="submit"
-          className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 focus:ring-slate-500"
+          className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 focus:fb-ring-slate-500"
           style={{ backgroundColor: brandColor }}>
           {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
         </button>

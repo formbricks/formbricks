@@ -4,6 +4,8 @@ import CrowdLogoDark from "@/images/clients/crowd-logo-dark.svg";
 import CrowdLogoLight from "@/images/clients/crowd-logo-light.svg";
 import StackOceanLogoDark from "@/images/clients/stack-ocean-dark.png";
 import StackOceanLogoLight from "@/images/clients/stack-ocean-light.png";
+import NILogoLight from "@/images/clients/niLogoWhite.svg";
+import NILogoDark from "@/images/clients/niLogoDark.svg";
 import AnimationFallback from "@/public/animations/fallback-image-open-source-feedback-software.jpg";
 import { Button } from "@formbricks/ui";
 import { usePlausible } from "next-plausible";
@@ -38,11 +40,11 @@ export default function Hero({}: Props) {
           </span>
         </p>
 
-        <div className="mx-auto mt-5 max-w-2xl items-center space-x-8 sm:flex sm:justify-center md:mt-8">
-          <p className="hidden whitespace-nowrap pt-1 text-xs text-slate-400 dark:text-slate-500 md:block">
+        <div className="mx-auto mt-5 max-w-3xl items-center space-x-8 sm:flex sm:justify-center md:mt-8">
+          <p className="hidden whitespace-nowrap pt-3 text-xs text-slate-400 dark:text-slate-500 md:block">
             Trusted by
           </p>
-          <div className="grid grid-cols-4 gap-8 pt-2">
+          <div className="grid grid-cols-5 items-center gap-8 pt-2">
             <Image
               src={CalLogoLight}
               alt="Cal Logo"
@@ -74,15 +76,27 @@ export default function Hero({}: Props) {
               width={200}
             />
             <Image
+              src={NILogoDark}
+              alt="Neverinstall Logo"
+              className="block pb-1 opacity-50 hover:opacity-100 dark:hidden"
+              width={200}
+            />
+            <Image
+              src={NILogoLight}
+              alt="Neverinstall Logo"
+              className="hidden  pb-1 opacity-50 hover:opacity-100 dark:block"
+              width={200}
+            />
+            <Image
               src={StackOceanLogoLight}
               alt="StackOcean Logo"
-              className="block rounded-lg pb-1 opacity-50 hover:opacity-100 dark:hidden"
+              className="block  pb-1 opacity-50 hover:opacity-100 dark:hidden"
               width={200}
             />
             <Image
               src={StackOceanLogoDark}
               alt="StakcOcean Logo"
-              className="hidden rounded-lg pb-1 opacity-50 hover:opacity-100 dark:block"
+              className="hidden pb-1 opacity-50 hover:opacity-100 dark:block"
               width={200}
             />
           </div>

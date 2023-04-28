@@ -67,6 +67,22 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/docs/events/why",
+        destination: "/docs/actions/why",
+        permanent: true,
+      },
+      {
+        source: "/docs/events/code",
+        destination: "/docs/actions/code",
+        permanent: true,
+      },
+      {
+        source: "/docs/events/code",
+        destination: "/docs/actions/code",
+        permanent: true,
+      },
+
+      {
         source: "/pmf",
         destination: "/",
         permanent: true,

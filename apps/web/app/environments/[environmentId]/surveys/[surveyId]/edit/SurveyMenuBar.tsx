@@ -4,7 +4,7 @@ import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import type { Survey } from "@formbricks/types/surveys";
 import { Button, Input } from "@formbricks/ui";
-import { UserGroupIcon } from "@heroicons/react/24/solid";
+import { UserGroupIcon, ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -43,6 +43,9 @@ export default function SurveyMenuBar({
   return (
     <div className="border-b border-slate-200 bg-white px-5 py-3 sm:flex sm:items-center sm:justify-between">
       <div className="flex space-x-2 whitespace-nowrap">
+        <Button variant="minimal" className="px-0" onClick={() => router.back()}>
+          <ArrowLeftIcon className="h-5 w-5 text-slate-700" />
+        </Button>
         <Input
           defaultValue={localSurvey.name}
           onChange={(e) => {
@@ -60,9 +63,6 @@ export default function SurveyMenuBar({
         </div>
       </div>
       <div className="mt-3 flex sm:ml-4 sm:mt-0">
-        <Button variant="minimal" className="mr-3" onClick={() => router.back()}>
-          Cancel
-        </Button>
         <Button
           variant="secondary"
           className="mr-3"

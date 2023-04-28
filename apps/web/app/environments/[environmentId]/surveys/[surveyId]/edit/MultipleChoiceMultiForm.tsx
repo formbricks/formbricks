@@ -68,7 +68,7 @@ export default function MultipleChoiceMultiForm({
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">Choices</Label>
+        <Label htmlFor="choices">Options</Label>
         <div className="mt-2 space-y-2" id="choices">
           {question.choices &&
             question.choices.map((choice, choiceIdx) => (
@@ -77,7 +77,7 @@ export default function MultipleChoiceMultiForm({
                   id={choice.id}
                   name={choice.id}
                   value={choice.label}
-                  placeholder={`Choice ${choiceIdx + 1}`}
+                  placeholder={`Option ${choiceIdx + 1}`}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
                 />
                 {question.choices && question.choices.length > 2 && (
@@ -89,7 +89,7 @@ export default function MultipleChoiceMultiForm({
               </div>
             ))}
           <Button variant="secondary" type="button" onClick={() => addChoice()}>
-            Add Choice
+            Add Option
           </Button>
         </div>
       </div>

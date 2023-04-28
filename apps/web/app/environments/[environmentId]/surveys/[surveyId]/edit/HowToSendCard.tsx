@@ -25,9 +25,9 @@ const options = [
   },
   {
     id: "link",
-    name: "Shareable Link",
+    name: "Link survey",
     icon: LinkIcon,
-    description: "Creates a personalized survey link to share around.",
+    description: "Creates a standalone survey to share via link.",
     comingSoon: false,
   },
   {
@@ -52,7 +52,7 @@ interface HowToSendCardProps {
 }
 
 export default function HowToSendCard({ localSurvey, setLocalSurvey }: HowToSendCardProps) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   const setSurveyType = (type: string) => {
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
@@ -79,7 +79,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey }: HowToSend
           <div>
             <p className="font-semibold text-slate-800">How to ask</p>
             <p className="mt-1 truncate text-sm text-slate-500">
-              Choose how you want to reach your audience.
+              In-app survey, link survey or email survey.
             </p>
           </div>
         </div>

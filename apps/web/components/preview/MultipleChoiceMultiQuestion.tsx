@@ -43,7 +43,7 @@ export default function MultipleChoiceMultiQuestion({
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
         <fieldset>
-          <legend className="sr-only">Choices</legend>
+          <legend className="sr-only">Options</legend>
           <div className="relative space-y-2 rounded-md bg-white">
             {question.choices &&
               question.choices.map((choice) => (
