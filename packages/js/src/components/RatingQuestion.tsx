@@ -68,7 +68,7 @@ export default function RatingQuestion({
               </label>
             ))}
           </div>
-          <div className="fb-flex fb-justify-between fb-text-sm fb-font-semibold fb-leading-6">
+          <div className="fb-flex fb-justify-between fb-text-slate-500  fb-leading-6 fb-px-1.5 fb-text-xs">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>

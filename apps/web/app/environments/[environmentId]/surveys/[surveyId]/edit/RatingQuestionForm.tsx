@@ -78,12 +78,12 @@ export default function RatingQuestionForm({
 
       <div className="mt-3 flex justify-between gap-8">
         <div className="flex-1">
-          <Label htmlFor="loweLabel">Lower label</Label>
+          <Label htmlFor="lowerLabel">Lower label</Label>
           <div className="mt-2">
             <Input
-              id="loweLabel"
-              name="loweLabel"
-              placeholder="Very unsatisfied"
+              id="lowerLabel"
+              name="lowerLabel"
+              placeholder="Not good"
               value={question.lowerLabel}
               onChange={(e) => updateQuestion(questionIdx, { lowerLabel: e.target.value })}
             />

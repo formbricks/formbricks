@@ -11,6 +11,9 @@ import {
   CursorArrowRippleIcon,
   PresentationChartBarIcon,
   QueueListIcon,
+  StarIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
@@ -76,10 +79,10 @@ export default function QuestionCard({
             className="flex-1 rounded-r-lg border border-slate-200">
             <Collapsible.CollapsibleTrigger
               asChild
-              className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
+              className={cn(open ? "" : "cursor-pointer hover:bg-slate-50 ", "flex justify-between p-4")}>
               <div>
                 <div className="inline-flex">
-                  <div className="-ml-0.5 mr-2 h-5 w-5 text-slate-400">
+                  <div className="-ml-0.5 mr-3 h-6 w-6 text-slate-400">
                     {question.type === "openText" ? (
                       <ChatBubbleBottomCenterTextIcon />
                     ) : question.type === "multipleChoiceSingle" ? (
@@ -90,6 +93,8 @@ export default function QuestionCard({
                       <PresentationChartBarIcon />
                     ) : question.type === "cta" ? (
                       <CursorArrowRippleIcon />
+                    ) : question.type === "rating" ? (
+                      <StarIcon />
                     ) : null}
                   </div>
                   <div>
@@ -168,7 +173,12 @@ export default function QuestionCard({
               ) : null}
               <div className="mt-4 border-t border-slate-200">
                 <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-3">
-                  <Collapsible.CollapsibleTrigger className="text-sm text-slate-800">
+                  <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700 ">
+                    {openAdvanced ? (
+                      <ChevronDownIcon className="mr-1 h-4 w-3" />
+                    ) : (
+                      <ChevronRightIcon className="mr-2 h-4 w-3" />
+                    )}
                     {openAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
                   </Collapsible.CollapsibleTrigger>
 

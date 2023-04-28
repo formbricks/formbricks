@@ -46,7 +46,7 @@ export default function RatingQuestion({
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="my-4">
         <fieldset>
-          <legend className="sr-only">Choices</legend>
+          <legend className="sr-only">Options</legend>
           <div className="flex">
             {Array.from({ length: question.range }, (_, i) => i + 1).map((number) => (
               <label
@@ -67,7 +67,7 @@ export default function RatingQuestion({
               </label>
             ))}
           </div>
-          <div className="flex justify-between text-sm font-semibold leading-6">
+          <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>

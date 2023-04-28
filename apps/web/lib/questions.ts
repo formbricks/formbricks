@@ -1,5 +1,5 @@
 import {
-  ArrowRightOnRectangleIcon,
+  CursorArrowRippleIcon,
   ChatBubbleBottomCenterTextIcon,
   ListBulletIcon,
   PresentationChartBarIcon,
@@ -70,7 +70,7 @@ export const questionTypes: QuestionType[] = [
     id: "cta",
     label: "Call-to-Action",
     description: "Ask your users to perform an action",
-    icon: ArrowRightOnRectangleIcon,
+    icon: CursorArrowRippleIcon,
     preset: {
       headline: "You are one of our power users!",
       buttonLabel: "Book interview",
@@ -84,10 +84,12 @@ export const questionTypes: QuestionType[] = [
     description: "Ask your users to rate something",
     icon: StarIcon,
     preset: {
+      headline: "How would you rate {{productName}}",
+      subheader: "Don't worry, be honest.",
       scale: "number",
       range: 5,
-      lowerLabel: "Very unsatisfied",
-      upperLabel: "Very satisfied",
+      lowerLabel: "Not good",
+      upperLabel: "Very good",
     },
   },
 ];
