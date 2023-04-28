@@ -12,7 +12,6 @@ export default function EditTeamName({ environmentId }) {
   const { team, isLoadingTeam, isErrorTeam } = useTeam(environmentId);
   const { register, handleSubmit } = useForm();
   const [teamId, setTeamId] = useState("");
-  console.log("TEST");
 
   useEffect(() => {
     if (team && team.id !== "") {
