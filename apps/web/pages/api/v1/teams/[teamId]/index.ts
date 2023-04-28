@@ -4,12 +4,13 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication
+
   const currentUser: any = await getSessionUser(req, res);
   if (!currentUser) {
     return res.status(401).json({ message: "Not authenticated" });
   }
 
-  const teamId = req.query.id?.toString();
+  const teamId = req.query.teamId?.toString();
   if (teamId === undefined) {
     return res.status(400).json({ message: "Missing teamId" });
   }

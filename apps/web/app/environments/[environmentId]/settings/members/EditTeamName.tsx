@@ -12,6 +12,7 @@ export default function EditTeamName({ environmentId }) {
   const { team, isLoadingTeam, isErrorTeam } = useTeam(environmentId);
   const { register, handleSubmit } = useForm();
   const [teamId, setTeamId] = useState("");
+  console.log("TEST");
 
   useEffect(() => {
     if (team && team.id !== "") {
@@ -32,13 +33,12 @@ export default function EditTeamName({ environmentId }) {
     <form
       className="w-full max-w-sm items-center"
       onSubmit={handleSubmit((data) => {
-        console.log("Data sent to server:", { ...data });
         triggerTeamMutate({ ...data })
-          .then(() => {
-            toast.success("Team name updated successfully.");
-          })
           .catch((error) => {
             toast.error(`Error: ${error.message}`);
+          })
+          .then(() => {
+            toast.success("Team name updated successfully.");
           });
       })}>
       <Label htmlFor="teamname">Team Name</Label>
