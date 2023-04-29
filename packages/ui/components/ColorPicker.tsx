@@ -8,13 +8,15 @@ import { HexColorInput, HexColorPicker } from "react-colorful";
 export const ColorPicker = ({ color, onChange }: { color: string; onChange: (v: string) => void }) => {
   return (
     <div className="my-2">
-      <div className="flex w-fit items-center space-x-1 rounded border px-2 text-slate-400">
-        #
-        <HexColorInput
-          className="ml-2 mr-2 h-10 w-16 text-slate-500 outline-none focus:border-none"
-          color={color}
-          onChange={onChange}
-        />
+      <div className="flex w-full text-sm items-center justify-between space-x-1 rounded-md border border-slate-300 px-2 text-slate-400">
+        <div>
+          #
+          <HexColorInput
+            className="ml-2 mr-2 h-10 w-16 bg-transparent text-slate-500 outline-none focus:border-none"
+            color={color}
+            onChange={onChange}
+          />
+        </div>
         <PopoverPicker color={color} onChange={onChange} />
       </div>
     </div>
