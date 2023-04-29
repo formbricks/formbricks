@@ -1,21 +1,27 @@
 "use client";
 
 import { cn } from "@/../../packages/lib/cn";
-import { Choice } from "@/../../packages/types/questions";
 import { Button, ColorPicker, Input, Label } from "@/../../packages/ui";
 import { Logo } from "@/components/Logo";
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
+import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProfile } from "@/lib/profile";
+import { useProfileMutation } from "@/lib/profile/mutateProfile";
+import { fetcher } from "@formbricks/lib/fetcher";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import useSWR from "swr";
 
 const MAX_STEPS = 6;
 
 export default function Onboarding() {
+  const { data, error } = useSWR(`/api/v1/environments/find-first`, fetcher);
   const { profile } = useProfile();
-
+  const { triggerProfileMutate } = useProfileMutation();
   const [currentStep, setCurrentStep] = useState(1);
+  const router = useRouter();
 
   const percent = useMemo(() => {
     return Math.floor((currentStep / MAX_STEPS) * 100);
@@ -40,6 +46,10 @@ export default function Onboarding() {
     return <div className="flex h-full w-full items-center justify-center">Loading</div>;
   }
 
+  if (error) {
+    return <div className="flex h-full w-full items-center justify-center">An error occurred</div>
+  }
+
   const skip = () => {
     setCurrentStep(5);
   };
@@ -51,7 +61,17 @@ export default function Onboarding() {
     }
   };
 
-  const done = () => {};
+  const done = async () => {
+    try {
+      const updatedProfile = { ...profile, onboardingDisplayed: true };
+      await triggerProfileMutate(updatedProfile);
+      if (data) {
+        router.push(`/environments/${data.id}`);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   return (
     <div className="flex h-full w-full flex-col bg-slate-50">
@@ -74,7 +94,7 @@ export default function Onboarding() {
         {currentStep === 2 && <Intention next={next} skip={skip} />}
         {currentStep === 3 && <Role next={next} skip={skip} />}
         {currentStep === 4 && <Objective next={next} skip={skip} />}
-        {currentStep === 5 && <Product done={done} />}
+        {currentStep === 5 && <Product done={done} environmentId={data.id} />}
       </div>
       <div className="flex items-center justify-center text-xs text-slate-500">
         <div className="pb-12 pt-8 text-center">
@@ -124,16 +144,44 @@ type Intention = {
   skip: any;
 };
 
+type IntentionChoice = {
+  label: string;
+  id:
+    | "survey_user_segments"
+    | "survey_at_specific_point_in_user_journey"
+    | "enrich_customer_profiles"
+    | "collect_all_user_feedback_on_one_platform"
+    | "other";
+};
+
 const Intention: React.FC<Intention> = ({ next, skip }) => {
-  const intentions: Array<Choice> = [
-    { label: "Survey user segments", id: "survey-user-segments" },
-    { label: "Survey at specific point in user journey", id: "survey-at-specific-point-in-user-journey" },
-    { label: "Enrich customer profiles", id: "enrich-customer-profiles" },
-    { label: "Collect all user feedback on one platform", id: "collect-all-user-feedback-on-one-platform" },
+  const { profile } = useProfile();
+  const { triggerProfileMutate, isMutatingProfile } = useProfileMutation();
+
+  const intentions: Array<IntentionChoice> = [
+    { label: "Survey user segments", id: "survey_user_segments" },
+    { label: "Survey at specific point in user journey", id: "survey_at_specific_point_in_user_journey" },
+    { label: "Enrich customer profiles", id: "enrich_customer_profiles" },
+    { label: "Collect all user feedback on one platform", id: "collect_all_user_feedback_on_one_platform" },
     { label: "Other", id: "other" },
   ];
 
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+
+  const handleNextClick = async () => {
+    if (selectedChoice) {
+      const selectedIntention = intentions.find((intention) => intention.label === selectedChoice);
+      if (selectedIntention) {
+        try {
+          const updatedProfile = { ...profile, intention: selectedIntention.id };
+          await triggerProfileMutate(updatedProfile);
+        } catch (e) {
+          console.log(e);
+        }
+        next();
+      }
+    }
+  };
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
@@ -177,7 +225,12 @@ const Intention: React.FC<Intention> = ({ next, skip }) => {
         <Button size="lg" variant="minimal" onClick={skip}>
           Skip
         </Button>
-        <Button size="lg" variant="primary" onClick={next}>
+        <Button
+          size="lg"
+          variant="primary"
+          loading={isMutatingProfile}
+          disabled={!selectedChoice}
+          onClick={handleNextClick}>
           Next
         </Button>
       </div>
@@ -190,16 +243,39 @@ type Role = {
   skip: any;
 };
 
+type RoleChoice = {
+  label: string;
+  id: "project_manager" | "engineer" | "founder" | "marketing_specialist" | "other";
+};
+
 const Role: React.FC<Role> = ({ next, skip }) => {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
 
-  const roles: Array<Choice> = [
-    { label: "Project Manager", id: "project-manager" },
+  const { profile } = useProfile();
+  const { triggerProfileMutate, isMutatingProfile } = useProfileMutation();
+
+  const roles: Array<RoleChoice> = [
+    { label: "Project Manager", id: "project_manager" },
     { label: "Engineer", id: "engineer" },
     { label: "Founder", id: "founder" },
-    { label: "Marketing Specialist", id: "marketing-specialist" },
+    { label: "Marketing Specialist", id: "marketing_specialist" },
     { label: "Other", id: "other" },
   ];
+
+  const handleNextClick = async () => {
+    if (selectedChoice) {
+      const selectedRole = roles.find((role) => role.label === selectedChoice);
+      if (selectedRole) {
+        try {
+          const updatedProfile = { ...profile, role: selectedRole.id };
+          await triggerProfileMutate(updatedProfile);
+        } catch (e) {
+          console.log(e);
+        }
+        next();
+      }
+    }
+  };
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
@@ -243,7 +319,12 @@ const Role: React.FC<Role> = ({ next, skip }) => {
         <Button size="lg" variant="minimal" onClick={skip}>
           Skip
         </Button>
-        <Button size="lg" variant="primary" onClick={next}>
+        <Button
+          size="lg"
+          variant="primary"
+          loading={isMutatingProfile}
+          disabled={!selectedChoice}
+          onClick={handleNextClick}>
           Next
         </Button>
       </div>
@@ -256,17 +337,46 @@ type Objective = {
   skip: any;
 };
 
+type ObjectiveChoice = {
+  label: string;
+  id:
+    | "increase_conversion"
+    | "improve_user_retention"
+    | "increase_user_adoption"
+    | "sharpen_marketing_messaging"
+    | "support_sales"
+    | "other";
+};
+
 const Objective: React.FC<Objective> = ({ next, skip }) => {
-  const objectives: Array<Choice> = [
-    { label: "Increase conversion", id: "increase-conversion" },
-    { label: "Improve user retention", id: "improve-user-retention" },
-    { label: "Increase user adoption", id: "increase-user-adoption" },
-    { label: "Sharpen marketing messaging", id: "sharpen-marketing-messaging" },
-    { label: "Support sales", id: "support-sales" },
+  const objectives: Array<ObjectiveChoice> = [
+    { label: "Increase conversion", id: "increase_conversion" },
+    { label: "Improve user retention", id: "improve_user_retention" },
+    { label: "Increase user adoption", id: "increase_user_adoption" },
+    { label: "Sharpen marketing messaging", id: "sharpen_marketing_messaging" },
+    { label: "Support sales", id: "support_sales" },
     { label: "Other", id: "other" },
   ];
 
+  const { profile } = useProfile();
+  const { triggerProfileMutate, isMutatingProfile } = useProfileMutation();
+
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+
+  const handleNextClick = async () => {
+    if (selectedChoice) {
+      const selectedObjective = objectives.find((objective) => objective.label === selectedChoice);
+      if (selectedObjective) {
+        try {
+          const updatedProfile = { ...profile, objective: selectedObjective.id };
+          await triggerProfileMutate(updatedProfile);
+        } catch (e) {
+          console.log(e);
+        }
+        next();
+      }
+    }
+  };
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
@@ -313,7 +423,12 @@ const Objective: React.FC<Objective> = ({ next, skip }) => {
         <Button size="lg" variant="minimal" onClick={skip}>
           Skip
         </Button>
-        <Button size="lg" variant="primary" onClick={next}>
+        <Button
+          size="lg"
+          variant="primary"
+          loading={isMutatingProfile}
+          disabled={!selectedChoice}
+          onClick={handleNextClick}>
           Next
         </Button>
       </div>
@@ -323,9 +438,12 @@ const Objective: React.FC<Objective> = ({ next, skip }) => {
 
 type Product = {
   done: any;
+  environmentId: string;
 };
 
-const Product: React.FC<Product> = ({ done }) => {
+const Product: React.FC<Product> = ({ done, environmentId }) => {
+  const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
+
   const [name, setName] = useState("");
   const [color, setColor] = useState("#334155");
 
@@ -339,12 +457,18 @@ const Product: React.FC<Product> = ({ done }) => {
 
   const dummyChoices = ["❤️ Love it!"];
 
-  const handleDoneClick = () => {
-    if (name) {
-      done()
-      return
+  const handleDoneClick = async () => {
+    if (!name || !environmentId) {
+      return;
     }
-  }
+
+    try {
+      await triggerProductMutate({ name, brandColor: color });
+    } catch (e) {
+      console.log(e);
+    }
+    done();
+  };
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
@@ -386,6 +510,7 @@ const Product: React.FC<Product> = ({ done }) => {
                         <span className="flex items-center text-sm">
                           <input
                             checked
+                            readOnly
                             type="radio"
                             className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
                             style={{ borderColor: "brandColor", color: "brandColor" }}
@@ -406,8 +531,13 @@ const Product: React.FC<Product> = ({ done }) => {
           </div>
         </div>
       </div>
-      <div className="flex justify-end items-center">
-        <Button size="lg" variant="primary" disabled={!name} onClick={handleDoneClick}>
+      <div className="flex items-center justify-end">
+        <Button
+          size="lg"
+          variant="primary"
+          loading={isMutatingProduct}
+          disabled={!name || !environmentId}
+          onClick={handleDoneClick}>
           Done
         </Button>
       </div>
