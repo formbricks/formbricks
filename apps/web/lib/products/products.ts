@@ -1,5 +1,5 @@
-import useSWR from "swr";
 import { fetcher } from "@formbricks/lib/fetcher";
+import useSWR from "swr";
 
 export const useProduct = (environmentId: string) => {
   const { data, isLoading, error, mutate, isValidating } = useSWR(
