@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/../../packages/lib/cn";
+import { Choice } from "@/../../packages/types/questions";
 import { Button, ColorPicker, Input, Label } from "@/../../packages/ui";
 import { Logo } from "@/components/Logo";
 import Headline from "@/components/preview/Headline";
@@ -124,13 +125,15 @@ type Intention = {
 };
 
 const Intention: React.FC<Intention> = ({ next, skip }) => {
-  const intentions = [
-    "Survey user segments",
-    "Survey at specific point in user journey",
-    "Enrich customer profiles",
-    "Collect all user feedback on one platform",
-    "Other",
+  const intentions: Array<Choice> = [
+    { label: "Survey user segments", id: "survey-user-segments" },
+    { label: "Survey at specific point in user journey", id: "survey-at-specific-point-in-user-journey" },
+    { label: "Enrich customer profiles", id: "enrich-customer-profiles" },
+    { label: "Collect all user feedback on one platform", id: "collect-all-user-feedback-on-one-platform" },
+    { label: "Other", id: "other" },
   ];
+
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
@@ -140,17 +143,29 @@ const Intention: React.FC<Intention> = ({ next, skip }) => {
         <div className="mt-4">
           <fieldset>
             <legend className="sr-only">Choices</legend>
-            <div className="pointer-events-none relative space-y-2 rounded-md">
-              {intentions.map((intention) => (
+            <div className=" relative space-y-2 rounded-md">
+              {intentions.map((choice) => (
                 <label
-                  key={intention}
-                  className="relative flex flex-col rounded-md border border-gray-200 p-4 hover:bg-slate-50 focus:outline-none">
+                  key={choice.id}
+                  className={cn(
+                    selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
+                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
+                  )}>
                   <span className="flex items-center text-sm">
                     <input
                       type="radio"
+                      id={choice.id}
+                      value={choice.label}
+                      checked={choice.label === selectedChoice}
                       className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
+                      aria-labelledby={`${choice.id}-label`}
+                      onChange={(e) => {
+                        setSelectedChoice(e.currentTarget.value);
+                      }}
                     />
-                    <span className="ml-3 font-medium">{intention}</span>
+                    <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                      {choice.label}
+                    </span>
                   </span>
                 </label>
               ))}
@@ -176,7 +191,15 @@ type Role = {
 };
 
 const Role: React.FC<Role> = ({ next, skip }) => {
-  const roles = ["Project Manager", "Engineer", "Founder", "Marketing Specialist", "Other"];
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+
+  const roles: Array<Choice> = [
+    { label: "Project Manager", id: "project-manager" },
+    { label: "Engineer", id: "engineer" },
+    { label: "Founder", id: "founder" },
+    { label: "Marketing Specialist", id: "marketing-specialist" },
+    { label: "Other", id: "other" },
+  ];
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
@@ -186,17 +209,29 @@ const Role: React.FC<Role> = ({ next, skip }) => {
         <div className="mt-4">
           <fieldset>
             <legend className="sr-only">Choices</legend>
-            <div className="pointer-events-none relative space-y-2 rounded-md">
-              {roles.map((role) => (
+            <div className=" relative space-y-2 rounded-md">
+              {roles.map((choice) => (
                 <label
-                  key={role}
-                  className="relative flex flex-col rounded-md border border-gray-200 p-4 hover:bg-slate-50 focus:outline-none">
+                  key={choice.id}
+                  className={cn(
+                    selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
+                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
+                  )}>
                   <span className="flex items-center text-sm">
                     <input
                       type="radio"
+                      id={choice.id}
+                      value={choice.label}
+                      checked={choice.label === selectedChoice}
                       className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
+                      aria-labelledby={`${choice.id}-label`}
+                      onChange={(e) => {
+                        setSelectedChoice(e.currentTarget.value);
+                      }}
                     />
-                    <span className="ml-3 font-medium">{role}</span>
+                    <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                      {choice.label}
+                    </span>
                   </span>
                 </label>
               ))}
@@ -222,14 +257,16 @@ type Objective = {
 };
 
 const Objective: React.FC<Objective> = ({ next, skip }) => {
-  const objectives = [
-    "Increase conversion",
-    "Improve user retention",
-    "Increase user adoption",
-    "Sharpen marketing messaging",
-    "Support sales",
-    "Other",
+  const objectives: Array<Choice> = [
+    { label: "Increase conversion", id: "increase-conversion" },
+    { label: "Improve user retention", id: "improve-user-retention" },
+    { label: "Increase user adoption", id: "increase-user-adoption" },
+    { label: "Sharpen marketing messaging", id: "sharpen-marketing-messaging" },
+    { label: "Support sales", id: "support-sales" },
+    { label: "Other", id: "other" },
   ];
+
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
@@ -242,17 +279,29 @@ const Objective: React.FC<Objective> = ({ next, skip }) => {
         <div className="mt-4">
           <fieldset>
             <legend className="sr-only">Choices</legend>
-            <div className="pointer-events-none relative space-y-2 rounded-md">
-              {objectives.map((objective) => (
+            <div className=" relative space-y-2 rounded-md">
+              {objectives.map((choice) => (
                 <label
-                  key={objective}
-                  className="relative flex flex-col rounded-md border border-gray-200 p-4 hover:bg-slate-50 focus:outline-none">
+                  key={choice.id}
+                  className={cn(
+                    selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
+                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
+                  )}>
                   <span className="flex items-center text-sm">
                     <input
                       type="radio"
+                      id={choice.id}
+                      value={choice.label}
+                      checked={choice.label === selectedChoice}
                       className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
+                      aria-labelledby={`${choice.id}-label`}
+                      onChange={(e) => {
+                        setSelectedChoice(e.currentTarget.value);
+                      }}
                     />
-                    <span className="ml-3 font-medium">{objective}</span>
+                    <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                      {choice.label}
+                    </span>
                   </span>
                 </label>
               ))}
@@ -290,6 +339,13 @@ const Product: React.FC<Product> = ({ done }) => {
 
   const dummyChoices = ["❤️ Love it!"];
 
+  const handleDoneClick = () => {
+    if (name) {
+      done()
+      return
+    }
+  }
+
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
       <div className="px-4">
@@ -297,7 +353,10 @@ const Product: React.FC<Product> = ({ done }) => {
         <Subheader subheader="You can always change these settings later." questionId="none" />
         <div className="mt-4 flex flex-col gap-2">
           <div className="pb-2">
-            <Label htmlFor="product">Your product name</Label>
+            <div className="flex justify-between">
+              <Label htmlFor="product">Your product name</Label>
+              <span className="text-xs text-slate-500">Required</span>
+            </div>
             <div className="mt-2">
               <Input id="product" type="text" placeholder="e.g. Formbricks" onChange={handleNameChange} />
             </div>
@@ -309,17 +368,17 @@ const Product: React.FC<Product> = ({ done }) => {
             </div>
           </div>
           <div className="relative flex cursor-not-allowed flex-col items-center gap-4 rounded-md border border-slate-300 px-16 py-8">
-              <div
-                className="absolute left-0 right-0 top-0 h-full w-full opacity-10"
-                style={{ backgroundColor: color }}
-              />
+            <div
+              className="absolute left-0 right-0 top-0 h-full w-full opacity-10"
+              style={{ backgroundColor: color }}
+            />
             <p className="text-xs text-slate-500">This is what your survey will look like:</p>
             <div className="relative w-full max-w-sm cursor-not-allowed rounded-lg bg-white px-4 py-6 shadow-lg ring-1 ring-black ring-opacity-5 sm:p-6">
               <Headline headline={`How do you like ${name ? name : "PRODUCT"}?`} questionId="none" />
               <div className="mt-4">
                 <fieldset>
                   <legend className="sr-only">Choices</legend>
-                  <div className="pointer-events-none relative space-y-2 rounded-md">
+                  <div className=" relative space-y-2 rounded-md">
                     {dummyChoices.map((choice) => (
                       <label
                         key={choice}
@@ -347,8 +406,8 @@ const Product: React.FC<Product> = ({ done }) => {
           </div>
         </div>
       </div>
-      <div className="flex justify-end">
-        <Button size="lg" variant="primary" onClick={done}>
+      <div className="flex justify-end items-center">
+        <Button size="lg" variant="primary" disabled={!name} onClick={handleDoneClick}>
           Done
         </Button>
       </div>
