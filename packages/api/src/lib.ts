@@ -1,70 +1,54 @@
 import { Result, err, ok, wrapThrows } from "@formbricks/errors";
-import { ResponseCreateRequest, ResponseUpdateRequest } from "@formbricks/types/js";
-import {
-  StartResponseResponse,
-  UpdateResponseResponse,
-  UpdateResponseResponseFormatted,
-} from "./dtos/responses";
+import { CreateResponseResponse, UpdateResponseResponseFormatted } from "./dtos/responses";
 import { NetworkError } from "./errors";
+
+import {
+  ICreateResponseOptions,
+  IUpdateResponseOptions,
+  createResponse,
+  updateResponse,
+} from "./endpoints/response";
+import { EnvironmentId, RequestFn } from "./types";
+
+export interface IFormbricksAPIOptions {
+  apiHost?: string;
+  environmentId: EnvironmentId;
+}
 
 export class FormbricksAPI {
   private readonly baseUrl: string;
-  private readonly environmentId: string;
+  private readonly environmentId: EnvironmentId;
 
-  // DO NOT declare the field in the constructor, it complicates tree-shaking
-  constructor(apiHost: string, environmentId: string) {
-    this.baseUrl = apiHost;
-    this.environmentId = environmentId;
+  constructor(options: IFormbricksAPIOptions) {
+    this.baseUrl = options.apiHost || ""; //TODO: add cloud hosted api url
+    this.environmentId = options.environmentId;
   }
 
-  async startResponse(
-    surveyId: string,
-    personId: string,
-    data: { [key: string]: any }
-  ): Promise<Result<StartResponseResponse, NetworkError>> {
-    const result = await this.request<StartResponseResponse, any, ResponseCreateRequest>(
-      `/api/v1/client/environments/${this.environmentId}/responses`,
-      {
-        surveyId,
-        personId,
-        response: {
-          data,
-          finished: false,
-        },
-      },
-      { method: "POST" }
-    );
-
-    return result;
+  async createResponse(
+    options: Omit<ICreateResponseOptions, "environmentId">
+  ): Promise<Result<CreateResponseResponse, NetworkError>> {
+    return this.runWithEnvironmentId(createResponse, options);
   }
 
   async updateResponse(
-    responseId: string,
-    data: { [key: string]: any },
-    finished: boolean = false
+    options: Omit<IUpdateResponseOptions, "environmentId">
   ): Promise<Result<UpdateResponseResponseFormatted, NetworkError>> {
-    const result = await this.request<UpdateResponseResponse, any, ResponseUpdateRequest>(
-      `/api/v1/client/environments/${this.environmentId}/responses/${responseId}`,
-      {
-        response: {
-          data,
-          finished,
-        },
-      },
-      {
-        method: "PUT",
-      }
-    );
+    return this.runWithEnvironmentId(updateResponse, options);
+  }
 
-    if (result.ok === false) return result;
+  /*
+    This was added to reduce code duplication
 
-    const newResponse: UpdateResponseResponseFormatted = {
-      ...result.value,
-      createdAt: new Date(result.value.createdAt),
-      updatedAt: new Date(result.value.updatedAt),
-    };
+    It checks that the function passed has the environmentId in the Options type
+    and automatically adds it to the options
+  */
+  private runWithEnvironmentId<T, E, Options extends { environmentId: EnvironmentId }>(
+    fn: (request: RequestFn, options: Options) => Promise<Result<T, E>>,
+    options: Omit<Options, "environmentId">
+  ): Promise<Result<T, E>> {
+    const newOptions = { environmentId: this.environmentId, ...options } as Options;
 
-    return ok(newResponse);
+    return fn(this.request, newOptions);
   }
 
   private async request<T = any, E = any, Data = any>(
@@ -73,20 +57,23 @@ export class FormbricksAPI {
     options?: RequestInit
   ): Promise<Result<T, E | NetworkError | Error>> {
     const url = `${this.baseUrl}${path}`;
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+
+    const body = JSON.stringify(data);
 
     const res = wrapThrows(() =>
       fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+        headers,
+        body,
         ...options,
       })
     )();
 
     if (res.ok === false) return err(res.error);
 
-    const response = await res.value;
+    const response = await res.data;
     const resJson = await response.json();
 
     if (!response.ok)

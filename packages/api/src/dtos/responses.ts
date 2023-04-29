@@ -1,15 +1,17 @@
-export interface StartResponseResponse {
-  id: string;
+import { KeyValueData, PersonId, ResponseId, SurveyId } from "../types";
+
+export interface CreateResponseResponse {
+  id: ResponseId;
 }
 
 export interface UpdateResponseResponse {
-  id: string;
+  id: ResponseId;
   createdAt: string;
   updatedAt: string;
   finished: boolean;
-  surveyId: string;
-  personId: string;
-  data: { [key: string]: any };
+  surveyId: SurveyId;
+  personId: PersonId;
+  data: KeyValueData;
   meta: {}; //TODO: figure out what this is
   userAttributes: string[]; //TODO: figure out what this is
   tags: string[]; //TODO: figure out what this is
