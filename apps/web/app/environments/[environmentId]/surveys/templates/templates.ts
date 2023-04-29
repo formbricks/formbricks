@@ -11,9 +11,16 @@ import {
   DogChaserIcon,
   DoorIcon,
   FeedbackIcon,
+  InterviewPromptIcon,
   OnboardingIcon,
   PMFIcon,
   TaskListSearchIcon,
+  HeartCommentIcon,
+  GaugeSpeedFastIcon,
+  LoadingBarIcon,
+  ArrowUpRightIcon,
+  UserSearchGlasIcon,
+  VideoTabletAdjustIcon,
 } from "@formbricks/ui";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -28,6 +35,7 @@ export const templates: Template[] = [
     name: "Product Market Fit Survey",
     icon: PMFIcon,
     category: "Product Experience",
+    objectives: ["Improve adoption", "Increase conversion"],
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       name: "Product Market Fit Survey",
@@ -97,6 +105,7 @@ export const templates: Template[] = [
     name: "Onboarding Segmentation",
     icon: OnboardingIcon,
     category: "Product Experience",
+    objectives: ["Improve adoption", "Increase retention"],
     description: "Learn more about who signed up to your product and why.",
     preset: {
       name: "Onboarding Segmentation",
@@ -195,7 +204,8 @@ export const templates: Template[] = [
   {
     name: "Uncover Strengths & Weaknesses",
     icon: TaskListSearchIcon,
-    category: "Growth Marketing",
+    category: "Growth",
+    objectives: ["Sharpen messaging", "Increase retention"],
     description: "Find out what users like and don't like about your product or offering.",
     preset: {
       name: "Uncover Strengths & Weaknesses",
@@ -264,7 +274,8 @@ export const templates: Template[] = [
   {
     name: "Marketing Attribution",
     icon: AppPieChartIcon,
-    category: "Growth Marketing",
+    category: "Growth",
+    objectives: ["Increase conversion", "Sharpen messaging"],
     description: "How did you first hear about us?",
     preset: {
       name: "Marketing Attribution",
@@ -306,6 +317,7 @@ export const templates: Template[] = [
     name: "Churn Survey",
     icon: CancelSubscriptionIcon,
     category: "Increase Revenue",
+    objectives: ["Sharpen messaging", "Increase retention"],
     description: "Find out why people cancel their subscriptions. These insights are pure gold!",
     preset: {
       name: "Churn Survey",
@@ -354,6 +366,7 @@ export const templates: Template[] = [
     name: "Missed Trial Conversion",
     icon: BaseballIcon,
     category: "Increase Revenue",
+    objectives: ["Improve adoption", "Increase conversion", "Increase retention"],
     description: "Find out why people stopped their trial. These insights help you improve your funnel.",
     preset: {
       name: "Missed Trial Conversion",
@@ -401,6 +414,7 @@ export const templates: Template[] = [
     name: "Changing subscription experience",
     icon: CashCalculatorIcon,
     category: "Increase Revenue",
+    objectives: ["Increase conversion", "Increase retention"],
     description: "Find out what goes through peoples minds when changing their subscriptions.",
     preset: {
       name: "Changing subscription experience",
@@ -461,6 +475,7 @@ export const templates: Template[] = [
     name: "Measure Task Accomplishment",
     icon: CheckMarkIcon,
     category: "Product Experience",
+    objectives: ["Improve adoption", "Increase retention"],
     description: "See if people get their 'Job To Be Done' done. Successful people are better customers.",
     preset: {
       name: "Measure Task Accomplishment",
@@ -499,6 +514,7 @@ export const templates: Template[] = [
     name: "Identify Customer Goals",
     icon: ArrowRightCircleIcon,
     category: "Product Experience",
+    objectives: ["Improve adoption", "Sharpen messaging", "Increase retention"],
     description:
       "Better understand if your messaging creates the right expectations of the value your product provides.",
     preset: {
@@ -536,6 +552,7 @@ export const templates: Template[] = [
     name: "Feature Chaser",
     icon: DogChaserIcon,
     category: "Product Experience",
+    objectives: ["Increase retention"],
     description: "Follow up with users who just used a specific feature.",
     preset: {
       name: "Feature Chaser",
@@ -582,7 +599,8 @@ export const templates: Template[] = [
   {
     name: "Fake Door Follow-Up",
     icon: DoorIcon,
-    category: "Product Exploration",
+    category: "Exploration",
+    objectives: ["Improve adoption"],
     description: "Follow up with users who ran into one of your Fake Door experiments.",
     preset: {
       name: "Fake Door Follow-Up",
@@ -615,6 +633,7 @@ export const templates: Template[] = [
     name: "Feedback Box",
     icon: FeedbackIcon,
     category: "Product Experience",
+    objectives: ["Increase retention"],
     description: "Give your users the chance to seamlessly share what's on their minds.",
     preset: {
       name: "Feedback Box",
@@ -650,6 +669,7 @@ export const templates: Template[] = [
     name: "Integration usage survey",
     icon: DashboardIcon,
     category: "Product Experience",
+    objectives: ["Improve adoption", "Increase retention"],
     description: "Evaluate how easily users can add integrations to your product. Find blind spots.",
     preset: {
       name: "Integration Usage Survey",
@@ -694,9 +714,57 @@ export const templates: Template[] = [
     },
   },
   {
+    name: "New integration survey",
+    icon: DashboardIcon,
+    category: "Exploration",
+    objectives: ["Improve adoption", "Increase conversion"],
+    description: "Find out which integrations your users would like to see next.",
+    preset: {
+      name: "New integration survey",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "Which other tools are you using?",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "PostHog",
+            },
+            {
+              id: createId(),
+              label: "Segment",
+            },
+            {
+              id: createId(),
+              label: "Hubspot",
+            },
+            {
+              id: createId(),
+              label: "Twilio",
+            },
+            {
+              id: createId(),
+              label: "Other",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "If you chose other, please clarify:",
+          required: false,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
     name: "Docs Feedback",
     icon: CodeBookIcon,
     category: "Product Experience",
+    objectives: ["Improve adoption", "Increase retention"],
     description: "Measure how clear each page of your developer documentation is.",
     preset: {
       name: "{{productName}} Docs Feedback",
@@ -733,24 +801,214 @@ export const templates: Template[] = [
       thankYouCard: thankYouCardDefault,
     },
   },
-  /*  {
-    name: "In-app Interview Prompt",
-    icon: OnboardingIcon,
+  {
+    name: "Interview Prompt",
+    icon: InterviewPromptIcon,
+    category: "Exploration",
+    objectives: ["Increase retention"],
     description: "Invite a specific subset of your users to schedule an interview with your product team.",
     preset: {
-      name: "In-app Interview Prompt",
+      name: "Interview Prompt",
       questions: [
         {
           id: createId(),
-          type: "prompt",
+          type: "cta",
           headline: "Wanna do a short 15m interview with Charly?",
-          subheader: "That would really help us",
           buttonLabel: "Book slot",
-          buttonUrl: "https://cal.com/formbricks",
+          buttonUrl: "https://cal.com/johannes",
+          buttonExternal: true,
+          required: false,
         },
       ],
-    },s
-  }, */
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Review Prompt",
+    icon: HeartCommentIcon,
+    category: "Growth",
+    objectives: ["Increase conversion", "Support sales"],
+    description: "Invite users who love your product to review it publicly.",
+    preset: {
+      name: "Review Prompt",
+      questions: [
+        {
+          id: createId(),
+          type: "cta",
+          headline: "You're one of our most valued customers! Please write a review for us.",
+          buttonLabel: "Write review",
+          buttonUrl: "https://formbricks.com/github",
+          buttonExternal: true,
+          required: false,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Net Promoter Score (NPS)",
+    icon: GaugeSpeedFastIcon,
+    category: "Customer Success",
+    objectives: ["Support sales"],
+    description: "Measure the Net Promoter Score of your product.",
+    preset: {
+      name: "{{productName}} NPS",
+      questions: [
+        {
+          id: createId(),
+          type: "nps",
+          headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
+          required: false,
+          lowerLabel: "Not likely",
+          upperLabel: "Very likely",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Identify upsell opportunities",
+    icon: ArrowUpRightIcon,
+    category: "Increase Revenue",
+    objectives: ["Support sales", "Sharpen messaging"],
+    description: "Find out how much time your product saves your user. Use it to upsell.",
+    preset: {
+      name: "Identify upsell opportunities",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "How many hours does your team save per week by using {{productName}}?",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Less than 1 hour",
+            },
+            {
+              id: createId(),
+              label: "1 to 2 hours",
+            },
+            {
+              id: createId(),
+              label: "3 to 5 hours",
+            },
+            {
+              id: createId(),
+              label: "5+ hours",
+            },
+          ],
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Build Product Roadmap",
+    icon: LoadingBarIcon,
+    category: "Product Experience",
+    objectives: ["Improve adoption", "Increase retention"],
+    description: "Ask how users rate your product. Identify blind spots to build your roadmap.",
+    preset: {
+      name: "Build Product Roadmap",
+      questions: [
+        {
+          id: createId(),
+          type: "rating",
+          headline: "How satisfied are you with the features of {{productName}}?",
+          required: true,
+          lowerLabel: "Not satisfied",
+          upperLabel: "Very satisfied",
+          scale: "number",
+          range: 5,
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "What's the #1 thing you'd like to change in {{productName}}?",
+          required: false,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Gauge Feature Satisfaction",
+    icon: UserSearchGlasIcon,
+    category: "Product Experience",
+    objectives: ["Improve adoption", "Increase retention"],
+    description: "Evaluate the satisfaction of specific features of your product.",
+    preset: {
+      name: "Gauge Feature Satisfaction",
+      questions: [
+        {
+          id: createId(),
+          type: "rating",
+          headline: "How easy was it to achieve ... ?",
+          required: true,
+          lowerLabel: "Not easy",
+          upperLabel: "Very easy",
+          scale: "number",
+          range: 5,
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "What is one thing we could do better?",
+          required: false,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Marketing Site Clarity",
+    icon: VideoTabletAdjustIcon,
+    category: "Growth",
+    objectives: ["Increase conversion", "Sharpen messaging"],
+    description: "Identify users dropping off your marketing site. Improve your messaging.",
+    preset: {
+      name: "Marketing Site Clarity",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "Do you have all the info you need to give {{productName}} a try?",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Yes, totally",
+            },
+            {
+              id: createId(),
+              label: "Kind of...",
+            },
+            {
+              id: createId(),
+              label: "No, not at all",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "What’s missing or unclear to you about {{productName}}?",
+          required: false,
+        },
+        {
+          id: createId(),
+          type: "cta",
+          headline: "Thanks for your answer! Get 25% off your first 6 months:",
+          required: false,
+          buttonLabel: "Get discount",
+          buttonUrl: "https://app.formbricks.com/auth/signup",
+          buttonExternal: true,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
 ];
 
 export const customSurvey: Template = {

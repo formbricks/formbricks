@@ -1,10 +1,18 @@
 import { Question } from "./questions";
 
+export type Objective =
+  | "Improve adoption"
+  | "Increase conversion"
+  | "Support sales"
+  | "Sharpen messaging"
+  | "Increase retention";
+
 export interface Template {
   name: string;
   icon: any;
   description: string;
-  category?: "Product Experience" | "Product Exploration" | "Growth Marketing" | "Increase Revenue";
+  category?: "Product Experience" | "Exploration" | "Growth" | "Increase Revenue" | "Customer Success";
+  objectives?: [Objective, Objective?, Objective?];
   preset: {
     name: string;
     questions: Question[];
