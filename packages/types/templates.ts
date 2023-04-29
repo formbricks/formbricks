@@ -1,11 +1,11 @@
 import { Question } from "./questions";
 
 export type Objective =
-  | "Improve adoption"
-  | "Increase conversion"
-  | "Support sales"
-  | "Sharpen messaging"
-  | "Increase retention";
+  | "increase_user_adoption"
+  | "increase_conversion"
+  | "support_sales"
+  | "sharpen_marketing_messaging"
+  | "improve_user_retention";
 
 export interface Template {
   name: string;

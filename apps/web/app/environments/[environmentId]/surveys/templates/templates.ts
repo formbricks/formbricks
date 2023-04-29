@@ -35,7 +35,7 @@ export const templates: Template[] = [
     name: "Product Market Fit Survey",
     icon: PMFIcon,
     category: "Product Experience",
-    objectives: ["Improve adoption", "Increase conversion"],
+    objectives: ["increase_user_adoption", "increase_conversion"],
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
       name: "Product Market Fit Survey",
@@ -105,7 +105,7 @@ export const templates: Template[] = [
     name: "Onboarding Segmentation",
     icon: OnboardingIcon,
     category: "Product Experience",
-    objectives: ["Improve adoption", "Increase retention"],
+    objectives: ["increase_user_adoption", "improve_user_retention"],
     description: "Learn more about who signed up to your product and why.",
     preset: {
       name: "Onboarding Segmentation",
@@ -205,7 +205,7 @@ export const templates: Template[] = [
     name: "Uncover Strengths & Weaknesses",
     icon: TaskListSearchIcon,
     category: "Growth",
-    objectives: ["Sharpen messaging", "Increase retention"],
+    objectives: ["sharpen_marketing_messaging", "improve_user_retention"],
     description: "Find out what users like and don't like about your product or offering.",
     preset: {
       name: "Uncover Strengths & Weaknesses",
@@ -275,7 +275,7 @@ export const templates: Template[] = [
     name: "Marketing Attribution",
     icon: AppPieChartIcon,
     category: "Growth",
-    objectives: ["Increase conversion", "Sharpen messaging"],
+    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
     description: "How did you first hear about us?",
     preset: {
       name: "Marketing Attribution",
@@ -317,7 +317,7 @@ export const templates: Template[] = [
     name: "Churn Survey",
     icon: CancelSubscriptionIcon,
     category: "Increase Revenue",
-    objectives: ["Sharpen messaging", "Increase retention"],
+    objectives: ["sharpen_marketing_messaging", "improve_user_retention"],
     description: "Find out why people cancel their subscriptions. These insights are pure gold!",
     preset: {
       name: "Churn Survey",
@@ -366,7 +366,7 @@ export const templates: Template[] = [
     name: "Missed Trial Conversion",
     icon: BaseballIcon,
     category: "Increase Revenue",
-    objectives: ["Improve adoption", "Increase conversion", "Increase retention"],
+    objectives: ["increase_user_adoption", "increase_conversion", "improve_user_retention"],
     description: "Find out why people stopped their trial. These insights help you improve your funnel.",
     preset: {
       name: "Missed Trial Conversion",
@@ -414,7 +414,7 @@ export const templates: Template[] = [
     name: "Changing subscription experience",
     icon: CashCalculatorIcon,
     category: "Increase Revenue",
-    objectives: ["Increase conversion", "Increase retention"],
+    objectives: ["increase_conversion", "improve_user_retention"],
     description: "Find out what goes through peoples minds when changing their subscriptions.",
     preset: {
       name: "Changing subscription experience",
@@ -475,7 +475,7 @@ export const templates: Template[] = [
     name: "Measure Task Accomplishment",
     icon: CheckMarkIcon,
     category: "Product Experience",
-    objectives: ["Improve adoption", "Increase retention"],
+    objectives: ["increase_user_adoption", "improve_user_retention"],
     description: "See if people get their 'Job To Be Done' done. Successful people are better customers.",
     preset: {
       name: "Measure Task Accomplishment",
@@ -514,7 +514,7 @@ export const templates: Template[] = [
     name: "Identify Customer Goals",
     icon: ArrowRightCircleIcon,
     category: "Product Experience",
-    objectives: ["Improve adoption", "Sharpen messaging", "Increase retention"],
+    objectives: ["increase_user_adoption", "sharpen_marketing_messaging", "improve_user_retention"],
     description:
       "Better understand if your messaging creates the right expectations of the value your product provides.",
     preset: {
@@ -552,7 +552,7 @@ export const templates: Template[] = [
     name: "Feature Chaser",
     icon: DogChaserIcon,
     category: "Product Experience",
-    objectives: ["Increase retention"],
+    objectives: ["improve_user_retention"],
     description: "Follow up with users who just used a specific feature.",
     preset: {
       name: "Feature Chaser",
@@ -600,7 +600,7 @@ export const templates: Template[] = [
     name: "Fake Door Follow-Up",
     icon: DoorIcon,
     category: "Exploration",
-    objectives: ["Improve adoption"],
+    objectives: ["increase_user_adoption"],
     description: "Follow up with users who ran into one of your Fake Door experiments.",
     preset: {
       name: "Fake Door Follow-Up",
@@ -633,7 +633,7 @@ export const templates: Template[] = [
     name: "Feedback Box",
     icon: FeedbackIcon,
     category: "Product Experience",
-    objectives: ["Increase retention"],
+    objectives: ["improve_user_retention"],
     description: "Give your users the chance to seamlessly share what's on their minds.",
     preset: {
       name: "Feedback Box",
@@ -669,7 +669,7 @@ export const templates: Template[] = [
     name: "Integration usage survey",
     icon: DashboardIcon,
     category: "Product Experience",
-    objectives: ["Improve adoption", "Increase retention"],
+    objectives: ["increase_user_adoption", "improve_user_retention"],
     description: "Evaluate how easily users can add integrations to your product. Find blind spots.",
     preset: {
       name: "Integration Usage Survey",
@@ -717,7 +717,7 @@ export const templates: Template[] = [
     name: "New integration survey",
     icon: DashboardIcon,
     category: "Exploration",
-    objectives: ["Improve adoption", "Increase conversion"],
+    objectives: ["increase_user_adoption", "increase_conversion"],
     description: "Find out which integrations your users would like to see next.",
     preset: {
       name: "New integration survey",
@@ -764,7 +764,7 @@ export const templates: Template[] = [
     name: "Docs Feedback",
     icon: CodeBookIcon,
     category: "Product Experience",
-    objectives: ["Improve adoption", "Increase retention"],
+    objectives: ["increase_user_adoption", "improve_user_retention"],
     description: "Measure how clear each page of your developer documentation is.",
     preset: {
       name: "{{productName}} Docs Feedback",
@@ -805,7 +805,7 @@ export const templates: Template[] = [
     name: "Interview Prompt",
     icon: InterviewPromptIcon,
     category: "Exploration",
-    objectives: ["Increase retention"],
+    objectives: ["improve_user_retention"],
     description: "Invite a specific subset of your users to schedule an interview with your product team.",
     preset: {
       name: "Interview Prompt",
@@ -827,7 +827,7 @@ export const templates: Template[] = [
     name: "Review Prompt",
     icon: HeartCommentIcon,
     category: "Growth",
-    objectives: ["Increase conversion", "Support sales"],
+    objectives: ["increase_conversion", "support_sales"],
     description: "Invite users who love your product to review it publicly.",
     preset: {
       name: "Review Prompt",
@@ -849,7 +849,7 @@ export const templates: Template[] = [
     name: "Net Promoter Score (NPS)",
     icon: GaugeSpeedFastIcon,
     category: "Customer Success",
-    objectives: ["Support sales"],
+    objectives: ["support_sales"],
     description: "Measure the Net Promoter Score of your product.",
     preset: {
       name: "{{productName}} NPS",
@@ -870,7 +870,7 @@ export const templates: Template[] = [
     name: "Identify upsell opportunities",
     icon: ArrowUpRightIcon,
     category: "Increase Revenue",
-    objectives: ["Support sales", "Sharpen messaging"],
+    objectives: ["support_sales", "sharpen_marketing_messaging"],
     description: "Find out how much time your product saves your user. Use it to upsell.",
     preset: {
       name: "Identify upsell opportunities",
@@ -907,7 +907,7 @@ export const templates: Template[] = [
     name: "Build Product Roadmap",
     icon: LoadingBarIcon,
     category: "Product Experience",
-    objectives: ["Improve adoption", "Increase retention"],
+    objectives: ["increase_user_adoption", "improve_user_retention"],
     description: "Ask how users rate your product. Identify blind spots to build your roadmap.",
     preset: {
       name: "Build Product Roadmap",
@@ -936,7 +936,7 @@ export const templates: Template[] = [
     name: "Gauge Feature Satisfaction",
     icon: UserSearchGlasIcon,
     category: "Product Experience",
-    objectives: ["Improve adoption", "Increase retention"],
+    objectives: ["increase_user_adoption", "improve_user_retention"],
     description: "Evaluate the satisfaction of specific features of your product.",
     preset: {
       name: "Gauge Feature Satisfaction",
@@ -965,7 +965,7 @@ export const templates: Template[] = [
     name: "Marketing Site Clarity",
     icon: VideoTabletAdjustIcon,
     category: "Growth",
-    objectives: ["Increase conversion", "Sharpen messaging"],
+    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
     description: "Identify users dropping off your marketing site. Improve your messaging.",
     preset: {
       name: "Marketing Site Clarity",
