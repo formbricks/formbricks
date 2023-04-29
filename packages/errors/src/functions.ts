@@ -3,7 +3,7 @@ import { Result } from "./result";
 export const wrap =
   <T, R>(fn: (value: T) => R) =>
   (result: Result<T>): Result<R> =>
-    result.ok === true ? { ok: true, value: fn(result.value) } : result;
+    result.ok === true ? { ok: true, data: fn(result.data) } : result;
     
 /* Usage:
 const test = (): Result<..., ...> => {
@@ -18,7 +18,7 @@ export function match<TSuccess, TError, TReturn>(
   onError: (error: TError) => TReturn
 ) {
   if (result.ok === true) {
-    return onSuccess(result.value);
+    return onSuccess(result.data);
   }
 
   return onError(result.error);
@@ -43,7 +43,7 @@ export const wrapThrows =
     try {
       return {
         ok: true,
-        value: fn(...args),
+        data: fn(...args),
       };
     } catch (error: any) {
       return {
