@@ -22,7 +22,8 @@ const api = new FormbricksAPI({
 
 </details>
 
-NOTE: All of the following methods return a `Result` from the `@formbricks/errors` package.
+> **Note**
+> All of the following methods return a `Result` from the `@formbricks/errors` package.
 
 <details>
 <summary>Create a new response</summary>
