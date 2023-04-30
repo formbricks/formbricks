@@ -29,6 +29,7 @@ type SuccessType = {
 };
 
 const test = (): Result<SuccessType, CustomError | AnotherCustomError> => {
+  /* There are 4 ways to return a Result from this function */
   // return ok({ id: '123' })
   // return err({ code: 'custom_error', message: 'Custom error message' })
   // return err({ code: 'another_custom_error', message: 'Another custom error message', anotherField: 123 })
