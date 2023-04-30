@@ -1,6 +1,5 @@
 {
   "name": "@formbricks/api",
-  "private": true,
   "version": "1.0.0",
   "license": "MIT",
   "main": "./dist/index.cjs",
