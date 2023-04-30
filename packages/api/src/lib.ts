@@ -70,13 +70,14 @@ export class FormbricksAPI {
     const response = await res.data;
     const resJson = await response.json();
 
-    if (!response.ok)
+    if (!response.ok) {
       return err({
         code: "network_error",
         message: response.statusText,
         status: response.status,
         url,
       });
+    }
 
     return ok(resJson as T);
   }
