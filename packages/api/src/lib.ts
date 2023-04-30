@@ -56,7 +56,7 @@ export class FormbricksAPI {
     data: Data,
     options?: RequestInit
   ): Promise<Result<T, E | NetworkError | Error>> {
-    const url = `${this.baseUrl}${path}`;
+    const url = new URL(path, this.baseUrl);
     const headers: HeadersInit = {
       "Content-Type": "application/json",
     };
