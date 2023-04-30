@@ -63,13 +63,7 @@ export class FormbricksAPI {
 
     const body = JSON.stringify(data);
 
-    const res = wrapThrows(() =>
-      fetch(url, {
-        headers,
-        body,
-        ...options,
-      })
-    )();
+    const res = wrapThrows(fetch)(url, { headers, body, ...options });
 
     if (res.ok === false) return err(res.error);
 
