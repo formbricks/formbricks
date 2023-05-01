@@ -20,7 +20,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useMemberships } from "@/lib/memberships";
 import { useTeam } from "@/lib/teams/teams";
-import { capitalizeFirstLetter } from "@/lib/utils";
+import { capitalizeFirstLetter, truncate } from "@/lib/utils";
 import {
   CustomersIcon,
   ErrorComponent,
@@ -28,6 +28,10 @@ import {
   FormIcon,
   ProfileAvatar,
   SettingsIcon,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@formbricks/ui";
 import {
   AdjustmentsVerticalIcon,
@@ -262,7 +266,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
 
                   <div>
                     <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
-                      {environment?.product?.name}
+                      {truncate(environment?.product?.name, 30)}
                     </p>
                     <p className="text-sm text-slate-500">{capitalizeFirstLetter(environment?.type)}</p>
                   </div>
@@ -270,8 +274,22 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56">
-                <DropdownMenuLabel>
-                  <span className="ph-no-capture font-normal">Signed in as</span> {session.user.name}
+                <DropdownMenuLabel className="cursor-default break-all">
+                  <span className="ph-no-capture font-normal">Signed in as </span>
+                  {session.user.name.length > 30 ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>{truncate(session.user.name, 30)}</span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[45rem] break-all" side="left" sideOffset={5}>
+                          {session.user.name}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    session.user.name
+                  )}
                 </DropdownMenuLabel>
 
                 <DropdownMenuSeparator />
@@ -281,19 +299,19 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <div>
-                      <p className="ph-no-capture">{environment?.product?.name}</p>
+                      <p className="ph-no-capture break-all">{truncate(environment?.product?.name, 20)}</p>
                       <p className=" block text-xs text-slate-500">Product</p>
                     </div>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
+                    <DropdownMenuSubContent className="max-w-[45rem]">
                       <DropdownMenuRadioGroup
                         value={environment?.product.id}
                         onValueChange={changeEnvironmentByProduct}>
                         {environment?.availableProducts?.map((product) => (
                           <DropdownMenuRadioItem
                             value={product.id}
-                            className="cursor-pointer"
+                            className="cursor-pointer break-all"
                             key={product.id}>
                             {product.name}
                           </DropdownMenuRadioItem>
