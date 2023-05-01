@@ -91,3 +91,26 @@ export function EditWaitingTime({ environmentId }) {
     </form>
   );
 }
+
+export function DeleteProduct({ environmentId }) {
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+
+  if (isLoadingProduct) {
+    return <LoadingSpinner />;
+  }
+  if (isErrorProduct) {
+    return <ErrorComponent />;
+  }
+
+  return (
+    <div>
+      <p className="text-sm text-slate-900">
+        Here you can delete {product.name} incl. all surveys, responses, people, actions and attributes.{" "}
+        <strong>This action cannot be undone.</strong>
+      </p>
+      <Button variant="warn" className="mt-4">
+        Delete {product.name}
+      </Button>
+    </div>
+  );
+}

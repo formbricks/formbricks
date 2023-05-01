@@ -1,7 +1,11 @@
+import DeleteDialog from "@/components/shared/DeleteDialog";
 import { timeSince } from "@formbricks/lib/time";
 import { PersonAvatar } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 interface OpenTextSummaryProps {
   data: {
@@ -34,6 +38,13 @@ function findEmail(person) {
 export default function SingleResponse({ data, environmentId }: OpenTextSummaryProps) {
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || data.personId;
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleDeleteResponse = async () => {
+    /*  await deletePerson(environmentId, personId); */
+    toast.success("Response deleted successfully.");
+    setDeleteDialogOpen(false);
+  };
 
   return (
     <div className=" my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -61,6 +72,14 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
                 Completed <CheckCircleIcon className="ml-1 h-5 w-5 text-green-400" />
               </span>
             )}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => {
+                  setDeleteDialogOpen(true);
+                }}>
+                <TrashIcon className="h-4 w-4 text-slate-500 hover:text-red-700" />
+              </button>
+            </div>
             <time className="text-slate-500" dateTime={timeSince(data.updatedAt)}>
               {timeSince(data.updatedAt)}
             </time>
@@ -79,6 +98,12 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
           </div>
         ))}
       </div>
+      <DeleteDialog
+        open={deleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        deleteWhat="response"
+        onDelete={handleDeleteResponse}
+      />
     </div>
   );
 }

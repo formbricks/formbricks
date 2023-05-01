@@ -81,7 +81,7 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
             onClick={() => {
               setDeleteDialogOpen(true);
             }}>
-            <TrashIcon className="h-5 w-5 text-slate-500 hover:text-red-500" />
+            <TrashIcon className="h-5 w-5 text-slate-500 hover:text-red-700" />
           </button>
         </div>
       </div>
