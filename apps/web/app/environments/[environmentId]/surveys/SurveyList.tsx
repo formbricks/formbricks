@@ -31,7 +31,7 @@ import TemplateList from "./templates/TemplateList";
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
-  const { profile, isLoadingProfile, isErrorProfile } = useProfile()
+  const { profile, isLoadingProfile, isErrorProfile } = useProfile();
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
@@ -78,7 +78,7 @@ export default function SurveysList({ environmentId }) {
 
   if (surveys.length === 0 && profile.objective) {
     return (
-      <div className="mx-auto flex w-full max-w-5xl flex-col py-24">
+      <div className="mx-auto w-full max-w-5xl py-24">
         {isCreateSurveyLoading ? (
           <LoadingSpinner />
         ) : (

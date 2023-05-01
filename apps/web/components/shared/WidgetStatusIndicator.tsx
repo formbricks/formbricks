@@ -107,7 +107,7 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
   if (type === "mini") {
     return (
       <Link href={`/environments/${environmentId}/settings/setup`}>
-        <div className="group flex justify-center">
+        <div className="group my-4 flex justify-center">
           <div className=" flex rounded-full bg-slate-100 px-2 py-1">
             <p className="mr-2 text-sm text-slate-400 group-hover:underline">
               {currentStatus.subtitle}{" "}
