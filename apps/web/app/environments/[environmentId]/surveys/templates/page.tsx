@@ -1,5 +1,5 @@
-import TemplateList from "./TemplateList";
+import SurveyTemplates from "./SurveyTemplates";
 
 export default function SurveyTemplatesPage({ params }) {
-  return <TemplateList environmentId={params.environmentId} />;
+  return <SurveyTemplates environmentId={params.environmentId} />;
 }
