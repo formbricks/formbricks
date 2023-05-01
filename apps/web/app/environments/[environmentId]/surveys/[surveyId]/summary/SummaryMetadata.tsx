@@ -62,76 +62,84 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
   }
 
   return (
-    <div className="mb-4 grid grid-cols-7 gap-x-2">
-      <div className=" space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="text-sm text-slate-600">Survey displays</p>
-        <p className="text-2xl font-bold text-slate-800">
-          {survey.numDisplays === 0 ? <span>-</span> : survey.numDisplays}
-        </p>
-      </div>
-      <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="text-sm text-slate-600">Total Responses</p>
-        <p className="text-2xl font-bold text-slate-800">
-          {responses.length === 0 ? <span>-</span> : responses.length}
-        </p>
-      </div>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger>
-            <div className="cursor-default space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
-              <p className="text-sm text-slate-600">Response Rate</p>
-              <p className="text-2xl font-bold text-slate-800">
-                {survey.responseRate === null || survey.responseRate === 0 ? (
-                  <span>-</span>
-                ) : (
-                  <span>{Math.round(survey.responseRate * 100)} %</span>
-                )}
-              </p>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>% of people who responded when survey was shown.</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger>
-            <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
-              <p className="text-sm text-slate-600">Completion Rate</p>
-              <p className="text-2xl font-bold text-slate-800">
-                {responses.length === 0 ? (
-                  <span>-</span>
-                ) : (
-                  <span>{parseFloat(completionRate.toFixed(2))} %</span>
-                )}
-              </p>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>
-              % of people who started <strong>and</strong> completed the survey.
+    <div className="mb-4 ">
+      <div className="flex flex-col-reverse gap-y-2 lg:grid lg:grid-cols-2 lg:gap-x-2">
+        <div className="grid grid-cols-2 gap-4 md:grid md:grid-cols-4 md:gap-x-2">
+          <div className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm text-slate-600">Survey displays</p>
+            <p className="text-2xl font-bold text-slate-800">
+              {survey.numDisplays === 0 ? <span>-</span> : survey.numDisplays}
             </p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <div className="col-span-3 flex flex-col justify-between">
-        <div className=""></div>
-        <div className="flex justify-end">
-          {survey.type === "link" && (
+          </div>
+          <div className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm text-slate-600">Total Responses</p>
+            <p className="text-2xl font-bold text-slate-800">
+              {responses.length === 0 ? <span>-</span> : responses.length}
+            </p>
+          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
+                  <p className="text-sm text-slate-600">Response Rate</p>
+                  <p className="text-2xl font-bold text-slate-800">
+                    {survey.responseRate === null || survey.responseRate === 0 ? (
+                      <span>-</span>
+                    ) : (
+                      <span>{Math.round(survey.responseRate * 100)} %</span>
+                    )}
+                  </p>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>% of people who responded when survey was shown.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
+                  <p className="text-sm text-slate-600">Completion Rate</p>
+                  <p className="text-2xl font-bold text-slate-800">
+                    {responses.length === 0 ? (
+                      <span>-</span>
+                    ) : (
+                      <span>{parseFloat(completionRate.toFixed(2))} %</span>
+                    )}
+                  </p>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  % of people who started <strong>and</strong> completed the survey.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="flex flex-col justify-between lg:col-span-1">
+          <div className=""></div>
+          <div className="flex justify-end gap-x-1.5">
+            {survey.type === "link" && (
+              <Button
+                variant="secondary"
+                className="h-full border border-slate-300 bg-white px-2 hover:bg-slate-100 focus:bg-slate-100 lg:px-6"
+                onClick={() => setShowLinkModal(true)}>
+                <ShareIcon className="h-5 w-5" />
+              </Button>
+            )}
+
+            {environment.widgetSetupCompleted && (
+              <SurveyStatusDropdown surveyId={surveyId} environmentId={environmentId} />
+            )}
             <Button
-              variant="secondary"
-              className="mr-1.5 h-full border border-slate-300 bg-white hover:bg-slate-100 focus:bg-slate-100"
-              onClick={() => setShowLinkModal(true)}>
-              <ShareIcon className="h-5 w-5" />
+              className="h-full w-full px-3 lg:px-6"
+              href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>
+              <PencilSquareIcon className="mr-2 h-5  w-5 text-white" />
+              Edit Survey
             </Button>
-          )}
-          {environment.widgetSetupCompleted && (
-            <SurveyStatusDropdown surveyId={surveyId} environmentId={environmentId} />
-          )}
-          <Button className="ml-1.5 h-full" href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>
-            <PencilSquareIcon className="mr-2 h-5  w-5 text-white" /> Edit Survey
-          </Button>
+          </div>
         </div>
       </div>
       {showLinkModal && <LinkSurveyModal survey={survey} open={showLinkModal} setOpen={setShowLinkModal} />}
