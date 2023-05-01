@@ -25,6 +25,12 @@ module.exports = {
           DEFAULT: "#0F172A",
         },
       },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+      },
       maxWidth: {
         "8xl": "88rem",
       },

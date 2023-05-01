@@ -53,7 +53,7 @@ const Intention: React.FC<Intention> = ({ next, skip }) => {
   };
 
   return (
-    <div className="flex w-full max-w-xl flex-col gap-8 px-8">
+    <div className="animate-fadeIn flex w-full max-w-xl flex-col gap-8 px-8 duration-500">
       <div className="px-4">
         <Headline headline="What are you planning to use Formbricks for?" questionId="none" />
         <Subheader subheader="Help us recommend you tried and tested best practices." questionId="none" />
@@ -65,8 +65,10 @@ const Intention: React.FC<Intention> = ({ next, skip }) => {
                 <label
                   key={choice.id}
                   className={cn(
-                    selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
+                    selectedChoice === choice.label
+                      ? "z-10 border-slate-400 bg-slate-100"
+                      : "border-gray-200",
+                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-100 focus:outline-none"
                   )}>
                   <span className="flex items-center text-sm">
                     <input
@@ -74,7 +76,7 @@ const Intention: React.FC<Intention> = ({ next, skip }) => {
                       id={choice.id}
                       value={choice.label}
                       checked={choice.label === selectedChoice}
-                      className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
+                      className=" checked:text-brand-dark  focus:text-brand-dark h-4 w-4 border border-gray-300  focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
                       onChange={(e) => {
                         setSelectedChoice(e.currentTarget.value);
@@ -91,7 +93,7 @@ const Intention: React.FC<Intention> = ({ next, skip }) => {
         </div>
       </div>
       <div className="flex justify-between">
-        <Button size="lg" variant="minimal" onClick={skip}>
+        <Button size="lg" variant="minimal" className="text-slate-400" onClick={skip}>
           Skip
         </Button>
         <Button
