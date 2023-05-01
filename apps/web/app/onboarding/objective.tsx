@@ -8,6 +8,7 @@ import Subheader from "@/components/preview/Subheader";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 type ObjectiveProps = {
   next: () => void;
@@ -43,6 +44,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip }) => {
           await triggerProfileMutate(updatedProfile);
         } catch (e) {
           console.log(e);
+          toast.error('An error occured saving your settings')
         }
         next();
       }

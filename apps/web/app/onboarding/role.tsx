@@ -7,6 +7,7 @@ import Subheader from "@/components/preview/Subheader";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 type Role = {
   next: () => void;
@@ -40,6 +41,7 @@ const Role: React.FC<Role> = ({ next, skip }) => {
           const updatedProfile = { ...profile, role: selectedRole.id };
           await triggerProfileMutate(updatedProfile);
         } catch (e) {
+          toast.error('An error occured saving your settings')
           console.log(e);
         }
         next();
