@@ -8,6 +8,7 @@ import { fetcher } from "@formbricks/lib/fetcher";
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import useSWR from "swr";
 import Greeting from "./greeting";
 import Intention from "./intention";
@@ -70,6 +71,7 @@ export default function Onboarding() {
         router.push(`/environments/${data.id}`);
       }
     } catch (e) {
+      toast.error('An error occured saving your settings.')
       console.log(e);
     }
   };

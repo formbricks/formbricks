@@ -32,6 +32,7 @@ export default function SurveysList({ environmentId }) {
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
 
   const [activeSurvey, setActiveSurvey] = useState("" as any);
   const [activeSurveyIdx, setActiveSurveyIdx] = useState("" as any);
@@ -41,8 +42,14 @@ export default function SurveysList({ environmentId }) {
   };
 
   const newSurveyFromTemplate = async (template: Template) => {
-    const survey = await createSurvey(environmentId, template.preset);
-    router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
+    setIsCreateSurveyLoading(true);
+    try {
+      const survey = await createSurvey(environmentId, template.preset);
+      router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
+    } catch (e) {
+      toast.error("An error occured creating a new survey");
+      setIsCreateSurveyLoading(false);
+    }
   };
 
   const deleteSurveyAction = async (survey, surveyIdx) => {
@@ -69,15 +76,24 @@ export default function SurveysList({ environmentId }) {
 
   if (surveys.length === 0) {
     return (
-      <div className="mx-auto flex flex-col w-full max-w-5xl py-24">
-        <div className="px-7 pb-4">
-          <h1 className="text-3xl font-extrabold text-slate-700">
-            You&apos;re all set! Time to create your first survey.
-          </h1>
-        </div>
-        <TemplateList environmentId={environmentId} onTemplateClick={(template) => {
-          newSurveyFromTemplate(template)
-        }}/>
+      <div className="mx-auto flex w-full max-w-5xl flex-col py-24">
+        {isCreateSurveyLoading ? (
+          <LoadingSpinner />
+        ) : (
+          <>
+            <div className="px-7 pb-4">
+              <h1 className="text-3xl font-extrabold text-slate-700">
+                You&apos;re all set! Time to create your first survey.
+              </h1>
+            </div>
+            <TemplateList
+              environmentId={environmentId}
+              onTemplateClick={(template) => {
+                newSurveyFromTemplate(template);
+              }}
+            />
+          </>
+        )}
       </div>
     );
   }
