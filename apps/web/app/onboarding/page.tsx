@@ -5,7 +5,7 @@ import { Logo } from "@/components/Logo";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { fetcher } from "@formbricks/lib/fetcher";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import useSWR from "swr";
@@ -76,9 +76,9 @@ export default function Onboarding() {
 
   return (
     <div className="flex h-full w-full flex-col bg-slate-50">
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-6 items-center pb-4 pt-12">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-6 items-center  pt-8">
         <div className="col-span-2">
-          <Logo className="w-1/2" />
+          <Logo className="ml-4 w-1/2" />
         </div>
         <div className="col-span-2 flex items-center justify-center gap-8">
           <div className="relative h-2 grow overflow-hidden rounded-full bg-slate-200">
@@ -96,17 +96,6 @@ export default function Onboarding() {
         {currentStep === 3 && <Role next={next} skip={skip} />}
         {currentStep === 4 && <Objective next={next} skip={skip} />}
         {currentStep === 5 && <Product done={done} environmentId={data.id} />}
-      </div>
-      <div className="flex items-center justify-center text-xs text-slate-500">
-        <div className="pb-12 pt-8 text-center">
-          <p>Your answers will help us improve your experience and help others like you.</p>
-          <p>
-            <Link href="" className="underline">
-              Click here
-            </Link>{" "}
-            to learn how we handle your data.
-          </p>
-        </div>
       </div>
     </div>
   );

@@ -43,9 +43,11 @@ const Product: React.FC<Product> = ({ done, environmentId }) => {
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
       <div className="px-4">
-        <Headline headline="Create your team's product." questionId="none" />
+        <label className="mb-1.5 block text-lg font-semibold leading-6 text-slate-900">
+          Create your team&apos;s product.
+        </label>
         <Subheader subheader="You can always change these settings later." questionId="none" />
-        <div className="mt-4 flex flex-col gap-2">
+        <div className="mt-6 flex flex-col gap-2">
           <div className="pb-2">
             <div className="flex justify-between">
               <Label htmlFor="product">Your product name</Label>

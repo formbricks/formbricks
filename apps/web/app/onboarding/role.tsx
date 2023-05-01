@@ -60,8 +60,10 @@ const Role: React.FC<Role> = ({ next, skip }) => {
                 <label
                   key={choice.id}
                   className={cn(
-                    selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
+                    selectedChoice === choice.label
+                      ? "z-10 border-slate-400 bg-slate-100"
+                      : "border-gray-200",
+                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-100 focus:outline-none"
                   )}>
                   <span className="flex items-center text-sm">
                     <input
@@ -69,7 +71,7 @@ const Role: React.FC<Role> = ({ next, skip }) => {
                       id={choice.id}
                       value={choice.label}
                       checked={choice.label === selectedChoice}
-                      className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
+                      className="checked:text-brand-dark  focus:text-brand-dark h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
                       onChange={(e) => {
                         setSelectedChoice(e.currentTarget.value);
@@ -86,7 +88,7 @@ const Role: React.FC<Role> = ({ next, skip }) => {
         </div>
       </div>
       <div className="flex justify-between">
-        <Button size="lg" variant="minimal" onClick={skip}>
+        <Button size="lg" className="text-slate-400" variant="minimal" onClick={skip}>
           Skip
         </Button>
         <Button
