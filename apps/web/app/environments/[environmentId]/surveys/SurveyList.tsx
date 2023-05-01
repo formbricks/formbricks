@@ -1,5 +1,6 @@
 "use client";
 
+import { Template } from "@/../../packages/types/templates";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import {
   DropdownMenu,
@@ -10,7 +11,7 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
+import { createSurvey, deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Badge, ErrorComponent } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import {
@@ -24,6 +25,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import TemplateList from "./templates/TemplateList";
 
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
@@ -36,6 +38,11 @@ export default function SurveysList({ environmentId }) {
 
   const newSurvey = async () => {
     router.push(`/environments/${environmentId}/surveys/templates`);
+  };
+
+  const newSurveyFromTemplate = async (template: Template) => {
+    const survey = await createSurvey(environmentId, template.preset);
+    router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
   };
 
   const deleteSurveyAction = async (survey, surveyIdx) => {
@@ -58,6 +65,21 @@ export default function SurveysList({ environmentId }) {
 
   if (isErrorSurveys) {
     return <ErrorComponent />;
+  }
+
+  if (surveys.length === 0) {
+    return (
+      <div className="mx-auto flex flex-col w-full max-w-5xl py-24">
+        <div className="px-7 pb-4">
+          <h1 className="text-3xl font-extrabold text-slate-700">
+            You&apos;re all set! Time to create your first survey.
+          </h1>
+        </div>
+        <TemplateList environmentId={environmentId} onTemplateClick={(template) => {
+          newSurveyFromTemplate(template)
+        }}/>
+      </div>
+    );
   }
 
   return (

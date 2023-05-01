@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/../../packages/lib/cn";
+import { Objective } from "@/../../packages/types/templates";
 import { Button } from "@/../../packages/ui";
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
@@ -8,23 +9,17 @@ import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { useState } from "react";
 
-type Objective = {
+type ObjectiveProps = {
   next: () => void;
   skip: () => void;
 };
 
 type ObjectiveChoice = {
   label: string;
-  id:
-    | "increase_conversion"
-    | "improve_user_retention"
-    | "increase_user_adoption"
-    | "sharpen_marketing_messaging"
-    | "support_sales"
-    | "other";
+  id: Objective;
 };
 
-const Objective: React.FC<Objective> = ({ next, skip }) => {
+const Objective: React.FC<ObjectiveProps> = ({ next, skip }) => {
   const objectives: Array<ObjectiveChoice> = [
     { label: "Increase conversion", id: "increase_conversion" },
     { label: "Improve user retention", id: "improve_user_retention" },
@@ -112,4 +107,4 @@ const Objective: React.FC<Objective> = ({ next, skip }) => {
   );
 };
 
-export default Objective;
+export default ObjectiveProps;
