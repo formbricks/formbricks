@@ -22,11 +22,11 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
 
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { profile, isLoadingProfile, isErrorProfile } = useProfile();
-  const [selectedFilter, setSelectedFilter] = useState("Recommended for you");
+  const [selectedFilter, setSelectedFilter] = useState("For you");
 
   const categories = [
-    { text: "Recommended for you", icon: <SparklesIcon className="h-5 w-5" /> },
-    { text: "All", icon: null },
+    { text: "For you", icon: <SparklesIcon className="h-5 w-5" /> },
+    /* { text: "All", icon: null }, */
     ...(Array.from(new Set(templates.map((template) => template.category))) as string[]).map((category) => ({
       text: category,
       icon: null,
@@ -44,7 +44,7 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
 
   return (
     <main className="relative z-0 flex-1 overflow-y-auto px-8 py-6 focus:outline-none">
-      <div className="mb-6 flex flex-wrap space-x-2 space-y-2">
+      <div className="mb-6 flex flex-wrap space-x-2">
         {categories.map((category) => (
           <button
             key={category.text}
@@ -84,7 +84,7 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
             (template) =>
               selectedFilter === "All" ||
               template.category === selectedFilter ||
-              (selectedFilter === "Recommended for you" && template.objectives?.includes(profile.objective))
+              (selectedFilter === "Fors you" && template.objectives?.includes(profile.objective))
           )
           .map((template: Template) => (
             <button
