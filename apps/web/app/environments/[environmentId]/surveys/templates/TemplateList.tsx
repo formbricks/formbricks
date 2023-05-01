@@ -84,7 +84,7 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
             (template) =>
               selectedFilter === "All" ||
               template.category === selectedFilter ||
-              (selectedFilter === "Fors you" && template.objectives?.includes(profile.objective))
+              (selectedFilter === "For you" && template.objectives?.includes(profile.objective))
           )
           .map((template: Template) => (
             <button
