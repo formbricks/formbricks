@@ -4,7 +4,7 @@ import SurveysList from "./SurveyList";
 
 export default async function SurveysPage({ params }) {
   return (
-    <ContentWrapper className="">
+    <ContentWrapper>
       <SurveysList environmentId={params.environmentId} />
       <WidgetStatusIndicator environmentId={params.environmentId} type="mini" />
     </ContentWrapper>
