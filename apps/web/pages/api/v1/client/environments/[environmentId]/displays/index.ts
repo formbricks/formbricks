@@ -1,12 +1,13 @@
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { prisma } from "@formbricks/database";
-import type { NextApiRequest, NextApiResponse } from "next";
+import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import type { NextApiRequest } from "next";
+import { CustomNextApiResponse, responses } from "../../../../../../../lib/api/response";
 
-export default async function handle(req: NextApiRequest, res: NextApiResponse) {
+export default async function handle(req: NextApiRequest, res: CustomNextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
 
   if (!environmentId) {
-    return res.status(400).json({ message: "Missing environmentId" });
+    return responses.missingFieldResponse(res, "environmentId");
   }
 
   // CORS
@@ -19,7 +20,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const { surveyId, personId } = req.body;
 
     if (!surveyId) {
-      return res.status(400).json({ message: "Missing surveyId" });
+      return responses.missingFieldResponse(res, "surveyId");
     }
 
     // get teamId from environment
@@ -47,7 +48,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
 
     if (!environment) {
-      return res.status(404).json({ message: "Environment not found" });
+      return responses.notFoundResponse(res, "environment", environmentId);
     }
 
     const teamId = environment.product.team.id;
@@ -87,11 +88,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       console.warn("Posthog capture not possible. No team owner found");
     }
 
-    return res.json(displayData);
+    return res.json({
+      data: displayData,
+    });
   }
 
   // Unknown HTTP Method
   else {
-    throw new Error(`The HTTP ${req.method} method is not supported by this route.`);
+    return responses.methodNotAllowedResponse(res, ["POST", "OPTIONS"]);
   }
 }

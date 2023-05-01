@@ -1,17 +1,18 @@
 import { prisma } from "@formbricks/database";
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest } from "next";
+import { CustomNextApiResponse, responses } from "../../../../../../../../lib/api/response";
 
-export default async function handle(req: NextApiRequest, res: NextApiResponse) {
+export default async function handle(req: NextApiRequest, res: CustomNextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
 
   if (!environmentId) {
-    return res.status(400).json({ message: "Missing environmentId" });
+    return responses.missingFieldResponse(res, "environmentId");
   }
 
   const displayId = req.query.displayId?.toString();
 
   if (!displayId) {
-    return res.status(400).json({ message: "Missing displayId" });
+    return responses.missingFieldResponse(res, "displayId");
   }
 
   // CORS
@@ -36,6 +37,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // Unknown HTTP Method
   else {
-    throw new Error(`The HTTP ${req.method} method is not supported by this route.`);
+    return responses.methodNotAllowedResponse(res, ["POST", "OPTIONS"]);
   }
 }
