@@ -43,7 +43,12 @@ export default function SurveyMenuBar({
   return (
     <div className="border-b border-slate-200 bg-white px-5 py-3 sm:flex sm:items-center sm:justify-between">
       <div className="flex space-x-2 whitespace-nowrap">
-        <Button variant="minimal" className="px-0" onClick={() => router.back()}>
+        <Button
+          variant="minimal"
+          className="px-0"
+          onClick={() => {
+            router.back();
+          }}>
           <ArrowLeftIcon className="h-5 w-5 text-slate-700" />
         </Button>
         <Input

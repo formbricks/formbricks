@@ -8,6 +8,7 @@ import { cn } from "@formbricks/lib/cn";
 import type { Template } from "@formbricks/types/templates";
 import { ErrorComponent } from "@formbricks/ui";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { SparklesIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import { customSurvey, templates } from "./templates";
 
@@ -22,10 +23,14 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { profile, isLoadingProfile, isErrorProfile } = useProfile();
   const [selectedFilter, setSelectedFilter] = useState("Recommended for you");
+
   const categories = [
-    "Recommended for you",
-    "All",
-    ...(Array.from(new Set(templates.map((template) => template.category))) as string[]),
+    { text: "Recommended for you", icon: <SparklesIcon className="h-5 w-5" /> },
+    { text: "All", icon: null },
+    ...(Array.from(new Set(templates.map((template) => template.category))) as string[]).map((category) => ({
+      text: category,
+      icon: null,
+    })),
   ];
 
   useEffect(() => {
@@ -42,16 +47,17 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
       <div className="mb-6 flex flex-wrap space-x-2 space-y-2">
         {categories.map((category) => (
           <button
-            key={category}
+            key={category.text}
             type="button"
-            onClick={() => setSelectedFilter(category)}
+            onClick={() => setSelectedFilter(category.text)}
             className={cn(
-              selectedFilter === category
+              selectedFilter === category.text
                 ? "text-brand-dark border-brand-dark font-semibold"
                 : "border-slate-300 text-slate-700 hover:bg-slate-100",
-              "rounded border  bg-slate-50 px-3 py-1 text-sm transition-all duration-150 "
+              "flex items-center rounded border bg-slate-50 px-3 py-1 text-sm transition-all duration-150"
             )}>
-            {category}
+            {category.text}
+            {category.icon && <div className="ml-2">{category.icon}</div>}
           </button>
         ))}
       </div>
