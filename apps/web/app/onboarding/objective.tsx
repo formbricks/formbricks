@@ -107,4 +107,4 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip }) => {
   );
 };
 
-export default ObjectiveProps;
+export default Objective;
