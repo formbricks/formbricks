@@ -19,6 +19,8 @@ import {
   LinkIcon,
   PencilSquareIcon,
   TrashIcon,
+  DocumentDuplicateIcon,
+  ArrowUturnUpIcon,
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -134,6 +136,22 @@ export default function SurveysList({ environmentId }) {
                               href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
                               <PencilSquareIcon className="mr-2 h-4 w-4" />
                               Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Link
+                              className="flex w-full items-center"
+                              href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                              <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
+                              Duplicate
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Link
+                              className="flex w-full items-center"
+                              href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                              <ArrowUturnUpIcon className="mr-2 h-4 w-4" />
+                              Copy to Production
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem>
