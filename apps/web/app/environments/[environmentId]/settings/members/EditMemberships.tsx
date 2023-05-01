@@ -80,15 +80,15 @@ export function EditMemberships({ environmentId }) {
         <div className="grid-cols-7">
           {[...team.members, ...team.invitees].map((member) => (
             <div
-              className="grid h-12 w-full grid-cols-7 content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
+              className="grid h-auto w-full grid-cols-7 content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
               key={member.email}>
               <div className="h-58 px-6 ">
                 <ProfileAvatar userId={member.userId || member.email} />
               </div>
-              <div className="ph-no-capture col-span-2 flex flex-col justify-center">
+              <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
                 <p>{member.name}</p>
               </div>
-              <div className="ph-no-capture col-span-2 flex flex-col justify-center">{member.email}</div>
+              <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">{member.email}</div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
                 {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}
                 {member.role !== "owner" && (
