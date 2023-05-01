@@ -1,1 +1,2 @@
 export const RESPONSES_LIMIT_FREE = 100;
+export const IS_FORMBRICKS_CLOUD = process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1";
