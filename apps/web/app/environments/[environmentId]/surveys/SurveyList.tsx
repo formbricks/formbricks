@@ -11,7 +11,6 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { useProfile } from "@/lib/profile";
 import { createSurvey, deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Badge, ErrorComponent } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/outline";
@@ -31,7 +30,6 @@ import TemplateList from "./templates/TemplateList";
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
-  const { profile, isLoadingProfile, isErrorProfile } = useProfile()
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
@@ -68,15 +66,15 @@ export default function SurveysList({ environmentId }) {
     }
   };
 
-  if (isLoadingSurveys || isLoadingProfile) {
+  if (isLoadingSurveys) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorSurveys || isErrorProfile) {
+  if (isErrorSurveys) {
     return <ErrorComponent />;
   }
 
-  if (surveys.length === 0 && profile.objective) {
+  if (surveys.length === 0) {
     return (
       <div className="mx-auto flex w-full max-w-5xl flex-col py-24">
         {isCreateSurveyLoading ? (

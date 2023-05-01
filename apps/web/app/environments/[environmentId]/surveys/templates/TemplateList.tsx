@@ -16,23 +16,39 @@ type TemplateList = {
   onTemplateClick: (template: Template) => void;
 };
 
+const ALL_CATEGORY_NAME = "All";
+const RECOMMENDED_CATEGORY_NAME = "Recommended for you";
+
 export default function TemplateList({ environmentId, onTemplateClick }: TemplateList) {
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
 
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { profile, isLoadingProfile, isErrorProfile } = useProfile();
-  const [selectedFilter, setSelectedFilter] = useState("Recommended for you");
-  const categories = [
-    "Recommended for you",
-    "All",
-    ...(Array.from(new Set(templates.map((template) => template.category))) as string[]),
-  ];
+  const [selectedFilter, setSelectedFilter] = useState(ALL_CATEGORY_NAME);
+
+  const [categories, setCategories] = useState<Array<string>>([]);
 
   useEffect(() => {
     if (product && templates?.length) {
       setActiveTemplate(null);
     }
   }, [product]);
+
+  useEffect(() => {
+    const defaultCategories = [
+      ALL_CATEGORY_NAME,
+      ...(Array.from(new Set(templates.map((template) => template.category))) as string[]),
+    ];
+
+    const fullCategories = !!profile?.objective
+      ? [RECOMMENDED_CATEGORY_NAME, ...defaultCategories]
+      : defaultCategories;
+
+    setCategories(fullCategories);
+
+    const activeFilter = !!profile?.objective ? RECOMMENDED_CATEGORY_NAME : ALL_CATEGORY_NAME;
+    setSelectedFilter(activeFilter);
+  }, [profile]);
 
   if (isLoadingProduct || isLoadingProfile) return <LoadingSpinner />;
   if (isErrorProduct || isErrorProfile) return <ErrorComponent />;
@@ -76,9 +92,10 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
         {templates
           .filter(
             (template) =>
-              selectedFilter === "All" ||
+              selectedFilter === ALL_CATEGORY_NAME ||
               template.category === selectedFilter ||
-              (selectedFilter === "Recommended for you" && template.objectives?.includes(profile.objective))
+              (selectedFilter === RECOMMENDED_CATEGORY_NAME &&
+                template.objectives?.includes(profile.objective))
           )
           .map((template: Template) => (
             <button
