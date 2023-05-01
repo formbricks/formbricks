@@ -40,13 +40,13 @@ To get the project running locally on your machine you need to have the followin
    docker-compose -f docker-compose.dev.yml up -d
    ```
 
-1. Create a `.env` file based on `.env.example` and change it according to your setup. If you are using a cloud based database or another mail server, you will need to update the `DATABASE_URL` and SMTP settings in your `.env` accordingly.
+1. Create a `.env` file based on `.env.example`. It's already preset to work with the docker-compose setup but you can also change values if needed.
 
    ```bash
    cp .env.example .env
    ```
 
-1. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
+1. Make sure your Docker containers are running. Then let prisma set up the database for you:
 
    ```bash
    pnpm dlx prisma migrate dev
@@ -58,24 +58,18 @@ To get the project running locally on your machine you need to have the followin
    pnpm dev --filter=web...
    ```
 
+   This only starts the Formbricks main app plus all its dependencies to save memory. If you want to start all apps at once, run `pnpm dev` instead.
+
    **You can now access the app on [https://localhost:3000](https://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of formbricks, create a new account.
 
    For viewing the confirmation email and other emails the system sends you, you can access mailhog at [https://localhost:8025](https://localhost:8025)
 
 ### Build
 
-To build all apps and packages, run the following command:
+To build all apps and packages and check for build errors, run the following command:
 
 ```bash
 pnpm build
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```bash
-pnpm dev
 ```
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
