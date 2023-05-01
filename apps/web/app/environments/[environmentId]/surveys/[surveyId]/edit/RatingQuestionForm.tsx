@@ -50,7 +50,7 @@ export default function RatingQuestionForm({
             <Dropdown
               options={[
                 { label: "Number", value: "number", icon: HashtagIcon },
-                { label: "Star", value: "star", icon: StarIcon, disabled: true },
+                { label: "Star", value: "star", icon: StarIcon },
                 { label: "Smiley", value: "smiley", icon: FaceSmileIcon, disabled: true },
               ]}
               defaultValue={question.scale || "number"}

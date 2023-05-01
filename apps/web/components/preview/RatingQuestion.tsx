@@ -3,6 +3,8 @@ import { cn } from "@formbricks/lib/cn";
 import type { RatingQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { StarIcon } from "@heroicons/react/24/outline";
+import { StarIcon as FilledStarIcon } from "@heroicons/react/24/solid";
 
 interface RatingQuestionProps {
   question: RatingQuestion;
@@ -45,27 +47,47 @@ export default function RatingQuestion({
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="my-4">
-        <fieldset>
+        <fieldset className="max-w-full">
           <legend className="sr-only">Options</legend>
           <div className="flex">
-            {Array.from({ length: question.range }, (_, i) => i + 1).map((number) => (
-              <label
-                key={number}
-                className={cn(
-                  selectedChoice === number ? "z-10 border-slate-400 bg-slate-50" : "",
-                  "relative h-10 flex-1 cursor-pointer border bg-white text-center text-sm  leading-10 first:rounded-l-md last:rounded-r-md hover:bg-gray-100 focus:outline-none"
-                )}>
-                <input
-                  type="radio"
-                  name="rating"
-                  value={number}
-                  className="absolute h-full w-full cursor-pointer opacity-0"
-                  onChange={() => handleSelect(number)}
-                  required={question.required}
-                />
-                {number}
-              </label>
-            ))}
+            {Array.from({ length: question.range }, (_, i) => i + 1).map((number) =>
+              question.scale === "number" ? (
+                <label
+                  key={number}
+                  className={cn(
+                    selectedChoice === number ? "z-10 border-slate-400 bg-slate-50" : "",
+                    "relative h-10 flex-1 cursor-pointer border bg-white text-center text-sm  leading-10 first:rounded-l-md last:rounded-r-md hover:bg-gray-100 focus:outline-none"
+                  )}>
+                  <input
+                    type="radio"
+                    name="rating"
+                    value={number}
+                    className="absolute h-full w-full cursor-pointer opacity-0"
+                    onChange={() => handleSelect(number)}
+                    required={question.required}
+                  />
+                  {number}
+                </label>
+              ) : (
+                <label
+                  key={number}
+                  className="relative flex max-h-10 flex-1 cursor-pointer justify-center bg-white text-center text-sm leading-10 hover:text-yellow-300">
+                  <input
+                    type="radio"
+                    name="rating"
+                    value={number}
+                    className="absolute h-full w-full cursor-pointer opacity-0"
+                    onChange={() => handleSelect(number)}
+                    required={question.required}
+                  />
+                  {selectedChoice && selectedChoice >= number ? (
+                    <FilledStarIcon className="max-h-full text-yellow-300" />
+                  ) : (
+                    <StarIcon className="max-h-full " />
+                  )}
+                </label>
+              )
+            )}
           </div>
           <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
             <p>{question.lowerLabel}</p>
