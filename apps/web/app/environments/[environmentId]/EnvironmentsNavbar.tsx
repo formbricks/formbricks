@@ -1,5 +1,6 @@
 "use client";
 
+import FaveIcon from "@/app/favicon.ico";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +18,9 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEnvironment } from "@/lib/environments/environments";
-import { capitalizeFirstLetter } from "@/lib/utils";
+import { useMemberships } from "@/lib/memberships";
+import { useTeam } from "@/lib/teams/teams";
+import { capitalizeFirstLetter, truncate } from "@/lib/utils";
 import {
   CustomersIcon,
   ErrorComponent,
@@ -25,6 +28,10 @@ import {
   FormIcon,
   ProfileAvatar,
   SettingsIcon,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@formbricks/ui";
 import {
   AdjustmentsVerticalIcon,
@@ -47,7 +54,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
-import FaveIcon from "@/app/favicon.ico";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -56,12 +62,16 @@ interface EnvironmentsNavbarProps {
 
 export default function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
   const pathname = usePathname();
 
-  const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
+  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
+  const { memberships, isErrorMemberships, isLoadingMemberships } = useMemberships();
+  const { team } = useTeam(environmentId);
 
+  const [currentTeamName, setCurrentTeamName] = useState("");
+  const [currentTeamId, setCurrentTeamId] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
 
   useEffect(() => {
@@ -71,6 +81,13 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
       setWidgetSetupCompleted(false);
     }
   }, [environment]);
+
+  useEffect(() => {
+    if (team && team.name !== "") {
+      setCurrentTeamName(team.name);
+      setCurrentTeamId(team.id);
+    }
+  }, [team]);
 
   const navigation = useMemo(
     () => [
@@ -139,11 +156,6 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           href: `/environments/${environmentId}/settings/billing`,
           hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
         },
-        /*  {
-          icon: RocketLaunchIcon,
-          label: "Upgrade account",
-          href: `/environments/${environmentId}/settings/billing`,
-        }, */
       ],
     },
     {
@@ -182,11 +194,24 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     router.push(`/environments/${newEnvironmentId}/`);
   };
 
-  if (isLoadingEnvironment || loading) {
+  const changeEnvironmentByTeam = (teamId: string) => {
+    const newTeamMembership = memberships.find((m) => m.teamId === teamId);
+    const newTeamProduct = newTeamMembership?.team?.products?.[0];
+
+    if (newTeamProduct) {
+      const newEnvironmentId = newTeamProduct.environments.find((e) => e.type === "production")?.id;
+
+      if (newEnvironmentId) {
+        router.push(`/environments/${newEnvironmentId}/`);
+      }
+    }
+  };
+
+  if (isLoadingEnvironment || loading || isLoadingMemberships) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorEnvironment) {
+  if (isErrorEnvironment || isErrorMemberships) {
     return <ErrorComponent />;
   }
 
@@ -241,7 +266,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
 
                   <div>
                     <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
-                      {environment?.product?.name}
+                      {truncate(environment?.product?.name, 30)}
                     </p>
                     <p className="text-sm text-slate-500">{capitalizeFirstLetter(environment?.type)}</p>
                   </div>
@@ -249,28 +274,44 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56">
-                <DropdownMenuLabel>
-                  <span className="ph-no-capture font-normal">Signed in as</span> {session.user.name}
+                <DropdownMenuLabel className="cursor-default break-all">
+                  <span className="ph-no-capture font-normal">Signed in as </span>
+                  {session.user.name.length > 30 ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>{truncate(session.user.name, 30)}</span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[45rem] break-all" side="left" sideOffset={5}>
+                          {session.user.name}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    session.user.name
+                  )}
                 </DropdownMenuLabel>
 
                 <DropdownMenuSeparator />
 
+                {/* Product Switch */}
+
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <div>
-                      <p className="ph-no-capture">{environment?.product?.name}</p>
+                      <p className="ph-no-capture break-all">{truncate(environment?.product?.name, 20)}</p>
                       <p className=" block text-xs text-slate-500">Product</p>
                     </div>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
+                    <DropdownMenuSubContent className="max-w-[45rem]">
                       <DropdownMenuRadioGroup
                         value={environment?.product.id}
                         onValueChange={changeEnvironmentByProduct}>
                         {environment?.availableProducts?.map((product) => (
                           <DropdownMenuRadioItem
                             value={product.id}
-                            className="cursor-pointer"
+                            className="cursor-pointer break-all"
                             key={product.id}>
                             {product.name}
                           </DropdownMenuRadioItem>
@@ -285,6 +326,8 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
+
+                {/* Environment Switch */}
 
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
@@ -308,6 +351,34 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
+
+                {/* Team Switch */}
+                {memberships.length > 1 && (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <div>
+                        <p>{currentTeamName}</p>
+                        <p className="block text-xs text-slate-500">Team</p>
+                      </div>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuRadioGroup
+                          value={currentTeamId}
+                          onValueChange={(teamId) => changeEnvironmentByTeam(teamId)}>
+                          {memberships?.map((membership) => (
+                            <DropdownMenuRadioItem
+                              value={membership.teamId}
+                              className="cursor-pointer"
+                              key={membership.teamId}>
+                              {membership.team.name}
+                            </DropdownMenuRadioItem>
+                          ))}
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                )}
 
                 {dropdownnavigation.map((item) => (
                   <DropdownMenuGroup key={item.title}>

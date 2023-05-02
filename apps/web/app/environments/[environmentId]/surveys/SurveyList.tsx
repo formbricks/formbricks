@@ -76,9 +76,9 @@ export default function SurveysList({ environmentId }) {
     return <ErrorComponent />;
   }
 
-  if (surveys.length === 0 && profile.objective) {
+  if (surveys.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-5xl py-24">
+      <div className="mx-auto flex w-full max-w-5xl flex-col py-24">
         {isCreateSurveyLoading ? (
           <LoadingSpinner />
         ) : (

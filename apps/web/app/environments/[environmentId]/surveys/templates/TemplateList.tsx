@@ -17,27 +17,39 @@ type TemplateList = {
   onTemplateClick: (template: Template) => void;
 };
 
+const ALL_CATEGORY_NAME = "All";
+const RECOMMENDED_CATEGORY_NAME = "For you";
+
 export default function TemplateList({ environmentId, onTemplateClick }: TemplateList) {
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
 
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { profile, isLoadingProfile, isErrorProfile } = useProfile();
-  const [selectedFilter, setSelectedFilter] = useState("For you");
+  const [selectedFilter, setSelectedFilter] = useState(ALL_CATEGORY_NAME);
 
-  const categories = [
-    { text: "For you", icon: <SparklesIcon className="h-5 w-5" /> },
-    /* { text: "All", icon: null }, */
-    ...(Array.from(new Set(templates.map((template) => template.category))) as string[]).map((category) => ({
-      text: category,
-      icon: null,
-    })),
-  ];
+  const [categories, setCategories] = useState<Array<string>>([]);
 
   useEffect(() => {
     if (product && templates?.length) {
       setActiveTemplate(null);
     }
   }, [product]);
+
+  useEffect(() => {
+    const defaultCategories = [
+      /*  ALL_CATEGORY_NAME, */
+      ...(Array.from(new Set(templates.map((template) => template.category))) as string[]),
+    ];
+
+    const fullCategories = !!profile?.objective
+      ? [RECOMMENDED_CATEGORY_NAME, ...defaultCategories]
+      : defaultCategories;
+
+    setCategories(fullCategories);
+
+    const activeFilter = !!profile?.objective ? RECOMMENDED_CATEGORY_NAME : ALL_CATEGORY_NAME;
+    setSelectedFilter(activeFilter);
+  }, [profile]);
 
   if (isLoadingProduct || isLoadingProfile) return <LoadingSpinner />;
   if (isErrorProduct || isErrorProfile) return <ErrorComponent />;
@@ -47,17 +59,17 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
       <div className="mb-6 flex flex-wrap space-x-2">
         {categories.map((category) => (
           <button
-            key={category.text}
+            key={category}
             type="button"
-            onClick={() => setSelectedFilter(category.text)}
+            onClick={() => setSelectedFilter(category)}
             className={cn(
-              selectedFilter === category.text
+              selectedFilter === category
                 ? "text-brand-dark border-brand-dark font-semibold"
                 : "border-slate-300 text-slate-700 hover:bg-slate-100",
-              "flex items-center rounded border bg-slate-50 px-3 py-1 text-sm transition-all duration-150"
+              "mt-2 rounded  border bg-slate-50 px-3 py-1 text-sm transition-all duration-150 "
             )}>
-            {category.text}
-            {category.icon && <div className="ml-2">{category.icon}</div>}
+            {category}
+            {category === RECOMMENDED_CATEGORY_NAME && <SparklesIcon className="ml-2 inline h-5 w-5" />}
           </button>
         ))}
       </div>
@@ -82,9 +94,10 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
         {templates
           .filter(
             (template) =>
-              selectedFilter === "All" ||
+              selectedFilter === ALL_CATEGORY_NAME ||
               template.category === selectedFilter ||
-              (selectedFilter === "For you" && template.objectives?.includes(profile.objective))
+              (selectedFilter === RECOMMENDED_CATEGORY_NAME &&
+                template.objectives?.includes(profile.objective))
           )
           .map((template: Template) => (
             <button
