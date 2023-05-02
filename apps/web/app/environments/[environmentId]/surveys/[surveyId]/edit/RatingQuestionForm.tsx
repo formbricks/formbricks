@@ -3,8 +3,10 @@ import { Input, Label } from "@formbricks/ui";
 import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outline";
 
 import Dropdown from "./RatingTypeDropdown";
+import type { Survey } from "@formbricks/types/surveys";
 
 interface RatingQuestionFormProps {
+  survey: Survey;
   question: RatingQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -12,6 +14,7 @@ interface RatingQuestionFormProps {
 }
 
 export default function RatingQuestionForm({
+  survey,
   question,
   questionIdx,
   updateQuestion,
@@ -69,6 +72,7 @@ export default function RatingQuestionForm({
                 { label: "7 points", value: "7" },
                 { label: "10 points", value: "10" },
               ]}
+              disabled={survey.status !== "draft"}
               defaultValue={question.range || "5"}
               onSelect={(option) => updateQuestion(questionIdx, { range: option.value })}
             />
