@@ -94,7 +94,7 @@ const Intention: React.FC<Intention> = ({ next, skip }) => {
           </fieldset>
         </div>
       </div>
-      <div className="flex justify-between">
+      <div className="mb-24 flex justify-between">
         <Button size="lg" variant="minimal" className="text-slate-400" onClick={skip}>
           Skip
         </Button>

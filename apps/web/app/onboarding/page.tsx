@@ -5,7 +5,7 @@ import { Logo } from "@/components/Logo";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { fetcher } from "@formbricks/lib/fetcher";
-
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -23,6 +23,7 @@ export default function Onboarding() {
   const { profile } = useProfile();
   const { triggerProfileMutate } = useProfileMutation();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const percent = useMemo(() => {
@@ -45,7 +46,11 @@ export default function Onboarding() {
   }, [percent]);
 
   if (!profile) {
-    return <div className="flex h-full w-full items-center justify-center">Loading</div>;
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   if (error) {
@@ -64,15 +69,17 @@ export default function Onboarding() {
   };
 
   const done = async () => {
+    setIsLoading(true);
     try {
       const updatedProfile = { ...profile, onboardingDisplayed: true };
       await triggerProfileMutate(updatedProfile);
       if (data) {
-        router.push(`/environments/${data.id}`);
+        await router.push(`/environments/${data.id}`);
       }
     } catch (e) {
       toast.error("An error occured saving your settings.");
       console.log(e);
+    } finally {
     }
   };
 
@@ -97,7 +104,7 @@ export default function Onboarding() {
         {/* {currentStep === 2 && <Intention next={next} skip={skip} />} */}
         {currentStep === 2 && <Role next={next} skip={skip} />}
         {currentStep === 3 && <Objective next={next} skip={skip} />}
-        {currentStep === 4 && <Product done={done} environmentId={data.id} />}
+        {currentStep === 4 && <Product done={done} environmentId={data.id} isLoading={isLoading} />}
       </div>
     </div>
   );

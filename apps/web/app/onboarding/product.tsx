@@ -10,10 +10,11 @@ import { toast } from "react-hot-toast";
 type Product = {
   done: () => void;
   environmentId: string;
+  isLoading: boolean;
 };
 
-const Product: React.FC<Product> = ({ done, environmentId }) => {
-  const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
+const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
+  const { triggerProductMutate } = useProductMutation(environmentId);
 
   const [name, setName] = useState("");
   const [color, setColor] = useState("#334155");
@@ -109,10 +110,10 @@ const Product: React.FC<Product> = ({ done, environmentId }) => {
         <Button
           size="lg"
           variant="darkCTA"
-          loading={isMutatingProduct}
+          loading={isLoading}
           disabled={!name || !environmentId}
           onClick={handleDoneClick}>
-          Done
+          {isLoading ? "Getting ready..." : "Done"}
         </Button>
       </div>
     </div>

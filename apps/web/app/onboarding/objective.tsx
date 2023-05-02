@@ -94,7 +94,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip }) => {
           </fieldset>
         </div>
       </div>
-      <div className="flex justify-between">
+      <div className="mb-24 flex justify-between">
         <Button size="lg" className="text-slate-400" variant="minimal" onClick={skip}>
           Skip
         </Button>
