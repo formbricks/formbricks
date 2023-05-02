@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
@@ -20,6 +20,10 @@ const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: Dropdow
   const [selectedOption, setSelectedOption] = useState<Option>(
     options.filter((option) => option.value === defaultValue)[0] || options[0]
   );
+
+  useEffect(() => {
+    setSelectedOption(options.filter((option) => option.value === defaultValue)[0] || options[0]);
+  }, [defaultValue, options]);
 
   const handleSelect = (option) => {
     setSelectedOption(option);

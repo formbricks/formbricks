@@ -66,7 +66,7 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="fb-relative fb-max-h-10 fb-flex-1 fb-cursor-pointer fb-overflow-hidden fb-bg-white fb-text-center fb-text-sm fb-leading-10 first:fb-rounded-l-md last:fb-rounded-r-md">
+                className="fb-relative fb-max-h-10 fb-flex-1 fb-cursor-pointer fb-bg-white fb-text-center fb-text-sm fb-leading-10">
                 {question.scale === "number" ? (
                   <label
                     className={cn(

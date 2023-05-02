@@ -69,14 +69,14 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="relative max-h-10 flex-1 cursor-pointer overflow-hidden bg-white text-center text-sm leading-10 first:rounded-l-md last:rounded-r-md">
+                className="relative max-h-10 flex-1 cursor-pointer bg-white text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
                     className={cn(
                       selectedChoice === number ? "z-10 border-slate-400 bg-slate-50" : "",
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
-                      "block h-full w-full border hover:bg-gray-100 focus:outline-none"
+                      "box-border block h-full w-full border hover:bg-gray-100 focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
