@@ -31,7 +31,7 @@ export default function RatingQuestion({
     }
   };
 
-  const HiddenRadioInput = (number) => (
+  const HiddenRadioInput = ({ number }) => (
     <input
       type="radio"
       name="rating"
@@ -78,7 +78,7 @@ export default function RatingQuestion({
                     <HiddenRadioInput number={number} />
                     {number}
                   </label>
-                ) : (
+                ) : question.scale === "star" ? (
                   <label
                     className={cn(
                       number <= hoveredNumber ? "fb-text-yellow-500" : "",
@@ -115,6 +115,15 @@ export default function RatingQuestion({
                       </svg>
                     )}
                   </label>
+                ) : (
+                  <label className="fb-flex fb-h-full fb-w-full fb-justify-center fb-fill-yellow-500">
+                    <HiddenRadioInput number={number} />
+                    <RatingSmiley
+                      active={selectedChoice == number || hoveredNumber == number}
+                      idx={i}
+                      range={question.range}
+                    />
+                  </label>
                 )}
               </span>
             ))}
@@ -138,4 +147,233 @@ export default function RatingQuestion({
       )}
     </form>
   );
+}
+
+interface RatingSmileyProps {
+  active: boolean;
+  idx: number;
+  range: number;
+}
+
+function RatingSmiley({ active, idx, range }: RatingSmileyProps): JSX.Element {
+  let icons = [
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+      <g id="line">
+        <circle
+          cx="36"
+          cy="36"
+          r="23"
+          className={active ? "fb-fill-yellow-500" : ""}
+          fill="none"
+          stroke="currentColor"
+          stroke-miterlimit="10"
+          stroke-width="2"
+        />
+        <line
+          x1="44.5361"
+          x2="50.9214"
+          y1="21.4389"
+          y2="24.7158"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-miterlimit="10"
+          stroke-width="2"
+        />
+        <line
+          x1="26.9214"
+          x2="20.5361"
+          y1="21.4389"
+          y2="24.7158"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-miterlimit="10"
+          stroke-width="2"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-miterlimit="10"
+          stroke-width="2"
+          d="M24,28c2.3334,1.3333,4.6666,2.6667,7,4c-2.3334,1.3333-4.6666,2.6667-7,4"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-miterlimit="10"
+          stroke-width="2"
+          d="M48,28c-2.3334,1.3333-4.6666,2.6667-7,4c2.3334,1.3333,4.6666,2.6667,7,4"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-miterlimit="10"
+          stroke-width="2"
+          d="M28,51c0.2704-0.3562,1-8,8.4211-8.0038C43,42.9929,43.6499,50.5372,44,51C38.6667,51,33.3333,51,28,51z"
+        />
+      </g>
+    </svg>,
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+      <g id="line">
+        <circle
+          cx="36"
+          cy="36"
+          r="23"
+          className={active ? "fb-fill-yellow-500" : ""}
+          fill="none"
+          stroke="currentColor"
+          stroke-miterlimit="10"
+          stroke-width="2"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-miterlimit="10"
+          stroke-width="2"
+          d="M26.5,48c1.8768-3.8326,5.8239-6.1965,10-6c3.8343,0.1804,7.2926,2.4926,9,6"
+        />
+        <path
+          stroke="currentColor"
+          fill="currentColor"
+          d="M30,31c0,1.6568-1.3448,3-3,3c-1.6553,0-3-1.3433-3-3c0-1.6552,1.3447-3,3-3C28.6552,28,30,29.3448,30,31"
+        />
+        <path
+          stroke="currentColor"
+          fill="currentColor"
+          d="M48,31c0,1.6568-1.3447,3-3,3s-3-1.3433-3-3c0-1.6552,1.3447-3,3-3S48,29.3448,48,31"
+        />
+      </g>
+    </svg>,
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+      <g id="line">
+        <circle
+          cx="36"
+          cy="36"
+          r="23"
+          className={active ? "fb-fill-yellow-500" : ""}
+          fill="none"
+          stroke="currentColor"
+          stroke-miterlimit="10"
+          stroke-width="2"
+        />
+        <line
+          x1="27"
+          x2="45"
+          y1="43"
+          y2="43"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-miterlimit="10"
+          stroke-width="2"
+        />
+        <path
+          stroke="currentColor"
+          fill="currentColor"
+          d="M30,31c0,1.6568-1.3448,3-3,3c-1.6553,0-3-1.3433-3-3c0-1.6552,1.3447-3,3-3C28.6552,28,30,29.3448,30,31"
+        />
+        <path
+          stroke="currentColor"
+          fill="currentColor"
+          d="M48,31c0,1.6568-1.3447,3-3,3s-3-1.3433-3-3c0-1.6552,1.3447-3,3-3S48,29.3448,48,31"
+        />
+      </g>
+    </svg>,
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+      <g id="line">
+        <circle
+          cx="36"
+          cy="36"
+          r="23"
+          className={active ? "fb-fill-yellow-500" : ""}
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M45.8149,44.9293 c-2.8995,1.6362-6.2482,2.5699-9.8149,2.5699s-6.9153-0.9336-9.8149-2.5699"
+        />
+        <path
+          stroke="currentColor"
+          fill="currentColor"
+          d="M30,31c0,1.6568-1.3448,3-3,3c-1.6553,0-3-1.3433-3-3c0-1.6552,1.3447-3,3-3C28.6552,28,30,29.3448,30,31"
+        />
+        <path
+          stroke="currentColor"
+          fill="currentColor"
+          d="M48,31c0,1.6568-1.3447,3-3,3s-3-1.3433-3-3c0-1.6552,1.3447-3,3-3S48,29.3448,48,31"
+        />
+      </g>
+    </svg>,
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+      <g id="line">
+        <circle
+          cx="36"
+          cy="36"
+          r="23"
+          className={active ? "fb-fill-yellow-500" : ""}
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M50.595,41.64a11.5554,11.5554,0,0,1-.87,4.49c-12.49,3.03-25.43.34-27.49-.13a11.4347,11.4347,0,0,1-.83-4.36h.11s14.8,3.59,28.89.07Z"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M49.7251,46.13c-1.79,4.27-6.35,7.23-13.69,7.23-7.41,0-12.03-3.03-13.8-7.36C24.2951,46.47,37.235,49.16,49.7251,46.13Z"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-miterlimit="10"
+          stroke-width="2"
+          d="M31.6941,32.4036a4.7262,4.7262,0,0,0-8.6382,0"
+        />
+        <path
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-miterlimit="10"
+          stroke-width="2"
+          d="M48.9441,32.4036a4.7262,4.7262,0,0,0-8.6382,0"
+        />
+      </g>
+    </svg>,
+  ];
+
+  if (range == 4) icons = [icons[0], icons[2], icons[3], icons[4]];
+  else if (range == 3) icons = [icons[0], icons[2], icons[4]];
+  return icons[idx];
 }

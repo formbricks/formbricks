@@ -54,7 +54,7 @@ export default function RatingQuestionForm({
               options={[
                 { label: "Number", value: "number", icon: HashtagIcon },
                 { label: "Star", value: "star", icon: StarIcon },
-                { label: "Smiley", value: "smiley", icon: FaceSmileIcon, disabled: true },
+                { label: "Smiley", value: "smiley", icon: FaceSmileIcon },
               ]}
               defaultValue={question.scale || "number"}
               onSelect={(option) => updateQuestion(questionIdx, { scale: option.value })}
@@ -72,7 +72,7 @@ export default function RatingQuestionForm({
                 { label: "7 points", value: "7" },
                 { label: "10 points", value: "10" },
               ]}
-              disabled={survey.status !== "draft"}
+              // disabled={survey.status !== "draft"}
               defaultValue={question.range || "5"}
               onSelect={(option) => updateQuestion(questionIdx, { range: option.value })}
             />
