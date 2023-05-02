@@ -31,7 +31,7 @@ import TemplateList from "./templates/TemplateList";
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
-  const { profile, isLoadingProfile, isErrorProfile } = useProfile();
+  const { isLoadingProfile, isErrorProfile } = useProfile();
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
