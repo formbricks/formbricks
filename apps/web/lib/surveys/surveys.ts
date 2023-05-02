@@ -106,28 +106,11 @@ export const getSurveyPage = (survey, pageId) => {
 
 export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
   try {
-    const res = await fetch(`/api/v1/environments/${environmentId}/surveys/${surveyId}`);
-
-    const originalSurvey = await res.json();
-    const newSurvey = {
-      ...originalSurvey,
-      name: `${originalSurvey.name} (Copy)`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: "draft",
-    };
-
-    delete newSurvey.id;
-    delete newSurvey.responses;
-    delete newSurvey.displays;
-    delete newSurvey.environmentId;
-    delete newSurvey.responseRate;
-    delete newSurvey.numDisplays;
-    delete newSurvey.environment;
-    delete newSurvey.triggers;
-
-    const createdSurvey = await createSurvey(environmentId, newSurvey);
-    return createdSurvey;
+    const res = await fetch(`/api/v1/environments/${environmentId}/surveys/${surveyId}/duplicate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await res.json();
   } catch (error) {
     console.error(error);
     throw Error(`duplicateSurvey: unable to duplicate survey: ${error.message}`);
