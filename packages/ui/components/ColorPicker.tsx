@@ -8,7 +8,7 @@ import { HexColorInput, HexColorPicker } from "react-colorful";
 export const ColorPicker = ({ color, onChange }: { color: string; onChange: (v: string) => void }) => {
   return (
     <div className="my-2">
-      <div className="flex w-full text-sm items-center justify-between space-x-1 rounded-md border border-slate-300 px-2 text-slate-400">
+      <div className="flex w-full items-center justify-between space-x-1 rounded-md border border-slate-300 px-2 text-sm text-slate-400">
         <div>
           #
           <HexColorInput
@@ -31,16 +31,18 @@ export const PopoverPicker = ({ color, onChange }: { color: string; onChange: (v
   useClickOutside(popover, close);
 
   return (
-    <div className="picker">
+    <div className="picker relative">
       <div
-        className="relative h-6 w-10 rounded"
+        className="h-6 w-10 cursor-pointer rounded"
         style={{ backgroundColor: color }}
-        onClick={() => toggle(true)}
+        onClick={() => toggle(!isOpen)}
       />
 
       {isOpen && (
-        <div className="absolute left-16 z-20 mt-1" ref={popover}>
-          <HexColorPicker color={color} onChange={onChange} />
+        <div className="absolute right-0 z-20 mt-2 origin-top-right" ref={popover}>
+          <div className="rounded bg-white p-2 shadow-lg">
+            <HexColorPicker color={color} onChange={onChange} />
+          </div>
         </div>
       )}
     </div>
