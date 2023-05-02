@@ -80,7 +80,7 @@ export default function RatingQuestionForm({
                 { label: "7 points", value: "7", disabled: question.scale === "smiley" },
                 { label: "10 points", value: "10", disabled: question.scale === "smiley" },
               ]}
-              // disabled={survey.status !== "draft"}
+              disabled={survey.status !== "draft"}
               defaultValue={question.range || "5"}
               onSelect={(option) => updateQuestion(questionIdx, { range: option.value })}
             />
