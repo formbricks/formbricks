@@ -41,7 +41,7 @@ const Role: React.FC<Role> = ({ next, skip }) => {
           const updatedProfile = { ...profile, role: selectedRole.id };
           await triggerProfileMutate(updatedProfile);
         } catch (e) {
-          toast.error('An error occured saving your settings')
+          toast.error("An error occured saving your settings");
           console.log(e);
         }
         next();
@@ -95,7 +95,7 @@ const Role: React.FC<Role> = ({ next, skip }) => {
         </Button>
         <Button
           size="lg"
-          variant="primary"
+          variant="darkCTA"
           loading={isMutatingProfile}
           disabled={!selectedChoice}
           onClick={handleNextClick}>

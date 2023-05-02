@@ -106,7 +106,7 @@ export default function SurveysList({ environmentId }) {
         <button onClick={() => newSurvey()}>
           <li className="col-span-1 h-56">
             <div className="from-brand-light to-brand-dark delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-b font-light text-white shadow transition ease-in-out hover:scale-105">
-              <div className="px-4 py-8 sm:p-14 xl:p-10">
+              <div id="main-cta" className="px-4 py-8 sm:p-14 xl:p-10">
                 <PlusIcon className="stroke-thin mx-auto h-14 w-14" />
                 Create Survey
               </div>

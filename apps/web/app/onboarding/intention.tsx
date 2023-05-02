@@ -46,7 +46,7 @@ const Intention: React.FC<Intention> = ({ next, skip }) => {
           const updatedProfile = { ...profile, intention: selectedIntention.id };
           await triggerProfileMutate(updatedProfile);
         } catch (e) {
-          toast.error('An error occured saving your settings')
+          toast.error("An error occured saving your settings");
           console.log(e);
         }
         next();
@@ -100,7 +100,7 @@ const Intention: React.FC<Intention> = ({ next, skip }) => {
         </Button>
         <Button
           size="lg"
-          variant="primary"
+          variant="darkCTA"
           loading={isMutatingProfile}
           disabled={!selectedChoice}
           onClick={handleNextClick}>

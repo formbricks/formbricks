@@ -44,7 +44,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip }) => {
           await triggerProfileMutate(updatedProfile);
         } catch (e) {
           console.log(e);
-          toast.error('An error occured saving your settings')
+          toast.error("An error occured saving your settings");
         }
         next();
       }
@@ -100,7 +100,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip }) => {
         </Button>
         <Button
           size="lg"
-          variant="primary"
+          variant="darkCTA"
           loading={isMutatingProfile}
           disabled={!selectedChoice}
           onClick={handleNextClick}>

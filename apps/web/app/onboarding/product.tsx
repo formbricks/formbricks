@@ -36,7 +36,7 @@ const Product: React.FC<Product> = ({ done, environmentId }) => {
     try {
       await triggerProductMutate({ name, brandColor: color });
     } catch (e) {
-      toast.error('An error occured saving your settings')
+      toast.error("An error occured saving your settings");
       console.log(e);
     }
     done();
@@ -72,7 +72,7 @@ const Product: React.FC<Product> = ({ done, environmentId }) => {
             />
             <p className="text-xs text-slate-500">This is what your survey will look like:</p>
             <div className="relative w-full max-w-sm cursor-not-allowed rounded-lg bg-white px-4 py-6 shadow-lg ring-1 ring-black ring-opacity-5 sm:p-6">
-              <Headline headline={`How do you like ${name ? name : "PRODUCT"}?`} questionId="none" />
+              <Headline headline={`How do you like ${name ? name : "Formbricks"}?`} questionId="none" />
               <div className="mt-4">
                 <fieldset>
                   <legend className="sr-only">Choices</legend>
@@ -108,7 +108,7 @@ const Product: React.FC<Product> = ({ done, environmentId }) => {
       <div className="flex items-center justify-end">
         <Button
           size="lg"
-          variant="primary"
+          variant="darkCTA"
           loading={isMutatingProduct}
           disabled={!name || !environmentId}
           onClick={handleDoneClick}>

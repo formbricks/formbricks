@@ -11,7 +11,7 @@ import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import useSWR from "swr";
 import Greeting from "./greeting";
-import Intention from "./intention";
+/* import Intention from "./intention"; */
 import Objective from "./objective";
 import Product from "./product";
 import Role from "./role";
@@ -71,7 +71,7 @@ export default function Onboarding() {
         router.push(`/environments/${data.id}`);
       }
     } catch (e) {
-      toast.error('An error occured saving your settings.')
+      toast.error("An error occured saving your settings.");
       console.log(e);
     }
   };
@@ -94,10 +94,10 @@ export default function Onboarding() {
       </div>
       <div className="flex grow items-center justify-center">
         {currentStep === 1 && <Greeting next={next} skip={skip} name={profile.name} />}
-        {currentStep === 2 && <Intention next={next} skip={skip} />}
-        {currentStep === 3 && <Role next={next} skip={skip} />}
-        {currentStep === 4 && <Objective next={next} skip={skip} />}
-        {currentStep === 5 && <Product done={done} environmentId={data.id} />}
+        {/* {currentStep === 2 && <Intention next={next} skip={skip} />} */}
+        {currentStep === 2 && <Role next={next} skip={skip} />}
+        {currentStep === 3 && <Objective next={next} skip={skip} />}
+        {currentStep === 4 && <Product done={done} environmentId={data.id} />}
       </div>
     </div>
   );

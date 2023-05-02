@@ -24,7 +24,7 @@ const Greeting: React.FC<Greeting> = ({ next, skip, name }) => {
           <Button size="lg" variant="minimal" onClick={skip}>
             I&apos;ll do it later
           </Button>
-          <Button size="lg" variant="primary" onClick={next}>
+          <Button size="lg" variant="darkCTA" onClick={next}>
             Begin (1 min)
           </Button>
         </div>
