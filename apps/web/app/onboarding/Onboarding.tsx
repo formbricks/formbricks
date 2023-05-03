@@ -63,7 +63,7 @@ export default function Onboarding({ session }: OnboardingProps) {
       const updatedProfile = { ...profile, onboardingDisplayed: true };
       await triggerProfileMutate(updatedProfile);
       if (data) {
-        await router.push(`/environments/${data.id}`);
+        await router.push(`/environments/${data.id}/surveys`);
       }
     } catch (e) {
       toast.error("An error occured saving your settings.");

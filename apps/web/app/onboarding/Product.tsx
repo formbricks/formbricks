@@ -6,8 +6,7 @@ import Subheader from "@/components/preview/Subheader";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
 type Product = {
@@ -17,6 +16,7 @@ type Product = {
 };
 
 const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
+  const [loading, setLoading] = useState(true);
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { triggerProductMutate } = useProductMutation(environmentId);
 
@@ -32,13 +32,14 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
   };
 
   useEffect(() => {
-    if (!product) {
+    if (isLoadingProduct) {
       return;
+    } else if (product && product.name !== "My Product") {
+      done(); // when product already exists, skip product step entirely
+    } else {
+      setLoading(false);
     }
-
-    setName(product.name !== "My Product" ? product.name : "");
-    setColor(product.brandColor);
-  }, [product]);
+  }, [product, done, isLoadingProduct]);
 
   const dummyChoices = ["❤️ Love it!"];
 
@@ -56,7 +57,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
     done();
   };
 
-  if (isLoadingProduct) {
+  if (isLoadingProduct || loading) {
     return <LoadingSpinner />;
   }
 
