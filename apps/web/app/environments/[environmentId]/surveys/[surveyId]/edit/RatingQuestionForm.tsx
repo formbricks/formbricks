@@ -20,14 +20,6 @@ export default function RatingQuestionForm({
   updateQuestion,
   lastQuestion,
 }: RatingQuestionFormProps) {
-  const handleScaleChange = (scale) => {
-    if (scale === "smiley" && question.range > 5) {
-      updateQuestion(questionIdx, { range: "5", scale });
-    } else {
-      updateQuestion(questionIdx, { scale });
-    }
-  };
-
   return (
     <form>
       <div className="mt-3">
@@ -65,7 +57,7 @@ export default function RatingQuestionForm({
                 { label: "Smiley", value: "smiley", icon: FaceSmileIcon },
               ]}
               defaultValue={question.scale || "number"}
-              onSelect={(option) => handleScaleChange(option.value)}
+              onSelect={(option) => updateQuestion(questionIdx, { scale: option.value })}
             />
           </div>
         </div>
@@ -77,10 +69,10 @@ export default function RatingQuestionForm({
                 { label: "5 points (recommended)", value: "5" },
                 { label: "3 points", value: "3" },
                 { label: "4 points", value: "4" },
-                { label: "7 points", value: "7", disabled: question.scale === "smiley" },
-                { label: "10 points", value: "10", disabled: question.scale === "smiley" },
+                { label: "7 points", value: "7" },
+                { label: "10 points", value: "10" },
               ]}
-              disabled={survey.status !== "draft"}
+              // disabled={survey.status !== "draft"}
               defaultValue={question.range || "5"}
               onSelect={(option) => updateQuestion(questionIdx, { range: option.value })}
             />
