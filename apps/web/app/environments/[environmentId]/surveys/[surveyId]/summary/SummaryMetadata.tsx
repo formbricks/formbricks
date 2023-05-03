@@ -29,10 +29,12 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const searchParams = useSearchParams();
 
-  useEffect(() => {
+  /*   useEffect(() => {
     if (environment) {
+      console.log(environment.widgetSetupCompleted);
       const newSurveyParam = searchParams?.get("success");
       if (newSurveyParam === "true" && survey) {
+        console.log(survey);
         setConfetti(true);
         toast.success(
           survey.type === "web" && !environment.widgetSetupCompleted
@@ -49,7 +51,41 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
         }
       }
     }
+  }, [environment, searchParams, survey]); */
+
+  const [toastMessage, setToastMessage] = useState("");
+
+  useEffect(() => {
+    if (environment) {
+      const newSurveyParam = searchParams?.get("success");
+      if (newSurveyParam === "true" && survey) {
+        setConfetti(true);
+
+        const newToastMessage =
+          survey.type === "web" && !environment.widgetSetupCompleted
+            ? "Almost there! Install widget to start receiving responses."
+            : "Congrats! Your survey is live.";
+
+        if (newToastMessage !== toastMessage) {
+          setToastMessage(newToastMessage);
+        }
+      }
+    }
   }, [environment, searchParams, survey]);
+
+  useEffect(() => {
+    if (toastMessage) {
+      toast.success(toastMessage, {
+        icon: survey.type === "web" && !environment.widgetSetupCompleted ? "🤏" : "🎉",
+        duration: 5000,
+        position: "bottom-right",
+      });
+
+      if (survey.type === "link") {
+        setShowLinkModal(true);
+      }
+    }
+  }, [toastMessage]);
 
   const responses = responsesData?.responses;
 
@@ -65,8 +101,6 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
   if (isErrorResponses || isErrorSurvey || isErrorEnvironment) {
     return <ErrorComponent />;
   }
-
-  console.log(survey);
 
   return (
     <div className="mb-4 ">
