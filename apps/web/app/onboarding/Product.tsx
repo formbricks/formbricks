@@ -37,6 +37,9 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
     } else if (product && product.name !== "My Product") {
       done(); // when product already exists, skip product step entirely
     } else {
+      if (product) {
+        setColor(product.brandColor);
+      }
       setLoading(false);
     }
   }, [product, done, isLoadingProduct]);
