@@ -301,6 +301,31 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
+enum Role {
+  project_manager
+  engineer
+  founder
+  marketing_specialist
+  other
+}
+
+enum Objective {
+  increase_conversion
+  improve_user_retention
+  increase_user_adoption
+  sharpen_marketing_messaging
+  support_sales
+  other
+}
+
+enum Intention {
+  survey_user_segments
+  survey_at_specific_point_in_user_journey
+  enrich_customer_profiles
+  collect_all_user_feedback_on_one_platform
+  other
+}
+
 model User {
   id                        String           @id @default(cuid())
   createdAt                 DateTime         @default(now()) @map(name: "created_at")
@@ -309,6 +334,7 @@ model User {
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
   password                  String?
+  onboardingDisplayed       Boolean          @default(false)
   identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
   memberships               Membership[]
@@ -316,4 +342,6 @@ model User {
   groupId                   String?
   invitesCreated            Invite[]         @relation("inviteCreatedBy")
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
+  role                      Role?
+  objective                 Objective?
 }

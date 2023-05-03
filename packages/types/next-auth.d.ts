@@ -7,11 +7,12 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string;
+      createdAt: string;
       teamId?: string;
       plan?: string;
       email: string;
       name: string;
-      finishedOnboarding: boolean;
+      onboardingDisplayed: boolean;
       image?: StaticImageData;
     };
   }

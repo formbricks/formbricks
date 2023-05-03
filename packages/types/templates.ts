@@ -5,7 +5,8 @@ export type Objective =
   | "increase_conversion"
   | "support_sales"
   | "sharpen_marketing_messaging"
-  | "improve_user_retention";
+  | "improve_user_retention"
+  | "other"
 
 export interface Template {
   name: string;

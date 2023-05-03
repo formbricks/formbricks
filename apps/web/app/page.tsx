@@ -2,7 +2,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "pages/api/auth/[...nextauth]";
-import { HomeRedirect } from "./components";
+import { HomeRedirect } from "./HomeRedirect";
 import { PosthogClientWrapper } from "./PosthogClientWrapper";
 
 export default async function Home() {
@@ -13,7 +13,7 @@ export default async function Home() {
   return (
     <PosthogClientWrapper>
       <div>
-        <HomeRedirect />
+        <HomeRedirect session={session} />
         <LoadingSpinner />
       </div>
     </PosthogClientWrapper>

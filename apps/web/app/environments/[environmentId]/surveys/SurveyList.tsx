@@ -1,5 +1,6 @@
 "use client";
 
+import { Template } from "@/../../packages/types/templates";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import {
   DropdownMenu,
@@ -10,7 +11,8 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { deleteSurvey, duplicateSurvey, useSurveys } from "@/lib/surveys/surveys";
+import { useProfile } from "@/lib/profile";
+import { createSurvey, deleteSurvey, useSurveys, duplicateSurvey } from "@/lib/surveys/surveys";
 import { Badge, ErrorComponent } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import {
@@ -25,18 +27,32 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import TemplateList from "./templates/TemplateList";
 
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
+  const { isLoadingProfile, isErrorProfile } = useProfile();
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
 
   const [activeSurvey, setActiveSurvey] = useState("" as any);
   const [activeSurveyIdx, setActiveSurveyIdx] = useState("" as any);
 
   const newSurvey = async () => {
     router.push(`/environments/${environmentId}/surveys/templates`);
+  };
+
+  const newSurveyFromTemplate = async (template: Template) => {
+    setIsCreateSurveyLoading(true);
+    try {
+      const survey = await createSurvey(environmentId, template.preset);
+      router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
+    } catch (e) {
+      toast.error("An error occured creating a new survey");
+      setIsCreateSurveyLoading(false);
+    }
   };
 
   const deleteSurveyAction = async (survey, surveyIdx) => {
@@ -63,12 +79,36 @@ export default function SurveysList({ environmentId }) {
     }
   };
 
-  if (isLoadingSurveys) {
+  if (isLoadingSurveys || isLoadingProfile) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorSurveys) {
+  if (isErrorSurveys || isErrorProfile) {
     return <ErrorComponent />;
+  }
+
+  if (surveys.length === 0) {
+    return (
+      <div className="mx-auto flex w-full max-w-5xl flex-col py-24">
+        {isCreateSurveyLoading ? (
+          <LoadingSpinner />
+        ) : (
+          <>
+            <div className="px-7 pb-4">
+              <h1 className="text-3xl font-extrabold text-slate-700">
+                You&apos;re all set! Time to create your first survey.
+              </h1>
+            </div>
+            <TemplateList
+              environmentId={environmentId}
+              onTemplateClick={(template) => {
+                newSurveyFromTemplate(template);
+              }}
+            />
+          </>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -77,7 +117,7 @@ export default function SurveysList({ environmentId }) {
         <button onClick={() => newSurvey()}>
           <li className="col-span-1 h-56">
             <div className="from-brand-light to-brand-dark delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-b font-light text-white shadow transition ease-in-out hover:scale-105">
-              <div className="px-4 py-8 sm:p-14 xl:p-10">
+              <div id="main-cta" className="px-4 py-8 sm:p-14 xl:p-10">
                 <PlusIcon className="stroke-thin mx-auto h-14 w-14" />
                 Create Survey
               </div>

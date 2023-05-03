@@ -16,6 +16,7 @@ export const createUser = async (
         email,
         password: hashedPassword,
         inviteToken,
+        onboardingDisplayed: false,
       }),
     });
     if (res.status !== 200) {
