@@ -23,7 +23,7 @@ interface OnboardingProps {
 }
 
 export default function Onboarding({ session }: OnboardingProps) {
-  const { data, error } = useSWR(`/api/v1/environments/find-first`, fetcher);
+  const { data: environment, error } = useSWR(`/api/v1/environments/find-first`, fetcher);
   const { profile } = useProfile();
   const { triggerProfileMutate } = useProfileMutation();
   const [currentStep, setCurrentStep] = useState(1);
@@ -62,13 +62,13 @@ export default function Onboarding({ session }: OnboardingProps) {
     try {
       const updatedProfile = { ...profile, onboardingDisplayed: true };
       await triggerProfileMutate(updatedProfile);
-      if (data) {
-        await router.push(`/environments/${data.id}/surveys`);
+      if (environment) {
+        router.push(`/environments/${environment.id}/surveys`);
+        return;
       }
     } catch (e) {
       toast.error("An error occured saving your settings.");
       console.error(e);
-    } finally {
     }
   };
 
@@ -92,7 +92,7 @@ export default function Onboarding({ session }: OnboardingProps) {
         {currentStep === 1 && <Greeting next={next} skip={skip} name={profile.name} session={session} />}
         {currentStep === 2 && <Role next={next} skip={skip} />}
         {currentStep === 3 && <Objective next={next} skip={skip} />}
-        {currentStep === 4 && <Product done={done} environmentId={data.id} isLoading={isLoading} />}
+        {currentStep === 4 && <Product done={done} environmentId={environment.id} isLoading={isLoading} />}
       </div>
     </div>
   );

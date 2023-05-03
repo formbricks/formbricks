@@ -3,7 +3,7 @@ import SettingsTitle from "../SettingsTitle";
 import { Button } from "@formbricks/ui";
 import PricingTable from "./PricingTable";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 
 const proPlan = false;
 

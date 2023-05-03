@@ -1,3 +1,4 @@
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { withEmailTemplate } from "./email-template";
 import { createInviteToken, createToken } from "./jwt";
 const nodemailer = require("nodemailer");
@@ -32,10 +33,10 @@ export const sendVerificationEmail = async (user) => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
-  const verifyLink = `${process.env.NEXTAUTH_URL}/auth/verify?token=${encodeURIComponent(token)}`;
-  const verificationRequestLink = `${
-    process.env.NEXTAUTH_URL
-  }/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
+  const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
+  const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?email=${encodeURIComponent(
+    user.email
+  )}`;
   await sendEmail({
     to: user.email,
     subject: "Welcome to Formbricks 🤍",
@@ -54,9 +55,7 @@ export const sendForgotPasswordEmail = async (user) => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
-  const verifyLink = `${process.env.NEXTAUTH_URL}/auth/forgot-password/reset?token=${encodeURIComponent(
-    token
-  )}`;
+  const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
   await sendEmail({
     to: user.email,
     subject: "Reset your Formbricks password",
@@ -84,8 +83,7 @@ export const sendInviteMemberEmail = async (inviteId, inviterName, inviteeName, 
   const token = createInviteToken(inviteId, email, {
     expiresIn: "7d",
   });
-  // const verifyLink = `${process.env.NEXTAUTH_URL}/api/v1/invite?token=${encodeURIComponent(token)}`;
-  const verifyLink = `${process.env.NEXTAUTH_URL}/invite?token=${encodeURIComponent(token)}`;
+  const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
   await sendEmail({
     to: email,

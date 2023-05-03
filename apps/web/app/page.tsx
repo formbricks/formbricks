@@ -1,21 +1,41 @@
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { WEBAPP_URL } from "@/../../packages/lib/constants";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { authOptions } from "pages/api/auth/[...nextauth]";
-import { HomeRedirect } from "./HomeRedirect";
-import { PosthogClientWrapper } from "./PosthogClientWrapper";
+
+async function getEnvironment() {
+  const cookie = headers().get("cookie") || "";
+  const res = await fetch(`${WEBAPP_URL}/api/v1/environments/find-first`, {
+    headers: {
+      cookie,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch data");
+  }
+
+  return res.json();
+}
 
 export default async function Home() {
-  const session = await getServerSession(authOptions);
+  const session: Session | null = await getServerSession(authOptions);
+
   if (!session) {
     redirect("/auth/login");
   }
-  return (
-    <PosthogClientWrapper>
-      <div>
-        <HomeRedirect session={session} />
-        <LoadingSpinner />
-      </div>
-    </PosthogClientWrapper>
-  );
+
+  if (session?.user && !session?.user?.onboardingDisplayed) {
+    return redirect(`/onboarding`);
+  }
+
+  const environment = await getEnvironment();
+
+  if (!environment) {
+    throw Error("No environment found for user");
+  }
+
+  return redirect(`/environments/${environment.id}`);
 }
