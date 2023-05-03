@@ -241,6 +241,122 @@ export default function Header() {
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Blog <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
           </Link>
+          <Popover className="relative">
+            {({ open }) => (
+              <>
+                <Popover.Button
+                  className={clsx(
+                    open
+                      ? "text-gray-300 "
+                      : "text-gray-500  hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-50",
+                    "group inline-flex items-center rounded-md text-base font-medium hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-gray-50"
+                  )}>
+                  <span>Best Practices</span>
+                  <ChevronDownIcon
+                    className={clsx(
+                      open ? "text-gray-600" : "text-gray-400",
+                      "ml-2 h-5 w-5 group-hover:text-gray-500"
+                    )}
+                    aria-hidden="true"
+                  />
+                </Popover.Button>
+
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-200"
+                  enterFrom="opacity-0 translate-y-1"
+                  enterTo="opacity-100 translate-y-0"
+                  leave="transition ease-in duration-150"
+                  leaveFrom="opacity-100 translate-y-0"
+                  leaveTo="opacity-0 translate-y-1">
+                  <Popover.Panel className="absolute z-10 -ml-4 mt-3 w-screen max-w-lg transform lg:left-1/2 lg:ml-0 lg:max-w-4xl lg:-translate-x-1/2">
+                    <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                      <div className="relative grid gap-6 bg-white px-5 py-6 sm:gap-6 sm:p-8 lg:grid-cols-3">
+                        <div>
+                          <h4 className="mb-6 ml-16 text-sm text-blue-400">Form Creation</h4>
+                          {creation.map((brick) => (
+                            <Link
+                              key={brick.name}
+                              href={brick.href}
+                              className={clsx(
+                                brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                                "-m-3 flex items-start rounded-lg p-3 py-4"
+                              )}>
+                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
+                                <brick.icon className="h-6 w-6" aria-hidden="true" />
+                              </div>
+                              <div className="ml-4">
+                                <p
+                                  className={clsx(
+                                    brick.status ? "text-gray-900" : "text-gray-400",
+                                    "text-lg font-semibold"
+                                  )}>
+                                  {brick.name}
+                                </p>
+                                <p className="text-sm text-gray-400">{brick.description}</p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                        <div>
+                          <h4 className="mb-6 ml-16 text-sm text-blue-400">Data Pipelines</h4>
+                          {pipes.map((brick) => (
+                            <Link
+                              key={brick.name}
+                              href={brick.href}
+                              className={clsx(
+                                brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                                "-m-3 flex items-start rounded-lg p-3 py-4"
+                              )}>
+                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center text-teal-500 sm:h-12 sm:w-12">
+                                <brick.icon className="h-6 w-6" aria-hidden="true" />
+                              </div>
+                              <div className="ml-4">
+                                <p
+                                  className={clsx(
+                                    brick.status ? "text-gray-900" : "text-gray-400",
+                                    "text-lg font-semibold"
+                                  )}>
+                                  {brick.name}
+                                </p>
+                                <p className="text-sm text-gray-400">{brick.description}</p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                        <div>
+                          <h4 className="mb-6 ml-16 text-sm text-blue-400">Data Insights</h4>
+                          {insights.map((brick) => (
+                            <Link
+                              key={brick.name}
+                              href={brick.href}
+                              className={clsx(
+                                brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                                "-m-3 flex items-start rounded-lg p-3 py-4"
+                              )}>
+                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
+                                <brick.icon className="h-6 w-6" aria-hidden="true" />
+                              </div>
+                              <div className="ml-4">
+                                <p
+                                  className={clsx(
+                                    brick.status ? "text-gray-900" : "text-gray-400",
+                                    "text-lg font-semibold"
+                                  )}>
+                                  {brick.name}
+                                </p>
+                                <p className="text-sm text-gray-400">{brick.description}</p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </Popover.Panel>
+                </Transition>
+              </>
+            )}
+          </Popover>
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
