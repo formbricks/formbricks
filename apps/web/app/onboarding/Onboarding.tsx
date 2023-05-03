@@ -19,7 +19,7 @@ import { Session } from "next-auth";
 const MAX_STEPS = 6;
 
 interface OnboardingProps {
-  session: Session;
+  session: Session | null;
 }
 
 export default function Onboarding({ session }: OnboardingProps) {

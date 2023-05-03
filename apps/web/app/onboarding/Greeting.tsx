@@ -8,11 +8,11 @@ type Greeting = {
   next: () => void;
   skip: () => void;
   name: string;
-  session: Session;
+  session: Session | null;
 };
 
 const Greeting: React.FC<Greeting> = ({ next, skip, name, session }) => {
-  const legacyUser = new Date(session?.user?.createdAt) < new Date("2023-05-03T00:00:00"); // if user is created before onboarding deployment
+  const legacyUser = !session ? false : new Date(session?.user?.createdAt) < new Date("2023-05-03T00:00:00"); // if user is created before onboarding deployment
 
   return (
     <div className="flex h-full w-full max-w-xl flex-col justify-around gap-8 px-8">

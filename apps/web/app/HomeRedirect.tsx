@@ -1,23 +1,24 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProfile } from "@/lib/profile";
 import { fetcher } from "@formbricks/lib/fetcher";
+import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
 import useSWR from "swr";
 
-export function HomeRedirect() {
+interface HomeRedirectProps {
+  session: Session;
+}
+
+export function HomeRedirect({ session }: HomeRedirectProps) {
   const { data, error } = useSWR(`/api/v1/environments/find-first`, fetcher);
-  const { profile, isErrorProfile } = useProfile();
 
   useEffect(() => {
-    if (profile) {
-      if (!profile.onboardingDisplayed && !isErrorProfile) {
+    if (session) {
+      if (!session.user?.onboardingDisplayed) {
         return redirect(`/onboarding`);
-      } else if (isErrorProfile) {
-        console.error(isErrorProfile);
       }
 
       if (data && !error) {
@@ -26,7 +27,7 @@ export function HomeRedirect() {
         console.error(error);
       }
     }
-  }, [data, error, profile, isErrorProfile])
+  }, [data, error, session]);
 
   if (error) {
     setTimeout(() => {
