@@ -8,6 +8,47 @@ import { useRouter } from "next/router";
 import { Fragment } from "react";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
+import clsx from "clsx";
+import {
+  AngryBirdRageIcon,
+  CancelSubscriptionIcon,
+  DogChaserIcon,
+  DoorIcon,
+  FeedbackIcon,
+  InterviewPromptIcon,
+  OnboardingIcon,
+  PMFIcon,
+} from "@formbricks/ui";
+
+const creation = [
+  {
+    name: "Feedback Box",
+    href: "/feedback-box",
+    status: true,
+    icon: FeedbackIcon,
+    description: "Keep a direct channel to your users.",
+  },
+];
+
+const insights = [
+  {
+    name: "Feedback Box",
+    href: "/feedback-box",
+    status: true,
+    icon: FeedbackIcon,
+    description: "Keep a direct channel to your users.",
+  },
+];
+
+const pipes = [
+  {
+    name: "Feedback Box",
+    href: "/feedback-box",
+    status: true,
+    icon: FeedbackIcon,
+    description: "Keep a direct channel to your users.",
+  },
+];
 
 export default function Header() {
   const plausible = usePlausible();
@@ -28,27 +69,6 @@ export default function Header() {
           </Popover.Button>
         </div>
         <Popover.Group as="nav" className="hidden space-x-10 md:flex">
-          <Link
-            href="/community"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Community
-          </Link>
-
-          <Link
-            href="https://formbricks.com/#pricing"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Pricing
-          </Link>
-          <Link
-            href="/docs"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Docs
-          </Link>
-          <Link
-            href="/blog"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Blog{/*  <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p> */}
-          </Link>
           <Popover className="relative">
             {({ open }) => (
               <>
@@ -165,6 +185,27 @@ export default function Header() {
               </>
             )}
           </Popover>
+          {/*           <Link
+            href="/community"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Community
+          </Link>
+ */}
+          <Link
+            href="https://formbricks.com/#pricing"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Pricing
+          </Link>
+          <Link
+            href="/docs"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Docs
+          </Link>
+          <Link
+            href="/blog"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Blog <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
+          </Link>
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
