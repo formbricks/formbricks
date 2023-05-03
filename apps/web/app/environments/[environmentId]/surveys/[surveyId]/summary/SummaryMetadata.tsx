@@ -27,24 +27,29 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
   const [confetti, setConfetti] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
-
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (searchParams && survey) {
-      const newSurveyParam = searchParams.get("success");
-      if (newSurveyParam === "true") {
+    if (environment) {
+      const newSurveyParam = searchParams?.get("success");
+      if (newSurveyParam === "true" && survey) {
         setConfetti(true);
-        toast.success("Congrats! Your survey is live 🎉", {
-          duration: 4000,
-          position: "bottom-right",
-        });
+        toast.success(
+          survey.type === "web" && !environment.widgetSetupCompleted
+            ? "Almost there! Install widget to start receiving responses."
+            : "Congrats! Your survey is live.",
+          {
+            icon: survey.type === "web" && !environment.widgetSetupCompleted ? "🤏" : "🎉",
+            duration: 5000,
+            position: "bottom-right",
+          }
+        );
         if (survey.type === "link") {
           setShowLinkModal(true);
         }
       }
     }
-  }, [searchParams, survey]);
+  }, [environment, searchParams, survey]);
 
   const responses = responsesData?.responses;
 
@@ -60,6 +65,8 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
   if (isErrorResponses || isErrorSurvey || isErrorEnvironment) {
     return <ErrorComponent />;
   }
+
+  console.log(survey);
 
   return (
     <div className="mb-4 ">

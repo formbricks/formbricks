@@ -27,6 +27,21 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
     // personId can be null, e.g. for link surveys
 
+    // check if survey exists
+    const survey = await prisma.survey.findUnique({
+      where: {
+        id: surveyId,
+      },
+      select: {
+        id: true,
+        type: true,
+      },
+    });
+
+    if (!survey) {
+      return res.status(404).json({ message: "Survey not found" });
+    }
+
     // get teamId from environment
     const environment = await prisma.environment.findUnique({
       where: {
@@ -88,6 +103,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (teamOwnerId) {
       await capturePosthogEvent(teamOwnerId, "response created", teamId, {
         surveyId,
+        surveyType: survey.type,
       });
     } else {
       console.warn("Posthog capture not possible. No team owner found");

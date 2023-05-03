@@ -12,11 +12,12 @@ import {
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { useProfile } from "@/lib/profile";
-import { createSurvey, deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
+import { createSurvey, deleteSurvey, useSurveys, duplicateSurvey } from "@/lib/surveys/surveys";
 import { Badge, ErrorComponent } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import {
   ComputerDesktopIcon,
+  DocumentDuplicateIcon,
   EllipsisHorizontalIcon,
   LinkIcon,
   PencilSquareIcon,
@@ -65,6 +66,16 @@ export default function SurveysList({ environmentId }) {
       toast.success("Survey deleted successfully.");
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const duplicateSurveyAndRefresh = async (surveyId) => {
+    try {
+      await duplicateSurvey(environmentId, surveyId);
+      mutateSurveys();
+      toast.success("Survey duplicated successfully.");
+    } catch (error) {
+      toast.error("Failed to duplicate the survey.");
     }
   };
 
@@ -176,6 +187,24 @@ export default function SurveysList({ environmentId }) {
                               Edit
                             </Link>
                           </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <button
+                              className="flex w-full items-center"
+                              onClick={async () => {
+                                duplicateSurveyAndRefresh(survey.id);
+                              }}>
+                              <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
+                              Duplicate
+                            </button>
+                          </DropdownMenuItem>
+                          {/* <DropdownMenuItem>
+                            <Link
+                              className="flex w-full items-center"
+                              href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                              <ArrowUturnUpIcon className="mr-2 h-4 w-4" />
+                              Copy to Production
+                            </Link>
+                          </DropdownMenuItem> */}
                           <DropdownMenuItem>
                             <button
                               className="flex w-full  items-center"
