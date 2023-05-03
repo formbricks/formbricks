@@ -99,8 +99,8 @@ export default function SurveyMenuBar({
             }
             variant="highlight"
             loading={isMutatingSurvey}
-            onClick={() => {
-              triggerSurveyMutate({ ...localSurvey, status: "inProgress" });
+            onClick={async () => {
+              await triggerSurveyMutate({ ...localSurvey, status: "inProgress" });
               router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
             }}>
             Publish Survey
