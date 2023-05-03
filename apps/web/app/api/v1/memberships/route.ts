@@ -15,6 +15,26 @@ export async function GET() {
     where: {
       userId: sessionUser.id,
     },
+    include: {
+      team: {
+        select: {
+          id: true,
+          name: true,
+          products: {
+            select: {
+              id: true,
+              name: true,
+              environments: {
+                select: {
+                  id: true,
+                  type: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   return NextResponse.json(memberships);
