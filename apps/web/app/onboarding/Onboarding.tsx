@@ -46,7 +46,11 @@ export default function Onboarding({ session }: OnboardingProps) {
     return <div className="flex h-full w-full items-center justify-center">An error occurred</div>;
   }
 
-  const skip = () => {
+  const skipStep = () => {
+    setCurrentStep(currentStep + 1);
+  };
+
+  const doLater = () => {
     setCurrentStep(4);
   };
 
@@ -89,9 +93,9 @@ export default function Onboarding({ session }: OnboardingProps) {
         <div className="col-span-2" />
       </div>
       <div className="flex grow items-center justify-center">
-        {currentStep === 1 && <Greeting next={next} skip={skip} name={profile.name} session={session} />}
-        {currentStep === 2 && <Role next={next} skip={skip} />}
-        {currentStep === 3 && <Objective next={next} skip={skip} />}
+        {currentStep === 1 && <Greeting next={next} skip={doLater} name={profile.name} session={session} />}
+        {currentStep === 2 && <Role next={next} skip={skipStep} />}
+        {currentStep === 3 && <Objective next={next} skip={skipStep} />}
         {currentStep === 4 && <Product done={done} environmentId={environment.id} isLoading={isLoading} />}
       </div>
     </div>
