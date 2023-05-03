@@ -60,7 +60,7 @@ export default function Onboarding({ session }: OnboardingProps) {
   const done = async () => {
     setIsLoading(true);
     try {
-      const updatedProfile = { ...profile, onboardingDisplayed: true };
+      const updatedProfile = { ...profile, onboardingCompleted: true };
       await triggerProfileMutate(updatedProfile);
       if (environment) {
         router.push(`/environments/${environment.id}/surveys`);

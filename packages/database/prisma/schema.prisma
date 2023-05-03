@@ -334,7 +334,7 @@ model User {
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
   password                  String?
-  onboardingDisplayed       Boolean          @default(false)
+  onboardingCompleted       Boolean          @default(false)
   identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
   memberships               Membership[]

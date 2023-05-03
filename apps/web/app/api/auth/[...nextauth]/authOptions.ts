@@ -130,7 +130,7 @@ export const authOptions: NextAuthOptions = {
         select: {
           id: true,
           createdAt: true,
-          onboardingDisplayed: true,
+          onboardingCompleted: true,
           memberships: {
             select: {
               teamId: true,
@@ -152,7 +152,7 @@ export const authOptions: NextAuthOptions = {
       const additionalAttributs = {
         id: existingUser.id,
         createdAt: existingUser.createdAt,
-        onboardingDisplayed: existingUser.onboardingDisplayed,
+        onboardingCompleted: existingUser.onboardingCompleted,
         teamId: existingUser.memberships.length > 0 ? existingUser.memberships[0].teamId : undefined,
         plan:
           existingUser.memberships.length > 0 && existingUser.memberships[0].team
@@ -172,7 +172,7 @@ export const authOptions: NextAuthOptions = {
       // @ts-ignore
       session.user.createdAt = token?.createdAt ? new Date(token?.createdAt).toISOString() : undefined;
       // @ts-ignore
-      session.user.onboardingDisplayed = token?.onboardingDisplayed;
+      session.user.onboardingCompleted = token?.onboardingCompleted;
       // @ts-ignore
       session.user.teamId = token?.teamId;
       // @ts-ignore
@@ -251,7 +251,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name,
             email: user.email,
             emailVerified: new Date(Date.now()),
-            onboardingDisplayed: false,
+            onboardingCompleted: false,
             identityProvider: provider,
             identityProviderAccountId: user.id as string,
             accounts: {

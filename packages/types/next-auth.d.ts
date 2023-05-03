@@ -12,7 +12,7 @@ declare module "next-auth" {
       plan?: string;
       email: string;
       name: string;
-      onboardingDisplayed: boolean;
+      onboardingCompleted: boolean;
       image?: StaticImageData;
     };
   }
