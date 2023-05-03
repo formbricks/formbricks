@@ -1,20 +1,19 @@
 "use client";
 
-import { cn } from "@/../../packages/lib/cn";
+import { ProgressBar } from "@/../../packages/ui";
 import { Logo } from "@/components/Logo";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { fetcher } from "@formbricks/lib/fetcher";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import useSWR from "swr";
-import Greeting from "./greeting";
-/* import Intention from "./intention"; */
-import Objective from "./objective";
-import Product from "./product";
-import Role from "./role";
+import Greeting from "./Greeting";
+import Objective from "./Objective";
+import Product from "./Product";
+import Role from "./Role";
 
 const MAX_STEPS = 6;
 
@@ -27,23 +26,8 @@ export default function Onboarding() {
   const router = useRouter();
 
   const percent = useMemo(() => {
-    return Math.floor((currentStep / MAX_STEPS) * 100);
+    return currentStep / MAX_STEPS;
   }, [currentStep]);
-
-  const progressSize = useMemo(() => {
-    switch (percent) {
-      case 16:
-        return "w-1/6";
-      case 33:
-        return "w-2/6";
-      case 50:
-        return "w-3/6";
-      case 66:
-        return "w-4/6";
-      case 83:
-        return "w-5/6";
-    }
-  }, [percent]);
 
   if (!profile) {
     return (
@@ -58,7 +42,7 @@ export default function Onboarding() {
   }
 
   const skip = () => {
-    setCurrentStep(5);
+    setCurrentStep(4);
   };
 
   const next = () => {
@@ -90,18 +74,17 @@ export default function Onboarding() {
           <Logo className="ml-4 w-1/2" />
         </div>
         <div className="col-span-2 flex items-center justify-center gap-8">
-          <div className="relative h-2 grow overflow-hidden rounded-full bg-slate-200">
-            <div className={cn(progressSize, "bg-brand-light absolute h-full transition-all")} />
+          <div className="relative grow overflow-hidden rounded-full bg-slate-200">
+            <ProgressBar progress={percent} barColor="bg-brand" height={2} />
           </div>
           <div className="grow-0 text-xs font-semibold text-slate-700">
-            {currentStep < 5 ? <>{percent}% complete</> : <>Almost there!</>}
+            {currentStep < 5 ? <>{Math.floor(percent * 100)}% complete</> : <>Almost there!</>}
           </div>
         </div>
         <div className="col-span-2" />
       </div>
       <div className="flex grow items-center justify-center">
         {currentStep === 1 && <Greeting next={next} skip={skip} name={profile.name} />}
-        {/* {currentStep === 2 && <Intention next={next} skip={skip} />} */}
         {currentStep === 2 && <Role next={next} skip={skip} />}
         {currentStep === 3 && <Objective next={next} skip={skip} />}
         {currentStep === 4 && <Product done={done} environmentId={data.id} isLoading={isLoading} />}

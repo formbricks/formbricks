@@ -1,9 +1,12 @@
 "use client";
 
-import { Button, ColorPicker, Input, Label } from "@/../../packages/ui";
+import { Button, ColorPicker, ErrorComponent, Input, Label } from "@/../../packages/ui";
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProductMutation } from "@/lib/products/mutateProducts";
+import { useProduct } from "@/lib/products/products";
+import { useEffect } from "react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -14,6 +17,7 @@ type Product = {
 };
 
 const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { triggerProductMutate } = useProductMutation(environmentId);
 
   const [name, setName] = useState("");
@@ -26,6 +30,15 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
   const handleColorChange = (color) => {
     setColor(color);
   };
+
+  useEffect(() => {
+    if (!product) {
+      return;
+    }
+
+    setName(product.name !== "My Product" ? product.name : "");
+    setColor(product.brandColor);
+  }, [product]);
 
   const dummyChoices = ["❤️ Love it!"];
 
@@ -43,6 +56,14 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
     done();
   };
 
+  if (isLoadingProduct) {
+    return <LoadingSpinner />;
+  }
+
+  if (isErrorProduct) {
+    return <ErrorComponent />;
+  }
+
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
       <div className="px-4">
@@ -57,7 +78,13 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
               <span className="text-xs text-slate-500">Required</span>
             </div>
             <div className="mt-2">
-              <Input id="product" type="text" placeholder="e.g. Formbricks" onChange={handleNameChange} />
+              <Input
+                id="product"
+                type="text"
+                placeholder="e.g. Formbricks"
+                value={name}
+                onChange={handleNameChange}
+              />
             </div>
           </div>
           <div>
