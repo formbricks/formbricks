@@ -7,7 +7,6 @@ import { PosthogClientWrapper } from "./PosthogClientWrapper";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
-  console.log(session);
   if (!session) {
     redirect("/auth/login");
   }

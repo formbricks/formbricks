@@ -67,7 +67,7 @@ export default function Onboarding({ session }: OnboardingProps) {
       }
     } catch (e) {
       toast.error("An error occured saving your settings.");
-      console.log(e);
+      console.error(e);
     } finally {
     }
   };

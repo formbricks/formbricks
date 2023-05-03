@@ -51,7 +51,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
       await triggerProductMutate({ name, brandColor: color });
     } catch (e) {
       toast.error("An error occured saving your settings");
-      console.log(e);
+      console.error(e);
     }
     done();
   };

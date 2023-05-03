@@ -26,6 +26,8 @@ export function HomeRedirect({ session }: HomeRedirectProps) {
       } else if (error) {
         console.error(error);
       }
+    } else {
+      return redirect(`/auth/login`);
     }
   }, [data, error, session]);
 

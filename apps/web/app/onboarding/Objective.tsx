@@ -43,7 +43,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip }) => {
           const updatedProfile = { ...profile, objective: selectedObjective.id };
           await triggerProfileMutate(updatedProfile);
         } catch (e) {
-          console.log(e);
+          console.error(e);
           toast.error("An error occured saving your settings");
         }
         next();

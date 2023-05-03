@@ -42,7 +42,7 @@ const Role: React.FC<Role> = ({ next, skip }) => {
           await triggerProfileMutate(updatedProfile);
         } catch (e) {
           toast.error("An error occured saving your settings");
-          console.log(e);
+          console.error(e);
         }
         next();
       }

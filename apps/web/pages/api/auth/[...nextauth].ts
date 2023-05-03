@@ -172,7 +172,7 @@ export const authOptions: NextAuthOptions = {
       // @ts-ignore
       session.user.id = token?.id;
       // @ts-ignore
-      session.user.createdAt = token?.createdAt ? token?.createdAt.toISOString() : undefined;
+      session.user.createdAt = token?.createdAt ? new Date(token?.createdAt).toISOString() : undefined;
       // @ts-ignore
       session.user.onboardingDisplayed = token?.onboardingDisplayed;
       // @ts-ignore
