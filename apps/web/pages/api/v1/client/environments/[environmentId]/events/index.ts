@@ -1,12 +1,11 @@
 import { prisma } from "@formbricks/database";
-import type { NextApiRequest } from "next";
-import { CustomNextApiResponse, responses } from "../../../../../../../lib/api/response";
+import type { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handle(req: NextApiRequest, res: CustomNextApiResponse) {
+export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
 
   if (!environmentId) {
-    return responses.missingFieldResponse(res, "environmentId");
+    return res.status(400).json({ message: "Missing environmentId" });
   }
 
   // CORS
@@ -18,11 +17,10 @@ export default async function handle(req: NextApiRequest, res: CustomNextApiResp
     const { sessionId, eventName, properties } = req.body;
 
     if (!sessionId) {
-      return responses.missingFieldResponse(res, "sessionId");
+      return res.status(400).json({ message: "Missing sessionId" });
     }
-
     if (!eventName) {
-      return responses.missingFieldResponse(res, "eventName");
+      return res.status(400).json({ message: "Missing eventName" });
     }
 
     const eventData = await prisma.event.create({
@@ -57,14 +55,11 @@ export default async function handle(req: NextApiRequest, res: CustomNextApiResp
         id: true,
       },
     });
-
-    return res.json({
-      data: eventData,
-    });
+    return res.json(eventData);
   }
 
   // Unknown HTTP Method
   else {
-    return responses.methodNotAllowedResponse(res, ["POST", "OPTIONS"]);
+    throw new Error(`The HTTP ${req.method} method is not supported by this route.`);
   }
 }
