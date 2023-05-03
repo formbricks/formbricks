@@ -2,9 +2,7 @@ import { verifyPassword } from "@/lib/auth";
 import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
 import { IdentityProvider } from "@prisma/client";
-import { NextApiRequest, NextApiResponse } from "next";
 import type { NextAuthOptions } from "next-auth";
-import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 
@@ -350,7 +348,3 @@ export const authOptions: NextAuthOptions = {
     error: "/auth/login", // Error code passed in query string as ?error=
   },
 };
-
-export default async function auth(req: NextApiRequest, res: NextApiResponse) {
-  return await NextAuth(req, res, authOptions);
-}

@@ -1,7 +1,7 @@
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "pages/api/auth/[...nextauth]";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { HomeRedirect } from "./HomeRedirect";
 import { PosthogClientWrapper } from "./PosthogClientWrapper";
 

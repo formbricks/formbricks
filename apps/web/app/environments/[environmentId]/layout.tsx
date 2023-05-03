@@ -2,7 +2,7 @@ import EnvironmentsNavbar from "@/app/environments/[environmentId]/EnvironmentsN
 import ToasterClient from "@/components/ToasterClient";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "pages/api/auth/[...nextauth]";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import PosthogIdentify from "./PosthogIdentify";
 import FormbricksClient from "./FormbricksClient";
 import { PosthogClientWrapper } from "../../PosthogClientWrapper";
