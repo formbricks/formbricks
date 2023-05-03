@@ -27,7 +27,7 @@ export default async function Home() {
     redirect("/auth/login");
   }
 
-  if (!session?.user?.onboardingDisplayed) {
+  if (session?.user && !session?.user?.onboardingDisplayed) {
     return redirect(`/onboarding`);
   }
 
