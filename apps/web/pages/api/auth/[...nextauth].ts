@@ -131,6 +131,7 @@ export const authOptions: NextAuthOptions = {
         where: { email: token.email! },
         select: {
           id: true,
+          createdAt: true,
           memberships: {
             select: {
               teamId: true,
@@ -151,6 +152,7 @@ export const authOptions: NextAuthOptions = {
 
       const additionalAttributs = {
         id: existingUser.id,
+        createdAt: existingUser.createdAt,
         teamId: existingUser.memberships.length > 0 ? existingUser.memberships[0].teamId : undefined,
         plan:
           existingUser.memberships.length > 0 && existingUser.memberships[0].team
@@ -167,6 +169,8 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       // @ts-ignore
       session.user.id = token?.id;
+      // @ts-ignore
+      session.user.createdAt = token?.createdAt;
       // @ts-ignore
       session.user.teamId = token?.teamId;
       // @ts-ignore
