@@ -20,31 +20,38 @@ import {
   PMFIcon,
 } from "@formbricks/ui";
 
-const creation = [
+const BoostRetention = [
   {
     name: "Feedback Box",
     href: "/feedback-box",
     status: true,
     icon: FeedbackIcon,
-    description: "Keep a direct channel to your users.",
+    description: "Direct channel to users.",
+  },
+  {
+    name: "Docs Feedback",
+    href: "/docs-feedback",
+    status: true,
+    icon: FeedbackIcon,
+    description: "Measure Docs clarity.",
   },
 ];
 
-const insights = [
+const UnderstandUsers = [
   {
-    name: "Feedback Box",
-    href: "/feedback-box",
-    status: true,
+    name: "Interview Prompt",
+    href: "/interview-prompt",
+    status: false,
     icon: FeedbackIcon,
     description: "Keep a direct channel to your users.",
   },
 ];
 
-const pipes = [
+const IncreaseRevenue = [
   {
-    name: "Feedback Box",
-    href: "/feedback-box",
-    status: true,
+    name: "Missed Trial Conversion",
+    href: "/missed-trials",
+    status: false,
     icon: FeedbackIcon,
     description: "Keep a direct channel to your users.",
   },
