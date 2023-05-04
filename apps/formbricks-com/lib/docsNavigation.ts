@@ -18,7 +18,7 @@ const navigation = [
   {
     title: "Best Practices",
     links: [
-      /*       { title: "Feedback Box", href: "/docs/best-practices/feedback-box" }, */
+      { title: "Feedback Box", href: "/docs/best-practices/feedback-box" },
       { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
       /*       { title: "In-app Interview Prompt", href: "/docs/best-practices/interview-prompt" }, */
     ],
