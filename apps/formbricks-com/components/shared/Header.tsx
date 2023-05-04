@@ -63,9 +63,9 @@ const IncreaseRevenue = [
 
 const BoostRetention = [
   {
-    name: "Missed Trial Conversion",
-    href: "/missed-trials",
-    status: false,
+    name: "Feedback Box",
+    href: "/feedback-box",
+    status: true,
     icon: FeedbackIcon,
     description: "Always keep an ear open",
   },
