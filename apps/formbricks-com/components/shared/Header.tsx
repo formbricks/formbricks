@@ -10,15 +10,56 @@ import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
 import clsx from "clsx";
 import {
-  AngryBirdRageIcon,
   CancelSubscriptionIcon,
   DogChaserIcon,
-  DoorIcon,
   FeedbackIcon,
   InterviewPromptIcon,
   OnboardingIcon,
   PMFIcon,
+  BaseballIcon,
+  CodeBookIcon,
 } from "@formbricks/ui";
+
+const UnderstandUsers = [
+  {
+    name: "Interview Prompt",
+    href: "/interview-prompt",
+    status: true,
+    icon: InterviewPromptIcon,
+    description: "Interview invites on auto-pilot",
+  },
+  {
+    name: "Measure PMF",
+    href: "/measure-pmf",
+    status: true,
+    icon: PMFIcon,
+    description: "Improve Product-Market Fit",
+  },
+  {
+    name: "Onboarding Segments",
+    href: "/onboarding",
+    status: false,
+    icon: OnboardingIcon,
+    description: "Get it right from the start",
+  },
+];
+
+const IncreaseRevenue = [
+  {
+    name: "Learn from Churn",
+    href: "/cancel-subscription-flow",
+    status: true,
+    icon: CancelSubscriptionIcon,
+    description: "Churn is hard, but insightful",
+  },
+  {
+    name: "Improve Trial CR",
+    href: "/missed-trials",
+    status: true,
+    icon: BaseballIcon,
+    description: "Take guessing out, hit right",
+  },
+];
 
 const BoostRetention = [
   {
@@ -26,34 +67,21 @@ const BoostRetention = [
     href: "/feedback-box",
     status: true,
     icon: FeedbackIcon,
-    description: "Direct channel to users.",
+    description: "Always keep an ear open",
   },
   {
     name: "Docs Feedback",
     href: "/docs-feedback",
     status: true,
-    icon: FeedbackIcon,
-    description: "Measure Docs clarity.",
+    icon: CodeBookIcon,
+    description: "Clear docs, more adoption",
   },
-];
-
-const UnderstandUsers = [
   {
-    name: "Interview Prompt",
-    href: "/interview-prompt",
-    status: false,
-    icon: FeedbackIcon,
-    description: "Keep a direct channel to your users.",
-  },
-];
-
-const IncreaseRevenue = [
-  {
-    name: "Missed Trial Conversion",
-    href: "/missed-trials",
-    status: false,
-    icon: FeedbackIcon,
-    description: "Keep a direct channel to your users.",
+    name: "Feature Chaser",
+    href: "/feature-chaser",
+    status: true,
+    icon: DogChaserIcon,
+    description: "Follow up, improve",
   },
 ];
 
@@ -82,8 +110,8 @@ export default function Header() {
                 <Popover.Button
                   className={clsx(
                     open
-                      ? "text-gray-300 "
-                      : "text-gray-500  hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-50",
+                      ? "text-gray-600 "
+                      : "text-gray-400  hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-50",
                     "group inline-flex items-center rounded-md text-base font-medium hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:hover:text-gray-50"
                   )}>
                   <span>Best Practices</span>
@@ -108,34 +136,8 @@ export default function Header() {
                     <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
                       <div className="relative grid gap-6 bg-white px-5 py-6 sm:gap-6 sm:p-8 lg:grid-cols-3">
                         <div>
-                          <h4 className="mb-6 ml-16 text-sm text-blue-400">Form Creation</h4>
-                          {creation.map((brick) => (
-                            <Link
-                              key={brick.name}
-                              href={brick.href}
-                              className={clsx(
-                                brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
-                                "-m-3 flex items-start rounded-lg p-3 py-4"
-                              )}>
-                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
-                                <brick.icon className="h-6 w-6" aria-hidden="true" />
-                              </div>
-                              <div className="ml-4">
-                                <p
-                                  className={clsx(
-                                    brick.status ? "text-gray-900" : "text-gray-400",
-                                    "text-lg font-semibold"
-                                  )}>
-                                  {brick.name}
-                                </p>
-                                <p className="text-sm text-gray-400">{brick.description}</p>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                        <div>
-                          <h4 className="mb-6 ml-16 text-sm text-blue-400">Data Pipelines</h4>
-                          {pipes.map((brick) => (
+                          <h4 className="mb-6 ml-16 text-sm text-slate-400">Understand Users</h4>
+                          {UnderstandUsers.map((brick) => (
                             <Link
                               key={brick.name}
                               href={brick.href}
@@ -150,18 +152,18 @@ export default function Header() {
                                 <p
                                   className={clsx(
                                     brick.status ? "text-gray-900" : "text-gray-400",
-                                    "text-lg font-semibold"
+                                    " font-semibold"
                                   )}>
                                   {brick.name}
                                 </p>
-                                <p className="text-sm text-gray-400">{brick.description}</p>
+                                <p className="mt-0.5 text-xs text-gray-400">{brick.description}</p>
                               </div>
                             </Link>
                           ))}
                         </div>
                         <div>
-                          <h4 className="mb-6 ml-16 text-sm text-blue-400">Data Insights</h4>
-                          {insights.map((brick) => (
+                          <h4 className="mb-6 ml-16 text-sm text-slate-400">Increase Revenue</h4>
+                          {IncreaseRevenue.map((brick) => (
                             <Link
                               key={brick.name}
                               href={brick.href}
@@ -176,11 +178,37 @@ export default function Header() {
                                 <p
                                   className={clsx(
                                     brick.status ? "text-gray-900" : "text-gray-400",
-                                    "text-lg font-semibold"
+                                    " font-semibold"
                                   )}>
                                   {brick.name}
                                 </p>
-                                <p className="text-sm text-gray-400">{brick.description}</p>
+                                <p className="mt-0.5 text-xs text-gray-400">{brick.description}</p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                        <div>
+                          <h4 className="mb-6 ml-16 text-sm text-slate-400">Boost Retention</h4>
+                          {BoostRetention.map((brick) => (
+                            <Link
+                              key={brick.name}
+                              href={brick.href}
+                              className={clsx(
+                                brick.status ? "cursor-pointer hover:bg-gray-50" : "cursor-default",
+                                "-m-3 flex items-start rounded-lg p-3 py-4"
+                              )}>
+                              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md text-teal-500 sm:h-12 sm:w-12">
+                                <brick.icon className="h-6 w-6" aria-hidden="true" />
+                              </div>
+                              <div className="ml-4">
+                                <p
+                                  className={clsx(
+                                    brick.status ? "text-gray-900" : "text-gray-400",
+                                    " font-semibold"
+                                  )}>
+                                  {brick.name}
+                                </p>
+                                <p className="mt-0.5 text-xs text-gray-400">{brick.description}</p>
                               </div>
                             </Link>
                           ))}
