@@ -1,0 +1,112 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+
+export const meta = {
+  title: "Missed Trial Conversion Survey",
+  description: "Understand how to improve the trial conversions to get more paying customers.",
+};
+
+When a user doesn't convert, you want to know why. A micro-survey displayed at exactly the right time gives you a window into understanding the most relevant question: To pay or not to pay?
+
+## Purpose
+
+The better you understand why free users don’t convert to paid users, the higher your revenue. You can make an informed decision about what to change in your offering to make more people pay for your service.
+
+## Formbricks Approach
+
+- Ask at exactly the right point in time
+- Ask to understand the problem, don’t ask for solutions
+
+### Preview
+
+## Installation
+
+To display the Missed Trial Conversion survey in your app you have to proceed as follows:
+
+1. Create new Missed Trial Conversion survey at [app.formbricks.com](http://app.formbricks.com/)
+2. Setup the user action to display survey at right point in time
+3. Print that 💸
+
+<Callout title="Formbricks Widget not yet running?" type="note">
+  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display
+  messages and surveys in your app. If not, please follow the Quick Start Guide (takes 15mins max.)
+  (/docs/getting-started/quickstart)
+</Callout>
+
+### 1. Create new Missed Trial Conversion survey
+
+If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
+
+Click on "Create Survey" and choose the template “Missed Trial Conversion”:
+
+<Image src={CreateFeedbackBox} alt="Create feedback box by template" quality="100" />
+
+### 2. Update questions (if you like)
+
+You’re free to update the question and answer options. However, based on our experience, we suggest giving the provided template a go 😊
+
+<Image src={ChangeTextContent} alt="Change text content" quality="100" />
+
+_Want to change the button color? You can do so in the product settings!_
+
+Save, and move over to the “Audience” tab.
+
+### 3. Pre-segment your audience (optional)
+
+If you pre-segment (or filter) your user base or not is dependent on how many users your app has as well as the structure of your it. Here is an example to demonstrate how it could increase the quality of data you’re collecting:
+
+F**ilter by plan:** One option is to only display your survey to users who have not subscribed to a paid plan yet. But how can Formbricks know? To be able to make that distingshion you have send attributes to Formbricks. Here is our manual on how to do that.(/ADD LINK)
+
+**Filter by “value experienced ”**: You can also make sure that the surveyed users are not just checking out your product but have actually experience the value of it. This separates people with an opinion (low quality data) from people who made an experience (high quality data).
+
+To only survey people who have experience value, you have a few options:
+
+- Check the time passed since sign-up (e.g. signed up 4 weeks ago)
+- User has performed a specific action a certain number of times or (e.g. created 5 reports)
+- User has performed a combination of actions (e.g. created a report **and** invited a team member)
+
+This way you make sure that you separate potentially misleading opinions from valuable insights.
+
+### 4. Set up a trigger for the Missed Trial Conversion survey:
+
+We assume that you have not yet created the correct trigger to show your Missed Trial Conversion survey. Once again, this is highly dependent on your app but here is two example:
+
+1. **Trigger by pageURL:** Let’s say in your product you have a page under “/trial-cancelled” where you forward users once they cancelled the trial subscription. You can then create an user Action with the type pageURL with the following settings:
+
+IMAGE
+
+So whenever a user visits this page, matches the filter conditions above and the recontact options (below) the survey will be displayed ✅ 2. **Trigger by Button Click:** In a different example, you have a “Cancel Trial Subscription” button in your app. You can setup a user Action with the according `innerText` like so:
+
+IMAGE
+
+For a full manual on Actions and how to set them up, here is our Actions manual(ADD LINK).
+
+### 5. Select Action in the “When to ask” card
+
+<Image src={SelectAction} alt="Select feedback button action" quality="100" />
+
+### 6. Last step: Set Recontact Options correctly
+
+Lastly, scroll down to “Recontact Options”. Here you have to choose the correct settings to make sure you milk these super valuable insights. You want to make sure that this survey is always displayed, no matter if the user has already seen a survey in the past days:
+
+<Image src={RecontactOptions} alt="Set recontact options" quality="100" />
+
+### 7. You’re ready to publish your survey!
+
+<Image src={PublishSurvey} alt="Publish survey" quality="100" />
+
+<Callout title="It only works with the widget" type="warning">
+  You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow
+  [this tutorial (Step 4 onwards)](notion://www.notion.so/docs/getting-started/quickstart) to install the
+  widget.
+</Callout>
+
+### [Widget setup tutorial](notion://www.notion.so/docs/getting-started/quickstart)
+
+###
+
+# Go get 'em 🎉
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
