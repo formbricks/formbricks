@@ -3,7 +3,6 @@ import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  console.log("getting called!!");
   const { internalSecret, environmentId, event, data } = await request.json();
   if (!internalSecret) {
     return new Response("Missing internalSecret", {
@@ -41,8 +40,6 @@ export async function POST(request: Request) {
     },
   });
 
-  console.log("got webhooks", webhooks);
-
   // send request to all webhooks
   await Promise.all(
     webhooks.map(async (webhook) => {
@@ -55,8 +52,6 @@ export async function POST(request: Request) {
       });
     })
   );
-
-  console.log("called webhooks");
 
   return NextResponse.json({ data: {} });
 }
