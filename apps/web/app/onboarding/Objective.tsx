@@ -95,7 +95,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip }) => {
         </div>
       </div>
       <div className="mb-24 flex justify-between">
-        <Button size="lg" className="text-slate-400" variant="minimal" onClick={skip}>
+        <Button size="lg" className="text-slate-400" variant="minimal" onClick={skip} id="objective-skip">
           Skip
         </Button>
         <Button
@@ -103,7 +103,8 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip }) => {
           variant="darkCTA"
           loading={isMutatingProfile}
           disabled={!selectedChoice}
-          onClick={handleNextClick}>
+          onClick={handleNextClick}
+          id="objective-next">
           Next
         </Button>
       </div>
