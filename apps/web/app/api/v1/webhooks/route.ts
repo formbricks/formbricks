@@ -53,9 +53,15 @@ export async function POST(request: Request) {
       status: 401,
     });
   }
-  const { url } = await request.json();
+  const { url, triggers } = await request.json();
   if (!url) {
     return new Response("Missing url", {
+      status: 400,
+    });
+  }
+
+  if (!triggers || !triggers.length) {
+    return new Response("Missing triggers", {
       status: 400,
     });
   }
@@ -64,6 +70,7 @@ export async function POST(request: Request) {
   const webhook = await prisma.webhook.create({
     data: {
       url,
+      triggers,
       environment: {
         connect: {
           id: apiKeyData.environmentId,
