@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
 import { hashApiKey } from "@/lib/api/apiHelper";
 
-export async function GET(request: Request, { params }: { params: { webhookId: string } }) {
+export async function GET(_: Request, { params }: { params: { webhookId: string } }) {
   const apiKey = headers().get("x-api-key");
   if (!apiKey) {
     return new Response("Not authenticated. This route is only available via API-Key authorization", {
@@ -38,7 +38,7 @@ export async function GET(request: Request, { params }: { params: { webhookId: s
   return NextResponse.json({ data: webhook });
 }
 
-export async function DELETE(request: Request, { params }: { params: { webhookId: string } }) {
+export async function DELETE(_: Request, { params }: { params: { webhookId: string } }) {
   const apiKey = headers().get("x-api-key");
   if (!apiKey) {
     return new Response("Not authenticated. This route is only available via API-Key authorization", {
