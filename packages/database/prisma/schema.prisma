@@ -12,6 +12,22 @@ generator client {
   //provider = "prisma-dbml-generator"
 }
 
+enum PipelineTriggers {
+  responseCreated
+  responseUpdated
+  responseFinished
+}
+
+model Webhook {
+  id            String             @id @default(cuid())
+  createdAt     DateTime           @default(now()) @map(name: "created_at")
+  updatedAt     DateTime           @updatedAt @map(name: "updated_at")
+  url           String
+  environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId String
+  triggers      PipelineTriggers[]
+}
+
 model Attribute {
   id               String         @id @default(cuid())
   createdAt        DateTime       @default(now()) @map(name: "created_at")
@@ -69,7 +85,6 @@ model Response {
   data           Json     @default("{}")
   meta           Json     @default("{}")
   userAttributes Json     @default("[]")
-  tags           String[]
 }
 
 enum SurveyStatus {
@@ -198,6 +213,7 @@ model Environment {
   eventClasses         EventClass[]
   attributeClasses     AttributeClass[]
   apiKeys              ApiKey[]
+  webhooks             Webhook[]
 }
 
 model Product {

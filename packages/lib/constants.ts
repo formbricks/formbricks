@@ -13,3 +13,6 @@ export const WEBAPP_URL =
   HEROKU_URL ||
   RENDER_URL ||
   "http://localhost:3000";
+
+// Other
+export const INTERNAL_SECRET = process.env.INTERNAL_SECRET;
