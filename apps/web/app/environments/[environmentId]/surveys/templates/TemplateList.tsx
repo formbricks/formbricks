@@ -25,7 +25,7 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
 
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { profile, isLoadingProfile, isErrorProfile } = useProfile();
-  const [selectedFilter, setSelectedFilter] = useState(ALL_CATEGORY_NAME);
+  const [selectedFilter, setSelectedFilter] = useState(RECOMMENDED_CATEGORY_NAME);
 
   const [categories, setCategories] = useState<Array<string>>([]);
 
@@ -41,13 +41,15 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
       ...(Array.from(new Set(templates.map((template) => template.category))) as string[]),
     ];
 
-    const fullCategories = !!profile?.objective
-      ? [RECOMMENDED_CATEGORY_NAME, ...defaultCategories]
-      : defaultCategories;
+    const fullCategories =
+      !!profile?.objective && profile.objective !== "other"
+        ? [RECOMMENDED_CATEGORY_NAME, ...defaultCategories]
+        : [ALL_CATEGORY_NAME, ...defaultCategories];
 
     setCategories(fullCategories);
 
-    const activeFilter = !!profile?.objective ? RECOMMENDED_CATEGORY_NAME : ALL_CATEGORY_NAME;
+    const activeFilter =
+      !!profile?.objective && profile.objective !== "other" ? RECOMMENDED_CATEGORY_NAME : ALL_CATEGORY_NAME;
     setSelectedFilter(activeFilter);
   }, [profile]);
 

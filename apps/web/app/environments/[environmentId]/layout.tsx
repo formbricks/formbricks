@@ -15,7 +15,7 @@ export default async function EnvironmentLayout({ children, params }) {
 
   return (
     <>
-      {<PosthogIdentify session={session} />}
+      <PosthogIdentify session={session} />
       <FormbricksClient session={session} />
       <ToasterClient />
       <EnvironmentsNavbar environmentId={params.environmentId} session={session} />

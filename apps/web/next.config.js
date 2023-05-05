@@ -8,9 +8,6 @@ const rootPath = path.join(__dirname, "..", "..");
 const { createId } = require("@paralleldrive/cuid2");
 
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   output: "standalone",
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {

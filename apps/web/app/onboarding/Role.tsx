@@ -90,7 +90,7 @@ const Role: React.FC<Role> = ({ next, skip }) => {
         </div>
       </div>
       <div className="mb-24 flex justify-between">
-        <Button size="lg" className="text-slate-400" variant="minimal" onClick={skip}>
+        <Button size="lg" className="text-slate-400" variant="minimal" onClick={skip} id="role-skip">
           Skip
         </Button>
         <Button
@@ -98,7 +98,8 @@ const Role: React.FC<Role> = ({ next, skip }) => {
           variant="darkCTA"
           loading={isMutatingProfile}
           disabled={!selectedChoice}
-          onClick={handleNextClick}>
+          onClick={handleNextClick}
+          id="role-next">
           Next
         </Button>
       </div>
