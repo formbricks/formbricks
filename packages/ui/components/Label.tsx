@@ -5,7 +5,12 @@ import * as LabelPrimitive from "@radix-ui/react-label";
 
 import { cn } from "@formbricks/lib/cn";
 
-const Label = React.forwardRef<
+type LabelType = React.ForwardRefExoticComponent<
+  React.PropsWithoutRef<React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>> &
+    React.RefAttributes<React.ElementRef<typeof LabelPrimitive.Root>>
+>;
+
+const Label: LabelType = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
 >(({ className, ...props }, ref) => (

@@ -5,14 +5,16 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
 import { cn } from "@formbricks/lib/cn";
 
-const TooltipProvider = TooltipPrimitive.Provider;
+const TooltipProvider: React.ComponentType<TooltipPrimitive.TooltipProviderProps> = TooltipPrimitive.Provider;
 
-const Tooltip = ({ ...props }) => <TooltipPrimitive.Root {...props} />;
+const Tooltip: React.ComponentType<TooltipPrimitive.TooltipProps> = ({ ...props }) => (
+  <TooltipPrimitive.Root {...props} />
+);
 Tooltip.displayName = TooltipPrimitive.Tooltip.displayName;
 
-const TooltipTrigger = TooltipPrimitive.Trigger;
+const TooltipTrigger: React.ComponentType<TooltipPrimitive.TooltipTriggerProps> = TooltipPrimitive.Trigger;
 
-const TooltipContent = React.forwardRef<
+const TooltipContent: React.ComponentType<TooltipPrimitive.TooltipContentProps> = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
 >(({ className, sideOffset = 4, ...props }, ref) => (

@@ -5,14 +5,15 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 
 import { cn } from "@formbricks/lib/cn";
 
-const Popover = PopoverPrimitive.Root;
+const Popover: React.FC<React.ComponentProps<typeof PopoverPrimitive.Root>> = PopoverPrimitive.Root;
 
-const PopoverTrigger = PopoverPrimitive.Trigger;
+const PopoverTrigger: React.FC<React.ComponentProps<typeof PopoverPrimitive.Trigger>> =
+  PopoverPrimitive.Trigger;
 
-const PopoverContent = React.forwardRef<
-  React.ElementRef<typeof PopoverPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
->(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+const PopoverContent: React.ForwardRefExoticComponent<
+  React.PropsWithoutRef<React.ComponentProps<typeof PopoverPrimitive.Content>> &
+    React.RefAttributes<React.ElementRef<typeof PopoverPrimitive.Content>>
+> = React.forwardRef(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
   <PopoverPrimitive.Portal>
     <PopoverPrimitive.Content
       ref={ref}
