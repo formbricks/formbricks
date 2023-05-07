@@ -14,3 +14,11 @@ export const useResponses = (environmentId: string, surveyId: string) => {
     mutateRespones: mutate,
   };
 };
+
+export const deleteSubmission = async (environmentId: string, surveyId: string, responseId: string) => {
+  const response = await fetch(`/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}`, {
+    method: "DELETE",
+  });
+
+  return response.json();
+};

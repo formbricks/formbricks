@@ -123,7 +123,12 @@ export function DeleteProduct({ environmentId }) {
     }
     const deleteResponse = await deleteProduct(environmentId);
 
+    if (deleteResponse?.message?.length > 0) {
+      toast.error(deleteResponse.message);
+      setIsDeleteDialogOpen(false);
+    }
     if (deleteResponse?.id?.length > 0) {
+      toast.success("Product deleted successfully.");
       router.push("/environments");
     }
   }

@@ -16,7 +16,7 @@ export const useProduct = (environmentId: string) => {
   };
 };
 
-export const createProduct = async (environmentId, product: { name: string }) => {
+export const createProduct = async (environmentId: string, product: { name: string }) => {
   const response = await fetch(`/api/v1/environments/${environmentId}/product`, {
     method: "POST",
     headers: {
@@ -28,7 +28,7 @@ export const createProduct = async (environmentId, product: { name: string }) =>
   return response.json();
 };
 
-export const deleteProduct = async (environmentId) => {
+export const deleteProduct = async (environmentId: string) => {
   const response = await fetch(`/api/v1/environments/${environmentId}/product`, {
     method: "DELETE",
   });

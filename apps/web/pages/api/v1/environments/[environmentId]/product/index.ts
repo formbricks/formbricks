@@ -1,4 +1,4 @@
-import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
+import { getSessionUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import { EnvironmentType } from "@prisma/client";
 import { populateEnvironment } from "@/lib/populate";
@@ -6,6 +6,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query?.environmentId?.toString();
+  const currentUser: any = await getSessionUser(req, res);
 
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
   if (!hasAccess) {
@@ -117,7 +118,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     
   // DELETE
   else if (req.method === "DELETE") {
-
+    console.log({currentUser})
+    const membership = await prisma.membership.findUnique({
+      where: {
+        userId_teamId: {
+          userId: currentUser.id,
+          teamId: currentUser.teamId,
+        },
+      },
+    });
+    if (membership?.role !== "admin") {
+      return res.status(403).json({ message: "You are not allowed to delete products." });
+    }
     const environment = await prisma.environment.findUnique({
       where: { id: environmentId },
       select: {

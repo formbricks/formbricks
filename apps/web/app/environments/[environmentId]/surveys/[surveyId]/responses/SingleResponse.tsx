@@ -6,11 +6,13 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { deleteSubmission } from "@/lib/responses/responses";
 
 interface OpenTextSummaryProps {
   data: {
     id: string;
     personId: string;
+    surveyId: string,
     person: {
       id: string;
       createdAt: string;
@@ -40,9 +42,10 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
   const displayIdentifier = email || data.personId;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const handleDeleteResponse = async () => {
-    /*  await deletePerson(environmentId, personId); */
-    toast.success("Response deleted successfully.");
+  const handleDeleteSubmission = async () => {
+    const deleteResponse = await deleteSubmission(environmentId, data?.surveyId, data?.id);
+    if(deleteResponse?.id?.length > 0)
+    toast.success("Submission deleted successfully.");
     setDeleteDialogOpen(false);
   };
 
@@ -102,7 +105,7 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
         open={deleteDialogOpen}
         setOpen={setDeleteDialogOpen}
         deleteWhat="response"
-        onDelete={handleDeleteResponse}
+        onDelete={handleDeleteSubmission}
       />
     </div>
   );
