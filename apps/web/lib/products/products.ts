@@ -27,3 +27,11 @@ export const createProduct = async (environmentId, product: { name: string }) =>
 
   return response.json();
 };
+
+export const deleteProduct = async (environmentId) => {
+  const response = await fetch(`/api/v1/environments/${environmentId}/product`, {
+    method: "DELETE",
+  });
+
+  return response.json();
+};

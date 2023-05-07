@@ -1,15 +1,23 @@
 "use client";
 
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+
+import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+
 import { Button } from "@formbricks/ui";
 import { ErrorComponent } from "@formbricks/ui";
 import { Input } from "@formbricks/ui";
 import { Label } from "@formbricks/ui";
+
 import { useProductMutation } from "@/lib/products/mutateProducts";
-import { useProduct } from "@/lib/products/products";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import { deleteProduct, useProduct } from "@/lib/products/products";
 import { useEnvironment } from "@/lib/environments/environments";
+import { truncate } from "@/lib/utils";
+
 
 export function EditProductName({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
@@ -93,7 +101,12 @@ export function EditWaitingTime({ environmentId }) {
 }
 
 export function DeleteProduct({ environmentId }) {
+  const router = useRouter();
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+  const { environment } = useEnvironment(environmentId);
 
   if (isLoadingProduct) {
     return <LoadingSpinner />;
@@ -102,15 +115,37 @@ export function DeleteProduct({ environmentId }) {
     return <ErrorComponent />;
   }
 
+  const handleDeleteProduct = async () => {
+    if (environment.availableProducts?.length <= 1) {
+      toast.error("Cannot delete product. Environment needs at least 1.");
+      setIsDeleteDialogOpen(false);
+      return;
+    }
+    const deleteResponse = await deleteProduct(environmentId);
+
+    if (deleteResponse?.id?.length > 0) {
+      router.push("/environments");
+    }
+  }
+
   return (
     <div>
       <p className="text-sm text-slate-900">
-        Here you can delete {product.name} incl. all surveys, responses, people, actions and attributes.{" "}
+        Here you can delete&nbsp;
+        <strong>{truncate(product.name, 30)}</strong>
+        &nbsp;incl. all surveys, responses, people, actions and attributes.{" "}
         <strong>This action cannot be undone.</strong>
       </p>
-      <Button variant="warn" className="mt-4">
-        Delete {product.name}
+      <Button onClick={() => setIsDeleteDialogOpen(true)} variant="warn" className="mt-4">
+        Delete
       </Button>
+      <DeleteDialog
+        deleteWhat="Product"
+        open={isDeleteDialogOpen}
+        setOpen={setIsDeleteDialogOpen}
+        onDelete={handleDeleteProduct}
+        text="Are you sure you want to delete this Product? This action cannot be undone."
+      />
     </div>
   );
 }

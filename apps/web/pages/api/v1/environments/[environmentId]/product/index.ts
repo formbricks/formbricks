@@ -114,6 +114,28 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const firstEnvironment = newProduct.environments[0];
     res.json(firstEnvironment);
   }
+    
+  // DELETE
+  else if (req.method === "DELETE") {
+
+    const environment = await prisma.environment.findUnique({
+      where: { id: environmentId },
+      select: {
+        productId: true,
+      },
+    });
+
+    if (environment === null) {
+      return res.status(404).json({ message: "This environment doesn't exist" });
+    }
+
+    // Delete the product with 
+    const prismaRes = await prisma.product.delete({
+      where: { id: environment.productId },
+    });
+    
+    return res.json(prismaRes);
+  }
 
   // Unknown HTTP Method
   else {
