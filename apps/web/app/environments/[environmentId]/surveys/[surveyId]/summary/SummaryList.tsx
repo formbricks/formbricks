@@ -7,10 +7,10 @@ import { useSurvey } from "@/lib/surveys/surveys";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { ErrorComponent } from "@formbricks/ui";
 import { useMemo } from "react";
-import MultipleChoiceSummary from "./MultipleChoiceSummary";
-import OpenTextSummary from "./OpenTextSummary";
-import NPSSummary from "./NPSSummary";
 import CTASummary from "./CTASummary";
+import MultipleChoiceSummary from "./MultipleChoiceSummary";
+import NPSSummary from "./NPSSummary";
+import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
 
 export default function SummaryList({ environmentId, surveyId }) {

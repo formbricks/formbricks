@@ -2,9 +2,7 @@ import { verifyPassword } from "@/lib/auth";
 import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
 import { IdentityProvider } from "@prisma/client";
-import { NextApiRequest, NextApiResponse } from "next";
 import type { NextAuthOptions } from "next-auth";
-import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 
@@ -131,6 +129,8 @@ export const authOptions: NextAuthOptions = {
         where: { email: token.email! },
         select: {
           id: true,
+          createdAt: true,
+          onboardingCompleted: true,
           memberships: {
             select: {
               teamId: true,
@@ -151,6 +151,8 @@ export const authOptions: NextAuthOptions = {
 
       const additionalAttributs = {
         id: existingUser.id,
+        createdAt: existingUser.createdAt,
+        onboardingCompleted: existingUser.onboardingCompleted,
         teamId: existingUser.memberships.length > 0 ? existingUser.memberships[0].teamId : undefined,
         plan:
           existingUser.memberships.length > 0 && existingUser.memberships[0].team
@@ -167,6 +169,10 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       // @ts-ignore
       session.user.id = token?.id;
+      // @ts-ignore
+      session.user.createdAt = token?.createdAt ? new Date(token?.createdAt).toISOString() : undefined;
+      // @ts-ignore
+      session.user.onboardingCompleted = token?.onboardingCompleted;
       // @ts-ignore
       session.user.teamId = token?.teamId;
       // @ts-ignore
@@ -245,6 +251,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name,
             email: user.email,
             emailVerified: new Date(Date.now()),
+            onboardingCompleted: false,
             identityProvider: provider,
             identityProviderAccountId: user.id as string,
             accounts: {
@@ -341,7 +348,3 @@ export const authOptions: NextAuthOptions = {
     error: "/auth/login", // Error code passed in query string as ?error=
   },
 };
-
-export default async function auth(req: NextApiRequest, res: NextApiResponse) {
-  return await NextAuth(req, res, authOptions);
-}

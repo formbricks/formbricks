@@ -32,6 +32,7 @@ export const SignupForm = () => {
       router.push(url);
     } catch (e: any) {
       setError(e.message);
+      setSigningUp(false);
     }
   };
 

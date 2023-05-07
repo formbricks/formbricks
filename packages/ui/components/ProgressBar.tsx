@@ -2,11 +2,19 @@
 
 import { cn } from "@formbricks/lib/cn";
 
-export function ProgressBar({ progress, barColor }: { progress: number; barColor?: string }) {
+export function ProgressBar({
+  progress,
+  barColor,
+  height = 5,
+}: {
+  progress: number;
+  barColor: string;
+  height?: 2 | 5;
+}) {
   return (
-    <div className="h-5 w-full rounded-full bg-slate-200 ">
+    <div className={cn(height === 2 ? "h-2" : height === 5 ? "h-5" : "", "w-full rounded-full bg-slate-200")}>
       <div
-        className={cn("h-5 rounded-full", barColor)}
+        className={cn("h-full rounded-full", barColor)}
         style={{ width: `${Math.floor(progress * 100)}%` }}></div>
     </div>
   );

@@ -12,6 +12,22 @@ generator client {
   //provider = "prisma-dbml-generator"
 }
 
+enum PipelineTriggers {
+  responseCreated
+  responseUpdated
+  responseFinished
+}
+
+model Webhook {
+  id            String             @id @default(cuid())
+  createdAt     DateTime           @default(now()) @map(name: "created_at")
+  updatedAt     DateTime           @updatedAt @map(name: "updated_at")
+  url           String
+  environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId String
+  triggers      PipelineTriggers[]
+}
+
 model Attribute {
   id               String         @id @default(cuid())
   createdAt        DateTime       @default(now()) @map(name: "created_at")
@@ -69,7 +85,6 @@ model Response {
   data           Json     @default("{}")
   meta           Json     @default("{}")
   userAttributes Json     @default("[]")
-  tags           String[]
 }
 
 enum SurveyStatus {
@@ -198,6 +213,7 @@ model Environment {
   eventClasses         EventClass[]
   attributeClasses     AttributeClass[]
   apiKeys              ApiKey[]
+  webhooks             Webhook[]
 }
 
 model Product {
@@ -301,6 +317,31 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
+enum Role {
+  project_manager
+  engineer
+  founder
+  marketing_specialist
+  other
+}
+
+enum Objective {
+  increase_conversion
+  improve_user_retention
+  increase_user_adoption
+  sharpen_marketing_messaging
+  support_sales
+  other
+}
+
+enum Intention {
+  survey_user_segments
+  survey_at_specific_point_in_user_journey
+  enrich_customer_profiles
+  collect_all_user_feedback_on_one_platform
+  other
+}
+
 model User {
   id                        String           @id @default(cuid())
   createdAt                 DateTime         @default(now()) @map(name: "created_at")
@@ -309,6 +350,7 @@ model User {
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
   password                  String?
+  onboardingCompleted       Boolean          @default(false)
   identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
   memberships               Membership[]
@@ -316,4 +358,6 @@ model User {
   groupId                   String?
   invitesCreated            Invite[]         @relation("inviteCreatedBy")
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
+  role                      Role?
+  objective                 Objective?
 }

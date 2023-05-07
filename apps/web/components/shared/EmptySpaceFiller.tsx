@@ -24,13 +24,13 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({ type, environmentId
         <div className="w-full space-y-4 rounded-b-lg bg-white p-4">
           <div className="h-16 w-full rounded-lg bg-slate-100"></div>
 
-          <div className=" flex h-16 w-full items-center justify-center rounded-lg bg-slate-50 text-slate-700 transition-all duration-300  ease-in-out ">
+          <div className=" flex h-16 w-full items-center justify-center rounded-lg bg-slate-50 text-slate-700 transition-all duration-300 ease-in-out hover:bg-slate-100 ">
             {!environment.widgetSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex h-full w-full items-center justify-center"
                 href={`/environments/${environmentId}/settings/setup`}>
-                <span className="decoration-brand-dark transition-all  duration-300 ease-in-out  group-hover:underline">
-                  Setup Formbricks Widget to start collecting insights 🚀
+                <span className="decoration-brand-dark underline  transition-all duration-300  ease-in-out">
+                  Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
                 </span>
               </Link>
             )}
@@ -52,13 +52,13 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({ type, environmentId
         </div>
         <div className="space-y-4">
           <div className="h-12 w-full rounded-full bg-slate-100"></div>
-          <div className=" flex h-12 w-full items-center justify-center rounded-full bg-slate-50 text-sm text-slate-500">
+          <div className=" flex h-12 w-full items-center justify-center rounded-full bg-slate-50 text-sm text-slate-500 hover:bg-slate-100">
             {!environment.widgetSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex h-full w-full items-center justify-center"
                 href={`/environments/${environmentId}/settings/setup`}>
-                <span className="decoration-brand-dark transition-all  duration-300 ease-in-out group-hover:underline">
-                  Setup Formbricks Widget to start collecting insights 🚀
+                <span className="decoration-brand-dark underline  transition-all duration-300 ease-in-out">
+                  Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
                 </span>
               </Link>
             )}
@@ -81,13 +81,13 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({ type, environmentId
       </div>
       <div className="space-y-4">
         <div className="h-12 w-full rounded-full bg-slate-100"></div>
-        <div className=" flex h-12 w-full items-center justify-center rounded-full bg-slate-50 text-sm text-slate-500">
+        <div className=" flex h-12 w-full items-center justify-center rounded-full bg-slate-50 text-sm text-slate-500 hover:bg-slate-100">
           {!environment.widgetSetupCompleted && !noWidgetRequired && (
             <Link
               className="flex h-full w-full items-center justify-center"
               href={`/environments/${environmentId}/settings/setup`}>
-              <span className="decoration-brand-dark transition-all  duration-300 ease-in-out group-hover:underline">
-                Setup Formbricks Widget to start collecting insights 🚀
+              <span className="decoration-brand-dark underline  transition-all duration-300 ease-in-out">
+                Install Formbricks Widget. <strong>Go to Setup Checklist 👉</strong>
               </span>
             </Link>
           )}

@@ -276,19 +276,19 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
               <DropdownMenuContent className="w-56">
                 <DropdownMenuLabel className="cursor-default break-all">
                   <span className="ph-no-capture font-normal">Signed in as </span>
-                  {session.user.name.length > 30 ? (
+                  {session?.user?.name.length > 30 ? (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span>{truncate(session.user.name, 30)}</span>
+                          <span>{truncate(session?.user?.name, 30)}</span>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-[45rem] break-all" side="left" sideOffset={5}>
-                          {session.user.name}
+                          {session?.user?.name}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   ) : (
-                    session.user.name
+                    session?.user?.name
                   )}
                 </DropdownMenuLabel>
 
@@ -313,7 +313,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                             value={product.id}
                             className="cursor-pointer break-all"
                             key={product.id}>
-                            {product.name}
+                            {product?.name}
                           </DropdownMenuRadioItem>
                         ))}
                       </DropdownMenuRadioGroup>
@@ -371,7 +371,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                               value={membership.teamId}
                               className="cursor-pointer"
                               key={membership.teamId}>
-                              {membership.team.name}
+                              {membership?.team?.name}
                             </DropdownMenuRadioItem>
                           ))}
                         </DropdownMenuRadioGroup>

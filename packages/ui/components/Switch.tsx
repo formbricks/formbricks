@@ -5,7 +5,7 @@ import * as SwitchPrimitives from "@radix-ui/react-switch";
 
 import { cn } from "@formbricks/lib/cn";
 
-const Switch = React.forwardRef<
+const Switch: React.ComponentType<SwitchPrimitives.SwitchProps> = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
 >(({ className, ...props }, ref) => (
