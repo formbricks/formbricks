@@ -16,6 +16,26 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       where: {
         userId: user.id,
       },
+      include: {
+        team: {
+          select: {
+            id: true,
+            name: true,
+            products: {
+              select: {
+                id: true,
+                name: true,
+                environments: {
+                  select: {
+                    id: true,
+                    type: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
     return res.json(memberships);
   }

@@ -19,8 +19,6 @@ export default function SummaryList({ environmentId, surveyId }) {
 
   const responses = responsesData?.responses;
 
-  console.log(responses);
-
   const summaryData: QuestionSummary[] = useMemo(() => {
     if (survey && responses) {
       return survey.questions.map((question) => {

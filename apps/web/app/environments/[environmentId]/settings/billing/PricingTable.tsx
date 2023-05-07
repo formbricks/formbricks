@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useTeam } from "@/lib/teams";
+import { useTeam } from "@/lib/teams/teams";
 import { Badge, Button, ErrorComponent } from "@formbricks/ui";
 import type { Session } from "next-auth";
 import { useRouter } from "next/navigation";

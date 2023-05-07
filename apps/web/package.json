@@ -24,6 +24,7 @@
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.5.2",
     "date-fns": "^2.29.3",
+    "dotenv-webpack": "^8.0.1",
     "eslint": "8.38.0",
     "eslint-config-next": "^13.3.0",
     "jsonwebtoken": "^9.0.0",
