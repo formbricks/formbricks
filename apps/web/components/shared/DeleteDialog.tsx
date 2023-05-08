@@ -1,5 +1,5 @@
 import Modal from "@/components/shared/Modal";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 
 interface DeleteDialogProps {
   open: boolean;

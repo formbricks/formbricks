@@ -1,5 +1,5 @@
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import type { OpenTextQuestion } from "@formbricks/types/questions";
 
 interface OpenQuestionFormProps {

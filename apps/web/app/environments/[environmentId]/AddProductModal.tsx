@@ -2,7 +2,9 @@
 
 import Modal from "@/components/shared/Modal";
 import { createProduct } from "@/lib/products/products";
-import { Button, Input, Label } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";

@@ -4,7 +4,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
-import { ErrorComponent } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";

@@ -13,7 +13,8 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { useProfile } from "@/lib/profile";
 import { createSurvey, deleteSurvey, useSurveys, duplicateSurvey } from "@/lib/surveys/surveys";
-import { Badge, ErrorComponent } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { Badge } from "@formbricks/ui/Badge";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import {
   ComputerDesktopIcon,

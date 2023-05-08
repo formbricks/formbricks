@@ -1,7 +1,7 @@
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 const DummyUI: React.FC = () => {
   const eventClasses = [

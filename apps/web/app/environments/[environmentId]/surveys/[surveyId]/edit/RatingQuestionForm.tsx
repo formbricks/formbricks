@@ -1,5 +1,6 @@
 import type { RatingQuestion } from "@formbricks/types/questions";
-import { Input, Label } from "@formbricks/ui";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { HashtagIcon, StarIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
 
 import Dropdown from "./RatingTypeDropdown";

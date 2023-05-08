@@ -2,9 +2,9 @@
 
 import type { Survey } from "@formbricks/types/surveys";
 import { cn } from "@formbricks/lib/cn";
-import { Badge } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { Badge } from "@formbricks/ui/Badge";
+import { Label } from "@formbricks/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 import {
   CheckCircleIcon,
   ComputerDesktopIcon,

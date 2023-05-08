@@ -3,7 +3,7 @@ import { Survey } from "@formbricks/types/surveys";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { useRef } from "react";
 
 interface LinkSurveyModalProps {

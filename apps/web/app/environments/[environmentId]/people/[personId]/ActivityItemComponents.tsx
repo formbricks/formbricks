@@ -1,5 +1,5 @@
-import { Label } from "@formbricks/ui";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
+import { Label } from "@formbricks/ui/Label";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { timeSince } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import {

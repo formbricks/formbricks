@@ -5,7 +5,7 @@ import { Prose } from "@/components/shared/Prose";
 import { Search } from "@/components/shared/Search";
 import { ThemeSelector } from "@/components/shared/ThemeSelector";
 import navigation from "@/lib/docsNavigation";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -84,7 +84,7 @@ interface LayoutProps {
   };
 }
 
-export function Layout({ children, meta }: LayoutProps) {
+export const Layout: React.FC<LayoutProps> = ({ children, meta }) => {
   let router = useRouter();
   let allLinks = navigation.flatMap((section) => section.links);
   let linkIndex = allLinks.findIndex((link) => link.href === router.pathname);
@@ -173,4 +173,4 @@ export function Layout({ children, meta }: LayoutProps) {
       </div>
     </>
   );
-}
+};

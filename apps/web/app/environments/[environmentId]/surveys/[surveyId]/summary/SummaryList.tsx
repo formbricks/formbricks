@@ -5,7 +5,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { ErrorComponent } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { useMemo } from "react";
 import CTASummary from "./CTASummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";

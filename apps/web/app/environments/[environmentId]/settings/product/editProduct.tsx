@@ -1,10 +1,10 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Button } from "@formbricks/ui";
-import { ErrorComponent } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
 import { useForm } from "react-hook-form";

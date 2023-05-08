@@ -1,7 +1,7 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Confetti } from "@formbricks/ui";
+import { Confetti } from "@formbricks/ui/Confetti";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useEnvironmentMutation } from "@/lib/environments/mutateEnvironments";
 import { useEvents } from "@/lib/events/events";
@@ -10,7 +10,7 @@ import { ArrowDownIcon, CheckIcon, ExclamationTriangleIcon } from "@heroicons/re
 import clsx from "clsx";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ErrorComponent } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 interface WidgetStatusIndicatorProps {
   environmentId: string;

@@ -8,7 +8,7 @@ import { createResponse, updateResponse } from "@formbricks/lib/clientResponse/r
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
-import { Confetti } from "@formbricks/ui";
+import { Confetti } from "@formbricks/ui/Confetti";
 import { useEffect, useState } from "react";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import { createDisplay, markDisplayResponded } from "@formbricks/lib/clientDisplay/display";

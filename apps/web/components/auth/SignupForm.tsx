@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { createUser } from "@/lib/users/users";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";

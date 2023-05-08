@@ -21,18 +21,10 @@ import { useEnvironment } from "@/lib/environments/environments";
 import { useMemberships } from "@/lib/memberships";
 import { useTeam } from "@/lib/teams/teams";
 import { capitalizeFirstLetter, truncate } from "@/lib/utils";
-import {
-  CustomersIcon,
-  ErrorComponent,
-  FilterIcon,
-  FormIcon,
-  ProfileAvatar,
-  SettingsIcon,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@formbricks/ui";
+import { CustomersIcon, FilterIcon, FormIcon, SettingsIcon } from "@formbricks/ui/icons";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { ProfileAvatar } from "@formbricks/ui/Avatars";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import {
   AdjustmentsVerticalIcon,
   ArrowRightOnRectangleIcon,

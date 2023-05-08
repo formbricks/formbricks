@@ -25,7 +25,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.26.1",
     "prettier": "latest",
-    "tsx": "^3.12.6",
+    "tsx": "^3.12.7",
     "turbo": "latest"
   },
   "engines": {

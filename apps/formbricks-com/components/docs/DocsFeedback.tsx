@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { handleFeedbackSubmit, updateFeedback } from "../../lib/handleFeedbackSubmit";
-import { Popover, PopoverTrigger, PopoverContent, Button } from "@formbricks/ui";
+import { Popover, PopoverTrigger, PopoverContent } from "@formbricks/ui/Popover";
+import { Button } from "@formbricks/ui/Button";
 import { useRouter } from "next/router";
 
-export default function DocsFeedback() {
+export const DocsFeedback: React.FC = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [sharedFeedback, setSharedFeedback] = useState(false);
@@ -68,4 +69,6 @@ export default function DocsFeedback() {
       )}
     </div>
   );
-}
+};
+
+export default DocsFeedback;

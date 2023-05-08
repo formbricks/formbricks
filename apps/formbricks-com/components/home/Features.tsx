@@ -1,4 +1,4 @@
-import { EyeIcon, HandPuzzleIcon, CodeFileIcon } from "@formbricks/ui";
+import { EyeIcon, HandPuzzleIcon, CodeFileIcon } from "@formbricks/ui/icons";
 import HeadingCentered from "../shared/HeadingCentered";
 
 const features = [
@@ -21,7 +21,7 @@ const features = [
     icon: CodeFileIcon,
   },
 ];
-export default function Features() {
+export const Features: React.FC = () => {
   return (
     <div className="relative px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14 lg:pt-24">
       <div className="relative mx-auto max-w-7xl">
@@ -57,4 +57,6 @@ export default function Features() {
       </div>
     </div>
   );
-}
+};
+
+export default Features;

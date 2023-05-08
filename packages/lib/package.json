@@ -15,8 +15,10 @@
   "devDependencies": {
     "@formbricks/tsconfig": "*",
     "@formbricks/types": "*",
-    "eslint": "^8.27.0",
+    "@types/react": "^18.2.6",
+    "@types/react-dom": "^18.2.4",
+    "eslint": "^8.40.0",
     "eslint-config-formbricks": "workspace:*",
-    "typescript": "^4.9.4"
+    "typescript": "^5.0.4"
   }
 }

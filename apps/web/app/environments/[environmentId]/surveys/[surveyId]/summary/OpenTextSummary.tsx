@@ -1,4 +1,4 @@
-import { PersonAvatar } from "@formbricks/ui";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { timeSince } from "@formbricks/lib/time";
 import { truncate } from "@/lib/utils";
 import type { QuestionSummary } from "@formbricks/types/responses";

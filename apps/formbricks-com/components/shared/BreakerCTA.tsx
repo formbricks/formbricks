@@ -1,4 +1,4 @@
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { useRouter } from "next/router";
 import clsx from "clsx";
 import { usePlausible } from "next-plausible";
