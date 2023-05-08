@@ -1,6 +1,6 @@
 import { XCircleIcon } from "@heroicons/react/24/solid";
 
-export function ErrorComponent() {
+export const ErrorComponent: React.FC = ({}) => {
   return (
     <div className="rounded-lg bg-red-50 p-4">
       <div className="flex">
@@ -18,4 +18,4 @@ export function ErrorComponent() {
       </div>
     </div>
   );
-}
+};

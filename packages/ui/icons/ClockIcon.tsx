@@ -1,4 +1,4 @@
-export function ClockIcon(props: any) {
+export const ClockIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
       <defs />
@@ -16,4 +16,4 @@ export function ClockIcon(props: any) {
       <polyline points="12 6.501 12 12.001 18 17.501" fill="none" stroke="#0f172a" strokeLinejoin="round" />
     </svg>
   );
-}
+};

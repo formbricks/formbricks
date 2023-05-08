@@ -1,6 +1,7 @@
 "use client"; // Error components must be Client components
 
-import { Button, ErrorComponent } from "@/../../packages/ui";
+import { Button } from "@formbricks/ui/Button";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { useEffect } from "react";
 
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {

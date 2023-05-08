@@ -64,3 +64,5 @@ export const Highlights: React.FC = ({}) => {
     </>
   );
 };
+
+export default Highlights;

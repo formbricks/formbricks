@@ -1,4 +1,4 @@
-export function EmailIcon(props: any) {
+export const EmailIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
       <defs />
@@ -44,4 +44,4 @@ export function EmailIcon(props: any) {
       />
     </svg>
   );
-}
+};
