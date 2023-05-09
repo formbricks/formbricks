@@ -31,6 +31,7 @@ interface QuestionCardProps {
   localSurvey: Survey;
   question: Question;
   questionIdx: number;
+  moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;
   activeQuestionId: string | null;
@@ -42,6 +43,7 @@ export default function QuestionCard({
   localSurvey,
   question,
   questionIdx,
+  moveQuestion,
   updateQuestion,
   deleteQuestion,
   activeQuestionId,
@@ -123,7 +125,12 @@ export default function QuestionCard({
                       />
                     </div>
                   )}
-                  <QuestionDropdown deleteQuestion={deleteQuestion} questionIdx={questionIdx} />
+                  <QuestionDropdown
+                    questionIdx={questionIdx}
+                    lastQuestion={lastQuestion}
+                    deleteQuestion={deleteQuestion}
+                    moveQuestion={moveQuestion}
+                  />
                 </div>
               </div>
             </Collapsible.CollapsibleTrigger>
