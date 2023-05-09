@@ -6,7 +6,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@prisma/client/*": ["@formbricks/prisma/client/*"]
+      "@prisma/client/*": ["@formbricks/database/generated/client/*"]
     },
     "plugins": [
       {

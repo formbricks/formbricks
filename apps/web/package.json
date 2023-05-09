@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
     "@formbricks/js": "workspace:*",
     "@formbricks/lib": "workspace:*",
@@ -52,9 +53,9 @@
     "typescript": "5.0.4"
   },
   "devDependencies": {
-    "@formbricks/database": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
+    "@prisma/nextjs-monorepo-workaround-plugin": "^4.14.0",
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/typography": "^0.5.9",
     "@types/bcryptjs": "^2.4.2",

@@ -1,7 +1,7 @@
 import { verifyPassword } from "@/lib/auth";
 import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
-import { IdentityProvider } from "@prisma/client";
+import type { IdentityProvider } from "@formbricks/database/generated";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";

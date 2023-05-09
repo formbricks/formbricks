@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-**/node_modules
+node_modules
 .pnp
 .pnp.js
 .pnpm-store/
@@ -10,12 +10,12 @@
 coverage
 
 # next.js
-**/.next
-**/out
-**/build
+.next/
+out/
+build
 
 # node
-**/dist
+dist/
 
 # misc
 .DS_Store
@@ -26,12 +26,18 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!packages/database/.env
+
 # turbo
 .turbo
 
 # nixos stuff
 .direnv
 
-.vscode
-.github
-**/.turbo
+Zone.Identifier
+generated

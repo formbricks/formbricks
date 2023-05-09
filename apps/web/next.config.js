@@ -2,17 +2,21 @@
 
 const path = require("path");
 const Dotenv = require("dotenv-webpack");
+const { PrismaPlugin } = require("@prisma/nextjs-monorepo-workaround-plugin");
 
 const rootPath = path.join(__dirname, "..", "..");
 
 const { createId } = require("@paralleldrive/cuid2");
 
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ["@prisma/client"],
-  },
   output: "standalone",
-  transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
+  transpilePackages: [
+    "@formbricks/database",
+    "@formbricks/database/generated",
+    "@formbricks/ee",
+    "@formbricks/ui",
+    "@formbricks/lib",
+  ],
   images: {
     remotePatterns: [
       {
@@ -53,12 +57,15 @@ const nextConfig = {
       },
     ];
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.plugins.push(
       new Dotenv({
         path: path.resolve(rootPath, ".env"),
       })
     );
+    if (isServer) {
+      config.plugins = [...config.plugins, new PrismaPlugin()];
+    }
     return config;
   },
   env: {

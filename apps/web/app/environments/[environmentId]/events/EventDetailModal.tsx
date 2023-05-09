@@ -1,6 +1,6 @@
 import ModalWithTabs from "@/components/shared/ModalWithTabs";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
-import type { EventClass } from "@prisma/client";
+import type { EventClass } from "@formbricks/database/generated";
 import EventActivityTab from "./EventActivityTab";
 import EventSettingsTab from "./EventSettingsTab";
 
