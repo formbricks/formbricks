@@ -88,7 +88,9 @@ export function EditMemberships({ environmentId }) {
               <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
                 <p>{member.name}</p>
               </div>
-              <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">{member.email}</div>
+              <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
+                {member.email}
+              </div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
                 {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}
                 {member.role !== "owner" && (

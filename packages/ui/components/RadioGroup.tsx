@@ -8,7 +8,7 @@ import { cn } from "@formbricks/lib/cn";
 const RadioGroup: React.FC<React.ComponentProps<typeof RadioGroupPrimitive.Root>> = React.forwardRef(
   ({ className, ...props }, ref) => {
     return <RadioGroupPrimitive.Root className={cn("grid gap-x-3", className)} {...props} ref={ref} />;
-  } 
+  }
 );
 RadioGroup.displayName = RadioGroupPrimitive.Root.displayName;
 

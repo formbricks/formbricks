@@ -41,7 +41,7 @@ export const trackEvent = async (
   logger.debug(`Formbricks: Event "${eventName}" tracked`);
   triggerSurvey(eventName);
 
-  return okVoid()
+  return okVoid();
 };
 
 export const triggerSurvey = (eventName: string): void => {
