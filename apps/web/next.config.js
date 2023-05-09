@@ -11,7 +11,7 @@ const nextConfig = {
   output: "standalone",
   transpilePackages: [
     "@formbricks/database",
-    "@formbricks/database/client",
+    "@formbricks/database/generated",
     "@formbricks/ee",
     "@formbricks/ui",
     "@formbricks/lib",

@@ -2,7 +2,7 @@ import { getSessionUser } from "@/lib/api/apiHelper";
 import { populateEnvironment } from "@/lib/populate";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { EnvironmentType } from "@prisma/client";
+import { EnvironmentType } from "@formbricks/database/generated";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication

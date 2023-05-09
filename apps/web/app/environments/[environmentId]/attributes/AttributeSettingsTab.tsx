@@ -3,7 +3,7 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { useAttributeClassMutation } from "@/lib/attributeClasses/mutateAttributeClasses";
-import type { AttributeClass } from "@prisma/client";
+import type { AttributeClass } from "@formbricks/database/generated";
 import { useForm } from "react-hook-form";
 
 interface AttributeSettingsTabProps {

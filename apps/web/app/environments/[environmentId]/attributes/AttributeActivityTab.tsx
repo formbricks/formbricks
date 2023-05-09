@@ -2,7 +2,7 @@ import { Label } from "@formbricks/ui/Label";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { TagIcon } from "@heroicons/react/24/solid";
-import type { AttributeClass } from "@prisma/client";
+import type { AttributeClass } from "@formbricks/database/generated";
 
 interface EventActivityTabProps {
   attributeClass: AttributeClass;

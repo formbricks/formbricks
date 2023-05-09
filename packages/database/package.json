@@ -3,14 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "license": "MIT",
-  "main": "index.ts",
-  "types": "index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist/**",
     "generated"
   ],
   "scripts": {
-    "clean": "rimraf .turbo node_modules dist",
+    "clean": "rimraf .turbo node_modules dist generated",
     "build": "tsup",
     "dev": "tsup --watch",
     "db:migrate:deploy": "prisma migrate deploy",
