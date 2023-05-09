@@ -1,6 +1,6 @@
-import { Label } from "@formbricks/ui";
-import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import { convertDateTimeStringShort } from "@formbricks/lib/time";
+import { Label } from "@formbricks/ui";
 import { TagIcon } from "@heroicons/react/24/solid";
 import type { AttributeClass } from "@prisma/client";
 

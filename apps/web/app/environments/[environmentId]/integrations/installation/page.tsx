@@ -1,7 +1,6 @@
-import { Card } from "@formbricks/ui";
-import { PageTitle } from "@formbricks/ui";
 import JSLogo from "@/images/jslogo.png";
 import NPMLogo from "@/images/npmlogo.png";
+import { Card, PageTitle } from "@formbricks/ui";
 import Image from "next/image";
 
 export default function InstallationsPage({ params }) {
