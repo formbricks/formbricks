@@ -2,15 +2,13 @@
 
 import { cn } from "@formbricks/lib/cn";
 
-export function ProgressBar({
-  progress,
-  barColor,
-  height = 5,
-}: {
+interface ProgressBarProps {
   progress: number;
   barColor: string;
   height?: 2 | 5;
-}) {
+}
+
+export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, barColor, height = 5 }) => {
   return (
     <div className={cn(height === 2 ? "h-2" : height === 5 ? "h-5" : "", "w-full rounded-full bg-slate-200")}>
       <div
@@ -18,9 +16,13 @@ export function ProgressBar({
         style={{ width: `${Math.floor(progress * 100)}%` }}></div>
     </div>
   );
+};
+
+interface HalfCircleProps {
+  value: number;
 }
 
-export function HalfCircle({ value }: { value: number }) {
+export const HalfCircle: React.FC<HalfCircleProps> = ({ value }: { value: number }) => {
   const normalizedValue = (value + 100) / 200;
   const mappedValue = (normalizedValue * 180 - 180).toString() + "deg";
 
@@ -40,4 +42,4 @@ export function HalfCircle({ value }: { value: number }) {
       </div>
     </div>
   );
-}
+};

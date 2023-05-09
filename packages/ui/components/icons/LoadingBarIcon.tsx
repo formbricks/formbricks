@@ -1,4 +1,4 @@
-export function LoadingBarIcon(props: any) {
+export const LoadingBarIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
       <defs />
@@ -64,4 +64,4 @@ export function LoadingBarIcon(props: any) {
       <path d="M9.594,17.481l5-5" fill="none" stroke="#0f172a" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+};

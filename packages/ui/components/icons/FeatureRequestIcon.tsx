@@ -1,4 +1,4 @@
-export function FeatureRequestIcon(props: any) {
+export const FeatureRequestIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg width="75" height="75" viewBox="0 0 75 75" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
@@ -62,4 +62,4 @@ export function FeatureRequestIcon(props: any) {
       />
     </svg>
   );
-}
+};
