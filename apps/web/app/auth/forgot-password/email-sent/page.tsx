@@ -1,6 +1,6 @@
 import BackToLoginButton from "@/components/auth/BackToLoginButton";
 
-export default function SignInPage() {
+const SignInPage: React.FC = () => {
   return (
     <div>
       <h1 className="leading-2 mb-4 text-center font-bold">Password reset successfully requested</h1>
@@ -13,4 +13,6 @@ export default function SignInPage() {
       </div>
     </div>
   );
-}
+};
+
+export default SignInPage;

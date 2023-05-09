@@ -1,0 +1,114 @@
+export const AppPieChartIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
+      <defs />
+      <path d="M23.5,7V20a2,2,0,0,1-2,2H2.5a2,2,0,0,1-2-2V7Z" fill="#00e6ca" />
+      <path d="M2.5,22h2l15-15H.5V20A2,2,0,0,0,2.5,22Z" fill="#c4f0eb" />
+      <path
+        d="M13,14.5a4.993,4.993,0,0,0-2.178-4.128L8,14.5l3.205,3.837A4.988,4.988,0,0,0,13,14.5Z"
+        fill="#00e6ca"
+      />
+      <path d="M10.822,10.372A5,5,0,0,0,3,14.5H8Z" fill="#c4f0eb" />
+      <path d="M3,14.5a5,5,0,0,0,8.205,3.837L8,14.5Z" fill="#00e6ca" />
+      <path d="M23.5,6.5H.5v-3a2,2,0,0,1,2-2h19a2,2,0,0,1,2,2Z" fill="#f8fafc" />
+      <rect
+        x={0.5}
+        y={1.504}
+        width={23}
+        height={21}
+        rx={2}
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1={0.5}
+        y1={6.504}
+        x2={23.5}
+        y2={6.504}
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4,3.754A.25.25,0,1,1,3.75,4,.25.25,0,0,1,4,3.754"
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7,3.754A.25.25,0,1,1,6.75,4,.25.25,0,0,1,7,3.754"
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10,3.754A.25.25,0,1,1,9.75,4a.25.25,0,0,1,.25-.25"
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx={8}
+        cy={14.504}
+        r={5}
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <polyline
+        points="10.821 10.376 8 14.504 11.205 18.341"
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1={8}
+        y1={14.504}
+        x2={3}
+        y2={14.504}
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1={15}
+        y1={10.504}
+        x2={21}
+        y2={10.504}
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1={15}
+        y1={13.504}
+        x2={21}
+        y2={13.504}
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1={15}
+        y1={16.504}
+        x2={21}
+        y2={16.504}
+        fill="none"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};

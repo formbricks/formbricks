@@ -1,6 +1,6 @@
-import { Button } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import { createId } from "@paralleldrive/cuid2";
 import { TrashIcon } from "@heroicons/react/24/solid";

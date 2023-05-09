@@ -1,9 +1,9 @@
 import Modal from "../shared/Modal";
-import { Button } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 
 interface EventDetailModalProps {
@@ -11,7 +11,7 @@ interface EventDetailModalProps {
   setOpen: (v: boolean) => void;
 }
 
-export default function AddNoCodeEventModalDummy({ open, setOpen }: EventDetailModalProps) {
+export const AddNoCodeEventModalDummy: React.FC<EventDetailModalProps> = ({ open, setOpen }) => {
   return (
     <Modal open={open} setOpen={setOpen} noPadding>
       <div className="flex h-full flex-col rounded-lg bg-slate-50 dark:bg-slate-800">
@@ -121,4 +121,6 @@ export default function AddNoCodeEventModalDummy({ open, setOpen }: EventDetailM
       </div>
     </Modal>
   );
-}
+};
+
+export default AddNoCodeEventModalDummy;

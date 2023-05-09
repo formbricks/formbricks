@@ -6,19 +6,23 @@
   "authors": "Formbricks",
   "version": "1.0.0",
   "main": "index.ts",
+  "scripts": {
+    "clean": "rimraf .turbo node_modules"
+  },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "@types/react": "^18.0.33",
-    "@types/react-dom": "^18.0.11",
+    "@types/react": "^18.2.6",
+    "@types/react-dom": "^18.2.4",
     "concurrently": "^8.0.1",
-    "eslint": "^8.37.0",
+    "eslint": "^8.40.0",
     "eslint-config-formbricks": "workspace:*",
-    "postcss": "^8.4.21",
+    "postcss": "^8.4.23",
     "react": "^18.2.0",
-    "typescript": "^5.0.3"
+    "typescript": "^5.0.4"
   },
   "dependencies": {
     "@formbricks/database": "workspace:*",
-    "next": "^13.2.4"
+    "next": "^13.4.1",
+    "rimraf": "^5.0.0"
   }
 }

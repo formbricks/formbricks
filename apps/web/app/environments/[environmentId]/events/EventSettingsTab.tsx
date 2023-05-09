@@ -1,9 +1,10 @@
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
-import { ErrorComponent } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Button } from "@formbricks/ui/Button";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 import { deleteEventClass, useEventClass, useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { useEventClassMutation } from "@/lib/eventClasses/mutateEventClasses";
 import { Controller, useForm } from "react-hook-form";

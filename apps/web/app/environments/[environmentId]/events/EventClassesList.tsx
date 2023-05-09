@@ -1,8 +1,8 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Button } from "@formbricks/ui";
-import { ErrorComponent } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";

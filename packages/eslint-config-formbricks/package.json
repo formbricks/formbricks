@@ -4,6 +4,9 @@
   "private": true,
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "clean": "rimraf .turbo node_modules"
+  },
   "dependencies": {
     "eslint": "^8.40.0",
     "eslint-config-next": "^13.4.1",
@@ -12,6 +15,7 @@
     "eslint-config-turbo": "latest"
   },
   "devDependencies": {
+    "rimraf": "^5.0.0",
     "typescript": "^5.0.4"
   }
 }

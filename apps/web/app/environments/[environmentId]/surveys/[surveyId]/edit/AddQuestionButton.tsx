@@ -7,7 +7,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { useProduct } from "@/lib/products/products";
-import { ErrorComponent } from "@/../../packages/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 interface AddQuestionButtonProps {

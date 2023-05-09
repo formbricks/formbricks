@@ -1,4 +1,4 @@
-import { Label } from "@formbricks/ui";
+import { Label } from "@formbricks/ui/Label";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { TagIcon } from "@heroicons/react/24/solid";

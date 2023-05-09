@@ -1,0 +1,58 @@
+export const FeedbackIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
+      <defs />
+      <path
+        d="M23.5,6.5c0-3.313-3.358-6-7.5-6s-7.5,2.687-7.5,6c0,3.179,3.092,5.773,7,5.981V16l4.365-4.365A5.88,5.88,0,0,0,23.5,6.5Z"
+        fill="#00e6ca"
+      />
+      <path
+        d="M16,2.5c3.716,0,6.8,2.163,7.4,5a4.807,4.807,0,0,0,.1-1c0-3.313-3.358-6-7.5-6s-7.5,2.687-7.5,6a4.892,4.892,0,0,0,.1,1C9.2,4.663,12.285,2.5,16,2.5Z"
+        fill="#c4f0eb"
+      />
+      <path
+        d="M23.5,6.5c0-3.313-3.358-6-7.5-6s-7.5,2.687-7.5,6c0,3.179,3.092,5.773,7,5.981V16l4.365-4.365A5.88,5.88,0,0,0,23.5,6.5Z"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <line
+        x1={12.501}
+        y1={4.5}
+        x2={19.501}
+        y2={4.5}
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <line
+        x1={12.501}
+        y1={7.5}
+        x2={17.501}
+        y2={7.5}
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <circle
+        cx={3.5}
+        cy={10.25}
+        r={2.25}
+        fill="#c4f0eb"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3.5,13.5a3,3,0,0,0-3,3v2H2l.5,5h2l.5-5H6.5v-2A3,3,0,0,0,3.5,13.5Z"
+        fill="#c4f0eb"
+        stroke="#0f172a"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};

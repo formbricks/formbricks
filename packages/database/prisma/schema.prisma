@@ -9,6 +9,7 @@ datasource db {
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["filteredRelationCount", "extendedWhereUnique"]
+  output          = "../../../node_modules/.prisma/client"
   //provider = "prisma-dbml-generator"
 }
 

@@ -2,7 +2,9 @@
 import { useState } from "react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useTeam } from "@/lib/teams/teams";
-import { Badge, Button, ErrorComponent } from "@formbricks/ui";
+import { Badge } from "@formbricks/ui/Badge";
+import { Button } from "@formbricks/ui/Button";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import type { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { CheckIcon } from "@heroicons/react/24/outline";

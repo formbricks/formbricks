@@ -1,7 +1,7 @@
 "use client";
 
 import { resetPassword } from "@/lib/users/users";
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";

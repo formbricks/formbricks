@@ -2,18 +2,11 @@
 
 import Modal from "@/components/shared/Modal";
 import { createEventClass } from "@/lib/eventClasses/eventClasses";
-import {
-  Button,
-  Input,
-  Label,
-  RadioGroup,
-  RadioGroupItem,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 import type { NoCodeConfig, Event } from "@formbricks/types/events";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";

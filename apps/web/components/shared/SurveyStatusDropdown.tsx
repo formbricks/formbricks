@@ -4,14 +4,8 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { useSurvey } from "@/lib/surveys/surveys";
-import {
-  ErrorComponent,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import {
   CheckCircleIcon,
   PauseCircleIcon,
@@ -20,7 +14,7 @@ import {
   ArchiveBoxIcon,
 } from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
-import { Badge } from "@formbricks/ui";
+import { Badge } from "@formbricks/ui/Badge";
 
 export default function SurveyStatusDropdown({
   surveyId,

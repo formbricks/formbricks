@@ -1,4 +1,4 @@
-import { Button } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
 

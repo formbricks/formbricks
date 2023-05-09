@@ -1,6 +1,6 @@
 "use client";
 
-import { ProgressBar } from "@/../../packages/ui";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { Logo } from "@/components/Logo";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProfile } from "@/lib/profile";

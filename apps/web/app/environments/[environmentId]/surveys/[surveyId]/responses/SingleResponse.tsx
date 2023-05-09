@@ -1,5 +1,5 @@
 import { timeSince } from "@formbricks/lib/time";
-import { PersonAvatar } from "@formbricks/ui";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 

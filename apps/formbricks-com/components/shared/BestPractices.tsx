@@ -1,6 +1,6 @@
+import { Button } from "@formbricks/ui/Button";
 import {
   AngryBirdRageIcon,
-  Button,
   CancelSubscriptionIcon,
   DogChaserIcon,
   DoorIcon,
@@ -8,7 +8,7 @@ import {
   InterviewPromptIcon,
   OnboardingIcon,
   PMFIcon,
-} from "@formbricks/ui";
+} from "@formbricks/ui/icons";
 import clsx from "clsx";
 import { usePlausible } from "next-plausible";
 import { useRouter } from "next/router";
@@ -85,33 +85,36 @@ export default function InsightOppos() {
       </div>
       <div>
         <div className=" mx-auto grid max-w-5xl grid-cols-1 gap-6 px-2 sm:grid-cols-2">
-          {BestPractices.map((bestPractice) => (
-            <div
-              key={bestPractice.title}
-              className="drop-shadow-card duration-120 relative rounded-lg bg-slate-100 p-8 transition-all ease-in-out hover:scale-105 dark:bg-slate-800">
+          {BestPractices.map((bestPractice) => {
+            const IconComponent: React.ElementType = bestPractice.icon;
+            return (
               <div
-                className={clsx(
-                  // base styles independent what type of button it is
-                  "absolute right-10 rounded-full px-3 py-1",
-                  // different styles depending on type
-                  bestPractice.category === "Boost Retention" &&
-                    "bg-pink-100 text-pink-500 dark:bg-pink-800 dark:text-pink-200",
-                  bestPractice.category === "Exploration" &&
-                    "bg-blue-100 text-blue-500 dark:bg-blue-800 dark:text-blue-200",
-                  bestPractice.category === "Retain Users" &&
-                    "bg-orange-100 text-orange-500 dark:bg-orange-800 dark:text-orange-200"
-                )}>
-                {bestPractice.category}
+                key={bestPractice.title}
+                className="drop-shadow-card duration-120 relative rounded-lg bg-slate-100 p-8 transition-all ease-in-out hover:scale-105 dark:bg-slate-800">
+                <div
+                  className={clsx(
+                    // base styles independent what type of button it is
+                    "absolute right-10 rounded-full px-3 py-1",
+                    // different styles depending on type
+                    bestPractice.category === "Boost Retention" &&
+                      "bg-pink-100 text-pink-500 dark:bg-pink-800 dark:text-pink-200",
+                    bestPractice.category === "Exploration" &&
+                      "bg-blue-100 text-blue-500 dark:bg-blue-800 dark:text-blue-200",
+                    bestPractice.category === "Retain Users" &&
+                      "bg-orange-100 text-orange-500 dark:bg-orange-800 dark:text-orange-200"
+                  )}>
+                  {bestPractice.category}
+                </div>
+                <div className="h-12 w-12">
+                  <IconComponent className="h-12 w-12 " />
+                </div>
+                <h3 className="mb-1 mt-3 text-xl font-bold text-slate-700 dark:text-slate-200">
+                  {bestPractice.title}
+                </h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">{bestPractice.description}</p>
               </div>
-              <div className="h-12 w-12">
-                <bestPractice.icon className="h-12 w-12 " />
-              </div>
-              <h3 className="mb-1 mt-3 text-xl font-bold text-slate-700 dark:text-slate-200">
-                {bestPractice.title}
-              </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">{bestPractice.description}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       <div className="mx-auto mt-4 w-fit px-4 py-2 text-center">

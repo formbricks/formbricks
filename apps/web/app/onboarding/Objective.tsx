@@ -2,7 +2,7 @@
 
 import { cn } from "@/../../packages/lib/cn";
 import { Objective } from "@/../../packages/types/templates";
-import { Button } from "@/../../packages/ui";
+import { Button } from "@formbricks/ui/Button";
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
 import { useProfile } from "@/lib/profile";

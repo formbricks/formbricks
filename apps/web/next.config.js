@@ -8,6 +8,9 @@ const rootPath = path.join(__dirname, "..", "..");
 const { createId } = require("@paralleldrive/cuid2");
 
 const nextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: ["@prisma/client"],
+  },
   output: "standalone",
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {

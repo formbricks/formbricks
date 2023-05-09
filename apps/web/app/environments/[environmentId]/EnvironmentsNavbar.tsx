@@ -21,18 +21,10 @@ import { useEnvironment } from "@/lib/environments/environments";
 import { useMemberships } from "@/lib/memberships";
 import { useTeam } from "@/lib/teams/teams";
 import { capitalizeFirstLetter, truncate } from "@/lib/utils";
-import {
-  CustomersIcon,
-  ErrorComponent,
-  FilterIcon,
-  FormIcon,
-  ProfileAvatar,
-  SettingsIcon,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@formbricks/ui";
+import { CustomersIcon, FilterIcon, FormIcon, SettingsIcon } from "@formbricks/ui/icons";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { ProfileAvatar } from "@formbricks/ui/Avatars";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import {
   AdjustmentsVerticalIcon,
   ArrowRightOnRectangleIcon,
@@ -232,21 +224,25 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
               {/* <PlusIcon className="h-6 w-6" /> */}
               <Image src={FaveIcon} width={30} height={30} alt="faveicon" />
             </Link>
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={clsx(
-                  item.current
-                    ? "bg-slate-100 text-slate-900"
-                    : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
-                  "inline-flex items-center rounded-md px-2 py-1 text-sm font-medium"
-                )}
-                aria-current={item.current ? "page" : undefined}>
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.name}
-              </Link>
-            ))}
+            {navigation.map((item) => {
+              const IconComponent: React.ElementType = item.icon;
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={clsx(
+                    item.current
+                      ? "bg-slate-100 text-slate-900"
+                      : "text-slate-900 hover:bg-slate-50 hover:text-slate-900",
+                    "inline-flex items-center rounded-md px-2 py-1 text-sm font-medium"
+                  )}
+                  aria-current={item.current ? "page" : undefined}>
+                  <IconComponent className="mr-3 h-5 w-5" />
+                  {item.name}
+                </Link>
+              );
+            })}
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <DropdownMenu>

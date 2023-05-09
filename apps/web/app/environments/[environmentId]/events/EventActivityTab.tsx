@@ -1,6 +1,6 @@
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ErrorComponent } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { Label } from "@formbricks/ui/Label";
 import { useEventClass } from "@/lib/eventClasses/eventClasses";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@/lib/utils";

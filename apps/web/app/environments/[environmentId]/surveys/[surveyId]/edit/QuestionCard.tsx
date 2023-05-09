@@ -4,28 +4,29 @@ import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
-import { Label, Switch } from "@formbricks/ui";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
 import {
-  ListBulletIcon,
   ChatBubbleBottomCenterTextIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
   CursorArrowRippleIcon,
+  ListBulletIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
-import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
+import CTAQuestionForm from "./CTAQuestionForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
+import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
+import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionDropdown";
-import NPSQuestionForm from "./NPSQuestionForm";
-import UpdateQuestionId from "./UpdateQuestionId";
-import CTAQuestionForm from "./CTAQuestionForm";
 import RatingQuestionForm from "./RatingQuestionForm";
+import UpdateQuestionId from "./UpdateQuestionId";
 
 interface QuestionCardProps {
   localSurvey: Survey;
