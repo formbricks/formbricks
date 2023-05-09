@@ -2,7 +2,7 @@ import { Question } from "./questionTypes";
 
 export interface Template {
   name: string;
-  icon: any;
+  icon?: any;
   description: string;
   category?: "Product Experience" | "Exploration" | "Growth" | "Increase Revenue" | "Customer Success";
   preset: {
