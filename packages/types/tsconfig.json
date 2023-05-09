@@ -1,5 +1,11 @@
 {
   "extends": "@formbricks/tsconfig/base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "dist",
+    "composite": true // Add this line
+    // ...other options
+  },
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"]
 }

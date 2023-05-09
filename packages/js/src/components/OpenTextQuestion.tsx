@@ -1,4 +1,4 @@
-import type { OpenTextQuestion } from "@formbricks/types/questions";
+import type { OpenTextQuestion } from "../../../types/questions";
 import { h } from "preact";
 import Headline from "./Headline";
 import Subheader from "./Subheader";

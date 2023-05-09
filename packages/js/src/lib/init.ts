@@ -1,4 +1,4 @@
-import { InitConfig } from "@formbricks/types/js";
+import type { InitConfig } from "../../../types/js";
 import { Config } from "./config";
 import {
   ErrorHandler,
@@ -12,7 +12,7 @@ import {
 } from "./errors";
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
-import { addClickEventListener, addPageUrlEventListeners } from "./noCodeEvents";
+import { addClickEventListener, addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
 import { createPerson } from "./person";
 import { createSession, extendOrCreateSession, extendSession, isExpired } from "./session";
 import { addStylesToDom } from "./styles";
@@ -122,6 +122,9 @@ export const initialize = async (
   addClickEventListener();
 
   logger.debug("Initialized");
+
+  // check page url if initialized after page load
+  checkPageUrl();
 
   return okVoid();
 };

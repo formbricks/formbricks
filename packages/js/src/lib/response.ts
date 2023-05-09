@@ -1,4 +1,4 @@
-import { JsConfig, Response, ResponseCreateRequest, ResponseUpdateRequest } from "@formbricks/types/js";
+import type { JsConfig, Response, ResponseCreateRequest, ResponseUpdateRequest } from "../../../types/js";
 import { NetworkError, Result, err, ok } from "./errors";
 
 export const createResponse = async (

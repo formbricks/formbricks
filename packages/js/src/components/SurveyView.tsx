@@ -1,4 +1,4 @@
-import { JsConfig, Survey } from "@formbricks/types/js";
+import type { JsConfig, Survey } from "../../../types/js";
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";

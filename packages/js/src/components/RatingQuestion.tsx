@@ -1,7 +1,7 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
-import type { RatingQuestion } from "@formbricks/types/questions";
+import type { RatingQuestion } from "../../../types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
