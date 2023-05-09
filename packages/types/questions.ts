@@ -6,70 +6,50 @@ export type Question =
   | CTAQuestion
   | RatingQuestion;
 
-export interface OpenTextQuestion {
+export interface IQuestion {
   id: string;
+  type: string;
+  headline: string;
+  subheader?: string;
+  required: boolean;
+  buttonLabel?: string;
+}
+
+export interface OpenTextQuestion extends IQuestion {
   type: "openText";
-  headline: string;
-  subheader?: string;
   placeholder?: string;
-  buttonLabel?: string;
-  required: boolean;
 }
 
-export interface MultipleChoiceSingleQuestion {
-  id: string;
+export interface MultipleChoiceSingleQuestion extends IQuestion {
   type: "multipleChoiceSingle";
-  headline: string;
-  subheader?: string;
-  required: boolean;
-  buttonLabel?: string;
   choices: Choice[];
 }
 
-export interface MultipleChoiceMultiQuestion {
-  id: string;
+export interface MultipleChoiceMultiQuestion extends IQuestion {
   type: "multipleChoiceMulti";
-  headline: string;
-  subheader?: string;
-  required: boolean;
-  buttonLabel?: string;
   choices: Choice[];
 }
 
-export interface NPSQuestion {
-  id: string;
+export interface NPSQuestion extends IQuestion {
   type: "nps";
-  headline: string;
-  subheader?: string;
-  required: boolean;
-  buttonLabel?: string;
   lowerLabel: string;
   upperLabel: string;
 }
 
-export interface CTAQuestion {
-  id: string;
+export interface CTAQuestion extends IQuestion {
   type: "cta";
-  headline: string;
   html?: string;
-  required: boolean;
-  buttonLabel?: string;
   buttonUrl?: string;
   buttonExternal: boolean;
   dismissButtonLabel?: string;
 }
 
-export interface RatingQuestion {
-  id: string;
+export interface RatingQuestion extends IQuestion {
   type: "rating";
-  headline: string;
-  subheader?: string;
-  required: boolean;
   scale: "number" | "smiley" | "star";
   range: 5 | 3 | 4 | 7 | 10;
   lowerLabel: string;
   upperLabel: string;
-  buttonLabel?: string;
 }
 
 export interface Choice {
