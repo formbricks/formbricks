@@ -70,7 +70,7 @@ export interface LogicBase {
     | "greaterEqual"
     | "includesAll"
     | "includesOne";
-  value?: number | string | string[];
+  value: number | string | string[] | undefined;
   destination: string | "end";
 }
 
