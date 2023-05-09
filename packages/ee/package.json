@@ -6,6 +6,9 @@
   "authors": "Formbricks",
   "version": "1.0.0",
   "main": "index.ts",
+  "scripts": {
+    "clean": "rimraf .turbo node_modules"
+  },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
     "@types/react": "^18.2.6",
@@ -19,6 +22,7 @@
   },
   "dependencies": {
     "@formbricks/database": "workspace:*",
-    "next": "^13.4.1"
+    "next": "^13.4.1",
+    "rimraf": "^5.0.0"
   }
 }

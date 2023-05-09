@@ -18,6 +18,7 @@
     "default": "./dist/index.modern.js"
   },
   "scripts": {
+    "clean": "rimraf .turbo node_modules dist",
     "dev": "microbundle watch --css inline",
     "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider preact watch",
     "build:widget": "microbundle --css inline",
@@ -61,6 +62,7 @@
     "preact": "10.13.2",
     "preact-cli": "^3.4.5",
     "preact-render-to-string": "^6.0.3",
+    "rimraf": "^5.0.0",
     "tailwindcss": "^3.3.2",
     "typescript": "^5.0.4"
   },

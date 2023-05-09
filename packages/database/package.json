@@ -3,14 +3,12 @@
   "private": true,
   "version": "1.0.0",
   "license": "MIT",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "main": "index.ts",
+  "types": "index.d.ts",
   "files": [
     "dist/**"
   ],
   "scripts": {
-    "build": "tsup",
     "clean": "rimraf .turbo node_modules dist",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
@@ -19,7 +17,7 @@
     "dev": "tsup --watch",
     "format": "prisma format",
     "generate": "prisma generate",
-    "lint": "eslint ./src --fix",
+    "lint": "eslint ./client --fix",
     "prebuild": "npm run generate",
     "predev": "npm run generate",
     "studio": "prisma studio"

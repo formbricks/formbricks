@@ -3,7 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "main": "index.js",
+  "scripts": {
+    "clean": "rimraf .turbo node_modules"
+  },
   "devDependencies": {
-    "@formbricks/tsconfig": "workspace:*"
+    "@formbricks/tsconfig": "workspace:*",
+    "rimraf": "^5.0.0"
   }
 }

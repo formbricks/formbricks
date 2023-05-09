@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "clean": "rimraf .turbo node_modules .next",
     "dev": "next dev -p 3002",
     "build": "next build",
     "start": "next start",
@@ -25,6 +26,7 @@
     "@tailwindcss/forms": "^0.5.3",
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.23",
+    "rimraf": "^5.0.0",
     "tailwindcss": "^3.3.2"
   }
 }

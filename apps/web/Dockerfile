@@ -5,6 +5,9 @@ WORKDIR /app
 
 COPY . .
 
+# Set up a case-sensitive volume for node_modules
+VOLUME /app/node_modules
+
 RUN pnpm install
 # Build the project
 RUN pnpm dlx prisma generate
