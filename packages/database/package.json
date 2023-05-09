@@ -19,7 +19,7 @@
     "db:push": "prisma db push --accept-data-loss",
     "format": "prisma format",
     "generate": "prisma generate",
-    "lint": "eslint ./client --fix",
+    "lint": "eslint ./src --fix",
     "prebuild": "npm run generate",
     "predev": "npm run generate",
     "studio": "prisma studio"
