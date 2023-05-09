@@ -2,11 +2,16 @@ import { Question } from "./questionTypes";
 
 export interface Template {
   name: string;
-  icon?: any;
+  icon: any;
   description: string;
-  category?: "All" | "Product Management" | "Growth Marketing" | "Increase Revenue";
+  category?: "Product Experience" | "Exploration" | "Growth" | "Increase Revenue" | "Customer Success";
   preset: {
     name: string;
     questions: Question[];
+    thankYouCard: {
+      enabled: boolean;
+      headline: string;
+      subheader: string;
+    };
   };
 }

@@ -1,6 +1,10 @@
 import { Layout } from "@/components/docs/Layout";
 import { Fence } from "@/components/shared/Fence";
 import { Callout } from "@/components/shared/Callout";
+import DemoPreview from "@/components/dummyUI/DemoPreview";
+import Image from "next/image";
+
+import CreatePrompt from "./create-cancel-flow.png";
 
 export const meta = {
   title: "In-app Interview Prompt",
@@ -19,6 +23,10 @@ Allow users to share feedback with 2 clicks. A low friction way to gather feedba
 - In-app prompts have a significantly higher conversion rate.
 - Set scheduling user interviews on auto pilot.
 - Soon: Integrate directly with your [Cal.com](http://Cal.com) account.
+
+## Preview
+
+<DemoPreview template="Interview Prompt" />
 
 ## Installation
 
@@ -40,7 +48,7 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Click on "Create Survey" and choose the template “Feedback Box”:
 
-<Image src={CreateFeedbackBox} alt="Create feedback box by template" quality="100" />
+<Image src={CreatePrompt} alt="Create feedback box by template" quality="100" />
 
 ### 2. Update prompt and CTA
 
@@ -71,9 +79,8 @@ We assume that you have not yet created the correct trigger to show your Intervi
 <Image src={AddAction} alt="Add action" quality="100" />
 
 <Callout title="You can also add actions in your code" type="note">
-  You can also create [Code Actions](notion://www.notion.so/docs/actions/code) using
-  `formbricks.track("Eventname")` - they will automatically appear in your Actions overview as long as the SDK
-  is embedded.
+  You can also create [Code Actions](/docs/actions/code) using `formbricks.track("Eventname")` - they will
+  automatically appear in your Actions overview as long as the SDK is embedded.
 </Callout>
 
 Generally, we have two types of user actions: Page views and clicks. With the interview prompt, you’ll likely want to display it on a page visit since you already filter who sees the prompt by attributes.
@@ -105,11 +112,8 @@ Scroll down to “Recontact Options”. Here you have to choose the correct sett
 
 <Callout title="It only works with the widget" type="note">
   You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow
-  [this tutorial (Step 4 onwards)](notion://www.notion.so/docs/getting-started/quickstart) to install the
-  widget.
+  [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart) to install the widget.
 </Callout>
-
-### [Widget setup tutorial](/docs/getting-started/quickstart)
 
 ###
 

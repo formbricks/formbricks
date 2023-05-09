@@ -375,7 +375,7 @@ export const templates: Template[] = [
           id: createId(),
           type: "multipleChoiceSingle",
           headline: "Why did you stop your trial?",
-          subheader: "Help us understand you better. Choose one option:",
+          subheader: "Help us understand you better:",
           required: true,
           choices: [
             {
@@ -403,7 +403,8 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: "openText",
-          headline: "Did you find a better alternative? Please name it:",
+          headline: "Did you find a better alternative?",
+          subheader: "Please name it:",
           required: false,
         },
       ],
@@ -813,7 +814,8 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: "cta",
-          headline: "Wanna do a short 15m interview with Charly?",
+          headline: "Do you have 15 min to talk to us? 🙏",
+          html: "You're one of our power users. We would love to interview you briefly!",
           buttonLabel: "Book slot",
           buttonUrl: "https://cal.com/johannes",
           buttonExternal: true,

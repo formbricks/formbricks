@@ -1,19 +1,30 @@
 import { Button } from "@formbricks/ui";
-import { ArrowRightIcon } from "@heroicons/react/24/solid";
+import usePlausible from "next-plausible";
+import { useRouter } from "next/router";
 
 interface UseCaseCTAProps {
   href: string;
 }
 
 export default function UseCaseHeader({ href }: UseCaseCTAProps) {
+  /*   const plausible = usePlausible(); */
+  const router = useRouter();
   return (
-    <div className="my-4 flex items-center space-x-2">
+    <div className="my-8 flex space-x-2">
       <Button variant="secondary" href={href}>
         Step-by-step manual
       </Button>
-      <Button variant="darkCTA" href="https://app.formbricks.com/auth/signup" EndIcon={ArrowRightIcon}>
-        Sign up (free)
-      </Button>
+      <div className="space-y-1 text-center">
+        <Button
+          variant="darkCTA"
+          onClick={() => {
+            router.push("https://app.formbricks.com/auth/signup");
+            /*  plausible("BestPractice_SubPage_CTA_TryItNow"); */
+          }}>
+          Try it now
+        </Button>
+        <p className="text-xs text-slate-400">It&apos;s free</p>
+      </div>
     </div>
   );
 }

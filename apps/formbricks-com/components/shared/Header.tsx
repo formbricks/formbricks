@@ -57,7 +57,7 @@ const IncreaseRevenue = [
     href: "/missed-trials",
     status: true,
     icon: BaseballIcon,
-    description: "Take guessing out, hit right",
+    description: "Take guessing out, hit it right",
   },
 ];
 

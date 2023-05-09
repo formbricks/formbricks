@@ -18,9 +18,13 @@ const navigation = [
   {
     title: "Best Practices",
     links: [
+      { title: "Learn from Churn", href: "/docs/best-practices/cancel-subscription" },
+      { title: "Interview Prompt", href: "/docs/best-practices/interview-prompt" },
+      { title: "Product-Market Fit", href: "/docs/best-practices/pmf-survey" },
+      { title: "Trial Conversion", href: "/docs/best-practices/missed-trial" },
+      { title: "Feature Chaser", href: "/docs/best-practices/feature-chaser" },
       { title: "Feedback Box", href: "/docs/best-practices/feedback-box" },
       { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
-      /*       { title: "In-app Interview Prompt", href: "/docs/best-practices/interview-prompt" }, */
     ],
   },
   {

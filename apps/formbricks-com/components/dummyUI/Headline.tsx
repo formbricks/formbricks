@@ -2,7 +2,7 @@ export default function Headline({ headline, questionId }: { headline: string; q
   return (
     <label
       htmlFor={questionId}
-      className="block text-base font-semibold leading-6 text-slate-900 dark:text-slate-100">
+      className="mb-1.5 block text-base font-semibold leading-6 text-slate-900 dark:text-slate-100">
       {headline}
     </label>
   );

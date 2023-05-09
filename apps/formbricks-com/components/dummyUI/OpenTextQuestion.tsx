@@ -1,10 +1,11 @@
 import type { OpenTextQuestion } from "./questionTypes";
+import { useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface OpenTextQuestionProps {
   question: OpenTextQuestion;
-  onSubmit: (id: string) => void;
+  onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
@@ -15,13 +16,18 @@ export default function OpenTextQuestion({
   lastQuestion,
   brandColor,
 }: OpenTextQuestionProps) {
+  const [value, setValue] = useState<string>("");
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const data = "Pupsi";
+
+        const data = {
+          [question.id]: value,
+        };
+        setValue(""); // reset value
         onSubmit(data);
-        // reset form
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -30,9 +36,11 @@ export default function OpenTextQuestion({
           rows={3}
           name={question.id}
           id={question.id}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
           placeholder={question.placeholder}
           required={question.required}
-          className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 dark:bg-slate-500 dark:text-white sm:text-sm"></textarea>
+          className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>
       </div>
       <div className="mt-4 flex w-full justify-between">
         <div></div>

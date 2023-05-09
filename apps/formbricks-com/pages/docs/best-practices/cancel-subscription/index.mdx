@@ -2,11 +2,22 @@ import { Layout } from "@/components/docs/Layout";
 import { Fence } from "@/components/shared/Fence";
 import { Callout } from "@/components/shared/Callout";
 import Image from "next/image";
+import DemoPreview from "@/components/dummyUI/DemoPreview";
+
+import CreateChurnFlow from "./create-cancel-flow.png";
+import ChangeText from "./change-text.png";
+import TriggerInnerText from "./trigger-inner-text.png";
+import TriggerCSS from "./trigger-css-selector.png";
+import TriggerPageUrl from "./trigger-page-url.png";
+import RecontactOptions from "./recontact-options.png";
+import PublishSurvey from "./publish-survey.png";
+import SelectAction from "./select-action.png";
 
 export const meta = {
   title: "Cancel Subscription Flow",
   description: "To know how to decrease churn, you have to understand it. Use a micro-survey.",
 };
+
 Churn is hard, but can teach you a lot. Whenever a user decides that your product isn’t worth it anymore, you have a unique opportunity to get deep insights. These insights are pure gold to reduce churn.
 
 ## Purpose
@@ -19,7 +30,9 @@ The Cancel Subscription Flow is among the most effective to identify weaknesses 
 - Follow-up to prevent bad reviews
 - Coming soon: Make survey mandatory
 
-### Preview
+## Preview
+
+<DemoPreview template="Churn Survey" />
 
 ## Overview
 
@@ -42,13 +55,13 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Click on "Create Survey" and choose the template “Cancel Subscription Flow”:
 
-<Image src={CreateFeedbackBox} alt="Create feedback box by template" quality="100" />
+<Image src={CreateChurnFlow} alt="Create churn survey by template" quality="100" />
 
 ### 2. Update questions (if you like)
 
 You’re free to update the question and answer options. However, based on our experience, we suggest giving the provided template a go 😊
 
-<Image src={ChangeTextContent} alt="Change text content" quality="100" />
+<Image src={ChangeText} alt="Change text content" quality="100" />
 
 _Want to change the button color? You can do so in the product settings._
 
@@ -64,19 +77,19 @@ You likely have not yet created the correct trigger to show your Cancel Subscrip
 
 1. **Trigger by innerText:** You likely have a “Cancel Subscription” button in your app. You can setup a user Action with the according `innerText` to trigger the survey, like so:
 
-IMAGE
+<Image src={TriggerInnerText} alt="Set the trigger by inner Text" quality="100" />
 
 2. **Trigger by CSS Selector:** In case you have more than one button saying “Cancel Subscription” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“cancel-subscription”` and set your user action up like so:
 
-IMAGE
+<Image src={TriggerCSS} alt="Set the trigger by CSS Selector" quality="100" />
 
 3. **Trigger by pageURL:** Lastly, you could also display your survey on a subpage “/subscription-cancelled” where you forward users once they cancelled the trial subscription. You can then create a user Action with the type pageURL with the following settings:
 
-IMAGE
+<Image src={TriggerPageUrl} alt="Set the trigger by page URL" quality="100" />
 
 So whenever a user visits this page, matches the filter conditions above and the recontact options (below) the survey will be displayed ✅
 
-For a full manual on Actions and how to set them up, here is our Actions manual(ADD LINK).
+For a full manual on Actions and how to set them up, here is our [Actions manual](/docs/actions/why).
 
 <Callout title="Pre-churn flow coming soon" type="note">
 
@@ -102,11 +115,8 @@ These settings make sure the survey is always displayed, when a user wants to Ca
 
 <Callout title="It only works with the widget" type="warning">
   You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow
-  [this tutorial (Step 4 onwards)](notion://www.notion.so/docs/getting-started/quickstart) to install the
-  widget.
+  [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart) to install the widget.
 </Callout>
-
-### [Widget setup tutorial](notion://www.notion.so/docs/getting-started/quickstart)
 
 ###
 
