@@ -1,15 +1,12 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Button } from "@formbricks/ui/Button";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+import { useEnvironment } from "@/lib/environments/environments";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
+import { Button, ErrorComponent, Input, Label } from "@formbricks/ui";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useEnvironment } from "@/lib/environments/environments";
 
 export function EditProductName({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);

@@ -2,9 +2,9 @@
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
+import { ErrorComponent } from "@formbricks/ui";
 import { useMemo } from "react";
 import SingleResponse from "./SingleResponse";
 

@@ -1,4 +1,4 @@
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui";
 import { Popover } from "@headlessui/react";
 import { usePlausible } from "next-plausible";
 import Link from "next/link";

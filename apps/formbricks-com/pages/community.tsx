@@ -1,6 +1,6 @@
 import Layout from "@/components/shared/Layout";
 import HeroTitle from "@/components/shared/HeroTitle";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
 import { ChatBubbleOvalLeftEllipsisIcon, EnvelopeIcon } from "@heroicons/react/24/solid";

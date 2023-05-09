@@ -1,12 +1,9 @@
 "use client";
 
-import type { CTAQuestion } from "@formbricks/types/questions";
-import { Editor } from "@formbricks/ui/editor/Editor";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
-import { useState } from "react";
 import { md } from "@formbricks/lib/markdownIt";
+import type { CTAQuestion } from "@formbricks/types/questions";
+import { Editor, Input, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { useState } from "react";
 
 interface CTAQuestionFormProps {
   question: CTAQuestion;

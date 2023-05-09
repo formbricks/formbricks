@@ -2,11 +2,10 @@
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { usePeople } from "@/lib/people/people";
-import Link from "next/link";
 import { truncateMiddle } from "@/lib/utils";
+import { ErrorComponent, PersonAvatar } from "@formbricks/ui";
+import Link from "next/link";
 
 export default function PeopleList({ environmentId }: { environmentId: string }) {
   const { people, isLoadingPeople, isErrorPeople } = usePeople(environmentId);

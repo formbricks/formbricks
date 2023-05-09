@@ -2,7 +2,7 @@
 
 import { createSurvey } from "@/lib/surveys/surveys";
 import type { Template } from "@formbricks/types/templates";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui";
 import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

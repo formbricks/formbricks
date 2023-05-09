@@ -1,6 +1,6 @@
 import ModalWithTabs from "@/components/shared/ModalWithTabs";
 import { TagIcon } from "@heroicons/react/24/solid";
-import type { AttributeClass } from "@formbricks/database/generated";
+import type { AttributeClass } from "@prisma/client";
 import AttributeActivityTab from "./AttributeActivityTab";
 import AttributeSettingsTab from "./AttributeSettingsTab";
 

@@ -3,14 +3,19 @@
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { addMember, deleteInvite, removeMember, resendInvite, useMembers } from "@/lib/members";
-import { Button } from "@formbricks/ui/Button";
-import { ProfileAvatar } from "@formbricks/ui/Avatars";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import {
+  Badge,
+  Button,
+  ProfileAvatar,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@formbricks/ui";
 import { PaperAirplaneIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
-import AddMemberModal from "./AddMemberModal";
-import { Badge } from "@formbricks/ui/Badge";
 import toast from "react-hot-toast";
+import AddMemberModal from "./AddMemberModal";
 
 export function EditMemberships({ environmentId }) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useMembers(environmentId);

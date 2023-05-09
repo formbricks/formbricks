@@ -1,6 +1,6 @@
 import React from "react";
-import { Card } from "@formbricks/ui/Card";
-import type { CardProps } from "@formbricks/ui/Card";
+import { Card } from "@formbricks/ui";
+import type { CardProps } from "@formbricks/ui";
 
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 

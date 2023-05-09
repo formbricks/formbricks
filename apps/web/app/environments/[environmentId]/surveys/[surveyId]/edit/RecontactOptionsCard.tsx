@@ -1,15 +1,12 @@
 "use client";
 
-import { Checkbox } from "@formbricks/ui/Checkbox";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
+import { Checkbox, Input, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 
 interface DisplayOption {
   id: "displayOnce" | "displayMultiple" | "respondMultiple";

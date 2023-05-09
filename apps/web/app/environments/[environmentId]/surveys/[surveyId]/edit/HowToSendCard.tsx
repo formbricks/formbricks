@@ -1,10 +1,8 @@
 "use client";
 
-import type { Survey } from "@formbricks/types/surveys";
 import { cn } from "@formbricks/lib/cn";
-import { Badge } from "@formbricks/ui/Badge";
-import { Label } from "@formbricks/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import type { Survey } from "@formbricks/types/surveys";
+import { Badge, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import {
   CheckCircleIcon,
   ComputerDesktopIcon,

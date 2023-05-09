@@ -2,6 +2,7 @@ import type { Template } from "@formbricks/types/templates";
 import {
   AppPieChartIcon,
   ArrowRightCircleIcon,
+  ArrowUpRightIcon,
   BaseballIcon,
   CancelSubscriptionIcon,
   CashCalculatorIcon,
@@ -11,17 +12,16 @@ import {
   DogChaserIcon,
   DoorIcon,
   FeedbackIcon,
+  GaugeSpeedFastIcon,
+  HeartCommentIcon,
   InterviewPromptIcon,
+  LoadingBarIcon,
   OnboardingIcon,
   PMFIcon,
   TaskListSearchIcon,
-  HeartCommentIcon,
-  GaugeSpeedFastIcon,
-  LoadingBarIcon,
-  ArrowUpRightIcon,
   UserSearchGlasIcon,
   VideoTabletAdjustIcon,
-} from "@formbricks/ui/icons";
+} from "@formbricks/ui";
 import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {

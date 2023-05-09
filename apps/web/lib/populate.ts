@@ -1,4 +1,4 @@
-import { EventType } from "@formbricks/database/generated";
+import { EventType } from "@prisma/client";
 export const populateEnvironment = {
   eventClasses: {
     create: [

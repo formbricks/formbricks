@@ -7,7 +7,6 @@
   "types": "./index.ts",
   "license": "MIT",
   "scripts": {
-    "clean": "rimraf .turbo node_modules",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
@@ -16,11 +15,8 @@
   "devDependencies": {
     "@formbricks/tsconfig": "*",
     "@formbricks/types": "*",
-    "@types/react": "^18.2.6",
-    "@types/react-dom": "^18.2.4",
-    "eslint": "^8.40.0",
+    "eslint": "^8.27.0",
     "eslint-config-formbricks": "workspace:*",
-    "rimraf": "^5.0.0",
-    "typescript": "^5.0.4"
+    "typescript": "^4.9.4"
   }
 }

@@ -14,8 +14,7 @@
     "noUnusedParameters": true,
     "preserveWatchOutput": true,
     "skipLibCheck": true,
-    "strict": true,
-    "preserveSymlinks": true
+    "strict": true
   },
   "exclude": ["node_modules"]
 }

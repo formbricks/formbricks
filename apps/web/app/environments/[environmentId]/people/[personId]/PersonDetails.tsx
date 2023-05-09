@@ -3,9 +3,9 @@
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import GoBackButton from "@/components/shared/GoBackButton";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { deletePerson, usePerson } from "@/lib/people/people";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import { ErrorComponent } from "@formbricks/ui";
 import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";

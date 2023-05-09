@@ -10,7 +10,6 @@
     "schema": "packages/database/prisma/schema.prisma"
   },
   "scripts": {
-    "clean": "turbo run clean && rimraf node_modules",
     "build": "turbo run build",
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:migrate:vercel": "turbo run db:migrate:vercel",
@@ -26,8 +25,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.26.1",
     "prettier": "latest",
-    "rimraf": "^5.0.0",
-    "tsx": "^3.12.7",
+    "tsx": "^3.12.6",
     "turbo": "latest"
   },
   "engines": {

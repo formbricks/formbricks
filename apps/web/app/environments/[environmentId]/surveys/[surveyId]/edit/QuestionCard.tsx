@@ -4,8 +4,7 @@ import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
-import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
+import { Label, Switch } from "@formbricks/ui";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChevronDownIcon,

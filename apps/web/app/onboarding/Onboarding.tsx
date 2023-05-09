@@ -1,11 +1,12 @@
 "use client";
 
-import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { Logo } from "@/components/Logo";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { fetcher } from "@formbricks/lib/fetcher";
+import { ProgressBar } from "@formbricks/ui";
+import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -14,7 +15,6 @@ import Greeting from "./Greeting";
 import Objective from "./Objective";
 import Product from "./Product";
 import Role from "./Role";
-import { Session } from "next-auth";
 
 const MAX_STEPS = 6;
 
