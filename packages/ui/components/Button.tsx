@@ -13,7 +13,7 @@ export type ButtonBaseProps = {
   onClick?: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void;
   StartIcon?: SVGComponent | React.ComponentType<React.ComponentProps<"svg">>;
   startIconClassName?: string;
-  EndIcon?: SVGComponent;
+  EndIcon?: SVGComponent | React.ComponentType<React.ComponentProps<"svg">>;
   endIconClassName?: string;
   shallow?: boolean;
 };
