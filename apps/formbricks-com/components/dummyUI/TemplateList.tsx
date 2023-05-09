@@ -4,10 +4,10 @@ import { createId } from "@paralleldrive/cuid2";
 import clsx from "clsx";
 import { useState } from "react";
 import PreviewSurvey from "./PreviewSurvey";
-import { templates } from "./templates";
 import type { Template } from "./templateTypes";
+import { templates } from "./templates";
 
-export default function TemplateList() {
+export const TemplateList: React.FC = () => {
   const onboardingSegmentation: Template = {
     name: "Onboarding Segmentation",
     icon: OnboardingIcon,
@@ -213,4 +213,6 @@ export default function TemplateList() {
       </div>
     </div>
   );
-}
+};
+
+export default TemplateList;

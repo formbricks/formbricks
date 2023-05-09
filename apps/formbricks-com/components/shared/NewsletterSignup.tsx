@@ -1,6 +1,6 @@
-import Image from "next/image";
-import { Button } from "@formbricks/ui";
 import Friends from "@/images/newsletter-signup-gif.gif";
+import { Button } from "@formbricks/ui";
+import Image from "next/image";
 
 export default function WaitlistForm() {
   return (
