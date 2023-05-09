@@ -12,7 +12,7 @@ import {
   BaseballIcon,
   CheckMarkIcon,
   ArrowRightCircleIcon,
-} from "@formbricks/ui/icons";
+} from "@formbricks/ui";
 
 import type { Template } from "./templateTypes";
 import { createId } from "@paralleldrive/cuid2";

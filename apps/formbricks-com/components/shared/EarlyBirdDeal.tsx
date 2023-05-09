@@ -1,5 +1,5 @@
 import EarlyBird from "@/images/early bird deal for open source jotform alternative typeform and surveymonkey_v2.svg";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui";
 import { usePlausible } from "next-plausible";
 import Image from "next/image";
 

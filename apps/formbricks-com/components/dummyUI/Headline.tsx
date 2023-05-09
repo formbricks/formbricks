@@ -1,4 +1,4 @@
-export const Headline: React.FC<{ headline: string; questionId: string }> = ({ headline, questionId }) => {
+export default function Headline({ headline, questionId }: { headline: string; questionId: string }) {
   return (
     <label
       htmlFor={questionId}
@@ -6,6 +6,4 @@ export const Headline: React.FC<{ headline: string; questionId: string }> = ({ h
       {headline}
     </label>
   );
-};
-
-export default Headline;
+}

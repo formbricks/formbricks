@@ -4,7 +4,7 @@ import ImageEventTriggerDark from "@/images/event-trigger-dark.svg";
 import ImageEventTriggerLight from "@/images/event-trigger-light.svg";
 import Image from "next/image";
 
-export const Highlights: React.FC = ({}) => {
+export default function Highlights({}) {
   return (
     <>
       <div className="mx-auto mb-12 mt-8 max-w-lg md:mb-0 md:mt-32 md:max-w-none">
@@ -63,6 +63,4 @@ export const Highlights: React.FC = ({}) => {
       </div>
     </>
   );
-};
-
-export default Highlights;
+}

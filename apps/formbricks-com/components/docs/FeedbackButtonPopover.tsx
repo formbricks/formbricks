@@ -1,4 +1,4 @@
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui";
 
 declare global {
   interface Window {
@@ -6,8 +6,6 @@ declare global {
   }
 }
 
-export const FeedbackButton: React.FC = () => {
+export function FeedbackButton() {
   return <Button variant="secondary">Open Feedback</Button>;
-};
-
-export default FeedbackButton;
+}

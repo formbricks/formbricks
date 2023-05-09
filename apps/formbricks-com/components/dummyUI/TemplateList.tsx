@@ -1,4 +1,4 @@
-import { OnboardingIcon } from "@formbricks/ui/icons";
+import { OnboardingIcon } from "@formbricks/ui";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { createId } from "@paralleldrive/cuid2";
 import clsx from "clsx";
@@ -7,7 +7,7 @@ import PreviewSurvey from "./PreviewSurvey";
 import { templates } from "./templates";
 import type { Template } from "./templateTypes";
 
-export const TemplateList: React.FC = () => {
+export default function TemplateList() {
   const onboardingSegmentation: Template = {
     name: "Onboarding Segmentation",
     icon: OnboardingIcon,
@@ -213,6 +213,4 @@ export const TemplateList: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default TemplateList;
+}

@@ -1,4 +1,4 @@
-import { ResponsiveVideo } from "@formbricks/ui/ResponsiveVideo";
+import { ResponsiveVideo } from "@formbricks/ui";
 import Modal from "../shared/Modal";
 
 interface VideoWalkThroughProps {
@@ -6,7 +6,7 @@ interface VideoWalkThroughProps {
   setOpen: (v: boolean) => void;
 }
 
-export const VideoWalkThrough: React.FC<VideoWalkThroughProps> = ({ open, setOpen }) => {
+export default function VideoWalkThrough({ open, setOpen }: VideoWalkThroughProps) {
   return (
     <Modal open={open} setOpen={setOpen}>
       <div className="mt-5">
@@ -14,4 +14,4 @@ export const VideoWalkThrough: React.FC<VideoWalkThroughProps> = ({ open, setOpe
       </div>
     </Modal>
   );
-};
+}

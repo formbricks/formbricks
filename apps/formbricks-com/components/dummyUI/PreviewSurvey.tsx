@@ -10,7 +10,7 @@ interface PreviewSurveyProps {
   brandColor: string;
 }
 
-export const PreviewSurvey: React.FC<PreviewSurveyProps> = ({ activeQuestionId, questions, brandColor }) => {
+export default function PreviewSurvey({ activeQuestionId, questions, brandColor }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
 
@@ -73,6 +73,4 @@ export const PreviewSurvey: React.FC<PreviewSurveyProps> = ({ activeQuestionId, 
       ) : null}
     </Modal>
   );
-};
-
-export default PreviewSurvey;
+}

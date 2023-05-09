@@ -1,7 +1,5 @@
 import { PasswordResetForm } from "../../../components/auth/PasswordResetForm";
 
-const ForgotPasswordPage: React.FC = () => {
+export default function ForgotPasswordPage() {
   return <PasswordResetForm />;
-};
-
-export default ForgotPasswordPage;
+}

@@ -6,7 +6,7 @@ import { useProfile } from "@/lib/profile";
 import { replacePresetPlaceholders } from "@/lib/templates";
 import { cn } from "@formbricks/lib/cn";
 import type { Template } from "@formbricks/types/templates";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { ErrorComponent } from "@formbricks/ui";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";

@@ -3,8 +3,7 @@
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import type { Survey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
+import { Button, Input } from "@formbricks/ui";
 import { UserGroupIcon, ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

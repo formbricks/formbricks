@@ -5,10 +5,15 @@ import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
-import { Button } from "@formbricks/ui/Button";
-import { Confetti } from "@formbricks/ui/Confetti";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import {
+  Button,
+  Confetti,
+  ErrorComponent,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@formbricks/ui";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";

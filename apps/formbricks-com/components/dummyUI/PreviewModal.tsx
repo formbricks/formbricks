@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { ReactNode, useEffect, useState } from "react";
 
-export const Modal: React.FC<{ children: ReactNode; isOpen: boolean }> = ({ children, isOpen }) => {
+export default function Modal({ children, isOpen }: { children: ReactNode; isOpen: boolean }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -22,6 +22,4 @@ export const Modal: React.FC<{ children: ReactNode; isOpen: boolean }> = ({ chil
       </div>
     </div>
   );
-};
-
-export default Modal;
+}

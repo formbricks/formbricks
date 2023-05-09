@@ -55,9 +55,6 @@
         "VERCEL_URL"
       ]
     },
-    "clean": {
-      "cache": false
-    },
     "db:migrate:deploy": {
       "outputs": []
     },

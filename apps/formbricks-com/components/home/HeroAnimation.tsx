@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { LottiePlayer } from "lottie-web";
 import Image from "next/image";
 
-export const HeroAnimation: React.FC<any> = ({ fallbackImage, ...props }) => {
+export default function HeroAnimation({ fallbackImage, ...props }: any) {
   const [loaded, setLoaded] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const [lottie, setLottie] = useState<LottiePlayer | null>(null);
@@ -48,6 +48,4 @@ export const HeroAnimation: React.FC<any> = ({ fallbackImage, ...props }) => {
       )}
     </div>
   );
-};
-
-export default HeroAnimation;
+}

@@ -1,6 +1,5 @@
 import type { NPSQuestion } from "@formbricks/types/questions";
-import { Label } from "@formbricks/ui/Label";
-import { Input } from "@formbricks/ui/Input";
+import { Input, Label } from "@formbricks/ui";
 
 interface NPSQuestionFormProps {
   question: NPSQuestion;

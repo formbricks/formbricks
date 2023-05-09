@@ -1,8 +1,6 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+import { Button, Input, Label } from "@formbricks/ui";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 

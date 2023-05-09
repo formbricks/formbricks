@@ -4,19 +4,19 @@
   "version": "1.0.0",
   "license": "MIT",
   "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist/**",
-    "generated"
+    "dist/**"
   ],
   "scripts": {
-    "clean": "rimraf .turbo node_modules dist generated",
     "build": "tsup",
-    "dev": "tsup --watch",
+    "clean": "rimraf .turbo node_modules dist",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:vercel": "DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma migrate deploy",
     "db:push": "prisma db push --accept-data-loss",
+    "dev": "tsup --watch",
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
@@ -25,17 +25,17 @@
     "studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "^4.14.0"
+    "@prisma/client": "^4.12.0"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "eslint": "^8.40.0",
+    "eslint": "^8.37.0",
     "eslint-config-formbricks": "workspace:*",
-    "prisma": "^4.14.0",
+    "prisma": "^4.12.0",
     "prisma-dbml-generator": "^0.10.0",
-    "rimraf": "^5.0.0",
+    "rimraf": "^4.4.1",
     "tsup": "^6.7.0",
-    "tsx": "^3.12.7",
-    "typescript": "^5.0.4"
+    "tsx": "^3.12.6",
+    "typescript": "^5.0.3"
   }
 }

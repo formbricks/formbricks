@@ -1,9 +1,9 @@
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+import { Button } from "@formbricks/ui";
+import { Input } from "@formbricks/ui";
+import { Label } from "@formbricks/ui";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { useAttributeClassMutation } from "@/lib/attributeClasses/mutateAttributeClasses";
-import type { AttributeClass } from "@formbricks/database/generated";
+import type { AttributeClass } from "@prisma/client";
 import { useForm } from "react-hook-form";
 
 interface AttributeSettingsTabProps {

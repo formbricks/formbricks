@@ -1,7 +1,7 @@
 import DashboardMockupDark from "@/images/dashboard-mockup-dark.png";
 import DashboardMockup from "@/images/dashboard-mockup.png";
 import PreviewSurvey from "../dummyUI/PreviewSurvey";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { useState } from "react";
@@ -71,7 +71,7 @@ const questions: Question[] = [
   },
 ];
 
-export const Steps: React.FC = () => {
+export default function Steps() {
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
 
   return (
@@ -204,6 +204,4 @@ export const Steps: React.FC = () => {
       <AddNoCodeEventModalDummy open={isAddEventModalOpen} setOpen={setAddEventModalOpen} />
     </>
   );
-};
-
-export default Steps;
+}

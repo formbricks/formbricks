@@ -7,14 +7,16 @@ import StackOceanLogoLight from "@/images/clients/stack-ocean-light.png";
 import NILogoLight from "@/images/clients/niLogoWhite.svg";
 import NILogoDark from "@/images/clients/niLogoDark.svg";
 import AnimationFallback from "@/public/animations/fallback-image-open-source-feedback-software.jpg";
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui";
 import { usePlausible } from "next-plausible";
 import ClovyrLogo from "@/images/clients/clovyr-logo.svg";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import HeroAnimation from "./HeroAnimation";
 
-export const Hero: React.FC = ({}) => {
+interface Props {}
+
+export default function Hero({}: Props) {
   const plausible = usePlausible();
   const router = useRouter();
   return (
@@ -125,6 +127,4 @@ export const Hero: React.FC = ({}) => {
       </div>
     </div>
   );
-};
-
-export default Hero;
+}

@@ -1,10 +1,6 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+import { Button, ColorPicker, ErrorComponent, Input, Label } from "@/../../packages/ui";
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";

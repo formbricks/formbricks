@@ -1,6 +1,6 @@
 "use client";
 
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { ErrorComponent } from "@/../../packages/ui";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEnvironment } from "@/lib/environments/environments";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";

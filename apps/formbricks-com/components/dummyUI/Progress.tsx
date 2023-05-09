@@ -1,4 +1,4 @@
-export const Progress: React.FC<{ progress: number; brandColor: string }> = ({ progress, brandColor }) => {
+export default function Progress({ progress, brandColor }: { progress: number; brandColor: string }) {
   return (
     <div className="h-1 w-full rounded-full bg-slate-200">
       <div
@@ -6,6 +6,4 @@ export const Progress: React.FC<{ progress: number; brandColor: string }> = ({ p
         style={{ backgroundColor: brandColor, width: `${Math.floor(progress * 100)}%` }}></div>
     </div>
   );
-};
-
-export default Progress;
+}

@@ -1,22 +1,22 @@
 import clsx from "clsx";
-import type { MultipleChoiceSingleQuestion as MultipleChoiceSingleQuestionType } from "./questionTypes";
+import type { MultipleChoiceSingleQuestion } from "./questionTypes";
 import { useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface MultipleChoiceSingleProps {
-  question: MultipleChoiceSingleQuestionType;
+  question: MultipleChoiceSingleQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
 
-export const MultipleChoiceSingleQuestion: React.FC<MultipleChoiceSingleProps> = ({
+export default function MultipleChoiceSingleQuestion({
   question,
   onSubmit,
   lastQuestion,
   brandColor,
-}) => {
+}: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   return (
     <form
@@ -81,6 +81,4 @@ export const MultipleChoiceSingleQuestion: React.FC<MultipleChoiceSingleProps> =
       </div>
     </form>
   );
-};
-
-export default MultipleChoiceSingleQuestion;
+}

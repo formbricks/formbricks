@@ -21,7 +21,7 @@ import {
   ArrowUpRightIcon,
   UserSearchGlasIcon,
   VideoTabletAdjustIcon,
-} from "@formbricks/ui/icons";
+} from "@formbricks/ui";
 import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {

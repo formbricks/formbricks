@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@/../../packages/ui";
 import type { Session } from "next-auth";
 import Link from "next/link";
 

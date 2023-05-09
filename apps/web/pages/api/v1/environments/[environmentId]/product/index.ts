@@ -1,6 +1,6 @@
 import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
-import { EnvironmentType } from "@formbricks/database/generated";
+import { EnvironmentType } from "@prisma/client";
 import { populateEnvironment } from "@/lib/populate";
 import type { NextApiRequest, NextApiResponse } from "next";
 
