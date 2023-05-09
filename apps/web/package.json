@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
     "@formbricks/js": "workspace:*",
     "@formbricks/lib": "workspace:*",
@@ -52,7 +53,6 @@
     "typescript": "5.0.4"
   },
   "devDependencies": {
-    "@formbricks/database": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@tailwindcss/forms": "^0.5.3",
