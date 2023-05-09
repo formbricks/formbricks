@@ -1,3 +1,8 @@
+export interface Choice {
+  id: string;
+  label: string;
+}
+
 export type Question =
   | OpenTextQuestion
   | MultipleChoiceSingleQuestion
@@ -6,37 +11,38 @@ export type Question =
   | CTAQuestion
   | RatingQuestion;
 
-export interface IQuestion {
+export interface IQuestion<T extends Logic> {
   id: string;
   type: string;
   headline: string;
   subheader?: string;
   required: boolean;
   buttonLabel?: string;
+  logic?: T[];
 }
 
-export interface OpenTextQuestion extends IQuestion {
+export interface OpenTextQuestion extends IQuestion<OpenTextLogic> {
   type: "openText";
   placeholder?: string;
 }
 
-export interface MultipleChoiceSingleQuestion extends IQuestion {
+export interface MultipleChoiceSingleQuestion extends IQuestion<MultipleChoiceSingleLogic> {
   type: "multipleChoiceSingle";
   choices: Choice[];
 }
 
-export interface MultipleChoiceMultiQuestion extends IQuestion {
+export interface MultipleChoiceMultiQuestion extends IQuestion<MultipleChoiceMultiLogic> {
   type: "multipleChoiceMulti";
   choices: Choice[];
 }
 
-export interface NPSQuestion extends IQuestion {
+export interface NPSQuestion extends IQuestion<NPSLogic> {
   type: "nps";
   lowerLabel: string;
   upperLabel: string;
 }
 
-export interface CTAQuestion extends IQuestion {
+export interface CTAQuestion extends IQuestion<CTALogic> {
   type: "cta";
   html?: string;
   buttonUrl?: string;
@@ -44,7 +50,7 @@ export interface CTAQuestion extends IQuestion {
   dismissButtonLabel?: string;
 }
 
-export interface RatingQuestion extends IQuestion {
+export interface RatingQuestion extends IQuestion<RatingLogic> {
   type: "rating";
   scale: "number" | "smiley" | "star";
   range: 5 | 3 | 4 | 7 | 10;
@@ -52,7 +58,66 @@ export interface RatingQuestion extends IQuestion {
   upperLabel: string;
 }
 
-export interface Choice {
-  id: string;
-  label: string;
+export interface LogicBase {
+  condition:
+    | "submitted"
+    | "skipped"
+    | "equals"
+    | "notEquals"
+    | "lessThan"
+    | "lessEqual"
+    | "greaterThan"
+    | "greaterEqual"
+    | "includesAll"
+    | "includesOne";
+  value?: number | string | string[];
+  destination: string | "end";
 }
+
+export interface OpenTextLogic extends LogicBase {
+  condition: "submitted" | "skipped";
+  value: undefined;
+}
+export interface MultipleChoiceSingleLogic extends LogicBase {
+  condition: "submitted" | "skipped" | "equals" | "notEquals";
+  value: string;
+}
+export interface MultipleChoiceMultiLogic extends LogicBase {
+  condition: "submitted" | "skipped" | "includesAll" | "includesOne";
+  value: string[];
+}
+export interface NPSLogic extends LogicBase {
+  condition:
+    | "submitted"
+    | "skipped"
+    | "lessThan"
+    | "lessEqual"
+    | "greaterThan"
+    | "greaterEqual"
+    | "equals"
+    | "notEquals";
+  value: number;
+}
+export interface CTALogic extends LogicBase {
+  condition: "submitted" | "skipped";
+  value: undefined;
+}
+export interface RatingLogic extends LogicBase {
+  condition:
+    | "submitted"
+    | "skipped"
+    | "lessThan"
+    | "lessEqual"
+    | "greaterThan"
+    | "greaterEqual"
+    | "equals"
+    | "notEquals";
+  value: number;
+}
+export type Logic =
+  | OpenTextLogic
+  | MultipleChoiceSingleLogic
+  | MultipleChoiceMultiLogic
+  | NPSLogic
+  | CTALogic
+  | RatingLogic;
