@@ -2,13 +2,15 @@ import type { QuestionSummary } from "@formbricks/types/responses";
 import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
+import { RatingResponse } from "../RatingResponse";
+import { RatingQuestion } from "@formbricks/types/questions";
 
 interface RatingSummaryProps {
-  questionSummary: QuestionSummary;
+  questionSummary: QuestionSummary<RatingQuestion>;
 }
 
 interface ChoiceResult {
-  label: string;
+  label: number | string;
   count: number;
   percentage: number;
 }
@@ -21,7 +23,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
     for (let i = 1; i <= questionSummary.question.range; i++) {
       resultsDict[i.toString()] = {
         count: 0,
-        label: i.toString(),
+        label: i,
         percentage: 0,
       };
     }
@@ -71,6 +73,8 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
     return total;
   }, [results]);
 
+  console.log(JSON.stringify(questionSummary.question, null, 2));
+
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-6 pb-5 pt-6">
@@ -90,7 +94,13 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
           <div key={result.label}>
             <div className="text flex justify-between px-2 pb-2">
               <div className="mr-8 flex space-x-1">
-                <p className="font-semibold text-slate-700">{result.label}</p>
+                <div className="font-semibold text-slate-700">
+                  <RatingResponse
+                    scale={questionSummary.question.scale}
+                    answer={result.label}
+                    range={questionSummary.question.range}
+                  />
+                </div>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
                     {Math.round(result.percentage * 100)}%

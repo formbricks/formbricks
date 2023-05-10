@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
@@ -11,14 +11,19 @@ type Option = {
 
 type DropdownProps = {
   options: Option[];
+  disabled?: boolean;
   defaultValue: string | number;
   onSelect: (option: Option) => any;
 };
 
-const Dropdown = ({ options, defaultValue, onSelect }: DropdownProps) => {
+const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: DropdownProps) => {
   const [selectedOption, setSelectedOption] = useState<Option>(
     options.filter((option) => option.value === defaultValue)[0] || options[0]
   );
+
+  useEffect(() => {
+    setSelectedOption(options.filter((option) => option.value === defaultValue)[0] || options[0]);
+  }, [defaultValue, options]);
 
   const handleSelect = (option) => {
     setSelectedOption(option);
@@ -49,7 +54,7 @@ const Dropdown = ({ options, defaultValue, onSelect }: DropdownProps) => {
             <DropdownMenu.Item
               key={option.value}
               className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
-              disabled={option.disabled}
+              disabled={disabled || option.disabled}
               onSelect={() => handleSelect(option)}>
               {option.icon && <option.icon className="mr-3 h-5 w-5" />}
               {option.label}

@@ -176,6 +176,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  survey={localSurvey}
                 />
               ) : null}
               <div className="mt-4 border-t border-slate-200">
