@@ -4,8 +4,11 @@ import { Label } from "@formbricks/ui/Label";
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import { createId } from "@paralleldrive/cuid2";
 import { TrashIcon } from "@heroicons/react/24/solid";
+import LogicEditor from "./LogicEditor";
+import { Survey } from "@formbricks/types/surveys";
 
 interface OpenQuestionFormProps {
+  localSurvey: Survey;
   question: MultipleChoiceSingleQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -13,6 +16,7 @@ interface OpenQuestionFormProps {
 }
 
 export default function MultipleChoiceSingleForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
@@ -106,6 +110,13 @@ export default function MultipleChoiceSingleForm({
           />
         </div>
       </div>
+
+      <LogicEditor
+        question={question}
+        updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
+        questionIdx={questionIdx}
+      />
     </form>
   );
 }

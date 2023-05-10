@@ -131,6 +131,7 @@ export default function QuestionCard({
             <Collapsible.CollapsibleContent className="px-4 pb-4">
               {question.type === "openText" ? (
                 <OpenQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -138,6 +139,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "multipleChoiceSingle" ? (
                 <MultipleChoiceSingleForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -145,6 +147,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "multipleChoiceMulti" ? (
                 <MultipleChoiceMultiForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -152,6 +155,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "nps" ? (
                 <NPSQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -159,6 +163,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "cta" ? (
                 <CTAQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -166,6 +171,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "rating" ? (
                 <RatingQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
