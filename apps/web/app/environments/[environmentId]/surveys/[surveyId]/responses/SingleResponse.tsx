@@ -2,6 +2,7 @@ import { timeSince } from "@formbricks/lib/time";
 import { PersonAvatar } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { RatingResponse } from "../RatingResponse";
 
 interface OpenTextSummaryProps {
   data: {
@@ -21,6 +22,9 @@ interface OpenTextSummaryProps {
       id: string;
       question: string;
       answer: string | any[];
+      type: string;
+      scale?: "number" | "star" | "smiley";
+      range?: number;
     }[];
   };
   environmentId: string;
@@ -34,6 +38,8 @@ function findEmail(person) {
 export default function SingleResponse({ data, environmentId }: OpenTextSummaryProps) {
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || data.personId;
+
+  console.log(data);
 
   return (
     <div className=" my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -72,7 +78,13 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
           <div key={`${response.id}-${idx}`}>
             <p className="text-sm text-slate-500">{response.question}</p>
             {typeof response.answer !== "object" ? (
-              <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer}</p>
+              response.type === "rating" ? (
+                <div className="h-8">
+                  <RatingResponse scale={response.scale} answer={response.answer} range={response.range} />
+                </div>
+              ) : (
+                <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer}</p>
+              )
             ) : (
               <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer.join(", ")}</p>
             )}
