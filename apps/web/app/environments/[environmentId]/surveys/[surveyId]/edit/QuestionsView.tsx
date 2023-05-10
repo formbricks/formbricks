@@ -74,6 +74,17 @@ export default function QuestionsView({
     setLocalSurvey(updatedSurvey);
   };
 
+  const moveQuestion = (questionIndex: number, up: boolean) => {
+    // move the question up or down in the localSurvey questions array
+    const newQuestions = Array.from(localSurvey.questions);
+    const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
+    const destinationIndex = up ? questionIndex - 1 : questionIndex + 1;
+    newQuestions.splice(destinationIndex, 0, reorderedQuestion);
+
+    const updatedSurvey = { ...localSurvey, questions: newQuestions };
+    setLocalSurvey(updatedSurvey);
+  };
+
   return (
     <div className="px-5 py-4">
       <DragDropContext onDragEnd={onDragEnd}>
@@ -88,6 +99,7 @@ export default function QuestionsView({
                     localSurvey={localSurvey}
                     question={question}
                     questionIdx={questionIdx}
+                    moveQuestion={moveQuestion}
                     updateQuestion={updateQuestion}
                     deleteQuestion={deleteQuestion}
                     activeQuestionId={activeQuestionId}
