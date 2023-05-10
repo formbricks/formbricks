@@ -1,8 +1,11 @@
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import type { OpenTextQuestion } from "@formbricks/types/questions";
+import LogicEditor from "./LogicEditor";
+import { Survey } from "@formbricks/types/surveys";
 
 interface OpenQuestionFormProps {
+  localSurvey: Survey;
   question: OpenTextQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -10,6 +13,7 @@ interface OpenQuestionFormProps {
 }
 
 export default function OpenQuestionForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
@@ -65,6 +69,13 @@ export default function OpenQuestionForm({
           />
         </div>
       </div>
+
+      <LogicEditor
+        question={question}
+        updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
+        questionIdx={questionIdx}
+      />
     </form>
   );
 }

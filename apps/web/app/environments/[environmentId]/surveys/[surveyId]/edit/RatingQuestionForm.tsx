@@ -2,10 +2,13 @@ import type { RatingQuestion } from "@formbricks/types/questions";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { HashtagIcon, StarIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
+import LogicEditor from "./LogicEditor";
+import { Survey } from "@formbricks/types/surveys";
 
 import Dropdown from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {
+  localSurvey: Survey;
   question: RatingQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -13,6 +16,7 @@ interface RatingQuestionFormProps {
 }
 
 export default function RatingQuestionForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
@@ -120,6 +124,13 @@ export default function RatingQuestionForm({
           </div>
         )}
       </div>
+
+      <LogicEditor
+        question={question}
+        updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
+        questionIdx={questionIdx}
+      />
     </form>
   );
 }

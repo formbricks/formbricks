@@ -7,8 +7,11 @@ import { Label } from "@formbricks/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 import { useState } from "react";
 import { md } from "@formbricks/lib/markdownIt";
+import LogicEditor from "./LogicEditor";
+import { Survey } from "@formbricks/types/surveys";
 
 interface CTAQuestionFormProps {
+  localSurvey: Survey;
   question: CTAQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -16,6 +19,7 @@ interface CTAQuestionFormProps {
 }
 
 export default function CTAQuestionForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
@@ -120,6 +124,13 @@ export default function CTAQuestionForm({
           </div>
         )}
       </div>
+
+      <LogicEditor
+        question={question}
+        updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
+        questionIdx={questionIdx}
+      />
     </form>
   );
 }

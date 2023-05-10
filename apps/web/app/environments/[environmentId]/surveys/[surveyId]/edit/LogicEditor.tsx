@@ -2,11 +2,12 @@ import { Logic, Question, LogicCondition } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import Button from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
-import { ForwardIcon } from "@heroicons/react/24/outline";
+import { ForwardIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { BsArrowReturnRight, BsArrowDown } from "react-icons/bs";
-import { use, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface LogicEditorProps {
   localSurvey: Survey;
@@ -131,95 +132,105 @@ export default function LogicEditor({
 
   const truncate = (str: string, n: number) => (str.length > n ? str.substring(0, n - 1) + "..." : str);
 
+  if (!(question.type in conditions)) {
+    return null;
+  }
+
   return (
-    question.type in conditions && (
-      <div className="mt-3">
-        <Label>Logic Jumps</Label>
+    <div className="mt-3">
+      <Label>Logic Jumps</Label>
 
-        {question?.logic && question?.logic?.length !== 0 && (
-          <div className="mt-2 space-y-3">
-            {question?.logic?.map((logic, logicIdx) => (
-              <div key={logicIdx} className="flex flex-wrap items-center space-x-2 space-y-1 text-sm">
-                <BsArrowReturnRight className="h-4 w-4" />
-                <p>If this answer</p>
+      {question?.logic && question?.logic?.length !== 0 && (
+        <div className="mt-2 space-y-3">
+          {question?.logic?.map((logic, logicIdx) => (
+            <div key={logicIdx} className="flex flex-wrap items-center space-x-2 space-y-1 text-sm">
+              <BsArrowReturnRight className="h-4 w-4" />
+              <p>If this answer</p>
 
-                <Select
-                  defaultValue={logic.condition}
-                  onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
+              <Select
+                defaultValue={logic.condition}
+                onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
+                <SelectTrigger className="w-fit dark:text-slate-200">
+                  <SelectValue placeholder="select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  {conditions[question.type].map((condition) => (
+                    <SelectItem key={condition} value={condition}>
+                      {logicConditions[condition].label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {logic.condition && logicConditions[logic.condition].values != null && (
+                <Select defaultValue={logic.value} onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
                   <SelectTrigger className="w-fit dark:text-slate-200">
-                    <SelectValue placeholder="select condition" />
+                    <SelectValue placeholder="select match type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {conditions[question.type].map((condition) => (
-                      <SelectItem key={condition} value={condition}>
-                        {logicConditions[condition].label}
+                    {logicConditions[logic.condition].values?.map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {value}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              )}
 
-                {logic.condition && logicConditions[logic.condition].values != null && (
-                  <Select
-                    // defaultValue={logic.value}
-                    onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
-                    <SelectTrigger className="w-fit dark:text-slate-200">
-                      <SelectValue placeholder="select match type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {logicConditions[logic.condition].values?.map((value) => (
-                        <SelectItem key={value} value={value}>
-                          {value}
+              <p>skip to question</p>
+
+              <Select
+                defaultValue={logic.destination}
+                onValueChange={(e) => updateLogic(logicIdx, { destination: e })}>
+                <SelectTrigger className="w-[180px] overflow-hidden dark:text-slate-200">
+                  <SelectValue placeholder="select question" />
+                </SelectTrigger>
+                <SelectContent>
+                  {localSurvey.questions.map(
+                    (question, idx) =>
+                      idx !== questionIdx && (
+                        <SelectItem key={question.id} value={question.id}>
+                          {idx + 1} - {truncate(question.headline, 14)}
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                      )
+                  )}
+                </SelectContent>
+              </Select>
 
-                <p>skip to</p>
-
-                <Select
-                  defaultValue={logic.destination}
-                  onValueChange={(e) => updateLogic(logicIdx, { destination: e })}>
-                  <SelectTrigger className="w-[180px] overflow-hidden dark:text-slate-200">
-                    <SelectValue placeholder="select question" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {localSurvey.questions.map(
-                      (question, idx) =>
-                        idx !== questionIdx && (
-                          <SelectItem key={question.id} value={question.id}>
-                            {idx + 1} - {truncate(question.headline, 14)}
-                          </SelectItem>
-                        )
-                    )}
-                  </SelectContent>
-                </Select>
-
-                <TrashIcon
-                  className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
-                  onClick={() => deleteLogic(idx)}
-                />
-              </div>
-            ))}
-            <div className="flex flex-wrap items-center space-x-2 text-sm">
-              <BsArrowDown className="h-4 w-4" />
-              <p>All other answers will continue to the next question</p>
+              <TrashIcon
+                className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
+                onClick={() => deleteLogic(logicIdx)}
+              />
             </div>
+          ))}
+          <div className="flex flex-wrap items-center space-x-2 text-sm">
+            <BsArrowDown className="h-4 w-4" />
+            <p>All other answers will continue to the next question</p>
           </div>
-        )}
-
-        <div className="mt-2">
-          <Button
-            id="logicJumps"
-            type="button"
-            name="logicJumps"
-            variant="secondary"
-            EndIcon={ForwardIcon}
-            onClick={() => addLogic()}>
-            Add Logic
-          </Button>
         </div>
+      )}
+
+      <div className="mt-2 flex items-center space-x-2">
+        <Button
+          id="logicJumps"
+          type="button"
+          name="logicJumps"
+          variant="secondary"
+          EndIcon={ForwardIcon}
+          onClick={() => addLogic()}>
+          Add Logic
+        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <QuestionMarkCircleIcon className="h-5 w-5 cursor-default" />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[200px]" side="top">
+              With logic jumps you can skip questions based on the responses users give.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-    )
+    </div>
   );
 }

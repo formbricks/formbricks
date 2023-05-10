@@ -1,8 +1,11 @@
 import type { NPSQuestion } from "@formbricks/types/questions";
 import { Label } from "@formbricks/ui/Label";
 import { Input } from "@formbricks/ui/Input";
+import LogicEditor from "./LogicEditor";
+import { Survey } from "@formbricks/types/surveys";
 
 interface NPSQuestionFormProps {
+  localSurvey: Survey;
   question: NPSQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -10,6 +13,7 @@ interface NPSQuestionFormProps {
 }
 
 export default function NPSQuestionForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
@@ -80,6 +84,13 @@ export default function NPSQuestionForm({
           </div>
         </div>
       )}
+
+      <LogicEditor
+        question={question}
+        updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
+        questionIdx={questionIdx}
+      />
     </form>
   );
 }
