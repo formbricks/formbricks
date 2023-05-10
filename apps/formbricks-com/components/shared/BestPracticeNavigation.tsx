@@ -31,7 +31,7 @@ export default function BestPracticeNavigation() {
     },
     {
       name: "Onboarding Segments",
-      href: "/onboarding",
+      href: "/onboarding-segmentation",
       status: false,
       icon: OnboardingIcon,
       description:

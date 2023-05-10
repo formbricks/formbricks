@@ -33,13 +33,54 @@ const thankYouCardDefault = {
 
 export const templates: Template[] = [
   {
-    name: "Product Market Fit Survey",
+    name: "Product Market Fit Survey (short)",
     icon: PMFIcon,
     category: "Product Experience",
 
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
     preset: {
-      name: "Product Market Fit Survey",
+      name: "Product Market Fit Survey (short)",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "How disappointed would you be if you could no longer use Formbricks?",
+          subheader: "Please select one of the following options:",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Not at all disappointed",
+            },
+            {
+              id: createId(),
+              label: "Somewhat disappointed",
+            },
+            {
+              id: createId(),
+              label: "Very disappointed",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "How can we improve our service for you?",
+          subheader: "Please be as specific as possible.",
+          required: true,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Product Market Fit (Superhuman)",
+    icon: PMFIcon,
+    category: "Product Experience",
+
+    description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
+    preset: {
+      name: "Product Market Fit (Superhuman)",
       questions: [
         {
           id: createId(),
@@ -90,6 +131,18 @@ export const templates: Template[] = [
               label: "Software Engineer",
             },
           ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "What type of people do you think would most benefit from Formbricks?",
+          required: true,
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "What is the main benefit your receive from Formbricks?",
+          required: true,
         },
         {
           id: createId(),
@@ -360,12 +413,12 @@ export const templates: Template[] = [
     },
   },
   {
-    name: "Missed Trial Conversion",
+    name: "Improve Trial Conversion",
     icon: BaseballIcon,
     category: "Increase Revenue",
     description: "Find out why people stopped their trial. These insights help you improve your funnel.",
     preset: {
-      name: "Missed Trial Conversion",
+      name: "Improve Trial Conversion",
       questions: [
         {
           id: createId(),
@@ -399,8 +452,14 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: "openText",
-          headline: "Did you find a better alternative?",
-          subheader: "Please name it:",
+          headline: "Any details to share?",
+          required: false,
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "How are you solving your problem instead?",
+          subheader: "Please name alternative tools:",
           required: false,
         },
       ],
@@ -497,6 +556,16 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
+          type: "rating",
+          headline: "How easy was it to achieve your goal?",
+          required: true,
+          lowerLabel: "Very difficult",
+          upperLabel: "Very easy",
+          range: 5,
+          scale: "number",
+        },
+        {
+          id: createId(),
           type: "openText",
           headline: "What did you come here to do today?",
           required: false,
@@ -552,31 +621,13 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: "rating",
           headline: "How easy was it to achieve your goal?",
           required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Extremely difficult",
-            },
-            {
-              id: createId(),
-              label: "It took a while, but I got it",
-            },
-            {
-              id: createId(),
-              label: "It was alright",
-            },
-            {
-              id: createId(),
-              label: "Quite easy",
-            },
-            {
-              id: createId(),
-              label: "Very easy, love it!",
-            },
-          ],
+          lowerLabel: "Very difficult",
+          upperLabel: "Very easy",
+          range: 5,
+          scale: "number",
         },
         {
           id: createId(),
@@ -599,23 +650,13 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: "rating",
           headline: "How important is this feature for you?",
           required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Very important",
-            },
-            {
-              id: createId(),
-              label: "Not so important",
-            },
-            {
-              id: createId(),
-              label: "I was just looking around",
-            },
-          ],
+          lowerLabel: "Not important",
+          upperLabel: "Very important",
+          range: 5,
+          scale: "number",
         },
       ],
       thankYouCard: thankYouCardDefault,

@@ -11,18 +11,18 @@ export default function DocsFeedbackPage() {
       description="The better your docs, the higher your user adoption. Measure granularly how clear your documentation is.">
       <div className="grid grid-cols-2 items-center gap-12 py-20">
         <div>
-          <UseCaseHeader title="Docs Feedback" difficulty="Intermediate" setupMinutes="30" />
+          <UseCaseHeader title="Docs Feedback" difficulty="Intermediate" setupMinutes="60" />
           <h3 className="text-md text-slate-80 mb-1.5 mt-6 font-semibold">Why is it useful?</h3>
           <p className="text-slate-600">
             You want to know if your Developer Docs are clear and concise. When engineers don’t understand
             your technology or find the answer to their question, they are unlikely to use it. Docs Feedback
-            gives you a window into how clear your Docs are.
+            opens a window into how clear your Docs are. Have a look!
           </p>
           <h3 className="text-md text-slate-80 mb-1.5 mt-6 font-semibold">How to get started:</h3>
           <p className="text-slate-600">
             As of now, Docs Feedback uses custom UI in the frontend and Formbricks in the backend. A partial
             submission is sent when the user answers YES / NO and is enriched when the open text field is
-            filled out and submitted. If you&apos;re using next.js you can copy our UI :)
+            filled out and submitted.
           </p>
           <UseCaseCTA href="/docs/best-practices/docs-feedback" />
         </div>

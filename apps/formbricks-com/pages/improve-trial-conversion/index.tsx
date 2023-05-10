@@ -4,7 +4,7 @@ import UseCaseCTA from "@/components/shared/UseCaseCTA";
 import DemoPreview from "@/components/dummyUI/DemoPreview";
 import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
 
-export default function InterviewPromptPage() {
+export default function MissedTrialPagePage() {
   return (
     <Layout
       title="Improve Trial Conversion"
@@ -20,13 +20,13 @@ export default function InterviewPromptPage() {
           </p>
           <h3 className="text-md text-slate-80 mb-1.5 mt-6 font-semibold">How to get started:</h3>
           <p className="text-slate-600">
-            Once a user signed up for a trial, you can pass this attribute to Formbricks. This allows you to
-            pre-segment your user base and only survey users in their trial stage. This granular segmentation
-            leads to better data.
+            Once a user signed up for a trial, you can pass this info as an attribute to Formbricks. This
+            allows you to pre-segment your user base and only survey users in the trial stage. This granular
+            segmentation leads to better data and minimal survey fatigue.
           </p>
-          <UseCaseCTA href="/docs/best-practices/missed-trial" />
+          <UseCaseCTA href="/docs/best-practices/improve-trial-cr" />
         </div>
-        <DemoPreview template="Missed Trial Conversion" />
+        <DemoPreview template="Improve Trial Conversion" />
       </div>
       <h2 className="mb-6 ml-4 text-2xl font-semibold text-slate-700">Other Best Practices</h2>
       <BestPracticeNavigation />

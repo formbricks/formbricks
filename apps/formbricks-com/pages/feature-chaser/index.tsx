@@ -4,19 +4,20 @@ import UseCaseCTA from "@/components/shared/UseCaseCTA";
 import DemoPreview from "@/components/dummyUI/DemoPreview";
 import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
 
-export default function InterviewPromptPage() {
+export default function FeatureChaserPage() {
   return (
     <Layout
       title="Feature Chaser"
       description="Show a survey about a new feature shown only to people who used it.">
       <div className="grid grid-cols-2 items-center gap-12 py-20">
         <div>
-          <UseCaseHeader title="Feature Follow-Up" difficulty="Easy" setupMinutes="10" />
+          <UseCaseHeader title="Feature Chaser" difficulty="Easy" setupMinutes="10" />
           <h3 className="text-md text-slate-80 mb-1.5 mt-6 font-semibold">Why is it useful?</h3>
           <p className="text-slate-600">
-            You don&apos;t always know how well a feature works. Especially in complex products with a diverse
-            user group, it can be difficult to gather reliable experience data. The Feature Chaser allows you
-            to granularly survey users at exactly the right point in the user journey.
+            You don&apos;t always know how well a feature works. Product analytics don&apos;t tell you why it
+            is used - and why not. Especially in complex products it can be difficult to gather reliable
+            experience data. The Feature Chaser allows you to granularly survey users at exactly the right
+            point in the user journey.
           </p>
           <h3 className="text-md text-slate-80 mb-1.5 mt-6 font-semibold">How to get started:</h3>
           <p className="text-slate-600">

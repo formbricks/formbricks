@@ -22,7 +22,6 @@ const DemoPreview: React.FC<DemoPreviewProps> = ({ template }) => {
     return <div>Template not found.</div>;
   }
 
-  console.log(selectedTemplate);
   return (
     <div className="flex items-center justify-center rounded-xl border-2 border-slate-300 bg-slate-200 py-6 transition-transform duration-150">
       <div className="flex flex-col items-center justify-around">

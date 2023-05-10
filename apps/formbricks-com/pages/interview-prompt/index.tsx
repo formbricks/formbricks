@@ -16,12 +16,13 @@ export default function InterviewPromptPage() {
           <p className="text-slate-600">
             Interviews are the best way to understand your customers needs. But there is so much overhead
             involved, especially when your team and customer base grow. Automate scheduling interviews with
-            Formbricks.
+            Formbricks with ease.
           </p>
           <h3 className="text-md text-slate-80 mb-1.5 mt-6 font-semibold">How to get started:</h3>
           <p className="text-slate-600">
             Once you have setup the Formbricks Widget, you have two ways to pre-segment your user base: Based
-            on events and based on attributes. Soon, you will also be able to import cohorts from PostHog.
+            on events and based on attributes. Soon, you will also be able to import cohorts from PostHog with
+            just a few clicks.
           </p>
           <UseCaseCTA href="/docs/best-practices/interview-prompt" />
         </div>

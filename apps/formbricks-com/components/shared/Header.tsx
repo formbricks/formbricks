@@ -30,7 +30,7 @@ const UnderstandUsers = [
   },
   {
     name: "Measure PMF",
-    href: "/measure-pmf",
+    href: "/measure-product-market-fit",
     status: true,
     icon: PMFIcon,
     description: "Improve Product-Market Fit",
@@ -47,14 +47,14 @@ const UnderstandUsers = [
 const IncreaseRevenue = [
   {
     name: "Learn from Churn",
-    href: "/cancel-subscription-flow",
+    href: "/learn-from-churn",
     status: true,
     icon: CancelSubscriptionIcon,
     description: "Churn is hard, but insightful",
   },
   {
     name: "Improve Trial CR",
-    href: "/missed-trials",
+    href: "/improve-trial-conversion",
     status: true,
     icon: BaseballIcon,
     description: "Take guessing out, hit it right",

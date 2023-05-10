@@ -16,7 +16,7 @@ export default function FeedbackBoxPage() {
           <p className="text-slate-600">
             Offering a direct channel for feedback helps you build a better product. Users feel heared and
             with Formbricks automations, you&apos;ll be able to react to feedback rapidly. Lastly, critical
-            feedback can be acted upon quickly so that it doesn&apos; end up on social media.
+            feedback can be acted upon quickly so that it doesn&apos;t end up on social media.
           </p>
           <h3 className="text-md text-slate-80 mb-1.5 mt-6 font-semibold">How to get started:</h3>
           <p className="text-slate-600">
