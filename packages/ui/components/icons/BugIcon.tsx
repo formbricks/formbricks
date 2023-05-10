@@ -1,4 +1,4 @@
-export function BugIcon(props: any) {
+export const BugIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg width={40} height={40} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
@@ -218,4 +218,4 @@ export function BugIcon(props: any) {
       />
     </svg>
   );
-}
+};

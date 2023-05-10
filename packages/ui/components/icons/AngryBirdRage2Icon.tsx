@@ -1,4 +1,4 @@
-export function AngryBirdRage2Icon(props: any) {
+export const AngryBirdRage2Icon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg width="79" height="75" viewBox="0 0 79 75" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
@@ -143,4 +143,4 @@ export function AngryBirdRage2Icon(props: any) {
       />
     </svg>
   );
-}
+};

@@ -5,13 +5,13 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "eslint": "^8.40.0",
-    "eslint-config-next": "^13.4.1",
+    "eslint": "^8.37.0",
+    "eslint-config-next": "^13.2.4",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-react": "7.32.2",
     "eslint-config-turbo": "latest"
   },
   "devDependencies": {
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.3"
   }
 }

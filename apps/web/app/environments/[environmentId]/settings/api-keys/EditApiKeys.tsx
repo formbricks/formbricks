@@ -1,10 +1,10 @@
 "use client";
 
-import { timeSince } from "@formbricks/lib/time";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { createApiKey, deleteApiKey, useApiKeys } from "@/lib/apiKeys";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import { timeSince } from "@formbricks/lib/time";
 import { Button, ErrorComponent } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";

@@ -1,7 +1,7 @@
+import type { MultipleChoiceMultiQuestion } from "../../../types/questions";
 import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
-import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 

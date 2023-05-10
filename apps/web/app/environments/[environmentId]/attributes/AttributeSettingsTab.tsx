@@ -1,8 +1,6 @@
-import { Button } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { useAttributeClassMutation } from "@/lib/attributeClasses/mutateAttributeClasses";
+import { Button, Input, Label } from "@formbricks/ui";
 import type { AttributeClass } from "@prisma/client";
 import { useForm } from "react-hook-form";
 

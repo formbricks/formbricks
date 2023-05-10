@@ -1,9 +1,7 @@
 "use client";
 
 import Modal from "@/components/shared/Modal";
-import { Button } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
+import { Button, Input, Label } from "@formbricks/ui";
 import { useForm } from "react-hook-form";
 
 interface MemberModalProps {

@@ -1,4 +1,4 @@
-export function ArchiveIcon(props: any) {
+export const ArchiveIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
@@ -50,4 +50,4 @@ export function ArchiveIcon(props: any) {
       />
     </svg>
   );
-}
+};

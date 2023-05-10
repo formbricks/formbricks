@@ -1,7 +1,10 @@
 import {
   AppPieChartIcon,
+  ArrowRightCircleIcon,
+  BaseballIcon,
   CancelSubscriptionIcon,
   CashCalculatorIcon,
+  CheckMarkIcon,
   DashboardIcon,
   DogChaserIcon,
   DoorIcon,
@@ -22,6 +25,7 @@ import {
   VideoTabletAdjustIcon,
 } from "@formbricks/ui";
 
+import { createId } from "@paralleldrive/cuid2";
 import type { Template } from "./templateTypes";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -253,6 +257,8 @@ export const templates: Template[] = [
       ],
       thankYouCard: thankYouCardDefault,
     },
+      ],
+      thankYouCard: thankYouCardDefault,
   },
   {
     name: "Uncover Strengths & Weaknesses",

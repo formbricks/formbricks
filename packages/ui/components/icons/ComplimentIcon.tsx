@@ -1,4 +1,4 @@
-export function ComplimentIcon(props: any) {
+export const ComplimentIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg width={40} height={40} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g clipPath="url(#clip0_78_2670)">
@@ -46,4 +46,4 @@ export function ComplimentIcon(props: any) {
       </defs>
     </svg>
   );
-}
+};

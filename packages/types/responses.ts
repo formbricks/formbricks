@@ -1,7 +1,7 @@
-import { Question } from "./questions";
+import type { Question } from "./questions";
 
-export interface QuestionSummary {
-  question: Question;
+export interface QuestionSummary<T extends Question> {
+  question: T;
   responses: {
     id: string;
     personId: string;

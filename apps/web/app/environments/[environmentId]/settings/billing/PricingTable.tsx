@@ -1,11 +1,11 @@
 "use client";
-import { useState } from "react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useTeam } from "@/lib/teams/teams";
 import { Badge, Button, ErrorComponent } from "@formbricks/ui";
+import { CheckIcon } from "@heroicons/react/24/outline";
 import type { Session } from "next-auth";
 import { useRouter } from "next/navigation";
-import { CheckIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 const stripeURl =
   process.env.NODE_ENV === "production"

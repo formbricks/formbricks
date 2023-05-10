@@ -1,4 +1,4 @@
-import { DisplayCreateRequest, JsConfig, Response } from "@formbricks/types/js";
+import type { DisplayCreateRequest, JsConfig, Response } from "../../../types/js";
 import { NetworkError, Result, err, ok, okVoid } from "./errors";
 
 export const createDisplay = async (

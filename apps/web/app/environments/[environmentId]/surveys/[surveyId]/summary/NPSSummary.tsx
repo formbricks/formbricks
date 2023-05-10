@@ -1,11 +1,11 @@
-import { ProgressBar } from "@formbricks/ui";
+import { NPSQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
+import { HalfCircle, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import { HalfCircle } from "@/../../packages/ui/components/ProgressBar";
 
 interface NPSSummaryProps {
-  questionSummary: QuestionSummary;
+  questionSummary: QuestionSummary<NPSQuestion>;
 }
 
 interface Result {

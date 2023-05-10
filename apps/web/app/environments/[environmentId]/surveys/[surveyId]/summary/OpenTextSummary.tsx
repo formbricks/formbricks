@@ -1,12 +1,13 @@
-import { PersonAvatar } from "@formbricks/ui";
-import { timeSince } from "@formbricks/lib/time";
 import { truncate } from "@/lib/utils";
+import { timeSince } from "@formbricks/lib/time";
+import { OpenTextQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
+import { PersonAvatar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
 interface OpenTextSummaryProps {
-  questionSummary: QuestionSummary;
+  questionSummary: QuestionSummary<OpenTextQuestion>;
   environmentId: string;
 }
 

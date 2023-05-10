@@ -5,18 +5,18 @@ import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface MultipleChoiceSingleProps {
-  question: MultipleChoiceSingleQuestion;
+  question: MultipleChoiceSingleQuestionType;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
 
-export default function MultipleChoiceSingleQuestion({
+export const MultipleChoiceSingleQuestion: React.FC<MultipleChoiceSingleProps> = ({
   question,
   onSubmit,
   lastQuestion,
   brandColor,
-}: MultipleChoiceSingleProps) {
+}) => {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   return (
     <form
@@ -78,4 +78,6 @@ export default function MultipleChoiceSingleQuestion({
       </div>
     </form>
   );
-}
+};
+
+export default MultipleChoiceSingleQuestion;

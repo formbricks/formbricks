@@ -1,4 +1,4 @@
-import type { JsConfig, Survey } from "@formbricks/types/js";
+import type { JsConfig, Survey } from "../../types/js";
 import { VNode, h } from "preact";
 import { useState } from "preact/hooks";
 import Modal from "./components/Modal";

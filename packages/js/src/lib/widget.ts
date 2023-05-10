@@ -1,4 +1,4 @@
-import { Survey } from "@formbricks/types/js";
+import type { Survey } from "../../../types/js";
 import { h, render } from "preact";
 import App from "../App";
 import { Config } from "./config";

@@ -3,7 +3,7 @@ interface ResponsiveVideoProps {
   title?: string;
 }
 
-export function ResponsiveVideo({ src, title }: ResponsiveVideoProps) {
+export const ResponsiveVideo: React.FC<ResponsiveVideoProps> = ({ src, title }: ResponsiveVideoProps) => {
   return (
     <div className="relative" style={{ paddingTop: "56.25%" }}>
       <iframe
@@ -15,4 +15,4 @@ export function ResponsiveVideo({ src, title }: ResponsiveVideoProps) {
         allowFullScreen></iframe>
     </div>
   );
-}
+};

@@ -1,4 +1,4 @@
-import { InitConfig } from "@formbricks/types/js";
+import type { InitConfig } from "../../types/js";
 import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";
 import { trackEvent } from "./lib/event";

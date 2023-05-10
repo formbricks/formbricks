@@ -2,9 +2,9 @@
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ErrorComponent } from "@formbricks/ui";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
+import { ErrorComponent } from "@formbricks/ui";
 import { useMemo } from "react";
 import SingleResponse from "./SingleResponse";
 
@@ -24,14 +24,25 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
 
       // Replace question IDs with question headlines in response data
       const updatedResponses = responses.map((response) => {
-        const updatedResponse: Array<{ question: string; answer: string }> = []; // Specify the type of updatedData
+        const updatedResponse: Array<{
+          question: string;
+          answer: string;
+          type: string;
+          scale?: "number" | "star" | "smiley";
+          range?: number;
+        }> = []; // Specify the type of updatedData
         // iterate over survey questions and build the updated response
         for (const question of survey.questions) {
-          const questionId = question.id;
-          const questionHeadline = question.headline;
-          const answer = response.data[questionId];
+          console.log(question);
+          const answer = response.data[question.id];
           if (answer) {
-            updatedResponse.push({ question: questionHeadline, answer: answer as string });
+            updatedResponse.push({
+              question: question.headline,
+              type: question.type,
+              scale: question.scale,
+              range: question.range,
+              answer: answer as string,
+            });
           }
         }
         return { ...response, responses: updatedResponse, person: response.person };

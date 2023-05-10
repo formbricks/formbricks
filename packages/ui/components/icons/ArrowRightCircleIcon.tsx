@@ -1,4 +1,4 @@
-export function ArrowRightCircleIcon(props: any) {
+export const ArrowRightCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
       <defs />
@@ -29,4 +29,4 @@ export function ArrowRightCircleIcon(props: any) {
       />
     </svg>
   );
-}
+};
