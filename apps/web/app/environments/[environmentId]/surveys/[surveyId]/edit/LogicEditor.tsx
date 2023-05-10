@@ -120,7 +120,9 @@ export default function LogicEditor({
   };
 
   const updateLogic = (logicIdx: number, updatedAttributes: any) => {
-    if (updatedAttributes.LogicCondition) {
+    if ("condition" in updatedAttributes && logicConditions[updatedAttributes.condition].multiSelect) {
+      updatedAttributes.value = [];
+    } else if ("condition" in updatedAttributes) {
       updatedAttributes.value = undefined;
     }
 
