@@ -4,7 +4,6 @@ import { cn } from "../../lib/cn";
 export default function Modal({
   children,
   isOpen,
-  reset,
 }: {
   children: ReactNode;
   isOpen: boolean;
@@ -30,5 +29,3 @@ export default function Modal({
     </div>
   );
 }
-
-export default Modal;

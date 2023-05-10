@@ -156,5 +156,3 @@ export default function PreviewSurvey({
     </>
   );
 }
-
-export default PreviewSurvey;

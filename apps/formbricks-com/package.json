@@ -12,6 +12,7 @@
   "dependencies": {
     "@docsearch/react": "^3.3.3",
     "@formbricks/ui": "workspace:*",
+    "@formbricks/types": "workspace:*",
     "@headlessui/react": "^1.7.14",
     "@heroicons/react": "^2.0.17",
     "@mapbox/rehype-prism": "^0.8.0",

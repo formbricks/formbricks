@@ -1,33 +1,29 @@
 import {
   AppPieChartIcon,
   ArrowRightCircleIcon,
+  ArrowUpRightIcon,
   BaseballIcon,
   CancelSubscriptionIcon,
   CashCalculatorIcon,
   CheckMarkIcon,
+  CodeBookIcon,
   DashboardIcon,
   DogChaserIcon,
   DoorIcon,
   FeedbackIcon,
+  GaugeSpeedFastIcon,
+  HeartCommentIcon,
+  InterviewPromptIcon,
+  LoadingBarIcon,
   OnboardingIcon,
   PMFIcon,
   TaskListSearchIcon,
-  BaseballIcon,
-  CheckMarkIcon,
-  ArrowRightCircleIcon,
-  CodeBookIcon,
-  InterviewPromptIcon,
-  HeartCommentIcon,
-  GaugeSpeedFastIcon,
-  ArrowUpRightIcon,
-  LoadingBarIcon,
   UserSearchGlasIcon,
   VideoTabletAdjustIcon,
 } from "@formbricks/ui";
 
 import { createId } from "@paralleldrive/cuid2";
-import type { Template } from "./templateTypes";
-import { createId } from "@paralleldrive/cuid2";
+import type { Template } from "@formbricks/types/templates";
 
 const thankYouCardDefault = {
   enabled: true,
@@ -35,48 +31,27 @@ const thankYouCardDefault = {
   subheader: "We appreciate your time and insight.",
 };
 
-export const templates: Template[] = [
-  {
-    name: "Product Market Fit Survey (short)",
-    icon: PMFIcon,
-    category: "Product Experience",
-
-    description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
-    preset: {
-      name: "Product Market Fit Survey (short)",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "How disappointed would you be if you could no longer use Formbricks?",
-          subheader: "Please select one of the following options:",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Not at all disappointed",
-            },
-            {
-              id: createId(),
-              label: "Somewhat disappointed",
-            },
-            {
-              id: createId(),
-              label: "Very disappointed",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "How can we improve our service for you?",
-          subheader: "Please be as specific as possible.",
-          required: true,
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
+export const customSurvey: Template = {
+  name: "Custom Survey",
+  description: "Create your survey from scratch.",
+  icon: null,
+  preset: {
+    name: "New Survey",
+    questions: [
+      {
+        id: createId(),
+        type: "openText",
+        headline: "What's poppin?",
+        subheader: "This can help us improve your experience.",
+        placeholder: "Type your answer here...",
+        required: true,
+      },
+    ],
+    thankYouCard: thankYouCardDefault,
   },
+};
+
+export const templates: Template[] = [
   {
     name: "Product Market Fit (Superhuman)",
     icon: PMFIcon,
@@ -159,6 +134,7 @@ export const templates: Template[] = [
       thankYouCard: thankYouCardDefault,
     },
   },
+
   {
     name: "Onboarding Segmentation",
     icon: OnboardingIcon,
@@ -257,8 +233,6 @@ export const templates: Template[] = [
       ],
       thankYouCard: thankYouCardDefault,
     },
-      ],
-      thankYouCard: thankYouCardDefault,
   },
   {
     name: "Uncover Strengths & Weaknesses",
@@ -663,6 +637,47 @@ export const templates: Template[] = [
           upperLabel: "Very important",
           range: 5,
           scale: "number",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Product Market Fit Survey (short)",
+    icon: PMFIcon,
+    category: "Product Experience",
+
+    description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
+    preset: {
+      name: "Product Market Fit Survey (short)",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "How disappointed would you be if you could no longer use Formbricks?",
+          subheader: "Please select one of the following options:",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Not at all disappointed",
+            },
+            {
+              id: createId(),
+              label: "Somewhat disappointed",
+            },
+            {
+              id: createId(),
+              label: "Very disappointed",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "How can we improve our service for you?",
+          subheader: "Please be as specific as possible.",
+          required: true,
         },
       ],
       thankYouCard: thankYouCardDefault,

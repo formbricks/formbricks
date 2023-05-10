@@ -10,7 +10,7 @@ interface OpenTextQuestionProps {
   brandColor: string;
 }
 
-export const OpenTextQuestion: React.FC<OpenTextQuestionProps> = ({
+export default function OpenTextQuestion({
   question,
   onSubmit,
   lastQuestion,
@@ -53,6 +53,4 @@ export const OpenTextQuestion: React.FC<OpenTextQuestionProps> = ({
       </div>
     </form>
   );
-};
-
-export default OpenTextQuestion;
+}

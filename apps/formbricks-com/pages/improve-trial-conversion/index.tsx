@@ -9,7 +9,7 @@ export default function MissedTrialPagePage() {
     <Layout
       title="Improve Trial Conversion"
       description="Take the guessing out, convert more trials to paid users with insights.">
-      <div className="grid grid-cols-2 items-center items-center gap-12 py-20">
+      <div className="grid grid-cols-2 items-center gap-12 py-20">
         <div>
           <UseCaseHeader title="Improve Trial Conversion" difficulty="Easy" setupMinutes="15" />
           <h3 className="text-md text-slate-80 mb-1.5 mt-6 font-semibold">Why is it useful?</h3>

@@ -1,5 +1,4 @@
 import { Button } from "@formbricks/ui";
-import usePlausible from "next-plausible";
 import { useRouter } from "next/router";
 
 interface UseCaseCTAProps {
@@ -19,7 +18,7 @@ export default function UseCaseHeader({ href }: UseCaseCTAProps) {
           variant="darkCTA"
           onClick={() => {
             router.push("https://app.formbricks.com/auth/signup");
-            /*  plausible("BestPractice_SubPage_CTA_TryItNow"); */
+            /* plausible("BestPractice_SubPage_CTA_TryItNow"); */
           }}>
           Try it now
         </Button>

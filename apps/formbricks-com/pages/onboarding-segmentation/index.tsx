@@ -1,8 +1,7 @@
-import Layout from "@/components/shared/Layout";
-import UseCaseHeader from "@/components/shared/UseCaseHeader";
-import UseCaseCTA from "@/components/shared/UseCaseCTA";
 import DemoPreview from "@/components/dummyUI/DemoPreview";
 import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
+import Layout from "@/components/shared/Layout";
+import UseCaseHeader from "@/components/shared/UseCaseHeader";
 
 export default function OnboardingSegmentationPage() {
   return (
