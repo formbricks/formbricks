@@ -1,11 +1,12 @@
-import { Logic, Question } from "@formbricks/types/questions";
+import { Logic, Question, LogicCondition } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import Button from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { ForwardIcon } from "@heroicons/react/24/outline";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { ArrowDownIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { TrashIcon } from "@heroicons/react/24/solid";
 import { BsArrowReturnRight, BsArrowDown } from "react-icons/bs";
+import { use, useEffect, useMemo } from "react";
 
 interface LogicEditorProps {
   localSurvey: Survey;
@@ -14,18 +15,103 @@ interface LogicEditorProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
 }
 
+type LogicConditions = {
+  [K in LogicCondition]: {
+    label: string;
+    values: string[] | null;
+    unique?: boolean;
+    multiSelect?: boolean;
+  };
+};
+
 export default function LogicEditor({
   localSurvey,
   question,
   questionIdx,
   updateQuestion,
 }: LogicEditorProps) {
+  const questionValues = useMemo(() => {
+    if ("choices" in question) {
+      return question.choices.map((choice) => choice.label);
+    } else if ("range" in question) {
+      return Array.from({ length: question.range }, (_, i) => (i + 1).toString());
+    }
+    return [];
+  }, [question]);
+
+  const conditions = {
+    openText: ["submitted", "skipped"],
+    multipleChoiceSingle: ["submitted", "equals", "notEquals"],
+    multipleChoiceMulti: ["submitted", "skipped", "includesAll", "includesOne", "equals"],
+    nps: ["equals", "notEquals", "lessThan", "lessEqual", "greaterThan", "greaterEqual", "submitted"],
+    rating: ["equals", "notEquals", "lessThan", "lessEqual", "greaterThan", "greaterEqual", "submitted"],
+  };
+  const logicConditions: LogicConditions = {
+    submitted: {
+      label: "is submitted",
+      values: null,
+      unique: true,
+    },
+    skipped: {
+      label: "is skipped",
+      values: null,
+      unique: true,
+    },
+    equals: {
+      label: "equals",
+      values: questionValues,
+    },
+    notEquals: {
+      label: "does not equal",
+      values: questionValues,
+    },
+    lessThan: {
+      label: "is less than",
+      values: questionValues,
+    },
+    lessEqual: {
+      label: "is less or equal to",
+      values: questionValues,
+    },
+    greaterThan: {
+      label: "is greater than",
+      values: questionValues,
+    },
+    greaterEqual: {
+      label: "is greater or equal to",
+      values: questionValues,
+    },
+    includesAll: {
+      label: "includes all of",
+      values: questionValues,
+      multiSelect: true,
+    },
+    includesOne: {
+      label: "includes one of",
+      values: questionValues,
+      multiSelect: true,
+    },
+  };
+
+  useEffect(() => {
+    console.log(question);
+  }, [question]);
+
   const addLogic = () => {
     const newLogic: Logic[] = !question.logic ? [] : question.logic;
-    newLogic.push({ condition: "submitted", value: undefined, destination: "" });
+    newLogic.push({
+      condition: undefined,
+      value: undefined,
+      destination: undefined,
+    });
     updateQuestion(questionIdx, { logic: newLogic });
   };
+
   const updateLogic = (logicIdx: number, updatedAttributes: any) => {
+    if (updatedAttributes.condition && logicConditions[updatedAttributes.condition].values == null) {
+      updatedAttributes.value = undefined;
+    }
+
     const newLogic = !question.logic
       ? []
       : question.logic.map((logic, idx) => {
@@ -34,65 +120,78 @@ export default function LogicEditor({
           }
           return logic;
         });
+
     updateQuestion(questionIdx, { logic: newLogic });
   };
 
   const deleteLogic = (logicIdx: number) => {
-    const newLogic = !question.logic ? [] : question.logic.filter((_, idx) => idx !== logicIdx);
+    const newLogic = !question.logic ? [] : question.logic.filter((_: any, idx: number) => idx !== logicIdx);
     updateQuestion(questionIdx, { logic: newLogic });
   };
-  //   console.log(question?.logic?.[0]?.destination);
+
+  const truncate = (str: string, n: number) => (str.length > n ? str.substring(0, n - 1) + "..." : str);
 
   return (
-    <div className="mt-3">
-      <Label>Logic Jumps</Label>
+    question.type in conditions && (
+      <div className="mt-3">
+        <Label>Logic Jumps</Label>
 
-      {question?.logic?.length !== 0 && (
-        <div className="mt-2">
-          <div className="flex flex-col space-y-2">
-            {question?.logic?.map((logic, idx) => (
-              <div key={idx} className="flex flex-wrap items-center space-x-2 text-sm">
+        {question?.logic && question?.logic?.length !== 0 && (
+          <div className="mt-2 space-y-3">
+            {question?.logic?.map((logic, logicIdx) => (
+              <div key={logicIdx} className="flex flex-wrap items-center space-x-2 space-y-1 text-sm">
                 <BsArrowReturnRight className="h-4 w-4" />
-                <p>If this answer is</p>
+                <p>If this answer</p>
 
                 <Select
                   defaultValue={logic.condition}
-                  onValueChange={(e) => updateLogic(questionIdx, { condition: e })}>
+                  onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
                   <SelectTrigger className="w-fit dark:text-slate-200">
-                    <SelectValue placeholder="Select condition" />
+                    <SelectValue placeholder="select condition" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="submitted">Submitted</SelectItem>
-                    <SelectItem value="skipped">Skipped</SelectItem>
-                    <SelectItem value="answered">Answered</SelectItem>
+                    {conditions[question.type].map((condition) => (
+                      <SelectItem key={condition} value={condition}>
+                        {logicConditions[condition].label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
-                <Select
-                  defaultValue={logic.value}
-                  onValueChange={(e) => updateLogic(questionIdx, { value: e })}>
-                  <SelectTrigger className="w-fit dark:text-slate-200">
-                    <SelectValue placeholder="Select match type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">True</SelectItem>
-                    <SelectItem value="false">False</SelectItem>
-                  </SelectContent>
-                </Select>
+                {logic.condition && logicConditions[logic.condition].values != null && (
+                  <Select
+                    // defaultValue={logic.value}
+                    onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
+                    <SelectTrigger className="w-fit dark:text-slate-200">
+                      <SelectValue placeholder="select match type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {logicConditions[logic.condition].values?.map((value) => (
+                        <SelectItem key={value} value={value}>
+                          {value}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
                 <p>skip to</p>
 
                 <Select
                   defaultValue={logic.destination}
-                  onValueChange={(e) => updateLogic(questionIdx, { destination: e })}>
+                  onValueChange={(e) => updateLogic(logicIdx, { destination: e })}>
                   <SelectTrigger className="w-[180px] overflow-hidden dark:text-slate-200">
-                    <SelectValue className="overflow-hidden" placeholder="Select destination question" />
+                    <SelectValue placeholder="select question" />
                   </SelectTrigger>
                   <SelectContent>
-                    {localSurvey.questions.map((question) => (
-                      <SelectItem key={question.id} value={question.id}>
-                        {question.headline}
-                      </SelectItem>
-                    ))}
+                    {localSurvey.questions.map(
+                      (question, idx) =>
+                        idx !== questionIdx && (
+                          <SelectItem key={question.id} value={question.id}>
+                            {idx + 1} - {truncate(question.headline, 14)}
+                          </SelectItem>
+                        )
+                    )}
                   </SelectContent>
                 </Select>
 
@@ -107,20 +206,20 @@ export default function LogicEditor({
               <p>All other answers will continue to the next question</p>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="mt-2">
-        <Button
-          id="logicJumps"
-          type="button"
-          name="logicJumps"
-          variant="secondary"
-          EndIcon={ForwardIcon}
-          onClick={() => addLogic()}>
-          Add Logic
-        </Button>
+        <div className="mt-2">
+          <Button
+            id="logicJumps"
+            type="button"
+            name="logicJumps"
+            variant="secondary"
+            EndIcon={ForwardIcon}
+            onClick={() => addLogic()}>
+            Add Logic
+          </Button>
+        </div>
       </div>
-    </div>
+    )
   );
 }

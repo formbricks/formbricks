@@ -22,6 +22,7 @@ export default function MultipleChoiceSingleForm({
   updateQuestion,
   lastQuestion,
 }: OpenQuestionFormProps) {
+  // console.log(localSurvey);
   const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
     const newChoices = !question.choices
       ? []

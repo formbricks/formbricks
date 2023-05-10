@@ -58,32 +58,34 @@ export interface RatingQuestion extends IQuestion<RatingLogic> {
   upperLabel: string;
 }
 
+export type LogicCondition =
+  | "submitted"
+  | "skipped"
+  | "equals"
+  | "notEquals"
+  | "lessThan"
+  | "lessEqual"
+  | "greaterThan"
+  | "greaterEqual"
+  | "includesAll"
+  | "includesOne";
+
 export interface LogicBase {
-  condition:
-    | "submitted"
-    | "skipped"
-    | "equals"
-    | "notEquals"
-    | "lessThan"
-    | "lessEqual"
-    | "greaterThan"
-    | "greaterEqual"
-    | "includesAll"
-    | "includesOne";
+  condition: LogicCondition | undefined;
   value: number | string | string[] | undefined;
-  destination: string | "end";
+  destination: string | "end" | undefined;
 }
 
 export interface OpenTextLogic extends LogicBase {
-  condition: "submitted" | "skipped";
+  condition: "submitted" | "skipped" | undefined;
   value: undefined;
 }
 export interface MultipleChoiceSingleLogic extends LogicBase {
-  condition: "submitted" | "skipped" | "equals" | "notEquals";
+  condition: "submitted" | "skipped" | "equals" | "notEquals" | undefined;
   value: string;
 }
 export interface MultipleChoiceMultiLogic extends LogicBase {
-  condition: "submitted" | "skipped" | "includesAll" | "includesOne";
+  condition: "submitted" | "skipped" | "includesAll" | "includesOne" | undefined;
   value: string[];
 }
 export interface NPSLogic extends LogicBase {
@@ -95,11 +97,12 @@ export interface NPSLogic extends LogicBase {
     | "greaterThan"
     | "greaterEqual"
     | "equals"
-    | "notEquals";
+    | "notEquals"
+    | undefined;
   value: number;
 }
 export interface CTALogic extends LogicBase {
-  condition: "submitted" | "skipped";
+  condition: "submitted" | "skipped" | undefined;
   value: undefined;
 }
 export interface RatingLogic extends LogicBase {
@@ -111,7 +114,8 @@ export interface RatingLogic extends LogicBase {
     | "greaterThan"
     | "greaterEqual"
     | "equals"
-    | "notEquals";
+    | "notEquals"
+    | undefined;
   value: number;
 }
 export type Logic =
