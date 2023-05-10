@@ -1,10 +1,11 @@
+import { CTAQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 
 interface CTASummaryProps {
-  questionSummary: QuestionSummary;
+  questionSummary: QuestionSummary<CTAQuestion>;
 }
 
 interface ChoiceResult {

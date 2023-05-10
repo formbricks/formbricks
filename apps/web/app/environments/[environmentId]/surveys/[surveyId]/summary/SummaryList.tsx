@@ -12,6 +12,15 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
+import type {
+  CTAQuestion,
+  MultipleChoiceMultiQuestion,
+  MultipleChoiceSingleQuestion,
+  NPSQuestion,
+  OpenTextQuestion,
+  Question,
+  RatingQuestion,
+} from "@formbricks/types/questions";
 
 export default function SummaryList({ environmentId, surveyId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
@@ -19,7 +28,7 @@ export default function SummaryList({ environmentId, surveyId }) {
 
   const responses = responsesData?.responses;
 
-  const summaryData: QuestionSummary[] = useMemo(() => {
+  const summaryData: QuestionSummary<Question>[] = useMemo(() => {
     if (survey && responses) {
       return survey.questions.map((question) => {
         const questionResponses = responses
@@ -64,7 +73,7 @@ export default function SummaryList({ environmentId, surveyId }) {
                 return (
                   <OpenTextSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary}
+                    questionSummary={questionSummary as QuestionSummary<OpenTextQuestion>}
                     environmentId={environmentId}
                   />
                 );
@@ -76,18 +85,37 @@ export default function SummaryList({ environmentId, surveyId }) {
                 return (
                   <MultipleChoiceSummary
                     key={questionSummary.question.id}
-                    questionSummary={questionSummary}
+                    questionSummary={
+                      questionSummary as QuestionSummary<
+                        MultipleChoiceMultiQuestion | MultipleChoiceSingleQuestion
+                      >
+                    }
                   />
                 );
               }
               if (questionSummary.question.type === "nps") {
-                return <NPSSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+                return (
+                  <NPSSummary
+                    key={questionSummary.question.id}
+                    questionSummary={questionSummary as QuestionSummary<NPSQuestion>}
+                  />
+                );
               }
               if (questionSummary.question.type === "cta") {
-                return <CTASummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+                return (
+                  <CTASummary
+                    key={questionSummary.question.id}
+                    questionSummary={questionSummary as QuestionSummary<CTAQuestion>}
+                  />
+                );
               }
               if (questionSummary.question.type === "rating") {
-                return <RatingSummary key={questionSummary.question.id} questionSummary={questionSummary} />;
+                return (
+                  <RatingSummary
+                    key={questionSummary.question.id}
+                    questionSummary={questionSummary as QuestionSummary<RatingQuestion>}
+                  />
+                );
               }
               return null;
             })}
