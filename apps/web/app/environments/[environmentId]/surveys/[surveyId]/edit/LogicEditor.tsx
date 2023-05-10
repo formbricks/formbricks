@@ -8,6 +8,15 @@ import { TrashIcon } from "@heroicons/react/24/solid";
 import { BsArrowReturnRight, BsArrowDown } from "react-icons/bs";
 import { useEffect, useMemo } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/shared/DropdownMenu";
+import { DropdownMenuCheckboxItem } from "@formbricks/ui/DropdownMenu";
+import { ChevronDown } from "lucide-react";
 
 interface LogicEditorProps {
   localSurvey: Survey;
@@ -33,7 +42,7 @@ export default function LogicEditor({
 }: LogicEditorProps) {
   const questionValues = useMemo(() => {
     if ("choices" in question) {
-      return question.choices.map((choice) => choice.label);
+      return question.choices.map((choice) => choice.id);
     } else if ("range" in question) {
       return Array.from({ length: question.range }, (_, i) => (i + 1).toString());
     } else if (question.type === "nps") {
@@ -111,7 +120,7 @@ export default function LogicEditor({
   };
 
   const updateLogic = (logicIdx: number, updatedAttributes: any) => {
-    if (updatedAttributes.condition && logicConditions[updatedAttributes.condition].values == null) {
+    if (updatedAttributes.LogicCondition) {
       updatedAttributes.value = undefined;
     }
 
@@ -127,12 +136,38 @@ export default function LogicEditor({
     updateQuestion(questionIdx, { logic: newLogic });
   };
 
+  const updateMultiSelectLogic = (logicIdx: number, checked: boolean, value: string) => {
+    const newLogic = !question.logic
+      ? []
+      : question.logic.map((logic, idx) => {
+          if (idx === logicIdx) {
+            const newValues = !logic.value ? [] : logic.value;
+            if (checked) {
+              newValues.push(value);
+            } else {
+              newValues.splice(newValues.indexOf(value), 1);
+            }
+            return { ...logic, value: Array.from(new Set(newValues)) };
+          }
+          return logic;
+        });
+
+    updateQuestion(questionIdx, { logic: newLogic });
+  };
+
   const deleteLogic = (logicIdx: number) => {
     const newLogic = !question.logic ? [] : question.logic.filter((_: any, idx: number) => idx !== logicIdx);
     updateQuestion(questionIdx, { logic: newLogic });
   };
 
   const truncate = (str: string, n: number) => (str.length > n ? str.substring(0, n - 1) + "..." : str);
+  const getValueLabel = (id: string) => {
+    if ("choices" in question) {
+      const choice = question.choices.find((choice) => choice.id === id);
+      return choice ? truncate(choice.label, 30) : id;
+    }
+    return id;
+  };
 
   if (!(question.type in conditions)) {
     return null;
@@ -168,18 +203,50 @@ export default function LogicEditor({
               </Select>
 
               {logic.condition && logicConditions[logic.condition].values != null && (
-                <Select defaultValue={logic.value} onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
-                  <SelectTrigger className="flex-1 basis-1/5 dark:text-slate-200">
-                    <SelectValue placeholder="select match type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {logicConditions[logic.condition].values?.map((value) => (
-                      <SelectItem key={value} value={value}>
-                        {value}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex-1 basis-1/5">
+                  {!logicConditions[logic.condition].multiSelect ? (
+                    <Select
+                      defaultValue={logic.value}
+                      onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="select match type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {logicConditions[logic.condition].values?.map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {getValueLabel(value)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
+                        <div className="flex h-10 w-full items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ">
+                          {logic.value?.length === 0 ? (
+                            <p className="text-slate-400">select match type</p>
+                          ) : (
+                            <p>{logic.value.map((v) => getValueLabel(v)).join(", ")}</p>
+                          )}
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="w-40 bg-slate-50 text-slate-700"
+                        align="start"
+                        side="top">
+                        {logicConditions[logic.condition].values?.map((value) => (
+                          <DropdownMenuCheckboxItem
+                            key={value}
+                            checked={logic.value?.includes(value)}
+                            onCheckedChange={(e) => updateMultiSelectLogic(logicIdx, e, value)}>
+                            {getValueLabel(value)}
+                          </DropdownMenuCheckboxItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
               )}
 
               <p>skip to</p>
