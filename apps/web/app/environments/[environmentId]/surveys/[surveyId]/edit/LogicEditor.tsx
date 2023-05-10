@@ -36,6 +36,8 @@ export default function LogicEditor({
       return question.choices.map((choice) => choice.label);
     } else if ("range" in question) {
       return Array.from({ length: question.range }, (_, i) => (i + 1).toString());
+    } else if (question.type === "nps") {
+      return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
     return [];
   }, [question]);
@@ -143,28 +145,31 @@ export default function LogicEditor({
       {question?.logic && question?.logic?.length !== 0 && (
         <div className="mt-2 space-y-3">
           {question?.logic?.map((logic, logicIdx) => (
-            <div key={logicIdx} className="flex flex-wrap items-center space-x-2 space-y-1 text-sm">
+            <div key={logicIdx} className="flex items-center space-x-2 space-y-1 text-sm">
               <BsArrowReturnRight className="h-4 w-4" />
               <p>If this answer</p>
 
               <Select
                 defaultValue={logic.condition}
                 onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
-                <SelectTrigger className="w-fit dark:text-slate-200">
+                <SelectTrigger className="min-w-fit flex-1 dark:text-slate-200">
                   <SelectValue placeholder="select condition" />
                 </SelectTrigger>
                 <SelectContent>
-                  {conditions[question.type].map((condition) => (
-                    <SelectItem key={condition} value={condition}>
-                      {logicConditions[condition].label}
-                    </SelectItem>
-                  ))}
+                  {conditions[question.type].map(
+                    (condition) =>
+                      !(question.required && condition === "skipped") && (
+                        <SelectItem key={condition} value={condition}>
+                          {logicConditions[condition].label}
+                        </SelectItem>
+                      )
+                  )}
                 </SelectContent>
               </Select>
 
               {logic.condition && logicConditions[logic.condition].values != null && (
                 <Select defaultValue={logic.value} onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
-                  <SelectTrigger className="w-fit dark:text-slate-200">
+                  <SelectTrigger className="flex-1 basis-1/5 dark:text-slate-200">
                     <SelectValue placeholder="select match type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -177,12 +182,12 @@ export default function LogicEditor({
                 </Select>
               )}
 
-              <p>skip to question</p>
+              <p>skip to</p>
 
               <Select
                 defaultValue={logic.destination}
                 onValueChange={(e) => updateLogic(logicIdx, { destination: e })}>
-                <SelectTrigger className="w-[180px] overflow-hidden dark:text-slate-200">
+                <SelectTrigger className="w-fit overflow-hidden dark:text-slate-200">
                   <SelectValue placeholder="select question" />
                 </SelectTrigger>
                 <SelectContent>
