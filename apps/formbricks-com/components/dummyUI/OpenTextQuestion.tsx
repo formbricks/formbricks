@@ -1,20 +1,20 @@
-import type { OpenTextQuestion } from "./questionTypes";
+import type { OpenTextQuestion as OpenTextQuestionType } from "./questionTypes";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface OpenTextQuestionProps {
-  question: OpenTextQuestion;
+  question: OpenTextQuestionType;
   onSubmit: (id: string) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
 
-export default function OpenTextQuestion({
+export const OpenTextQuestion: React.FC<OpenTextQuestionProps> = ({
   question,
   onSubmit,
   lastQuestion,
   brandColor,
-}: OpenTextQuestionProps) {
+}) => {
   return (
     <form
       onSubmit={(e) => {
@@ -45,4 +45,6 @@ export default function OpenTextQuestion({
       </div>
     </form>
   );
-}
+};
+
+export default OpenTextQuestion;

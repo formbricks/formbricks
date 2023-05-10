@@ -1,4 +1,4 @@
-import type { Session, Settings } from "@formbricks/types/js";
+import type { Session, Settings } from "../../../types/js";
 import { Config } from "./config";
 import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "./errors";
 import { trackEvent } from "./event";

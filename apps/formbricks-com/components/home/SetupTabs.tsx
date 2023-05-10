@@ -9,7 +9,7 @@ interface SecondNavbarProps {
   setActiveId: (id: string) => void;
 }
 
-export function TabBar({ tabs, activeId, setActiveId }: SecondNavbarProps) {
+export const TabBar: React.FC<SecondNavbarProps> = ({ tabs, activeId, setActiveId }) => {
   return (
     <div className="flex h-14 items-center justify-center rounded-lg  bg-slate-200 dark:bg-slate-700">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
@@ -31,14 +31,14 @@ export function TabBar({ tabs, activeId, setActiveId }: SecondNavbarProps) {
       </nav>
     </div>
   );
-}
+};
 
 const tabs = [
   { id: "npm", label: "NPM", icon: <IoLogoNpm /> },
   { id: "html", label: "HTML", icon: <IoLogoHtml5 /> },
 ];
 
-export default function SetupInstructions({}) {
+export const SetupInstructions: React.FC = ({}) => {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
 
   return (
@@ -66,4 +66,6 @@ if (typeof window !== "undefined") {
       </div>
     </div>
   );
-}
+};
+
+export default SetupInstructions;

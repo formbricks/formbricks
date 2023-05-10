@@ -2,6 +2,7 @@
 
 import Modal from "@/components/shared/Modal";
 import { createEventClass } from "@/lib/eventClasses/eventClasses";
+import type { Event, NoCodeConfig } from "@formbricks/types/events";
 import {
   Button,
   Input,
@@ -14,13 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui";
-import type { NoCodeConfig, Event } from "@formbricks/types/events";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { testURLmatch } from "./testURLmatch";
 import toast from "react-hot-toast";
+import { testURLmatch } from "./testURLmatch";
 
 interface EventDetailModalProps {
   environmentId: string;

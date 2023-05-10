@@ -1,11 +1,9 @@
 "use client";
 
-import { Label } from "@formbricks/ui";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { cn } from "@formbricks/lib/cn";
+import { Badge, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { Badge } from "@formbricks/ui";
-import { cn } from "@formbricks/lib/cn";
 import { useState } from "react";
 
 const options = [

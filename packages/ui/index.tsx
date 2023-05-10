@@ -29,7 +29,7 @@ export { Input } from "./components/Input";
 export { Label } from "./components/Label";
 export { PageTitle } from "./components/PageTitle";
 export { Popover, PopoverTrigger, PopoverContent } from "./components/Popover";
-export { ProgressBar } from "./components/ProgressBar";
+export { ProgressBar, HalfCircle } from "./components/ProgressBar";
 export { RadioGroup, RadioGroupItem } from "./components/RadioGroup";
 export { ResponsiveVideo } from "./components/ResponsiveVideo";
 export {

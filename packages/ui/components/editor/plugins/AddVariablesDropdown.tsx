@@ -7,7 +7,7 @@ interface IAddVariablesDropdown {
   variables: string[];
 }
 
-export const AddVariablesDropdown = (props: IAddVariablesDropdown) => {
+export const AddVariablesDropdown: React.FC<IAddVariablesDropdown> = (props) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="focus:bg-muted pt-[6px]">

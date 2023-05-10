@@ -1,8 +1,8 @@
 "use client";
 
-import { ErrorComponent } from "@/../../packages/ui";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEnvironment } from "@/lib/environments/environments";
+import { ErrorComponent } from "@formbricks/ui";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 

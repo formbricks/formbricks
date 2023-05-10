@@ -1,7 +1,10 @@
 import {
   AppPieChartIcon,
+  ArrowRightCircleIcon,
+  BaseballIcon,
   CancelSubscriptionIcon,
   CashCalculatorIcon,
+  CheckMarkIcon,
   DashboardIcon,
   DogChaserIcon,
   DoorIcon,
@@ -9,13 +12,10 @@ import {
   OnboardingIcon,
   PMFIcon,
   TaskListSearchIcon,
-  BaseballIcon,
-  CheckMarkIcon,
-  ArrowRightCircleIcon,
 } from "@formbricks/ui";
 
-import type { Template } from "./templateTypes";
 import { createId } from "@paralleldrive/cuid2";
+import type { Template } from "./templateTypes";
 
 export const templates: Template[] = [
   {

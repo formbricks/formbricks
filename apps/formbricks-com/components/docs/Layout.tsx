@@ -84,7 +84,7 @@ interface LayoutProps {
   };
 }
 
-export function Layout({ children, meta }: LayoutProps) {
+export const Layout: React.FC<LayoutProps> = ({ children, meta }) => {
   let router = useRouter();
   let allLinks = navigation.flatMap((section) => section.links);
   let linkIndex = allLinks.findIndex((link) => link.href === router.pathname);
@@ -173,4 +173,4 @@ export function Layout({ children, meta }: LayoutProps) {
       </div>
     </>
   );
-}
+};

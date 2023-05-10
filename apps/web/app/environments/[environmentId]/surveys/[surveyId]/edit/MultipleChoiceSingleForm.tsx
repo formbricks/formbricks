@@ -1,9 +1,7 @@
-import { Button } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { createId } from "@paralleldrive/cuid2";
+import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/solid";
+import { createId } from "@paralleldrive/cuid2";
 
 interface OpenQuestionFormProps {
   question: MultipleChoiceSingleQuestion;

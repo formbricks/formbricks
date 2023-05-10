@@ -22,13 +22,25 @@ export default function App({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     // Connect next.js router to Formbricks
-    const handleRouteChange = formbricks?.registerRouteChange;
-    router.events.on("routeChangeComplete", handleRouteChange);
+    if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
+      const handleRouteChange = formbricks?.registerRouteChange;
+      router.events.on("routeChangeComplete", handleRouteChange);
 
-    return () => {
-      router.events.off("routeChangeComplete", handleRouteChange);
-    };
+      return () => {
+        router.events.off("routeChangeComplete", handleRouteChange);
+      };
+    }
   }, []);
 
-  return <Component {...pageProps} />;
+  return (
+    <>
+      {(!process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID ||
+        !process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) && (
+        <div className="w-full bg-red-500 p-3 text-center text-sm text-white">
+          Please set Formbricks environment variables
+        </div>
+      )}
+      <Component {...pageProps} />
+    </>
+  );
 }
