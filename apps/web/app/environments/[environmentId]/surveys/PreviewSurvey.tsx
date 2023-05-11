@@ -50,7 +50,20 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, localSurvey, questions, setActiveQuestionId]);
 
-  const gotoNextQuestion = () => {
+  const findNextIndex = (data) => {
+    if (!activeQuestionId) return;
+    console.log("data", data);
+
+    const question = questions.find((q) => q.id === activeQuestionId);
+    if (!question) return activeQuestionId + 1;
+
+    question.logic?.forEach(logic => {
+      if (logic.type === "submitted") {
+        return logic.data
+  };
+
+  const gotoNextQuestion = (data) => {
+    const nextIndex = findNextIndex(data);
     const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
     if (currentIndex < questions.length - 1) {
       setActiveQuestionId(questions[currentIndex + 1].id);
