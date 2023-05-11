@@ -16,9 +16,9 @@ import { useState } from "react";
 const options = [
   {
     id: "web",
-    name: "Web app",
+    name: "In-app (Popup)",
     icon: ComputerDesktopIcon,
-    description: "Send the survey to your audience through your web app.",
+    description: "Survey users inside of your web application.",
     comingSoon: false,
   },
   {

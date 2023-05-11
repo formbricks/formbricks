@@ -138,6 +138,9 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
         </div>
       </div>
       <div className="flex items-center justify-end">
+        <Button size="lg" className="mr-2" variant="minimal" id="product-skip" onClick={done}>
+          I&apos;ll do it later
+        </Button>
         <Button
           size="lg"
           variant="darkCTA"
