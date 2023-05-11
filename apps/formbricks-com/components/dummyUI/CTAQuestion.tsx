@@ -1,4 +1,4 @@
-import type { CTAQuestion } from "./questionTypes";
+import type { CTAQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 

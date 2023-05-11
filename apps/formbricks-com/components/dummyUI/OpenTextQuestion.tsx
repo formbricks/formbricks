@@ -1,4 +1,4 @@
-import type { OpenTextQuestion } from "./questionTypes";
+import type { OpenTextQuestion } from "@formbricks/types/questions";
 import { useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";

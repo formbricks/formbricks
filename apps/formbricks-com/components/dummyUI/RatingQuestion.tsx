@@ -1,6 +1,6 @@
+import type { RatingQuestion } from "@formbricks/types/questions";
 import { useState } from "react";
-import { cn } from "../../lib/cn";
-import type { RatingQuestion } from "./questionTypes";
+import { cn } from "@formbricks/lib/cn";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 

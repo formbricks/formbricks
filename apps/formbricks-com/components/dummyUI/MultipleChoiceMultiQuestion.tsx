@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { cn } from "../..//lib/cn";
-import type { MultipleChoiceMultiQuestion } from "./questionTypes";
+import { cn } from "@formbricks/lib/cn";
+import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 

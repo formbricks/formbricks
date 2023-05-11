@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from "react";
-import { cn } from "../../lib/cn";
+import { cn } from "@formbricks/lib/cn";
 
 export default function Modal({
   children,

@@ -71,6 +71,9 @@ importers:
       '@docsearch/react':
         specifier: ^3.3.3
         version: 3.3.3(@algolia/client-search@4.14.2)(@types/react@18.0.35)(react-dom@18.2.0)(react@18.2.0)
+      '@formbricks/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
       '@formbricks/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -4882,7 +4885,7 @@ packages:
       tailwindcss: '>=3.0.0 || >= 3.0.0-alpha.1'
     dependencies:
       mini-svg-data-uri: 1.4.4
-      tailwindcss: 3.3.1(postcss@8.4.22)
+      tailwindcss: 3.3.1(postcss@8.4.21)
     dev: true
 
   /@tailwindcss/forms@0.5.3(tailwindcss@3.3.2):

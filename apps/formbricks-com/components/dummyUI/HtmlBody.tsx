@@ -1,4 +1,5 @@
-import { cleanHtml } from "../../lib/cleanHtml";
+/* import { cleanHtml } from "../../lib/cleanHtml"; */
+import { cleanHtml } from "@formbricks/lib/cleanHtml";
 
 export default function HtmlBody({ htmlString, questionId }: { htmlString: string; questionId: string }) {
   return (

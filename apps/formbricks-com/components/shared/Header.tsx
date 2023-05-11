@@ -1,24 +1,24 @@
-import { Button } from "@formbricks/ui";
+import {
+  BaseballIcon,
+  Button,
+  CancelSubscriptionIcon,
+  CodeBookIcon,
+  DogChaserIcon,
+  FeedbackIcon,
+  InterviewPromptIcon,
+  OnboardingIcon,
+  PMFIcon,
+} from "@formbricks/ui";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
+import clsx from "clsx";
 import { usePlausible } from "next-plausible";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
-import clsx from "clsx";
-import {
-  CancelSubscriptionIcon,
-  DogChaserIcon,
-  FeedbackIcon,
-  InterviewPromptIcon,
-  OnboardingIcon,
-  PMFIcon,
-  BaseballIcon,
-  CodeBookIcon,
-} from "@formbricks/ui";
 
 function GitHubIcon(props: any) {
   return (

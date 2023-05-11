@@ -1,6 +1,6 @@
 import type { Template } from "@formbricks/types/templates";
 import { useEffect, useState } from "react";
-import { cn } from "../..//lib/cn";
+import { cn } from "@formbricks/lib/cn";
 import { templates } from "./templates";
 
 type TemplateList = {

@@ -1,4 +1,4 @@
-import type { Question } from "./questionTypes";
+import type { Question } from "@formbricks/types/questions";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
