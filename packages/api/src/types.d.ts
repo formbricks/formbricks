@@ -17,6 +17,11 @@ export type RequestFn = <T = any, E = any, Data = any>(
   options?: RequestInit
 ) => Promise<Result<T, E | NetworkError | Error>>;
 
-export interface IEnvironmentId {
-  environmentId: EnvironmentId;
+// https://github.com/formbricks/formbricks/blob/fbfc80dd4ed5d768f0c549e179fd1aa10edc400a/apps/web/lib/api/response.ts
+export interface ApiErrorResponse {
+  code: string;
+  message: string;
+  details: {
+    [key: string]: string | string[] | number | number[] | boolean | boolean[];
+  }
 }

@@ -3,8 +3,8 @@ import { CreateResponseResponse, UpdateResponseResponseFormatted } from "./dtos/
 import { NetworkError } from "./errors";
 
 import {
-  ICreateResponseOptions,
-  IUpdateResponseOptions,
+  CreateResponseOptions,
+  UpdateResponseOptions,
   createResponse,
   updateResponse,
 } from "./endpoints/response";
@@ -25,13 +25,13 @@ export class FormbricksAPI {
   }
 
   async createResponse(
-    options: Omit<ICreateResponseOptions, "environmentId">
+    options: Omit<CreateResponseOptions, "environmentId">
   ): Promise<Result<CreateResponseResponse, NetworkError>> {
     return this.runWithEnvironmentId(createResponse, options);
   }
 
   async updateResponse(
-    options: Omit<IUpdateResponseOptions, "environmentId">
+    options: Omit<UpdateResponseOptions, "environmentId">
   ): Promise<Result<UpdateResponseResponseFormatted, NetworkError>> {
     return this.runWithEnvironmentId(updateResponse, options);
   }

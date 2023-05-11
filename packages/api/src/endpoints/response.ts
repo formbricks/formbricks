@@ -6,9 +6,10 @@ import {
   UpdateResponseResponseFormatted,
 } from "../dtos/responses";
 import { NetworkError } from "../errors";
-import { IEnvironmentId, KeyValueData, PersonId, RequestFn, ResponseId, SurveyId } from "../types";
+import { EnvironmentId, KeyValueData, PersonId, RequestFn, ResponseId, SurveyId } from "../types";
 
-export interface ICreateResponseOptions extends IEnvironmentId {
+export interface CreateResponseOptions {
+  environmentId: EnvironmentId;
   surveyId: SurveyId;
   personId: PersonId;
   data: KeyValueData;
@@ -16,7 +17,7 @@ export interface ICreateResponseOptions extends IEnvironmentId {
 
 export const createResponse = async (
   request: RequestFn,
-  options: ICreateResponseOptions
+  options: CreateResponseOptions
 ): Promise<Result<CreateResponseResponse, NetworkError>> => {
   const result = await request<CreateResponseResponse, any, ResponseCreateRequest>(
     `/api/v1/client/environments/${options.environmentId}/responses`,
@@ -34,13 +35,14 @@ export const createResponse = async (
   return result;
 };
 
-export interface IUpdateResponseOptions extends IEnvironmentId {
+export interface UpdateResponseOptions {
+  environmentId: EnvironmentId;
   data: KeyValueData;
   responseId: ResponseId;
   finished?: boolean;
 }
 
-export const updateResponse = async (request: RequestFn, options: IUpdateResponseOptions) => {
+export const updateResponse = async (request: RequestFn, options: UpdateResponseOptions) => {
   const result = await request<UpdateResponseResponse, any, ResponseUpdateRequest>(
     `/api/v1/client/environments/${options.environmentId}/responses/${options.responseId}`,
     {
