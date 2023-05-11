@@ -25,7 +25,7 @@ export default function SurveyTemplatesPage({}) {
             setActiveTemplate(template);
           }}
         />
-        <aside className="group relative h-full flex-1 flex-shrink-0 overflow-hidden rounded-r-lg border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">
+        <aside className="group relative h-full flex-1 flex-shrink-0 overflow-hidden rounded-r-lg bg-slate-200 shadow-inner  dark:bg-slate-700 md:flex md:flex-col">
           {activeTemplate && (
             <PreviewSurvey
               activeQuestionId={activeQuestionId}

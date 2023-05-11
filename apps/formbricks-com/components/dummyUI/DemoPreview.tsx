@@ -23,10 +23,10 @@ const DemoPreview: React.FC<DemoPreviewProps> = ({ template }) => {
   }
 
   return (
-    <div className="flex items-center justify-center rounded-xl border-2 border-slate-300 bg-slate-200 py-6 transition-transform duration-150">
+    <div className="mx-2 flex items-center justify-center rounded-xl border-2 border-slate-300 bg-slate-200 py-6 transition-transform duration-150 dark:border-slate-500 dark:bg-slate-700 md:mx-0">
       <div className="flex flex-col items-center justify-around">
-        <p className="my-3 text-sm text-slate-500">Preview</p>
-        <div className="hidden flex-col md:flex">
+        <p className="my-3 text-sm text-slate-500 dark:text-slate-300">Preview</p>
+        <div className="">
           {selectedTemplate && (
             <PreviewSurvey
               activeQuestionId={activeQuestionId}
@@ -35,9 +35,6 @@ const DemoPreview: React.FC<DemoPreviewProps> = ({ template }) => {
               setActiveQuestionId={setActiveQuestionId}
             />
           )}
-        </div>
-        <div className="flex items-center justify-center pt-36 text-slate-600 md:hidden">
-          This demo is not yet optimized for smartphones.
         </div>
       </div>
     </div>

@@ -44,16 +44,16 @@ export default function MultipleChoiceMultiQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative space-y-2 rounded-md bg-white">
+          <div className="relative space-y-2 rounded-md bg-white dark:bg-slate-900">
             {question.choices &&
               question.choices.map((choice) => (
                 <label
                   key={choice.id}
                   className={cn(
                     selectedChoices.includes(choice.label)
-                      ? "z-10 border-slate-400 bg-slate-50"
-                      : "border-gray-200",
-                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
+                      ? "z-10 border-slate-400 bg-slate-50 dark:border-slate-400 dark:bg-slate-600"
+                      : "border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600",
+                    "relative flex cursor-pointer flex-col rounded-md border p-4  focus:outline-none"
                   )}>
                   <span className="flex items-center text-sm">
                     <input
@@ -61,7 +61,7 @@ export default function MultipleChoiceMultiQuestion({
                       id={choice.id}
                       name={question.id}
                       value={choice.label}
-                      className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+                      className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0 dark:border-slate-600 dark:bg-slate-500"
                       aria-labelledby={`${choice.id}-label`}
                       checked={selectedChoices.includes(choice.label)}
                       onChange={(e) => {
@@ -75,7 +75,9 @@ export default function MultipleChoiceMultiQuestion({
                       }}
                       style={{ borderColor: brandColor, color: brandColor }}
                     />
-                    <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                    <span
+                      id={`${choice.id}-label`}
+                      className="ml-3 font-medium text-slate-900 dark:text-slate-200">
                       {choice.label}
                     </span>
                   </span>

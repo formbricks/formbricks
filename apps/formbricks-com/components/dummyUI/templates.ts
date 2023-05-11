@@ -384,7 +384,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: "openText",
-          headline: "Is there something we can do to win you back?",
+          headline: "How can we win you back?",
           subheader: "Feel free to speak your mind, we do too.",
           required: false,
         },

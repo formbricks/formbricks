@@ -9,7 +9,7 @@ export default function UseCaseHeader({ href }: UseCaseCTAProps) {
   /*   const plausible = usePlausible(); */
   const router = useRouter();
   return (
-    <div className="my-8 flex space-x-2">
+    <div className="my-8 flex space-x-2 whitespace-nowrap">
       <Button variant="secondary" href={href}>
         Step-by-step manual
       </Button>

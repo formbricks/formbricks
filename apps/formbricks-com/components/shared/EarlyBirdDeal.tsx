@@ -15,7 +15,7 @@ export default function EarlyBirdDeal() {
         </h2>
         <h2 className="text-xl font-semibold tracking-tight text-slate-200 sm:text-lg">
           Limited deal: Only{" "}
-          <span className="bg- rounded-sm bg-slate-200/40 px-2 py-0.5 text-slate-100">17</span> left.
+          <span className="bg- rounded-sm bg-slate-200/40 px-2 py-0.5 text-slate-100">14</span> left.
         </h2>
 
         <div className="mt-6">

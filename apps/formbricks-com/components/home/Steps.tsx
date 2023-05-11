@@ -47,7 +47,7 @@ export const Steps: React.FC = () => {
               <div className="flex h-40 items-center justify-center">
                 <Button
                   variant="primary"
-                  className="animate-bounce transition-all duration-150 hover:scale-105"
+                  className=""
                   onClick={() => {
                     setAddEventModalOpen(true);
                   }}>
@@ -82,8 +82,8 @@ export const Steps: React.FC = () => {
                 adjust the look and feel of your survey.
               </p>
             </div>
-            <div className="relative w-full rounded-lg bg-slate-100 p-1 dark:bg-slate-800 sm:p-8">
-              <DemoPreview template="Product Market Fit Survey" />
+            <div className="relative w-full rounded-lg p-1 dark:bg-slate-800 sm:p-8">
+              <DemoPreview template="Product Market Fit Survey (short)" />
             </div>
           </div>
         </div>

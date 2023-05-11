@@ -34,7 +34,7 @@ export default function HeaderLight() {
               router.push("https://app.formbricks.com/auth/signup");
               plausible("Demo_CTA_TryForFree");
             }}>
-            Create surveys for free
+            Start for free
           </Button>
         </div>
       </div>

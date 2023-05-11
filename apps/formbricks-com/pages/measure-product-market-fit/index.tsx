@@ -17,17 +17,21 @@ export default function MeasurePMFPage() {
     <Layout
       title="Product-Market Fit Survey"
       description="Measure Product-Market Fit to understand how to develop your product further.">
-      <div className="grid grid-cols-2 items-center gap-12 py-20">
-        <div>
+      <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
+        <div className="p-6 md:p-0">
           <UseCaseHeader title="Product-Market Fit" difficulty="Intermediate" setupMinutes="30" />
-          <h3 className="text-md text-slate-80 mb-1.5 mt-6 font-semibold">Why is it useful?</h3>
-          <p className="text-slate-600">
+          <h3 className="text-md mb-1.5 mt-6 font-semibold text-slate-800 dark:text-slate-200">
+            Why is it useful?
+          </h3>
+          <p className="text-slate-600 dark:text-slate-400">
             The Product-Market Fit survey is a proven method to get a continuous understanding of how users
             value your product. This helps you prioritize features to increase your PMF. To run it properly,
             you need granular control over who to ask when. Formbricks makes this possible.
           </p>
-          <h3 className="text-md text-slate-80 mb-1.5 mt-6 font-semibold">How to get started:</h3>
-          <p className="text-slate-600">
+          <h3 className="text-md mb-1.5 mt-6 font-semibold text-slate-800 dark:text-slate-200">
+            How to get started:
+          </h3>
+          <p className="text-slate-600 dark:text-slate-400">
             In a nutshell: Decide what constitutes a &quot;Power User&quot; in your product. Set and send the
             corresponding attribute to Formbricks and use it to pre-segment your user base. Formbricks
             automatically asks a predetermined amount of users weekly, bi-weekly or monthly. The continuous
@@ -69,13 +73,11 @@ export default function MeasurePMFPage() {
           </div>
         </div>
       </div>
-      <div className="mx-auto mb-12 mt-8 max-w-lg md:mb-0 md:mt-32  md:max-w-none">
+      <div className="mb-12 mt-8 max-w-lg md:mb-0 md:mt-32 md:max-w-none">
         <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
-            <div className="order-last w-full rounded-lg p-4 sm:py-8 md:order-first">
-              <div className="mx-auto">
-                <DemoPreview template="Product Market Fit Survey" />
-              </div>
+            <div className="order-last rounded-lg sm:py-8 md:order-first md:p-4">
+              <DemoPreview template="Product Market Fit Survey (short)" />
             </div>
             <div className="pb-8 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 2</h4>
@@ -153,7 +155,9 @@ export default function MeasurePMFPage() {
         cta="Sign up for free"
         href="https://app.formbricks.com/auth/signup"
       />
-      <h2 className="mb-6 ml-4 mt-32 text-2xl font-semibold text-slate-700">Other Best Practices</h2>
+      <h2 className="mb-6 ml-4 mt-32 text-2xl font-semibold text-slate-700 dark:text-slate-300">
+        Other Best Practices
+      </h2>
       <BestPracticeNavigation />
     </Layout>
   );
