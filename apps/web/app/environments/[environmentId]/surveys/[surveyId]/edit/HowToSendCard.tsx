@@ -89,8 +89,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey }: HowToSend
             defaultValue="web"
             value={localSurvey.type}
             onValueChange={setSurveyType}
-            className="flex flex-col space-y-3"
-            disabled={localSurvey.status !== "draft"}>
+            className="flex flex-col space-y-3">
             {options.map((option) => (
               <Label
                 key={option.id}
