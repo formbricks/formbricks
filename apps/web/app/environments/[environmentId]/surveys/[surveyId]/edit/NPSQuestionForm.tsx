@@ -1,8 +1,7 @@
 import type { NPSQuestion } from "@formbricks/types/questions";
-import { Label } from "@formbricks/ui/Label";
-import { Input } from "@formbricks/ui/Input";
 import LogicEditor from "./LogicEditor";
 import { Survey } from "@formbricks/types/surveys";
+import { Input, Label } from "@formbricks/ui";
 
 interface NPSQuestionFormProps {
   localSurvey: Survey;
@@ -18,7 +17,7 @@ export default function NPSQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-}: NPSQuestionFormProps) {
+}: NPSQuestionFormProps): JSX.Element {
   return (
     <form>
       <div className="mt-3">

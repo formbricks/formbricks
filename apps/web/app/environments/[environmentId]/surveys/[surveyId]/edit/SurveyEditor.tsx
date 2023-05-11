@@ -4,7 +4,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { ErrorComponent } from "@formbricks/ui";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
@@ -18,7 +18,7 @@ interface SurveyEditorProps {
   surveyId: string;
 }
 
-export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorProps) {
+export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "audience">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<Survey | null>();

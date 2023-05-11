@@ -1,8 +1,8 @@
 "use client";
 
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
+import { ErrorComponent } from "@formbricks/ui";
 import EditApiKeys from "./EditApiKeys";
 
 export default function ApiKeyList({

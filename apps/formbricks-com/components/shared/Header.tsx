@@ -1,4 +1,4 @@
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";

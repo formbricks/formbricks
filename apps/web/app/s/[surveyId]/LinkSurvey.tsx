@@ -1,17 +1,17 @@
 "use client";
 
 import Progress from "@/components/preview/Progress";
+import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { createDisplay, markDisplayResponded } from "@formbricks/lib/clientDisplay/display";
 import { createResponse, updateResponse } from "@formbricks/lib/clientResponse/response";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
-import { Confetti } from "@formbricks/ui/Confetti";
+import { Confetti } from "@formbricks/ui";
 import { useEffect, useState } from "react";
-import QuestionConditional from "@/components/preview/QuestionConditional";
-import { createDisplay, markDisplayResponded } from "@formbricks/lib/clientDisplay/display";
 
 type EnhancedSurvey = Survey & {
   brandColor: string;

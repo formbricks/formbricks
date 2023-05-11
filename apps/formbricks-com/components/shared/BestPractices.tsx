@@ -1,4 +1,4 @@
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui";
 import {
   AngryBirdRageIcon,
   CancelSubscriptionIcon,
@@ -8,7 +8,7 @@ import {
   InterviewPromptIcon,
   OnboardingIcon,
   PMFIcon,
-} from "@formbricks/ui/icons";
+} from "@formbricks/ui";
 import clsx from "clsx";
 import { usePlausible } from "next-plausible";
 import { useRouter } from "next/router";

@@ -1,10 +1,10 @@
 import Modal from "@/components/shared/Modal";
 import { Survey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
-import toast from "react-hot-toast";
-import { Button } from "@formbricks/ui/Button";
 import { useRef } from "react";
+import toast from "react-hot-toast";
 
 interface LinkSurveyModalProps {
   survey: Survey;

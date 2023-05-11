@@ -1,21 +1,26 @@
 import { Logic, Question, LogicCondition } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import Button from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
-import { ForwardIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { TrashIcon } from "@heroicons/react/24/solid";
-import { BsArrowReturnRight, BsArrowDown } from "react-icons/bs";
-import { useEffect, useMemo } from "react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import {
+  Label,
+  Button,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+  DropdownMenuCheckboxItem,
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/shared/DropdownMenu";
-import { DropdownMenuCheckboxItem } from "@formbricks/ui/DropdownMenu";
+} from "@formbricks/ui";
+import { ForwardIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/solid";
+import { BsArrowReturnRight, BsArrowDown } from "react-icons/bs";
+import { useMemo } from "react";
 import { ChevronDown } from "lucide-react";
 
 interface LogicEditorProps {
@@ -39,7 +44,7 @@ export default function LogicEditor({
   question,
   questionIdx,
   updateQuestion,
-}: LogicEditorProps) {
+}: LogicEditorProps): JSX.Element {
   const questionValues = useMemo(() => {
     if ("choices" in question) {
       return question.choices.map((choice) => choice.id);
@@ -172,7 +177,7 @@ export default function LogicEditor({
   };
 
   if (!(question.type in conditions)) {
-    return null;
+    return <></>;
   }
 
   return (

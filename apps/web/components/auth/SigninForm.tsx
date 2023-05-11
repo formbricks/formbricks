@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
+import { Button } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";

@@ -1,8 +1,7 @@
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
 import type { OpenTextQuestion } from "@formbricks/types/questions";
 import LogicEditor from "./LogicEditor";
 import { Survey } from "@formbricks/types/surveys";
+import { Input, Label } from "@formbricks/ui";
 
 interface OpenQuestionFormProps {
   localSurvey: Survey;
@@ -18,7 +17,7 @@ export default function OpenQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-}: OpenQuestionFormProps) {
+}: OpenQuestionFormProps): JSX.Element {
   return (
     <form>
       <div className="mt-3">

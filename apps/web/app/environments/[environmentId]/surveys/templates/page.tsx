@@ -4,7 +4,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { replacePresetPlaceholders } from "@/lib/templates";
 import type { Template } from "@formbricks/types/templates";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { ErrorComponent } from "@formbricks/ui";
 import { PaintBrushIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useEffect, useState } from "react";

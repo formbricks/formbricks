@@ -1,15 +1,11 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
+import { Button, ColorPicker, ErrorComponent, Input, Label } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 

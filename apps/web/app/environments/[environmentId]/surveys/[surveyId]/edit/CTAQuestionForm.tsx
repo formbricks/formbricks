@@ -1,12 +1,9 @@
 "use client";
 
-import type { CTAQuestion } from "@formbricks/types/questions";
-import { Editor } from "@formbricks/ui/editor/Editor";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
-import { useState } from "react";
 import { md } from "@formbricks/lib/markdownIt";
+import type { CTAQuestion } from "@formbricks/types/questions";
+import { Editor, Input, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { useState } from "react";
 import LogicEditor from "./LogicEditor";
 import { Survey } from "@formbricks/types/surveys";
 
@@ -24,7 +21,7 @@ export default function CTAQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-}: CTAQuestionFormProps) {
+}: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
   return (
     <form>

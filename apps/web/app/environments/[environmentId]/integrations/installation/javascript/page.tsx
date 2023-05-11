@@ -1,7 +1,7 @@
 import DocsSidebar from "@/components/integrations/DocsSidebar";
 import IntegrationPageTitle from "@/components/integrations/IntegrationsPageTitle";
-import { Input } from "@formbricks/ui/Input";
 import JSLogo from "@/images/jslogo.png";
+import { Input } from "@formbricks/ui";
 import Image from "next/image";
 
 export default function JavaScriptPage({ params }) {

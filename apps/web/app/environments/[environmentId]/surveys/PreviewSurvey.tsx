@@ -22,7 +22,7 @@ export default function PreviewSurvey({
   activeQuestionId,
   questions,
   brandColor,
-}: PreviewSurveyProps) {
+}: PreviewSurveyProps): JSX.Element {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
 
@@ -57,9 +57,9 @@ export default function PreviewSurvey({
     const question = questions.find((q) => q.id === activeQuestionId);
     if (!question) return activeQuestionId + 1;
 
-    question.logic?.forEach(logic => {
-      if (logic.type === "submitted") {
-        return logic.data
+    // question.logic?.forEach(logic => {
+    //   if (logic.type === "submitted") {
+    //     return logic.data
   };
 
   const gotoNextQuestion = (data) => {
@@ -99,7 +99,7 @@ export default function PreviewSurvey({
   };
 
   if (!activeQuestionId) {
-    return null;
+    return <></>;
   }
 
   return (

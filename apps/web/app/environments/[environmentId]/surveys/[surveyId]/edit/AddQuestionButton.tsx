@@ -1,14 +1,14 @@
 "use client";
 
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useProduct } from "@/lib/products/products";
 import { getQuestionDefaults, questionTypes, universalQuestionPresets } from "@/lib/questions";
+import { cn } from "@formbricks/lib/cn";
+import { ErrorComponent } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { useProduct } from "@/lib/products/products";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;

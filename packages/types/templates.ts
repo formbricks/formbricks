@@ -6,7 +6,7 @@ export type Objective =
   | "support_sales"
   | "sharpen_marketing_messaging"
   | "improve_user_retention"
-  | "other"
+  | "other";
 
 export interface Template {
   name: string;

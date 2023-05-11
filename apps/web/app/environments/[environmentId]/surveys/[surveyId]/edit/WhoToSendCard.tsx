@@ -1,13 +1,11 @@
 "use client";
 
-import { Badge } from "@formbricks/ui/Badge";
-import { Label } from "@formbricks/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { cn } from "@formbricks/lib/cn";
+import type { Survey } from "@formbricks/types/surveys";
+import { Badge, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { cn } from "@formbricks/lib/cn";
 import { useState } from "react";
-import type { Survey } from "@formbricks/types/surveys";
 
 const options = [
   {

@@ -1,11 +1,9 @@
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
-import { createId } from "@paralleldrive/cuid2";
+import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import LogicEditor from "./LogicEditor";
 import { Survey } from "@formbricks/types/surveys";
+import { createId } from "@paralleldrive/cuid2";
 
 interface OpenQuestionFormProps {
   localSurvey: Survey;
@@ -21,7 +19,7 @@ export default function MultipleChoiceMultiForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-}: OpenQuestionFormProps) {
+}: OpenQuestionFormProps): JSX.Element {
   const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
     const newChoices = !question.choices
       ? []

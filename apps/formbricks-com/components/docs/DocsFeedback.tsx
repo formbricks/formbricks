@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { handleFeedbackSubmit, updateFeedback } from "../../lib/handleFeedbackSubmit";
-import { Popover, PopoverTrigger, PopoverContent } from "@formbricks/ui/Popover";
-import { Button } from "@formbricks/ui/Button";
+import { Popover, PopoverTrigger, PopoverContent } from "@formbricks/ui";
+import { Button } from "@formbricks/ui";
 import { useRouter } from "next/router";
 
 export const DocsFeedback: React.FC = () => {
