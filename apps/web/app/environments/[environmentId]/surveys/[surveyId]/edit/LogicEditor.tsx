@@ -189,7 +189,7 @@ export default function LogicEditor({
               <Select
                 defaultValue={logic.condition}
                 onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
-                <SelectTrigger className="min-w-fit flex-1 dark:text-slate-200">
+                <SelectTrigger className="min-w-fit flex-1">
                   <SelectValue placeholder="select condition" />
                 </SelectTrigger>
                 <SelectContent>
@@ -256,7 +256,7 @@ export default function LogicEditor({
               <Select
                 defaultValue={logic.destination}
                 onValueChange={(e) => updateLogic(logicIdx, { destination: e })}>
-                <SelectTrigger className="w-fit overflow-hidden dark:text-slate-200">
+                <SelectTrigger className="w-fit overflow-hidden ">
                   <SelectValue placeholder="select question" />
                 </SelectTrigger>
                 <SelectContent>
@@ -268,6 +268,7 @@ export default function LogicEditor({
                         </SelectItem>
                       )
                   )}
+                  <SelectItem value="end">End of survey</SelectItem>
                 </SelectContent>
               </Select>
 
