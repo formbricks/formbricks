@@ -11,8 +11,8 @@
   "types": "./index.tsx",
   "scripts": {
     "build": "tsup index.tsx --format esm,cjs --dts --external react",
-    "dev": "tsup index.tsx --format esm,cjs --dts --external react --watch",
-    "clean": "rm -rf dist"
+    "clean": "rimraf .turbo node_modules dist",
+    "dev": "tsup index.tsx --format esm,cjs --dts --external react --watch"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
@@ -23,6 +23,7 @@
     "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.21",
     "react": "^18.2.0",
+    "rimraf": "^5.0.0",
     "tsup": "^6.7.0",
     "typescript": "^5.0.4"
   },

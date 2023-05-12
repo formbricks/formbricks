@@ -79,6 +79,9 @@
     },
     "lint": {
       "outputs": []
+    },
+    "clean": {
+      "outputs": []
     }
   }
 }
