@@ -100,7 +100,7 @@ export default function PreviewSurvey({
             Preview
           </div>
           <div className="flex h-full flex-1 items-center overflow-y-auto bg-white">
-            <ContentWrapper className="max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-3xl">
+            <ContentWrapper className="w-full md:max-w-lg">
               {activeQuestionId == "thank-you-card" ? (
                 <ThankYouCard
                   brandColor={brandColor}
@@ -124,7 +124,7 @@ export default function PreviewSurvey({
             </ContentWrapper>
           </div>
           <div className="top-0 z-10 w-full border-b bg-white">
-            <div className="mx-auto max-w-lg p-6">
+            <div className="mx-auto max-w-md p-6">
               <Progress progress={progress} brandColor={brandColor} />
             </div>
           </div>

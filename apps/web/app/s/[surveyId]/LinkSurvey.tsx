@@ -113,7 +113,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
           loadingElement && "fb-animate-pulse fb-opacity-60",
           "flex h-full flex-1 items-center overflow-y-auto bg-white"
         )}>
-        <ContentWrapper className="w-full md:max-w-2xl">
+        <ContentWrapper className="w-full md:max-w-lg">
           {finished ? (
             <div>
               <Confetti colors={[survey.brandColor, "#eee"]} />
@@ -134,7 +134,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         </ContentWrapper>
       </div>
       <div className="top-0 z-10 w-full border-b bg-white">
-        <div className="mx-auto max-w-lg p-6">
+        <div className="mx-auto max-w-md p-6">
           <Progress progress={progress} brandColor={survey.brandColor} />
         </div>
       </div>
