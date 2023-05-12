@@ -45,8 +45,8 @@ const UnderstandUsers = [
   },
   {
     name: "Onboarding Segments",
-    href: "/onboarding",
-    status: false,
+    href: "/onboarding-segmentation",
+    status: true,
     icon: OnboardingIcon,
     description: "Get it right from the start",
   },
