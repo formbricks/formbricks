@@ -138,6 +138,7 @@ model SurveyAttributeFilter {
   survey           Survey                         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId         String
   condition        SurveyAttributeFilterCondition
+  value            String
 
   @@unique([surveyId, attributeClassId])
 }
