@@ -99,8 +99,8 @@ export default function Pricing() {
                 <ul className="mt-4 space-y-4">
                   {tier.features.map((feature, index) => (
                     <li key={index} className="flex items-start">
-                      <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                        <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
+                      <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:border-green-600 dark:bg-green-900">
+                        <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-300" />
                       </div>
                       <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
                     </li>

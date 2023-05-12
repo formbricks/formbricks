@@ -10,7 +10,7 @@ export default function HeaderLight() {
   const router = useRouter();
   return (
     <Popover className="relative" as="header">
-      <div className=" max-w-8xl  mx-auto flex items-center justify-between py-6 sm:px-2 md:justify-start  lg:px-8 xl:px-12 ">
+      <div className="mx-auto flex items-center justify-between py-6 sm:px-2 md:justify-start  lg:px-8 xl:px-12 ">
         <div className="flex w-0 flex-1 justify-start">
           <Link href="/">
             <span className="sr-only">Formbricks</span>
@@ -34,7 +34,7 @@ export default function HeaderLight() {
               router.push("https://app.formbricks.com/auth/signup");
               plausible("Demo_CTA_TryForFree");
             }}>
-            Create surveys for free
+            Start for free
           </Button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import DemoPreview from "@/components/dummyUI/DemoPreview";
 import DashboardMockupDark from "@/images/dashboard-mockup-dark.png";
 import DashboardMockup from "@/images/dashboard-mockup.png";
 import { Button } from "@formbricks/ui";
@@ -6,70 +7,8 @@ import Image from "next/image";
 import { useState } from "react";
 import AddEventDummy from "../dummyUI/AddEventDummy";
 import AddNoCodeEventModalDummy from "../dummyUI/AddNoCodeEventModalDummy";
-import PreviewSurvey from "../dummyUI/PreviewSurvey";
-import type { Question } from "../dummyUI/questionTypes";
 import HeadingCentered from "../shared/HeadingCentered";
 import SetupTabs from "./SetupTabs";
-
-const questions: Question[] = [
-  {
-    id: "1",
-    type: "multipleChoiceSingle",
-    headline: "How disappointed would you be if you could no longer use Formbricks?",
-    subheader: "Please select one of the following options:",
-    required: true,
-    choices: [
-      {
-        id: "2",
-        label: "Not at all disappointed",
-      },
-      {
-        id: "3",
-        label: "Somewhat disappointed",
-      },
-      {
-        id: "4",
-        label: "Very disappointed",
-      },
-    ],
-  },
-  {
-    id: "5",
-    type: "multipleChoiceSingle",
-    headline: "What is your role?",
-    subheader: "Please select one of the following options:",
-    required: true,
-    choices: [
-      {
-        id: "6",
-        label: "Founder",
-      },
-      {
-        id: "7",
-        label: "Executive",
-      },
-      {
-        id: "8",
-        label: "Product Manager",
-      },
-      {
-        id: "9",
-        label: "Product Owner",
-      },
-      {
-        id: "10",
-        label: "Software Engineer",
-      },
-    ],
-  },
-  {
-    id: "11",
-    type: "openText",
-    headline: "How can we improve Formbricks for you?",
-    subheader: "Please be as specific as possible.",
-    required: true,
-  },
-];
 
 export const Steps: React.FC = () => {
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
@@ -108,7 +47,7 @@ export const Steps: React.FC = () => {
               <div className="flex h-40 items-center justify-center">
                 <Button
                   variant="primary"
-                  className="animate-bounce transition-all duration-150 hover:scale-105"
+                  className=""
                   onClick={() => {
                     setAddEventModalOpen(true);
                   }}>
@@ -143,8 +82,8 @@ export const Steps: React.FC = () => {
                 adjust the look and feel of your survey.
               </p>
             </div>
-            <div className="relative w-full rounded-lg bg-slate-100 p-1 dark:bg-slate-800 sm:p-8">
-              <PreviewSurvey questions={questions} brandColor="#00C4B8" />
+            <div className="relative w-full rounded-lg p-1 dark:bg-slate-800 sm:p-8">
+              <DemoPreview template="Product Market Fit Survey (short)" />
             </div>
           </div>
         </div>
