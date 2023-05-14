@@ -6,31 +6,32 @@ import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Label, Switch } from "@formbricks/ui";
 import {
-  ListBulletIcon,
   ChatBubbleBottomCenterTextIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
   CursorArrowRippleIcon,
+  ListBulletIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
-import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
+import CTAQuestionForm from "./CTAQuestionForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
+import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
+import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionDropdown";
-import NPSQuestionForm from "./NPSQuestionForm";
-import UpdateQuestionId from "./UpdateQuestionId";
-import CTAQuestionForm from "./CTAQuestionForm";
 import RatingQuestionForm from "./RatingQuestionForm";
+import UpdateQuestionId from "./UpdateQuestionId";
 
 interface QuestionCardProps {
   localSurvey: Survey;
   question: Question;
   questionIdx: number;
+  moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;
   activeQuestionId: string | null;
@@ -42,6 +43,7 @@ export default function QuestionCard({
   localSurvey,
   question,
   questionIdx,
+  moveQuestion,
   updateQuestion,
   deleteQuestion,
   activeQuestionId,
@@ -123,7 +125,12 @@ export default function QuestionCard({
                       />
                     </div>
                   )}
-                  <QuestionDropdown deleteQuestion={deleteQuestion} questionIdx={questionIdx} />
+                  <QuestionDropdown
+                    questionIdx={questionIdx}
+                    lastQuestion={lastQuestion}
+                    deleteQuestion={deleteQuestion}
+                    moveQuestion={moveQuestion}
+                  />
                 </div>
               </div>
             </Collapsible.CollapsibleTrigger>
@@ -169,6 +176,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                  survey={localSurvey}
                 />
               ) : null}
               <div className="mt-4 border-t border-slate-200">

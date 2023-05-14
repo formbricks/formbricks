@@ -1,11 +1,11 @@
 "use client";
 
-import { Button, ColorPicker, ErrorComponent, Input, Label } from "@/../../packages/ui";
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
+import { Button, ColorPicker, ErrorComponent, Input, Label } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -138,6 +138,9 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
         </div>
       </div>
       <div className="flex items-center justify-end">
+        <Button size="lg" className="mr-2" variant="minimal" id="product-skip" onClick={done}>
+          I&apos;ll do it later
+        </Button>
         <Button
           size="lg"
           variant="darkCTA"

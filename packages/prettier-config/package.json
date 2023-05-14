@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "license": "MIT",
+  "scripts": {
+    "clean": "rimraf node_modules"
+  },
   "devDependencies": {
     "prettier": "^2.8.7",
-    "prettier-plugin-tailwindcss": "^0.2.6"
+    "prettier-plugin-tailwindcss": "^0.2.6",
+    "rimraf": "^5.0.0"
   }
 }

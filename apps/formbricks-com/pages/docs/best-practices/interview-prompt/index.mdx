@@ -1,14 +1,133 @@
 import { Layout } from "@/components/docs/Layout";
 import { Fence } from "@/components/shared/Fence";
 import { Callout } from "@/components/shared/Callout";
+import DemoPreview from "@/components/dummyUI/DemoPreview";
+import Image from "next/image";
+
+import ActionCSS from "./action-css.png";
+import ActionInner from "./action-innertext.png";
+import ActionPageurl from "./action-pageurl.png";
+import AddAction from "./add-action.png";
+import ChangeText from "./change-text.png";
+import CreatePrompt from "./create-prompt.png";
+import InterviewExample from "./interview-example.png";
+import Publish from "./publish-survey.png";
+import RecontactOptions from "./recontact-options.png";
+import SelectAction from "./select-action.png";
 
 export const meta = {
   title: "In-app Interview Prompt",
+  description: "Invite only power users to schedule an interview with your product team.",
 };
 
-<Callout title="Closed Beta" type="note">
-  In-app interview prompts are only available in closed beta. Want to become a design partner? Reach out at
-  hola@formbricks.com
+The Interview Prompt allows you to pick a specific user segment (e.g. Power Users) and invite them to a user interview. Bye, bye spammy email invites, benefit from up to 6x more respondents.
+
+## Purpose
+
+Product analytics and in-app surveys are incomplete without user interviews. Set the scheduling on autopilot for a continuous stream of interviews.
+
+## Preview
+
+<DemoPreview template="Interview Prompt" />
+
+## Formbricks Approach
+
+- Pre-segment users with custom attributes. Only invite highly relevant users.
+- In-app prompts have a 6x higher conversion rate than email invites.
+- Set scheduling user interviews on auto pilot.
+- Soon: Integrate directly with your [Cal.com](http://Cal.com) account.
+
+## Installation
+
+To display an Interview Prompt in your app you want to proceed as follows:
+
+1. Create new Interview Prompt at [app.formbricks.com](http://app.formbricks.com/)
+2. Adjust content and settings
+3. That’s it! 🎉
+
+<Callout title="Formbricks Widget running?" type="note">
+  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display
+  messages and surveys in your app. If not, please follow the [Quick Start Guide
+  (15mins).](/docs/getting-started/quickstart)
 </Callout>
+
+### 1. Create new Interview Prompt
+
+If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
+
+Click on "Create Survey" and choose the template “Interview Prompt”:
+
+<Image src={CreatePrompt} alt="Create interview prompt by template" quality="100" className="rounded-lg" />
+
+### 2. Update prompt and CTA
+
+Update the prompt, description and button text to match your products tonality. You can also update the button color in the Product Settings.
+
+<Image src={ChangeText} alt="Change text content" quality="100" className="rounded-lg" />
+
+In the button settings you have to make sure it is set to “External URL”. In the URL field, copy your booking link (e.g. https://cal.com/company/user-interview). If you don’t have a booking link yet, head over to [cal.com](http://cal.com) and get one - they have the best free plan out there!
+
+<Image src={InterviewExample} alt="Add CSS action" quality="100" className="rounded-lg" />
+
+Save, and move over to the “Audience” tab.
+
+### 3. Pre-segment your audience (coming soon)
+
+<Callout title="Filter by attribute coming soon" type="note">
+  We're working on pre-segmenting users by attributes. We will update this manual in the next few days.
+</Callout>
+
+Once you clicked over to the “Audience” tab you can change the settings. In the **Who To Send** card, select “Filter audience by attribute”. This allows you to only show the prompt to a specific segment of your user base.
+
+In our case, we want to select users who we have assigned the attribute “Power User”. To learn how to assign attributes to your users, please [follow this guide](/docs/attributes/why).
+
+Great, now only the “Power User” segment will see our Interview Prompt. But when will they see it?
+
+### 4. Set up a trigger for the Interview Prompt:
+
+To create the trigger to show your Interview Prompt, go to the “Audience” tab, find the “When to send” card and choose “Add Action”. We will now use our super cool No-Code User Action Tracker:
+
+<Image src={AddAction} alt="Add action" quality="100" className="rounded-lg" />
+
+<Callout title="You can also add actions in your code" type="note">
+  You can also create [Code Actions](/docs/actions/code) using `formbricks.track("Eventname")` - they will
+  automatically appear in your Actions overview as long as the SDK is embedded.
+</Callout>
+
+Generally, we have two types of user actions: Page views and clicks. The Interview Prompt, you’ll likely want to display on a page visit since you already filter who sees the prompt by attributes.
+
+1. **pageURL:** Whenever a user visits a page the survey will be displayed, as long as the other conditions match. Other conditions are pre-segmentation, if this user has seen a survey in the past 2 weeks, etc.
+
+<Image src={ActionPageurl} alt="Add page URL action" quality="100" className="rounded-lg" />
+
+2. **innerText & CSS-Selector:** When a user clicks an element (like a button) with a specific text content or CSS selector, the prompt will be displayed as long as the other conditions also match.
+
+<div className="grid grid-cols-2 space-x-2">
+  <Image src={ActionCSS} alt="Add CSS action" quality="100" className="rounded-lg" />
+  <Image src={ActionInner} alt="Add inner text action" quality="100" className="rounded-lg" />
+</div>
+
+### 5. Select action in the “When to ask” card
+
+<Image src={SelectAction} alt="Select feedback button action" quality="100" className="rounded-lg" />
+
+### 6. Set Recontact Options correctly
+
+Scroll down to “Recontact Options”. Here you have to choose the correct settings to strike the right balance between asking for user feedback and preventing survey fatigue. Your settings also depend on the size of your user base or segment. If you e.g. have thousands of “Power Users” you can easily afford to only display the prompt once. If you have a smaller user base you might want to ask twice to get a sufficient amount of bookings:
+
+<Image src={RecontactOptions} alt="Set recontact options" quality="100" className="rounded-lg" />
+
+### 7. Congrats! You’re ready to publish your survey 💃 🤸
+
+<Image src={Publish} alt="Publish survey" quality="100" className="rounded-lg" />
+
+<Callout title="Formbricks widget running?" type="note">
+  You need to have the Formbricks Widget installed to display the Interview Prompt in your app. Please follow
+  [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart) to install the widget.
+</Callout>
+
+###
+
+# Learn about them users! 🎉
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

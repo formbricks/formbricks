@@ -1,4 +1,4 @@
-export function PMFIcon(props: any) {
+export const PMFIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg width="59" height="77" viewBox="0 0 59 77" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
@@ -79,4 +79,4 @@ export function PMFIcon(props: any) {
       />
     </svg>
   );
-}
+};

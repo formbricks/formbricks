@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { deleteSubmission } from "@/lib/responses/responses";
+import { RatingResponse } from "../RatingResponse";
 
 interface OpenTextSummaryProps {
   data: {
@@ -27,6 +28,9 @@ interface OpenTextSummaryProps {
       id: string;
       question: string;
       answer: string | any[];
+      type: string;
+      scale?: "number" | "star" | "smiley";
+      range?: number;
     }[];
   };
   environmentId: string;
@@ -48,6 +52,8 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
     toast.success("Submission deleted successfully.");
     setDeleteDialogOpen(false);
   };
+
+  console.log(data);
 
   return (
     <div className=" my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -94,7 +100,13 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
           <div key={`${response.id}-${idx}`}>
             <p className="text-sm text-slate-500">{response.question}</p>
             {typeof response.answer !== "object" ? (
-              <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer}</p>
+              response.type === "rating" ? (
+                <div className="h-8">
+                  <RatingResponse scale={response.scale} answer={response.answer} range={response.range} />
+                </div>
+              ) : (
+                <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer}</p>
+              )
             ) : (
               <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer.join(", ")}</p>
             )}

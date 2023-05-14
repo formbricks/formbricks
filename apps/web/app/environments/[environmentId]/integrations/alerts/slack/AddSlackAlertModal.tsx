@@ -1,10 +1,7 @@
 "use client";
 
 import Modal from "@/components/shared/Modal";
-import { Button } from "@formbricks/ui";
-import { Checkbox } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
+import { Button, Checkbox, Input, Label } from "@formbricks/ui";
 
 type AddEmailAlertModalProps = {
   open: boolean;

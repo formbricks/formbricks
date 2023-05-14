@@ -1,10 +1,12 @@
 import type { RatingQuestion } from "@formbricks/types/questions";
 import { Input, Label } from "@formbricks/ui";
-import { HashtagIcon, StarIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
+import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outline";
 
+import type { Survey } from "@formbricks/types/surveys";
 import Dropdown from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {
+  survey: Survey;
   question: RatingQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -50,8 +52,8 @@ export default function RatingQuestionForm({
             <Dropdown
               options={[
                 { label: "Number", value: "number", icon: HashtagIcon },
-                { label: "Star", value: "star", icon: StarIcon, disabled: true },
-                { label: "Smiley", value: "smiley", icon: FaceSmileIcon, disabled: true },
+                { label: "Star", value: "star", icon: StarIcon },
+                { label: "Smiley", value: "smiley", icon: FaceSmileIcon },
               ]}
               defaultValue={question.scale || "number"}
               onSelect={(option) => updateQuestion(questionIdx, { scale: option.value })}
@@ -63,13 +65,14 @@ export default function RatingQuestionForm({
           <div className="mt-2">
             <Dropdown
               options={[
-                { label: "5 points (recommended)", value: "5" },
-                { label: "3 points", value: "3" },
-                { label: "4 points", value: "4" },
-                { label: "7 points", value: "7" },
-                { label: "10 points", value: "10" },
+                { label: "5 points (recommended)", value: 5 },
+                { label: "3 points", value: 3 },
+                { label: "4 points", value: 4 },
+                { label: "7 points", value: 7 },
+                { label: "10 points", value: 10 },
               ]}
-              defaultValue={question.range || "5"}
+              /* disabled={survey.status !== "draft"} */
+              defaultValue={question.range || 5}
               onSelect={(option) => updateQuestion(questionIdx, { range: option.value })}
             />
           </div>

@@ -1,7 +1,6 @@
+import type { CTAQuestion } from "../../../types/questions";
 import { h } from "preact";
-import type { CTAQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
-import Subheader from "./Subheader";
 import HtmlBody from "./HtmlBody";
 
 interface CTAQuestionProps {

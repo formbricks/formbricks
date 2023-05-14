@@ -1,4 +1,4 @@
-export function CustomersIcon(props: any) {
+export const CustomersIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg viewBox="0 0 25 26" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g clipPath="url(#clip0_111_733)">
@@ -70,4 +70,4 @@ export function CustomersIcon(props: any) {
       </defs>
     </svg>
   );
-}
+};

@@ -7,16 +7,15 @@
   <script type="text/javascript">
     !(function () {
       var t = document.createElement("script");
-      (t.type = "text/javascript"),
-        (t.async = !0),
-        (t.src = "https://unpkg.com/@formbricks/js@0.1.2/dist/index.umd.js");
+      (t.type = "text/javascript"), (t.async = !0), (t.src = "/dist/index.umd.js");
       var e = document.getElementsByTagName("script")[0];
       e.parentNode.insertBefore(t, e),
         setTimeout(function () {
           window.formbricks = window.js;
           window.formbricks.init({
-            environmentId: "clfv982hs003dyzhphibui8as",
+            environmentId: "clham12520003yz4zeng786vq",
             apiHost: "http://localhost:3000",
+            logLevel: "debug",
           });
         }, 500);
     })();

@@ -1,17 +1,17 @@
 "use client";
 
 import Progress from "@/components/preview/Progress";
+import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { createDisplay, markDisplayResponded } from "@formbricks/lib/clientDisplay/display";
 import { createResponse, updateResponse } from "@formbricks/lib/clientResponse/response";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Confetti } from "@formbricks/ui";
 import { useEffect, useState } from "react";
-import QuestionConditional from "@/components/preview/QuestionConditional";
-import { createDisplay, markDisplayResponded } from "@formbricks/lib/clientDisplay/display";
 
 type EnhancedSurvey = Survey & {
   brandColor: string;
@@ -113,7 +113,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
           loadingElement && "fb-animate-pulse fb-opacity-60",
           "flex h-full flex-1 items-center overflow-y-auto bg-white"
         )}>
-        <ContentWrapper className="w-full md:max-w-2xl">
+        <ContentWrapper className="w-full md:max-w-lg">
           {finished ? (
             <div>
               <Confetti colors={[survey.brandColor, "#eee"]} />
@@ -134,7 +134,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         </ContentWrapper>
       </div>
       <div className="top-0 z-10 w-full border-b bg-white">
-        <div className="mx-auto max-w-lg p-6">
+        <div className="mx-auto max-w-md p-6">
           <Progress progress={progress} brandColor={survey.brandColor} />
         </div>
       </div>

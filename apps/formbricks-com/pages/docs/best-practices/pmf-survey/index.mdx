@@ -1,175 +1,116 @@
 import { Layout } from "@/components/docs/Layout";
 import { Fence } from "@/components/shared/Fence";
-import Link from "next/link";
+import { Callout } from "@/components/shared/Callout";
+import DemoPreview from "@/components/dummyUI/DemoPreview";
 import Image from "next/image";
-import NewPMF from "@/images/docs/new-pmf.png";
-import ID from "@/images/docs/copy-id.png";
+
+import ActionCSS from "./action-css.png";
+import ActionPageurl from "./action-pageurl.png";
+import ChangeText from "./change-text.png";
+import CreateSurvey from "./create-survey.png";
+import Publish from "./publish.png";
+import RecontactOptions from "./recontact-options.png";
+import SelectAction from "./select-action.png";
 
 export const meta = {
   title: "Product-Market Fit Survey",
+  description: "The Product-Market Fit survey helps you measure, well, Product-Market Fit (PMF).",
 };
-
-The Product-Market Fit survey (or Sean Ellis Test) is a method to measure Product-Market Fit.
 
 ## Purpose
 
-By assessing how disappointed users would be if they could no longer use your service you get a good idea of how well your current product fits your target market.
-
-Measuring it allows you to optimize it.
-
-## Formbricks Approach
-
-- Higher conversion: In-app surveys **convert significantly better** than email surveys
-
-- **Pre-segment** user base: Only ask users who experienced the value of your product
-
-- **Specific** dashboard: Understand your data right, separate signal from noise by design
-
-- Targeted approach: **Personally address** users with their name (if you have it)
-
-- Measure continuously: Feel the pulse of your user base **consistently**
-
-- No UI clutter: **Natively embed** the survey for best possible UX
-
-- **Never** ask twice: Assure to not survey users twice
+Measuring and understanding your PMF is essential to build a large, successful business. It helps you understand what users like, what they’re missing and what to build next. This survey is perfectly suited to measure PMF like [Superhuman](https://review.firstround.com/how-superhuman-built-an-engine-to-find-product-market-fit).
 
 ## Preview
 
-<div className="max-w-md"></div>
+<DemoPreview template="Product Market Fit (Superhuman)" />
 
-## Installation
+## Formbricks Approach
 
-To add the Product-Market Fit Survey to your app, you need to perform these steps:
+- Pre-segment users to only survey users who have experienced your products value
+- Never ask twice, keep your data clean
+- Run on autopilot: Set up once, keep surveying users continuously
 
-1. Create new survey at app.formbricks.com
-2. Embed JS snippet in `<head>`
-3. Configure survey
-4. Render in-app
+## Overview
 
-### 1. Create new survey
+To display the Product-Market Fit survey in your app you want to proceed as follows:
 
-Create an account at [app.formbricks.com](https://app.formbricks.com/auth/signup)
+1. Create new Product-Market Fit survey at [app.formbricks.com](http://app.formbricks.com/)
+2. Setup pre-segmentation to assure high data quality
+3. Setup the user action to display survey at good point in time
 
-Then, create a new Product-Market Fit Survey:
+<Callout title="Formbricks Widget running?" type="note">
+  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display
+  messages and surveys in your app. If not, please follow the [Quick Start Guide (takes 15mins
+  max.)](/docs/getting-started/quickstart)
+</Callout>
 
-<Image src={NewPMF} alt="create pmf survey" quality="100" />
+### 1. Create new PMF survey
 
-Go to the "Setup instructions" tab and locate your survey ID. You'll need it in a minute:
+If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
 
-<Image src={ID} alt="copy survey id" quality="100" />
+Click on "Create Survey" and choose one of the PMF survey templates. The first one is rather short, the latter builds on the ["Product-Market Fit Engine"](https://review.firstround.com/how-superhuman-built-an-engine-to-find-product-market-fit) developed by Superhuman:
 
-### 2. Embed Formbricks snippet in `<head>`
+<Image src={CreateSurvey} alt="Create survey by template" quality="100" className="rounded-lg" />
 
-Embed the following Product-Market Fit Survey script in your HTML `<head>` tag.
+### 2. Update questions (if you like)
 
-Replace the `formId` with survey Id from the Formbricks dashboard:
+You’re free to update the question and answer options. However, based on our experience, we suggest giving the provided template a go 😊 Here is a very [detailed description](https://coda.io/@rahulvohra/superhuman-product-market-fit-engine) of what to do with the data you’re collecting.
 
-```tsx
-<script src="https://cdn.jsdelivr.net/npm/@formbricks/pmf@0.1" defer></script>
+<Image src={ChangeText} alt="Change text content" quality="100" className="rounded-lg" />
 
-<script>
-  window.formbricksPmf = {
-    ...window.formbricksPmf,
-    config: {
-      formbricksUrl: "https://app.formbricks.com",
-      formId: "SURVEY ID HERE", // paste your survey ID here
-      containerId: "formbricks-pmf", // required to render survey in your page
-    },
-  };
-</script>
-```
+_Want to change the button color? You can do so in the product settings!_
 
-All you have to do now is assigning the `containerId` to the div where you want to render your survey (detailed instructions linked at the bottom):
+Save, and move over to where the magic happens: The “Audience” tab.
 
-```html
-<div id="formbricks-pmf"></div>
-```
+### 3. Pre-segment your audience (coming soon)
 
-### 3. Configure survey
+<Callout title="Filter by attribute coming soon" type="note">
+  We're working on pre-segmenting users by attributes. We will update this manual in the next days.
+</Callout>
 
-**Sending user metadata with submission**
+To run this survey properly, you should pre-segment your user base. As touched upon earlier: if you ask every user you’ll get lots of opinions which are often misleading. You only want to gather feedback from people who invested the time to get to know and use your product:
 
-The Product-Market Fit Survey is built for in-app experiences. We assume that you already have user properties stored in a session object. It makes sense to send them to Formbricks to enrich the user profile in the user view. Later on, you will be able to create cohorts to survey based on user properties.
+**Filter by attribute**: You can keep the logic to decide if a user has (or has not) experienced value in your application. This makes most sense if you want to use historic usage data to decide if a user qualifies or not. Create your logic and if it applies, send an attribute to Formbricks by e.g. `formbricks.setAttribute("Loyalty", "Experienced Value");` Here is the full manual on how to [set attributes](/docs/attributes/custom-attributes).
 
-Here is an example of how to take metadata from the next.js Session Object and pass it to Formbricks:
+**Filter by actions (coming soon)**: Later, you can also segment users based on events tracked with Formbricks. However, this makes it impossible to use historic usage data (pre Formbricks usage). Here we will have a few options to achieve that:
 
-```javascript
-window.formbricksPmf = {
-  ...window.formbricksPmf,
-  config: {
-    // ...
-    customer: {
-      email: "", // fill dynamically
-      name: "", // fill dynamically
-    },
-  };
-},
-```
+- Check the time passed since sign-up (e.g. signed up 4 weeks ago)
+- User has performed a specific action a certain number of times or (e.g. created 5 reports)
+- User has performed a combination of actions (e.g. created a report **and** invited a team member)
 
-Note: the `email` field must be present in the customer object
+This way you make sure that you separate potentially misleading opinions from valuable insights.
 
-**Styling**
+### 4. Set up a trigger for the Product-Market Fit survey:
 
-You can style the Product-Market Fit Survey to match your UI. We recommend to at least replace the brand color with your main color.
+You need a trigger to display the survey but in this case, the filtering does all the work. It’s up to you to decide to display the survey after the user viewed a specific subpage (pageURL) or after clicking an element. Have a look at the [Actions manual](/docs/actions/why) if you are not sure how to set them up:
 
-```javascript
-window.formbricksPmf = {
-  ...window.formbricksPmf,
-  config: {
-    // ...
-    style: {
-      brandColor: "#00c4b8",
-    },
-  };
-},
-```
+<div className="grid grid-cols-2 space-x-2">
+  <Image src={ActionCSS} alt="Add CSS action" quality="100" className="rounded-lg" />
+  <Image src={ActionPageurl} alt="Add inner text action" quality="100" className="rounded-lg" />
+</div>
 
-Here are all variables you can set with the current defaults:
+### 5. Select Action in the “When to ask” card
 
-```javascript
-style: {
-  brandColor: "#00c4b8",
-  borderRadius: "0.4rem",
-  containerBgColor: "#f8fafc",
-  textColor: "#0f172a",
-  buttonTextColor: "#ffffff",
-  textareaBorderColor: "#e2e8f0",
-},
-```
+<Image src={SelectAction} alt="Select PMF trigger button action" quality="100" className="rounded-lg" />
 
-### Example config
+### 6. Last step: Set Recontact Options correctly
 
-Here is an example of a full config object:
+Lastly, scroll down to “Recontact Options”. Here you have to choose the correct settings to make sure your data remains of high quality. You want to make sure that this survey is only responded to once per user. It is up to you to decide if you want to display it several times until the user responds:
 
-```javascript
-window.formbricksPmf = {
-  ...window.formbricksPmf,
-  config: {
-    formbricksUrl: "https://app.formbricks.com",
-    formId: "cldetkpre0000nr0hku986hio",
-    containerId: "formbricks-pmf-survey", // always needed
-    customer: {
-      id: "", // fill dynamically
-      name: "", // fill dynamically
-      email: "", // fill dynamically
-    },
-    style: {
-      brandColor: "#00c4b8",
-      borderRadius: "0.4rem",
-      containerBgColor: "#f8fafc",
-      textColor: "#0f172a",
-      buttonTextColor: "#ffffff",
-      textareaBorderColor: "#e2e8f0",
-    },
-  },
-};
-```
+<Image src={RecontactOptions} alt="Set recontact options" quality="100" className="rounded-lg" />
 
-### 4. Render survey in your app
+### 7. Congrats! You’re ready to publish your survey 💃
 
-To add the Product-Market Fit Survey to your UI, you can use different wrappers. Please follow the instructions linked below:
+<Image src={Publish} alt="Publish survey" quality="100" className="rounded-lg" />
 
-1. <Link href="/docs/wrappers/modal">Modal</Link>
-2. <Link href="/docs/wrappers/inline">Inline</Link>
+<Callout title="Formbricks Widget running?" type="warning">
+  You need to have the Formbricks Widget installed to display the PMF Survey in your app. Please follow [this
+  tutorial (Step 4 onwards)](/docs/getting-started/quickstart) to install the widget.
+</Callout>
+
+###
+
+# Get those insights!
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

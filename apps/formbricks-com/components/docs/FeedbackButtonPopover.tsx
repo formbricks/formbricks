@@ -6,6 +6,8 @@ declare global {
   }
 }
 
-export function FeedbackButton() {
+export const FeedbackButton: React.FC = () => {
   return <Button variant="secondary">Open Feedback</Button>;
-}
+};
+
+export default FeedbackButton;

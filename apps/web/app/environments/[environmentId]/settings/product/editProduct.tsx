@@ -8,16 +8,12 @@ import { useRouter } from "next/navigation";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
-import { Button } from "@formbricks/ui";
-import { ErrorComponent } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
-
-import { useProductMutation } from "@/lib/products/mutateProducts";
 import { deleteProduct, useProduct } from "@/lib/products/products";
-import { useEnvironment } from "@/lib/environments/environments";
 import { truncate } from "@/lib/utils";
 
+import { useEnvironment } from "@/lib/environments/environments";
+import { useProductMutation } from "@/lib/products/mutateProducts";
+import { Button, ErrorComponent, Input, Label } from "@formbricks/ui";
 
 export function EditProductName({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);

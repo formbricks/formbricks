@@ -1,5 +1,5 @@
-import type { Event } from "@formbricks/types/events";
-import type { MatchType } from "@formbricks/types/js";
+import type { Event } from "../../../types/events";
+import type { MatchType } from "../../../types/js";
 import { Config } from "./config";
 import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
 import { trackEvent } from "./event";

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { handleFeedbackSubmit, updateFeedback } from "../../lib/handleFeedbackSubmit";
-import { Popover, PopoverTrigger, PopoverContent, Button } from "@formbricks/ui";
+import { Popover, PopoverTrigger, PopoverContent } from "@formbricks/ui";
+import { Button } from "@formbricks/ui";
 import { useRouter } from "next/router";
 
-export default function DocsFeedback() {
+export const DocsFeedback: React.FC = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [sharedFeedback, setSharedFeedback] = useState(false);
@@ -21,10 +22,10 @@ export default function DocsFeedback() {
   return (
     <div className="mt-6 inline-flex cursor-default items-center rounded-md border border-slate-200 bg-white p-4 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
       {!sharedFeedback ? (
-        <div>
+        <div className="text-center md:text-left">
           Was this page helpful?
           <Popover open={isOpen} onOpenChange={setIsOpen}>
-            <div className="ml-4 inline-flex space-x-3">
+            <div className="mt-2 inline-flex space-x-3 md:ml-4 md:mt-0">
               {["Yes 👍", " No 👎"].map((option) => (
                 <PopoverTrigger
                   key={option}
@@ -68,4 +69,6 @@ export default function DocsFeedback() {
       )}
     </div>
   );
-}
+};
+
+export default DocsFeedback;

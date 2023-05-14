@@ -2,13 +2,13 @@
 
 import { cn } from "@formbricks/lib/cn";
 
-interface SecondNavbarProps {
+interface TabBarProps {
   tabs: { id: string; label: string; icon?: React.ReactNode }[];
   activeId: string;
   setActiveId: (id: string) => void;
 }
 
-export function TabBar({ tabs, activeId, setActiveId }: SecondNavbarProps) {
+export const TabBar: React.FC<TabBarProps> = ({ tabs, activeId, setActiveId }) => {
   return (
     <div className="flex h-14 w-full items-center justify-center border-b bg-slate-50">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
@@ -30,4 +30,4 @@ export function TabBar({ tabs, activeId, setActiveId }: SecondNavbarProps) {
       </nav>
     </div>
   );
-}
+};

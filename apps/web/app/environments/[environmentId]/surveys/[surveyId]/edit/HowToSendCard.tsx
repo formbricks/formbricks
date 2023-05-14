@@ -1,10 +1,8 @@
 "use client";
 
-import type { Survey } from "@formbricks/types/surveys";
 import { cn } from "@formbricks/lib/cn";
-import { Badge } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import type { Survey } from "@formbricks/types/surveys";
+import { Badge, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import {
   CheckCircleIcon,
   ComputerDesktopIcon,
@@ -18,9 +16,9 @@ import { useState } from "react";
 const options = [
   {
     id: "web",
-    name: "Web app",
+    name: "In-app (Popup)",
     icon: ComputerDesktopIcon,
-    description: "Send the survey to your audience through your web app.",
+    description: "Survey users inside of your web application.",
     comingSoon: false,
   },
   {
@@ -91,8 +89,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey }: HowToSend
             defaultValue="web"
             value={localSurvey.type}
             onValueChange={setSurveyType}
-            className="flex flex-col space-y-3"
-            disabled={localSurvey.status !== "draft"}>
+            className="flex flex-col space-y-3">
             {options.map((option) => (
               <Label
                 key={option.id}

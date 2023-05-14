@@ -1,5 +1,5 @@
-import type { Person } from "@formbricks/types/js";
-import { Session, Settings } from "@formbricks/types/js";
+import type { Person } from "../../../types/js";
+import type { Session, Settings } from "../../../types/js";
 import { Config } from "./config";
 import {
   AttributeAlreadyExistsError,

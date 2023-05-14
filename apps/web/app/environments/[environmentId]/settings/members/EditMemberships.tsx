@@ -4,6 +4,7 @@ import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { addMember, deleteInvite, removeMember, resendInvite, useMembers } from "@/lib/members";
 import {
+  Badge,
   Button,
   ProfileAvatar,
   Tooltip,
@@ -13,9 +14,8 @@ import {
 } from "@formbricks/ui";
 import { PaperAirplaneIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
-import AddMemberModal from "./AddMemberModal";
-import { Badge } from "@formbricks/ui";
 import toast from "react-hot-toast";
+import AddMemberModal from "./AddMemberModal";
 
 export function EditMemberships({ environmentId }) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useMembers(environmentId);
@@ -88,7 +88,9 @@ export function EditMemberships({ environmentId }) {
               <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
                 <p>{member.name}</p>
               </div>
-              <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">{member.email}</div>
+              <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
+                {member.email}
+              </div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
                 {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}
                 {member.role !== "owner" && (
