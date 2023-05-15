@@ -38,7 +38,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
   useEffect(() => {
     if (!isLoadingAttributeClasses) {
-      if (attributeClasses.length > 0) {
+      if (localSurvey.attributeFilters.length > 0) {
         setOpen(true);
       }
     }
