@@ -74,15 +74,18 @@ export default function SurveyMenuBar({
           loading={isMutatingSurvey}
           onClick={() => {
             triggerSurveyMutate({ ...localSurvey })
-              .then(() => {
+              .then(async (response) => {
+                if (!response?.ok) {
+                  throw new Error(await response?.text());
+                }
                 toast.success("Changes saved.");
+                if (localSurvey.status !== "draft") {
+                  router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary`);
+                }
               })
-              .catch((error) => {
-                toast.error(`Error: ${error.message}`);
+              .catch(() => {
+                toast.error(`Error saving changes`);
               });
-            if (localSurvey.status !== "draft") {
-              router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary`);
-            }
           }}>
           Save Changes
         </Button>
