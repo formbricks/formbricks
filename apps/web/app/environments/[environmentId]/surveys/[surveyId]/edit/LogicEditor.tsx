@@ -60,8 +60,26 @@ export default function LogicEditor({
     openText: ["submitted", "skipped"],
     multipleChoiceSingle: ["submitted", "equals", "notEquals"],
     multipleChoiceMulti: ["submitted", "skipped", "includesAll", "includesOne", "equals"],
-    nps: ["equals", "notEquals", "lessThan", "lessEqual", "greaterThan", "greaterEqual", "submitted"],
-    rating: ["equals", "notEquals", "lessThan", "lessEqual", "greaterThan", "greaterEqual", "submitted"],
+    nps: [
+      "equals",
+      "notEquals",
+      "lessThan",
+      "lessEqual",
+      "greaterThan",
+      "greaterEqual",
+      "submitted",
+      "skipped",
+    ],
+    rating: [
+      "equals",
+      "notEquals",
+      "lessThan",
+      "lessEqual",
+      "greaterThan",
+      "greaterEqual",
+      "submitted",
+      "skipped",
+    ],
   };
   const logicConditions: LogicConditions = {
     submitted: {
