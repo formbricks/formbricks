@@ -168,13 +168,6 @@ export default function LogicEditor({
   };
 
   const truncate = (str: string, n: number) => (str.length > n ? str.substring(0, n - 1) + "..." : str);
-  // const getValueLabel = (id: string) => {
-  //   if ("choices" in question) {
-  //     const choice = question.choices.find((choice) => choice.id === id);
-  //     return choice ? truncate(choice.label, 30) : id;
-  //   }
-  //   return id;
-  // };
 
   if (!(question.type in conditions)) {
     return <></>;
@@ -283,7 +276,7 @@ export default function LogicEditor({
               />
             </div>
           ))}
-          <div className="flex flex-wrap items-center space-x-2 text-sm">
+          <div className="flex flex-wrap items-center space-x-2 py-1 text-sm">
             <BsArrowDown className="h-4 w-4" />
             <p>All other answers will continue to the next question</p>
           </div>
