@@ -50,7 +50,6 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, localSurvey, questions, setActiveQuestionId]);
 
-  // Helper function to evaluate logic conditions
   function evaluateCondition(logic: Logic, answerValue: any): boolean {
     switch (logic.condition) {
       case "equals":
@@ -80,6 +79,10 @@ export default function PreviewSurvey({
           Array.isArray(logic.value) &&
           logic.value.some((v) => answerValue.includes(v))
         );
+      case "submitted":
+        return (Array.isArray(answerValue) && answerValue.length > 0) || answerValue !== "";
+      case "skipped":
+        return (Array.isArray(answerValue) && answerValue.length === 0) || answerValue === "";
       default:
         return false;
     }
@@ -90,56 +93,41 @@ export default function PreviewSurvey({
 
     const questions = localSurvey.questions;
 
-    // Find the current question index
     const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
     if (currentQuestionIndex === -1) throw new Error("Question not found");
 
     const answerValue = answer[activeQuestionId];
-
     const currentQuestion = questions[currentQuestionIndex];
 
-    // If the current question has logic
     if (currentQuestion.logic && currentQuestion.logic.length > 0) {
       for (let logic of currentQuestion.logic) {
         if (!logic.destination) continue;
 
         if (evaluateCondition(logic, answerValue)) {
-          const destination = logic.destination;
-          return destination === "end" ? questions[questions.length - 1].id : destination;
+          return logic.destination;
         }
       }
     }
-
-    // If no logic is set or no logic conditions were met, continue to the next question
-    return questions[currentQuestionIndex + 1].id;
+    return questions[currentQuestionIndex + 1]?.id || "";
   }
 
   const gotoNextQuestion = (data) => {
-    const nextId = getNextQuestion(data);
-    console.log(nextId);
-
     const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
-    if (currentIndex < questions.length - 1) {
-      setActiveQuestionId(questions[currentIndex + 1].id);
+    const nextQuestionId = getNextQuestion(data);
+
+    if (currentIndex < questions.length - 1 && nextQuestionId !== "end") {
+      setActiveQuestionId(nextQuestionId);
+      // setActiveQuestionId(questions[currentIndex + 1].id);
     } else {
       if (localSurvey?.thankYouCard?.enabled) {
         setActiveQuestionId("thank-you-card");
+        setProgress(1);
       } else {
         setIsModalOpen(false);
         setTimeout(() => {
           setActiveQuestionId(questions[0].id);
           setIsModalOpen(true);
         }, 500);
-        if (localSurvey?.thankYouCard?.enabled) {
-          setActiveQuestionId("thank-you-card");
-          setProgress(1);
-        } else {
-          setIsModalOpen(false);
-          setTimeout(() => {
-            setActiveQuestionId(questions[0].id);
-            setIsModalOpen(true);
-          }, 500);
-        }
       }
     }
   };
