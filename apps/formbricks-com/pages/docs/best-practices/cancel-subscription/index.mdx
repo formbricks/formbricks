@@ -1,0 +1,125 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+import DemoPreview from "@/components/dummyUI/DemoPreview";
+
+import CreateChurnFlow from "./create-cancel-flow.png";
+import ChangeText from "./change-text.png";
+import TriggerInnerText from "./trigger-inner-text.png";
+import TriggerCSS from "./trigger-css-selector.png";
+import TriggerPageUrl from "./trigger-page-url.png";
+import RecontactOptions from "./recontact-options.png";
+import PublishSurvey from "./publish-survey.png";
+import SelectAction from "./select-action.png";
+
+export const meta = {
+  title: "Learn from Churn",
+  description: "To know how to decrease churn, you have to understand it. Use a micro-survey.",
+};
+
+Churn is hard, but can teach you a lot. Whenever a user decides that your product isn’t worth it anymore, you have a unique opportunity to get deep insights. These insights are pure gold to reduce churn.
+
+## Purpose
+
+The Churn Survey is among the most effective ways to identify weaknesses in you offering. People were willing to pay but now are not anymore: What changed? Let’s find out!
+
+## Preview
+
+<DemoPreview template="Churn Survey" />
+
+## Formbricks Approach
+
+- Ask at exactly the right point in time
+- Follow-up to prevent bad reviews
+- Coming soon: Make survey mandatory
+
+## Overview
+
+To run the Churn Survey in your app you want to proceed as follows:
+
+1. Create new Churn Survey at [app.formbricks.com](http://app.formbricks.com/)
+2. Set up the user action to display survey at right point in time
+3. Choose correct recontact options to never miss a feedback
+4. Prevent that churn!
+
+<Callout title="Formbricks Widget running?" type="note">
+  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display
+  messages and surveys in your app. If not, please follow the [Quick Start Guide (takes 15mins
+  max.)](/docs/getting-started/quickstart)
+</Callout>
+
+### 1. Create new Churn Survey
+
+If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
+
+Click on "Create Survey" and choose the template “Churn Survey”:
+
+<Image src={CreateChurnFlow} alt="Create churn survey by template" quality="100" className="rounded-lg" />
+
+### 2. Update questions (if you like)
+
+You’re free to update the question and answer options. However, based on our experience, we suggest giving the provided template a go 😊
+
+<Image src={ChangeText} alt="Change text content" quality="100" className="rounded-lg" />
+
+_Want to change the button color? You can do so in the product settings._
+
+Save, and move over to the “Audience” tab.
+
+### 3. Pre-segment your audience
+
+In this case, you don’t really need to pre-segment your audience. You likely want to ask everyone who hits the “Cancel subscription” button.
+
+### 4. Set up a trigger
+
+To create the trigger for your Churn Survey, you have two options to choose from:
+
+1. **Trigger by innerText:** You likely have a “Cancel Subscription” button in your app. You can setup a user Action with the according `innerText` to trigger the survey, like so:
+
+<Image src={TriggerInnerText} alt="Set the trigger by inner Text" quality="100" className="rounded-lg" />
+
+2. **Trigger by CSS Selector:** In case you have more than one button saying “Cancel Subscription” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“cancel-subscription”` and set your user action up like so:
+
+<Image src={TriggerCSS} alt="Set the trigger by CSS Selector" quality="100" className="rounded-lg" />
+
+3. **Trigger by pageURL:** Lastly, you could also display your survey on a subpage “/subscription-cancelled” where you forward users once they cancelled the trial subscription. You can then create a user Action with the type `pageURL` with the following settings:
+
+<Image src={TriggerPageUrl} alt="Set the trigger by page URL" quality="100" className="rounded-lg" />
+
+Whenever a user visits this page, matches the filter conditions above and the recontact options (below) the survey will be displayed ✅
+
+Here is our complete [Actions manual](/docs/actions/why) covering [Code](/docs/actions/code) and [No-Code](/docs/actions/no-code) Actions.
+
+<Callout title="Pre-churn flow coming soon" type="note">
+
+We’re currently building full-screen survey pop-ups. You’ll be able to prevent users from closing the survey unless they respond to it. It’s certainly debatable if you want that but you could force them to click through the survey before letting them cancel 🤷
+
+</Callout>
+
+### 5. Select Action in the “When to ask” card
+
+<Image src={SelectAction} alt="Select feedback button action" quality="100" className="rounded-lg" />
+
+### 6. Last step: Set Recontact Options correctly
+
+Lastly, scroll down to “Recontact Options”. Here you have to choose the correct settings to make sure you milk these super valuable insights. You want to make sure that this survey is always displayed, no matter if the user has already seen a survey in the past days:
+
+<Image src={RecontactOptions} alt="Set recontact options" quality="100" className="rounded-lg" />
+
+These settings make sure the survey is always displayed, when a user wants to Cancel their subscription.
+
+### 7. Congrats! You’re ready to publish your survey 💃
+
+<Image src={PublishSurvey} alt="Publish survey" quality="100" className="rounded-lg" />
+
+<Callout title="Formbricks Widget running?" type="warning">
+  You need to have the Formbricks Widget installed to display the Churn Survey in your app. Please follow
+  [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart) to install the widget.
+</Callout>
+
+###
+
+# Get those insights! 🎉
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

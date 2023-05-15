@@ -8,7 +8,7 @@ import rehypePrism from "@mapbox/rehype-prism";
 const nextConfig = {
   reactStrictMode: true,
   pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
-  transpilePackages: ["@formbricks/ui"],
+  transpilePackages: ["@formbricks/ui", "@formbricks/lib"],
   async redirects() {
     return [
       {

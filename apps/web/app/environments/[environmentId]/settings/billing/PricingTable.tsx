@@ -87,7 +87,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
                 ))}
               </ul>
               <p className="mt-6 text-3xl">
-                <span className="text-slate-80 font-light">Always free</span>
+                <span className="text-slate-800font-light">Always free</span>
               </p>
               {session.user?.plan === "free" ? (
                 <Button variant="minimal" disabled className="mt-6 w-full justify-center py-4 shadow-sm">

@@ -15,6 +15,7 @@ import CopyIds from "./copy-ids.png";
 
 export const meta = {
   title: "Docs Feedback",
+  description: "Docs Feedback allows you to measure how clear your documentation is.",
 };
 
 Docs Feedback allows you to measure how clear your documentation is.
@@ -42,15 +43,33 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 
 2. In the Menu (top right) you see that you can switch between a “Development” and a “Production” environment. These are two separate environments so your test data doesn’t mess up the insights from prod. Switch to “Development”:
 
-<Image src={SwitchToDev} alt="switch to dev environment" quality="100" className="rounded" />
+<Image
+  src={SwitchToDev}
+  alt="switch to dev environment"
+  quality="100"
+  className="rounded-lg"
+  className="rounded"
+/>
 
 3. Then, create a survey using the template “Docs Feedback”:
 
-<Image src={DocsTemplate} alt="select docs template" quality="100" className="rounded" />
+<Image
+  src={DocsTemplate}
+  alt="select docs template"
+  quality="100"
+  className="rounded-lg"
+  className="rounded"
+/>
 
 4. Change the Internal Question ID of the first question to **“isHelpful”** to make your life easier 😉
 
-<Image src={ChangeId} alt="switch to dev environment" quality="100" className="rounded" />
+<Image
+  src={ChangeId}
+  alt="switch to dev environment"
+  quality="100"
+  className="rounded-lg"
+  className="rounded"
+/>
 
 5. In the same way, you can change the Internal Question ID of the _Please elaborate_ question to **“additionalFeedback”** and the one of the _Page URL_ question to **“pageUrl”**.
 
@@ -61,15 +80,21 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 
 6. Click on “Continue to Audience” or select the audience tab manually. Scroll down to “When to ask” and create a new Action:
 
-<Image src={WhenToAsk} alt="set up when to ask card" quality="100" className="rounded" />
+<Image
+  src={WhenToAsk}
+  alt="set up when to ask card"
+  quality="100"
+  className="rounded-lg"
+  className="rounded"
+/>
 
 7. Our goal is to create an event that never fires. This is a bit nonsensical because it is a workaround. Stick with me 😃 Fill the action out like on the screenshot:
 
-<Image src={AddAction} alt="add action" quality="100" className="rounded" />
+<Image src={AddAction} alt="add action" quality="100" className="rounded-lg" className="rounded" />
 
 8. Select the Non-Event in the dropdown. Now you see that the “Publish survey” button is active. Publish your survey 🤝
 
-<Image src={SelectNonevent} alt="select nonevent" quality="100" className="rounded" />
+<Image src={SelectNonevent} alt="select nonevent" quality="100" className="rounded-lg" className="rounded" />
 
 **You’re all setup in Formbricks Cloud for now 👍**
 
@@ -82,7 +107,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 
 Before we start, lets talk about the widget. It works like this:
 
-- Once the user selects yes/no, a partial response is created in Formbricks. It includes the feedback and the current page url.
+- Once the user selects yes/no, a partial response is sent to the Formbricks API. It includes the feedback and the current page url.
 - Then the user is presented with an additional open text field to further explain their choice. Once it's submitted, the previous response is updated with the additional feedback.
 
 This allows us to capture and analyze partial feedback where the user is not willing to provide additional information.
@@ -93,7 +118,7 @@ This allows us to capture and analyze partial feedback where the user is not wil
 
 2. Likely, you have a template file or similar which renders the navigation at the bottom of the page:
 
-<Image src={DocsNavi} alt="doc navigation" quality="100" className="rounded" />
+<Image src={DocsNavi} alt="doc navigation" quality="100" className="rounded-lg" className="rounded" />
 
 Locate that file. We are using the [Tailwind Template “Syntax”](https://tailwindui.com/templates/syntax) for our docs. Here is our [Layout.tsx](https://github.com/formbricks/formbricks/blob/main/apps/formbricks-com/components/docs/Layout.tsx) file.
 
@@ -348,7 +373,7 @@ Before you roll it out in production, you want to test it. To do so, you need tw
 
 When you are on the survey detail page, you’ll find both of them in the URL:
 
-<Image src={CopyIds} alt="copy IDs" quality="100" className="rounded" />
+<Image src={CopyIds} alt="copy IDs" quality="100" className="rounded-lg" className="rounded" />
 
 Now, you have to replace the IDs and the API host accordingly in your `handleFeedbackSubmit`:
 

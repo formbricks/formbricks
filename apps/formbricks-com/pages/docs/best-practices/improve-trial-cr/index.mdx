@@ -1,0 +1,114 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+import DemoPreview from "@/components/dummyUI/DemoPreview";
+import Image from "next/image";
+
+import ActionText from "./action-innertext.png";
+import ActionPageurl from "./action-pageurl.png";
+import ChangeText from "./change-text.png";
+import CreateSurvey from "./create-survey.png";
+import Publish from "./publish.png";
+import RecontactOptions from "./recontact-options.png";
+import SelectAction from "./select-action.png";
+
+export const meta = {
+  title: "Improve Trial Conversion",
+  description: "Understand how to improve the trial conversions to get more paying customers.",
+};
+
+When a user doesn't convert, you want to know why. A micro-survey displayed at exactly the right time gives you a window into understanding the most relevant question: To pay or not to pay?
+
+## Purpose
+
+The better you understand why free users don’t convert to paid users, the higher your revenue. You can make an informed decision about what to change in your offering to make more people pay for your service.
+
+## Preview
+
+<DemoPreview template="Improve Trial Conversion" />
+
+## Formbricks Approach
+
+- Ask at exactly the right point in time
+- Ask to understand the problem, don’t ask for solutions
+
+## Installation
+
+To display the Trial Conversion Survey in your app you want to proceed as follows:
+
+1. Create new Trial Conversion Survey at [app.formbricks.com](http://app.formbricks.com/)
+2. Set up the user action to display survey at right point in time
+3. Print that 💸
+
+<Callout title="Formbricks Widget running?" type="note">
+  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display
+  messages and surveys in your app. If not, please follow the [Quick Start Guide (takes 15mins
+  max.)](/docs/getting-started/quickstart)
+</Callout>
+
+### 1. Create new Trial Conversion Survey
+
+If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
+
+Click on "Create Survey" and choose the template “Improve Trial Conversion”:
+
+<Image src={CreateSurvey} alt="Create survey by template" quality="100" className="rounded-lg" />
+
+### 2. Update questions (if you like)
+
+You’re free to update the questions and answer options. However, based on our experience, we suggest giving the provided template a go 😊
+
+<Image src={ChangeText} alt="Change text content" quality="100" className="rounded-lg" />
+
+_Want to change the button color? You can do so in the product settings!_
+
+Save, and move over to the “Audience” tab.
+
+### 3. Pre-segment your audience (coming soon)
+
+<Callout title="Filter by attribute coming soon" type="note">
+  We're working on pre-segmenting users by attributes. We will update this manual in the next days.
+</Callout>
+
+Pre-segmentation isn't relevant for this survey because you likely want to solve all people who cancel their trial. You probably have a specific user action e.g. clicking on "Cancel Trial" you can use to only display the survey to users trialing your product.
+
+### 4. Set up a trigger for the Trial Conversion Survey:
+
+How you trigger your survey depends on your product. There are two options:
+
+1. **Trigger by pageURL:** Let’s say you have a page under “/trial-cancelled” where you forward users once they cancelled the trial subscription. You can then create an user Action with the type `pageURL` with the following settings:
+
+<Image src={ActionPageurl} alt="Change text content" quality="100" className="rounded-lg" />
+
+Whenever a user visits this page, the survey will be displayed ✅
+
+2. **Trigger by Button Click:** In a different case, you have a “Cancel Trial button in your app. You can setup a user Action with the according `innerText` like so:
+
+<Image src={ActionText} alt="Change text content" quality="100" className="rounded-lg" />
+
+Please have a look at our complete [Actions manual](/docs/actions/why) if you have questions.
+
+### 5. Select Action in the “When to ask” card
+
+<Image src={SelectAction} alt="Select feedback button action" quality="100" className="rounded-lg" />
+
+### 6. Last step: Set Recontact Options correctly
+
+Lastly, scroll down to “Recontact Options”. Here you have to choose the correct settings to make sure you gather as many insights as possible. You want to make sure that this survey is always displayed, no matter if the user has already seen a survey in the past days:
+
+<Image src={RecontactOptions} alt="Set recontact options" quality="100" className="rounded-lg" />
+
+### 7. Congrats! You’re ready to publish your survey 💃
+
+<Image src={Publish} alt="Publish survey" quality="100" className="rounded-lg" />
+
+<Callout title="Formbricks Widget running?" type="warning">
+  You need to have the Formbricks Widget installed to display the Improve Trial Conversion Survey in your app.
+  Please follow [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart) to install the widget.
+</Callout>
+
+###
+
+# Go get 'em 🎉
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

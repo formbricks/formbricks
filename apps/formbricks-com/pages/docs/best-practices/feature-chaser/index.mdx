@@ -1,0 +1,106 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+import DemoPreview from "@/components/dummyUI/DemoPreview";
+import Image from "next/image";
+
+import ActionCSS from "./action-css.png";
+import ActionText from "./action-text.png";
+import ChangeText from "./change-text.png";
+import CreateSurvey from "./create-survey.png";
+import Publish from "./publish.png";
+import RecontactOptions from "./recontact-options.png";
+import SelectAction from "./select-action.png";
+
+export const meta = {
+  title: "Feature Chaser",
+  description: "Follow up with users who used a specific feature. Gather feedback and improve your product.",
+};
+
+Following up on specific features only makes sense with very targeted surveys. Formbricks is built for that.
+
+## Purpose
+
+Product analytics never tell you why a feature is used - and why not. Following up on specfic features with highly relevant questions is a great way to gather feedback and improve your product.
+
+## Preview
+
+<DemoPreview template="Feature Chaser" />
+
+## Formbricks Approach
+
+- Trigger survey at exactly the right point in the user journey
+- Never ask twice, keep your data clean
+- Prevent survey fatigue with global waiting period
+
+## Overview
+
+To run the Feature Chaser survey in your app you want to proceed as follows:
+
+1. Create new Feature Chaser survey at [app.formbricks.com](http://app.formbricks.com/)
+2. Setup a user action to display survey at the right point in time
+
+<Callout title="Formbricks Widget running?" type="note">
+  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display
+  messages and surveys in your app. If not, please follow the [Quick Start Guide (takes 15mins
+  max.)](/docs/getting-started/quickstart)
+</Callout>
+
+### 1. Create new Feature Chaser
+
+If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
+
+Click on "Create Survey" and choose the template “Feature Chaser”:
+
+<Image src={CreateSurvey} alt="Create survey by template" quality="100" className="rounded-lg" />
+
+### 2. Update questions
+
+The questions you want to ask are dependent on your feature and can be very specific. In the template, we suggest a high-level check on how easy it was for the user to achieve their goal. We also add an opportunity to provide context:
+
+<Image src={ChangeText} alt="Change text content" quality="100" className="rounded-lg" />
+
+Save, and move over to where the magic happens: The “Audience” tab.
+
+### 3. Set up a trigger for the Feature Chaser survey:
+
+Before setting the right trigger, you need to identify a user action in your app which signals, that they have just used the feature you want to understand better. In most cases, it is clicking a specific button in your product.
+
+You can create [Code Actions](/docs/actions/code) and [No Code Actions](/docs/actions/no-code) to follow users through your app. In this example, we will create a No Code Action.
+
+There are two ways to track a button:
+
+1. **Trigger by innerText:** You might have a button with a unique text at the end of your feature e.g. "Export Report". You can setup a user Action with the according `innerText` to trigger the survey, like so:
+
+<Image src={ActionText} alt="Set the trigger by inner Text" quality="100" className="rounded-lg" />
+
+2. **Trigger by CSS Selector:** In case you have more than one button saying “Export Report” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“export-report-featurename”` and set your user action up like so:
+
+<Image src={ActionCSS} alt="Set the trigger by CSS Selector" quality="100" className="rounded-lg" />
+
+Please follow our [Actions manual](/docs/actions/why) for an in-depth description of how Actions work.
+
+### 4. Select Action in the “When to ask” card
+
+<Image src={SelectAction} alt="Select PMF trigger button action" quality="100" className="rounded-lg" />
+
+### 5. Last step: Set Recontact Options correctly
+
+Lastly, scroll down to “Recontact Options”. Here you have full freedom to decide who you want to ask. Generally, you only want to ask every user once and prevent survey fatigue. It's up to you to decide if you want to ask again, when the user did not yet reply:
+
+<Image src={RecontactOptions} alt="Set recontact options" quality="100" className="rounded-lg" />
+
+### 7. Congrats! You’re ready to publish your survey 💃
+
+<Image src={Publish} alt="Publish survey" quality="100" className="rounded-lg" />
+
+<Callout title="Formbricks Widget running?" type="warning">
+  You need to have the Formbricks Widget installed to display the Feature Chaser in your app. Please follow
+  [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart) to install the widget.
+</Callout>
+
+###
+
+# Get those insights! 🎉
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

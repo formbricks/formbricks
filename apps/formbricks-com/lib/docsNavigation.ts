@@ -16,14 +16,6 @@ const navigation = [
     ],
   },
   {
-    title: "Best Practices",
-    links: [
-      /*       { title: "Feedback Box", href: "/docs/best-practices/feedback-box" }, */
-      { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
-      /*       { title: "In-app Interview Prompt", href: "/docs/best-practices/interview-prompt" }, */
-    ],
-  },
-  {
     title: "Attributes",
     links: [
       { title: "Why Attributes?", href: "/docs/attributes/why" },
@@ -37,6 +29,18 @@ const navigation = [
       { title: "Why Actions?", href: "/docs/actions/why" },
       { title: "No-Code Actions", href: "/docs/actions/no-code" },
       { title: "Code Actions", href: "/docs/actions/code" },
+    ],
+  },
+  {
+    title: "Best Practices",
+    links: [
+      { title: "Learn from Churn", href: "/docs/best-practices/cancel-subscription" },
+      { title: "Interview Prompt", href: "/docs/best-practices/interview-prompt" },
+      { title: "Product-Market Fit", href: "/docs/best-practices/pmf-survey" },
+      { title: "Trial Conversion", href: "/docs/best-practices/improve-trial-cr" },
+      { title: "Feature Chaser", href: "/docs/best-practices/feature-chaser" },
+      { title: "Feedback Box", href: "/docs/best-practices/feedback-box" },
+      { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
     ],
   },
   {
