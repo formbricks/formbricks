@@ -140,7 +140,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
               className="h-full w-full px-3 lg:px-6"
               href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>
               <PencilSquareIcon className="mr-2 h-5  w-5 text-white" />
-              Edit Survey
+              Edit
             </Button>
           </div>
         </div>

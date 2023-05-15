@@ -4,21 +4,11 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  Button,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui";
-import { CheckCircleIcon, InformationCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
+import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"; /*  */
+import { UserGroupIcon, FunnelIcon } from "@heroicons/react/24/solid";
 
 const filterConditions = [
   { id: "equals", name: "equals" },
@@ -97,26 +87,39 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
             <div>
               <p className="font-semibold text-slate-800">Who to ask</p>
               <p className="mt-1 truncate text-sm text-slate-500">
-                Choose the actions which attributeFilter the survey.
+                Pre-segment your users with attributes filters.
               </p>
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="">
           <hr className="py-1 text-slate-600" />
-          {localSurvey.attributeFilters.length === 0 && (
-            <div className="px-4 pb-0 pt-4">
-              <Alert>
-                <InformationCircleIcon className="h-4 w-4" />
-                <AlertTitle>Survey all people</AlertTitle>
-                <AlertDescription>
-                  If no additional filters are selected, all users can potentially be surveyed.
-                </AlertDescription>
-              </Alert>
+
+          <div className="mx-6 flex items-center rounded-lg border border-slate-200 p-4 text-slate-800">
+            <div>
+              {localSurvey.attributeFilters.length === 0 ? (
+                <UserGroupIcon className="mr-4 h-6 w-6 text-slate-700" />
+              ) : (
+                <FunnelIcon className="mr-4 h-6 w-6 text-slate-700" />
+              )}
             </div>
-          )}
+            <div>
+              <p className="">
+                Audience:{" "}
+                <span className="font-semibold text-slate-900">
+                  {localSurvey.attributeFilters.length === 0 ? "All users" : "Filtered"}
+                </span>
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                {localSurvey.attributeFilters.length === 0
+                  ? "Currently, all users will might see the survey."
+                  : "Only users who match the attribute filter will see the survey."}
+              </p>
+            </div>
+          </div>
+
           {localSurvey.attributeFilters.map((attributeFilter, idx) => (
-            <div className="mt-2 px-5" key={idx}>
+            <div className="mt-4 px-5" key={idx}>
               <div className="justify-left flex items-center space-x-3">
                 <p className={cn(idx !== 0 && "ml-5", "text-right text-sm")}>{idx === 0 ? "Where" : "and"}</p>
                 <Select
@@ -148,7 +151,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                       attributeFilter.value
                     )
                   }>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[210px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -174,7 +177,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
               </div>
             </div>
           ))}
-          <div className="ml-14 px-8 py-4">
+          <div className="px-6 py-4">
             <Button
               variant="secondary"
               onClick={() => {
