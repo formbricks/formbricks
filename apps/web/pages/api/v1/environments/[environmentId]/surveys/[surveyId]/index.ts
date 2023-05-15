@@ -132,18 +132,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       delete body.triggers;
     }
 
-    if (body.attributeFilters) {
+    const attributeFilters: AttributeFilter[] = body.attributeFilters;
+
+    if (attributeFilters) {
       const newFilters: AttributeFilter[] = [];
-      const removedFilters: AttributeFilter[] = [];
+      const removedFilterIds: string[] = [];
       // find added attribute filters
-      for (const attributeFilter of body.attributeFilters) {
+      for (const attributeFilter of attributeFilters) {
         if (!attributeFilter.attributeClassId || !attributeFilter.condition || !attributeFilter.value) {
           continue;
         }
         if (
           currentAttributeFilters.find(
             (f) =>
-              f.attributeClass === attributeFilter.attributeFilter &&
+              f.attributeClassId === attributeFilter.attributeClassId &&
               f.condition === attributeFilter.condition &&
               f.value === attributeFilter.value
           )
@@ -160,7 +162,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       // find removed attribute filters
       for (const attributeFilter of currentAttributeFilters) {
         if (
-          body.attributeFilters.find(
+          attributeFilters.find(
             (f) =>
               f.attributeClassId === attributeFilter.attributeClassId &&
               f.condition === attributeFilter.condition &&
@@ -169,7 +171,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         ) {
           continue;
         } else {
-          removedFilters.push(attributeFilter.attributeClassId);
+          removedFilterIds.push(attributeFilter.attributeClassId);
         }
       }
       // create new attribute filters
@@ -184,10 +186,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         };
       }
       // delete removed triggers
-      if (removedFilters.length > 0) {
+      if (removedFilterIds.length > 0) {
         // delete all attribute filters that match the removed attribute classes
         await Promise.all(
-          removedFilters.map(async (attributeClassId) => {
+          removedFilterIds.map(async (attributeClassId) => {
             await prisma.surveyAttributeFilter.deleteMany({
               where: {
                 attributeClassId,
@@ -203,8 +205,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       ...data,
       ...body,
     };
-
-    console.log(JSON.stringify(data, null, 2));
 
     // remove fields that are not in the survey model
     delete data.responseRate;
