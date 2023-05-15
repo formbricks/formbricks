@@ -112,7 +112,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
               </p>
               <p className="mt-1 text-sm text-slate-500">
                 {localSurvey.attributeFilters.length === 0
-                  ? "Currently, all users will might see the survey."
+                  ? "Currently, all users might see the survey."
                   : "Only users who match the attribute filter will see the survey."}
               </p>
             </div>
