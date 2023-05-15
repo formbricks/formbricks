@@ -73,7 +73,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
     return total;
   }, [results]);
 
-  console.log(JSON.stringify(questionSummary.question, null, 2));
+  // console.log(JSON.stringify(questionSummary.question, null, 2));
 
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">

@@ -169,7 +169,8 @@ export default function LogicEditor({
     updateQuestion(questionIdx, { logic: newLogic });
   };
 
-  const truncate = (str: string, n: number) => (str.length > n ? str.substring(0, n - 1) + "..." : str);
+  const truncate = (str: string, n: number) =>
+    str && str.length > n ? str.substring(0, n - 1) + "..." : str;
 
   if (!(question.type in conditions)) {
     return <></>;
