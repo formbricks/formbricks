@@ -38,10 +38,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     }
   }, [survey]);
 
-  useEffect(() => {
-    console.log("SurveyEditor activeQuestionId", activeQuestionId);
-  }, [activeQuestionId]);
-
   if (isLoadingSurvey || isLoadingProduct || !localSurvey) {
     return <LoadingSpinner />;
   }
