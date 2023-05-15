@@ -90,7 +90,7 @@ export const Button: React.ForwardRefExoticComponent<
         variant === "secondary" &&
           (disabled
             ? "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800"
-            : "text-slate-600 hover:text-slate-500 bg-slate-200 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),
+            : "text-slate-600 hover:text-slate-500 bg-slate-200 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-300 focus:ring-neutral-500"),
         variant === "warn" &&
           (disabled
             ? "text-slate-400 bg-transparent"
