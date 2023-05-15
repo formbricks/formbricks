@@ -38,6 +38,10 @@ export default function PreviewSurvey({
   }, [activeQuestionId, localSurvey]);
 
   useEffect(() => {
+    console.log("Preview activeQuestionId", activeQuestionId);
+  }, [activeQuestionId]);
+
+  useEffect(() => {
     // close modal if there are no questions left
     if (localSurvey?.type === "web" && !localSurvey?.thankYouCard.enabled) {
       if (activeQuestionId === "thank-you-card") {
