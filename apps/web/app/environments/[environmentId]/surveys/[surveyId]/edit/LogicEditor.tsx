@@ -163,7 +163,9 @@ export default function LogicEditor({
   };
 
   const deleteLogic = (logicIdx: number) => {
-    const newLogic = !question.logic ? [] : question.logic.filter((_: any, idx: number) => idx !== logicIdx);
+    const newLogic = !question.logic
+      ? []
+      : (question.logic as Logic[]).filter((_: any, idx: number) => idx !== logicIdx);
     updateQuestion(questionIdx, { logic: newLogic });
   };
 
