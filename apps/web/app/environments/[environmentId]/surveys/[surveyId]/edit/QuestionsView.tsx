@@ -48,7 +48,6 @@ export default function QuestionsView({
   };
 
   const deleteQuestion = (questionIdx: number) => {
-    console.log("------deleteQuestion------");
     const questionId = localSurvey.questions[questionIdx].id;
 
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
@@ -56,23 +55,15 @@ export default function QuestionsView({
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
 
-    console.log("questionId", questionId);
-    console.log("activeQuestionId", activeQuestionId);
-    // if (questionId === activeQuestionId) {
-    //   if (questionIdx < localSurvey.questions.length) {
-    //     console.log("next question");
-    //     setActiveQuestionId(localSurvey.questions[questionIdx].id);
-    //   } else if (localSurvey.thankYouCard.enabled) {
-    //     console.log("thank-you-card");
-    //     setActiveQuestionId("thank-you-card");
-    //   } else {
-    //     console.log("prev question");
-    //     setActiveQuestionId(localSurvey.questions[questionIdx - 1].id);
-    //   }
-    // } else {
-    //   setActiveQuestionId(activeQuestionId);
-    // }
-    // console.log("activeQuestionId", activeQuestionId);
+    if (questionId === activeQuestionId) {
+      if (questionIdx < localSurvey.questions.length - 1) {
+        setActiveQuestionId(localSurvey.questions[questionIdx + 1].id);
+      } else if (localSurvey.thankYouCard.enabled) {
+        setActiveQuestionId("thank-you-card");
+      } else {
+        setActiveQuestionId(localSurvey.questions[questionIdx - 1].id);
+      }
+    }
   };
 
   const addQuestion = (question: any) => {
