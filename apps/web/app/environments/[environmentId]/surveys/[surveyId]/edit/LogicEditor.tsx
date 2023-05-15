@@ -47,7 +47,7 @@ export default function LogicEditor({
 }: LogicEditorProps): JSX.Element {
   const questionValues = useMemo(() => {
     if ("choices" in question) {
-      return question.choices.map((choice) => choice.id);
+      return question.choices.map((choice) => choice.label);
     } else if ("range" in question) {
       return Array.from({ length: question.range }, (_, i) => (i + 1).toString());
     } else if (question.type === "nps") {
@@ -168,13 +168,13 @@ export default function LogicEditor({
   };
 
   const truncate = (str: string, n: number) => (str.length > n ? str.substring(0, n - 1) + "..." : str);
-  const getValueLabel = (id: string) => {
-    if ("choices" in question) {
-      const choice = question.choices.find((choice) => choice.id === id);
-      return choice ? truncate(choice.label, 30) : id;
-    }
-    return id;
-  };
+  // const getValueLabel = (id: string) => {
+  //   if ("choices" in question) {
+  //     const choice = question.choices.find((choice) => choice.id === id);
+  //     return choice ? truncate(choice.label, 30) : id;
+  //   }
+  //   return id;
+  // };
 
   if (!(question.type in conditions)) {
     return <></>;
@@ -221,7 +221,7 @@ export default function LogicEditor({
                       <SelectContent>
                         {logicConditions[logic.condition].values?.map((value) => (
                           <SelectItem key={value} value={value}>
-                            {getValueLabel(value)}
+                            {value}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -233,7 +233,7 @@ export default function LogicEditor({
                           {logic.value?.length === 0 ? (
                             <p className="text-slate-400">select match type</p>
                           ) : (
-                            <p>{logic.value.map((v) => getValueLabel(v)).join(", ")}</p>
+                            <p>{logic.value.join(", ")}</p>
                           )}
                           <ChevronDown className="h-4 w-4 opacity-50" />
                         </div>
@@ -247,7 +247,7 @@ export default function LogicEditor({
                             key={value}
                             checked={logic.value?.includes(value)}
                             onCheckedChange={(e) => updateMultiSelectLogic(logicIdx, e, value)}>
-                            {getValueLabel(value)}
+                            {value}
                           </DropdownMenuCheckboxItem>
                         ))}
                       </DropdownMenuContent>

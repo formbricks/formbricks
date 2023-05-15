@@ -3,7 +3,7 @@ import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import ContentWrapper from "@/components/shared/ContentWrapper";
-import type { Question } from "@formbricks/types/questions";
+import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
@@ -50,20 +50,74 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, localSurvey, questions, setActiveQuestionId]);
 
-  const findNextIndex = (data) => {
-    if (!activeQuestionId) return;
-    console.log("data", data);
+  // Helper function to evaluate logic conditions
+  function evaluateCondition(logic: Logic, answerValue: any): boolean {
+    switch (logic.condition) {
+      case "equals":
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 1 && answerValue.includes(logic.value)) ||
+          answerValue === logic.value
+        );
+      case "notEquals":
+        return answerValue !== logic.value;
+      case "lessThan":
+        return answerValue < logic.value;
+      case "lessEqual":
+        return answerValue <= logic.value;
+      case "greaterThan":
+        return answerValue > logic.value;
+      case "greaterEqual":
+        return answerValue >= logic.value;
+      case "includesAll":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.every((v) => answerValue.includes(v))
+        );
+      case "includesOne":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.some((v) => answerValue.includes(v))
+        );
+      default:
+        return false;
+    }
+  }
 
-    const question = questions.find((q) => q.id === activeQuestionId);
-    if (!question) return activeQuestionId + 1;
+  function getNextQuestion(answer: any): string {
+    if (!localSurvey || !activeQuestionId) return "";
 
-    // question.logic?.forEach(logic => {
-    //   if (logic.type === "submitted") {
-    //     return logic.data
-  };
+    const questions = localSurvey.questions;
+
+    // Find the current question index
+    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
+
+    const answerValue = answer[activeQuestionId];
+
+    const currentQuestion = questions[currentQuestionIndex];
+
+    // If the current question has logic
+    if (currentQuestion.logic && currentQuestion.logic.length > 0) {
+      for (let logic of currentQuestion.logic) {
+        if (!logic.destination) continue;
+
+        if (evaluateCondition(logic, answerValue)) {
+          const destination = logic.destination;
+          return destination === "end" ? questions[questions.length - 1].id : destination;
+        }
+      }
+    }
+
+    // If no logic is set or no logic conditions were met, continue to the next question
+    return questions[currentQuestionIndex + 1].id;
+  }
 
   const gotoNextQuestion = (data) => {
-    const nextIndex = findNextIndex(data);
+    const nextId = getNextQuestion(data);
+    console.log(nextId);
+
     const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
     if (currentIndex < questions.length - 1) {
       setActiveQuestionId(questions[currentIndex + 1].id);
