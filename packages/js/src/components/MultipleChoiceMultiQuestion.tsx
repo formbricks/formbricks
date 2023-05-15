@@ -4,6 +4,7 @@ import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import SubmitButton from "./SubmitButton";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -96,6 +97,12 @@ export default function MultipleChoiceMultiQuestion({
           style={{ backgroundColor: brandColor }}>
           {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
         </button>
+        <SubmitButton
+          question={question}
+          lastQuestion={lastQuestion}
+          brandColor={brandColor}
+          onClick={() => {}}
+        />
       </div>
     </form>
   );

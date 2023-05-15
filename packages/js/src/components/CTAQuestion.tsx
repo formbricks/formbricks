@@ -2,6 +2,7 @@ import type { CTAQuestion } from "../../../types/questions";
 import { h } from "preact";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
+import SubmitButton from "./SubmitButton";
 
 interface CTAQuestionProps {
   question: CTAQuestion;
@@ -28,7 +29,7 @@ export default function CTAQuestion({ question, onSubmit, lastQuestion, brandCol
             {question.dismissButtonLabel || "Skip"}
           </button>
         )}
-        <button
+        {/* <button
           type="button"
           onClick={() => {
             if (question.buttonExternal && question.buttonUrl) {
@@ -39,7 +40,19 @@ export default function CTAQuestion({ question, onSubmit, lastQuestion, brandCol
           className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm fb-hover:opacity-90 fb-focus:outline-none fb-focus:ring-2 fb-focus:ring-slate-500 fb-focus:ring-offset-2"
           style={{ backgroundColor: brandColor }}>
           {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
-        </button>
+        </button> */}
+        <SubmitButton
+          question={question}
+          lastQuestion={lastQuestion}
+          brandColor={brandColor}
+          onClick={() => {
+            if (question.buttonExternal && question.buttonUrl) {
+              window?.open(question.buttonUrl, "_blank")?.focus();
+            }
+            onSubmit({ [question.id]: "clicked" });
+          }}
+          type="button"
+        />
       </div>
     </div>
   );
