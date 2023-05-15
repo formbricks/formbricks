@@ -2,7 +2,7 @@ import useSWRMutation from "swr/mutation";
 import { updateRessource } from "@formbricks/lib/fetcher";
 
 export function useSurveyMutation(environmentId: string, surveyId: string) {
-  const { trigger, isMutating } = useSWRMutation(
+  const { trigger, isMutating, error } = useSWRMutation(
     `/api/v1/environments/${environmentId}/surveys/${surveyId}`,
     updateRessource
   );

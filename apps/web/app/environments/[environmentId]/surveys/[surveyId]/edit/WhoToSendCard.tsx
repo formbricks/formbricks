@@ -4,8 +4,19 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
-import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui";
+import { CheckCircleIcon, InformationCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
 
@@ -21,9 +32,17 @@ interface WhenToSendCardProps {
 }
 
 export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhenToSendCardProps) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
     useAttributeClasses(environmentId);
+
+  useEffect(() => {
+    if (!isLoadingAttributeClasses) {
+      if (attributeClasses.length > 0) {
+        setOpen(true);
+      }
+    }
+  }, [isLoadingAttributeClasses]);
 
   const addAttributeFilter = () => {
     const updatedSurvey = { ...localSurvey };
@@ -49,13 +68,6 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     setLocalSurvey(updatedSurvey);
   };
 
-  //create new empty attributeFilter on page load, remove one click for user
-  useEffect(() => {
-    if (localSurvey.attributeFilters.length === 0) {
-      addAttributeFilter();
-    }
-  }, []);
-
   if (isLoadingAttributeClasses) {
     return <LoadingSpinner />;
   }
@@ -80,13 +92,8 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
         <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
           <div className="inline-flex px-4 py-6">
             <div className="flex items-center pl-2 pr-5">
-              {localSurvey.attributeFilters.length === 0 || !localSurvey.attributeFilters[0] ? (
-                <div className="h-7 w-7 rounded-full border border-slate-400" />
-              ) : (
-                <CheckCircleIcon className="h-8 w-8 text-green-400" />
-              )}
+              <CheckCircleIcon className="h-8 w-8 text-green-400" />
             </div>
-
             <div>
               <p className="font-semibold text-slate-800">Who to ask</p>
               <p className="mt-1 truncate text-sm text-slate-500">
@@ -97,14 +104,30 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="">
           <hr className="py-1 text-slate-600" />
+          {localSurvey.attributeFilters.length === 0 && (
+            <div className="px-4 pb-0 pt-4">
+              <Alert>
+                <InformationCircleIcon className="h-4 w-4" />
+                <AlertTitle>Survey all people</AlertTitle>
+                <AlertDescription>
+                  If no additional filters are selected, all users can potentially be surveyed.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
           {localSurvey.attributeFilters.map((attributeFilter, idx) => (
             <div className="mt-2 px-5" key={idx}>
-              <div className="inline-flex items-center space-x-3">
-                <p className="w-14 text-right text-sm">{idx === 0 ? "Where" : "and"}</p>
+              <div className="justify-left flex items-center space-x-3">
+                <p className={cn(idx !== 0 && "ml-5", "text-right text-sm")}>{idx === 0 ? "Where" : "and"}</p>
                 <Select
                   value={attributeFilter.attributeClassId}
-                  onValueChange={(attributeClass) =>
-                    setAttributeFilter(idx, attributeClass, attributeFilter.condition, attributeFilter.value)
+                  onValueChange={(attributeClassId) =>
+                    setAttributeFilter(
+                      idx,
+                      attributeClassId,
+                      attributeFilter.condition,
+                      attributeFilter.value
+                    )
                   }>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue />
@@ -117,8 +140,13 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                 </Select>
                 <Select
                   value={attributeFilter.condition}
-                  onValueChange={(attributeClass) =>
-                    setAttributeFilter(idx, attributeClass, attributeFilter.condition, attributeFilter.value)
+                  onValueChange={(condition) =>
+                    setAttributeFilter(
+                      idx,
+                      attributeFilter.attributeClassId,
+                      condition,
+                      attributeFilter.value
+                    )
                   }>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue />
@@ -130,7 +158,6 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                   </SelectContent>
                 </Select>
                 <Input
-                  className="w-56"
                   value={attributeFilter.value}
                   onChange={(e) =>
                     setAttributeFilter(
@@ -142,7 +169,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                   }
                 />
                 <button onClick={() => removeAttributeFilter(idx)}>
-                  <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
+                  <TrashIcon className="h-4 w-4 text-slate-400" />
                 </button>
               </div>
             </div>
@@ -154,7 +181,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                 addAttributeFilter();
               }}>
               <PlusIcon className="mr-2 h-4 w-4" />
-              Add condition
+              Add filter
             </Button>
           </div>
         </Collapsible.CollapsibleContent>

@@ -14,6 +14,7 @@ if (typeof window !== "undefined") {
       logLevel: "debug",
     });
     window.formbricks = formbricks;
+    formbricks.refresh();
   }
 }
 

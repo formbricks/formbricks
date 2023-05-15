@@ -35,6 +35,10 @@ export const getSettings = async (environmentId: string, personId: string): Prom
     },
   });
 
+  if (!person) {
+    throw new Error("Person not found");
+  }
+
   // get all surveys that meet the displayOption criteria
   const potentialSurveys = await prisma.survey.findMany({
     where: {
@@ -126,8 +130,18 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       return true;
     }
     // check if meets all attribute filters criterias
-    // TODO
-    return true;
+    return attributeFilters.every((attributeFilter) => {
+      const attribute = person.attributes.find(
+        (attribute) => attribute.attributeClassId === attributeFilter.attributeClass.id
+      );
+      if (attributeFilter.condition === "equals") {
+        return attribute?.value === attributeFilter.value;
+      } else if (attributeFilter.condition === "notEquals") {
+        return attribute?.value !== attributeFilter.value;
+      } else {
+        throw Error("Invalid attribute filter condition");
+      }
+    });
   });
 
   // filter surveys that meet the recontactDays criteria

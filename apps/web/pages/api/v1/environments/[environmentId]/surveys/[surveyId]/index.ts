@@ -185,14 +185,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       }
       // delete removed triggers
       if (removedFilters.length > 0) {
-        data.attributeFilters = {
-          ...(data.attributeFilters || []),
-          deleteMany: {
-            attributeClassId: {
-              in: removedFilters,
-            },
-          },
-        };
+        // delete all attribute filters that match the removed attribute classes
+        await Promise.all(
+          removedFilters.map(async (attributeClassId) => {
+            await prisma.surveyAttributeFilter.deleteMany({
+              where: {
+                attributeClassId,
+              },
+            });
+          })
+        );
       }
       delete body.attributeFilters;
     }
@@ -201,6 +203,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       ...data,
       ...body,
     };
+
+    console.log(JSON.stringify(data, null, 2));
 
     // remove fields that are not in the survey model
     delete data.responseRate;

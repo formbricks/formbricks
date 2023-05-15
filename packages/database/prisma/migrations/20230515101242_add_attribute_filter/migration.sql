@@ -9,6 +9,7 @@ CREATE TABLE "SurveyAttributeFilter" (
     "attributeClassId" TEXT NOT NULL,
     "surveyId" TEXT NOT NULL,
     "condition" "SurveyAttributeFilterCondition" NOT NULL,
+    "value" TEXT NOT NULL,
 
     CONSTRAINT "SurveyAttributeFilter_pkey" PRIMARY KEY ("id")
 );
