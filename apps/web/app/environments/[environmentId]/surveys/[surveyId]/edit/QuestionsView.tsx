@@ -48,10 +48,31 @@ export default function QuestionsView({
   };
 
   const deleteQuestion = (questionIdx: number) => {
+    console.log("------deleteQuestion------");
+    const questionId = localSurvey.questions[questionIdx].id;
+
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions.splice(questionIdx, 1);
     setLocalSurvey(updatedSurvey);
-    delete internalQuestionIdMap[localSurvey.questions[questionIdx].id];
+    delete internalQuestionIdMap[questionId];
+
+    console.log("questionId", questionId);
+    console.log("activeQuestionId", activeQuestionId);
+    // if (questionId === activeQuestionId) {
+    //   if (questionIdx < localSurvey.questions.length) {
+    //     console.log("next question");
+    //     setActiveQuestionId(localSurvey.questions[questionIdx].id);
+    //   } else if (localSurvey.thankYouCard.enabled) {
+    //     console.log("thank-you-card");
+    //     setActiveQuestionId("thank-you-card");
+    //   } else {
+    //     console.log("prev question");
+    //     setActiveQuestionId(localSurvey.questions[questionIdx - 1].id);
+    //   }
+    // } else {
+    //   setActiveQuestionId(activeQuestionId);
+    // }
+    // console.log("activeQuestionId", activeQuestionId);
   };
 
   const addQuestion = (question: any) => {
