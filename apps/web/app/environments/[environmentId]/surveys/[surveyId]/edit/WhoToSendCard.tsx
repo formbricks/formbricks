@@ -25,13 +25,13 @@ const filterConditions = [
   { id: "notEquals", name: "not equals" },
 ];
 
-interface WhenToSendCardProps {
+interface WhoToSendCardProps {
   localSurvey: Survey;
   setLocalSurvey: (survey: Survey) => void;
   environmentId: string;
 }
 
-export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhenToSendCardProps) {
+export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhoToSendCardProps) {
   const [open, setOpen] = useState(false);
   const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
     useAttributeClasses(environmentId);
