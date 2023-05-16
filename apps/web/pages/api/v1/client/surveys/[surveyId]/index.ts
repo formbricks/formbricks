@@ -52,7 +52,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (survey.status !== "inProgress") {
       return res
         .status(403)
-        .json({ message: "Survey not running", status: survey.status, brandColor: product?.brandColor });
+        .json({ message: "Survey not running", reason: survey.status, brandColor: product?.brandColor });
     }
 
     // if survey exists, return survey
