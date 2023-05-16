@@ -1,4 +1,4 @@
-import type { MultipleChoiceMultiLogic, MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import LogicEditor from "./LogicEditor";
