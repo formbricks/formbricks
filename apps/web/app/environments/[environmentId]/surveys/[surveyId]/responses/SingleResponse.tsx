@@ -1,13 +1,21 @@
+"use client";
+
+import DeleteDialog from "@/components/shared/DeleteDialog";
 import { timeSince } from "@formbricks/lib/time";
 import { PersonAvatar } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import { RatingResponse } from "../RatingResponse";
+import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 
 interface OpenTextSummaryProps {
   data: {
     id: string;
     personId: string;
+    surveyId: string;
     person: {
       id: string;
       createdAt: string;
@@ -28,6 +36,7 @@ interface OpenTextSummaryProps {
     }[];
   };
   environmentId: string;
+  surveyId: string;
 }
 
 function findEmail(person) {
@@ -35,11 +44,21 @@ function findEmail(person) {
   return emailAttribute ? emailAttribute.value : null;
 }
 
-export default function SingleResponse({ data, environmentId }: OpenTextSummaryProps) {
+export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || data.personId;
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { mutateResponses } = useResponses(environmentId, surveyId);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  console.log(data);
+  const handleDeleteSubmission = async () => {
+    setIsDeleting(true);
+    const deleteResponse = await deleteSubmission(environmentId, data?.surveyId, data?.id);
+    mutateResponses();
+    if (deleteResponse?.id?.length > 0) toast.success("Submission deleted successfully.");
+    setDeleteDialogOpen(false);
+    setIsDeleting(false);
+  };
 
   return (
     <div className=" my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -70,6 +89,12 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
             <time className="text-slate-500" dateTime={timeSince(data.updatedAt)}>
               {timeSince(data.updatedAt)}
             </time>
+            <button
+              onClick={() => {
+                setDeleteDialogOpen(true);
+              }}>
+              <TrashIcon className="h-4 w-4 text-slate-500 hover:text-red-700" />
+            </button>
           </div>
         </div>
       </div>
@@ -91,6 +116,13 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
           </div>
         ))}
       </div>
+      <DeleteDialog
+        open={deleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        deleteWhat="response"
+        onDelete={handleDeleteSubmission}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

@@ -51,14 +51,15 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 ### Upcoming Features
 
-|     | Feature                                       |
-| --- | --------------------------------------------- |
-| 👷  | Zapier, Slack & Posthog Integration           |
-| 👷  | Filter Audience by Attributes                 |
-| 🗒️  | Multi-Language Functionality                  |
-| 🗒️  | Auto-complete Surveys after at x responses    |
-| 🗒️  | Pre-Fill Link-Surveys                         |
-| 🗒️  | E-Mail Surveys                                |
+|     | Feature                                    |
+| --- | ------------------------------------------ |
+| 👷  | Zapier, Slack & Posthog Integration        |
+| 👷  | Branching Logic in Surveys                 |
+| 🗒️  | Filtering Options in Survey Analysis       |
+| 🗒️  | Multi-Language Functionality               |
+| 🗒️  | Auto-complete Surveys after at x responses |
+| 🗒️  | Pre-Fill Link-Surveys                      |
+| 🗒️  | E-Mail Surveys                             |
 
 _👷 In Progress | 🗒️ Up Next_
 
