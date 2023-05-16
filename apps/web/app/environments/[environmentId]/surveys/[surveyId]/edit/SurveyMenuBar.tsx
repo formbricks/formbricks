@@ -1,10 +1,11 @@
 "use client";
 
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
+import { useProduct } from "@/lib/products/products";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import type { Survey } from "@formbricks/types/surveys";
 import { Button, Input } from "@formbricks/ui";
-import { ArrowLeftIcon, UserGroupIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -13,8 +14,8 @@ interface SurveyMenuBarProps {
   localSurvey: Survey;
   setLocalSurvey: (survey: Survey) => void;
   environmentId: string;
-  activeId: "questions" | "audience";
-  setActiveId: (id: "questions" | "audience") => void;
+  activeId: "questions" | "settings";
+  setActiveId: (id: "questions" | "settings") => void;
 }
 
 export default function SurveyMenuBar({
@@ -27,9 +28,10 @@ export default function SurveyMenuBar({
   const router = useRouter();
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
   const [audiencePrompt, setAudiencePrompt] = useState(true);
+  const { product } = useProduct(environmentId);
 
   useEffect(() => {
-    if (audiencePrompt && activeId === "audience") {
+    if (audiencePrompt && activeId === "settings") {
       setAudiencePrompt(false);
     }
   }, [activeId, audiencePrompt]);
@@ -42,32 +44,39 @@ export default function SurveyMenuBar({
 
   return (
     <div className="border-b border-slate-200 bg-white px-5 py-3 sm:flex sm:items-center sm:justify-between">
-      <div className="flex space-x-2 whitespace-nowrap">
+      <div className="flex items-center space-x-2 whitespace-nowrap">
         <Button
-          variant="minimal"
-          className="px-0"
+          variant="secondary"
+          StartIcon={ArrowLeftIcon}
           onClick={() => {
             router.back();
           }}>
-          <ArrowLeftIcon className="h-5 w-5 text-slate-700" />
+          {/*  <ArrowLeftIcon className="h-5 w-5 text-slate-700" /> */} Back
         </Button>
+        <p className="pl-4 font-semibold">{product.name} / </p>
         <Input
           defaultValue={localSurvey.name}
           onChange={(e) => {
             const updatedSurvey = { ...localSurvey, name: e.target.value };
             setLocalSurvey(updatedSurvey);
           }}
-          className="w-72"
+          className="w-72 border-white hover:border-slate-200 "
         />
-        <div className="flex items-center">
+        {localSurvey?.responseRate && (
+          <div className="flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-sm text-amber-700 shadow-sm">
+            <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-amber-400" />
+            This survey received responses. To keep the data consistent, make changes with caution.
+          </div>
+        )}
+      </div>
+      <div className="mt-3 flex sm:ml-4 sm:mt-0">
+        <div className="mr-4 flex items-center">
           <SurveyStatusDropdown
             surveyId={localSurvey.id}
             environmentId={environmentId}
             updateLocalSurveyStatus={updateLocalSurveyStatus}
           />
         </div>
-      </div>
-      <div className="mt-3 flex sm:ml-4 sm:mt-0">
         <Button
           variant="secondary"
           className="mr-3"
@@ -84,16 +93,17 @@ export default function SurveyMenuBar({
               router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary`);
             }
           }}>
-          Save Changes
+          Save
         </Button>
         {localSurvey.status === "draft" && audiencePrompt && (
           <Button
-            variant="highlight"
+            variant="darkCTA"
             onClick={() => {
               setAudiencePrompt(false);
-              setActiveId("audience");
-            }}>
-            <UserGroupIcon className="mr-1 h-4 w-4" /> Continue to Audience
+              setActiveId("settings");
+            }}
+            EndIcon={Cog8ToothIcon}>
+            Continue to Settings
           </Button>
         )}
         {localSurvey.status === "draft" && !audiencePrompt && (
@@ -102,13 +112,13 @@ export default function SurveyMenuBar({
               localSurvey.type === "web" &&
               (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
             }
-            variant="highlight"
+            variant="darkCTA"
             loading={isMutatingSurvey}
             onClick={async () => {
               await triggerSurveyMutate({ ...localSurvey, status: "inProgress" });
               router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
             }}>
-            Publish Survey
+            Publish
           </Button>
         )}
       </div>

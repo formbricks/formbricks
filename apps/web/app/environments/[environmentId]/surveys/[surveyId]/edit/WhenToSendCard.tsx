@@ -25,7 +25,7 @@ interface WhenToSendCardProps {
 }
 
 export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhenToSendCardProps) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const { eventClasses, isLoadingEventClasses, isErrorEventClasses, mutateEventClasses } =
     useEventClasses(environmentId);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
@@ -77,10 +77,10 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
           "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
         )}>
         <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
-          <div className="inline-flex px-4 py-6">
+          <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
               {localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
-                <div className="h-7 w-7 rounded-full border border-slate-400" />
+                <div className="h-7 w-7 rounded-full border border-amber-500 bg-amber-50" />
               ) : (
                 <CheckCircleIcon className="h-8 w-8 text-green-400" />
               )}

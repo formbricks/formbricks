@@ -21,7 +21,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
   const { triggerProductMutate } = useProductMutation(environmentId);
 
   const [name, setName] = useState("");
-  const [color, setColor] = useState("#334155");
+  const [color, setColor] = useState("#919294");
 
   const handleNameChange = (event) => {
     setName(event.target.value);
