@@ -48,8 +48,19 @@ export default function QuestionsView({
   };
 
   const deleteQuestion = (questionIdx: number) => {
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    const questionId = localSurvey.questions[questionIdx].id;
+    const updatedSurvey: Survey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions.splice(questionIdx, 1);
+
+    updatedSurvey.questions.forEach((question) => {
+      if (!question.logic) return;
+      question.logic.forEach((rule) => {
+        if (rule.destination === questionId) {
+          rule.destination = "end";
+        }
+      });
+    });
+
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[localSurvey.questions[questionIdx].id];
   };
