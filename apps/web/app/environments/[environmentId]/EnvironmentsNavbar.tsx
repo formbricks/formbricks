@@ -280,7 +280,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
               <DropdownMenuContent className="w-56">
                 <DropdownMenuLabel className="cursor-default break-all">
                   <span className="ph-no-capture font-normal">Signed in as </span>
-                  {session.user.name.length > 30 ? (
+                  {session?.user?.name.length > 30 ? (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
