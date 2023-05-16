@@ -32,6 +32,8 @@ export default function PreviewSurvey({
     }
 
     function calculateProgress(survey) {
+      if (activeQuestionId === "thank-you-card") return 1;
+
       const elementIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
       return elementIdx / survey.questions.length;
     }
