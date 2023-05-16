@@ -5,13 +5,13 @@ import Image from "next/image";
 
 const SurveyInactive = ({ status }) => {
   const icons = {
-    paused: <PauseCircleIcon className="h-6 w-6" />,
-    closed: <CheckCircleIcon className="h-20 w-20" />,
+    paused: <PauseCircleIcon className="h-20 w-20" />,
+    completed: <CheckCircleIcon className="h-20 w-20" />,
   };
 
   const descriptions = {
     paused: "This survey is temporarily paused.",
-    closed: "This survey has been closed.",
+    completed: "This survey has been closed.",
   };
 
   return (
