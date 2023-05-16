@@ -53,7 +53,6 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 |     | Feature                                       |
 | --- | --------------------------------------------- |
-| 👷  | Rating Scale (Numbers + Emojis) Question Type |
 | 👷  | Zapier, Slack & Posthog Integration           |
 | 👷  | Filter Audience by Attributes                 |
 | 🗒️  | Multi-Language Functionality                  |

@@ -129,7 +129,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
               </div>
             </div>
           ))}
-          <div className="ml-14 p-3">
+          <div className="px-6 py-4">
             <Button
               variant="secondary"
               onClick={() => {

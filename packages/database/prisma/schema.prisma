@@ -48,15 +48,16 @@ enum AttributeType {
 }
 
 model AttributeClass {
-  id            String        @id @default(cuid())
-  createdAt     DateTime      @default(now()) @map(name: "created_at")
-  updatedAt     DateTime      @updatedAt @map(name: "updated_at")
-  name          String
-  description   String?
-  type          AttributeType
-  environment   Environment   @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  environmentId String
-  attributes    Attribute[]
+  id               String                  @id @default(cuid())
+  createdAt        DateTime                @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                @updatedAt @map(name: "updated_at")
+  name             String
+  description      String?
+  type             AttributeType
+  environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId    String
+  attributes       Attribute[]
+  attributeFilters SurveyAttributeFilter[]
 
   @@unique([name, environmentId])
 }
@@ -123,6 +124,25 @@ model SurveyTrigger {
   @@unique([surveyId, eventClassId])
 }
 
+enum SurveyAttributeFilterCondition {
+  equals
+  notEquals
+}
+
+model SurveyAttributeFilter {
+  id               String                         @id @default(cuid())
+  createdAt        DateTime                       @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                       @updatedAt @map(name: "updated_at")
+  attributeClass   AttributeClass                 @relation(fields: [attributeClassId], references: [id], onDelete: Cascade)
+  attributeClassId String
+  survey           Survey                         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId         String
+  condition        SurveyAttributeFilterCondition
+  value            String
+
+  @@unique([surveyId, attributeClassId])
+}
+
 enum SurveyType {
   email
   link
@@ -137,21 +157,22 @@ enum displayOptions {
 }
 
 model Survey {
-  id            String          @id @default(cuid())
-  createdAt     DateTime        @default(now()) @map(name: "created_at")
-  updatedAt     DateTime        @updatedAt @map(name: "updated_at")
-  name          String
-  type          SurveyType      @default(web)
-  environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  environmentId String
-  status        SurveyStatus    @default(draft)
-  questions     Json            @default("[]")
-  thankYouCard  Json            @default("{\"enabled\": false}")
-  responses     Response[]
-  displayOption displayOptions  @default(displayOnce)
-  recontactDays Int?
-  triggers      SurveyTrigger[]
-  displays      Display[]
+  id               String                  @id @default(cuid())
+  createdAt        DateTime                @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                @updatedAt @map(name: "updated_at")
+  name             String
+  type             SurveyType              @default(web)
+  environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId    String
+  status           SurveyStatus            @default(draft)
+  questions        Json                    @default("[]")
+  thankYouCard     Json                    @default("{\"enabled\": false}")
+  responses        Response[]
+  displayOption    displayOptions          @default(displayOnce)
+  recontactDays    Int?
+  triggers         SurveyTrigger[]
+  attributeFilters SurveyAttributeFilter[]
+  displays         Display[]
 }
 
 model Event {

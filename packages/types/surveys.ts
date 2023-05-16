@@ -5,6 +5,7 @@ export interface ThankYouCard {
   headline?: string;
   subheader?: string;
 }
+
 export interface Survey {
   id: string;
   createdAt: string;
@@ -20,4 +21,11 @@ export interface Survey {
   numDisplays: number;
   responseRate: number;
   displayOption: "displayOnce" | "displayMultiple" | "respondMultiple";
+  attributeFilters: AttributeFilter[];
+}
+
+export interface AttributeFilter {
+  attributeClassId: string;
+  condition: string;
+  value: string;
 }
