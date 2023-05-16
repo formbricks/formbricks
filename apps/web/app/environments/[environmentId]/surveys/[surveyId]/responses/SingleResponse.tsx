@@ -1,3 +1,5 @@
+"use client";
+
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import { timeSince } from "@formbricks/lib/time";
 import { PersonAvatar } from "@formbricks/ui";
@@ -13,7 +15,7 @@ interface OpenTextSummaryProps {
   data: {
     id: string;
     personId: string;
-    surveyId: string,
+    surveyId: string;
     person: {
       id: string;
       createdAt: string;
@@ -46,17 +48,17 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || data.personId;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { mutateResponses }  = useResponses(environmentId, surveyId)
+  const { mutateResponses } = useResponses(environmentId, surveyId);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteSubmission = async () => {
+    setIsDeleting(true);
     const deleteResponse = await deleteSubmission(environmentId, data?.surveyId, data?.id);
     mutateResponses();
-    if(deleteResponse?.id?.length > 0)
-    toast.success("Submission deleted successfully.");
+    if (deleteResponse?.id?.length > 0) toast.success("Submission deleted successfully.");
     setDeleteDialogOpen(false);
+    setIsDeleting(false);
   };
-
-  console.log(data);
 
   return (
     <div className=" my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -84,17 +86,15 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
                 Completed <CheckCircleIcon className="ml-1 h-5 w-5 text-green-400" />
               </span>
             )}
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => {
-                  setDeleteDialogOpen(true);
-                }}>
-                <TrashIcon className="h-4 w-4 text-slate-500 hover:text-red-700" />
-              </button>
-            </div>
             <time className="text-slate-500" dateTime={timeSince(data.updatedAt)}>
               {timeSince(data.updatedAt)}
             </time>
+            <button
+              onClick={() => {
+                setDeleteDialogOpen(true);
+              }}>
+              <TrashIcon className="h-4 w-4 text-slate-500 hover:text-red-700" />
+            </button>
           </div>
         </div>
       </div>
@@ -121,6 +121,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
         setOpen={setDeleteDialogOpen}
         deleteWhat="response"
         onDelete={handleDeleteSubmission}
+        isDeleting={isDeleting}
       />
     </div>
   );

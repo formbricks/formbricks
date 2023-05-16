@@ -101,16 +101,16 @@ export function EditWaitingTime({ environmentId }) {
 export function DeleteProduct({ environmentId }) {
   const router = useRouter();
 
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { profile } = useProfile();
-  const{ team } = useMembers(environmentId)
+  const { team } = useMembers(environmentId);
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { environment } = useEnvironment(environmentId);
 
-  const availableProducts = environment?.availableProducts?.length; 
-  const role = team?.members?.filter(member => member?.userId === profile?.id)[0]?.role;
-  const isUserAdminOrOwner = role === 'admin' || role === 'owner';
+  const availableProducts = environment?.availableProducts?.length;
+  const role = team?.members?.filter((member) => member?.userId === profile?.id)[0]?.role;
+  const isUserAdminOrOwner = role === "admin" || role === "owner";
   const isDeleteDisabled = availableProducts <= 1 || !isUserAdminOrOwner;
 
   if (isLoadingProduct) {
@@ -122,7 +122,7 @@ export function DeleteProduct({ environmentId }) {
 
   const handleDeleteProduct = async () => {
     if (environment?.availableProducts?.length <= 1) {
-      toast.error("Cannot delete product. Environment needs at least 1.");
+      toast.error("Cannot delete product. Your team needs at least 1.");
       setIsDeleteDialogOpen(false);
       return;
     }
@@ -136,7 +136,7 @@ export function DeleteProduct({ environmentId }) {
       toast.success("Product deleted successfully.");
       router.push("/environments");
     }
-  }
+  };
 
   return (
     <div>
@@ -146,15 +146,18 @@ export function DeleteProduct({ environmentId }) {
         &nbsp;incl. all surveys, responses, people, actions and attributes.{" "}
         <strong>This action cannot be undone.</strong>
       </p>
-      <Button disabled={isDeleteDisabled} variant="warn" className={`mt-4 ${isDeleteDisabled ? 'ring-1 ring-offset-1 ring-grey-500' : ''}`} onClick={() => setIsDeleteDialogOpen(true)}>
+      <Button
+        disabled={isDeleteDisabled}
+        variant="warn"
+        className={`mt-4 ${isDeleteDisabled ? "ring-grey-500 ring-1 ring-offset-1" : ""}`}
+        onClick={() => setIsDeleteDialogOpen(true)}>
         Delete
       </Button>
       {isDeleteDisabled && (
-        <p className="text-xs text-red-700 mt-2">
+        <p className="mt-2 text-xs text-red-700">
           {!isUserAdminOrOwner
-            ? 'Only Admin or Owners can delete products.'
-            : 'Environment needs at least 1 product.'
-          }
+            ? "Only Admin or Owners can delete products."
+            : "Environment needs at least 1 product."}
         </p>
       )}
       <DeleteDialog
