@@ -68,7 +68,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
         <div>
           {matchQandA.map((updatedResponse) => {
             return (
-              <SingleResponse key={updatedResponse.id} data={updatedResponse} environmentId={environmentId} />
+              <SingleResponse key={updatedResponse.id} data={updatedResponse} surveyId={surveyId} environmentId={environmentId} />
             );
           })}
         </div>

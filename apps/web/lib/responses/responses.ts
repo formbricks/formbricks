@@ -11,7 +11,7 @@ export const useResponses = (environmentId: string, surveyId: string) => {
     responsesData: data,
     isLoadingResponses: isLoading,
     isErrorResponses: error,
-    mutateRespones: mutate,
+    mutateResponses: mutate,
   };
 };
 

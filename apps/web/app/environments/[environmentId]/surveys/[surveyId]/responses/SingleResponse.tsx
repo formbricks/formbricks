@@ -6,8 +6,8 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { deleteSubmission } from "@/lib/responses/responses";
 import { RatingResponse } from "../RatingResponse";
+import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 
 interface OpenTextSummaryProps {
   data: {
@@ -34,6 +34,7 @@ interface OpenTextSummaryProps {
     }[];
   };
   environmentId: string;
+  surveyId: string;
 }
 
 function findEmail(person) {
@@ -41,13 +42,15 @@ function findEmail(person) {
   return emailAttribute ? emailAttribute.value : null;
 }
 
-export default function SingleResponse({ data, environmentId }: OpenTextSummaryProps) {
+export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || data.personId;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { mutateResponses }  = useResponses(environmentId, surveyId)
 
   const handleDeleteSubmission = async () => {
     const deleteResponse = await deleteSubmission(environmentId, data?.surveyId, data?.id);
+    mutateResponses();
     if(deleteResponse?.id?.length > 0)
     toast.success("Submission deleted successfully.");
     setDeleteDialogOpen(false);

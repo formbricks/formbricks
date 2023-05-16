@@ -118,7 +118,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     
   // DELETE
   else if (req.method === "DELETE") {
-    console.log({currentUser})
     const membership = await prisma.membership.findUnique({
       where: {
         userId_teamId: {
@@ -127,7 +126,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
     });
-    if (membership?.role !== "admin") {
+    if (membership?.role !== "admin" && membership?.role !== "owner") {
       return res.status(403).json({ message: "You are not allowed to delete products." });
     }
     const environment = await prisma.environment.findUnique({
