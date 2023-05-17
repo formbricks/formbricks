@@ -61,7 +61,7 @@ export const Button: React.ForwardRefExoticComponent<
         "inline-flex items-center appearance-none",
         // different styles depending on size
         size === "sm" && "px-3 py-2 text-sm leading-4 font-medium rounded-md",
-        size === "base" && "px-6 py-2 text-sm font-medium rounded-md",
+        size === "base" && "px-6 py-3 text-sm font-medium rounded-md",
         size === "lg" && "px-4 py-2 text-base font-medium rounded-md",
         size === "icon" &&
           "w-10 h-10 justify-center group p-2 border rounded-lg border-transparent text-neutral-400 hover:border-slate-200 transition",
@@ -97,7 +97,7 @@ export const Button: React.ForwardRefExoticComponent<
             : "hover:bg-red-200 text-red-700 bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:bg-red-50 focus:ring-red-500"),
         variant === "darkCTA" &&
           (disabled
-            ? "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800"
+            ? "text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800"
             : "text-slate-100 hover:text-slate-50 bg-slate-800 hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-700 dark:hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),
 
         // set not-allowed cursor if disabled

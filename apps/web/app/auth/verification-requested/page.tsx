@@ -2,11 +2,12 @@
 
 import { RequestVerificationEmail } from "@/components/auth/RequestVerificationEmail";
 import { useSearchParams } from "next/navigation";
+import FormWrapper from "@/components/auth/FormWrapper";
 
 export default function VerficationPage() {
   const searchParams = useSearchParams();
   return (
-    <div>
+    <FormWrapper>
       {searchParams && searchParams?.get("email") ? (
         <>
           <h1 className="leading-2 mb-4 text-center text-lg font-semibold text-slate-900">
@@ -27,6 +28,6 @@ export default function VerficationPage() {
       ) : (
         <p className="text-center">No E-Mail Address provided</p>
       )}
-    </div>
+    </FormWrapper>
   );
 }

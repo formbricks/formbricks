@@ -111,35 +111,35 @@ export const SignupForm = () => {
               Log in.
             </Link>
           </div>
-          {(process.env.NEXT_PUBLIC_TERMS_URL || process.env.NEXT_PUBLIC_PRIVACY_URL) && (
-            <div className="mt-3 text-center text-xs text-slate-400">
-              By clicking &quot;Sign Up&quot;, you agree to our
-              <br />
-              {process.env.NEXT_PUBLIC_TERMS_URL && (
-                <Link
-                  className="text-brand hover:text-brand-light underline"
-                  href={process.env.NEXT_PUBLIC_TERMS_URL}
-                  rel="noreferrer"
-                  target="_blank">
-                  terms of service
-                </Link>
-              )}
-              {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
-              {process.env.NEXT_PUBLIC_PRIVACY_URL && (
-                <Link
-                  className="text-brand hover:text-brand-light underline"
-                  href={process.env.NEXT_PUBLIC_PRIVACY_URL}
-                  rel="noreferrer"
-                  target="_blank">
-                  privacy policy
-                </Link>
-              )}
-              .<br />
-              We&apos;ll occasionally send you account related emails.
-            </div>
-          )}
+          {/*    {(process.env.NEXT_PUBLIC_TERMS_URL || process.env.NEXT_PUBLIC_PRIVACY_URL) && ( */}
+          <div className="mt-3 text-center text-xs text-slate-400">
+            By clicking &quot;Sign Up&quot;, you agree to our
+            <br />
+            {process.env.NEXT_PUBLIC_TERMS_URL && (
+              <Link
+                className="text-brand hover:text-brand-light underline"
+                href={process.env.NEXT_PUBLIC_TERMS_URL}
+                rel="noreferrer"
+                target="_blank">
+                terms of service
+              </Link>
+            )}
+            {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
+            {process.env.NEXT_PUBLIC_PRIVACY_URL && (
+              <Link
+                className="text-brand hover:text-brand-light underline"
+                href={process.env.NEXT_PUBLIC_PRIVACY_URL}
+                rel="noreferrer"
+                target="_blank">
+                privacy policy
+              </Link>
+            )}
+            .<br />
+            We&apos;ll occasionally send you account related emails.
+          </div>
+          {/*   )} */}
         </div>
-        {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
+        {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "0" && (
           <>
             <div className="relative">
               <div className="absolute inset-0 flex items-center" aria-hidden="true">
