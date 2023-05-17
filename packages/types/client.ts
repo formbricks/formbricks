@@ -50,7 +50,7 @@ export type ErrorHandler = (error: any) => void;
 
 export interface Settings {
   surveys?: Survey[];
-  noCodeEvents?: any[];
+  noCodeActions?: any[];
   brandColor?: string;
 }
 

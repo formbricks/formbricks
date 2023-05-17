@@ -1,4 +1,4 @@
-import type { InitConfig } from "../../types/js";
+import type { InitConfig } from "../../types/client";
 import { CommandQueue } from "./lib/commandQueue";
 import { Logger } from "./lib/logger";
 import { ErrorHandler } from "./lib/errors";

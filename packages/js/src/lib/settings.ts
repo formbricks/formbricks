@@ -1,4 +1,4 @@
-import type { Settings } from "../../../types/js";
+import type { Settings } from "../../../types/client";
 import { Config } from "./config";
 import { NetworkError, Result, err, ok, okVoid } from "./errors";
 import { Logger } from "./logger";

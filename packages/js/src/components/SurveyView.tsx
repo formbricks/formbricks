@@ -1,4 +1,4 @@
-import type { JsConfig, Survey } from "../../../types/js";
+import type { JsConfig, Survey } from "../../../types/client";
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";

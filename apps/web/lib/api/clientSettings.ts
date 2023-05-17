@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { Settings } from "@formbricks/types/js";
+import { Settings } from "@formbricks/types/client";
 
 export const getSettings = async (environmentId: string, personId: string): Promise<Settings> => {
   // get recontactDays from product
@@ -183,7 +183,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       };
     });
 
-  const noCodeEvents = await prisma.eventClass.findMany({
+  const noCodeActions = await prisma.eventClass.findMany({
     where: {
       environmentId,
       type: "noCode",
@@ -209,5 +209,5 @@ export const getSettings = async (environmentId: string, personId: string): Prom
 
   const brandColor = environmentProdut?.product.brandColor;
 
-  return { surveys, noCodeEvents, brandColor };
+  return { surveys, noCodeActions, brandColor };
 };

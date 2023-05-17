@@ -1,4 +1,4 @@
-import { DisplayCreateRequest } from "@formbricks/types/js";
+import { DisplayCreateRequest } from "@formbricks/types/client";
 
 export const createDisplay = async (
   displayCreateRequest: DisplayCreateRequest,

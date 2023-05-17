@@ -1,4 +1,4 @@
-import type { Survey } from "../../../types/js";
+import type { Survey } from "../../../types/client";
 import { h, render } from "preact";
 import App from "../App";
 import { Config } from "./config";

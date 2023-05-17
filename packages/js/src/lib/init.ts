@@ -1,4 +1,4 @@
-import type { InitConfig } from "../../../types/js";
+import type { InitConfig } from "../../../types/client";
 import { Config } from "./config";
 import {
   ErrorHandler,

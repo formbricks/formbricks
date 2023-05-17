@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import type { Person } from "@formbricks/types/js";
+import type { Person } from "@formbricks/types/client";
 
 export const createPerson = async (environmentId: string): Promise<Person> => {
   return await prisma.person.create({

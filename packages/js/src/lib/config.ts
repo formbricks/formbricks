@@ -1,4 +1,4 @@
-import type { JsConfig } from "../../../types/js";
+import type { JsConfig } from "../../../types/client";
 import { Result, wrapThrows } from "./errors";
 
 export class Config {

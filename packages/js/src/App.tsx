@@ -1,4 +1,4 @@
-import type { JsConfig, Survey } from "../../types/js";
+import type { JsConfig, Survey } from "../../types/client";
 import { VNode, h } from "preact";
 import { useState } from "preact/hooks";
 import Modal from "./components/Modal";

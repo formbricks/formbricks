@@ -1,15 +1,14 @@
 import { responses } from "@/lib/api/response";
-import type { ApiSuccessResponse } from "@/lib/api/response";
-import type { SurveyResponse } from "@formbricks/types/api/client";
-import { prisma } from "@formbricks/database";
-import { NextResponse } from "next/server";
 import { toJson } from "@/lib/utils";
+import { prisma } from "@formbricks/database";
+import type { SurveyResponse } from "@formbricks/types/api/client";
+import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
-  return NextResponse.json({} as ApiSuccessResponse);
+  return responses.successResponse({}, true);
 }
 
-export async function GET(_: Request, { params }: { params: { surveyId: string } }) {
+export async function GET(_: Request, { params }: { params: { surveyId: string } }): Promise<NextResponse> {
   const { surveyId } = params;
 
   const survey = await prisma.survey.findFirst({
@@ -28,7 +27,7 @@ export async function GET(_: Request, { params }: { params: { surveyId: string }
 
   // if survey does not exist, return 404
   if (!survey) {
-    return responses.notFoundResponse("Survey", surveyId);
+    return responses.notFoundResponse("Survey", surveyId, true);
   }
 
   // get brandColor from product using environmentId
@@ -46,12 +45,13 @@ export async function GET(_: Request, { params }: { params: { surveyId: string }
   });
 
   // if survey exists, return survey
-  return NextResponse.json({
-    data: {
+  return responses.successResponse(
+    {
       ...survey,
       questions: toJson(survey.questions),
       thankYouCard: toJson(survey.thankYouCard),
       brandColor: product?.brandColor,
-    },
-  } as ApiSuccessResponse<SurveyResponse>);
+    } as SurveyResponse,
+    true
+  );
 }

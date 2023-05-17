@@ -23,30 +23,46 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-const badRequestResponse = (
-  res: CustomNextApiResponse,
-  message: string,
-  details?: { [key: string]: string }
-) =>
-  res.status(400).json({
-    code: "bad_request",
-    message,
-    details: details || {},
-  });
+const badRequestResponse = (message: string, details?: { [key: string]: string }, cors: boolean = false) =>
+  NextResponse.json(
+    {
+      code: "bad_request",
+      message,
+      details: details || {},
+    } as ApiErrorResponse,
+    {
+      status: 400,
+      ...(cors && { headers: corsHeaders }),
+    }
+  );
 
-const missingFieldResponse = (res: CustomNextApiResponse, field: string) =>
-  badRequestResponse(res, `Missing ${field}`, {
-    missing_field: field,
-  });
-
-const methodNotAllowedResponse = (res: CustomNextApiResponse, allowedMethods: string[]) =>
-  res.status(405).json({
-    code: "method_not_allowed",
-    message: `The HTTP ${res.req?.method} method is not supported by this route.`,
-    details: {
-      allowed_methods: allowedMethods,
+const missingFieldResponse = (field: string, cors: boolean = false) =>
+  badRequestResponse(
+    `Missing ${field}`,
+    {
+      missing_field: field,
     },
-  });
+    cors
+  );
+
+const methodNotAllowedResponse = (
+  res: CustomNextApiResponse,
+  allowedMethods: string[],
+  cors: boolean = false
+) =>
+  NextResponse.json(
+    {
+      code: "method_not_allowed",
+      message: `The HTTP ${res.req?.method} method is not supported by this route.`,
+      details: {
+        allowed_methods: allowedMethods,
+      },
+    } as ApiErrorResponse,
+    {
+      status: 405,
+      ...(cors && { headers: corsHeaders }),
+    }
+  );
 
 const notFoundResponse = (resourceType: string, resourceId: string, cors: boolean = false) =>
   NextResponse.json(
@@ -64,9 +80,21 @@ const notFoundResponse = (resourceType: string, resourceId: string, cors: boolea
     }
   );
 
+const successResponse = (data: Object, cors: boolean = false) =>
+  NextResponse.json(
+    {
+      data,
+    } as ApiSuccessResponse<typeof data>,
+    {
+      status: 200,
+      ...(cors && { headers: corsHeaders }),
+    }
+  );
+
 export const responses = {
   badRequestResponse,
   missingFieldResponse,
   methodNotAllowedResponse,
   notFoundResponse,
+  successResponse,
 };

@@ -1,4 +1,4 @@
-import type { JsConfig, Response, ResponseCreateRequest, ResponseUpdateRequest } from "../../../types/js";
+import type { JsConfig, Response, ResponseCreateRequest, ResponseUpdateRequest } from "../../../types/client";
 import { NetworkError, Result, err, ok } from "./errors";
 
 export const createResponse = async (

@@ -1,4 +1,4 @@
-import { MatchType } from "./js";
+import { MatchType } from "./client";
 
 export interface NoCodeConfig {
   type: "innerHtml" | "pageUrl" | "cssSelector";
