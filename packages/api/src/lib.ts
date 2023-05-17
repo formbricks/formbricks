@@ -79,6 +79,6 @@ export class FormbricksAPI {
       });
     }
 
-    return ok(resJson as T);
+    return ok(resJson.data as T);
   }
 }
