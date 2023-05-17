@@ -1,9 +1,9 @@
 import type { InitConfig } from "../../types/js";
 import { CommandQueue } from "./lib/commandQueue";
+import { Logger } from "./lib/logger";
 import { ErrorHandler } from "./lib/errors";
 import { trackEvent } from "./lib/event";
 import { initialize } from "./lib/init";
-import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeEvents";
 import { resetPerson, setPersonAttribute, setPersonUserId } from "./lib/person";
 import { refreshSettings } from "./lib/settings";

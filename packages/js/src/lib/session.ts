@@ -43,7 +43,8 @@ export const createSession = async (): Promise<
 
 export const extendSession = (session: Session): Session => {
   const updatedSession = { ...session };
-  updatedSession.expiresAt = Date.now() + 1000 * 60 * 60; // extend session for 60 minutes
+  // updatedSession.expiresAt = Date.now() + 1000 * 60 * 60; // extend session for 60 minutes
+  updatedSession.expiresAt = Date.now() + 1000 * 60 * 0.5; // extend session for 30 seconds
   return updatedSession;
 };
 

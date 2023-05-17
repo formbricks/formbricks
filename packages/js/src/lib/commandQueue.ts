@@ -17,7 +17,7 @@ export class CommandQueue {
     command: (...args: A[]) => Promise<Result<void, any>> | Result<void, any>,
     ...args: A[]
   ) {
-    logger.debug(`Add command to queue: ${command.name}(${JSON.stringify(args)})`);
+    /* logger.debug(`Add command to queue: ${command.name}(${JSON.stringify(args)})`); */
     this.queue.push({ command, checkInitialized, commandArgs: args });
 
     if (!this.running) {
@@ -42,11 +42,11 @@ export class CommandQueue {
 
       if (!result) continue;
 
-      logger.debug(
+      /* logger.debug(
         `Command result: ${result.ok === true ? "OK" : "Something went really wrong"}, ${
           currentItem.command.name
         }`
-      );
+      ); */
 
       if (result.ok !== true) errorHandler.handle(result.error);
     }

@@ -37,6 +37,13 @@ const addSessionEventListeners = (): void => {
 export const initialize = async (
   c: InitConfig
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
+  if (c.logLevel) {
+    logger.debug(`Setting log level to ${c.logLevel}`);
+    logger.configure({ logLevel: c.logLevel });
+  }
+
+  ErrorHandler.getInstance().printStatus();
+
   logger.debug("Start initialize");
 
   if (!c.environmentId) {
@@ -54,11 +61,6 @@ export const initialize = async (
       code: "missing_field",
       field: "apiHost",
     });
-  }
-
-  if (c.logLevel) {
-    logger.debug(`Setting log level to ${c.logLevel}`);
-    logger.configure({ logLevel: c.logLevel });
   }
 
   logger.debug("Adding widget container to DOM");
