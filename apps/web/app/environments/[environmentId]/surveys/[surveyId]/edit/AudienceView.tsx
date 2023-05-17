@@ -20,7 +20,11 @@ export default function AudienceView({ environmentId, localSurvey, setLocalSurve
         environmentId={environmentId}
       />
 
-      <WhoToSendCard localSurvey={localSurvey} />
+      <WhoToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environmentId={environmentId}
+      />
 
       <WhenToSendCard
         localSurvey={localSurvey}
