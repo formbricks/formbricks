@@ -172,7 +172,7 @@ CREATE TABLE "Product" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "teamId" TEXT NOT NULL,
-    "brandColor" TEXT NOT NULL DEFAULT '#334155',
+    "brandColor" TEXT NOT NULL DEFAULT '#94a3b8',
     "recontactDays" INTEGER NOT NULL DEFAULT 7,
 
     CONSTRAINT "Product_pkey" PRIMARY KEY ("id")

@@ -33,7 +33,6 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
         }> = []; // Specify the type of updatedData
         // iterate over survey questions and build the updated response
         for (const question of survey.questions) {
-          console.log(question);
           const answer = response.data[question.id];
           if (answer) {
             updatedResponse.push({

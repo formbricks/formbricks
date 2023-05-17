@@ -35,11 +35,11 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
 
   const [categories, setCategories] = useState<Array<string>>([]);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     if (product && templates?.length) {
       setActiveTemplate(customSurvey);
     }
-  }, [product]);
+  }, [product]); */
 
   useEffect(() => {
     const defaultCategories = [

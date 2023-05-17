@@ -312,7 +312,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                                 <div className="mt-0.5 h-2 w-2 rounded-full bg-amber-500 hover:bg-amber-600"></div>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Formbricks widget not set up.</p>
+                                <p>Your app is not connected to Formbricks.</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>

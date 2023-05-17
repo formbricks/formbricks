@@ -47,9 +47,9 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
   const options = [
     {
       id: "web",
-      name: "In-app (Popup)",
+      name: "Web App",
       icon: ComputerDesktopIcon,
-      description: "Survey users inside of your web application.",
+      description: "Embed a survey in your web app to collect responses.",
       comingSoon: false,
       alert: !widgetSetupCompleted,
     },
@@ -57,7 +57,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
       id: "link",
       name: "Link survey",
       icon: LinkIcon,
-      description: "Creates a standalone survey to share via link.",
+      description: "Share a link to a survey page.",
       comingSoon: false,
       alert: false,
     },
@@ -147,7 +147,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
                         <ExclamationCircleIcon className="h-5 w-5 text-amber-500" />
                         <div className=" text-amber-800">
                           <p className="text-xs font-semibold">
-                            Formbricks is not yet connected to your app.
+                            Your app is not yet connected to Formbricks.
                           </p>
                           <p className="text-xs font-normal">
                             Follow the{" "}
@@ -155,9 +155,9 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
                               href={`/environments/${environmentId}/settings/setup`}
                               className="underline hover:text-amber-900"
                               target="_blank">
-                              setup guide
+                              set up guide
                             </Link>{" "}
-                            to run in-app surveys.
+                            to connect Formbricks and launch surveys in your app.
                           </p>
                         </div>
                       </div>

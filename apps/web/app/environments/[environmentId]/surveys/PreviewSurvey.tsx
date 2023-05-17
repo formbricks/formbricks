@@ -30,7 +30,24 @@ export default function PreviewSurvey({
   const [progress, setProgress] = useState(0); // [0, 1]
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const { environment } = useEnvironment(environmentId);
+  const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
 
+  useEffect(() => {
+    if (activeQuestionId) {
+      setLastActiveQuestionId(activeQuestionId);
+      setProgress(calculateProgress(questions, activeQuestionId));
+    } else if (lastActiveQuestionId) {
+      setProgress(calculateProgress(questions, lastActiveQuestionId));
+    }
+
+    function calculateProgress(questions, id) {
+      const elementIdx = questions.findIndex((e) => e.id === id);
+      return elementIdx / questions.length;
+    }
+  }, [activeQuestionId, lastActiveQuestionId, questions]);
+
+  // Before letting users collapse Question Cards
+  /* 
   useEffect(() => {
     if (activeQuestionId) {
       setProgress(calculateProgress(questions));
@@ -41,7 +58,7 @@ export default function PreviewSurvey({
       return elementIdx / questions.length;
     }
   }, [activeQuestionId, questions]);
-
+ */
   useEffect(() => {
     // close modal if there are no questions left
     if (surveyType === "web" && !thankYouCard.enabled) {
@@ -55,8 +72,38 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, surveyType, questions, setActiveQuestionId, thankYouCard]);
 
-  const gotoNextQuestion = () => {
+  // Before letting users collapse Question Cards
+  /*   const gotoNextQuestion = () => {
     const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentIndex < questions.length - 1) {
+      setActiveQuestionId(questions[currentIndex + 1].id);
+    } else {
+      if (thankYouCard?.enabled) {
+        setActiveQuestionId("thank-you-card");
+      } else {
+        setIsModalOpen(false);
+        setTimeout(() => {
+          setActiveQuestionId(questions[0].id);
+          setIsModalOpen(true);
+        }, 500);
+        if (thankYouCard?.enabled) {
+          setActiveQuestionId("thank-you-card");
+          setProgress(1);
+        } else {
+          setIsModalOpen(false);
+          setTimeout(() => {
+            setActiveQuestionId(questions[0].id);
+            setIsModalOpen(true);
+          }, 500);
+        }
+      }
+    }
+  }; */
+
+  const gotoNextQuestion = () => {
+    const currentQuestionId = activeQuestionId || lastActiveQuestionId;
+    const currentIndex = questions.findIndex((q) => q.id === currentQuestionId);
+
     if (currentIndex < questions.length - 1) {
       setActiveQuestionId(questions[currentIndex + 1].id);
     } else {
@@ -98,10 +145,10 @@ export default function PreviewSurvey({
     }
   }, [environment]);
 
-  if (!activeQuestionId) {
+  /*   if (!activeQuestionId) {
     return null;
   }
-
+ */
   return (
     <div className="my-4 flex h-full w-5/6 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
       <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
@@ -115,7 +162,26 @@ export default function PreviewSurvey({
 
       {surveyType === "web" || widgetSetupCompleted ? (
         <Modal isOpen={isModalOpen}>
-          {activeQuestionId == "thank-you-card" ? (
+          {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+            <ThankYouCard
+              brandColor={brandColor}
+              headline={thankYouCard?.headline || ""}
+              subheader={thankYouCard?.subheader || ""}
+            />
+          ) : (
+            questions.map((question, idx) =>
+              (activeQuestionId || lastActiveQuestionId) === question.id ? (
+                <QuestionConditional
+                  key={question.id}
+                  question={question}
+                  brandColor={brandColor}
+                  lastQuestion={idx === questions.length - 1}
+                  onSubmit={gotoNextQuestion}
+                />
+              ) : null
+            )
+          )}
+          {/*  {activeQuestionId == "thank-you-card" ? (
             <ThankYouCard
               brandColor={brandColor}
               headline={thankYouCard?.headline || ""}
@@ -134,13 +200,32 @@ export default function PreviewSurvey({
                   />
                 )
             )
-          )}
+          )} */}
         </Modal>
       ) : (
         <div className="flex flex-grow flex-col">
           <div className="flex w-full flex-grow flex-col items-center justify-center bg-white">
             <div className="w-full max-w-md">
-              {activeQuestionId == "thank-you-card" ? (
+              {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+                <ThankYouCard
+                  brandColor={brandColor}
+                  headline={thankYouCard?.headline || ""}
+                  subheader={thankYouCard?.subheader || ""}
+                />
+              ) : (
+                questions.map((question, idx) =>
+                  (activeQuestionId || lastActiveQuestionId) === question.id ? (
+                    <QuestionConditional
+                      key={question.id}
+                      question={question}
+                      brandColor={brandColor}
+                      lastQuestion={idx === questions.length - 1}
+                      onSubmit={gotoNextQuestion}
+                    />
+                  ) : null
+                )
+              )}
+              {/*   {activeQuestionId == "thank-you-card" ? (
                 <ThankYouCard
                   brandColor={brandColor}
                   headline={thankYouCard?.headline || "Thank you!"}
@@ -159,7 +244,7 @@ export default function PreviewSurvey({
                       />
                     )
                 )
-              )}
+              )} */}
             </div>
           </div>
           <div className="z-10 w-full rounded-b-lg bg-white">

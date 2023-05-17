@@ -39,8 +39,6 @@ export default function SingleResponse({ data, environmentId }: OpenTextSummaryP
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || data.personId;
 
-  console.log(data);
-
   return (
     <div className=" my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-6 pb-5 pt-6">

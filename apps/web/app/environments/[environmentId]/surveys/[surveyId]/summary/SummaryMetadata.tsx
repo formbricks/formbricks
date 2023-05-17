@@ -139,9 +139,9 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
               </Button>
             )}
 
-            {environment.widgetSetupCompleted && (
+            {environment.widgetSetupCompleted || survey.type === "link" ? (
               <SurveyStatusDropdown surveyId={surveyId} environmentId={environmentId} />
-            )}
+            ) : null}
             <Button
               className="h-full w-full px-3 lg:px-6"
               href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>

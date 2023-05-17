@@ -62,13 +62,13 @@ export default function SurveyMenuBar({
           }}
           className="w-72 border-white hover:border-slate-200 "
         />
-        {localSurvey?.responseRate && (
-          <div className="flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-sm text-amber-700 shadow-sm">
-            <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-amber-400" />
-            This survey received responses. To keep the data consistent, make changes with caution.
-          </div>
-        )}
       </div>
+      {localSurvey?.responseRate && (
+        <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-sm text-amber-700 shadow-sm">
+          <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-amber-400" />
+          This survey received responses. To keep the data consistent, make changes with caution.
+        </div>
+      )}
       <div className="mt-3 flex sm:ml-4 sm:mt-0">
         <div className="mr-4 flex items-center">
           <SurveyStatusDropdown

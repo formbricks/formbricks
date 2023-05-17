@@ -5,19 +5,19 @@ import type { Survey } from "@formbricks/types/surveys";
 import { Badge, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const options = [
   {
     id: "all",
-    name: "Survey all people",
-    description: "Potentially, all users can be surveyed.",
+    name: "Everyone",
+    description: "Show your survey to all users.",
     disabled: false,
   },
   {
     id: "filter",
-    name: "Filter based on attributes",
-    description: "Only people with specific attributes can be surveyed.",
+    name: "Filter by attributes",
+    description: "Target specific audiences by attributes.",
     disabled: true,
   },
 ];
@@ -29,27 +29,46 @@ interface WhoToSendToCardProps {
 export default function WhoToSendToCard({ localSurvey }: WhoToSendToCardProps) {
   const [open, setOpen] = useState(false);
 
-  if (localSurvey.type === "link") {
+  useEffect(() => {
+    if (localSurvey.type === "link") {
+      setOpen(false);
+    }
+  }, [localSurvey.type]);
+
+  /*  if (localSurvey.type === "link") {
     return null;
   }
-
+ */
   return (
     <Collapsible.Root
       open={open}
-      onOpenChange={setOpen}
-      className={cn(
-        open ? "" : "hover:bg-slate-50",
-        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
-      )}>
-      <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
+      onOpenChange={(openState) => {
+        if (localSurvey.type !== "link") {
+          setOpen(openState);
+        }
+      }}
+      className="w-full rounded-lg border border-slate-300 bg-white">
+      <Collapsible.CollapsibleTrigger
+        asChild
+        className={cn(
+          localSurvey.type !== "link" ? "cursor-pointer hover:bg-slate-50" : "cursor-not-allowed bg-slate-50",
+          "h-full w-full rounded-lg "
+        )}>
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon className="h-8 w-8 text-green-400" />
+            <CheckCircleIcon
+              className={cn(localSurvey.type !== "link" ? "text-green-400" : "text-slate-300", "h-8 w-8 ")}
+            />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Who to ask</p>
+            <p className="font-semibold text-slate-800">Target Audience</p>
             <p className="mt-1 truncate text-sm text-slate-500">Filter your users based on attributes.</p>
           </div>
+          {localSurvey.type === "link" && (
+            <div className="flex w-full items-center justify-end pr-2">
+              <Badge size="normal" text="In-app survey settings" type="warning" />
+            </div>
+          )}
         </div>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent>
