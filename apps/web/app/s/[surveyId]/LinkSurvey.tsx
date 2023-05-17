@@ -8,17 +8,13 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { createDisplay, markDisplayResponded } from "@formbricks/lib/clientDisplay/display";
 import { createResponse, updateResponse } from "@formbricks/lib/clientResponse/response";
 import { cn } from "@formbricks/lib/cn";
+import type { SurveyResponse } from "@formbricks/types/api/client";
 import type { Question } from "@formbricks/types/questions";
-import type { Survey } from "@formbricks/types/surveys";
 import { Confetti } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 
-type EnhancedSurvey = Survey & {
-  brandColor: string;
-};
-
 interface LinkSurveyProps {
-  survey: EnhancedSurvey;
+  survey: SurveyResponse;
 }
 
 export default function LinkSurvey({ survey }: LinkSurveyProps) {
