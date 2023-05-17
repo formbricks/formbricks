@@ -39,3 +39,12 @@ export const scrollToTop = () => {
     behavior: "smooth",
   });
 };
+
+export const toJson = (obj: any): Object | null => {
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};

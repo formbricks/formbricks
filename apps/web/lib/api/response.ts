@@ -1,4 +1,5 @@
 import { NextApiResponse } from "next";
+import { NextResponse } from "next/server";
 
 export type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
@@ -15,6 +16,12 @@ export interface ApiErrorResponse {
 }
 
 export type CustomNextApiResponse = NextApiResponse<ApiResponse>;
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
 
 const badRequestResponse = (
   res: CustomNextApiResponse,
@@ -41,15 +48,21 @@ const methodNotAllowedResponse = (res: CustomNextApiResponse, allowedMethods: st
     },
   });
 
-const notFoundResponse = (res: CustomNextApiResponse, resourceType: string, resourceId: string) =>
-  res.status(404).json({
-    code: "not_found",
-    message: `${resourceType} not found`,
-    details: {
-      resource_id: resourceId,
-      resource_type: resourceType,
-    },
-  });
+const notFoundResponse = (resourceType: string, resourceId: string, cors: boolean = false) =>
+  NextResponse.json(
+    {
+      code: "not_found",
+      message: `${resourceType} not found`,
+      details: {
+        resource_id: resourceId,
+        resource_type: resourceType,
+      },
+    } as ApiErrorResponse,
+    {
+      status: 404,
+      ...(cors && { headers: corsHeaders }),
+    }
+  );
 
 export const responses = {
   badRequestResponse,

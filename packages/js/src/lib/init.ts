@@ -13,7 +13,7 @@ import {
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
 import { addClickEventListener, addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
-import { createPerson } from "./person";
+import { createPerson, resetPerson } from "./person";
 import { createSession, extendOrCreateSession, extendSession, isExpired } from "./session";
 import { addStylesToDom } from "./styles";
 import { addWidgetContainer } from "./widget";
@@ -80,7 +80,11 @@ export const initialize = async (
 
       const createSessionResult = await createSession();
 
-      if (createSessionResult.ok !== true) return err(createSessionResult.error);
+      // if create session fails, clear config and start from scratch
+      if (createSessionResult.ok !== true) {
+        await resetPerson();
+        return await initialize(c);
+      }
 
       const { session, settings } = createSessionResult.value;
 
