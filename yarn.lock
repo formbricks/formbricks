@@ -12006,6 +12006,11 @@ react-countdown-hook@^1.1.1:
   resolved "https://registry.yarnpkg.com/react-countdown-hook/-/react-countdown-hook-1.1.1.tgz#2536209b0d9243f75275844ae575d696f2ffbc5d"
   integrity sha512-+/vH6zK2H0yM9dPWJOa3hnLsBWWjwwi/6KOXDBc6F65lrc8vmuMozjTOlLhG4AtyyOTJAd2bvJhlph8IPqrXxg==
 
+react-countdown-hook@^1.1.3:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/react-countdown-hook/-/react-countdown-hook-1.1.3.tgz#04609f3243ee71aadceb5ddfcd538a813a3443ea"
+  integrity sha512-MY4Kr8wXMtCjDF45kehMP7R/OwekilHxznK1RRnuvgelOVqT0noaW9Fqm2A9J2AZIEnfJHpe47KEVEEq212R8w==
+
 react-csv@^2.2.2:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/react-csv/-/react-csv-2.2.2.tgz#5bbf0d72a846412221a14880f294da9d6def9bfb"

@@ -72,10 +72,10 @@ export default function Builder({ formId }) {
       await persistNoCodeForm(newNoCodeForm);
       mutateNoCodeForm(newNoCodeForm);
       setLoading(false);
-      toast(
+      toast.success(
         firstPublish
-          ? "Your form is now published 🎉"
-          : "Your changes are now published 🎉"
+          ? "Votre formulaire est maintenant publié 🎉"
+          : "Vos modifications sont maintenant publiées 🎉"
       );
     }, 500);
   };

@@ -22,7 +22,7 @@ export default async function handle(
       });
       if (!user) {
         return res.status(409).json({
-          error: "Invalid token provided or no longer valid",
+          error: "Jeton invalide fourni ou qui n'est plus valide",
         });
       }
       await prisma.user.update({
@@ -33,7 +33,7 @@ export default async function handle(
       res.json({});
     } catch (e) {
       return res.status(500).json({
-        error: "Invalid token provided or no longer valid",
+        error: "Jeton invalide fourni ou qui n'est plus valide",
       });
     }
   }
