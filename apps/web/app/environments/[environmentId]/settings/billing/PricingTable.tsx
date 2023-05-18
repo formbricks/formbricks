@@ -141,7 +141,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
                 </Button>
               ) : (
                 <Button
-                  variant="highlight"
+                  variant="darkCTA"
                   className="mt-6 w-full justify-center py-4 text-white shadow-sm"
                   onClick={() => router.push(`${stripeURl}?client_reference_id=${team.id}`)}>
                   Upgrade

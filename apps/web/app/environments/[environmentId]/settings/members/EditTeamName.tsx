@@ -43,7 +43,7 @@ export default function EditTeamName({ environmentId }) {
       <Label htmlFor="teamname">Team Name</Label>
       <Input type="text" id="teamname" defaultValue={team.name} {...register("name")} />
 
-      <Button type="submit" className="mt-4" loading={isMutatingTeam}>
+      <Button type="submit" className="mt-4" variant="darkCTA" loading={isMutatingTeam}>
         Update
       </Button>
     </form>

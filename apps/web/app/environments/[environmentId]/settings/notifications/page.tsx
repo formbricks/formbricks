@@ -1,15 +1,14 @@
+import SettingsCard from "@/app/environments/[environmentId]/settings/SettingsCard";
 import SettingsTitle from "../SettingsTitle";
+import EditNotifications from "./EditNotifications";
 
 export default function ProfileSettingsPage() {
   return (
     <div>
       <SettingsTitle title="Notifications" />
-      {/*       <SettingsCard title="Personal Information" description="Update your personal information.">
-        <EditName />
+      <SettingsCard title="Manage members" description="Add or remove members in your team.">
+        <EditNotifications />
       </SettingsCard>
-      <SettingsCard title="Avatar" description="Assist your team in identifying you on Formbricks.">
-        <EditAvatar />
-      </SettingsCard> */}
     </div>
   );
 }

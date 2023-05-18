@@ -12,6 +12,7 @@ import {
   PaintBrushIcon,
   UserCircleIcon,
   UsersIcon,
+  BellAlertIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
@@ -30,6 +31,13 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
             href: `/environments/${environmentId}/settings/profile`,
             icon: UserCircleIcon,
             current: pathname?.includes("/profile"),
+            hidden: false,
+          },
+          {
+            name: "Notifications",
+            href: `/environments/${environmentId}/settings/notifications`,
+            icon: BellAlertIcon,
+            current: pathname?.includes("/notifications"),
             hidden: false,
           },
         ],
@@ -156,7 +164,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
       <nav className="flex-1 space-y-1 bg-white px-2">
         {navigation.map((item) => (
           <div key={item.title}>
-            <p className="mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <p className="mt-6 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
               {item.title}
             </p>
             <div className="ml-2 mt-1 space-y-1">
