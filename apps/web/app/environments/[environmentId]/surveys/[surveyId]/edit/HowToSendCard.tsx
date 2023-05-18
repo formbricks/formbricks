@@ -23,7 +23,7 @@ interface HowToSendCardProps {
 }
 
 export default function HowToSendCard({ localSurvey, setLocalSurvey, environmentId }: HowToSendCardProps) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(localSurvey.type === "web" ? false : true);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const { environment } = useEnvironment(environmentId);
 

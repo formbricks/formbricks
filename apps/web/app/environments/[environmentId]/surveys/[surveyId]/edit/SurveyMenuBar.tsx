@@ -1,8 +1,10 @@
 "use client";
 
+import DeleteDialog from "@/components/shared/DeleteDialog";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useProduct } from "@/lib/products/products";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
+import { deleteSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
 import { Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
@@ -28,6 +30,7 @@ export default function SurveyMenuBar({
   const router = useRouter();
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
   const [audiencePrompt, setAudiencePrompt] = useState(true);
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { product } = useProduct(environmentId);
 
   useEffect(() => {
@@ -42,6 +45,25 @@ export default function SurveyMenuBar({
     setLocalSurvey(updatedSurvey);
   };
 
+  const deleteSurveyAction = async (survey) => {
+    try {
+      await deleteSurvey(environmentId, survey.id);
+      setDeleteDialogOpen(false);
+      router.back();
+    } catch (error) {
+      console.log("An error occured deleting the survey");
+    }
+  };
+
+  const handleBack = () => {
+    if (localSurvey.createdAt === localSurvey.updatedAt && localSurvey.status === "draft") {
+      setDeleteDialogOpen(true);
+      console.log(localSurvey);
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <div className="border-b border-slate-200 bg-white px-5 py-3 sm:flex sm:items-center sm:justify-between">
       <div className="flex items-center space-x-2 whitespace-nowrap">
@@ -49,9 +71,9 @@ export default function SurveyMenuBar({
           variant="secondary"
           StartIcon={ArrowLeftIcon}
           onClick={() => {
-            router.back();
+            handleBack();
           }}>
-          {/*  <ArrowLeftIcon className="h-5 w-5 text-slate-700" /> */} Back
+          Back
         </Button>
         <p className="pl-4 font-semibold">{product.name} / </p>
         <Input
@@ -78,7 +100,7 @@ export default function SurveyMenuBar({
           />
         </div>
         <Button
-          variant="secondary"
+          variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
           className="mr-3"
           loading={isMutatingSurvey}
           onClick={() => {
@@ -87,9 +109,13 @@ export default function SurveyMenuBar({
                 if (!response?.ok) {
                   throw new Error(await response?.text());
                 }
+                const updatedSurvey = await response.json();
+                setLocalSurvey(updatedSurvey); // update local survey state
                 toast.success("Changes saved.");
                 if (localSurvey.status !== "draft") {
                   router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary`);
+                } else {
+                  router.push(`/environments/${environmentId}/surveys`);
                 }
               })
               .catch(() => {
@@ -125,6 +151,13 @@ export default function SurveyMenuBar({
           </Button>
         )}
       </div>
+      <DeleteDialog
+        deleteWhat="Draft"
+        open={isDeleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        onDelete={() => deleteSurveyAction(localSurvey)}
+        text="Do you want to delete this draft?"
+      />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import { useEnvironment } from "@/lib/environments/environments";
 import { useProfile } from "@/lib/profile";
 import { createSurvey, deleteSurvey, duplicateSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Badge, ErrorComponent } from "@formbricks/ui";
@@ -33,6 +34,7 @@ export default function SurveysList({ environmentId }) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
   const { isLoadingProfile, isErrorProfile } = useProfile();
+  const { environment } = useEnvironment(environmentId);
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
@@ -46,8 +48,12 @@ export default function SurveysList({ environmentId }) {
 
   const newSurveyFromTemplate = async (template: Template) => {
     setIsCreateSurveyLoading(true);
+    const augmentedTemplate = {
+      ...template.preset,
+      type: environment?.widgetSetupCompleted ? "web" : "link",
+    };
     try {
-      const survey = await createSurvey(environmentId, template.preset);
+      const survey = await createSurvey(environmentId, augmentedTemplate);
       router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
     } catch (e) {
       toast.error("An error occured creating a new survey");
@@ -89,7 +95,7 @@ export default function SurveysList({ environmentId }) {
 
   if (surveys.length === 0) {
     return (
-      <div className="mx-auto flex w-full max-w-5xl flex-col py-24">
+      <div className="mx-auto flex w-full max-w-5xl flex-col py-12">
         {isCreateSurveyLoading ? (
           <LoadingSpinner />
         ) : (

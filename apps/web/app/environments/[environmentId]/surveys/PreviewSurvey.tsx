@@ -15,6 +15,7 @@ interface PreviewSurveyProps {
   environmentId: string;
   surveyType: Survey["type"];
   thankYouCard: Survey["thankYouCard"];
+  previewType?: "modal" | "fullwidth" | "email";
 }
 
 export default function PreviewSurvey({
@@ -25,6 +26,7 @@ export default function PreviewSurvey({
   environmentId,
   surveyType,
   thankYouCard,
+  previewType,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
@@ -46,19 +48,6 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, lastActiveQuestionId, questions]);
 
-  // Before letting users collapse Question Cards
-  /* 
-  useEffect(() => {
-    if (activeQuestionId) {
-      setProgress(calculateProgress(questions));
-    }
-
-    function calculateProgress(questions) {
-      const elementIdx = questions.findIndex((e) => e.id === activeQuestionId);
-      return elementIdx / questions.length;
-    }
-  }, [activeQuestionId, questions]);
- */
   useEffect(() => {
     // close modal if there are no questions left
     if (surveyType === "web" && !thankYouCard.enabled) {
@@ -71,34 +60,6 @@ export default function PreviewSurvey({
       }
     }
   }, [activeQuestionId, surveyType, questions, setActiveQuestionId, thankYouCard]);
-
-  // Before letting users collapse Question Cards
-  /*   const gotoNextQuestion = () => {
-    const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
-    if (currentIndex < questions.length - 1) {
-      setActiveQuestionId(questions[currentIndex + 1].id);
-    } else {
-      if (thankYouCard?.enabled) {
-        setActiveQuestionId("thank-you-card");
-      } else {
-        setIsModalOpen(false);
-        setTimeout(() => {
-          setActiveQuestionId(questions[0].id);
-          setIsModalOpen(true);
-        }, 500);
-        if (thankYouCard?.enabled) {
-          setActiveQuestionId("thank-you-card");
-          setProgress(1);
-        } else {
-          setIsModalOpen(false);
-          setTimeout(() => {
-            setActiveQuestionId(questions[0].id);
-            setIsModalOpen(true);
-          }, 500);
-        }
-      }
-    }
-  }; */
 
   const gotoNextQuestion = () => {
     const currentQuestionId = activeQuestionId || lastActiveQuestionId;
@@ -137,6 +98,7 @@ export default function PreviewSurvey({
     }, 500);
   };
  */
+
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
       setWidgetSetupCompleted(true);
@@ -145,10 +107,10 @@ export default function PreviewSurvey({
     }
   }, [environment]);
 
-  /*   if (!activeQuestionId) {
-    return null;
+  if (!previewType) {
+    previewType = widgetSetupCompleted ? "modal" : "fullwidth";
   }
- */
+
   return (
     <div className="my-4 flex h-full w-5/6 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
       <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
@@ -157,16 +119,18 @@ export default function PreviewSurvey({
           <div className="h-3 w-3 rounded-full bg-amber-500"></div>
           <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
         </div>
-        <p>{surveyType === "web" && <p className="ml-4 font-mono text-sm text-slate-400">Your web app</p>}</p>
+        <p>
+          {previewType === "modal" && <p className="ml-4 font-mono text-sm text-slate-400">Your web app</p>}
+        </p>
       </div>
 
-      {surveyType === "web" || widgetSetupCompleted ? (
+      {previewType === "modal" ? (
         <Modal isOpen={isModalOpen}>
           {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
             <ThankYouCard
               brandColor={brandColor}
-              headline={thankYouCard?.headline || ""}
-              subheader={thankYouCard?.subheader || ""}
+              headline={thankYouCard?.headline || "Thank you!"}
+              subheader={thankYouCard?.subheader || "We appreciate your feedback."}
             />
           ) : (
             questions.map((question, idx) =>
@@ -181,26 +145,6 @@ export default function PreviewSurvey({
               ) : null
             )
           )}
-          {/*  {activeQuestionId == "thank-you-card" ? (
-            <ThankYouCard
-              brandColor={brandColor}
-              headline={thankYouCard?.headline || ""}
-              subheader={thankYouCard?.subheader || ""}
-            />
-          ) : (
-            questions.map(
-              (question, idx) =>
-                activeQuestionId === question.id && (
-                  <QuestionConditional
-                    key={question.id}
-                    question={question}
-                    brandColor={brandColor}
-                    lastQuestion={idx === questions.length - 1}
-                    onSubmit={gotoNextQuestion}
-                  />
-                )
-            )
-          )} */}
         </Modal>
       ) : (
         <div className="flex flex-grow flex-col">
@@ -209,8 +153,8 @@ export default function PreviewSurvey({
               {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
                 <ThankYouCard
                   brandColor={brandColor}
-                  headline={thankYouCard?.headline || ""}
-                  subheader={thankYouCard?.subheader || ""}
+                  headline={thankYouCard?.headline || "Thank you!"}
+                  subheader={thankYouCard?.subheader || "We appreciate your feedback."}
                 />
               ) : (
                 questions.map((question, idx) =>
@@ -225,26 +169,6 @@ export default function PreviewSurvey({
                   ) : null
                 )
               )}
-              {/*   {activeQuestionId == "thank-you-card" ? (
-                <ThankYouCard
-                  brandColor={brandColor}
-                  headline={thankYouCard?.headline || "Thank you!"}
-                  subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-                />
-              ) : (
-                questions.map(
-                  (question, idx) =>
-                    activeQuestionId === question.id && (
-                      <QuestionConditional
-                        key={question.id}
-                        question={question}
-                        brandColor={brandColor}
-                        lastQuestion={idx === questions.length - 1}
-                        onSubmit={gotoNextQuestion}
-                      />
-                    )
-                )
-              )} */}
             </div>
           </div>
           <div className="z-10 w-full rounded-b-lg bg-white">

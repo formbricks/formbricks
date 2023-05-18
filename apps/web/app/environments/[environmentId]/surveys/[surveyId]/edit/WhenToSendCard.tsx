@@ -26,7 +26,7 @@ interface WhenToSendCardProps {
 }
 
 export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhenToSendCardProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
   const { eventClasses, isLoadingEventClasses, isErrorEventClasses, mutateEventClasses } =
     useEventClasses(environmentId);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
