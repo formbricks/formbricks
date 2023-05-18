@@ -1,5 +1,6 @@
 "use client";
 
+import { GoogleButton } from "@/components/auth/GoogleButton";
 import { Button } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
@@ -37,7 +38,7 @@ export const SigninForm = () => {
   return (
     <>
       <div className="text-center">
-        <p className="mb-8 text-slate-700">Log in to your account</p>
+        <p className="mb-8 text-lg text-slate-700">Log in to your account</p>
         <div className="space-y-2">
           <form onSubmit={handleSubmit} ref={formRef} className="space-y-2" onChange={checkFormValidity}>
             {showLogin && (
@@ -97,21 +98,29 @@ export const SigninForm = () => {
               className="w-full justify-center"
               loading={loggingIn}
               disabled={!isButtonEnabled}>
-              Continue with email
+              Continue with Email
             </Button>
           </form>
 
           {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "0" && (
             <>
-              <GithubButton text="Continue with Google" />
+              <GoogleButton />
             </>
           )}
           {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "0" && (
             <>
-              <GithubButton text="Continue with GitHub" />{" "}
+              <GithubButton />
             </>
           )}
         </div>
+        {process.env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
+          <div className="mt-3 text-center text-xs text-slate-600">
+            Need an account?{" "}
+            <Link href="/auth/signup" className="font-semibold underline">
+              Register.
+            </Link>
+          </div>
+        )}
       </div>
       {searchParams?.get("error") && (
         <div className="absolute top-10 rounded-md bg-red-50 p-4">

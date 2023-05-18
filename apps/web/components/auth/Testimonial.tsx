@@ -9,7 +9,7 @@ export default function Testimonial() {
       <div className="mb-10 w-1/2 space-y-8">
         <div>
           <h2 className="text-3xl font-bold text-slate-600">Survey any segment</h2>
-          <h3 className="text-3xl font-light text-slate-500">No coding required.</h3>
+          <h3 className="text-3xl font-light text-slate-600">No coding required.</h3>
         </div>
         {/*  <p className="text-slate-600">
           Make customer-centric decisions based on data.
