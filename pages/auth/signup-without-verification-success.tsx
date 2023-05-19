@@ -12,10 +12,10 @@ export default function SignupWithoutVerificationSuccess() {
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
             <div className="w-fit m-auto">
               <Image
-                src="/img/kda_logo.png"
-                alt="kinshasa digital academy logo"
+                src="/img/kadea_logo.png"
+                alt="Kadea  academy logo"
                 width={180}
-                height={60}
+                height={40}
               />
             </div>
 

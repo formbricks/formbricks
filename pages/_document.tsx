@@ -8,18 +8,18 @@ export default function Document() {
           rel="icon"
           type="image/png"
           sizes="32x32"
-          href="/favicons/favicon-kda.png"
+          href="/favicons/favicon-kadea.png"
         />
         <link
           rel="icon"
           type="image/png"
           sizes="16x16"
-          href="/favicons/favicon-kda.png"
+          href="/favicons/favicon-kadea.png"
         />
         <link
           rel="apple-touch-icon"
           sizes="180x180"
-          href="/favicons/favicon-kda.png"
+          href="/favicons/favicon-kadea.png"
         />
         <link rel="manifest" href="/favicons/site.webmanifest" />
         <link

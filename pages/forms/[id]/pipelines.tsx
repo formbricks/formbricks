@@ -183,7 +183,7 @@ function PipelinesPage() {
 
   return (
     <BaseLayoutManagement
-      title={`${form.name} - KDA Sourcing`}
+      title={`${form.name} - Kadea Sourcing`}
       breadcrumbs={[{ name: form.name, href: "#", current: true }]}
       steps={formMenuSteps}
       currentStep="pipelines"
