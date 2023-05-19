@@ -5,7 +5,7 @@ import Testimonial from "@/components/auth/Testimonial";
 
 export default function SignUpPage() {
   return (
-    <div className="bg grid grid-cols-2 bg-gradient-to-tr from-slate-200 to-slate-50">
+    <div className="grid min-h-screen w-full grid-cols-2 bg-gradient-to-tr from-slate-200 to-slate-50">
       <Testimonial />
       <FormWrapper>
         {process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1" ? (
