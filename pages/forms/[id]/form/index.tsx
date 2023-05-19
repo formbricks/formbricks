@@ -43,7 +43,7 @@ function FormPage() {
     <>
       {form.formType === "NOCODE" ? (
         <BaseLayoutManagement
-          title={`${form.name} - KDA Sourcing`}
+          title={`${form.name} - Kadea Sourcing`}
           breadcrumbs={breadcrumbs}
           steps={formMenuSteps}
           currentStep="form"
@@ -56,7 +56,7 @@ function FormPage() {
         </BaseLayoutManagement>
       ) : (
         <BaseLayoutManagement
-          title={`${form.name} - KDA Sourcing`}
+          title={`${form.name} - Kadea Sourcing`}
           breadcrumbs={breadcrumbs}
           steps={formMenuSteps}
           currentStep="form"

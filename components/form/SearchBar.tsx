@@ -29,7 +29,7 @@ function SearchBar({
         type="text"
         name="name"
         className="block w-full p-3 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
-        placeholder="e.g. Registration for the Kinshasa Digital Academy"
+        placeholder="e.g. Registration for the Kadea  Academy"
         value={queryValue}
         onChange={(e) => setQueryValue(e.target.value)}
         autoFocus

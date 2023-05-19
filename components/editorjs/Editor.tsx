@@ -42,7 +42,7 @@ const Editor = ({
   const keyPressListener = useCallback((e) => {
     if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      toast("KDA Sourcing autosaves your work ✌️");
+      toast("Kadea Sourcing autosaves your work ✌️");
     }
   }, []);
 
