@@ -4,6 +4,7 @@ import { fr } from "date-fns/locale";
 import crypto from "crypto";
 import { UserRole } from "@prisma/client";
 import AWS from "aws-sdk";
+import { toast } from "react-toastify";
 
 export const fetcher = async (url) => {
   const res = await fetch(url);
@@ -74,11 +75,26 @@ export const slugify = (...args: (string | number)[]): string => {
     .replace(/\s+/g, "-"); // separator
 };
 
-export const handlePhoneNumberValidity = (phone) => {
-  const validity = /^(\+243|0)[0-9]{9}$/.test(phone);
-  if (validity === false)
-    throw new Error("Le numéro de téléphone entré est incorrect");
-  return phone;
+// export const handlePhoneNumberValidity = (phone) => {
+//   const validity = /^(\+243|243)[0-9]{9}$/.test(phone);
+//   if (validity === false)
+//     throw new Error("Entrez le numéro au format +243 xxx xxx xxx");
+//   return phone;
+// };
+export const handlePhoneNumberValidity = (phone, name) => {
+  const phoneReg1 = /^(243|\+243|0|00243)([0-9]{9})$/;
+  const phoneReg2 = /^([0-9]{9})$/;
+  if (phoneReg1.test(phone)) {
+    if (phone.startsWith("+")) return phone;
+    if (phone.startsWith("00")) return `+${phone.split("").slice(2).join("")}`;
+    if (phone.startsWith("0"))
+      return `+243${phone.split("").slice(1).join("")}`;
+    return `+${phone}`;
+  }
+  if (phoneReg2.test(phone)) return `+243${phone}`;
+  else{
+    throw new Error(`${name}: Entrez un numéro valide`);
+  }
 };
 
 export const getFieldSetter = (obj, objSetter) => {

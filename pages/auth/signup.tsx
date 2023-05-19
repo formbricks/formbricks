@@ -22,13 +22,14 @@ export default function SignUpPage() {
   const handleSubmit = async (e) => {
     const callbackUrl = router.query.callbackUrl?.toString() || "/soucings";
     e.preventDefault();
+    
     try {
       await createUser(
         {
           firstname: e.target.elements.firstname.value,
           lastname: e.target.elements.lastname.value,
           gender: e.target.elements.gender.value,
-          phone: handlePhoneNumberValidity(e.target.elements.phone.value),
+          phone: handlePhoneNumberValidity(e.target.elements.phone.value, "Téléphone"),
           dob : new Date(e.target.elements.dob.value),
           address : {
             create:
@@ -40,7 +41,7 @@ export default function SignUpPage() {
                 province :e.target.elements.province.value
               },
           },
-          whatsapp: e.target.elements.whatsapp.value,
+          whatsapp: e.target.elements.whatsapp.value, 
           email: e.target.elements.email.value,
           password: e.target.elements.password.value,
         },
@@ -265,7 +266,8 @@ export default function SignUpPage() {
                         id="whatsapp"
                         name="whatsapp"
                         type="tel"
-                        pattern="^\+[1-9]{1}[0-9]{6,14}$" //^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$ //^\+243|0[0-9]{9}$
+                        // pattern="/^(243|\+243|0|00243)([0-9]{9})$/" //^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$ //^\+243|0[0-9]{9}$
+                        // pattern="^\+[1-9]{1}[0-9]{6,14}$" //^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$ //^\+243|0[0-9]{9}$
                         placeholder="+15289134"
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
