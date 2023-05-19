@@ -42,8 +42,10 @@ export default function PreviewSurvey({
       setProgress(calculateProgress(questions, lastActiveQuestionId));
     }
 
-    function calculateProgress(questions, id) {
-      const elementIdx = questions.findIndex((e) => e.id === id);
+    function calculateProgress(questions, activeQuestionId) {
+      if (activeQuestionId === "thank-you-card") return 1;
+
+      const elementIdx = questions.findIndex((e) => e.id === activeQuestionId);
       return elementIdx / questions.length;
     }
   }, [activeQuestionId, lastActiveQuestionId, questions]);
