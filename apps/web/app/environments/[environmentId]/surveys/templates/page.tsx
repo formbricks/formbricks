@@ -1,21 +1,23 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useEnvironment } from "@/lib/environments/environments";
 import { useProduct } from "@/lib/products/products";
 import { replacePresetPlaceholders } from "@/lib/templates";
 import type { Template } from "@formbricks/types/templates";
 import { ErrorComponent } from "@formbricks/ui";
-import { PaintBrushIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
+/* import { PaintBrushIcon } from "@heroicons/react/24/solid";
+import Link from "next/link"; */
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../PreviewSurvey";
 import TemplateList from "./TemplateList";
-import TemplateMenuBar from "./TemplateMenuBar";
+/* import TemplateMenuBar from "./TemplateMenuBar"; */
 import { templates } from "./templates";
 
 export default function SurveyTemplatesPage({ params }) {
   const environmentId = params.environmentId;
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
+  const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
 
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
@@ -29,33 +31,37 @@ export default function SurveyTemplatesPage({ params }) {
     }
   }, [product]);
 
-  if (isLoadingProduct) return <LoadingSpinner />;
-  if (isErrorProduct) return <ErrorComponent />;
+  if (isLoadingProduct || isLoadingEnvironment) return <LoadingSpinner />;
+  if (isErrorProduct || isErrorEnvironment) return <ErrorComponent />;
 
   return (
-    <div className="flex h-full flex-col">
-      <TemplateMenuBar activeTemplate={activeTemplate} environmentId={environmentId} />
+    <div className="flex h-full flex-col ">
+      {/*       <TemplateMenuBar activeTemplate={activeTemplate} environmentId={environmentId} /> */}
       <div className="relative z-0 flex flex-1 overflow-hidden">
-        <TemplateList
-          environmentId={environmentId}
-          onTemplateClick={(template) => {
-            setActiveQuestionId(template.preset.questions[0].id);
-            setActiveTemplate(template);
-          }}
-        />
-        <aside className="group relative hidden h-full flex-1 flex-shrink-0 overflow-hidden border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">
-          <Link
-            href={`/environments/${environmentId}/settings/lookandfeel`}
-            className="absolute left-6 top-6 z-50 flex items-center rounded bg-slate-50 px-2 py-0.5 text-xs text-slate-500 opacity-0 transition-all duration-500 hover:scale-105 hover:bg-slate-100 group-hover:opacity-100">
-            Update brand color <PaintBrushIcon className="ml-1.5 h-3 w-3" />
-          </Link>
+        <div className="flex-1 flex-col overflow-auto bg-slate-50">
+          <h1 className="ml-6 mt-6 text-2xl font-bold text-slate-800">Create a new survey</h1>
+          <TemplateList
+            environmentId={environmentId}
+            onTemplateClick={(template) => {
+              setActiveQuestionId(template.preset.questions[0].id);
+              setActiveTemplate(template);
+            }}
+          />
+        </div>
+        <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">
           {activeTemplate && (
-            <PreviewSurvey
-              activeQuestionId={activeQuestionId}
-              questions={activeTemplate.preset.questions}
-              brandColor={product.brandColor}
-              setActiveQuestionId={setActiveQuestionId}
-            />
+            <div className="my-6 flex h-full w-full flex-col items-center justify-center">
+              <p className="pb-2 text-center text-sm font-normal text-slate-400">Preview</p>
+              <PreviewSurvey
+                activeQuestionId={activeQuestionId}
+                questions={activeTemplate.preset.questions}
+                brandColor={product.brandColor}
+                setActiveQuestionId={setActiveQuestionId}
+                environmentId={environmentId}
+                surveyType={environment?.widgetSetupCompleted ? "web" : "link"}
+                thankYouCard={{ enabled: true }}
+              />
+            </div>
           )}
         </aside>
       </div>

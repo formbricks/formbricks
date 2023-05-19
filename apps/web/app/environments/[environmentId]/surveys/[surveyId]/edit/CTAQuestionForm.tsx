@@ -121,13 +121,6 @@ export default function CTAQuestionForm({
           </div>
         )}
       </div>
-
-      <LogicEditor
-        question={question}
-        updateQuestion={updateQuestion}
-        localSurvey={localSurvey}
-        questionIdx={questionIdx}
-      />
     </form>
   );
 }

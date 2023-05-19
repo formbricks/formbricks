@@ -62,7 +62,17 @@ export default function QuestionsView({
     });
 
     setLocalSurvey(updatedSurvey);
-    delete internalQuestionIdMap[localSurvey.questions[questionIdx].id];
+    delete internalQuestionIdMap[questionId];
+
+    if (questionId === activeQuestionId) {
+      if (questionIdx < localSurvey.questions.length - 1) {
+        setActiveQuestionId(localSurvey.questions[questionIdx + 1].id);
+      } else if (localSurvey.thankYouCard.enabled) {
+        setActiveQuestionId("thank-you-card");
+      } else {
+        setActiveQuestionId(localSurvey.questions[questionIdx - 1].id);
+      }
+    }
   };
 
   const addQuestion = (question: any) => {
@@ -97,7 +107,7 @@ export default function QuestionsView({
   };
 
   return (
-    <div className="px-5 py-4">
+    <div className="mt-12 px-5 py-4">
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="mb-5 grid grid-cols-1 gap-5 ">
           <StrictModeDroppable droppableId="questionsList">

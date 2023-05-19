@@ -12,15 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui";
-import {
-  CheckCircleIcon,
-  PauseCircleIcon,
-  PlayCircleIcon,
-  PencilSquareIcon,
-  ArchiveBoxIcon,
-} from "@heroicons/react/24/solid";
+import { CheckCircleIcon, PauseCircleIcon, PlayCircleIcon } from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
-import { Badge } from "@formbricks/ui";
 
 export default function SurveyStatusDropdown({
   surveyId,
@@ -47,24 +40,8 @@ export default function SurveyStatusDropdown({
       {survey.status === "draft" || survey.status === "archived" ? (
         <div className="flex items-center">
           <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
-          {survey.status === "draft" && (
-            <Badge
-              text="Draft"
-              type="gray"
-              size="normal"
-              StartIcon={PencilSquareIcon}
-              startIconClassName="mr-2"
-            />
-          )}
-          {survey.status === "archived" && (
-            <Badge
-              text="Archived"
-              type="gray"
-              size="normal"
-              StartIcon={ArchiveBoxIcon}
-              startIconClassName="mr-2"
-            />
-          )}
+          {survey.status === "draft" && <p className="text-sm italic text-slate-600">Draft</p>}
+          {survey.status === "archived" && <p className="text-sm italic text-slate-600">Archived</p>}
         </div>
       ) : (
         <Select

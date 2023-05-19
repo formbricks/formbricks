@@ -122,13 +122,6 @@ export default function MultipleChoiceSingleForm({
           />
         </div>
       </div>
-
-      <LogicEditor
-        question={question}
-        updateQuestion={updateQuestion}
-        localSurvey={localSurvey}
-        questionIdx={questionIdx}
-      />
     </form>
   );
 }

@@ -1,8 +1,12 @@
-import { Logic, Question, LogicCondition } from "@formbricks/types/questions";
+import { Logic, LogicCondition, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import {
-  Label,
   Button,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  Label,
   Select,
   SelectContent,
   SelectItem,
@@ -12,16 +16,12 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-  DropdownMenuCheckboxItem,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
 } from "@formbricks/ui";
-import { ForwardIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import { TrashIcon } from "@heroicons/react/24/solid";
-import { BsArrowReturnRight, BsArrowDown } from "react-icons/bs";
+import { ChevronDown, SplitIcon } from "lucide-react";
 import { useMemo } from "react";
-import { ChevronDown } from "lucide-react";
+import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
 interface LogicEditorProps {
   localSurvey: Survey;
@@ -80,6 +80,7 @@ export default function LogicEditor({
       "submitted",
       "skipped",
     ],
+    cta: ["submitted", "skipped"],
   };
   const logicConditions: LogicConditions = {
     submitted: {
@@ -310,7 +311,7 @@ export default function LogicEditor({
           type="button"
           name="logicJumps"
           variant="secondary"
-          EndIcon={ForwardIcon}
+          StartIcon={SplitIcon}
           onClick={() => addLogic()}>
           Add Logic
         </Button>

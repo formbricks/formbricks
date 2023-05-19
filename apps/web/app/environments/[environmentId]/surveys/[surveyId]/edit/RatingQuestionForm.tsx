@@ -123,13 +123,6 @@ export default function RatingQuestionForm({
           </div>
         )}
       </div>
-
-      <LogicEditor
-        question={question}
-        updateQuestion={updateQuestion}
-        localSurvey={localSurvey}
-        questionIdx={questionIdx}
-      />
     </form>
   );
 }

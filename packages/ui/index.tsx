@@ -1,4 +1,5 @@
 export { PersonAvatar, ProfileAvatar } from "./components/Avatars";
+export { Alert, AlertDescription, AlertTitle } from "./components/Alert";
 export { Badge } from "./components/Badge";
 export { Button } from "./components/Button";
 export { Card } from "./components/Card";

@@ -1,6 +1,6 @@
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
-import { EditProductName, EditWaitingTime } from "./editProduct";
+import { EditProductName, EditWaitingTime, DeleteProduct } from "./editProduct";
 
 export default function ProfileSettingsPage({ params }) {
   return (
@@ -13,6 +13,11 @@ export default function ProfileSettingsPage({ params }) {
         title="Recontact Waiting Time"
         description="Control how frequently users can be surveyed across all surveys.">
         <EditWaitingTime environmentId={params.environmentId} />
+      </SettingsCard>
+      <SettingsCard
+        title="Danger Zone"
+        description="You will delete all surveys, responses, people, actions and attributes along with the product.">
+        <DeleteProduct environmentId={params.environmentId} />
       </SettingsCard>
     </div>
   );

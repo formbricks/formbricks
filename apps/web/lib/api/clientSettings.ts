@@ -20,6 +20,25 @@ export const getSettings = async (environmentId: string, personId: string): Prom
     throw new Error("Product not found");
   }
 
+  const person = await prisma.person.findUnique({
+    where: {
+      id: personId,
+    },
+    select: {
+      attributes: {
+        select: {
+          id: true,
+          value: true,
+          attributeClassId: true,
+        },
+      },
+    },
+  });
+
+  if (!person) {
+    throw new Error("Person not found");
+  }
+
   // get all surveys that meet the displayOption criteria
   const potentialSurveys = await prisma.survey.findMany({
     where: {
@@ -62,6 +81,19 @@ export const getSettings = async (environmentId: string, personId: string): Prom
         },
         // last display
       },
+      attributeFilters: {
+        select: {
+          id: true,
+          condition: true,
+          value: true,
+          attributeClass: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
       displays: {
         where: {
           personId,
@@ -91,8 +123,29 @@ export const getSettings = async (environmentId: string, personId: string): Prom
     },
   });
 
+  // filter surveys that meet the attributeFilters criteria
+  const potentialSurveysWithAttributes = potentialSurveys.filter((survey) => {
+    const attributeFilters = survey.attributeFilters;
+    if (attributeFilters.length === 0) {
+      return true;
+    }
+    // check if meets all attribute filters criterias
+    return attributeFilters.every((attributeFilter) => {
+      const attribute = person.attributes.find(
+        (attribute) => attribute.attributeClassId === attributeFilter.attributeClass.id
+      );
+      if (attributeFilter.condition === "equals") {
+        return attribute?.value === attributeFilter.value;
+      } else if (attributeFilter.condition === "notEquals") {
+        return attribute?.value !== attributeFilter.value;
+      } else {
+        throw Error("Invalid attribute filter condition");
+      }
+    });
+  });
+
   // filter surveys that meet the recontactDays criteria
-  const surveys = potentialSurveys
+  const surveys = potentialSurveysWithAttributes
     .filter((survey) => {
       if (!lastDisplayPerson) {
         // no display yet - always display

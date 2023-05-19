@@ -5,6 +5,7 @@ import { createProduct } from "@/lib/products/products";
 import { Button, Input, Label } from "@formbricks/ui";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 interface AddProductModalProps {
@@ -15,12 +16,15 @@ interface AddProductModalProps {
 
 export default function AddProductModal({ environmentId, open, setOpen }: AddProductModalProps) {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm();
 
   const submitProduct = async (data) => {
+    setLoading(true);
     const newEnv = await createProduct(environmentId, data);
     router.push(`/environments/${newEnv.id}/`);
     setOpen(false);
+    setLoading(false);
   };
 
   return (
@@ -58,7 +62,7 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
                 }}>
                 Cancel
               </Button>
-              <Button variant="primary" type="submit">
+              <Button variant="primary" type="submit" loading={loading}>
                 Add product
               </Button>
             </div>

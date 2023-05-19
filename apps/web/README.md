@@ -59,7 +59,7 @@ To get the project running locally on your machine you need to have the followin
    pnpm dev
    ```
 
-   **You can now access the app on [https://localhost:3000](https://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of formbricks, create a new account.
+   **You can now access the app on [http://localhost:3000](http://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of formbricks, create a new account.
 
    For viewing the confirmation email and other emails the system sends you, you can access mailhog at [http://localhost:8025](http://localhost:8025)
 
