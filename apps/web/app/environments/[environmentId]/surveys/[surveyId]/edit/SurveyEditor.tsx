@@ -5,7 +5,6 @@ import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";
 import { ErrorComponent } from "@formbricks/ui";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
 import AudienceView from "./AudienceView";
@@ -19,7 +18,7 @@ interface SurveyEditorProps {
 }
 
 export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorProps) {
-  const [activeView, setActiveView] = useState<"questions" | "audience">("questions");
+  const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<Survey | null>();
 
@@ -57,13 +56,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
-          {survey.status !== "draft" && (
-            <div className="flex items-center border border-red-200 bg-red-100 p-2 text-sm text-slate-700 shadow-sm">
-              <ExclamationTriangleIcon className="mr-3 h-6 w-6 text-red-400" />
-              You&apos;re editing a published survey. Be cautious when making changes, they might mess up the
-              data.
-            </div>
-          )}
           <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
           {activeView === "questions" ? (
             <QuestionsView
@@ -81,13 +73,16 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             />
           )}
         </main>
-        <aside className="relative hidden h-full flex-1 flex-shrink-0 overflow-hidden border-l border-slate-200 bg-slate-200 shadow-inner md:flex md:flex-col">
+        <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50  md:flex md:flex-col">
           <PreviewSurvey
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
             questions={localSurvey.questions}
             brandColor={product.brandColor}
-            localSurvey={localSurvey}
+            environmentId={environmentId}
+            surveyType={localSurvey.type}
+            thankYouCard={localSurvey.thankYouCard}
+            previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
           />
         </aside>
       </div>

@@ -32,8 +32,8 @@ const thankYouCardDefault = {
 };
 
 export const customSurvey: Template = {
-  name: "Custom Survey",
-  description: "Create your survey from scratch.",
+  name: "Start from scratch",
+  description: "Create a survey without template.",
   icon: null,
   preset: {
     name: "New Survey",
@@ -41,8 +41,8 @@ export const customSurvey: Template = {
       {
         id: createId(),
         type: "openText",
-        headline: "What's poppin?",
-        subheader: "This can help us improve your experience.",
+        headline: "Custom Survey",
+        subheader: "This is an example survey.",
         placeholder: "Type your answer here...",
         required: true,
       },
@@ -226,7 +226,7 @@ export const templates: Template[] = [
             },
             {
               id: createId(),
-              label: "in a Podcast",
+              label: "In a Podcast",
             },
           ],
         },
@@ -336,7 +336,7 @@ export const templates: Template[] = [
             },
             {
               id: createId(),
-              label: "in a Podcast",
+              label: "In a Podcast",
             },
           ],
         },

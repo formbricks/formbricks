@@ -1,8 +1,8 @@
 import { cn } from "@formbricks/lib/cn";
-import { QuestionMarkCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
+import { QueueListIcon, Cog8ToothIcon } from "@heroicons/react/24/solid";
 
 interface Tab {
-  id: "questions" | "audience";
+  id: "questions" | "settings";
   label: string;
   icon: JSX.Element;
 }
@@ -11,23 +11,23 @@ const tabs: Tab[] = [
   {
     id: "questions",
     label: "Questions",
-    icon: <QuestionMarkCircleIcon />,
+    icon: <QueueListIcon />,
   },
   {
-    id: "audience",
-    label: "Audience",
-    icon: <UserGroupIcon />,
+    id: "settings",
+    label: "Settings",
+    icon: <Cog8ToothIcon />,
   },
 ];
 
 interface QuestionsAudienceTabsProps {
-  activeId: "questions" | "audience";
-  setActiveId: (id: "questions" | "audience") => void;
+  activeId: "questions" | "settings";
+  setActiveId: (id: "questions" | "settings") => void;
 }
 
 export default function QuestionsAudienceTabs({ activeId, setActiveId }: QuestionsAudienceTabsProps) {
   return (
-    <div className="flex h-14 w-full items-center justify-center border bg-white">
+    <div className="fixed z-10 flex h-14 w-1/2 items-center justify-center border bg-white">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
         {tabs.map((tab) => (
           <button

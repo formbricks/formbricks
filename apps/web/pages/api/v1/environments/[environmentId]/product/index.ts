@@ -115,7 +115,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const firstEnvironment = newProduct.environments[0];
     res.json(firstEnvironment);
   }
-    
+
   // DELETE
   else if (req.method === "DELETE") {
     const membership = await prisma.membership.findUnique({
@@ -140,11 +140,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(404).json({ message: "This environment doesn't exist" });
     }
 
-    // Delete the product with 
+    // Delete the product with
     const prismaRes = await prisma.product.delete({
       where: { id: environment.productId },
     });
-    
+
     return res.json(prismaRes);
   }
 

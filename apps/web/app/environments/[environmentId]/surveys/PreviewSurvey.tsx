@@ -2,44 +2,55 @@ import Modal from "@/components/preview/Modal";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
-import ContentWrapper from "@/components/shared/ContentWrapper";
+import { useEnvironment } from "@/lib/environments/environments";
 import type { Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 
 interface PreviewSurveyProps {
-  localSurvey?: Survey;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
   questions: Question[];
   brandColor: string;
+  environmentId: string;
+  surveyType: Survey["type"];
+  thankYouCard: Survey["thankYouCard"];
+  previewType?: "modal" | "fullwidth" | "email";
 }
 
 export default function PreviewSurvey({
-  localSurvey,
   setActiveQuestionId,
   activeQuestionId,
   questions,
   brandColor,
+  environmentId,
+  surveyType,
+  thankYouCard,
+  previewType,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
+  const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
+  const { environment } = useEnvironment(environmentId);
+  const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
 
   useEffect(() => {
-    if (activeQuestionId && localSurvey) {
-      setProgress(calculateProgress(localSurvey));
+    if (activeQuestionId) {
+      setLastActiveQuestionId(activeQuestionId);
+      setProgress(calculateProgress(questions, activeQuestionId));
+    } else if (lastActiveQuestionId) {
+      setProgress(calculateProgress(questions, lastActiveQuestionId));
     }
 
-    function calculateProgress(survey) {
-      const elementIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
-      return elementIdx / survey.questions.length;
+    function calculateProgress(questions, id) {
+      const elementIdx = questions.findIndex((e) => e.id === id);
+      return elementIdx / questions.length;
     }
-  }, [activeQuestionId, localSurvey]);
+  }, [activeQuestionId, lastActiveQuestionId, questions]);
 
   useEffect(() => {
     // close modal if there are no questions left
-    if (localSurvey?.type === "web" && !localSurvey?.thankYouCard.enabled) {
+    if (surveyType === "web" && !thankYouCard.enabled) {
       if (activeQuestionId === "thank-you-card") {
         setIsModalOpen(false);
         setTimeout(() => {
@@ -48,14 +59,16 @@ export default function PreviewSurvey({
         }, 500);
       }
     }
-  }, [activeQuestionId, localSurvey, questions, setActiveQuestionId]);
+  }, [activeQuestionId, surveyType, questions, setActiveQuestionId, thankYouCard]);
 
   const gotoNextQuestion = () => {
-    const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    const currentQuestionId = activeQuestionId || lastActiveQuestionId;
+    const currentIndex = questions.findIndex((q) => q.id === currentQuestionId);
+
     if (currentIndex < questions.length - 1) {
       setActiveQuestionId(questions[currentIndex + 1].id);
     } else {
-      if (localSurvey?.thankYouCard?.enabled) {
+      if (thankYouCard?.enabled) {
         setActiveQuestionId("thank-you-card");
       } else {
         setIsModalOpen(false);
@@ -63,7 +76,7 @@ export default function PreviewSurvey({
           setActiveQuestionId(questions[0].id);
           setIsModalOpen(true);
         }, 500);
-        if (localSurvey?.thankYouCard?.enabled) {
+        if (thankYouCard?.enabled) {
           setActiveQuestionId("thank-you-card");
           setProgress(1);
         } else {
@@ -77,82 +90,94 @@ export default function PreviewSurvey({
     }
   };
 
-  const resetPreview = () => {
+  /*  const resetPreview = () => {
     setIsModalOpen(false);
     setTimeout(() => {
       setActiveQuestionId(questions[0].id);
       setIsModalOpen(true);
     }, 500);
   };
+ */
 
-  if (!activeQuestionId) {
-    return null;
+  useEffect(() => {
+    if (environment && environment.widgetSetupCompleted) {
+      setWidgetSetupCompleted(true);
+    } else {
+      setWidgetSetupCompleted(false);
+    }
+  }, [environment]);
+
+  if (!previewType) {
+    previewType = widgetSetupCompleted ? "modal" : "fullwidth";
   }
 
   return (
-    <>
-      {localSurvey?.type === "link" ? (
-        <div className="relative flex h-full flex-1 flex-shrink-0 flex-col overflow-hidden border border-amber-400">
-          <div
-            className="absolute right-3 mr-6 flex items-center rounded-b bg-amber-500 px-3 text-sm font-semibold text-white opacity-100 transition-all duration-500 ease-in-out hover:cursor-pointer"
-            onClick={resetPreview}>
-            <ArrowPathIcon className="mr-1.5 mt-0.5 h-4 w-4 " />
-            Preview
-          </div>
-          <div className="flex h-full flex-1 items-center overflow-y-auto bg-white">
-            <ContentWrapper className="w-full md:max-w-lg">
-              {activeQuestionId == "thank-you-card" ? (
+    <div className="my-4 flex h-full w-5/6 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
+      <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
+        <div className="ml-6 flex space-x-2">
+          <div className="h-3 w-3 rounded-full bg-red-500"></div>
+          <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+          <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+        </div>
+        <p>
+          {previewType === "modal" && <p className="ml-4 font-mono text-sm text-slate-400">Your web app</p>}
+        </p>
+      </div>
+
+      {previewType === "modal" ? (
+        <Modal isOpen={isModalOpen}>
+          {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+            <ThankYouCard
+              brandColor={brandColor}
+              headline={thankYouCard?.headline || "Thank you!"}
+              subheader={thankYouCard?.subheader || "We appreciate your feedback."}
+            />
+          ) : (
+            questions.map((question, idx) =>
+              (activeQuestionId || lastActiveQuestionId) === question.id ? (
+                <QuestionConditional
+                  key={question.id}
+                  question={question}
+                  brandColor={brandColor}
+                  lastQuestion={idx === questions.length - 1}
+                  onSubmit={gotoNextQuestion}
+                />
+              ) : null
+            )
+          )}
+        </Modal>
+      ) : (
+        <div className="flex flex-grow flex-col">
+          <div className="flex w-full flex-grow flex-col items-center justify-center bg-white">
+            <div className="w-full max-w-md">
+              {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
                 <ThankYouCard
                   brandColor={brandColor}
-                  headline={localSurvey?.thankYouCard?.headline || ""}
-                  subheader={localSurvey?.thankYouCard?.subheader || ""}
+                  headline={thankYouCard?.headline || "Thank you!"}
+                  subheader={thankYouCard?.subheader || "We appreciate your feedback."}
                 />
               ) : (
-                questions.map(
-                  (question, idx) =>
-                    activeQuestionId === question.id && (
-                      <QuestionConditional
-                        key={question.id}
-                        question={question}
-                        brandColor={brandColor}
-                        lastQuestion={idx === questions.length - 1}
-                        onSubmit={gotoNextQuestion}
-                      />
-                    )
+                questions.map((question, idx) =>
+                  (activeQuestionId || lastActiveQuestionId) === question.id ? (
+                    <QuestionConditional
+                      key={question.id}
+                      question={question}
+                      brandColor={brandColor}
+                      lastQuestion={idx === questions.length - 1}
+                      onSubmit={gotoNextQuestion}
+                    />
+                  ) : null
                 )
               )}
-            </ContentWrapper>
+            </div>
           </div>
-          <div className="top-0 z-10 w-full border-b bg-white">
-            <div className="mx-auto max-w-md p-6">
+          <div className="z-10 w-full rounded-b-lg bg-white">
+            <div className="mx-auto max-w-md p-6 pt-4">
               <Progress progress={progress} brandColor={brandColor} />
             </div>
           </div>
         </div>
-      ) : (
-        <Modal isOpen={isModalOpen} reset={resetPreview}>
-          {activeQuestionId == "thank-you-card" ? (
-            <ThankYouCard
-              brandColor={brandColor}
-              headline={localSurvey?.thankYouCard?.headline || ""}
-              subheader={localSurvey?.thankYouCard?.subheader || ""}
-            />
-          ) : (
-            questions.map(
-              (question, idx) =>
-                activeQuestionId === question.id && (
-                  <QuestionConditional
-                    key={question.id}
-                    question={question}
-                    brandColor={brandColor}
-                    lastQuestion={idx === questions.length - 1}
-                    onSubmit={gotoNextQuestion}
-                  />
-                )
-            )
-          )}
-        </Modal>
       )}
-    </>
+    </div>
   );
 }

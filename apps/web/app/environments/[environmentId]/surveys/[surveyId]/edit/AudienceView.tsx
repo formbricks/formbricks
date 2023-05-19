@@ -13,8 +13,12 @@ interface AudienceViewProps {
 
 export default function AudienceView({ environmentId, localSurvey, setLocalSurvey }: AudienceViewProps) {
   return (
-    <div className="space-y-3 p-5">
-      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+    <div className="mt-12 space-y-3 p-5">
+      <HowToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environmentId={environmentId}
+      />
 
       <WhoToSendCard
         localSurvey={localSurvey}

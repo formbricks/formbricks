@@ -86,7 +86,7 @@ export default function QuestionsView({
   };
 
   return (
-    <div className="px-5 py-4">
+    <div className="mt-12 px-5 py-4">
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="mb-5 grid grid-cols-1 gap-5 ">
           <StrictModeDroppable droppableId="questionsList">
