@@ -1,13 +1,13 @@
 import SettingsCard from "@/app/environments/[environmentId]/settings/SettingsCard";
 import SettingsTitle from "../SettingsTitle";
-import EditNotifications from "./EditNotifications";
+import EditAlerts from "./EditAlerts";
 
-export default function ProfileSettingsPage() {
+export default function ProfileSettingsPage({ params }) {
   return (
     <div>
       <SettingsTitle title="Notifications" />
-      <SettingsCard title="Manage members" description="Add or remove members in your team.">
-        <EditNotifications />
+      <SettingsCard title="Email alerts" description="Set up an alert to get notified on new responses.">
+        <EditAlerts environmentId={params.environmentId} />
       </SettingsCard>
     </div>
   );

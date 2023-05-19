@@ -61,7 +61,7 @@ export function EditMemberships({ environmentId }) {
 
   return (
     <>
-      <div className="mb-6 text-right">
+      <div className="mb-5 text-right">
         <Button
           variant="darkCTA"
           onClick={() => {
