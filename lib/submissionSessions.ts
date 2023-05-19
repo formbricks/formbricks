@@ -146,7 +146,7 @@ export const getSubmissionAnalytics = (
                     candidates:
                       (candidateResponse.includes(label) &&
                         Array.isArray(candidateResponse)) ||
-                      candidateResponse === label
+                        candidateResponse === label
                         ? 1
                         : 0,
                   };
@@ -240,20 +240,20 @@ export const getSubmissionAnalytics = (
   pagesInsights.splice(pagesInsights.length - 1, 1);
   Object.keys(questionsInsights).map((question) => {
     const ispageExist = pagesInsights.find(
-      (page) => questionsInsights[question].pageTitle === page.name
+      (page) => questionsInsights[question].pageTitle === page?.name
     );
 
     const pageIndex = pagesInsights.findIndex((element) => {
-      return ispageExist.name === element.name;
+      return ispageExist?.name === element?.name;
     });
-    pagesInsights[pageIndex].questions.push(questionsInsights[question]);
+    pagesInsights[pageIndex]?.questions.push(questionsInsights[question]);
 
     if (
-      pagesInsights[pageIndex].stat <
-      questionsInsights[question].candidates.length
+      pagesInsights[pageIndex]?.stat <
+      questionsInsights[question]?.candidates.length
     ) {
       pagesInsights[pageIndex].stat =
-        questionsInsights[question].candidates.length;
+        questionsInsights[question]?.candidates.length;
     }
   });
 
@@ -356,7 +356,7 @@ function questionSchema(
         options[idx].candidates +
         ((candidateResponse.includes(label) &&
           Array.isArray(candidateResponse)) ||
-        candidateResponse === label
+          candidateResponse === label
           ? 1
           : 0),
     };

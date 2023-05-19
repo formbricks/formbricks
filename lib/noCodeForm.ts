@@ -12,6 +12,7 @@ export const useNoCodeForm = (formId) => {
     isLoadingNoCodeForm: !error && !data,
     isErrorNoCodeForm: error,
     mutateNoCodeForm: mutate,
+    blocks: data?.blocks,
   };
 };
 
@@ -28,6 +29,7 @@ export const useNoCodeFormPublic = (formId) => {
     isLoadingNoCodeForm: !error && !data,
     isErrorNoCodeForm: error,
     mutateNoCodeForm: mutate,
+    
   };
 };
 
@@ -45,7 +47,7 @@ export const useNoCodePagePublic = (formId) => {
   };
 };
 
-export const createNoCodeForm = async (formId, body={}) => {
+export const createNoCodeForm = async (formId, body = {}) => {
   try {
     const res = await fetch(`/api/forms/${formId}/nocodeform`, {
       method: "POST",

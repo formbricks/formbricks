@@ -54,10 +54,10 @@ const App: FC<IProps> = ({
             </div>
             <div className='mt-8'>
               <h1 className='mb-4 font-bold text-center leading-2'>
-                Time Over
+                Temps écoulé
               </h1>
               <p className='text-center'>
-                You no longer have access to this form because your time is up
+                Vous n'avez plus accès à ce formulaire car votre temps est écoulé
               </p>
             </div>
           </div>

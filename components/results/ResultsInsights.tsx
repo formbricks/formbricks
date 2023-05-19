@@ -4,17 +4,20 @@ import {
   getSubmissionAnalytics,
   useSubmissionSessions,
 } from "../../lib/submissionSessions";
-import { timeSince } from "../../lib/utils";
+import { getFormPages, timeSince } from "../../lib/utils";
 import Loading from "../Loading";
 import AnalyticsCard from "./AnalyticsCard";
+import { useNoCodeForm, useNoCodeFormPublic } from "../../lib/noCodeForm";
 
 export default function ResultsAnalytics({ formId }) {
   const { submissionSessions, isLoadingSubmissionSessions } =
     useSubmissionSessions(formId);
 
+    const {blocks} = useNoCodeForm (formId);
+
   const analytics = useMemo(() => {
     if (!isLoadingSubmissionSessions) {
-      return getSubmissionAnalytics(submissionSessions);
+      return getSubmissionAnalytics(submissionSessions, getFormPages(blocks, formId));
     }
   }, [isLoadingSubmissionSessions, submissionSessions]);
 
