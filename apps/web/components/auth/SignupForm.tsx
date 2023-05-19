@@ -148,12 +148,12 @@ export const SignupForm = () => {
             </Button>
           </form>
 
-          {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "0" && (
+          {process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
             <>
               <GoogleButton />
             </>
           )}
-          {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "0" && (
+          {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
             <>
               <GithubButton />{" "}
             </>
