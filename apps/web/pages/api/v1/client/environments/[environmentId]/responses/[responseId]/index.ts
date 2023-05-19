@@ -20,7 +20,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     res.status(200).end();
   }
 
-  // POST
+  // PUT
   else if (req.method === "PUT") {
     const { response } = req.body;
 
