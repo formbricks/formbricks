@@ -15,7 +15,7 @@ import {
   TooltipTrigger,
 } from "@formbricks/ui";
 import { ShareIcon } from "@heroicons/react/24/outline";
-import { PencilSquareIcon } from "@heroicons/react/24/solid";
+import { PencilSquareIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -84,7 +84,10 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
             <Tooltip>
               <TooltipTrigger>
                 <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
-                  <p className="text-sm text-slate-600">Response Rate</p>
+                  <p className="text-sm text-slate-600">
+                    Response %
+                    <QuestionMarkCircleIcon className="mb-1 ml-2 inline h-4 w-4 text-slate-500" />
+                  </p>
                   <p className="text-2xl font-bold text-slate-800">
                     {survey.responseRate === null || survey.responseRate === 0 ? (
                       <span>-</span>
@@ -102,8 +105,11 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <div className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
-                  <p className="text-sm text-slate-600">Completion Rate</p>
+                <div className="flex cursor-default flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
+                  <p className="text-sm text-slate-600">
+                    Completion %
+                    <QuestionMarkCircleIcon className="mb-1 ml-2 inline h-4 w-4 text-slate-500" />
+                  </p>
                   <p className="text-2xl font-bold text-slate-800">
                     {responses.length === 0 ? (
                       <span>-</span>
@@ -133,9 +139,9 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
               </Button>
             )}
 
-            {environment.widgetSetupCompleted && (
+            {environment.widgetSetupCompleted || survey.type === "link" ? (
               <SurveyStatusDropdown surveyId={surveyId} environmentId={environmentId} />
-            )}
+            ) : null}
             <Button
               className="h-full w-full px-3 lg:px-6"
               href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>
