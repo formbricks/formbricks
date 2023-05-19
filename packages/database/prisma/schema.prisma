@@ -316,6 +316,7 @@ model ApiKey {
 enum IdentityProvider {
   email
   github
+  google
 }
 
 model Account {
