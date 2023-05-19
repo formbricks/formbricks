@@ -61,7 +61,7 @@ export const Button: React.ForwardRefExoticComponent<
         "inline-flex items-center appearance-none",
         // different styles depending on size
         size === "sm" && "px-3 py-2 text-sm leading-4 font-medium rounded-md",
-        size === "base" && "px-6 py-2 text-sm font-medium rounded-md",
+        size === "base" && "px-6 py-3 text-sm font-medium rounded-md",
         size === "lg" && "px-4 py-2 text-base font-medium rounded-md",
         size === "icon" &&
           "w-10 h-10 justify-center group p-2 border rounded-lg border-transparent text-neutral-400 hover:border-slate-200 transition",

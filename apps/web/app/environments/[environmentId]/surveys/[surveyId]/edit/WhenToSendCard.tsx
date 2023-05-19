@@ -135,7 +135,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                 <Select
                   value={triggerEventClassId}
                   onValueChange={(eventClassId) => setTriggerEvent(idx, eventClassId)}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[240px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
