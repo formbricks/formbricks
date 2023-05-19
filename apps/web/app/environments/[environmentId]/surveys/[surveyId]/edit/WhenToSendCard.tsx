@@ -5,6 +5,7 @@ import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
 import {
+  Badge,
   Button,
   Select,
   SelectContent,
@@ -25,7 +26,7 @@ interface WhenToSendCardProps {
 }
 
 export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhenToSendCardProps) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
   const { eventClasses, isLoadingEventClasses, isErrorEventClasses, mutateEventClasses } =
     useEventClasses(environmentId);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
@@ -48,6 +49,12 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     setLocalSurvey(updatedSurvey);
   };
 
+  useEffect(() => {
+    if (localSurvey.type === "link") {
+      setOpen(false);
+    }
+  }, [localSurvey.type]);
+
   //create new empty trigger on page load, remove one click for user
   useEffect(() => {
     if (localSurvey.triggers.length === 0) {
@@ -63,35 +70,60 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     return <div>Error</div>;
   }
 
-  if (localSurvey.type === "link") {
+  /*   if (localSurvey.type === "link") {
     return null;
-  }
+  } */
 
   return (
     <>
       <Collapsible.Root
         open={open}
-        onOpenChange={setOpen}
-        className={cn(
-          open ? "" : "hover:bg-slate-50",
-          "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
-        )}>
-        <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
-          <div className="inline-flex px-4 py-6">
+        onOpenChange={(openState) => {
+          if (localSurvey.type !== "link") {
+            setOpen(openState);
+          }
+        }}
+        className="w-full rounded-lg border border-slate-300 bg-white">
+        <Collapsible.CollapsibleTrigger
+          asChild
+          className={cn(
+            localSurvey.type !== "link"
+              ? "cursor-pointer hover:bg-slate-50"
+              : "cursor-not-allowed bg-slate-50",
+            "h-full w-full rounded-lg "
+          )}>
+          <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
               {localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
-                <div className="h-7 w-7 rounded-full border border-slate-400" />
+                <div
+                  className={cn(
+                    localSurvey.type !== "link"
+                      ? "border-amber-500 bg-amber-50"
+                      : "border-slate-300 bg-slate-100",
+                    "h-7 w-7 rounded-full border "
+                  )}
+                />
               ) : (
-                <CheckCircleIcon className="h-8 w-8 text-green-400" />
+                <CheckCircleIcon
+                  className={cn(
+                    localSurvey.type !== "link" ? "text-green-400" : "text-slate-300",
+                    "h-8 w-8 "
+                  )}
+                />
               )}
             </div>
 
             <div>
-              <p className="font-semibold text-slate-800">When to ask</p>
+              <p className="font-semibold text-slate-800">Survey Trigger</p>
               <p className="mt-1 truncate text-sm text-slate-500">
                 Choose the actions which trigger the survey.
               </p>
             </div>
+            {localSurvey.type === "link" && (
+              <div className="flex w-full items-center justify-end pr-2">
+                <Badge size="normal" text="In-app survey settings" type="warning" />
+              </div>
+            )}
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="">

@@ -245,7 +245,7 @@ model Product {
   team          Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId        String
   environments  Environment[]
-  brandColor    String        @default("#334155")
+  brandColor    String        @default("#64748b")
   recontactDays Int           @default(7)
 }
 

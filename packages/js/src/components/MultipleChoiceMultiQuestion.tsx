@@ -4,6 +4,7 @@ import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import SubmitButton from "./SubmitButton";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -90,12 +91,12 @@ export default function MultipleChoiceMultiQuestion({
       />
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
         <div></div>
-        <button
-          type="submit"
-          className="fb-flex fb-items-center fb-rounded-md fb-border fb-border-transparent fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-white fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 focus:fb-ring-slate-500"
-          style={{ backgroundColor: brandColor }}>
-          {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
-        </button>
+        <SubmitButton
+          question={question}
+          lastQuestion={lastQuestion}
+          brandColor={brandColor}
+          onClick={() => {}}
+        />
       </div>
     </form>
   );

@@ -34,6 +34,12 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     }
   }, [isLoadingAttributeClasses]);
 
+  useEffect(() => {
+    if (localSurvey.type === "link") {
+      setOpen(false);
+    }
+  }, [localSurvey.type]);
+
   const addAttributeFilter = () => {
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.attributeFilters = [
@@ -66,26 +72,26 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     return <div>Error</div>;
   }
 
-  if (localSurvey.type === "link") {
-    return null;
-  }
-
   return (
     <>
       <Collapsible.Root
         open={open}
         onOpenChange={setOpen}
-        className={cn(
-          open ? "" : "hover:bg-slate-50",
-          "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
-        )}>
-        <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
+        className="w-full rounded-lg border border-slate-300 bg-white">
+        <Collapsible.CollapsibleTrigger
+          asChild
+          className={cn(
+            localSurvey.type !== "link"
+              ? "cursor-pointer hover:bg-slate-50"
+              : "cursor-not-allowed bg-slate-50",
+            "h-full w-full rounded-lg "
+          )}>
           <div className="inline-flex px-4 py-6">
             <div className="flex items-center pl-2 pr-5">
               <CheckCircleIcon className="h-8 w-8 text-green-400" />
             </div>
             <div>
-              <p className="font-semibold text-slate-800">Who to ask</p>
+              <p className="font-semibold text-slate-800">Target Audience</p>
               <p className="mt-1 truncate text-sm text-slate-500">
                 Pre-segment your users with attributes filters.
               </p>
@@ -98,21 +104,21 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
           <div className="mx-6 flex items-center rounded-lg border border-slate-200 p-4 text-slate-800">
             <div>
               {localSurvey.attributeFilters.length === 0 ? (
-                <UserGroupIcon className="mr-4 h-6 w-6 text-slate-700" />
+                <UserGroupIcon className="mr-4 h-6 w-6 text-slate-600" />
               ) : (
-                <FunnelIcon className="mr-4 h-6 w-6 text-slate-700" />
+                <FunnelIcon className="mr-4 h-6 w-6 text-slate-600" />
               )}
             </div>
             <div>
               <p className="">
-                Audience:{" "}
+                Current:{" "}
                 <span className="font-semibold text-slate-900">
                   {localSurvey.attributeFilters.length === 0 ? "All users" : "Filtered"}
                 </span>
               </p>
               <p className="mt-1 text-sm text-slate-500">
                 {localSurvey.attributeFilters.length === 0
-                  ? "Currently, all users might see the survey."
+                  ? "All users can see the survey."
                   : "Only users who match the attribute filter will see the survey."}
               </p>
             </div>

@@ -303,7 +303,21 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <div>
-                      <p className="ph-no-capture break-all">{truncate(environment?.product?.name, 20)}</p>
+                      <div className="flex items-center space-x-1">
+                        <p className="">{truncate(environment?.product?.name, 20)}</p>
+                        {!widgetSetupCompleted && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="mt-0.5 h-2 w-2 rounded-full bg-amber-500 hover:bg-amber-600"></div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Your app is not connected to Formbricks.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                       <p className=" block text-xs text-slate-500">Product</p>
                     </div>
                   </DropdownMenuSubTrigger>
