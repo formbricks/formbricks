@@ -88,7 +88,9 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
           )}>
           <div className="inline-flex px-4 py-6">
             <div className="flex items-center pl-2 pr-5">
-              <CheckCircleIcon className="h-8 w-8 text-green-400" />
+              <CheckCircleIcon
+                className={cn(localSurvey.type !== "link" ? "text-green-400" : "text-slate-300", "h-8 w-8 ")}
+              />
             </div>
             <div>
               <p className="font-semibold text-slate-800">Target Audience</p>
