@@ -2,11 +2,11 @@
 
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
-import { Checkbox, Input, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { Badge, Input, Label, RadioGroup, RadioGroupItem, Switch } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface DisplayOption {
   id: "displayOnce" | "displayMultiple" | "respondMultiple";
@@ -17,8 +17,8 @@ interface DisplayOption {
 const displayOptions: DisplayOption[] = [
   {
     id: "displayOnce",
-    name: "Only once, even if they do not respond",
-    description: "The survey won't be shown again, if person doesn't respond.",
+    name: "Show only once",
+    description: "The survey will be shown once, even if person doesn't respond.",
   },
   {
     id: "displayMultiple",
@@ -27,7 +27,7 @@ const displayOptions: DisplayOption[] = [
   },
   {
     id: "respondMultiple",
-    name: "Always, when the conditions match",
+    name: "Keep showing while conditions match",
     description: "Even after they submitted a response (e.g. Feedback Box)",
   },
 ];
@@ -67,22 +67,36 @@ export default function RecontactOptionsCard({
     setLocalSurvey(updatedSurvey);
   };
 
-  if (localSurvey.type === "link") {
+  useEffect(() => {
+    if (localSurvey.type === "link") {
+      setOpen(false);
+    }
+  }, [localSurvey.type]);
+
+  /*   if (localSurvey.type === "link") {
     return null;
-  }
+  } */
 
   return (
     <Collapsible.Root
       open={open}
-      onOpenChange={setOpen}
-      className={cn(
-        open ? "" : "hover:bg-slate-50",
-        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
-      )}>
-      <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
-        <div className="inline-flex px-4 py-6">
+      onOpenChange={(openState) => {
+        if (localSurvey.type !== "link") {
+          setOpen(openState);
+        }
+      }}
+      className="w-full rounded-lg border border-slate-300 bg-white">
+      <Collapsible.CollapsibleTrigger
+        asChild
+        className={cn(
+          localSurvey.type !== "link" ? "cursor-pointer hover:bg-slate-50" : "cursor-not-allowed bg-slate-50",
+          "h-full w-full rounded-lg "
+        )}>
+        <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon className="h-8 w-8 text-green-400" />
+            <CheckCircleIcon
+              className={cn(localSurvey.type !== "link" ? "text-green-400" : "text-slate-300", "h-8 w-8 ")}
+            />
           </div>
           <div>
             <p className="font-semibold text-slate-800">Recontact Options</p>
@@ -90,6 +104,11 @@ export default function RecontactOptionsCard({
               Decide how often people can answer this survey.
             </p>
           </div>
+          {localSurvey.type === "link" && (
+            <div className="flex w-full items-center justify-end pr-2">
+              <Badge size="normal" text="In-app survey settings" type="warning" />
+            </div>
+          )}
         </div>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="pb-3">
@@ -127,7 +146,8 @@ export default function RecontactOptionsCard({
 
         <div className="p-3">
           <div className="ml-2 flex items-center space-x-1">
-            <Checkbox id="recontactDays" checked={ignoreWaiting} onCheckedChange={handleCheckMark} />
+            <Switch id="recontactDays" checked={ignoreWaiting} onCheckedChange={handleCheckMark} />
+            {/* <Checkbox id="recontactDays" checked={ignoreWaiting} onCheckedChange={handleCheckMark} /> */}
             <Label htmlFor="recontactDays" className="cursor-pointer">
               <div className="ml-2">
                 <h3 className="text-sm font-semibold text-slate-700">Ignore waiting time between surveys</h3>
