@@ -16,6 +16,7 @@ Fixes # (issue)
 - [ ] Chore (refactoring code, technical debt, workflow improvements)
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] This change adds a new database migration
 - [ ] This change requires a documentation update
 
 ## How should this be tested?
@@ -37,3 +38,4 @@ Fixes # (issue)
 - I haven't checked if my changes generate no new warnings
 - I haven't checked if my changes generate build errors (`pnpm build`) or linting errors (`pnpm lint`)
 - I haven't checked if I removed all console.logs's
+- I haven't checked for merge conflicts by merging the latest changes from main with `git pull origin main`
