@@ -5,8 +5,9 @@ import { createUser } from "@/lib/users/users";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
+import { GoogleButton } from "@/components/auth/GoogleButton";
 
 export const SignupForm = () => {
   const searchParams = useSearchParams();
@@ -36,6 +37,18 @@ export const SignupForm = () => {
     }
   };
 
+  const [showLogin, setShowLogin] = useState(false);
+  const [isButtonEnabled, setButtonEnabled] = useState(true);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const checkFormValidity = () => {
+    // If all fields are filled, enable the button
+    if (formRef.current) {
+      setButtonEnabled(formRef.current.checkValidity());
+    }
+  };
+
   return (
     <>
       {error && (
@@ -53,106 +66,136 @@ export const SignupForm = () => {
           </div>
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-800">
-            Full Name
-          </label>
-          <div className="mt-1">
-            <input
-              id="name"
-              name="name"
-              type="text"
-              autoComplete="given-name"
-              required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
-            />
-          </div>
-        </div>
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-800">
-            Email address
-          </label>
-          <div className="mt-1">
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              defaultValue={searchParams?.get("email") || ""}
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
-            />
-          </div>
-        </div>
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-800">
-            Password
-          </label>
-          <div className="mt-1">
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
-            />
-          </div>
-        </div>
+      <div className="text-center">
+        <p className="mb-8 text-lg text-slate-700">Create your Formbricks account</p>
+        <div className="space-y-2">
+          <form onSubmit={handleSubmit} ref={formRef} className="space-y-2" onChange={checkFormValidity}>
+            {showLogin && (
+              <div>
+                <div className="mb-2 transition-all duration-500 ease-in-out">
+                  <label htmlFor="name" className="sr-only">
+                    Full Name
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      autoComplete="given-name"
+                      placeholder="Full Name"
+                      aria-placeholder="Full Name"
+                      required
+                      className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="mb-2 transition-all duration-500 ease-in-out">
+                  <label htmlFor="email" className="sr-only">
+                    Email address
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    placeholder="work@email.com"
+                    defaultValue={searchParams?.get("email") || ""}
+                    className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                  />
+                </div>
+                <div className="transition-all duration-500 ease-in-out">
+                  <label htmlFor="password" className="sr-only">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="*******"
+                    aria-placeholder="password"
+                    onFocus={() => setIsPasswordFocused(true)}
+                    required
+                    className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                  />
+                </div>
+                {process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && isPasswordFocused && (
+                  <div className="ml-1 text-right transition-all duration-500 ease-in-out">
+                    <Link
+                      href="/auth/forgot-password"
+                      className="hover:text-brand-dark text-xs text-slate-500">
+                      Forgot your password?
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+            <Button
+              onClick={() => {
+                if (!showLogin) {
+                  setShowLogin(true);
+                  setButtonEnabled(false);
+                } else if (formRef.current) {
+                  formRef.current.requestSubmit();
+                }
+              }}
+              variant="darkCTA"
+              className="w-full justify-center"
+              loading={signingUp}
+              disabled={!isButtonEnabled}>
+              Continue with Email
+            </Button>
+          </form>
 
-        <div>
-          <Button type="submit" className="w-full justify-center" loading={signingUp}>
-            Sign up
-          </Button>
-
-          <div className="mt-3 text-center text-xs text-slate-600">
-            Already have an account?{" "}
-            <Link href="/auth/login" className="text-brand hover:text-brand-light">
-              Log in.
-            </Link>
-          </div>
-          {(process.env.NEXT_PUBLIC_TERMS_URL || process.env.NEXT_PUBLIC_PRIVACY_URL) && (
-            <div className="mt-3 text-center text-xs text-slate-400">
-              By clicking &quot;Sign Up&quot;, you agree to our
-              <br />
-              {process.env.NEXT_PUBLIC_TERMS_URL && (
-                <Link
-                  className="text-brand hover:text-brand-light underline"
-                  href={process.env.NEXT_PUBLIC_TERMS_URL}
-                  rel="noreferrer"
-                  target="_blank">
-                  terms of service
-                </Link>
-              )}
-              {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
-              {process.env.NEXT_PUBLIC_PRIVACY_URL && (
-                <Link
-                  className="text-brand hover:text-brand-light underline"
-                  href={process.env.NEXT_PUBLIC_PRIVACY_URL}
-                  rel="noreferrer"
-                  target="_blank">
-                  privacy policy
-                </Link>
-              )}
-              .<br />
-              We&apos;ll occasionally send you account related emails.
-            </div>
+          {process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
+            <>
+              <GoogleButton />
+            </>
+          )}
+          {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
+            <>
+              <GithubButton />{" "}
+            </>
           )}
         </div>
-        {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
-          <>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className="w-full border-t border-slate-300" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white px-2 text-sm text-slate-500">Sign up with</span>
-              </div>
-            </div>
-            <GithubButton text="Sign up with GitHub" />
-          </>
+
+        {(process.env.NEXT_PUBLIC_TERMS_URL || process.env.NEXT_PUBLIC_PRIVACY_URL) && (
+          <div className="mt-3 text-center text-xs text-slate-500">
+            By signing up, you agree to our
+            <br />
+            {process.env.NEXT_PUBLIC_TERMS_URL && (
+              <Link
+                className="font-semibold"
+                href="google.com" /* {process.env.NEXT_PUBLIC_TERMS_URL} */
+                rel="noreferrer"
+                target="_blank">
+                Terms of Service
+              </Link>
+            )}
+            {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
+            {process.env.NEXT_PUBLIC_PRIVACY_URL && (
+              <Link
+                className="font-semibold"
+                href="google.com" /* {/* process.env.NEXT_PUBLIC_PRIVACY_URL }*/
+                rel="noreferrer"
+                target="_blank">
+                Privacy Policy.
+              </Link>
+            )}
+            {/*           <br />
+          We&apos;ll occasionally send you account related emails. */}
+            <hr className="mx-6 mt-3"></hr>
+          </div>
         )}
-      </form>
+
+        <div className="mt-3 text-center text-xs text-slate-600">
+          Have an account?{" "}
+          <Link href="/auth/login" className="font-semibold underline">
+            Log in.
+          </Link>
+        </div>
+      </div>
     </>
   );
 };
