@@ -21,7 +21,7 @@ export const NotLoggedInContent = ({ email, token, redirectUrl }) => {
       <Button variant="secondary" href={`/auth/signup?inviteToken=${token}&email=${email}`}>
         Create account
       </Button>
-      <Button variant="primary" href={`/auth/login?callbackUrl=${redirectUrl}&email=${email}`}>
+      <Button variant="darkCTA" href={`/auth/login?callbackUrl=${redirectUrl}&email=${email}`}>
         Login
       </Button>
     </ContentLayout>
@@ -36,7 +36,7 @@ export const WrongAccountContent = () => {
       <Button variant="secondary" href="/support">
         Contact support
       </Button>
-      <Button variant="primary" href="/">
+      <Button variant="darkCTA" href="/">
         Go to app
       </Button>
     </ContentLayout>
@@ -46,7 +46,7 @@ export const WrongAccountContent = () => {
 export const RightAccountContent = () => {
   return (
     <ContentLayout headline="You’re in 🎉" description="Welcome to the team.">
-      <Button variant="primary" href="/">
+      <Button variant="darkCTA" href="/">
         Go to app
       </Button>
     </ContentLayout>
@@ -71,7 +71,7 @@ export const UsedContent = () => {
       <Button variant="secondary" href="/support">
         Contact support
       </Button>
-      <Button variant="primary" href="/">
+      <Button variant="darkCTA" href="/">
         Go to app
       </Button>
     </ContentLayout>
