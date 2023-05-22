@@ -92,7 +92,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     }
   }
 
-  const getNextQuestion = (answer: any): string => {
+  const getNextQuestionId = (answer: any): string => {
     const activeQuestionId: string = currentQuestion?.id || "";
     const currentQuestionIndex = survey.questions.findIndex((q) => q.id === currentQuestion?.id);
     if (currentQuestionIndex === -1) throw new Error("Question not found");
@@ -108,6 +108,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         }
       }
     }
+    if (lastQuestion) return "end";
     return survey.questions[currentQuestionIndex + 1].id;
   };
 
@@ -146,7 +147,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
 
     setLoadingElement(false);
 
-    const nextQuestionId = getNextQuestion(data);
+    const nextQuestionId = getNextQuestionId(data);
     if (!finished && nextQuestionId !== "end") {
       const question = survey.questions.find((q) => q.id === nextQuestionId);
 
