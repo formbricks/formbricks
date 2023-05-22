@@ -26,6 +26,7 @@ export default async function handle(
       },
       data: {
         ...user,
+        profileIsValid : true,
         address: {
           upsert: {
             create: address,
