@@ -1,8 +1,7 @@
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import { Survey } from "@formbricks/types/surveys";
 import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/solid";
-import LogicEditor from "./LogicEditor";
-import { Survey } from "@formbricks/types/surveys";
 import { createId } from "@paralleldrive/cuid2";
 
 interface OpenQuestionFormProps {
@@ -14,7 +13,6 @@ interface OpenQuestionFormProps {
 }
 
 export default function MultipleChoiceMultiForm({
-  localSurvey,
   question,
   questionIdx,
   updateQuestion,

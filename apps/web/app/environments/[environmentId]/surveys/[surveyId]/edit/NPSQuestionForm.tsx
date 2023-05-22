@@ -1,5 +1,4 @@
 import type { NPSQuestion } from "@formbricks/types/questions";
-import LogicEditor from "./LogicEditor";
 import { Survey } from "@formbricks/types/surveys";
 import { Input, Label } from "@formbricks/ui";
 
@@ -12,7 +11,6 @@ interface NPSQuestionFormProps {
 }
 
 export default function NPSQuestionForm({
-  localSurvey,
   question,
   questionIdx,
   updateQuestion,

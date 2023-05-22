@@ -2,10 +2,9 @@
 
 import { md } from "@formbricks/lib/markdownIt";
 import type { CTAQuestion } from "@formbricks/types/questions";
+import { Survey } from "@formbricks/types/surveys";
 import { Editor, Input, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { useState } from "react";
-import LogicEditor from "./LogicEditor";
-import { Survey } from "@formbricks/types/surveys";
 
 interface CTAQuestionFormProps {
   localSurvey: Survey;
@@ -16,7 +15,6 @@ interface CTAQuestionFormProps {
 }
 
 export default function CTAQuestionForm({
-  localSurvey,
   question,
   questionIdx,
   updateQuestion,

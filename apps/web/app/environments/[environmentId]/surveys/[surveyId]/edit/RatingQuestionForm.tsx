@@ -1,8 +1,7 @@
 import type { RatingQuestion } from "@formbricks/types/questions";
-import { HashtagIcon, StarIcon, FaceSmileIcon } from "@heroicons/react/24/outline";
-import LogicEditor from "./LogicEditor";
-import { Input, Label } from "@formbricks/ui";
 import type { Survey } from "@formbricks/types/surveys";
+import { Input, Label } from "@formbricks/ui";
+import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outline";
 import Dropdown from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {
@@ -14,7 +13,6 @@ interface RatingQuestionFormProps {
 }
 
 export default function RatingQuestionForm({
-  localSurvey,
   question,
   questionIdx,
   updateQuestion,
