@@ -11,6 +11,7 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import { useEnvironment } from "@/lib/environments/environments";
 import { useProfile } from "@/lib/profile";
 import { createSurvey, deleteSurvey, duplicateSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Badge, ErrorComponent } from "@formbricks/ui";
@@ -33,6 +34,7 @@ export default function SurveysList({ environmentId }) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
   const { isLoadingProfile, isErrorProfile } = useProfile();
+  const { environment } = useEnvironment(environmentId);
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
@@ -46,8 +48,12 @@ export default function SurveysList({ environmentId }) {
 
   const newSurveyFromTemplate = async (template: Template) => {
     setIsCreateSurveyLoading(true);
+    const augmentedTemplate = {
+      ...template.preset,
+      type: environment?.widgetSetupCompleted ? "web" : "link",
+    };
     try {
-      const survey = await createSurvey(environmentId, template.preset);
+      const survey = await createSurvey(environmentId, augmentedTemplate);
       router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
     } catch (e) {
       toast.error("An error occured creating a new survey");
@@ -89,7 +95,7 @@ export default function SurveysList({ environmentId }) {
 
   if (surveys.length === 0) {
     return (
-      <div className="mx-auto flex w-full max-w-5xl flex-col py-24">
+      <div className="mx-auto flex w-full max-w-5xl flex-col py-12">
         {isCreateSurveyLoading ? (
           <LoadingSpinner />
         ) : (
@@ -116,7 +122,7 @@ export default function SurveysList({ environmentId }) {
       <ul className="grid grid-cols-2 place-content-stretch gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 ">
         <button onClick={() => newSurvey()}>
           <li className="col-span-1 h-56">
-            <div className="from-brand-light to-brand-dark delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-b font-light text-white shadow transition ease-in-out hover:scale-105">
+            <div className="delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-slate-900 to-slate-800 font-light text-white shadow transition ease-in-out hover:scale-105 hover:from-slate-800 hover:to-slate-700">
               <div id="main-cta" className="px-4 py-8 sm:p-14 xl:p-10">
                 <PlusIcon className="stroke-thin mx-auto h-14 w-14" />
                 Create Survey

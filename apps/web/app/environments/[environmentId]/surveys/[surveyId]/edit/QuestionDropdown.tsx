@@ -22,18 +22,29 @@ export default function QuestionDropdown({
         <EllipsisHorizontalIcon className="h-5 w-5 text-slate-600 focus:outline-none active:outline-none" />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem className="justify-between" onClick={() => deleteQuestion(questionIdx)}>
+        <DropdownMenuItem
+          className="justify-between"
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteQuestion(questionIdx);
+          }}>
           Delete <TrashIcon className="ml-3 h-4" />
         </DropdownMenuItem>
         <DropdownMenuItem
           className="justify-between"
-          onClick={() => moveQuestion(questionIdx, true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            moveQuestion(questionIdx, true);
+          }}
           disabled={questionIdx == 0}>
           Move up <ArrowUpIcon className="ml-3 h-4" />
         </DropdownMenuItem>
         <DropdownMenuItem
           className="justify-between"
-          onClick={() => moveQuestion(questionIdx, false)}
+          onClick={(e) => {
+            e.stopPropagation();
+            moveQuestion(questionIdx, false);
+          }}
           disabled={lastQuestion}>
           Move down
           <ArrowDownIcon className="h-4" />

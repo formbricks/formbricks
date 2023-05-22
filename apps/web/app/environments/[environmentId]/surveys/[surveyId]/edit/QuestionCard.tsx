@@ -66,7 +66,7 @@ export default function QuestionCard({
           <div
             className={cn(
               open ? "bg-slate-700" : "bg-slate-400",
-              "top-0 w-10 cursor-move rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-600"
+              "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-600"
             )}>
             {questionIdx + 1}
           </div>
@@ -74,14 +74,15 @@ export default function QuestionCard({
             open={open}
             onOpenChange={() => {
               if (activeQuestionId !== question.id) {
-                // only be able to open other question
                 setActiveQuestionId(question.id);
+              } else {
+                setActiveQuestionId(null);
               }
             }}
             className="flex-1 rounded-r-lg border border-slate-200">
             <Collapsible.CollapsibleTrigger
               asChild
-              className={cn(open ? "" : "cursor-pointer hover:bg-slate-50 ", "flex justify-between p-4")}>
+              className={cn(open ? "" : "  ", "flex cursor-pointer justify-between p-4 hover:bg-slate-50")}>
               <div>
                 <div className="inline-flex">
                   <div className="-ml-0.5 mr-3 h-6 w-6 text-slate-400">

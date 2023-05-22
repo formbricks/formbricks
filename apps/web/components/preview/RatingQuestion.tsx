@@ -17,6 +17,7 @@ import {
   TiredFace,
   WearyFace,
 } from "../Smileys";
+import SubmitButton from "@/components/preview/SubmitButton";
 
 interface RatingQuestionProps {
   question: RatingQuestion;
@@ -130,12 +131,7 @@ export default function RatingQuestion({
       {!question.required && (
         <div className="mt-4 flex w-full justify-between">
           <div></div>
-          <button
-            type="submit"
-            className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-            style={{ backgroundColor: brandColor }}>
-            {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
-          </button>
+          <SubmitButton {...{ question, lastQuestion, brandColor }} />
         </div>
       )}
     </form>

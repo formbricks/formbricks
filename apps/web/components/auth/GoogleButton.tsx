@@ -2,11 +2,11 @@
 
 import { Button } from "@formbricks/ui";
 import { signIn } from "next-auth/react";
-import { FaGithub } from "react-icons/fa";
+import { FaGoogle } from "react-icons/fa";
 
-export const GithubButton = ({ text = "Continue with Github" }) => {
+export const GoogleButton = ({ text = "Continue with Google" }) => {
   const handleLogin = async () => {
-    await signIn("github", {
+    await signIn("google", {
       redirect: true,
       callbackUrl: "/", // redirect after login to /
     });
@@ -15,8 +15,8 @@ export const GithubButton = ({ text = "Continue with Github" }) => {
   return (
     <Button
       type="button"
-      EndIcon={FaGithub}
-      startIconClassName="ml-2"
+      EndIcon={FaGoogle}
+      startIconClassName="ml-3"
       onClick={handleLogin}
       variant="secondary"
       className="w-full justify-center">
