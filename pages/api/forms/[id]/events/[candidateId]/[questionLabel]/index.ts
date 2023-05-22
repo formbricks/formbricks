@@ -131,12 +131,12 @@ export default async function handle(
     }
     const page = formPages.filter(({id}) => id === pageId)
 
-    const pageQuestions = page[0].blocks.filter((b) => {
+    const pageQuestions = page[0].blocks.filter((b, index) => {
       const isLabelInHeaders = headerConfig.findIndex(({label}) => label === b.id);
 
       if(isBlockAQuestion(b)){
         if(isLabelInHeaders === -1) {
-          const label =  b.id;
+          const label =  index+"-"+b.data?.label;
           headerConfig.push({label ,  key: label})
         }
         return true;
