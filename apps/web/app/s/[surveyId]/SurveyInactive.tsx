@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckCircleIcon, PauseCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon, PauseCircleIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 import footerLogo from "./footerlogo.svg";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,11 +7,13 @@ import { Button } from "@formbricks/ui";
 
 const SurveyInactive = ({ status }) => {
   const icons = {
+    "not found": <QuestionMarkCircleIcon className="h-20 w-20" />,
     paused: <PauseCircleIcon className="h-20 w-20" />,
     completed: <CheckCircleIcon className="h-20 w-20" />,
   };
 
   const descriptions = {
+    "not found": "There is not survey with this ID.",
     paused: "This free & open-source survey is temporarily paused.",
     completed: "This free & open-source survey has been closed.",
   };

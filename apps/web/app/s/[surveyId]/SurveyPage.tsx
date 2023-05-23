@@ -22,11 +22,7 @@ export default function SurveyPage({ surveyId }: SurveyPageProps) {
   }
 
   if (isErrorSurvey && isErrorSurvey.status === 404) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <p className="text-sm text-slate-800">Survey cannot be found</p>
-      </div>
-    );
+    return <SurveyInactive status="not found" />;
   }
 
   if (isErrorSurvey && isErrorSurvey.status === 403) {
