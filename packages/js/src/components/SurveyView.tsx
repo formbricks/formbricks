@@ -111,7 +111,9 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
     const questionIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
-    const finished = questionIdx === survey.questions.length - 1;
+    const nextQuestionId = getNextQuestion(data);
+
+    const finished = nextQuestionId === "end" || questionIdx === survey.questions.length - 1;
     // build response
     const responseRequest = {
       surveyId: survey.id,
@@ -136,7 +138,6 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
     }
     setLoadingElement(false);
 
-    const nextQuestionId = getNextQuestion(data);
     if (!finished && nextQuestionId !== "end") {
       // setActiveQuestionId(survey.questions[questionIdx + 1].id);
       setActiveQuestionId(nextQuestionId);
