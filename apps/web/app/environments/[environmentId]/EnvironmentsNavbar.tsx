@@ -54,6 +54,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
+import CreateTeamModal from "./CreateTeamModal";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -73,6 +74,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
   const [loading, setLoading] = useState(false);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -393,6 +395,11 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                             </DropdownMenuRadioItem>
                           ))}
                         </DropdownMenuRadioGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setShowCreateTeamModal(true)}>
+                          <PlusIcon className="mr-2 h-4 w-4" />
+                          <span>Create team</span>
+                        </DropdownMenuItem>
                       </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                   </DropdownMenuSub>
@@ -437,6 +444,11 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
       <AddProductModal
         open={showAddProductModal}
         setOpen={(val) => setShowAddProductModal(val)}
+        environmentId={environmentId}
+      />
+      <CreateTeamModal
+        open={showCreateTeamModal}
+        setOpen={(val) => setShowCreateTeamModal(val)}
         environmentId={environmentId}
       />
     </nav>

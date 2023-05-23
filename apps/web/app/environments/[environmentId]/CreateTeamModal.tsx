@@ -8,13 +8,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-interface AddProductModalProps {
+interface CreateTeamModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
 }
 
-export default function AddProductModal({ environmentId, open, setOpen }: AddProductModalProps) {
+export default function CreateTeamModal({ environmentId, open, setOpen }: CreateTeamModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm();
@@ -37,8 +37,10 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
                 <PlusCircleIcon />
               </div>
               <div>
-                <div className="text-xl font-medium text-slate-700">Add Product</div>
-                <div className="text-sm text-slate-500">Create a new product for your team.</div>
+                <div className="text-xl font-medium text-slate-700">Create team</div>
+                <div className="text-sm text-slate-500">
+                  Create a new team to handle a different set of products.
+                </div>
               </div>
             </div>
           </div>
@@ -47,8 +49,8 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
           <div className="flex w-full justify-between space-y-4 rounded-lg p-6">
             <div className="grid w-full gap-x-2">
               <div>
-                <Label>Name</Label>
-                <Input placeholder="e.g. My New Product" {...register("name", { required: true })} />
+                <Label>Team Name</Label>
+                <Input placeholder="e.g. Power Puff Girls" {...register("name", { required: true })} />
               </div>
             </div>
           </div>
@@ -63,7 +65,7 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
                 Cancel
               </Button>
               <Button variant="darkCTA" type="submit" loading={loading}>
-                Add product
+                Create team
               </Button>
             </div>
           </div>
