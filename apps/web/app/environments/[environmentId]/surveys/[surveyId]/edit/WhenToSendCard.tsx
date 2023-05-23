@@ -94,7 +94,9 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
           )}>
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
-              {localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
+              {!localSurvey.triggers ||
+              localSurvey.triggers.length === 0 ||
+              localSurvey.triggers[0] === "" ? (
                 <div
                   className={cn(
                     localSurvey.type !== "link"
@@ -128,7 +130,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="">
           <hr className="py-1 text-slate-600" />
-          {localSurvey.triggers.map((triggerEventClassId, idx) => (
+          {localSurvey.triggers?.map((triggerEventClassId, idx) => (
             <div className="mt-2" key={idx}>
               <div className="inline-flex items-center">
                 <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
