@@ -60,19 +60,37 @@ import {
   changeEnvironmentByTeam,
   changeEnvironment,
 } from "@/lib/environments/changeEnvironments";
+import { Membership, Team, Environment } from "@prisma/client";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
   session: Session;
 }
 
+type EnvironmentData = {
+  environment: Environment | null;
+  isErrorEnvironment: boolean;
+  isLoadingEnvironment: boolean;
+};
+
+type MembershipsData = {
+  memberships: Membership[] | null; // assuming each membership corresponds to a user
+  isErrorMemberships: boolean;
+  isLoadingMemberships: boolean;
+};
+
+type TeamData = {
+  team: Team | null;
+};
+
 export default function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
-  const { memberships, isErrorMemberships, isLoadingMemberships } = useMemberships();
-  const { team } = useTeam(environmentId);
+  const { environment, isErrorEnvironment, isLoadingEnvironment }: EnvironmentData =
+    useEnvironment(environmentId);
+  const { memberships, isErrorMemberships, isLoadingMemberships }: MembershipsData = useMemberships();
+  const { team }: TeamData = useTeam(environmentId);
 
   const [currentTeamName, setCurrentTeamName] = useState("");
   const [currentTeamId, setCurrentTeamId] = useState("");
