@@ -6,7 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import type { Membership, User } from "./types";
 
-async function getData(userId: string | undefined): Promise<{ memberships: Membership[]; user: User }> {
+async function getUser(userId: string | undefined): Promise<User> {
   if (!userId) {
     throw new Error("Unauthorized");
   }
@@ -26,6 +26,10 @@ async function getData(userId: string | undefined): Promise<{ memberships: Membe
 
   const user = JSON.parse(JSON.stringify(userData)); // hack to remove the JsonValue type from the notificationSettings
 
+  return user;
+}
+
+async function getMemberships(userId: string): Promise<Membership[]> {
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
@@ -59,7 +63,7 @@ async function getData(userId: string | undefined): Promise<{ memberships: Membe
       },
     },
   });
-  return { user, memberships };
+  return memberships;
 }
 
 export default async function ProfileSettingsPage({ params }) {
@@ -67,7 +71,8 @@ export default async function ProfileSettingsPage({ params }) {
   if (!session) {
     throw new Error("Unauthorized");
   }
-  const { user, memberships } = await getData(session.user.id);
+  const [user, memberships] = await Promise.all([getUser(session.user.id), getMemberships(session.user.id)]);
+
   return (
     <div>
       <SettingsTitle title="Notifications" />

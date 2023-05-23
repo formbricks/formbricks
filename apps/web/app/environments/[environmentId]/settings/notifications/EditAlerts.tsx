@@ -5,12 +5,6 @@ import Link from "next/link";
 import type { NotificationSettings } from "@formbricks/types/users";
 import { Membership, User } from "./types";
 
-interface EditAlertsProps {
-  memberships: Membership[];
-  user: User;
-  environmentId: string;
-}
-
 const cleanNotificationSettings = (notificationSettings: NotificationSettings, memberships: Membership[]) => {
   const newNotificationSettings = {};
   for (const membership of memberships) {
@@ -32,6 +26,12 @@ const cleanNotificationSettings = (notificationSettings: NotificationSettings, m
   }
   return newNotificationSettings;
 };
+
+interface EditAlertsProps {
+  memberships: Membership[];
+  user: User;
+  environmentId: string;
+}
 
 export default function EditAlerts({ memberships, user, environmentId }: EditAlertsProps) {
   user.notificationSettings = cleanNotificationSettings(user.notificationSettings, memberships);
