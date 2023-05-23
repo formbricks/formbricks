@@ -2,7 +2,7 @@
   "name": "@formbricks/types",
   "version": "0.0.0",
   "private": true,
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "clean": "rimraf node_modules .turbo"
   },
