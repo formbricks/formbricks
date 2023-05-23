@@ -147,19 +147,20 @@ export default function LogicEditor({
     const currentLogic: any = question.logic ? question.logic[logicIdx] : undefined;
     if (!currentLogic) return;
 
-    if (
-      "condition" in updatedAttributes &&
-      logicConditions[updatedAttributes.condition].multiSelect &&
-      !logicConditions[currentLogic.condition].multiSelect
-    ) {
-      updatedAttributes.value = [];
-    } else if (
-      "condition" in updatedAttributes &&
-      ((!logicConditions[updatedAttributes.condition].multiSelect &&
-        logicConditions[currentLogic.condition].multiSelect) ||
-        logicConditions[updatedAttributes.condition].values === null)
-    ) {
-      updatedAttributes.value = undefined;
+    // clean logic value if not needed or if condition changed between multiSelect and singleSelect conditions
+    const updatedCondition = updatedAttributes?.condition;
+    const currentCondition = currentLogic?.condition;
+    const updatedLogicCondition = logicConditions[updatedCondition];
+    const currentLogicCondition = logicConditions[currentCondition];
+    if (updatedCondition) {
+      if (updatedLogicCondition?.multiSelect && !currentLogicCondition?.multiSelect) {
+        updatedAttributes.value = [];
+      } else if (
+        (!updatedLogicCondition?.multiSelect && currentLogicCondition?.multiSelect) ||
+        updatedLogicCondition?.values === null
+      ) {
+        updatedAttributes.value = undefined;
+      }
     }
 
     const newLogic = !question.logic
