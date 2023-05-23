@@ -6,7 +6,7 @@ export default function ProfileSettingsPage({ params }) {
   return (
     <div>
       <SettingsTitle title="Notifications" />
-      <SettingsCard title="Email alerts" description="Set up an alert to get notified on new responses.">
+      <SettingsCard title="Email alerts" description="Set up an alert to get an email on new responses.">
         <EditAlerts environmentId={params.environmentId} />
       </SettingsCard>
     </div>

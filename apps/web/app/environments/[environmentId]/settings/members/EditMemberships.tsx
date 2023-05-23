@@ -99,7 +99,7 @@ export function EditMemberships({ environmentId }) {
                   </button>
                 )}
                 {!member.accepted && (
-                  <TooltipProvider>
+                  <TooltipProvider delayDuration={50}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button

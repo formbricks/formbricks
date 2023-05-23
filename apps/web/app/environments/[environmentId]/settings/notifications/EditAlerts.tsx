@@ -1,62 +1,34 @@
 "use client";
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProfile } from "@/lib/profile";
+import { useProduct } from "@/lib/products/products";
 import { useSurveys } from "@/lib/surveys/surveys";
 import { useTeam } from "@/lib/teams/teams";
-import { Switch } from "@formbricks/ui";
-import { UsersIcon } from "@heroicons/react/24/solid";
+import { Switch, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import { QuestionMarkCircleIcon, UsersIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
 export default function EditAlerts({ environmentId }) {
-  const { profile, isLoadingProfile, isErrorProfile } = useProfile();
   const { surveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
-
   const { team, isLoadingTeam, isErrorTeam } = useTeam(environmentId);
+  const { product } = useProduct(environmentId);
 
-  /*   const handleEditAlert = async (data) => {
-    e.preventDefault();
-    setActiveAlert(survey);
-    setAddAlertModalOpen();
-  }; */
-
-  const exampleSurveys = [
-    {
-      name: "Product Market Fit Survey",
-      product: "Formbricks",
-    },
-    {
-      name: "Onboarding Survey",
-      product: "Formbricks",
-    },
-    {
-      name: "Marketing Attribution Survey",
-      product: "Formbricks",
-    },
-    {
-      name: "Product Market Fit Survey",
-      product: "ACME",
-    },
-    {
-      name: "Onboarding Survey",
-      product: "ACME",
-    },
-    {
-      name: "Marketing Attribution Survey",
-      product: "ACME",
-    },
-  ];
-
-  if (isLoadingProfile || isLoadingTeam || isLoadingSurveys) {
+  if (isLoadingTeam || isLoadingSurveys) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorProfile || isErrorTeam || isErrorSurveys) {
+  if (isErrorTeam || isErrorSurveys) {
     return <div>Error</div>;
   }
 
-  console.log(surveys);
+  if (surveys.length === 0) {
+    return (
+      <p className="text-center text-slate-700">
+        You have no surveys. Create a survey to add your first email alert.
+      </p>
+    );
+  }
 
   return (
     <>
@@ -70,15 +42,32 @@ export default function EditAlerts({ environmentId }) {
         <div className="grid h-12 grid-cols-5 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-1">Product</div>
           <div className="col-span-2">Survey</div>
-          <div className="col-span-1 text-center">Every Submission</div>
-          <div className="col-span-1 text-center">Weekly Summary</div>
+          <TooltipProvider delayDuration={50}>
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="col-span-1 cursor-default text-center">
+                  Every Submission <QuestionMarkCircleIcon className="mb-1 inline h-4 w-4 text-slate-500" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Sends completed submissions, no partials.</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider delayDuration={50}>
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="col-span-1 cursor-default text-center">Weekly Summary</div>
+              </TooltipTrigger>
+              <TooltipContent>Coming soon 🚀</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <div className="grid-cols-8 space-y-1 p-2">
-          {exampleSurveys.map((survey) => (
+          {surveys.map((survey) => (
             <div
               className="grid h-auto w-full cursor-pointer grid-cols-5 place-content-center rounded-lg px-2 py-2 text-left text-sm text-slate-900 hover:bg-slate-50"
               key={survey.name}>
-              <div className="col-span-1 flex flex-col justify-center break-all">{team?.name}</div>
+              <div className="col-span-1 flex flex-col justify-center break-all">{product?.name}</div>
               <div className=" col-span-2 flex items-center ">
                 <p className="text-slate-800">{survey.name}</p>
               </div>
@@ -87,17 +76,17 @@ export default function EditAlerts({ environmentId }) {
                   id="every-submission"
                   aria-label="toggle every submission"
                   onCheckedChange={() => {
-                    toast.success(`Every submission of ${survey.name} coming your way!`);
+                    toast.success(`Every new submission of ${survey.name} is coming your way!`);
                   }}
                 />
               </div>
               <div className="col-span-1 text-center">
                 <Switch
+                  disabled
                   id="weekly-summary"
                   aria-label="toggle weekly summary"
-                  defaultChecked
                   onCheckedChange={() => {
-                    toast.success(`Every submission of ${survey.name} coming your way!`);
+                    toast.success(`Every new submission of ${survey.name} is coming your way!`);
                   }}
                 />
               </div>
