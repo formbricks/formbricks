@@ -68,7 +68,7 @@ export default function PreviewSurvey({
       case "equals":
         return (
           (Array.isArray(answerValue) && answerValue.length === 1 && answerValue.includes(logic.value)) ||
-          answerValue === logic.value
+          answerValue.toString() === logic.value
         );
       case "notEquals":
         return answerValue !== logic.value;
@@ -93,9 +93,21 @@ export default function PreviewSurvey({
           logic.value.some((v) => answerValue.includes(v))
         );
       case "submitted":
-        return (Array.isArray(answerValue) && answerValue.length > 0) || answerValue !== "";
+        if (typeof answerValue === "string") {
+          return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
+        } else if (Array.isArray(answerValue)) {
+          return answerValue.length > 0;
+        } else if (typeof answerValue === "number") {
+          return answerValue !== null;
+        }
+        return false;
       case "skipped":
-        return (Array.isArray(answerValue) && answerValue.length === 0) || answerValue === "";
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 0) ||
+          answerValue === "" ||
+          answerValue === null ||
+          answerValue === "dismissed"
+        );
       default:
         return false;
     }
