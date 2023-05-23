@@ -65,7 +65,7 @@ export default function SurveyStatusDropdown({
             if (updateLocalSurveyStatus)
               updateLocalSurveyStatus(value as "draft" | "inProgress" | "paused" | "completed" | "archived");
           }}>
-          <SelectTrigger className="w-[170px] bg-white py-1.5 md:w-[200px]">
+          <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
             <SelectValue>
               <div className="flex items-center">
                 <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />

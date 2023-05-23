@@ -4,7 +4,16 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
 import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
+import {
+  Badge,
+  Button,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react"; /*  */
@@ -98,6 +107,11 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                 Pre-segment your users with attributes filters.
               </p>
             </div>
+            {localSurvey.type === "link" && (
+              <div className="flex w-full items-center justify-end pr-2">
+                <Badge size="normal" text="In-app survey settings" type="warning" />
+              </div>
+            )}
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="">

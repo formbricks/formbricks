@@ -19,13 +19,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       where: {
         id: surveyId,
         type: "link",
-        status: "inProgress",
+        // status: "inProgress",
       },
       select: {
         id: true,
         questions: true,
         thankYouCard: true,
         environmentId: true,
+        status: true,
       },
     });
 
@@ -47,6 +48,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         brandColor: true,
       },
     });
+
+    if (survey.status !== "inProgress") {
+      return res
+        .status(403)
+        .json({ message: "Survey not running", reason: survey.status, brandColor: product?.brandColor });
+    }
 
     // if survey exists, return survey
     return res.status(200).json({ ...survey, brandColor: product?.brandColor });
