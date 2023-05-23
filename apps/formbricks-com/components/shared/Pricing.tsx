@@ -16,7 +16,7 @@ const tiers = [
     highlight: false,
     description: "Host Formbricks on your own server.",
     features: [
-      "All Free feautres",
+      "All Free features",
       "Easy self-hosting (Docker)",
       "Unlimited surveys",
       "Unlimited responses",
