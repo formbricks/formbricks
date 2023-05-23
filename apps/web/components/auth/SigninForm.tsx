@@ -115,9 +115,8 @@ export const SigninForm = () => {
         </div>
         {process.env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
           <div className="mt-3 text-center text-xs text-slate-600">
-            Need an account?{" "}
             <Link href="/auth/signup" className="font-semibold underline">
-              Register.
+              Create new account
             </Link>
           </div>
         )}
