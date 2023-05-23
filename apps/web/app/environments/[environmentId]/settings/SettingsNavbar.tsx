@@ -2,9 +2,11 @@
 
 import { useProduct } from "@/lib/products/products";
 import { useTeam } from "@/lib/teams/teams";
+import { truncate } from "@/lib/utils";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import {
   AdjustmentsVerticalIcon,
+  BellAlertIcon,
   ChatBubbleLeftEllipsisIcon,
   CreditCardIcon,
   DocumentCheckIcon,
@@ -14,13 +16,11 @@ import {
   PaintBrushIcon,
   UserCircleIcon,
   UsersIcon,
-  BellAlertIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
-import { capitalizeFirstLetter, truncate } from "@/lib/utils";
 
 export default function SettingsNavbar({ environmentId }: { environmentId: string }) {
   const pathname = usePathname();
