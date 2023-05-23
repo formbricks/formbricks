@@ -1,4 +1,4 @@
-export const fetchRessource = async (url) => {
+export const fetchRessource = async <T = any>(url: string): Promise<T> => {
   const res = await fetch(url);
 
   // If the status code is not in the range 200-299,
@@ -11,10 +11,10 @@ export const fetchRessource = async (url) => {
     throw error;
   }
 
-  return res.json();
+  return res.json() as Promise<T>;
 };
 
-export const fetcher = async (url) => {
+export const fetcher = async <T = any>(url: string): Promise<T> => {
   const res = await fetch(url);
 
   // If the status code is not in the range 200-299,
@@ -27,10 +27,10 @@ export const fetcher = async (url) => {
     throw error;
   }
 
-  return res.json();
+  return res.json() as Promise<T>;
 };
 
-export const updateRessource = async (url, { arg }) => {
+export const updateRessource = async <T = any>(url: string, { arg }: { arg: any }): Promise<T> => {
   const response = await fetch(url, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -42,5 +42,5 @@ export const updateRessource = async (url, { arg }) => {
     throw new Error(errorData.message);
   }
 
-  return response.json();
+  return response.json() as Promise<T>;
 };

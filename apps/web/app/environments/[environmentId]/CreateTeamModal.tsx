@@ -1,12 +1,14 @@
-"use client";
-
 import Modal from "@/components/shared/Modal";
-import { createProduct } from "@/lib/products/products";
 import { Button, Input, Label } from "@formbricks/ui";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
-import { useRouter } from "next/navigation";
+/* import { useRouter } from "next/navigation"; */
+import { useProfile } from "@/lib/profile";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { createTeamInDb } from "./actions";
+/* import { changeEnvironmentByTeam } from "@/lib/environments/changeEnvironments";
+import { useMemberships } from "@/lib/memberships"; */
+import toast from "react-hot-toast";
 
 interface CreateTeamModalProps {
   environmentId: string;
@@ -14,15 +16,19 @@ interface CreateTeamModalProps {
   setOpen: (v: boolean) => void;
 }
 
-export default function CreateTeamModal({ environmentId, open, setOpen }: CreateTeamModalProps) {
-  const router = useRouter();
+export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps) {
+  const { profile } = useProfile();
+  /*   const { memberships } = useMemberships(); */
+  /*   const router = useRouter(); */
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm();
 
-  const submitProduct = async (data) => {
+  const submitTeam = async (data) => {
     setLoading(true);
-    const newEnv = await createProduct(environmentId, data);
-    router.push(`/environments/${newEnv.id}/`);
+    const newTeam = await createTeamInDb({ ...data, ownerUserId: (profile as any).id });
+    /* changeEnvironmentByTeam(newTeam.id, memberships, router); */
+    console.log(newTeam);
+    toast.success("Team created successfully!");
     setOpen(false);
     setLoading(false);
   };
@@ -45,7 +51,7 @@ export default function CreateTeamModal({ environmentId, open, setOpen }: Create
             </div>
           </div>
         </div>
-        <form onSubmit={handleSubmit(submitProduct)}>
+        <form onSubmit={handleSubmit(submitTeam)}>
           <div className="flex w-full justify-between space-y-4 rounded-lg p-6">
             <div className="grid w-full gap-x-2">
               <div>

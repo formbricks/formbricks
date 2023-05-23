@@ -55,6 +55,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
 import CreateTeamModal from "./CreateTeamModal";
+import {
+  changeEnvironmentByProduct,
+  changeEnvironmentByTeam,
+  changeEnvironment,
+} from "@/lib/environments/changeEnvironments";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -184,7 +189,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
       ],
     },
   ];
-
+  /* 
   const changeEnvironment = (environmentType: string) => {
     const newEnvironmentId = environment.product.environments.find((e) => e.type === environmentType)?.id;
     router.push(`/environments/${newEnvironmentId}/`);
@@ -207,6 +212,18 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         router.push(`/environments/${newEnvironmentId}/`);
       }
     }
+  }; */
+
+  const handleEnvironmentChange = (environmentType) => {
+    changeEnvironment(environmentType, environment, router);
+  };
+
+  const handleEnvironmentChangeByProduct = (productId) => {
+    changeEnvironmentByProduct(productId, environment, router);
+  };
+
+  const handleEnvironmentChangeByTeam = (teamId) => {
+    changeEnvironmentByTeam(teamId, memberships, router);
   };
 
   if (isLoadingEnvironment || loading || isLoadingMemberships) {
@@ -327,7 +344,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <DropdownMenuSubContent className="max-w-[45rem]">
                       <DropdownMenuRadioGroup
                         value={environment?.product.id}
-                        onValueChange={changeEnvironmentByProduct}>
+                        onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
                         {environment?.availableProducts?.map((product) => (
                           <DropdownMenuRadioItem
                             value={product.id}
@@ -360,7 +377,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <DropdownMenuSubContent>
                       <DropdownMenuRadioGroup
                         value={environment?.type}
-                        onValueChange={(v) => changeEnvironment(v)}>
+                        onValueChange={(v) => handleEnvironmentChange(v)}>
                         <DropdownMenuRadioItem value="production" className="cursor-pointer">
                           Production
                         </DropdownMenuRadioItem>
@@ -385,7 +402,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       <DropdownMenuSubContent>
                         <DropdownMenuRadioGroup
                           value={currentTeamId}
-                          onValueChange={(teamId) => changeEnvironmentByTeam(teamId)}>
+                          onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
                           {memberships?.map((membership) => (
                             <DropdownMenuRadioItem
                               value={membership.teamId}
