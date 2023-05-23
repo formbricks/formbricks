@@ -31,9 +31,16 @@ export const fetcher = async (url) => {
 };
 
 export const updateRessource = async (url, { arg }) => {
-  return fetch(url, {
+  const response = await fetch(url, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(arg),
   });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message);
+  }
+
+  return response.json();
 };

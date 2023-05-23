@@ -72,7 +72,9 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
           <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
             <div className="p-8">
               <h2 className="inline-flex text-3xl font-bold text-slate-700">Free</h2>
-              {session.user?.plan === "free" && <Badge text="Current Plan" size="normal" type="success" />}
+              {session.user?.plan === "free" && (
+                <Badge className="ml-2" text="Current Plan" size="normal" type="success" />
+              )}
               <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
                 Always free. Giving back to the community.
               </p>
