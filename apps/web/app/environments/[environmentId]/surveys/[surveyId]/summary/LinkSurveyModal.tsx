@@ -50,7 +50,7 @@ export default function LinkSurveyModal({ survey, open, setOpen }: LinkSurveyMod
               variant="secondary"
               title="Preview survey"
               aria-label="Preview survey"
-              href={`${window.location.protocol}//${window.location.host}/s/${survey.id}`}
+              href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}
               target="_blank"
               EndIcon={EyeIcon}>
               Preview
