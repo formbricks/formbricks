@@ -144,9 +144,21 @@ export default function LogicEditor({
   };
 
   const updateLogic = (logicIdx: number, updatedAttributes: any) => {
-    if ("condition" in updatedAttributes && logicConditions[updatedAttributes.condition].multiSelect) {
+    const currentLogic: any = question.logic ? question.logic[logicIdx] : undefined;
+    if (!currentLogic) return;
+
+    if (
+      "condition" in updatedAttributes &&
+      logicConditions[updatedAttributes.condition].multiSelect &&
+      !logicConditions[currentLogic.condition].multiSelect
+    ) {
       updatedAttributes.value = [];
-    } else if ("condition" in updatedAttributes) {
+    } else if (
+      "condition" in updatedAttributes &&
+      ((!logicConditions[updatedAttributes.condition].multiSelect &&
+        logicConditions[currentLogic.condition].multiSelect) ||
+        logicConditions[updatedAttributes.condition].values === null)
+    ) {
       updatedAttributes.value = undefined;
     }
 
