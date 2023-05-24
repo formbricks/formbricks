@@ -40,6 +40,7 @@ export function EditBrandColor({ environmentId }) {
       <ColorPicker color={color} onChange={setColor} />
       <Button
         type="submit"
+        variant="darkCTA"
         className="mt-4"
         loading={isMutatingProduct}
         onClick={() => {
@@ -99,7 +100,7 @@ export function EditPlacement({ environmentId }) {
           <div className="absolute bottom-3 right-3 h-16 w-16 rounded bg-slate-700"></div>
         </div>
       </div>
-      <Button type="submit" className="mt-4" disabled>
+      <Button type="submit" variant="darkCTA" className="mt-4" disabled>
         Save
       </Button>
     </div>

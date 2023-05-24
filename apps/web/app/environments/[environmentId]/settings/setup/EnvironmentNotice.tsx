@@ -26,8 +26,8 @@ export default function EnvironmentNotice({ environmentId }: { environmentId: st
   return (
     <div>
       {environment.type === "production" && !environment.widgetSetupCompleted && (
-        <div className="flex items-center rounded-lg border border-amber-200 bg-amber-100 p-6 text-slate-900 shadow-sm">
-          <ExclamationTriangleIcon className="mr-3 h-6 w-6 text-amber-400" />
+        <div className="flex items-center rounded-lg border border-amber-100 bg-amber-50 p-4 text-slate-900 shadow-sm">
+          <ExclamationTriangleIcon className="mr-3 h-6 w-6 text-amber-700" />
           You&apos;re currently in the Production environment.
           <a
             onClick={() => changeEnvironment("development")}
