@@ -58,7 +58,6 @@ export default function SurveyMenuBar({
   const handleBack = () => {
     if (localSurvey.createdAt === localSurvey.updatedAt && localSurvey.status === "draft") {
       setDeleteDialogOpen(true);
-      console.log(localSurvey);
     } else {
       router.back();
     }
