@@ -1,25 +1,20 @@
-import { useProduct } from "@/lib/products/products";
-import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import FormbricksSignature from "@/components/preview/FormbricksSignature";
 
 interface ThankYouCardProps {
   headline: string;
   subheader: string;
   brandColor: string;
+  showFormbricksSignature?: boolean;
 }
 
-export default function ThankYouCard({ headline, subheader, brandColor }: ThankYouCardProps) {
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-
-  const [formbricksSignature, setFormbricksSignature] = useState(false);
-
-  useEffect(() => {
-    if (product) {
-      setFormbricksSignature(product.formbricksSignature);
-    }
-  }, [product]);
-
+export default function ThankYouCard({
+  headline,
+  subheader,
+  brandColor,
+  showFormbricksSignature,
+}: ThankYouCardProps) {
   return (
     <div className="text-center">
       <div className="flex items-center justify-center" style={{ color: brandColor }}>
@@ -44,21 +39,7 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
         <Headline headline={headline} questionId="thankYouCard" />
         <Subheader subheader={subheader} questionId="thankYouCard" />
       </div>
-      {formbricksSignature && (
-        <div>
-          <p className="pt-10 text-xs text-slate-500">
-            Powered by{" "}
-            <b>
-              <a
-                href="https://formbricks.com"
-                target="_blank"
-                className="text-slate-600 hover:text-slate-700">
-                Formbricks
-              </a>
-            </b>
-          </p>
-        </div>
-      )}
+      {showFormbricksSignature && <FormbricksSignature />}
     </div>
   );
 }
