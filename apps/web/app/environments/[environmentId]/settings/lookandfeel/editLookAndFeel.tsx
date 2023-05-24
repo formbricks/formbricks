@@ -19,7 +19,6 @@ import toast from "react-hot-toast";
 
 export function EditBrandColor({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-
   const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
 
   const [color, setColor] = useState("");
@@ -103,7 +102,6 @@ export function EditPlacement({ environmentId }) {
       <Button type="submit" className="mt-4" disabled>
         Save
       </Button>
-      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
     </div>
   );
 }
@@ -111,26 +109,51 @@ export function EditPlacement({ environmentId }) {
 export function EditFormbricksSignature({ environmentId }) {
   const { isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+  const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
+
+  const [formbricksSignature, setFormbricksSignature] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      setFormbricksSignature(product.formbricksSignature);
+    }
+  }, [product]);
+
+  const toggleSignature = () => {
+    const newSignatureState = !formbricksSignature;
+    setFormbricksSignature(newSignatureState);
+    triggerProductMutate({ formbricksSignature: newSignatureState })
+      .then(() => {
+        toast.success(newSignatureState ? "Formbricks signature shown." : "Formbricks signature hidden.");
+      })
+      .catch((error) => {
+        toast.error(`Error: ${error.message}`);
+      });
+  };
 
   if (isLoadingEnvironment || isLoadingProduct) {
     return <LoadingSpinner />;
   }
+
   if (isErrorEnvironment || isErrorProduct) {
     return <ErrorComponent />;
   }
 
-  return (
-    <div className="w-full items-center">
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="signature"
-          onCheckedChange={() => {
-            product.formbricksSignature = !product.formbricksSignature;
-            console.log(product);
-          }}
-        />
-        <Label htmlFor="signature">Show &apos;Powered by Formbricks&apos; Signature</Label>
+  if (formbricksSignature !== null) {
+    return (
+      <div className="w-full items-center">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="signature"
+            checked={formbricksSignature}
+            onCheckedChange={toggleSignature}
+            disabled={isMutatingProduct}
+          />
+          <Label htmlFor="signature">Show &apos;Powered by Formbricks&apos; Signature</Label>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }

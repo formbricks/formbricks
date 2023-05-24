@@ -1,3 +1,5 @@
+import { useProduct } from "@/lib/products/products";
+import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
@@ -8,6 +10,16 @@ interface ThankYouCardProps {
 }
 
 export default function ThankYouCard({ headline, subheader, brandColor }: ThankYouCardProps) {
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+
+  const [formbricksSignature, setFormbricksSignature] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      setFormbricksSignature(product.formbricksSignature);
+    }
+  }, [product]);
+
   return (
     <div className="text-center">
       <div className="flex items-center justify-center" style={{ color: brandColor }}>
