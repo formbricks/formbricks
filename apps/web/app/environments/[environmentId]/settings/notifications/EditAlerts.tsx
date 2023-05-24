@@ -40,13 +40,13 @@ export default function EditAlerts({ memberships, user, environmentId }: EditAle
     <>
       {memberships.map((membership) => (
         <>
-          <div className="mb-5 flex items-center space-x-3  font-semibold">
+          <div className="mb-5 flex items-center space-x-3 font-semibold">
             <div className="rounded-full bg-slate-100 p-1">
               <UsersIcon className="h-6 w-7 text-slate-600" />
             </div>
             <p className="text-slate-800">{membership.team.name}</p>
           </div>
-          <div className="rounded-lg border border-slate-200">
+          <div className="mb-6 rounded-lg border border-slate-200">
             <div className="grid h-12 grid-cols-5 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
               <div className="col-span-1">Product</div>
               <div className="col-span-2">Survey</div>
@@ -57,7 +57,7 @@ export default function EditAlerts({ memberships, user, environmentId }: EditAle
                       Every Response <QuestionMarkCircleIcon className="mb-1 inline h-4 w-4 text-slate-500" />
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent>Sends completed responses, no partials.</TooltipContent>
+                  <TooltipContent>Sends complete responses, no partials.</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
 

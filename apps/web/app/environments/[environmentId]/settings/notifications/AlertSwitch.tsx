@@ -26,7 +26,12 @@ export function AlertSwitch({ surveyId, userId, notificationSettings }: AlertSwi
           !updatedNotificationSettings[surveyId]["responseFinished"];
         // update db
         await updateNotificationSettings(userId, notificationSettings);
-        toast.success(`Every new submission is coming your way!`);
+        // show success message if toggled on, different message if toggled off
+        if (updatedNotificationSettings[surveyId]["responseFinished"]) {
+          toast.success(`Every new response is coming your way.`);
+        } else {
+          toast.success(`You won't receive notifications anymore.`);
+        }
         router.refresh();
       }}
     />
