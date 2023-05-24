@@ -11,8 +11,8 @@ import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Confetti } from "@formbricks/ui";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
-import { ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 
 type EnhancedSurvey = Survey & {
   brandColor: string;
