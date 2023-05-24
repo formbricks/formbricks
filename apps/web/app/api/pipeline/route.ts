@@ -150,7 +150,7 @@ export async function POST(request: Request) {
       // send email to all users
       await Promise.all(
         usersWithNotifications.map(async (user) => {
-          sendResponseFinishedEmail(user.email, environmentId, survey, data, person);
+          await sendResponseFinishedEmail(user.email, environmentId, survey, data, person);
         })
       );
     }
