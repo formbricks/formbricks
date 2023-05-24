@@ -54,6 +54,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
+import CreateTeamModal from "@/components/team/CreateTeamModal";
+import {
+  changeEnvironmentByProduct,
+  changeEnvironmentByTeam,
+  changeEnvironment,
+} from "@/lib/environments/changeEnvironments";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -73,6 +79,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
   const [loading, setLoading] = useState(false);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -183,35 +190,23 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     },
   ];
 
-  const changeEnvironment = (environmentType: string) => {
-    const newEnvironmentId = environment.product.environments.find((e) => e.type === environmentType)?.id;
-    router.push(`/environments/${newEnvironmentId}/`);
+  const handleEnvironmentChange = (environmentType: "production" | "development") => {
+    changeEnvironment(environmentType, environment, router);
   };
 
-  const changeEnvironmentByProduct = (productId: string) => {
-    const product = environment.availableProducts.find((p) => p.id === productId);
-    const newEnvironmentId = product?.environments[0]?.id;
-    router.push(`/environments/${newEnvironmentId}/`);
+  const handleEnvironmentChangeByProduct = (productId: string) => {
+    changeEnvironmentByProduct(productId, environment, router);
   };
 
-  const changeEnvironmentByTeam = (teamId: string) => {
-    const newTeamMembership = memberships.find((m) => m.teamId === teamId);
-    const newTeamProduct = newTeamMembership?.team?.products?.[0];
-
-    if (newTeamProduct) {
-      const newEnvironmentId = newTeamProduct.environments.find((e) => e.type === "production")?.id;
-
-      if (newEnvironmentId) {
-        router.push(`/environments/${newEnvironmentId}/`);
-      }
-    }
+  const handleEnvironmentChangeByTeam = (teamId: string) => {
+    changeEnvironmentByTeam(teamId, memberships, router);
   };
 
   if (isLoadingEnvironment || loading || isLoadingMemberships) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorEnvironment || isErrorMemberships) {
+  if (isErrorEnvironment || isErrorMemberships || !environment || !memberships) {
     return <ErrorComponent />;
   }
 
@@ -325,7 +320,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <DropdownMenuSubContent className="max-w-[45rem]">
                       <DropdownMenuRadioGroup
                         value={environment?.product.id}
-                        onValueChange={changeEnvironmentByProduct}>
+                        onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
                         {environment?.availableProducts?.map((product) => (
                           <DropdownMenuRadioItem
                             value={product.id}
@@ -358,7 +353,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <DropdownMenuSubContent>
                       <DropdownMenuRadioGroup
                         value={environment?.type}
-                        onValueChange={(v) => changeEnvironment(v)}>
+                        onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
                         <DropdownMenuRadioItem value="production" className="cursor-pointer">
                           Production
                         </DropdownMenuRadioItem>
@@ -383,7 +378,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       <DropdownMenuSubContent>
                         <DropdownMenuRadioGroup
                           value={currentTeamId}
-                          onValueChange={(teamId) => changeEnvironmentByTeam(teamId)}>
+                          onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
                           {memberships?.map((membership) => (
                             <DropdownMenuRadioItem
                               value={membership.teamId}
@@ -393,6 +388,11 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                             </DropdownMenuRadioItem>
                           ))}
                         </DropdownMenuRadioGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setShowCreateTeamModal(true)}>
+                          <PlusIcon className="mr-2 h-4 w-4" />
+                          <span>Create team</span>
+                        </DropdownMenuItem>
                       </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                   </DropdownMenuSub>
@@ -437,6 +437,11 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
       <AddProductModal
         open={showAddProductModal}
         setOpen={(val) => setShowAddProductModal(val)}
+        environmentId={environmentId}
+      />
+      <CreateTeamModal
+        open={showCreateTeamModal}
+        setOpen={(val) => setShowCreateTeamModal(val)}
         environmentId={environmentId}
       />
     </nav>
