@@ -9,6 +9,9 @@ const { createId } = require("@paralleldrive/cuid2");
 
 const nextConfig = {
   output: "standalone",
+  experimental: {
+    serverActions: true,
+  },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [

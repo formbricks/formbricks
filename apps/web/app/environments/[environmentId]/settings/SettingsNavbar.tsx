@@ -1,8 +1,12 @@
 "use client";
 
+import { useProduct } from "@/lib/products/products";
+import { useTeam } from "@/lib/teams/teams";
+import { truncate } from "@/lib/utils";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import {
   AdjustmentsVerticalIcon,
+  BellAlertIcon,
   ChatBubbleLeftEllipsisIcon,
   CreditCardIcon,
   DocumentCheckIcon,
@@ -20,6 +24,8 @@ import { useMemo } from "react";
 
 export default function SettingsNavbar({ environmentId }: { environmentId: string }) {
   const pathname = usePathname();
+  const { team } = useTeam(environmentId);
+  const { product } = useProduct(environmentId);
   const navigation = useMemo(
     () => [
       {
@@ -30,6 +36,13 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
             href: `/environments/${environmentId}/settings/profile`,
             icon: UserCircleIcon,
             current: pathname?.includes("/profile"),
+            hidden: false,
+          },
+          {
+            name: "Notifications",
+            href: `/environments/${environmentId}/settings/notifications`,
+            icon: BellAlertIcon,
+            current: pathname?.includes("/notifications"),
             hidden: false,
           },
         ],
@@ -156,8 +169,14 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
       <nav className="flex-1 space-y-1 bg-white px-2">
         {navigation.map((item) => (
           <div key={item.title}>
-            <p className="mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              {item.title}
+            <p className="mt-6 pl-3 pr-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              {item.title}{" "}
+              {item.title === "Product" && product?.name && (
+                <span className="font-normal capitalize">({truncate(product?.name, 10)})</span>
+              )}
+              {item.title === "Team" && team?.name && (
+                <span className="font-normal capitalize">({truncate(team?.name, 14)})</span>
+              )}
             </p>
             <div className="ml-2 mt-1 space-y-1">
               {item.links

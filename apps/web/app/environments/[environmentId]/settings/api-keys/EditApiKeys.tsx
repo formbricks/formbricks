@@ -56,7 +56,7 @@ export default function EditAPIKeys({
     <>
       <div className="mb-6 text-right">
         <Button
-          variant="primary"
+          variant="darkCTA"
           onClick={() => {
             setOpenAddAPIKeyModal(true);
           }}>

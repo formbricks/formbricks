@@ -61,9 +61,9 @@ export function EditMemberships({ environmentId }) {
 
   return (
     <>
-      <div className="mb-6 text-right">
+      <div className="mb-5 text-right">
         <Button
-          variant="primary"
+          variant="darkCTA"
           onClick={() => {
             setAddMemberModalOpen(true);
           }}>
@@ -99,7 +99,7 @@ export function EditMemberships({ environmentId }) {
                   </button>
                 )}
                 {!member.accepted && (
-                  <TooltipProvider>
+                  <TooltipProvider delayDuration={50}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button

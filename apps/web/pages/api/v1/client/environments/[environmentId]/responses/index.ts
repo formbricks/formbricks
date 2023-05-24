@@ -107,6 +107,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       body: JSON.stringify({
         internalSecret: INTERNAL_SECRET,
         environmentId,
+        surveyId,
         event: "responseCreated",
         data: responseData,
       }),
@@ -123,6 +124,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         body: JSON.stringify({
           internalSecret: INTERNAL_SECRET,
           environmentId,
+          surveyId,
           event: "responseFinished",
           data: responseData,
         }),

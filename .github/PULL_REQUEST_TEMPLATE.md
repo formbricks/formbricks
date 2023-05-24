@@ -28,14 +28,13 @@ Fixes # (issue)
 
 ## Checklist
 
-<!-- Please remove all the irrelevant bullets to your PR -->
+<!-- We're starting to get more and more contributions. Please help us making this efficient for all of us and go through this checklist. Please tick off what you did  -->
 
-- I haven't read the [contributing guide](https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md)
-- My code doesn't follow the style guidelines of this project
-- I haven't performed a self-review of my own code and corrected any misspellings
-- I haven't commented my code, particularly in hard-to-understand areas
-- I haven't checked if my PR needs changes to the documentation
-- I haven't checked if my changes generate no new warnings
-- I haven't checked if my changes generate build errors (`pnpm build`) or linting errors (`pnpm lint`)
-- I haven't checked if I removed all console.logs's
-- I haven't checked for merge conflicts by merging the latest changes from main with `git pull origin main`
+- [ ] I have read the [contributing guide](https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md)
+- [ ] I have performed a self-review of my own code and corrected any misspellings
+- [ ] I have added comments to my code, particularly in hard-to-understand bits
+- [ ] I ran `pnpm build` and `pnpm lint` to prevent build and linting errors
+- [ ] My contribitiom does not cause any warnings
+- [ ] I have removed all `console.logs`
+- [ ] I have merged the latest changes from main onto my branch with `git pull origin main`
+- [ ] My contribution causes changes to the Formbricks Docs

@@ -1,6 +1,11 @@
+import { getQuestionResponseMapping } from "@/lib/responses/questionResponseMapping";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { Question } from "@formbricks/types/questions";
+import { Response } from "@formbricks/types/responses";
+import { AttributeClass } from "@prisma/client";
 import { withEmailTemplate } from "./email-template";
 import { createInviteToken, createToken } from "./jwt";
+
 const nodemailer = require("nodemailer");
 
 interface sendEmailData {
@@ -107,5 +112,45 @@ export const sendInviteAcceptedEmail = async (inviterName, inviteeName, email) =
     <br/><br/>
     Have a great day!<br/>
     The Formbricks Team!`),
+  });
+};
+
+export const sendResponseFinishedEmail = async (
+  email: string,
+  environmentId: string,
+  survey: { id: string; name: string; questions: Question[] },
+  response: Response,
+  person: { id: string; attributes: { id: string; value: string; attributeClass: AttributeClass }[] } | null
+) => {
+  const personEmail = person?.attributes?.find((a) => a.attributeClass?.name === "email")?.value;
+  await sendEmail({
+    to: email,
+    subject: `A response for ${survey.name} was completed ✅`,
+    replyTo: personEmail || process.env.MAIL_FROM,
+    html: withEmailTemplate(`<h1>Survey completed</h1>Someone just completed your survey "${survey.name}"<br/>
+
+    <hr/> 
+
+    ${getQuestionResponseMapping(survey, response)
+      .map((question) => `<p><strong>${question.question}</strong></p><p>${question.answer}</p>`)
+      .join("")} 
+
+
+   
+    <hr/>
+
+    <div class="tooltip">
+    <p class='brandcolor'><strong>Did you know? 💡</strong></p>
+    ${
+      personEmail
+        ? "<p>You can reply to this email to start a conversation with this user.</p>"
+        : "<p>If you set the email address as an attribute in in-app surveys, you can reply directly to the respondent.</p>"
+    }
+    </div>
+    
+    <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
+      survey.id
+    }/responses">View response</a>
+    `),
   });
 };
