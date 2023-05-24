@@ -173,6 +173,7 @@ model Survey {
   triggers         SurveyTrigger[]
   attributeFilters SurveyAttributeFilter[]
   displays         Display[]
+  autoClose        Int?                    
 }
 
 model Event {
