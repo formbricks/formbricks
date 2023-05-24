@@ -12,6 +12,7 @@ import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Confetti } from "@formbricks/ui";
 import { useEffect, useState } from "react";
+import { ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 
 type EnhancedSurvey = Survey & {
   brandColor: string;
@@ -54,6 +55,14 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     }
   }, [currentQuestion, survey]);
 
+  const isPreview = new URLSearchParams(window.location.search).get("preview") === "true";
+
+  const restartSurvey = () => {
+    setCurrentQuestion(survey.questions[0]);
+    setProgress(0);
+    setFinished(false);
+  };
+
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
     const questionIdx = survey.questions.findIndex((e) => e.id === currentQuestion?.id);
@@ -64,7 +73,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
       surveyId: survey.id,
       response: { finished, data },
     };
-    if (!responseId) {
+    if (!responseId && !isPreview) {
       const response = await createResponse(
         responseRequest,
         `${window.location.protocol}//${window.location.host}`,
@@ -78,7 +87,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         );
       }
       setResponseId(response.id);
-    } else {
+    } else if (responseId && !isPreview) {
       await updateResponse(
         responseRequest,
         responseId,
@@ -110,10 +119,21 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     <>
       <div
         className={cn(
-          loadingElement && "fb-animate-pulse fb-opacity-60",
+          loadingElement && "animate-pulse opacity-60",
           "flex h-full flex-1 items-center overflow-y-auto bg-white"
         )}>
         <ContentWrapper className="w-full md:max-w-lg">
+          {isPreview && (
+            <div className="mb-10 flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-center text-sm text-amber-700 shadow-sm">
+              <div className="flex flex-1 items-center">
+                <ExclamationTriangleIcon className="mr-2 h-5 w-5 animate-pulse text-amber-400" />
+                Live Preview
+              </div>
+              <button className="flex items-center" onClick={() => restartSurvey()}>
+                Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
+              </button>
+            </div>
+          )}
           {finished ? (
             <div>
               <Confetti colors={[survey.brandColor, "#eee"]} />
