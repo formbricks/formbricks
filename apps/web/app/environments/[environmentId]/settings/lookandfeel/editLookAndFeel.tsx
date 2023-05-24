@@ -110,18 +110,25 @@ export function EditPlacement({ environmentId }) {
 
 export function EditFormbricksSignature({ environmentId }) {
   const { isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
 
-  if (isLoadingEnvironment) {
+  if (isLoadingEnvironment || isLoadingProduct) {
     return <LoadingSpinner />;
   }
-  if (isErrorEnvironment) {
+  if (isErrorEnvironment || isErrorProduct) {
     return <ErrorComponent />;
   }
 
   return (
     <div className="w-full items-center">
       <div className="flex items-center space-x-2">
-        <Switch id="signature" />
+        <Switch
+          id="signature"
+          onCheckedChange={() => {
+            product.formbricksSignature = !product.formbricksSignature;
+            console.log(product);
+          }}
+        />
         <Label htmlFor="signature">Show &apos;Powered by Formbricks&apos; Signature</Label>
       </div>
     </div>
