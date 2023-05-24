@@ -136,12 +136,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
           ))}
         </div>
       </div>
-      <CreateTeamModal
-        open={isCreateTeamModalOpen}
-        setOpen={(val) => setCreateTeamModalOpen(val)}
-        environmentId={environmentId}
-      />
-
+      <CreateTeamModal open={isCreateTeamModalOpen} setOpen={(val) => setCreateTeamModalOpen(val)} />
       <AddMemberModal
         open={isAddMemberModalOpen}
         setOpen={setAddMemberModalOpen}

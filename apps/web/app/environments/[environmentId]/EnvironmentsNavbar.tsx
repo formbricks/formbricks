@@ -267,7 +267,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
                       {truncate(environment?.product?.name, 30)}
                     </p>
-                    <p className="text-sm text-slate-500">{capitalizeFirstLetter(environment?.type)}</p>
+                    <p className="text-sm text-slate-500">{capitalizeFirstLetter(team?.name)}</p>
                   </div>
                   <ChevronDownIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
                 </div>
@@ -340,31 +340,6 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
 
-                {/* Environment Switch */}
-
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <div>
-                      <p>{capitalizeFirstLetter(environment?.type)}</p>
-                      <p className=" block text-xs text-slate-500">Environment</p>
-                    </div>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuRadioGroup
-                        value={environment?.type}
-                        onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
-                        <DropdownMenuRadioItem value="production" className="cursor-pointer">
-                          Production
-                        </DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="development" className="cursor-pointer">
-                          Development
-                        </DropdownMenuRadioItem>
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-
                 {/* Team Switch */}
                 {memberships.length > 1 && (
                   <DropdownMenuSub>
@@ -397,6 +372,31 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     </DropdownMenuPortal>
                   </DropdownMenuSub>
                 )}
+
+                {/* Environment Switch */}
+
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <div>
+                      <p>{capitalizeFirstLetter(environment?.type)}</p>
+                      <p className=" block text-xs text-slate-500">Environment</p>
+                    </div>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuRadioGroup
+                        value={environment?.type}
+                        onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
+                        <DropdownMenuRadioItem value="production" className="cursor-pointer">
+                          Production
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="development" className="cursor-pointer">
+                          Development
+                        </DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
 
                 {dropdownnavigation.map((item) => (
                   <DropdownMenuGroup key={item.title}>
@@ -439,11 +439,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         setOpen={(val) => setShowAddProductModal(val)}
         environmentId={environmentId}
       />
-      <CreateTeamModal
-        open={showCreateTeamModal}
-        setOpen={(val) => setShowCreateTeamModal(val)}
-        environmentId={environmentId}
-      />
+      <CreateTeamModal open={showCreateTeamModal} setOpen={(val) => setShowCreateTeamModal(val)} />
     </nav>
   );
 }

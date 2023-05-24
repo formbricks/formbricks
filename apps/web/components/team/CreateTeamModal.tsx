@@ -6,21 +6,23 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { createTeam } from "../../app/environments/[environmentId]/actions";
 import toast from "react-hot-toast";
+import { useMemberships } from "@/lib/memberships";
 
 interface CreateTeamModalProps {
-  environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
 }
 
 export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps) {
   const { profile } = useProfile();
+  const { mutateMemberships } = useMemberships();
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm();
 
   const submitTeam = async (data) => {
     setLoading(true);
     await createTeam(data.name, (profile as any).id);
+    mutateMemberships();
     toast.success("Team created successfully!");
     setOpen(false);
     setLoading(false);
