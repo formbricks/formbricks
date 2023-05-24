@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@formbricks/lib/cn";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useProductMutation } from "@/lib/products/mutateProducts";
@@ -53,7 +54,6 @@ export function EditBrandColor({ environmentId }) {
         }}>
         Save
       </Button>
-      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
     </div>
   );
 }
@@ -88,7 +88,11 @@ export function EditPlacement({ environmentId }) {
                 checked={placement.default}
                 disabled={placement.disabled}
               />
-              <Label htmlFor={placement.value}>{placement.name}</Label>
+              <Label
+                htmlFor={placement.value}
+                className={cn(placement.disabled ? "cursor-not-allowed text-slate-500" : "text-slate-900")}>
+                {placement.name}
+              </Label>
             </div>
           ))}
         </RadioGroup>
@@ -117,13 +121,9 @@ export function EditFormbricksSignature({ environmentId }) {
   return (
     <div className="w-full items-center">
       <div className="flex items-center space-x-2">
-        <Switch disabled id="signature" />
-        <Label htmlFor="signature">Show Formbricks Signature</Label>
+        <Switch id="signature" />
+        <Label htmlFor="signature">Show &apos;Powered by Formbricks&apos; Signature</Label>
       </div>
-      <Button type="submit" className="mt-4" disabled>
-        Save
-      </Button>
-      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
     </div>
   );
 }
