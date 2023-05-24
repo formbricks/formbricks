@@ -124,12 +124,12 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         )}>
         <ContentWrapper className="w-full md:max-w-lg">
           {isPreview && (
-            <div className="mb-10 flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-center text-sm text-amber-700 shadow-sm">
-              <div className="flex flex-1 items-center">
-                <ExclamationTriangleIcon className="mr-2 h-5 w-5 animate-pulse text-amber-400" />
-                Live Preview
-              </div>
-              <button className="flex items-center" onClick={() => restartSurvey()}>
+            <div className="absolute left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
+              <div className="w-20"></div>
+              <div className="">Survey Preview 👀</div>
+              <button
+                className="flex items-center rounded-full bg-slate-500 px-3 py-1 hover:bg-slate-400"
+                onClick={() => restartSurvey()}>
                 Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
               </button>
             </div>
