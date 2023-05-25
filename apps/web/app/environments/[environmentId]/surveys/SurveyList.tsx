@@ -225,21 +225,23 @@ export default function SurveysList({ environmentId }) {
                           {survey.type === "link" && (
                             <>
                               <DropdownMenuItem>
-                                <Link
+                                <a
                                   className="flex w-full items-center"
-                                  href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}>
+                                  href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}
+                                  target="_blank">
                                   <EyeIcon className="mr-2 h-4 w-4" />
                                   Preview Survey
-                                </Link>
+                                </a>
                               </DropdownMenuItem>
                               <DropdownMenuItem>
                                 <button
                                   className="flex w-full items-center"
-                                  onClick={() =>
+                                  onClick={() => {
                                     navigator.clipboard.writeText(
                                       `${window.location.protocol}//${window.location.host}/s/${survey.id}`
-                                    )
-                                  }>
+                                    );
+                                    toast.success("Copied link to clipboard");
+                                  }}>
                                   <LinkIcon className="mr-2 h-4 w-4" />
                                   Copy Link
                                 </button>
