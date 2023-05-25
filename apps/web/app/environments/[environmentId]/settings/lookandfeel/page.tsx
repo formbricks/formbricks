@@ -16,9 +16,8 @@ export default function ProfileSettingsPage({ params }: { params: { environmentI
         <EditPlacement environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
-        soon
         title="Formbricks Signature"
-        description="As of now, there is no Formbricks branding on your surveys.">
+        description="We love your support but understand if you toggle it off.">
         <EditFormbricksSignature environmentId={params.environmentId} />
       </SettingsCard>
     </div>
