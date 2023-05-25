@@ -65,7 +65,8 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
   };
 
   const handleInputSeconds = (e: any) => {
-    const updatedSurvey: Survey = { ...localSurvey, autoClose: e.target.value };
+    const value = parseInt(e.target.value);
+    const updatedSurvey: Survey = { ...localSurvey, autoClose: value };
     setLocalSurvey(updatedSurvey);
   };
 

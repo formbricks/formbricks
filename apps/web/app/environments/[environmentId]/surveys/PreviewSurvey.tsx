@@ -5,7 +5,7 @@ import ThankYouCard from "@/components/preview/ThankYouCard";
 import { useEnvironment } from "@/lib/environments/environments";
 import type { Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
@@ -15,6 +15,7 @@ interface PreviewSurveyProps {
   environmentId: string;
   surveyType: Survey["type"];
   thankYouCard: Survey["thankYouCard"];
+  autoClose: Survey["autoClose"];
   previewType?: "modal" | "fullwidth" | "email";
 }
 
@@ -26,6 +27,7 @@ export default function PreviewSurvey({
   environmentId,
   surveyType,
   thankYouCard,
+  autoClose,
   previewType,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -33,6 +35,25 @@ export default function PreviewSurvey({
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const { environment } = useEnvironment(environmentId);
   const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
+
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  useEffect(() => {
+    if (!autoClose) return;
+
+    console.log("autoClose changed", autoClose);
+    timeoutRef.current = setTimeout(() => {
+      console.log("No hover or click for x seconds!");
+    }, autoClose); // Change 5000 (5 seconds) to your desired number of seconds
+
+    return () => {
+      clearTimeout(timeoutRef.current);
+    };
+  }, [autoClose]);
+
+  const cancelTimeout = () => {
+    clearTimeout(timeoutRef.current);
+  };
 
   useEffect(() => {
     if (activeQuestionId) {
@@ -128,25 +149,27 @@ export default function PreviewSurvey({
 
       {previewType === "modal" ? (
         <Modal isOpen={isModalOpen}>
-          {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
-            <ThankYouCard
-              brandColor={brandColor}
-              headline={thankYouCard?.headline || "Thank you!"}
-              subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-            />
-          ) : (
-            questions.map((question, idx) =>
-              (activeQuestionId || lastActiveQuestionId) === question.id ? (
-                <QuestionConditional
-                  key={question.id}
-                  question={question}
-                  brandColor={brandColor}
-                  lastQuestion={idx === questions.length - 1}
-                  onSubmit={gotoNextQuestion}
-                />
-              ) : null
-            )
-          )}
+          <div onClick={() => cancelTimeout()} onMouseOver={() => cancelTimeout()}>
+            {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+              <ThankYouCard
+                brandColor={brandColor}
+                headline={thankYouCard?.headline || "Thank you!"}
+                subheader={thankYouCard?.subheader || "We appreciate your feedback."}
+              />
+            ) : (
+              questions.map((question, idx) =>
+                (activeQuestionId || lastActiveQuestionId) === question.id ? (
+                  <QuestionConditional
+                    key={question.id}
+                    question={question}
+                    brandColor={brandColor}
+                    lastQuestion={idx === questions.length - 1}
+                    onSubmit={gotoNextQuestion}
+                  />
+                ) : null
+              )
+            )}
+          </div>
         </Modal>
       ) : (
         <div className="flex flex-grow flex-col">
