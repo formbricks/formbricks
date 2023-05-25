@@ -178,8 +178,8 @@ export default function PreviewSurvey({
           </div>
           <div className="z-10 w-full rounded-b-lg bg-white">
             <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
-              {showFormbricksSignature && <FormbricksSignature />}
               <Progress progress={progress} brandColor={brandColor} />
+              {showFormbricksSignature && <FormbricksSignature />}
             </div>
           </div>
         </div>
