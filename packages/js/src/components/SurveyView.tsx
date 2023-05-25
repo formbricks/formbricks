@@ -118,8 +118,8 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
           )
         )}
       </div>
-      <Progress progress={progress} brandColor={config.settings?.brandColor} />
       {config.settings?.formbricksSignature && <FormbricksSignature />}
+      <Progress progress={progress} brandColor={config.settings?.brandColor} />
     </div>
   );
 }
