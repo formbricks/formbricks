@@ -7,6 +7,7 @@ import { useProduct } from "@/lib/products/products";
 import type { Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useState } from "react";
+import FormbricksSignature from "@/components/preview/FormbricksSignature";
 
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
@@ -134,7 +135,6 @@ export default function PreviewSurvey({
               brandColor={brandColor}
               headline={thankYouCard?.headline || "Thank you!"}
               subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-              showFormbricksSignature={showFormbricksSignature}
             />
           ) : (
             questions.map((question, idx) =>
@@ -149,6 +149,7 @@ export default function PreviewSurvey({
               ) : null
             )
           )}
+          {showFormbricksSignature && <FormbricksSignature />}
         </Modal>
       ) : (
         <div className="flex flex-grow flex-col">
@@ -159,7 +160,6 @@ export default function PreviewSurvey({
                   brandColor={brandColor}
                   headline={thankYouCard?.headline || "Thank you!"}
                   subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-                  showFormbricksSignature={showFormbricksSignature}
                 />
               ) : (
                 questions.map((question, idx) =>
@@ -177,8 +177,9 @@ export default function PreviewSurvey({
             </div>
           </div>
           <div className="z-10 w-full rounded-b-lg bg-white">
-            <div className="mx-auto max-w-md p-6 pt-4">
+            <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
               <Progress progress={progress} brandColor={brandColor} />
+              {showFormbricksSignature && <FormbricksSignature />}
             </div>
           </div>
         </div>

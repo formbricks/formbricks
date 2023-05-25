@@ -1,20 +1,13 @@
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import FormbricksSignature from "@/components/preview/FormbricksSignature";
 
 interface ThankYouCardProps {
   headline: string;
   subheader: string;
   brandColor: string;
-  showFormbricksSignature?: boolean;
 }
 
-export default function ThankYouCard({
-  headline,
-  subheader,
-  brandColor,
-  showFormbricksSignature,
-}: ThankYouCardProps) {
+export default function ThankYouCard({ headline, subheader, brandColor }: ThankYouCardProps) {
   return (
     <div className="text-center">
       <div className="flex items-center justify-center" style={{ color: brandColor }}>
@@ -39,7 +32,6 @@ export default function ThankYouCard({
         <Headline headline={headline} questionId="thankYouCard" />
         <Subheader subheader={subheader} questionId="thankYouCard" />
       </div>
-      {showFormbricksSignature && <FormbricksSignature />}
     </div>
   );
 }

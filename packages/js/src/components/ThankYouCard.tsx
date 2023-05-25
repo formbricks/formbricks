@@ -33,21 +33,6 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
         <Headline headline={headline} questionId="thankYouCard" style={{ "margin-right": 0 }} />
         <Subheader subheader={subheader} questionId="thankYouCard" />
       </div>
-
-      {/* <span
-        className="fb-inline-block fb-w-4/5 fb-h-[2px] fb-mt-[35px] fb-mb-[10px]"
-        style={{ backgroundColor: brandColor }}></span>
-
-      <div>
-        <p className="fb-text-xs fb-text-slate-500">
-          Powered by{" "}
-          <b>
-            <a href="https://formbricks.com" target="_blank" className="hover:text-slate-700">
-              Formbricks
-            </a>
-          </b>
-        </p>
-      </div> */}
     </div>
   );
 }

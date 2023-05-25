@@ -21,8 +21,6 @@ export default function SurveyPage({ surveyId }: SurveyPageProps) {
     );
   }
 
-  console.log("survey", survey);
-
   if (isErrorSurvey && isErrorSurvey.status === 404) {
     return <SurveyInactive status="not found" />;
   }

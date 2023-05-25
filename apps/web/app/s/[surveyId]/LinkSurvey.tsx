@@ -1,5 +1,6 @@
 "use client";
 
+import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
@@ -30,7 +31,6 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
   const [loadingElement, setLoadingElement] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
-  console.log(survey.formbricksSignature);
 
   useEffect(() => {
     if (survey) {
@@ -143,7 +143,6 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
                 headline={survey.thankYouCard.headline || "Thank you!"}
                 subheader={survey.thankYouCard.subheader || "Your response has been recorded."}
                 brandColor={survey.brandColor}
-                showFormbricksSignature={survey.formbricksSignature}
               />
             </div>
           ) : (
@@ -157,8 +156,9 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         </ContentWrapper>
       </div>
       <div className="top-0 z-10 w-full border-b bg-white">
-        <div className="mx-auto max-w-md p-6">
+        <div className="mx-auto max-w-md space-y-6 p-6">
           <Progress progress={progress} brandColor={survey.brandColor} />
+          {survey.formbricksSignature && <FormbricksSignature />}
         </div>
       </div>
     </>
