@@ -1,5 +1,5 @@
-import useSWR from "swr";
 import { fetcher } from "@formbricks/lib/fetcher";
+import useSWR from "swr";
 
 export const useResponses = (environmentId: string, surveyId: string) => {
   const { data, error, mutate, isLoading } = useSWR(

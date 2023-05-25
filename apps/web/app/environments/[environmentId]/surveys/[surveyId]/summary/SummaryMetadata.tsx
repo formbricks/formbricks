@@ -80,7 +80,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
               {responses.length === 0 ? <span>-</span> : responses.length}
             </p>
           </div>
-          <TooltipProvider>
+          <TooltipProvider delayDuration={50}>
             <Tooltip>
               <TooltipTrigger>
                 <div className="flex h-full cursor-default flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">
@@ -102,7 +102,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <TooltipProvider>
+          <TooltipProvider delayDuration={50}>
             <Tooltip>
               <TooltipTrigger>
                 <div className="flex cursor-default flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm">

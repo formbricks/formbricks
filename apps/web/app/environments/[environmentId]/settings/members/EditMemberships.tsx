@@ -114,7 +114,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                   </button>
                 )}
                 {!member.accepted && (
-                  <TooltipProvider>
+                  <TooltipProvider delayDuration={50}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button

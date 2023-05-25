@@ -28,16 +28,14 @@ Fixes # (issue)
 
 ## Checklist
 
-<!-- Please make sure to do all of the hygiene tasks below. We are a small team, pleas make it easy for us to accept your contribution 🙏 -->
+<!-- We're starting to get more and more contributions. Please help us making this efficient for all of us and go through this checklist. Please tick off what you did  -->
 
-- [] My contribution does not generate any **warnings in the console**
-- [] My contribution does not generate any **build errors**
-- [] My contribution does not contain **console.logs**
-- [] My contribution does not cause merge conflicts. I merged the latest changes from main with `git pull origin main` onto my branch
-- [] I have performed a self-review of my own code and corrected any misspellings
-- [] I have read the [contributing guide](https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md)
-- [] I have added comments for hard-to-understand bits
+- [ ] Read the [contributing guide](https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md)
+- [ ] Self-reviewed my own code
+- [ ] Commented on my code in hard-to-understand bits
+- [ ] Ran `pnpm build`
+- [ ] Checked for warnings, there are non
+- [ ] Removed all `console.logs`
+- [ ] Merged the latest changes from main onto my branch with `git pull origin main`
 
-## Doc Update needed?
-
-- [] My changes require the docs to be augmented / changed
+- [ ] My contribution causes changes to the Formbricks Docs

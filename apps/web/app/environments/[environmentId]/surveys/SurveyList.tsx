@@ -12,7 +12,6 @@ import {
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { useEnvironment } from "@/lib/environments/environments";
-import { useProfile } from "@/lib/profile";
 import { createSurvey, deleteSurvey, duplicateSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Badge, ErrorComponent } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/outline";
@@ -33,7 +32,6 @@ import TemplateList from "./templates/TemplateList";
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
-  const { isLoadingProfile, isErrorProfile } = useProfile();
   const { environment } = useEnvironment(environmentId);
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -85,11 +83,11 @@ export default function SurveysList({ environmentId }) {
     }
   };
 
-  if (isLoadingSurveys || isLoadingProfile) {
+  if (isLoadingSurveys) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorSurveys || isErrorProfile) {
+  if (isErrorSurveys) {
     return <ErrorComponent />;
   }
 
