@@ -21,6 +21,7 @@ import {
   EllipsisHorizontalIcon,
   LinkIcon,
   PencilSquareIcon,
+  EyeIcon,
   TrashIcon,
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -221,6 +222,30 @@ export default function SurveysList({ environmentId }) {
                               Delete
                             </button>
                           </DropdownMenuItem>
+                          {survey.type === "link" && (
+                            <>
+                              <DropdownMenuItem>
+                                <Link
+                                  className="flex w-full items-center"
+                                  href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}>
+                                  <EyeIcon className="mr-2 h-4 w-4" />
+                                  Preview Survey
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <button
+                                  className="flex w-full items-center"
+                                  onClick={() =>
+                                    navigator.clipboard.writeText(
+                                      `${window.location.protocol}//${window.location.host}/s/${survey.id}`
+                                    )
+                                  }>
+                                  <LinkIcon className="mr-2 h-4 w-4" />
+                                  Copy Link
+                                </button>
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
