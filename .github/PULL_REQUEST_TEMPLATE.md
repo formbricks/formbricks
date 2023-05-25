@@ -34,7 +34,7 @@ Fixes # (issue)
 - [ ] Self-reviewed my own code
 - [ ] Commented on my code in hard-to-understand bits
 - [ ] Ran `pnpm build`
-- [ ] Checked for warnings, there are non
+- [ ] Checked for warnings, there are none
 - [ ] Removed all `console.logs`
 - [ ] Merged the latest changes from main onto my branch with `git pull origin main`
 

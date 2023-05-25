@@ -17,6 +17,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import CreateTeamModal from "@/components/team/CreateTeamModal";
+import {
+  changeEnvironment,
+  changeEnvironmentByProduct,
+  changeEnvironmentByTeam,
+} from "@/lib/environments/changeEnvironments";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useMemberships } from "@/lib/memberships";
 import { useTeam } from "@/lib/teams/teams";
@@ -54,12 +60,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
-import CreateTeamModal from "@/components/team/CreateTeamModal";
-import {
-  changeEnvironmentByProduct,
-  changeEnvironmentByTeam,
-  changeEnvironment,
-} from "@/lib/environments/changeEnvironments";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -341,37 +341,36 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 </DropdownMenuSub>
 
                 {/* Team Switch */}
-                {memberships.length > 1 && (
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <div>
-                        <p>{currentTeamName}</p>
-                        <p className="block text-xs text-slate-500">Team</p>
-                      </div>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        <DropdownMenuRadioGroup
-                          value={currentTeamId}
-                          onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
-                          {memberships?.map((membership) => (
-                            <DropdownMenuRadioItem
-                              value={membership.teamId}
-                              className="cursor-pointer"
-                              key={membership.teamId}>
-                              {membership?.team?.name}
-                            </DropdownMenuRadioItem>
-                          ))}
-                        </DropdownMenuRadioGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setShowCreateTeamModal(true)}>
-                          <PlusIcon className="mr-2 h-4 w-4" />
-                          <span>Create team</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                )}
+
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <div>
+                      <p>{currentTeamName}</p>
+                      <p className="block text-xs text-slate-500">Team</p>
+                    </div>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuRadioGroup
+                        value={currentTeamId}
+                        onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
+                        {memberships?.map((membership) => (
+                          <DropdownMenuRadioItem
+                            value={membership.teamId}
+                            className="cursor-pointer"
+                            key={membership.teamId}>
+                            {membership?.team?.name}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setShowCreateTeamModal(true)}>
+                        <PlusIcon className="mr-2 h-4 w-4" />
+                        <span>Create team</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
 
                 {/* Environment Switch */}
 
