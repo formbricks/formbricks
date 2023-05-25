@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 
 type EnhancedSurvey = Survey & {
   brandColor: string;
+  formbricksSignature: boolean;
 };
 
 interface LinkSurveyProps {
@@ -29,7 +30,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
   const [loadingElement, setLoadingElement] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
-  const [showFormbricksSignature, setShowFormbricksSignature] = useState(false);
+  console.log(survey.formbricksSignature);
 
   useEffect(() => {
     if (survey) {
@@ -142,7 +143,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
                 headline={survey.thankYouCard.headline || "Thank you!"}
                 subheader={survey.thankYouCard.subheader || "Your response has been recorded."}
                 brandColor={survey.brandColor}
-                showFormbricksSignature={showFormbricksSignature}
+                showFormbricksSignature={survey.formbricksSignature}
               />
             </div>
           ) : (
