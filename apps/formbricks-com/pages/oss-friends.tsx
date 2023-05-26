@@ -46,6 +46,12 @@ const OSSFriends = [
     href: "https://gitwonk.com",
   },
   {
+    name: "Hanko",
+    description:
+      "Open-source authentication and user management for the passkey era. Integrated in minutes, for web and mobile apps.",
+    href: "https://www.hanko.io",
+  },
+  {
     name: "HTMX",
     description:
       "HTMX is a dependency-free JavaScript library that allows you to access AJAX, CSS Transitions, WebSockets, and Server Sent Events directly in HTML.",
