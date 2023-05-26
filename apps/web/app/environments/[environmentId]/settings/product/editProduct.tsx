@@ -47,7 +47,7 @@ export function EditProductName({ environmentId }) {
       <Label htmlFor="fullname">What&apos;s your product called?</Label>
       <Input type="text" id="fullname" defaultValue={product.name} {...register("name")} />
 
-      <Button type="submit" className="mt-4" loading={isMutatingProduct}>
+      <Button type="submit" variant="darkCTA" className="mt-4" loading={isMutatingProduct}>
         Update
       </Button>
     </form>
@@ -91,7 +91,7 @@ export function EditWaitingTime({ environmentId }) {
         })}
       />
 
-      <Button type="submit" className="mt-4" loading={isMutatingProduct}>
+      <Button type="submit" variant="darkCTA" className="mt-4" loading={isMutatingProduct}>
         Update
       </Button>
     </form>
@@ -157,7 +157,7 @@ export function DeleteProduct({ environmentId }) {
         <p className="mt-2 text-xs text-red-700">
           {!isUserAdminOrOwner
             ? "Only Admin or Owners can delete products."
-            : "Environment needs at least 1 product."}
+            : "This is your only product, it cannot be deleted. Create a new product first."}
         </p>
       )}
       <DeleteDialog

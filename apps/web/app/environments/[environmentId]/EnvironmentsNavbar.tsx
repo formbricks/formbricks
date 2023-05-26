@@ -306,7 +306,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                       <div className="flex items-center space-x-1">
                         <p className="">{truncate(environment?.product?.name, 20)}</p>
                         {!widgetSetupCompleted && (
-                          <TooltipProvider>
+                          <TooltipProvider delayDuration={50}>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="mt-0.5 h-2 w-2 rounded-full bg-amber-500 hover:bg-amber-600"></div>

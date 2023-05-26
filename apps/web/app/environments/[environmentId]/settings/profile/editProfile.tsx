@@ -41,7 +41,7 @@ export function EditName() {
         <Label htmlFor="email">Email</Label>
         <Input type="email" id="fullname" defaultValue={profile.email} disabled />
       </div>
-      <Button type="submit" className="mt-4" loading={isMutatingProfile}>
+      <Button type="submit" variant="darkCTA" className="mt-4" loading={isMutatingProfile}>
         Update
       </Button>
     </form>
@@ -63,7 +63,7 @@ export function EditAvatar({ session }) {
         <ProfileAvatar userId={session?.user?.id} />
       )}
 
-      <Button className="mt-4" disabled={true}>
+      <Button className="mt-4" variant="darkCTA" disabled={true}>
         Upload Image
       </Button>
     </div>

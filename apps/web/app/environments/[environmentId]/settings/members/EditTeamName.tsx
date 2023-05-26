@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 export default function EditTeamName({ environmentId }) {
-  const { team, isLoadingTeam, isErrorTeam } = useTeam(environmentId);
+  const { team, isLoadingTeam, isErrorTeam, mutateTeam } = useTeam(environmentId);
   const { register, handleSubmit } = useForm();
   const [teamId, setTeamId] = useState("");
 
@@ -38,12 +38,13 @@ export default function EditTeamName({ environmentId }) {
           })
           .then(() => {
             toast.success("Team name updated successfully.");
+            mutateTeam(); // Added to trigger SWR to update the team name in menus
           });
       })}>
       <Label htmlFor="teamname">Team Name</Label>
       <Input type="text" id="teamname" defaultValue={team.name} {...register("name")} />
 
-      <Button type="submit" className="mt-4" loading={isMutatingTeam}>
+      <Button type="submit" className="mt-4" variant="darkCTA" loading={isMutatingTeam}>
         Update
       </Button>
     </form>
