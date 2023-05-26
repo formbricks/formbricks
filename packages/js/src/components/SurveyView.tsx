@@ -28,7 +28,6 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
-    console.log(survey);
     if (!survey.autoClose) return;
 
     timeoutRef.current = setTimeout(() => {
