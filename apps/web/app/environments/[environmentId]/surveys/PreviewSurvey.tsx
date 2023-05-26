@@ -128,25 +128,28 @@ export default function PreviewSurvey({
 
       {previewType === "modal" ? (
         <Modal isOpen={isModalOpen}>
-          {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
-            <ThankYouCard
-              brandColor={brandColor}
-              headline={thankYouCard?.headline || "Thank you!"}
-              subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-            />
-          ) : (
-            questions.map((question, idx) =>
-              (activeQuestionId || lastActiveQuestionId) === question.id ? (
-                <QuestionConditional
-                  key={question.id}
-                  question={question}
-                  brandColor={brandColor}
-                  lastQuestion={idx === questions.length - 1}
-                  onSubmit={gotoNextQuestion}
-                />
-              ) : null
-            )
-          )}
+          <div className="px-4 py-6 sm:p-6">
+            {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+              <ThankYouCard
+                brandColor={brandColor}
+                headline={thankYouCard?.headline || "Thank you!"}
+                subheader={thankYouCard?.subheader || "We appreciate your feedback."}
+              />
+            ) : (
+              questions.map((question, idx) =>
+                (activeQuestionId || lastActiveQuestionId) === question.id ? (
+                  <QuestionConditional
+                    key={question.id}
+                    question={question}
+                    brandColor={brandColor}
+                    lastQuestion={idx === questions.length - 1}
+                    onSubmit={gotoNextQuestion}
+                  />
+                ) : null
+              )
+            )}
+          </div>
+          <Progress progress={progress} brandColor={brandColor} />
         </Modal>
       ) : (
         <div className="flex flex-grow flex-col">
