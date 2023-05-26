@@ -1,6 +1,6 @@
 import type { JsConfig, Survey } from "../../../types/js";
 import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
 import { IErrorHandler } from "../lib/errors";
 import { Logger } from "../lib/logger";
@@ -24,6 +24,24 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
   const [loadingElement, setLoadingElement] = useState(false);
+
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  useEffect(() => {
+    console.log(survey);
+    if (!survey.autoClose) return;
+
+    timeoutRef.current = setTimeout(() => {
+      close();
+    }, survey.autoClose * 1000);
+    return () => {
+      clearTimeout(timeoutRef.current);
+    };
+  }, [survey, close]);
+
+  const cancelTimeout = () => {
+    clearTimeout(timeoutRef.current);
+  };
 
   useEffect(() => {
     initDisplay();
@@ -96,7 +114,9 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
         className={cn(
           loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
           "fb-text-slate-800 fb-font-sans fb-px-4 fb-py-6 sm:fb-p-6"
-        )}>
+        )}
+        onClick={() => cancelTimeout()}
+        onMouseOver={() => cancelTimeout()}>
         {progress === 100 && survey.thankYouCard.enabled ? (
           <ThankYouCard
             headline={survey.thankYouCard.headline}

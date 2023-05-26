@@ -41,15 +41,18 @@ export default function PreviewSurvey({
   useEffect(() => {
     if (!autoClose) return;
 
-    console.log("autoClose changed", autoClose);
     timeoutRef.current = setTimeout(() => {
-      console.log("No hover or click for x seconds!");
-    }, autoClose); // Change 5000 (5 seconds) to your desired number of seconds
-
+      // setIsModalOpen(false);
+      // setTimeout(() => {
+      //   setActiveQuestionId(questions[0].id);
+      //   setIsModalOpen(true);
+      // }, 500);
+      // action if survey autoClose time has passed
+    }, autoClose * 1000);
     return () => {
       clearTimeout(timeoutRef.current);
     };
-  }, [autoClose]);
+  }, [autoClose, questions, setActiveQuestionId]);
 
   const cancelTimeout = () => {
     clearTimeout(timeoutRef.current);
@@ -142,9 +145,9 @@ export default function PreviewSurvey({
           <div className="h-3 w-3 rounded-full bg-amber-500"></div>
           <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
         </div>
-        <p>
+        <div>
           {previewType === "modal" && <p className="ml-4 font-mono text-sm text-slate-400">Your web app</p>}
-        </p>
+        </div>
       </div>
 
       {previewType === "modal" ? (
