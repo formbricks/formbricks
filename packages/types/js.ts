@@ -78,6 +78,7 @@ export interface Survey {
   questions: Question[];
   triggers: Trigger[];
   thankYouCard: ThankYouCard;
+  autoClose?: number | null;
 }
 
 export interface Trigger {
