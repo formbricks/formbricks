@@ -222,7 +222,7 @@ export default function SurveysList({ environmentId }) {
                               Delete
                             </button>
                           </DropdownMenuItem>
-                          {survey.type === "link" && (
+                          {survey.type === "link" && survey.status !== "draft" && (
                             <>
                               <DropdownMenuItem>
                                 <a
