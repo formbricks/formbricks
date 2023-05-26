@@ -68,7 +68,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // PUT
   else if (req.method === "PUT") {
-    console.log(req.body);
     const currentTriggers = await prisma.surveyTrigger.findMany({
       where: {
         surveyId,
@@ -215,7 +214,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       where: { id: surveyId },
       data,
     });
-    console.log(prismaRes);
     return res.json(prismaRes);
   }
 
