@@ -37,4 +37,4 @@ Fixes # (issue)
 - [ ] My contribution does not cause any warnings
 - [ ] I have removed all `console.logs`
 - [ ] I have merged the latest changes from main onto my branch with `git pull origin main`
-- [ ] My contribution causes changes to the Formbricks Docs
+- [ ] I have updated the Formbricks Docs if necessary
