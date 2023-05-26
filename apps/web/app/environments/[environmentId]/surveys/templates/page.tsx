@@ -60,6 +60,7 @@ export default function SurveyTemplatesPage({ params }) {
                 environmentId={environmentId}
                 surveyType={environment?.widgetSetupCompleted ? "web" : "link"}
                 thankYouCard={{ enabled: true }}
+                autoClose={null}
               />
             </div>
           )}
