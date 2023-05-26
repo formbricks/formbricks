@@ -34,6 +34,12 @@ export default function MultipleChoiceSingleForm({
     updateQuestion(questionIdx, { choices: newChoices });
   };
 
+  const addOther = () => {
+    const newChoices = !question.choices ? [] : question.choices;
+    newChoices.push({ id: "other", label: "" });
+    updateQuestion(questionIdx, { choices: newChoices });
+  };
+
   const deleteChoice = (choiceIdx: number) => {
     const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
     updateQuestion(questionIdx, { choices: newChoices });
@@ -75,7 +81,7 @@ export default function MultipleChoiceSingleForm({
                   id={choice.id}
                   name={choice.id}
                   value={choice.label}
-                  placeholder={`Option ${choiceIdx + 1}`}
+                  placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
                 />
                 {question.choices && question.choices.length > 2 && (
@@ -86,9 +92,15 @@ export default function MultipleChoiceSingleForm({
                 )}
               </div>
             ))}
-          <Button variant="secondary" type="button" onClick={() => addChoice()}>
-            Add Option
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button variant="secondary" type="button" onClick={() => addChoice()}>
+              Add Option
+            </Button>
+            <p>or</p>
+            <Button variant="minimal" type="button" onClick={() => addOther()}>
+              Add &quot;Other&quot; with specify
+            </Button>
+          </div>
         </div>
       </div>
 
