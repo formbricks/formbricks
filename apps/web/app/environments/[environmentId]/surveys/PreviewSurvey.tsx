@@ -36,21 +36,26 @@ export default function PreviewSurvey({
   const { environment } = useEnvironment(environmentId);
   const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
 
-  const [countdownProgress, setCountdownProgress] = useState(100);
-  const [stop, setStop] = useState(false);
+  const [countdownProgress, setCountdownProgress] = useState(1);
   const startRef = useRef(performance.now());
   const frameRef = useRef<number | null>(null);
+  const [countdownStop, setCountdownStop] = useState(false);
 
   const handleStopCountdown = () => {
-    setStop(true);
     if (frameRef.current !== null) {
       cancelAnimationFrame(frameRef.current);
+      setCountdownStop(true);
     }
   };
 
   useEffect(() => {
+    if (!autoClose) return;
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+    }
+
     const frame = () => {
-      if (stop || !autoClose || !startRef.current) return;
+      if (!autoClose || !startRef.current) return;
 
       const timeout = autoClose * 1000;
       const elapsed = performance.now() - startRef.current;
@@ -66,8 +71,17 @@ export default function PreviewSurvey({
       }
     };
 
+    setCountdownStop(false);
+    setCountdownProgress(1);
+    startRef.current = performance.now();
     frameRef.current = requestAnimationFrame(frame);
-  }, [autoClose, stop]);
+
+    return () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, [autoClose]);
 
   useEffect(() => {
     if (activeQuestionId) {
@@ -163,7 +177,7 @@ export default function PreviewSurvey({
 
       {previewType === "modal" ? (
         <Modal isOpen={isModalOpen}>
-          {!stop && <Progress progress={countdownProgress} brandColor={brandColor} />}
+          {!countdownStop && autoClose && <Progress progress={countdownProgress} brandColor={brandColor} />}
           <div
             onClick={() => handleStopCountdown()}
             onMouseOver={() => handleStopCountdown()}
