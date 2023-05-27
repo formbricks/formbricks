@@ -65,7 +65,10 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
   };
 
   const handleInputSeconds = (e: any) => {
-    const value = parseInt(e.target.value);
+    let value = parseInt(e.target.value);
+
+    if (value < 1) value = 1;
+
     const updatedSurvey: Survey = { ...localSurvey, autoClose: value };
     setLocalSurvey(updatedSurvey);
   };
@@ -214,7 +217,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                       type="number"
                       min="1"
                       id="autoCloseSeconds"
-                      value={localSurvey.autoClose || 0}
+                      value={localSurvey.autoClose?.toString()}
                       onChange={(e) => handleInputSeconds(e)}
                       className="ml-2 mr-2 inline w-16 text-center text-sm"
                     />

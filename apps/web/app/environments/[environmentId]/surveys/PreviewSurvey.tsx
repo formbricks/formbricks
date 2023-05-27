@@ -177,7 +177,9 @@ export default function PreviewSurvey({
 
       {previewType === "modal" ? (
         <Modal isOpen={isModalOpen}>
-          {!countdownStop && autoClose && <Progress progress={countdownProgress} brandColor={brandColor} />}
+          {!countdownStop && autoClose !== null && autoClose > 0 && (
+            <Progress progress={countdownProgress} brandColor={brandColor} />
+          )}
           <div
             onClick={() => handleStopCountdown()}
             onMouseOver={() => handleStopCountdown()}
