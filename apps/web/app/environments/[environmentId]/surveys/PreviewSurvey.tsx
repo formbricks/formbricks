@@ -36,27 +36,38 @@ export default function PreviewSurvey({
   const { environment } = useEnvironment(environmentId);
   const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
 
-  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const [countdownProgress, setCountdownProgress] = useState(100);
+  const [stop, setStop] = useState(false);
+  const startRef = useRef(performance.now());
+  const frameRef = useRef<number | null>(null);
+
+  const handleStopCountdown = () => {
+    setStop(true);
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+    }
+  };
 
   useEffect(() => {
-    if (!autoClose) return;
+    const frame = () => {
+      if (stop || !autoClose || !startRef.current) return;
 
-    timeoutRef.current = setTimeout(() => {
-      // setIsModalOpen(false);
-      // setTimeout(() => {
-      //   setActiveQuestionId(questions[0].id);
-      //   setIsModalOpen(true);
-      // }, 500);
-      // action if survey autoClose time has passed
-    }, autoClose * 1000);
-    return () => {
-      clearTimeout(timeoutRef.current);
+      const timeout = autoClose * 1000;
+      const elapsed = performance.now() - startRef.current;
+      const remaining = Math.max(0, timeout - elapsed);
+
+      setCountdownProgress(remaining / timeout);
+
+      if (remaining > 0) {
+        frameRef.current = requestAnimationFrame(frame);
+      } else {
+        handleStopCountdown();
+        // close modal
+      }
     };
-  }, [autoClose, questions, setActiveQuestionId]);
 
-  const cancelTimeout = () => {
-    clearTimeout(timeoutRef.current);
-  };
+    frameRef.current = requestAnimationFrame(frame);
+  }, [autoClose, stop]);
 
   useEffect(() => {
     if (activeQuestionId) {
@@ -152,9 +163,10 @@ export default function PreviewSurvey({
 
       {previewType === "modal" ? (
         <Modal isOpen={isModalOpen}>
+          {!stop && <Progress progress={countdownProgress} brandColor={brandColor} />}
           <div
-            onClick={() => cancelTimeout()}
-            onMouseOver={() => cancelTimeout()}
+            onClick={() => handleStopCountdown()}
+            onMouseOver={() => handleStopCountdown()}
             className="px-4 py-6 sm:p-6">
             {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
               <ThankYouCard
