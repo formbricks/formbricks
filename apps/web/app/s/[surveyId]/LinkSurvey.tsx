@@ -11,6 +11,7 @@ import { cn } from "@formbricks/lib/cn";
 import type { Logic, Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Confetti } from "@formbricks/ui";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 
 type EnhancedSurvey = Survey & {
@@ -29,9 +30,14 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
 
+  const isPreview = new URLSearchParams(window.location.search).get("preview") === "true";
+
   useEffect(() => {
     if (survey) {
       setCurrentQuestion(survey.questions[0]);
+
+      if (isPreview) return;
+
       // create display
       createDisplay(
         { surveyId: survey.id },
@@ -41,7 +47,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         setDisplayId(display.id);
       });
     }
-  }, [survey]);
+  }, [survey, isPreview]);
 
   useEffect(() => {
     if (currentQuestion && survey) {
@@ -122,6 +128,10 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     }
     if (lastQuestion) return "end";
     return survey.questions[currentQuestionIndex + 1].id;
+  const restartSurvey = () => {
+    setCurrentQuestion(survey.questions[0]);
+    setProgress(0);
+    setFinished(false);
   };
 
   const submitResponse = async (data: { [x: string]: any }) => {
@@ -136,7 +146,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
       surveyId: survey.id,
       response: { finished, data },
     };
-    if (!responseId) {
+    if (!responseId && !isPreview) {
       const response = await createResponse(
         responseRequest,
         `${window.location.protocol}//${window.location.host}`,
@@ -150,7 +160,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         );
       }
       setResponseId(response.id);
-    } else {
+    } else if (responseId && !isPreview) {
       await updateResponse(
         responseRequest,
         responseId,
@@ -188,10 +198,21 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     <>
       <div
         className={cn(
-          loadingElement && "fb-animate-pulse fb-opacity-60",
+          loadingElement && "animate-pulse opacity-60",
           "flex h-full flex-1 items-center overflow-y-auto bg-white"
         )}>
         <ContentWrapper className="w-full md:max-w-lg">
+          {isPreview && (
+            <div className="absolute left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
+              <div className="w-20"></div>
+              <div className="">Survey Preview 👀</div>
+              <button
+                className="flex items-center rounded-full bg-slate-500 px-3 py-1 hover:bg-slate-400"
+                onClick={() => restartSurvey()}>
+                Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
+              </button>
+            </div>
+          )}
           {finished ? (
             <div>
               <Confetti colors={[survey.brandColor, "#eee"]} />

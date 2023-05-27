@@ -382,4 +382,5 @@ model User {
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
   role                      Role?
   objective                 Objective?
+  notificationSettings      Json             @default("{}")
 }

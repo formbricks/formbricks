@@ -58,7 +58,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
                 }}>
                 Cancel
               </Button>
-              <Button variant="primary" type="submit">
+              <Button variant="darkCTA" type="submit">
                 Add API Key
               </Button>
             </div>

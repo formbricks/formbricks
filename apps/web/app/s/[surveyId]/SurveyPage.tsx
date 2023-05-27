@@ -1,6 +1,7 @@
 "use client";
 
 import LinkSurvey from "@/app/s/[surveyId]/LinkSurvey";
+import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
 import LegalFooter from "@/components/shared/LegalFooter";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useLinkSurvey } from "@/lib/linkSurvey/linkSurvey";
@@ -20,12 +21,12 @@ export default function SurveyPage({ surveyId }: SurveyPageProps) {
     );
   }
 
-  if (isErrorSurvey || !survey) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <p className="text-sm text-slate-800">Survey cannot be found</p>
-      </div>
-    );
+  if (isErrorSurvey && isErrorSurvey.status === 404) {
+    return <SurveyInactive status="not found" />;
+  }
+
+  if (isErrorSurvey && isErrorSurvey.status === 403) {
+    return <SurveyInactive status={isErrorSurvey.info.reason} />;
   }
 
   return (
