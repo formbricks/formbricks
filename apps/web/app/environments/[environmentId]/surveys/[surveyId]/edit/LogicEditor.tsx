@@ -274,6 +274,7 @@ export default function LogicEditor({
                           <DropdownMenuCheckboxItem
                             key={value}
                             checked={logic.value?.includes(value)}
+                            onSelect={(e) => e.preventDefault()}
                             onCheckedChange={(e) => updateMultiSelectLogic(logicIdx, e, value)}>
                             {value}
                           </DropdownMenuCheckboxItem>
