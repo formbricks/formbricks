@@ -128,6 +128,8 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     }
     if (lastQuestion) return "end";
     return survey.questions[currentQuestionIndex + 1].id;
+  };
+
   const restartSurvey = () => {
     setCurrentQuestion(survey.questions[0]);
     setProgress(0);
