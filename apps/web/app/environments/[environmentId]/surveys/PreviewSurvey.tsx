@@ -152,7 +152,10 @@ export default function PreviewSurvey({
 
       {previewType === "modal" ? (
         <Modal isOpen={isModalOpen}>
-          <div onClick={() => cancelTimeout()} onMouseOver={() => cancelTimeout()}>
+          <div
+            onClick={() => cancelTimeout()}
+            onMouseOver={() => cancelTimeout()}
+            className="px-4 py-6 sm:p-6">
             {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
               <ThankYouCard
                 brandColor={brandColor}
@@ -173,6 +176,7 @@ export default function PreviewSurvey({
               )
             )}
           </div>
+          <Progress progress={progress} brandColor={brandColor} />
         </Modal>
       ) : (
         <div className="flex flex-grow flex-col">
