@@ -25,22 +25,47 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
   const [displayId, setDisplayId] = useState<string | null>(null);
   const [loadingElement, setLoadingElement] = useState(false);
 
-  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const [countdownProgress, setCountdownProgress] = useState(100);
+  const [countdownStop, setCountdownStop] = useState(false);
+  const startRef = useRef(performance.now());
+  const frameRef = useRef<number | null>(null);
+
+  const handleStopCountdown = () => {
+    if (frameRef.current !== null) {
+      setCountdownStop(true);
+      cancelAnimationFrame(frameRef.current);
+    }
+  };
 
   useEffect(() => {
     if (!survey.autoClose) return;
+    const frame = () => {
+      if (!survey.autoClose || !startRef.current) return;
 
-    timeoutRef.current = setTimeout(() => {
-      close();
-    }, survey.autoClose * 1000);
-    return () => {
-      clearTimeout(timeoutRef.current);
+      const timeout = survey.autoClose * 1000;
+      const elapsed = performance.now() - startRef.current;
+      const remaining = Math.max(0, timeout - elapsed);
+
+      setCountdownProgress(remaining / timeout);
+
+      if (remaining > 0) {
+        frameRef.current = requestAnimationFrame(frame);
+      } else {
+        handleStopCountdown();
+        close();
+      }
     };
-  }, [survey, close]);
 
-  const cancelTimeout = () => {
-    clearTimeout(timeoutRef.current);
-  };
+    setCountdownStop(false);
+    setCountdownProgress(1);
+    frameRef.current = requestAnimationFrame(frame);
+
+    return () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, [survey.autoClose, close]);
 
   useEffect(() => {
     initDisplay();
@@ -109,13 +134,16 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
 
   return (
     <div>
+      {!countdownStop && survey.autoClose && (
+        <Progress progress={countdownProgress} brandColor={brandColor} />
+      )}
       <div
         className={cn(
           loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
           "fb-text-slate-800 fb-font-sans fb-px-4 fb-py-6 sm:fb-p-6"
         )}
-        onClick={() => cancelTimeout()}
-        onMouseOver={() => cancelTimeout()}>
+        onClick={() => handleStopCountdown()}
+        onMouseOver={() => handleStopCountdown()}>
         {progress === 100 && survey.thankYouCard.enabled ? (
           <ThankYouCard
             headline={survey.thankYouCard.headline}
