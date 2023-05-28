@@ -78,8 +78,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         surveyId,
       },
     });
-    let data: any = { updatedAt: new Date() };
+    let data: any = {};
     const body = { ...req.body };
+
+    delete body.updatedAt;
 
     // delete unused fields for link surveys
     if (body.type === "link") {

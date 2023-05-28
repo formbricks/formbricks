@@ -124,32 +124,37 @@ export default function PreviewSurvey({
           <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
         </div>
         <p>
-          {previewType === "modal" && <p className="ml-4 font-mono text-sm text-slate-400">Your web app</p>}
+          {previewType === "modal" && (
+            <span className="ml-4 font-mono text-sm text-slate-400">Your web app</span>
+          )}
         </p>
       </div>
 
       {previewType === "modal" ? (
         <Modal isOpen={isModalOpen}>
-          {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
-            <ThankYouCard
-              brandColor={brandColor}
-              headline={thankYouCard?.headline || "Thank you!"}
-              subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-            />
-          ) : (
-            questions.map((question, idx) =>
-              (activeQuestionId || lastActiveQuestionId) === question.id ? (
-                <QuestionConditional
-                  key={question.id}
-                  question={question}
-                  brandColor={brandColor}
-                  lastQuestion={idx === questions.length - 1}
-                  onSubmit={gotoNextQuestion}
-                />
-              ) : null
-            )
-          )}
-          {showFormbricksSignature && <FormbricksSignature />}
+          <div className="px-4 py-6 sm:p-6">
+            {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+              <ThankYouCard
+                brandColor={brandColor}
+                headline={thankYouCard?.headline || "Thank you!"}
+                subheader={thankYouCard?.subheader || "We appreciate your feedback."}
+              />
+            ) : (
+              questions.map((question, idx) =>
+                (activeQuestionId || lastActiveQuestionId) === question.id ? (
+                  <QuestionConditional
+                    key={question.id}
+                    question={question}
+                    brandColor={brandColor}
+                    lastQuestion={idx === questions.length - 1}
+                    onSubmit={gotoNextQuestion}
+                  />
+                ) : null
+              )
+            )}
+            {showFormbricksSignature && <FormbricksSignature />}
+          </div>
+          <Progress progress={progress} brandColor={brandColor} />
         </Modal>
       ) : (
         <div className="flex flex-grow flex-col">
