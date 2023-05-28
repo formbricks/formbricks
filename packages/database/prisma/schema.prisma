@@ -247,7 +247,7 @@ model Product {
   environments  Environment[]
   brandColor    String        @default("#64748b")
   recontactDays Int           @default(7)
-  formbricksSignature Boolean @default(false)
+  formbricksSignature Boolean @default(true)
 }
 
 enum Plan {

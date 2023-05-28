@@ -6,7 +6,7 @@ export default function FormbricksSignature() {
       href="https://formbricks.com?utm_source=survey_branding"
       target="_blank"
       className="fb-mb-5 fb-mt-2 fb-flex fb-justify-center">
-      <p className=" text-xs text-slate-400">
+      <p className="fb-text-xs fb-text-slate-400">
         Powered by{" "}
         <b>
           <span className="fb-text-slate-500 fb-hover:text-slate-700">Formbricks</span>
