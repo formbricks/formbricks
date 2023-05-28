@@ -5,6 +5,7 @@ const navigation = {
   other: [
     { name: "Community", href: "/community", status: true },
     { name: "Blog", href: "/blog", status: true },
+    { name: "OSS Friends", href: "/oss-friends", status: true },
     { name: "GDPR FAQ", href: "/gdpr", status: true },
     { name: "GDPR Guide", href: "/gdpr-guide", status: true },
   ],
@@ -47,13 +48,15 @@ export default function Footer() {
           <span className="sr-only">Formbricks</span>
           <FooterLogo className="mx-auto h-8 w-auto sm:h-10" />
         </Link>
-        <p className="text-base text-slate-500 dark:text-slate-400">Experience Management for B2B SaaS</p>
+        <p className="text-base text-slate-500 dark:text-slate-400">
+          Make customer-centric decisions based on data.
+        </p>
         <div className="border-slate-500">
           <p className="text-sm text-slate-400 dark:text-slate-500">
             &copy; 2022. All rights reserved.
             <br />
             <Link href="/imprint">Imprint</Link> | <Link href="/privacy">Privacy Policy</Link> |{" "}
-            <Link href="/terms">Terms</Link>
+            <Link href="/terms">Terms</Link> | <Link href="/oss-friends">OSS Friends</Link>
           </p>
         </div>
         <div className="flex justify-center space-x-6">
