@@ -30,9 +30,14 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
 
+  const isPreview = new URLSearchParams(window.location.search).get("preview") === "true";
+
   useEffect(() => {
     if (survey) {
       setCurrentQuestion(survey.questions[0]);
+
+      if (isPreview) return;
+
       // create display
       createDisplay(
         { surveyId: survey.id },
@@ -42,7 +47,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         setDisplayId(display.id);
       });
     }
-  }, [survey]);
+  }, [survey, isPreview]);
 
   useEffect(() => {
     if (currentQuestion && survey) {
@@ -54,8 +59,6 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
       return elementIdx / survey.questions.length;
     }
   }, [currentQuestion, survey]);
-
-  const isPreview = new URLSearchParams(window.location.search).get("preview") === "true";
 
   const restartSurvey = () => {
     setCurrentQuestion(survey.questions[0]);
