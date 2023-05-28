@@ -1,4 +1,5 @@
 import type { JsConfig, Survey } from "../../../types/js";
+import type { Logic } from "../../../types/questions";
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
@@ -48,10 +49,83 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
     }
   }, [activeQuestionId, survey]);
 
+  function evaluateCondition(logic: Logic, answerValue: any): boolean {
+    switch (logic.condition) {
+      case "equals":
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 1 && answerValue.includes(logic.value)) ||
+          answerValue.toString() === logic.value
+        );
+      case "notEquals":
+        return answerValue !== logic.value;
+      case "lessThan":
+        return answerValue < logic.value;
+      case "lessEqual":
+        return answerValue <= logic.value;
+      case "greaterThan":
+        return answerValue > logic.value;
+      case "greaterEqual":
+        return answerValue >= logic.value;
+      case "includesAll":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.every((v) => answerValue.includes(v))
+        );
+      case "includesOne":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.some((v) => answerValue.includes(v))
+        );
+      case "submitted":
+        if (typeof answerValue === "string") {
+          return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
+        } else if (Array.isArray(answerValue)) {
+          return answerValue.length > 0;
+        } else if (typeof answerValue === "number") {
+          return answerValue !== null;
+        }
+        return false;
+      case "skipped":
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 0) ||
+          answerValue === "" ||
+          answerValue === null ||
+          answerValue === "dismissed"
+        );
+      default:
+        return false;
+    }
+  }
+
+  function getNextQuestion(answer: any): string {
+    const questions = survey.questions;
+
+    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
+
+    const answerValue = answer[activeQuestionId];
+    const currentQuestion = questions[currentQuestionIndex];
+
+    if (currentQuestion.logic && currentQuestion.logic.length > 0) {
+      for (let logic of currentQuestion.logic) {
+        if (!logic.destination) continue;
+
+        if (evaluateCondition(logic, answerValue)) {
+          return logic.destination;
+        }
+      }
+    }
+    return questions[currentQuestionIndex + 1]?.id || "";
+  }
+
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
     const questionIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
-    const finished = questionIdx === survey.questions.length - 1;
+    const nextQuestionId = getNextQuestion(data);
+
+    const finished = nextQuestionId === "end" || questionIdx === survey.questions.length - 1;
     // build response
     const responseRequest = {
       surveyId: survey.id,
@@ -75,8 +149,10 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
       }
     }
     setLoadingElement(false);
-    if (!finished) {
-      setActiveQuestionId(survey.questions[questionIdx + 1].id);
+
+    if (!finished && nextQuestionId !== "end") {
+      // setActiveQuestionId(survey.questions[questionIdx + 1].id);
+      setActiveQuestionId(nextQuestionId);
     } else {
       setProgress(100);
 

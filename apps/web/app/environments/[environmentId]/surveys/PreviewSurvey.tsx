@@ -3,7 +3,7 @@ import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import { useEnvironment } from "@/lib/environments/environments";
-import type { Question } from "@formbricks/types/questions";
+import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useState } from "react";
 
@@ -63,31 +63,94 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, surveyType, questions, setActiveQuestionId, thankYouCard]);
 
-  const gotoNextQuestion = () => {
-    const currentQuestionId = activeQuestionId || lastActiveQuestionId;
-    const currentIndex = questions.findIndex((q) => q.id === currentQuestionId);
+  function evaluateCondition(logic: Logic, answerValue: any): boolean {
+    switch (logic.condition) {
+      case "equals":
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 1 && answerValue.includes(logic.value)) ||
+          answerValue.toString() === logic.value
+        );
+      case "notEquals":
+        return answerValue !== logic.value;
+      case "lessThan":
+        return answerValue < logic.value;
+      case "lessEqual":
+        return answerValue <= logic.value;
+      case "greaterThan":
+        return answerValue > logic.value;
+      case "greaterEqual":
+        return answerValue >= logic.value;
+      case "includesAll":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.every((v) => answerValue.includes(v))
+        );
+      case "includesOne":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.some((v) => answerValue.includes(v))
+        );
+      case "submitted":
+        if (typeof answerValue === "string") {
+          return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
+        } else if (Array.isArray(answerValue)) {
+          return answerValue.length > 0;
+        } else if (typeof answerValue === "number") {
+          return answerValue !== null;
+        }
+        return false;
+      case "skipped":
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 0) ||
+          answerValue === "" ||
+          answerValue === null ||
+          answerValue === "dismissed"
+        );
+      default:
+        return false;
+    }
+  }
 
-    if (currentIndex < questions.length - 1) {
-      setActiveQuestionId(questions[currentIndex + 1].id);
+  function getNextQuestion(answer: any): string {
+    if (!activeQuestionId) return "";
+
+    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
+
+    const answerValue = answer[activeQuestionId];
+    const currentQuestion = questions[currentQuestionIndex];
+
+    if (currentQuestion.logic && currentQuestion.logic.length > 0) {
+      for (let logic of currentQuestion.logic) {
+        if (!logic.destination) continue;
+
+        if (evaluateCondition(logic, answerValue)) {
+          return logic.destination;
+        }
+      }
+    }
+    return questions[currentQuestionIndex + 1]?.id || "";
+  }
+
+  const gotoNextQuestion = (data) => {
+    const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    const nextQuestionId = getNextQuestion(data);
+
+    if (currentIndex < questions.length - 1 && nextQuestionId !== "end") {
+      setActiveQuestionId(nextQuestionId);
+      // setActiveQuestionId(questions[currentIndex + 1].id);
     } else {
       if (thankYouCard?.enabled) {
         setActiveQuestionId("thank-you-card");
+        setProgress(1);
       } else {
         setIsModalOpen(false);
         setTimeout(() => {
           setActiveQuestionId(questions[0].id);
           setIsModalOpen(true);
         }, 500);
-        if (thankYouCard?.enabled) {
-          setActiveQuestionId("thank-you-card");
-          setProgress(1);
-        } else {
-          setIsModalOpen(false);
-          setTimeout(() => {
-            setActiveQuestionId(questions[0].id);
-            setIsModalOpen(true);
-          }, 500);
-        }
       }
     }
   };
@@ -111,6 +174,10 @@ export default function PreviewSurvey({
 
   if (!previewType) {
     previewType = widgetSetupCompleted ? "modal" : "fullwidth";
+
+    if (!activeQuestionId) {
+      return <></>;
+    }
   }
 
   return (
@@ -122,7 +189,9 @@ export default function PreviewSurvey({
           <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
         </div>
         <p>
-          {previewType === "modal" && <p className="ml-4 font-mono text-sm text-slate-400">Your web app</p>}
+          {previewType === "modal" && (
+            <span className="ml-4 font-mono text-sm text-slate-400">Your web app</span>
+          )}
         </p>
       </div>
 
