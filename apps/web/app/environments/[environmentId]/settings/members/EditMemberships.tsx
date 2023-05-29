@@ -16,12 +16,18 @@ import { PaperAirplaneIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import AddMemberModal from "./AddMemberModal";
+import CreateTeamModal from "@/components/team/CreateTeamModal";
 
-export function EditMemberships({ environmentId }) {
+type EditMembershipsProps = {
+  environmentId: string;
+};
+
+export function EditMemberships({ environmentId }: EditMembershipsProps) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useMembers(environmentId);
 
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
+  const [isCreateTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
   const [activeMember, setActiveMember] = useState({} as any);
 
@@ -30,6 +36,16 @@ export function EditMemberships({ environmentId }) {
     setActiveMember(member);
     setDeleteMemberModalOpen(true);
   };
+
+  if (isLoadingTeam) {
+    return <LoadingSpinner />;
+  }
+
+  if (isErrorTeam || !team) {
+    console.error(isErrorTeam);
+    return <div>Error</div>;
+  }
+
   const handleDeleteMember = async () => {
     if (activeMember.accepted) {
       await removeMember(team.teamId, activeMember.userId);
@@ -50,20 +66,19 @@ export function EditMemberships({ environmentId }) {
     mutateTeam();
   };
 
-  if (isLoadingTeam) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorTeam) {
-    console.error(isErrorTeam);
-    return <div>Error</div>;
-  }
-
   return (
     <>
-      <div className="mb-5 text-right">
+      <div className="mb-6 text-right">
         <Button
-          variant="darkCTA"
+          variant="secondary"
+          className="mr-2"
+          onClick={() => {
+            setCreateTeamModalOpen(true);
+          }}>
+          Create New Team
+        </Button>
+        <Button
+          variant="primary"
           onClick={() => {
             setAddMemberModalOpen(true);
           }}>
@@ -121,7 +136,7 @@ export function EditMemberships({ environmentId }) {
           ))}
         </div>
       </div>
-
+      <CreateTeamModal open={isCreateTeamModalOpen} setOpen={(val) => setCreateTeamModalOpen(val)} />
       <AddMemberModal
         open={isAddMemberModalOpen}
         setOpen={setAddMemberModalOpen}

@@ -17,6 +17,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import CreateTeamModal from "@/components/team/CreateTeamModal";
+import {
+  changeEnvironment,
+  changeEnvironmentByProduct,
+  changeEnvironmentByTeam,
+} from "@/lib/environments/changeEnvironments";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useMemberships } from "@/lib/memberships";
 import { useTeam } from "@/lib/teams/teams";
@@ -73,6 +79,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
   const [loading, setLoading] = useState(false);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -183,35 +190,23 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     },
   ];
 
-  const changeEnvironment = (environmentType: string) => {
-    const newEnvironmentId = environment.product.environments.find((e) => e.type === environmentType)?.id;
-    router.push(`/environments/${newEnvironmentId}/`);
+  const handleEnvironmentChange = (environmentType: "production" | "development") => {
+    changeEnvironment(environmentType, environment, router);
   };
 
-  const changeEnvironmentByProduct = (productId: string) => {
-    const product = environment.availableProducts.find((p) => p.id === productId);
-    const newEnvironmentId = product?.environments[0]?.id;
-    router.push(`/environments/${newEnvironmentId}/`);
+  const handleEnvironmentChangeByProduct = (productId: string) => {
+    changeEnvironmentByProduct(productId, environment, router);
   };
 
-  const changeEnvironmentByTeam = (teamId: string) => {
-    const newTeamMembership = memberships.find((m) => m.teamId === teamId);
-    const newTeamProduct = newTeamMembership?.team?.products?.[0];
-
-    if (newTeamProduct) {
-      const newEnvironmentId = newTeamProduct.environments.find((e) => e.type === "production")?.id;
-
-      if (newEnvironmentId) {
-        router.push(`/environments/${newEnvironmentId}/`);
-      }
-    }
+  const handleEnvironmentChangeByTeam = (teamId: string) => {
+    changeEnvironmentByTeam(teamId, memberships, router);
   };
 
   if (isLoadingEnvironment || loading || isLoadingMemberships) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorEnvironment || isErrorMemberships) {
+  if (isErrorEnvironment || isErrorMemberships || !environment || !memberships) {
     return <ErrorComponent />;
   }
 
@@ -272,7 +267,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
                       {truncate(environment?.product?.name, 30)}
                     </p>
-                    <p className="text-sm text-slate-500">{capitalizeFirstLetter(environment?.type)}</p>
+                    <p className="text-sm text-slate-500">{capitalizeFirstLetter(team?.name)}</p>
                   </div>
                   <ChevronDownIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
                 </div>
@@ -325,7 +320,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <DropdownMenuSubContent className="max-w-[45rem]">
                       <DropdownMenuRadioGroup
                         value={environment?.product.id}
-                        onValueChange={changeEnvironmentByProduct}>
+                        onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
                         {environment?.availableProducts?.map((product) => (
                           <DropdownMenuRadioItem
                             value={product.id}
@@ -345,6 +340,38 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
 
+                {/* Team Switch */}
+
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <div>
+                      <p>{currentTeamName}</p>
+                      <p className="block text-xs text-slate-500">Team</p>
+                    </div>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuRadioGroup
+                        value={currentTeamId}
+                        onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
+                        {memberships?.map((membership) => (
+                          <DropdownMenuRadioItem
+                            value={membership.teamId}
+                            className="cursor-pointer"
+                            key={membership.teamId}>
+                            {membership?.team?.name}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setShowCreateTeamModal(true)}>
+                        <PlusIcon className="mr-2 h-4 w-4" />
+                        <span>Create team</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+
                 {/* Environment Switch */}
 
                 <DropdownMenuSub>
@@ -358,7 +385,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     <DropdownMenuSubContent>
                       <DropdownMenuRadioGroup
                         value={environment?.type}
-                        onValueChange={(v) => changeEnvironment(v)}>
+                        onValueChange={(v) => handleEnvironmentChange(v as "production" | "development")}>
                         <DropdownMenuRadioItem value="production" className="cursor-pointer">
                           Production
                         </DropdownMenuRadioItem>
@@ -369,34 +396,6 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
-
-                {/* Team Switch */}
-                {memberships.length > 1 && (
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <div>
-                        <p>{currentTeamName}</p>
-                        <p className="block text-xs text-slate-500">Team</p>
-                      </div>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        <DropdownMenuRadioGroup
-                          value={currentTeamId}
-                          onValueChange={(teamId) => changeEnvironmentByTeam(teamId)}>
-                          {memberships?.map((membership) => (
-                            <DropdownMenuRadioItem
-                              value={membership.teamId}
-                              className="cursor-pointer"
-                              key={membership.teamId}>
-                              {membership?.team?.name}
-                            </DropdownMenuRadioItem>
-                          ))}
-                        </DropdownMenuRadioGroup>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                )}
 
                 {dropdownnavigation.map((item) => (
                   <DropdownMenuGroup key={item.title}>
@@ -439,6 +438,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
         setOpen={(val) => setShowAddProductModal(val)}
         environmentId={environmentId}
       />
+      <CreateTeamModal open={showCreateTeamModal} setOpen={(val) => setShowCreateTeamModal(val)} />
     </nav>
   );
 }
