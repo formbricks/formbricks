@@ -3,6 +3,12 @@ import HeroTitle from "@/components/shared/HeroTitle";
 import { Button } from "@formbricks/ui";
 
 const OSSFriends = [
+   {
+    name: "BoxyHQ",
+    description:
+      "BoxyHQ’s suite of APIs for security and privacy helps engineering teams build and ship compliant cloud applications faster.",
+    href: "https://boxyhq.com",
+  },
   {
     name: "Cal.com",
     description:
