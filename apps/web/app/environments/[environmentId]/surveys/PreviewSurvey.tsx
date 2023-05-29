@@ -1,3 +1,4 @@
+import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Modal from "@/components/preview/Modal";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
@@ -6,8 +7,7 @@ import { useEnvironment } from "@/lib/environments/environments";
 import { useProduct } from "@/lib/products/products";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { useEffect, useState } from "react";
-import FormbricksSignature from "@/components/preview/FormbricksSignature";
+import { useEffect, useRef, useState } from "react";
 
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
@@ -17,6 +17,7 @@ interface PreviewSurveyProps {
   environmentId: string;
   surveyType: Survey["type"];
   thankYouCard: Survey["thankYouCard"];
+  autoClose: Survey["autoClose"];
   previewType?: "modal" | "fullwidth" | "email";
 }
 
@@ -28,6 +29,7 @@ export default function PreviewSurvey({
   environmentId,
   surveyType,
   thankYouCard,
+  autoClose,
   previewType,
 }: PreviewSurveyProps) {
   const { environment } = useEnvironment(environmentId);
@@ -44,6 +46,53 @@ export default function PreviewSurvey({
       setShowFormbricksSignature(product.formbricksSignature);
     }
   }, [product]);
+
+  const [countdownProgress, setCountdownProgress] = useState(1);
+  const startRef = useRef(performance.now());
+  const frameRef = useRef<number | null>(null);
+  const [countdownStop, setCountdownStop] = useState(false);
+
+  const handleStopCountdown = () => {
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+      setCountdownStop(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!autoClose) return;
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+    }
+
+    const frame = () => {
+      if (!autoClose || !startRef.current) return;
+
+      const timeout = autoClose * 1000;
+      const elapsed = performance.now() - startRef.current;
+      const remaining = Math.max(0, timeout - elapsed);
+
+      setCountdownProgress(remaining / timeout);
+
+      if (remaining > 0) {
+        frameRef.current = requestAnimationFrame(frame);
+      } else {
+        handleStopCountdown();
+        // close modal
+      }
+    };
+
+    setCountdownStop(false);
+    setCountdownProgress(1);
+    startRef.current = performance.now();
+    frameRef.current = requestAnimationFrame(frame);
+
+    return () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, [autoClose]);
 
   useEffect(() => {
     if (activeQuestionId) {
@@ -199,7 +248,13 @@ export default function PreviewSurvey({
 
       {previewType === "modal" ? (
         <Modal isOpen={isModalOpen}>
-          <div className="px-4 py-6 sm:p-6">
+          {!countdownStop && autoClose !== null && autoClose > 0 && (
+            <Progress progress={countdownProgress} brandColor={brandColor} />
+          )}
+          <div
+            onClick={() => handleStopCountdown()}
+            onMouseOver={() => handleStopCountdown()}
+            className="px-4 py-6 sm:p-6">
             {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
               <ThankYouCard
                 brandColor={brandColor}

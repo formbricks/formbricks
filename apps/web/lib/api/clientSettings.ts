@@ -107,6 +107,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
         },
       },
       thankYouCard: true,
+      autoClose: true,
     },
   });
 
@@ -180,6 +181,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
         questions: JSON.parse(JSON.stringify(survey.questions)),
         triggers: survey.triggers,
         thankYouCard: JSON.parse(JSON.stringify(survey.thankYouCard)),
+        autoClose: survey.autoClose,
       };
     });
 

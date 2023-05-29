@@ -1,7 +1,7 @@
 import type { JsConfig, Survey } from "../../../types/js";
 import type { Logic } from "../../../types/questions";
 import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
 import { IErrorHandler } from "../lib/errors";
 import { Logger } from "../lib/logger";
@@ -25,6 +25,48 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
   const [loadingElement, setLoadingElement] = useState(false);
+
+  const [countdownProgress, setCountdownProgress] = useState(100);
+  const [countdownStop, setCountdownStop] = useState(false);
+  const startRef = useRef(performance.now());
+  const frameRef = useRef<number | null>(null);
+
+  const handleStopCountdown = () => {
+    if (frameRef.current !== null) {
+      setCountdownStop(true);
+      cancelAnimationFrame(frameRef.current);
+    }
+  };
+
+  useEffect(() => {
+    if (!survey.autoClose) return;
+    const frame = () => {
+      if (!survey.autoClose || !startRef.current) return;
+
+      const timeout = survey.autoClose * 1000;
+      const elapsed = performance.now() - startRef.current;
+      const remaining = Math.max(0, timeout - elapsed);
+
+      setCountdownProgress(remaining / timeout);
+
+      if (remaining > 0) {
+        frameRef.current = requestAnimationFrame(frame);
+      } else {
+        handleStopCountdown();
+        close();
+      }
+    };
+
+    setCountdownStop(false);
+    setCountdownProgress(1);
+    frameRef.current = requestAnimationFrame(frame);
+
+    return () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, [survey.autoClose, close]);
 
   useEffect(() => {
     initDisplay();
@@ -168,11 +210,16 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
 
   return (
     <div>
+      {!countdownStop && survey.autoClose && (
+        <Progress progress={countdownProgress} brandColor={config.settings?.brandColor} />
+      )}
       <div
         className={cn(
           loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
           "fb-text-slate-800 fb-font-sans fb-px-4 fb-py-6 sm:fb-p-6"
-        )}>
+        )}
+        onClick={() => handleStopCountdown()}
+        onMouseOver={() => handleStopCountdown()}>
         {progress === 100 && survey.thankYouCard.enabled ? (
           <ThankYouCard
             headline={survey.thankYouCard.headline}

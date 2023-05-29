@@ -7,12 +7,15 @@ import type { Survey } from "@formbricks/types/surveys";
 import {
   Badge,
   Button,
+  Switch,
+  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectSeparator,
   SelectTrigger,
   SelectValue,
+  Input,
 } from "@formbricks/ui";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -31,6 +34,8 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     useEventClasses(environmentId);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
 
+  const autoClose = localSurvey.autoClose !== null;
+
   const addTriggerEvent = () => {
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.triggers = [...localSurvey.triggers, ""];
@@ -46,6 +51,25 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
   const removeTriggerEvent = (idx: number) => {
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.triggers = [...localSurvey.triggers.slice(0, idx), ...localSurvey.triggers.slice(idx + 1)];
+    setLocalSurvey(updatedSurvey);
+  };
+
+  const handleCheckMark = () => {
+    if (autoClose) {
+      const updatedSurvey: Survey = { ...localSurvey, autoClose: null };
+      setLocalSurvey(updatedSurvey);
+    } else {
+      const updatedSurvey: Survey = { ...localSurvey, autoClose: 10 };
+      setLocalSurvey(updatedSurvey);
+    }
+  };
+
+  const handleInputSeconds = (e: any) => {
+    let value = parseInt(e.target.value);
+
+    if (value < 1) value = 1;
+
+    const updatedSurvey: Survey = { ...localSurvey, autoClose: value };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -152,7 +176,9 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                     </button>
                     <SelectSeparator />
                     {eventClasses.map((eventClass) => (
-                      <SelectItem value={eventClass.id}>{eventClass.name}</SelectItem>
+                      <SelectItem value={eventClass.id} key={eventClass.id}>
+                        {eventClass.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -173,6 +199,36 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
               Add condition
             </Button>
           </div>
+          <div className="ml-2 flex items-center space-x-1 p-4">
+            <Switch id="autoClose" checked={autoClose} onCheckedChange={handleCheckMark} />
+            <Label htmlFor="autoClose" className="cursor-pointer">
+              <div className="ml-2">
+                <h3 className="text-sm font-semibold text-slate-700">Auto close on inactivity</h3>
+              </div>
+            </Label>
+          </div>
+          {autoClose && (
+            <div className="ml-2 flex items-center space-x-1 px-4 pb-4">
+              <label
+                htmlFor="autoCloseSeconds"
+                className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                <div className="">
+                  <p className="text-sm font-semibold text-slate-700">
+                    Automatically close survey after
+                    <Input
+                      type="number"
+                      min="1"
+                      id="autoCloseSeconds"
+                      value={localSurvey.autoClose?.toString()}
+                      onChange={(e) => handleInputSeconds(e)}
+                      className="ml-2 mr-2 inline w-16 text-center text-sm"
+                    />
+                    seconds with no initial interaction.
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
       <AddNoCodeEventModal
