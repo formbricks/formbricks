@@ -30,11 +30,11 @@ Fixes # (issue)
 
 <!-- We're starting to get more and more contributions. Please help us making this efficient for all of us and go through this checklist. Please tick off what you did  -->
 
-- [ ] I have read the [contributing guide](https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md)
-- [ ] I have performed a self-review of my own code and corrected any misspellings
-- [ ] I have added comments to my code, particularly in hard-to-understand bits
-- [ ] I ran `pnpm build` and `pnpm lint` and checked for build and linting errors
-- [ ] My contribution does not cause any warnings
-- [ ] I have removed all `console.logs`
-- [ ] I have merged the latest changes from main onto my branch with `git pull origin main`
-- [ ] I have updated the Formbricks Docs if necessary
+- [ ] Read the [contributing guide](https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md)
+- [ ] Self-reviewed my own code
+- [ ] Commented on my code in hard-to-understand bits
+- [ ] Ran `pnpm build`
+- [ ] Checked for warnings, there are none
+- [ ] Removed all `console.logs`
+- [ ] Merged the latest changes from main onto my branch with `git pull origin main`
+- [ ] Updated the Formbricks Docs if changes were necessary

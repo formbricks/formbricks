@@ -118,7 +118,9 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
           )}>
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
-              {localSurvey.triggers?.length === 0 || !localSurvey.triggers || !localSurvey.triggers[0] ? (
+              {!localSurvey.triggers ||
+              localSurvey.triggers.length === 0 ||
+              localSurvey.triggers[0] === "" ? (
                 <div
                   className={cn(
                     localSurvey.type !== "link"

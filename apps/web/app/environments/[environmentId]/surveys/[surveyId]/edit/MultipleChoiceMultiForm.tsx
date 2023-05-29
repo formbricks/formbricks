@@ -1,9 +1,11 @@
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import { Survey } from "@formbricks/types/surveys";
 import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 
 interface OpenQuestionFormProps {
+  localSurvey: Survey;
   question: MultipleChoiceMultiQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -15,7 +17,7 @@ export default function MultipleChoiceMultiForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-}: OpenQuestionFormProps) {
+}: OpenQuestionFormProps): JSX.Element {
   const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
     const newChoices = !question.choices
       ? []
@@ -36,7 +38,20 @@ export default function MultipleChoiceMultiForm({
 
   const deleteChoice = (choiceIdx: number) => {
     const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
-    updateQuestion(questionIdx, { choices: newChoices });
+
+    const choiceValue = question.choices[choiceIdx].label;
+    let newLogic: any[] = [];
+    question.logic?.forEach((logic) => {
+      let newL: string | string[] | undefined = logic.value;
+      if (Array.isArray(logic.value)) {
+        newL = logic.value.filter((value) => value !== choiceValue);
+      } else {
+        newL = logic.value !== choiceValue ? logic.value : undefined;
+      }
+      newLogic.push({ ...logic, value: newL });
+    });
+
+    updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
   };
 
   return (

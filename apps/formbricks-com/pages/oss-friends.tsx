@@ -72,7 +72,7 @@ const OSSFriends = [
   {
     name: "OpenBB",
     description:
-      "The most innovative investment research platform. Open to anyone's input. Open to everyone's work.",
+      "Democratizing investment research through an open source financial ecosystem. The OpenBB Terminal allows everyone to perform investment research, from everywhere.",
     href: "https://openbb.co",
   },
   {

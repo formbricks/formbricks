@@ -52,6 +52,7 @@ export interface Settings {
   surveys?: Survey[];
   noCodeEvents?: any[];
   brandColor?: string;
+  formbricksSignature?: boolean;
 }
 
 export interface JsConfig {

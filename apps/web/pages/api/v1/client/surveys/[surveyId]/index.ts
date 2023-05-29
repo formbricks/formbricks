@@ -46,17 +46,27 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
       select: {
         brandColor: true,
+        formbricksSignature: true,
       },
     });
 
     if (survey.status !== "inProgress") {
-      return res
-        .status(403)
-        .json({ message: "Survey not running", reason: survey.status, brandColor: product?.brandColor });
+      return res.status(403).json({
+        message: "Survey not running",
+        reason: survey.status,
+        brandColor: product?.brandColor,
+        formbricksSignature: product?.formbricksSignature,
+      });
     }
 
     // if survey exists, return survey
-    return res.status(200).json({ ...survey, brandColor: product?.brandColor });
+    return res
+      .status(200)
+      .json({
+        ...survey,
+        brandColor: product?.brandColor,
+        formbricksSignature: product?.formbricksSignature,
+      });
   }
 
   // Unknown HTTP Method

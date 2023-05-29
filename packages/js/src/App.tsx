@@ -25,13 +25,7 @@ export default function App({ config, survey, closeSurvey, errorHandler }: AppPr
   return (
     <div id="fbjs">
       <Modal isOpen={isOpen} close={close}>
-        <SurveyView
-          config={config}
-          survey={survey}
-          close={close}
-          brandColor={config.settings?.brandColor}
-          errorHandler={errorHandler}
-        />
+        <SurveyView config={config} survey={survey} close={close} errorHandler={errorHandler} />
       </Modal>
     </div>
   );

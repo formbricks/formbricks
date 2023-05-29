@@ -11,14 +11,13 @@ export default function ProfileSettingsPage({ params }: { params: { environmentI
       </SettingsCard>
       <SettingsCard
         soon
-        title="Survey Placement"
-        description="Change where surveys will be shown in your product.">
+        title="In-app Survey Placement"
+        description="Change where surveys will be shown in your web app.">
         <EditPlacement environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
-        soon
         title="Formbricks Signature"
-        description="As of now, there is no Formbricks branding on your surveys.">
+        description="We love your support but understand if you toggle it off.">
         <EditFormbricksSignature environmentId={params.environmentId} />
       </SettingsCard>
     </div>
