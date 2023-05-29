@@ -10,16 +10,16 @@ import { cn } from "../lib/utils";
 import Progress from "./Progress";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
+import FormbricksSignature from "./FormbricksSignature";
 
 interface SurveyViewProps {
   config: JsConfig;
   survey: Survey;
   close: () => void;
-  brandColor: string;
   errorHandler: IErrorHandler;
 }
 
-export default function SurveyView({ config, survey, close, brandColor, errorHandler }: SurveyViewProps) {
+export default function SurveyView({ config, survey, close, errorHandler }: SurveyViewProps) {
   const [activeQuestionId, setActiveQuestionId] = useState(survey.questions[0].id);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [responseId, setResponseId] = useState<string | null>(null);
@@ -185,7 +185,7 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
               activeQuestionId === question.id && (
                 <QuestionConditional
                   key={question.id}
-                  brandColor={brandColor}
+                  brandColor={config.settings?.brandColor}
                   lastQuestion={idx === survey.questions.length - 1}
                   onSubmit={submitResponse}
                   question={question}
@@ -194,7 +194,8 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
           )
         )}
       </div>
-      <Progress progress={progress} brandColor={brandColor} />
+      {config.settings?.formbricksSignature && <FormbricksSignature />}
+      <Progress progress={progress} brandColor={config.settings?.brandColor} />
     </div>
   );
 }

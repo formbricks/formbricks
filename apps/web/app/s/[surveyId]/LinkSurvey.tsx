@@ -1,5 +1,6 @@
 "use client";
 
+import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
@@ -16,6 +17,7 @@ import { useEffect, useState } from "react";
 
 type EnhancedSurvey = Survey & {
   brandColor: string;
+  formbricksSignature: boolean;
 };
 
 interface LinkSurveyProps {
@@ -235,8 +237,9 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         </ContentWrapper>
       </div>
       <div className="top-0 z-10 w-full border-b bg-white">
-        <div className="mx-auto max-w-md p-6">
+        <div className="mx-auto max-w-md space-y-6 p-6">
           <Progress progress={progress} brandColor={survey.brandColor} />
+          {survey.formbricksSignature && <FormbricksSignature />}
         </div>
       </div>
     </>

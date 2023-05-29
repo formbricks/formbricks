@@ -202,12 +202,14 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       product: {
         select: {
           brandColor: true,
+          formbricksSignature: true,
         },
       },
     },
   });
 
+  const formbricksSignature = environmentProdut?.product.formbricksSignature;
   const brandColor = environmentProdut?.product.brandColor;
 
-  return { surveys, noCodeEvents, brandColor };
+  return { surveys, noCodeEvents, brandColor, formbricksSignature };
 };

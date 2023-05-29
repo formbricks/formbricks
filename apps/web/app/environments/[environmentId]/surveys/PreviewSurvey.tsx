@@ -3,9 +3,11 @@ import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import { useEnvironment } from "@/lib/environments/environments";
+import { useProduct } from "@/lib/products/products";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useState } from "react";
+import FormbricksSignature from "@/components/preview/FormbricksSignature";
 
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
@@ -28,11 +30,20 @@ export default function PreviewSurvey({
   thankYouCard,
   previewType,
 }: PreviewSurveyProps) {
+  const { environment } = useEnvironment(environmentId);
+  const { product } = useProduct(environmentId);
+
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
-  const { environment } = useEnvironment(environmentId);
   const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
+  const [showFormbricksSignature, setShowFormbricksSignature] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      setShowFormbricksSignature(product.formbricksSignature);
+    }
+  }, [product]);
 
   useEffect(() => {
     if (activeQuestionId) {
@@ -155,15 +166,6 @@ export default function PreviewSurvey({
     }
   };
 
-  /*  const resetPreview = () => {
-    setIsModalOpen(false);
-    setTimeout(() => {
-      setActiveQuestionId(questions[0].id);
-      setIsModalOpen(true);
-    }, 500);
-  };
- */
-
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
       setWidgetSetupCompleted(true);
@@ -217,6 +219,7 @@ export default function PreviewSurvey({
                 ) : null
               )
             )}
+            {showFormbricksSignature && <FormbricksSignature />}
           </div>
           <Progress progress={progress} brandColor={brandColor} />
         </Modal>
@@ -246,8 +249,9 @@ export default function PreviewSurvey({
             </div>
           </div>
           <div className="z-10 w-full rounded-b-lg bg-white">
-            <div className="mx-auto max-w-md p-6 pt-4">
+            <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
               <Progress progress={progress} brandColor={brandColor} />
+              {showFormbricksSignature && <FormbricksSignature />}
             </div>
           </div>
         </div>

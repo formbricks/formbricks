@@ -18,8 +18,8 @@ export default function SettingsCard({
     <div className="my-4 w-full bg-white shadow sm:rounded-lg">
       <div className="rounded-t-lg border-b border-slate-200 bg-slate-100 px-6 py-5">
         <div className="flex">
-          <h3 className="text-lg font-medium leading-6 text-slate-900">{title}</h3>
-          {soon && <Badge text="coming soon" size="normal" type="warning" />}
+          <h3 className="mr-2 text-lg font-medium leading-6 text-slate-900">{title}</h3>
+          {soon && <Badge text="coming soon" size="normal" type="success" />}
         </div>
         <p className="mt-1 text-sm text-slate-500">{description}</p>
       </div>

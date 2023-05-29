@@ -238,15 +238,16 @@ model Environment {
 }
 
 model Product {
-  id            String        @id @default(cuid())
-  createdAt     DateTime      @default(now()) @map(name: "created_at")
-  updatedAt     DateTime      @updatedAt @map(name: "updated_at")
-  name          String
-  team          Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId        String
-  environments  Environment[]
-  brandColor    String        @default("#64748b")
-  recontactDays Int           @default(7)
+  id                  String        @id @default(cuid())
+  createdAt           DateTime      @default(now()) @map(name: "created_at")
+  updatedAt           DateTime      @updatedAt @map(name: "updated_at")
+  name                String
+  team                Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId              String
+  environments        Environment[]
+  brandColor          String        @default("#64748b")
+  recontactDays       Int           @default(7)
+  formbricksSignature Boolean       @default(true)
 }
 
 enum Plan {

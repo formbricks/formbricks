@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@formbricks/lib/cn";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useProductMutation } from "@/lib/products/mutateProducts";
@@ -18,7 +19,6 @@ import toast from "react-hot-toast";
 
 export function EditBrandColor({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-
   const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
 
   const [color, setColor] = useState("");
@@ -54,7 +54,6 @@ export function EditBrandColor({ environmentId }) {
         }}>
         Save
       </Button>
-      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
     </div>
   );
 }
@@ -89,7 +88,11 @@ export function EditPlacement({ environmentId }) {
                 checked={placement.default}
                 disabled={placement.disabled}
               />
-              <Label htmlFor={placement.value}>{placement.name}</Label>
+              <Label
+                htmlFor={placement.value}
+                className={cn(placement.disabled ? "cursor-not-allowed text-slate-500" : "text-slate-900")}>
+                {placement.name}
+              </Label>
             </div>
           ))}
         </RadioGroup>
@@ -100,31 +103,58 @@ export function EditPlacement({ environmentId }) {
       <Button type="submit" variant="darkCTA" className="mt-4" disabled>
         Save
       </Button>
-      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
     </div>
   );
 }
 
 export function EditFormbricksSignature({ environmentId }) {
   const { isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+  const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
 
-  if (isLoadingEnvironment) {
+  const [formbricksSignature, setFormbricksSignature] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      setFormbricksSignature(product.formbricksSignature);
+    }
+  }, [product]);
+
+  const toggleSignature = () => {
+    const newSignatureState = !formbricksSignature;
+    setFormbricksSignature(newSignatureState);
+    triggerProductMutate({ formbricksSignature: newSignatureState })
+      .then(() => {
+        toast.success(newSignatureState ? "Formbricks signature shown." : "Formbricks signature hidden.");
+      })
+      .catch((error) => {
+        toast.error(`Error: ${error.message}`);
+      });
+  };
+
+  if (isLoadingEnvironment || isLoadingProduct) {
     return <LoadingSpinner />;
   }
-  if (isErrorEnvironment) {
+
+  if (isErrorEnvironment || isErrorProduct) {
     return <ErrorComponent />;
   }
 
-  return (
-    <div className="w-full items-center">
-      <div className="flex items-center space-x-2">
-        <Switch disabled id="signature" />
-        <Label htmlFor="signature">Show Formbricks Signature</Label>
+  if (formbricksSignature !== null) {
+    return (
+      <div className="w-full items-center">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="signature"
+            checked={formbricksSignature}
+            onCheckedChange={toggleSignature}
+            disabled={isMutatingProduct}
+          />
+          <Label htmlFor="signature">Show &apos;Powered by Formbricks&apos; Signature</Label>
+        </div>
       </div>
-      <Button type="submit" variant="darkCTA" className="mt-4" disabled>
-        Save
-      </Button>
-      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
