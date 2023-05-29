@@ -211,7 +211,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   return (
     <div>
       {!countdownStop && survey.autoClose && (
-        <Progress progress={countdownProgress} brandColor={brandColor} />
+        <Progress progress={countdownProgress} brandColor={config.settings?.brandColor} />
       )}
       <div
         className={cn(

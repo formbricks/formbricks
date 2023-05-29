@@ -59,7 +59,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
       const updatedSurvey: Survey = { ...localSurvey, autoClose: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey: Survey = { ...localSurvey, autoClose: 6 };
+      const updatedSurvey: Survey = { ...localSurvey, autoClose: 10 };
       setLocalSurvey(updatedSurvey);
     }
   };
