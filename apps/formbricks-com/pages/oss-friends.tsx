@@ -4,6 +4,12 @@ import { Button } from "@formbricks/ui";
 
 const OSSFriends = [
    {
+    name: "Webstudio",
+    description:
+      "Webstudio is an open source alternative to Webflow",
+    href: "https://webstudio.is",
+  },
+   {
     name: "BoxyHQ",
     description:
       "BoxyHQ’s suite of APIs for security and privacy helps engineering teams build and ship compliant cloud applications faster.",
