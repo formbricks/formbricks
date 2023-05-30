@@ -191,16 +191,15 @@ export default function PreviewSurvey({
         }
       }
     }
-    return questions[currentQuestionIndex + 1]?.id || "";
+    return questions[currentQuestionIndex + 1]?.id || "end";
   }
 
   const gotoNextQuestion = (data) => {
     const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
     const nextQuestionId = getNextQuestion(data);
 
-    if (currentIndex < questions.length - 1 && nextQuestionId !== "end") {
+    if (currentIndex < questions.length - 1 || nextQuestionId !== "end") {
       setActiveQuestionId(nextQuestionId);
-      // setActiveQuestionId(questions[currentIndex + 1].id);
     } else {
       if (thankYouCard?.enabled) {
         setActiveQuestionId("thank-you-card");
