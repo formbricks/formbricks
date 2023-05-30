@@ -5,10 +5,10 @@ import CalComLogo from "@/images/cal-logo-light.svg";
 
 export default function Testimonial() {
   return (
-    <div className="flex flex-col items-center justify-center">
-      <div className="mb-10 w-3/4 space-y-8 2xl:w-1/2">
+    <div className="flex flex-col items-center justify-center bg-gradient-to-tr from-slate-100 to-slate-300">
+      <div className="3xl:w-2/3 mb-10 space-y-8 px-12 xl:px-20 ">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900">
+          <h2 className="text-3xl font-bold text-slate-800">
             Versatile in-app surveys. Valuable user insights.
           </h2>
         </div>
@@ -19,19 +19,19 @@ export default function Testimonial() {
         <div className="space-y-2">
           <div className="flex space-x-2">
             <CheckCircleIcon className="text-brand-dark h-6 w-6" />
-            <p className="inline text-lg text-slate-900">All features included</p>
+            <p className="inline text-lg text-slate-800">All features included</p>
           </div>
           <div className="flex space-x-2">
             <CheckCircleIcon className="text-brand-dark h-6 w-6" />
-            <p className="inline text-lg text-slate-900">Free and open-source</p>
+            <p className="inline text-lg text-slate-800">Free and open-source</p>
           </div>
           <div className="flex space-x-2">
             <CheckCircleIcon className="text-brand-dark h-6 w-6" />
-            <p className="inline text-lg text-slate-900">No credit card required</p>
+            <p className="inline text-lg text-slate-800">No credit card required</p>
           </div>
         </div>
 
-        <div className="border-1 rounded-xl border-slate-200 bg-slate-50 p-6 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-gradient-to-tr from-slate-100 to-slate-200 p-8">
           <p className="italic text-slate-700">
             We measure the clarity of our docs and learn from churn all on one platform. Great product, very
             responsive team!
