@@ -140,11 +140,9 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
 
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
-    const questionIdx = survey.questions.findIndex((e) => e.id === currentQuestion?.id);
     const nextQuestionId = getNextQuestionId(data);
 
-    console.log(nextQuestionId);
-    const finished = nextQuestionId === "end" || questionIdx === survey.questions.length - 1;
+    const finished = nextQuestionId === "end";
     // build response
     const responseRequest = {
       surveyId: survey.id,

@@ -191,16 +191,14 @@ export default function PreviewSurvey({
         }
       }
     }
-    return questions[currentQuestionIndex + 1]?.id || "";
+    return questions[currentQuestionIndex + 1]?.id || "end";
   }
 
   const gotoNextQuestion = (data) => {
-    const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
     const nextQuestionId = getNextQuestion(data);
 
-    if (currentIndex < questions.length - 1 && nextQuestionId !== "end") {
+    if (nextQuestionId !== "end") {
       setActiveQuestionId(nextQuestionId);
-      // setActiveQuestionId(questions[currentIndex + 1].id);
     } else {
       if (thankYouCard?.enabled) {
         setActiveQuestionId("thank-you-card");
@@ -240,9 +238,9 @@ export default function PreviewSurvey({
           <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
         </div>
         <p>
-          {previewType === "modal" && (
-            <span className="ml-4 font-mono text-sm text-slate-400">Your web app</span>
-          )}
+          <span className="ml-4 font-mono text-sm text-slate-400">
+            {previewType === "modal" ? "Your web app" : "Preview"}
+          </span>
         </p>
       </div>
 
