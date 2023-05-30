@@ -238,9 +238,9 @@ export default function PreviewSurvey({
           <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
         </div>
         <p>
-          {previewType === "modal" && (
-            <span className="ml-4 font-mono text-sm text-slate-400">Your web app</span>
-          )}
+          <span className="ml-4 font-mono text-sm text-slate-400">
+            {previewType === "modal" ? "Your web app" : "Preview"}
+          </span>
         </p>
       </div>
 
