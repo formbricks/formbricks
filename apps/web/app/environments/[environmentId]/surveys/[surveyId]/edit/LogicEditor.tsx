@@ -128,10 +128,6 @@ export default function LogicEditor({
     },
   };
 
-  // useEffect(() => {
-  //   console.log(question);
-  // }, [question]);
-
   const addLogic = () => {
     const newLogic: Logic[] = !question.logic ? [] : question.logic;
     newLogic.push({
