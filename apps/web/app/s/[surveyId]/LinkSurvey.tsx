@@ -144,7 +144,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     const nextQuestionId = getNextQuestionId(data);
 
     console.log(nextQuestionId);
-    const finished = nextQuestionId === "end" || questionIdx === survey.questions.length - 1;
+    const finished = nextQuestionId === "end"; //|| questionIdx === survey.questions.length - 1;
     // build response
     const responseRequest = {
       surveyId: survey.id,
