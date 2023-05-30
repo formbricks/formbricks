@@ -164,10 +164,9 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
 
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
-    // const questionIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
     const nextQuestionId = getNextQuestion(data);
 
-    const finished = nextQuestionId === "end"; // || questionIdx === survey.questions.length - 1;
+    const finished = nextQuestionId === "end";
     // build response
     const responseRequest = {
       surveyId: survey.id,
@@ -193,7 +192,6 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     setLoadingElement(false);
 
     if (!finished && nextQuestionId !== "end") {
-      // setActiveQuestionId(survey.questions[questionIdx + 1].id);
       setActiveQuestionId(nextQuestionId);
     } else {
       setProgress(100);
