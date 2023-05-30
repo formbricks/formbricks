@@ -195,10 +195,9 @@ export default function PreviewSurvey({
   }
 
   const gotoNextQuestion = (data) => {
-    const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
     const nextQuestionId = getNextQuestion(data);
 
-    if (currentIndex < questions.length - 1 || nextQuestionId !== "end") {
+    if (nextQuestionId !== "end") {
       setActiveQuestionId(nextQuestionId);
     } else {
       if (thankYouCard?.enabled) {
