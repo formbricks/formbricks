@@ -159,15 +159,15 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
         }
       }
     }
-    return questions[currentQuestionIndex + 1]?.id || "";
+    return questions[currentQuestionIndex + 1]?.id || "end";
   }
 
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
-    const questionIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
+    // const questionIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
     const nextQuestionId = getNextQuestion(data);
 
-    const finished = nextQuestionId === "end" || questionIdx === survey.questions.length - 1;
+    const finished = nextQuestionId === "end"; // || questionIdx === survey.questions.length - 1;
     // build response
     const responseRequest = {
       surveyId: survey.id,
