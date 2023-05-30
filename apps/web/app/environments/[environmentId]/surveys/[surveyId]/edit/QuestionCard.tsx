@@ -1,5 +1,6 @@
 "use client";
 
+import LogicEditor from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/LogicEditor";
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
@@ -26,7 +27,6 @@ import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionDropdown";
 import RatingQuestionForm from "./RatingQuestionForm";
 import UpdateQuestionId from "./UpdateQuestionId";
-import LogicEditor from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/LogicEditor";
 
 interface QuestionCardProps {
   localSurvey: Survey;
@@ -35,6 +35,7 @@ interface QuestionCardProps {
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;
+  duplicateQuestion: (questionIdx: number) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
@@ -46,6 +47,7 @@ export default function QuestionCard({
   questionIdx,
   moveQuestion,
   updateQuestion,
+  duplicateQuestion,
   deleteQuestion,
   activeQuestionId,
   setActiveQuestionId,
@@ -130,6 +132,7 @@ export default function QuestionCard({
                   <QuestionDropdown
                     questionIdx={questionIdx}
                     lastQuestion={lastQuestion}
+                    duplicateQuestion={duplicateQuestion}
                     deleteQuestion={deleteQuestion}
                     moveQuestion={moveQuestion}
                   />

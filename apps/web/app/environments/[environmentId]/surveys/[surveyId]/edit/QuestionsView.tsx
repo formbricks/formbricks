@@ -1,13 +1,14 @@
 "use client";
 
 import type { Survey } from "@formbricks/types/surveys";
-import { DragDropContext } from "react-beautiful-dnd";
-import AddQuestionButton from "./AddQuestionButton";
-import QuestionCard from "./QuestionCard";
-import { StrictModeDroppable } from "./StrictModeDroppable";
-import EditThankYouCard from "./EditThankYouCard";
 import { createId } from "@paralleldrive/cuid2";
 import { useMemo } from "react";
+import { DragDropContext } from "react-beautiful-dnd";
+import toast from "react-hot-toast";
+import AddQuestionButton from "./AddQuestionButton";
+import EditThankYouCard from "./EditThankYouCard";
+import QuestionCard from "./QuestionCard";
+import { StrictModeDroppable } from "./StrictModeDroppable";
 
 interface QuestionsViewProps {
   localSurvey: Survey;
@@ -73,6 +74,28 @@ export default function QuestionsView({
         setActiveQuestionId(localSurvey.questions[questionIdx - 1].id);
       }
     }
+    toast.success("Question deleted.");
+  };
+
+  const duplicateQuestion = (questionIdx: number) => {
+    const questionToDuplicate = JSON.parse(JSON.stringify(localSurvey.questions[questionIdx]));
+    const newQuestionId = createId();
+
+    // create a copy of the question with a new id
+    const duplicatedQuestion = {
+      ...questionToDuplicate,
+      id: newQuestionId,
+    };
+
+    // insert the new question right after the original one
+    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    updatedSurvey.questions.splice(questionIdx + 1, 0, duplicatedQuestion);
+
+    setLocalSurvey(updatedSurvey);
+    setActiveQuestionId(newQuestionId);
+    internalQuestionIdMap[newQuestionId] = createId();
+
+    toast.success("Question duplicated.");
   };
 
   const addQuestion = (question: any) => {
@@ -122,6 +145,7 @@ export default function QuestionsView({
                     questionIdx={questionIdx}
                     moveQuestion={moveQuestion}
                     updateQuestion={updateQuestion}
+                    duplicateQuestion={duplicateQuestion}
                     deleteQuestion={deleteQuestion}
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
