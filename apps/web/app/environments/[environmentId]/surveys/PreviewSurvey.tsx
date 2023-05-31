@@ -174,6 +174,8 @@ export default function PreviewSurvey({
   }
 
   function getNextQuestion(answer: any): string {
+    // extract activeQuestionId from answer to make it work when form is collapsed.
+    const activeQuestionId = Object.keys(answer)[0];
     if (!activeQuestionId) return "";
 
     const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
