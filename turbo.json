@@ -58,6 +58,12 @@
         "VERCEL_URL"
       ]
     },
+    "prebuild": {
+      "outputs": []
+    },
+    "db:migrate:dev": {
+      "outputs": []
+    },
     "db:migrate:deploy": {
       "outputs": []
     },
