@@ -37,9 +37,11 @@ export default function MultipleChoiceSingleForm({
   };
 
   const addOther = () => {
-    const newChoices = !question.choices ? [] : question.choices;
-    newChoices.push({ id: "other", label: "" });
-    updateQuestion(questionIdx, { choices: newChoices });
+    if (question.choices.filter((c) => c.id === "other").length === 0) {
+      const newChoices = !question.choices ? [] : question.choices;
+      newChoices.push({ id: "other", label: "" });
+      updateQuestion(questionIdx, { choices: newChoices });
+    }
   };
 
   const deleteChoice = (choiceIdx: number) => {
@@ -111,10 +113,14 @@ export default function MultipleChoiceSingleForm({
             <Button variant="secondary" type="button" onClick={() => addChoice()}>
               Add Option
             </Button>
-            <p>or</p>
-            <Button variant="minimal" type="button" onClick={() => addOther()}>
-              Add &quot;Other&quot; with specify
-            </Button>
+            {question.choices.filter((c) => c.id === "other").length === 0 && (
+              <>
+                <p>or</p>
+                <Button variant="minimal" type="button" onClick={() => addOther()}>
+                  Add &quot;Other&quot; with specify
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
