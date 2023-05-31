@@ -60,13 +60,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // if survey exists, return survey
-    return res
-      .status(200)
-      .json({
-        ...survey,
-        brandColor: product?.brandColor,
-        formbricksSignature: product?.formbricksSignature,
-      });
+    return res.status(200).json({
+      ...survey,
+      brandColor: product?.brandColor,
+      formbricksSignature: product?.formbricksSignature,
+    });
   }
 
   // Unknown HTTP Method
