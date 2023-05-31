@@ -225,13 +225,13 @@ export default function SurveysList({ environmentId }) {
                           {survey.type === "link" && survey.status !== "draft" && (
                             <>
                               <DropdownMenuItem>
-                                <a
+                                <Link
                                   className="flex w-full items-center"
                                   href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}
                                   target="_blank">
                                   <EyeIcon className="mr-2 h-4 w-4" />
                                   Preview Survey
-                                </a>
+                                </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem>
                                 <button
