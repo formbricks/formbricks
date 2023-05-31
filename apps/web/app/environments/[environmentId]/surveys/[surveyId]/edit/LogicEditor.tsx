@@ -17,8 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@formbricks/ui";
-import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
-import { TrashIcon } from "@heroicons/react/24/solid";
+import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { ChevronDown, SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
@@ -129,10 +128,6 @@ export default function LogicEditor({
     },
   };
 
-  // useEffect(() => {
-  //   console.log(question);
-  // }, [question]);
-
   const addLogic = () => {
     const newLogic: Logic[] = !question.logic ? [] : question.logic;
     newLogic.push({
@@ -217,13 +212,13 @@ export default function LogicEditor({
           {question?.logic?.map((logic, logicIdx) => (
             <div key={logicIdx} className="flex items-center space-x-2 space-y-1 text-sm">
               <BsArrowReturnRight className="h-4 w-4" />
-              <p>If this answer</p>
+              <p className="text-slate-700">If this answer</p>
 
               <Select
                 defaultValue={logic.condition}
                 onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
                 <SelectTrigger className="min-w-fit flex-1">
-                  <SelectValue placeholder="select condition" />
+                  <SelectValue placeholder="Select condition" />
                 </SelectTrigger>
                 <SelectContent>
                   {conditions[question.type].map(
@@ -244,7 +239,7 @@ export default function LogicEditor({
                       defaultValue={logic.value}
                       onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="select match type" />
+                        <SelectValue placeholder="Select match type" />
                       </SelectTrigger>
                       <SelectContent>
                         {logicConditions[logic.condition].values?.map((value) => (
@@ -259,7 +254,7 @@ export default function LogicEditor({
                       <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
                         <div className="flex h-10 w-full items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ">
                           {logic.value?.length === 0 ? (
-                            <p className="text-slate-400">select match type</p>
+                            <p className="text-slate-400">Select match type</p>
                           ) : (
                             <p>{logic.value.join(", ")}</p>
                           )}
@@ -285,13 +280,13 @@ export default function LogicEditor({
                 </div>
               )}
 
-              <p>skip to</p>
+              <p className="text-slate-700">skip to</p>
 
               <Select
                 defaultValue={logic.destination}
                 onValueChange={(e) => updateLogic(logicIdx, { destination: e })}>
                 <SelectTrigger className="w-fit overflow-hidden ">
-                  <SelectValue placeholder="select question" />
+                  <SelectValue placeholder="Select question" />
                 </SelectTrigger>
                 <SelectContent>
                   {localSurvey.questions.map(
@@ -314,7 +309,7 @@ export default function LogicEditor({
           ))}
           <div className="flex flex-wrap items-center space-x-2 py-1 text-sm">
             <BsArrowDown className="h-4 w-4" />
-            <p>All other answers will continue to the next question</p>
+            <p className="text-slate-700">All other answers will continue to the next question</p>
           </div>
         </div>
       )}
@@ -322,6 +317,7 @@ export default function LogicEditor({
       <div className="mt-2 flex items-center space-x-2">
         <Button
           id="logicJumps"
+          className="bg-slate-100 px-6 py-2 hover:bg-slate-50"
           type="button"
           name="logicJumps"
           variant="secondary"
@@ -329,12 +325,12 @@ export default function LogicEditor({
           onClick={() => addLogic()}>
           Add Logic
         </Button>
-        <TooltipProvider>
+        <TooltipProvider delayDuration={50}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <QuestionMarkCircleIcon className="h-5 w-5 cursor-default" />
+              <QuestionMarkCircleIcon className="ml-2 inline h-4 w-4 cursor-default text-slate-500" />
             </TooltipTrigger>
-            <TooltipContent className="max-w-[200px]" side="top">
+            <TooltipContent className="max-w-[300px]" side="top">
               With logic jumps you can skip questions based on the responses users give.
             </TooltipContent>
           </Tooltip>

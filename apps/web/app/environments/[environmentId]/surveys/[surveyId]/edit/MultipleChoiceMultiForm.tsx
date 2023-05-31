@@ -95,7 +95,7 @@ export default function MultipleChoiceMultiForm({
                 />
                 {question.choices && question.choices.length > 2 && (
                   <TrashIcon
-                    className="ml-2 h-4 w-4 text-slate-400"
+                    className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                     onClick={() => deleteChoice(choiceIdx)}
                   />
                 )}

@@ -38,7 +38,7 @@ export const SigninForm = () => {
   return (
     <>
       <div className="text-center">
-        <p className="mb-8 text-lg text-slate-700">Log in to your account</p>
+        <h1 className="mb-4 text-slate-700">Log in to your account</h1>
         <div className="space-y-2">
           <form onSubmit={handleSubmit} ref={formRef} className="space-y-2" onChange={checkFormValidity}>
             {showLogin && (
@@ -98,7 +98,7 @@ export const SigninForm = () => {
               className="w-full justify-center"
               loading={loggingIn}
               disabled={!isButtonEnabled}>
-              Continue with Email
+              Login with Email
             </Button>
           </form>
 
@@ -114,9 +114,11 @@ export const SigninForm = () => {
           )}
         </div>
         {process.env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
-          <div className="mt-3 text-center text-xs text-slate-600">
-            <Link href="/auth/signup" className="font-semibold underline">
-              Create new account
+          <div className="mt-9 text-center text-xs ">
+            <span className="leading-5 text-slate-500">New to Formbricks?</span>
+            <br />
+            <Link href="/auth/signup" className="font-semibold text-slate-600 underline hover:text-slate-700">
+              Create an account
             </Link>
           </div>
         )}
