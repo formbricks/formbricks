@@ -32,7 +32,7 @@ export default function MultipleChoiceSingleQuestion({
         const data = {
           [question.id]: value,
         };
-        console.log(data);
+        // console.log(data);
 
         onSubmit(data);
         setSelectedChoice(null); // reset form
