@@ -25,8 +25,8 @@ export default function MultipleChoiceMultiQuestion({
   const [otherSpecified, setOtherSpecified] = useState("");
 
   useEffect(() => {
-    setIsAtLeastOneChecked(selectedChoices.length > 0);
-  }, [selectedChoices]);
+    setIsAtLeastOneChecked(selectedChoices.length > 0 || otherSpecified.length > 0);
+  }, [selectedChoices, otherSpecified]);
 
   return (
     <form
@@ -42,6 +42,7 @@ export default function MultipleChoiceMultiQuestion({
           [question.id]: selectedChoices,
         };
         onSubmit(data);
+        // console.log(data);
         setSelectedChoices([]); // reset value
         setShowOther(false);
         setOtherSpecified("");
