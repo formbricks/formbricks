@@ -37,7 +37,7 @@ export default function MultipleChoiceMultiForm({
   };
 
   const addOther = () => {
-    if (question.choices.filter((c) => c.id === "other").length > 0) {
+    if (question.choices.filter((c) => c.id === "other").length === 0) {
       const newChoices = !question.choices ? [] : question.choices;
       newChoices.push({ id: "other", label: "" });
       updateQuestion(questionIdx, { choices: newChoices });
