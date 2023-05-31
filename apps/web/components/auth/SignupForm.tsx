@@ -67,7 +67,7 @@ export const SignupForm = () => {
         </div>
       )}
       <div className="text-center">
-        <p className="mb-8 text-lg text-slate-700">Create your Formbricks account</p>
+        <h1 className="mb-4 text-slate-700">Create your Formbricks account</h1>
         <div className="space-y-2">
           <form onSubmit={handleSubmit} ref={formRef} className="space-y-2" onChange={checkFormValidity}>
             {showLogin && (
@@ -189,9 +189,10 @@ export const SignupForm = () => {
           </div>
         )}
 
-        <div className="mt-3 text-center text-xs text-slate-600">
-          Have an account?{" "}
-          <Link href="/auth/login" className="font-semibold underline">
+        <div className="mt-9 text-center text-xs ">
+          <span className="leading-5 text-slate-500">Have an account?</span>
+          <br />
+          <Link href="/auth/login" className="font-semibold text-slate-600 underline hover:text-slate-700">
             Log in.
           </Link>
         </div>

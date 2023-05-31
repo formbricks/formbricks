@@ -1,12 +1,11 @@
 import type { RatingQuestion } from "@formbricks/types/questions";
+import type { Survey } from "@formbricks/types/surveys";
 import { Input, Label } from "@formbricks/ui";
 import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outline";
-
-import type { Survey } from "@formbricks/types/surveys";
 import Dropdown from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {
-  survey: Survey;
+  localSurvey: Survey;
   question: RatingQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;

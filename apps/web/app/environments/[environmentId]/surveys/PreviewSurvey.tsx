@@ -1,11 +1,13 @@
+import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Modal from "@/components/preview/Modal";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import { useEnvironment } from "@/lib/environments/environments";
-import type { Question } from "@formbricks/types/questions";
+import { useProduct } from "@/lib/products/products";
+import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
@@ -15,6 +17,7 @@ interface PreviewSurveyProps {
   environmentId: string;
   surveyType: Survey["type"];
   thankYouCard: Survey["thankYouCard"];
+  autoClose: Survey["autoClose"];
   previewType?: "modal" | "fullwidth" | "email";
 }
 
@@ -26,13 +29,70 @@ export default function PreviewSurvey({
   environmentId,
   surveyType,
   thankYouCard,
+  autoClose,
   previewType,
 }: PreviewSurveyProps) {
+  const { environment } = useEnvironment(environmentId);
+  const { product } = useProduct(environmentId);
+
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
-  const { environment } = useEnvironment(environmentId);
   const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
+  const [showFormbricksSignature, setShowFormbricksSignature] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      setShowFormbricksSignature(product.formbricksSignature);
+    }
+  }, [product]);
+
+  const [countdownProgress, setCountdownProgress] = useState(1);
+  const startRef = useRef(performance.now());
+  const frameRef = useRef<number | null>(null);
+  const [countdownStop, setCountdownStop] = useState(false);
+
+  const handleStopCountdown = () => {
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+      setCountdownStop(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!autoClose) return;
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+    }
+
+    const frame = () => {
+      if (!autoClose || !startRef.current) return;
+
+      const timeout = autoClose * 1000;
+      const elapsed = performance.now() - startRef.current;
+      const remaining = Math.max(0, timeout - elapsed);
+
+      setCountdownProgress(remaining / timeout);
+
+      if (remaining > 0) {
+        frameRef.current = requestAnimationFrame(frame);
+      } else {
+        handleStopCountdown();
+        // close modal
+      }
+    };
+
+    setCountdownStop(false);
+    setCountdownProgress(1);
+    startRef.current = performance.now();
+    frameRef.current = requestAnimationFrame(frame);
+
+    return () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, [autoClose]);
 
   useEffect(() => {
     if (activeQuestionId) {
@@ -63,43 +123,95 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, surveyType, questions, setActiveQuestionId, thankYouCard]);
 
-  const gotoNextQuestion = () => {
-    const currentQuestionId = activeQuestionId || lastActiveQuestionId;
-    const currentIndex = questions.findIndex((q) => q.id === currentQuestionId);
+  function evaluateCondition(logic: Logic, answerValue: any): boolean {
+    switch (logic.condition) {
+      case "equals":
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 1 && answerValue.includes(logic.value)) ||
+          answerValue.toString() === logic.value
+        );
+      case "notEquals":
+        return answerValue !== logic.value;
+      case "lessThan":
+        return answerValue < logic.value;
+      case "lessEqual":
+        return answerValue <= logic.value;
+      case "greaterThan":
+        return answerValue > logic.value;
+      case "greaterEqual":
+        return answerValue >= logic.value;
+      case "includesAll":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.every((v) => answerValue.includes(v))
+        );
+      case "includesOne":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.some((v) => answerValue.includes(v))
+        );
+      case "submitted":
+        if (typeof answerValue === "string") {
+          return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
+        } else if (Array.isArray(answerValue)) {
+          return answerValue.length > 0;
+        } else if (typeof answerValue === "number") {
+          return answerValue !== null;
+        }
+        return false;
+      case "skipped":
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 0) ||
+          answerValue === "" ||
+          answerValue === null ||
+          answerValue === "dismissed"
+        );
+      default:
+        return false;
+    }
+  }
 
-    if (currentIndex < questions.length - 1) {
-      setActiveQuestionId(questions[currentIndex + 1].id);
+  function getNextQuestion(answer: any): string {
+    if (!activeQuestionId) return "";
+
+    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
+
+    const answerValue = answer[activeQuestionId];
+    const currentQuestion = questions[currentQuestionIndex];
+
+    if (currentQuestion.logic && currentQuestion.logic.length > 0) {
+      for (let logic of currentQuestion.logic) {
+        if (!logic.destination) continue;
+
+        if (evaluateCondition(logic, answerValue)) {
+          return logic.destination;
+        }
+      }
+    }
+    return questions[currentQuestionIndex + 1]?.id || "end";
+  }
+
+  const gotoNextQuestion = (data) => {
+    const nextQuestionId = getNextQuestion(data);
+
+    if (nextQuestionId !== "end") {
+      setActiveQuestionId(nextQuestionId);
     } else {
       if (thankYouCard?.enabled) {
         setActiveQuestionId("thank-you-card");
+        setProgress(1);
       } else {
         setIsModalOpen(false);
         setTimeout(() => {
           setActiveQuestionId(questions[0].id);
           setIsModalOpen(true);
         }, 500);
-        if (thankYouCard?.enabled) {
-          setActiveQuestionId("thank-you-card");
-          setProgress(1);
-        } else {
-          setIsModalOpen(false);
-          setTimeout(() => {
-            setActiveQuestionId(questions[0].id);
-            setIsModalOpen(true);
-          }, 500);
-        }
       }
     }
   };
-
-  /*  const resetPreview = () => {
-    setIsModalOpen(false);
-    setTimeout(() => {
-      setActiveQuestionId(questions[0].id);
-      setIsModalOpen(true);
-    }, 500);
-  };
- */
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -111,6 +223,10 @@ export default function PreviewSurvey({
 
   if (!previewType) {
     previewType = widgetSetupCompleted ? "modal" : "fullwidth";
+
+    if (!activeQuestionId) {
+      return <></>;
+    }
   }
 
   return (
@@ -122,13 +238,21 @@ export default function PreviewSurvey({
           <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
         </div>
         <p>
-          {previewType === "modal" && <p className="ml-4 font-mono text-sm text-slate-400">Your web app</p>}
+          <span className="ml-4 font-mono text-sm text-slate-400">
+            {previewType === "modal" ? "Your web app" : "Preview"}
+          </span>
         </p>
       </div>
 
       {previewType === "modal" ? (
         <Modal isOpen={isModalOpen}>
-          <div className="px-4 py-6 sm:p-6">
+          {!countdownStop && autoClose !== null && autoClose > 0 && (
+            <Progress progress={countdownProgress} brandColor={brandColor} />
+          )}
+          <div
+            onClick={() => handleStopCountdown()}
+            onMouseOver={() => handleStopCountdown()}
+            className="px-4 py-6 sm:p-6">
             {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
               <ThankYouCard
                 brandColor={brandColor}
@@ -148,6 +272,7 @@ export default function PreviewSurvey({
                 ) : null
               )
             )}
+            {showFormbricksSignature && <FormbricksSignature />}
           </div>
           <Progress progress={progress} brandColor={brandColor} />
         </Modal>
@@ -177,8 +302,9 @@ export default function PreviewSurvey({
             </div>
           </div>
           <div className="z-10 w-full rounded-b-lg bg-white">
-            <div className="mx-auto max-w-md p-6 pt-4">
+            <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
               <Progress progress={progress} brandColor={brandColor} />
+              {showFormbricksSignature && <FormbricksSignature />}
             </div>
           </div>
         </div>

@@ -37,7 +37,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
   useEffect(() => {
     if (!isLoadingAttributeClasses) {
-      if (localSurvey.attributeFilters.length > 0) {
+      if (localSurvey.attributeFilters?.length > 0) {
         setOpen(true);
       }
     }
@@ -119,7 +119,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
 
           <div className="mx-6 flex items-center rounded-lg border border-slate-200 p-4 text-slate-800">
             <div>
-              {localSurvey.attributeFilters.length === 0 ? (
+              {localSurvey.attributeFilters?.length === 0 ? (
                 <UserGroupIcon className="mr-4 h-6 w-6 text-slate-600" />
               ) : (
                 <FunnelIcon className="mr-4 h-6 w-6 text-slate-600" />
@@ -129,18 +129,18 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
               <p className="">
                 Current:{" "}
                 <span className="font-semibold text-slate-900">
-                  {localSurvey.attributeFilters.length === 0 ? "All users" : "Filtered"}
+                  {localSurvey.attributeFilters?.length === 0 ? "All users" : "Filtered"}
                 </span>
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                {localSurvey.attributeFilters.length === 0
+                {localSurvey.attributeFilters?.length === 0
                   ? "All users can see the survey."
                   : "Only users who match the attribute filter will see the survey."}
               </p>
             </div>
           </div>
 
-          {localSurvey.attributeFilters.map((attributeFilter, idx) => (
+          {localSurvey.attributeFilters?.map((attributeFilter, idx) => (
             <div className="mt-4 px-5" key={idx}>
               <div className="justify-left flex items-center space-x-3">
                 <p className={cn(idx !== 0 && "ml-5", "text-right text-sm")}>{idx === 0 ? "Where" : "and"}</p>

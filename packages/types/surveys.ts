@@ -22,6 +22,7 @@ export interface Survey {
   responseRate: number;
   displayOption: "displayOnce" | "displayMultiple" | "respondMultiple";
   attributeFilters: AttributeFilter[];
+  autoClose: number | null;
 }
 
 export interface AttributeFilter {

@@ -107,6 +107,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
         },
       },
       thankYouCard: true,
+      autoClose: true,
     },
   });
 
@@ -180,6 +181,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
         questions: JSON.parse(JSON.stringify(survey.questions)),
         triggers: survey.triggers,
         thankYouCard: JSON.parse(JSON.stringify(survey.thankYouCard)),
+        autoClose: survey.autoClose,
       };
     });
 
@@ -202,12 +204,14 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       product: {
         select: {
           brandColor: true,
+          formbricksSignature: true,
         },
       },
     },
   });
 
+  const formbricksSignature = environmentProdut?.product.formbricksSignature;
   const brandColor = environmentProdut?.product.brandColor;
 
-  return { surveys, noCodeEvents, brandColor };
+  return { surveys, noCodeEvents, brandColor, formbricksSignature };
 };

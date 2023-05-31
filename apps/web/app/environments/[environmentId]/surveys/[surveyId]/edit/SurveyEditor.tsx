@@ -17,7 +17,7 @@ interface SurveyEditorProps {
   surveyId: string;
 }
 
-export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorProps) {
+export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<Survey | null>();
@@ -83,6 +83,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             surveyType={localSurvey.type}
             thankYouCard={localSurvey.thankYouCard}
             previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
+            autoClose={localSurvey.autoClose}
           />
         </aside>
       </div>

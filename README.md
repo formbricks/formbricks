@@ -54,7 +54,7 @@ Formbricks helps you apply best practices from data-driven work and experience m
 |     | Feature                                    |
 | --- | ------------------------------------------ |
 | 👷  | Zapier, Slack & Posthog Integration        |
-| 👷  | Branching Logic in Surveys                 |
+| 👷  | Webhooks                                   |
 | 🗒️  | Filtering Options in Survey Analysis       |
 | 🗒️  | Multi-Language Functionality               |
 | 🗒️  | Auto-complete Surveys after at x responses |

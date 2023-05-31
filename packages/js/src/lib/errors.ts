@@ -97,11 +97,13 @@ const logger = Logger.getInstance();
 export class ErrorHandler {
   private static instance: ErrorHandler | null;
   private handleError: (error: any) => void;
+  public customized: boolean = false;
   public static initialized = false;
 
   private constructor(errorHandler?: (error: any) => void) {
     if (errorHandler) {
       this.handleError = errorHandler;
+      this.customized = true;
     } else {
       this.handleError = (err) => Logger.getInstance().error(JSON.stringify(err));
     }
@@ -118,11 +120,11 @@ export class ErrorHandler {
   static init(errorHandler?: (error: any) => void): void {
     this.initialized = true;
 
-    // for some reason, Logger.getInstance().debug didnt work here
-    console.log("🧱 Formbricks - initializing error handler");
-    console.log("🧱 Formbricks - Custom error handler: ", typeof errorHandler === "function" ? "yes" : "no");
-
     ErrorHandler.instance = new ErrorHandler(errorHandler);
+  }
+
+  public printStatus(): void {
+    logger.debug(`Custom error handler: ${this.customized ? "yes" : "no"}`);
   }
 
   public handle(error: any): void {

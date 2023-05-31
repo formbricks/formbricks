@@ -1,5 +1,6 @@
 "use client";
 
+import LogicEditor from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/LogicEditor";
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
@@ -34,6 +35,7 @@ interface QuestionCardProps {
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;
+  duplicateQuestion: (questionIdx: number) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
@@ -45,6 +47,7 @@ export default function QuestionCard({
   questionIdx,
   moveQuestion,
   updateQuestion,
+  duplicateQuestion,
   deleteQuestion,
   activeQuestionId,
   setActiveQuestionId,
@@ -129,6 +132,7 @@ export default function QuestionCard({
                   <QuestionDropdown
                     questionIdx={questionIdx}
                     lastQuestion={lastQuestion}
+                    duplicateQuestion={duplicateQuestion}
                     deleteQuestion={deleteQuestion}
                     moveQuestion={moveQuestion}
                   />
@@ -138,6 +142,7 @@ export default function QuestionCard({
             <Collapsible.CollapsibleContent className="px-4 pb-4">
               {question.type === "openText" ? (
                 <OpenQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -145,6 +150,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "multipleChoiceSingle" ? (
                 <MultipleChoiceSingleForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -152,6 +158,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "multipleChoiceMulti" ? (
                 <MultipleChoiceMultiForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -159,6 +166,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "nps" ? (
                 <NPSQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -166,6 +174,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "cta" ? (
                 <CTAQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -173,15 +182,21 @@ export default function QuestionCard({
                 />
               ) : question.type === "rating" ? (
                 <RatingQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  survey={localSurvey}
                 />
               ) : null}
               <div className="mt-4 border-t border-slate-200">
-                <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-3">
+                <LogicEditor
+                  question={question}
+                  updateQuestion={updateQuestion}
+                  localSurvey={localSurvey}
+                  questionIdx={questionIdx}
+                />
+                <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
                   <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700 ">
                     {openAdvanced ? (
                       <ChevronDownIcon className="mr-1 h-4 w-3" />

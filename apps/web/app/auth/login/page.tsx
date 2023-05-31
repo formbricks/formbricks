@@ -4,13 +4,15 @@ import FormWrapper from "@/components/auth/FormWrapper";
 
 export default function SignInPage() {
   return (
-    <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-200 to-slate-50 lg:grid-cols-2">
-      <div className="hidden lg:flex">
+    <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
+      <div className="col-span-2 hidden lg:flex">
         <Testimonial />
       </div>
-      <FormWrapper>
-        <SigninForm />
-      </FormWrapper>
+      <div className="col-span-3 flex flex-col items-center justify-center">
+        <FormWrapper>
+          <SigninForm />
+        </FormWrapper>
+      </div>
     </div>
   );
 }

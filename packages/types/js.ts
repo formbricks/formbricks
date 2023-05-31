@@ -52,6 +52,7 @@ export interface Settings {
   surveys?: Survey[];
   noCodeEvents?: any[];
   brandColor?: string;
+  formbricksSignature?: boolean;
 }
 
 export interface JsConfig {
@@ -78,6 +79,7 @@ export interface Survey {
   questions: Question[];
   triggers: Trigger[];
   thankYouCard: ThankYouCard;
+  autoClose?: number | null;
 }
 
 export interface Trigger {

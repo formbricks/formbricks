@@ -104,7 +104,7 @@ export default function EditAlerts({ memberships, user, environmentId }: EditAle
             </div>
             <p className="pb-3 pl-4 text-xs text-slate-400">
               Want to loop in team mates?{" "}
-              <Link className="font-semibold" href={`/environments/${environmentId}/settings/notifications`}>
+              <Link className="font-semibold" href={`/environments/${environmentId}/settings/members`}>
                 Invite them.
               </Link>
             </p>

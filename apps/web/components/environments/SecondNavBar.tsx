@@ -1,16 +1,30 @@
 import { cn } from "@formbricks/lib/cn";
+import SurveyNavBarName from "@/components/shared/SurveyNavBarName";
 import Link from "next/link";
 
 interface SecondNavbarProps {
   tabs: { id: string; label: string; href: string; icon?: React.ReactNode }[];
   activeId: string;
+  surveyId?: string;
+  environmentId?: string;
 }
 
-export default function SecondNavbar({ tabs, activeId, ...props }: SecondNavbarProps) {
+export default function SecondNavbar({
+  tabs,
+  activeId,
+  surveyId,
+  environmentId,
+  ...props
+}: SecondNavbarProps) {
   return (
     <div {...props}>
-      <div className="flex h-14 w-full items-center justify-center border-b bg-white">
-        <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
+      <div className="grid h-14 w-full grid-cols-3 items-center justify-items-stretch border-b bg-white px-4">
+        <div className="justify-self-start">
+          {surveyId && environmentId && (
+            <SurveyNavBarName surveyId={surveyId} environmentId={environmentId} />
+          )}
+        </div>{" "}
+        <nav className="flex h-full items-center space-x-4 justify-self-center" aria-label="Tabs">
           {tabs.map((tab) => (
             <Link
               key={tab.id}
@@ -27,6 +41,7 @@ export default function SecondNavbar({ tabs, activeId, ...props }: SecondNavbarP
             </Link>
           ))}
         </nav>
+        <div className="justify-self-end"></div>
       </div>
     </div>
   );

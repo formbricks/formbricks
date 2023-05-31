@@ -3,6 +3,12 @@ import HeroTitle from "@/components/shared/HeroTitle";
 import { Button } from "@formbricks/ui";
 
 const OSSFriends = [
+   {
+    name: "BoxyHQ",
+    description:
+      "BoxyHQ’s suite of APIs for security and privacy helps engineering teams build and ship compliant cloud applications faster.",
+    href: "https://boxyhq.com",
+  },
   {
     name: "Cal.com",
     description:
@@ -72,7 +78,7 @@ const OSSFriends = [
   {
     name: "OpenBB",
     description:
-      "The most innovative investment research platform. Open to anyone's input. Open to everyone's work.",
+      "Democratizing investment research through an open source financial ecosystem. The OpenBB Terminal allows everyone to perform investment research, from everywhere.",
     href: "https://openbb.co",
   },
   {
