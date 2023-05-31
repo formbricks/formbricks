@@ -21,7 +21,7 @@ export default function SurveyNavBarName({ surveyId, environmentId }: SurveyNavB
   }
 
   return (
-    <div className="flex items-center space-x-2 whitespace-nowrap">
+    <div className="hidden items-center space-x-2 whitespace-nowrap md:flex">
       {/*       <Button
         variant="secondary"
         StartIcon={ArrowLeftIcon}
