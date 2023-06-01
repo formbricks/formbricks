@@ -12,6 +12,8 @@
   "scripts": {
     "clean": "turbo run clean && rimraf node_modules",
     "build": "turbo run build",
+    "prebuild": "turbo run prebuild",
+    "db:migrate:dev": "turbo run db:migrate:dev",
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:migrate:vercel": "turbo run db:migrate:vercel",
     "db:push": "turbo run db:push",

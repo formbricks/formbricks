@@ -13,7 +13,6 @@ export interface Response {
   meta: {
     [key: string]: string;
   };
-  userAttributes: {}[];
 }
 
 export interface QuestionSummary<T extends Question> {
