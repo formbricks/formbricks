@@ -2,7 +2,7 @@ import "./globals.css";
 
 export const metadata = {
   title: "Formbricks",
-  description: "In-Product Survey Platform",
+  description: "Open-Source In-Product Survey Platform",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

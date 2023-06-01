@@ -6,17 +6,20 @@ import { CheckIcon, ChevronRightIcon, CheckCircleIcon } from "@heroicons/react/2
 
 import { cn } from "@formbricks/lib/cn";
 
-const DropdownMenu = DropdownMenuPrimitive.Root;
+const DropdownMenu: React.FC<DropdownMenuPrimitive.DropdownMenuProps> = DropdownMenuPrimitive.Root;
 
-const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
+const DropdownMenuTrigger: React.FC<DropdownMenuPrimitive.DropdownMenuTriggerProps> =
+  DropdownMenuPrimitive.Trigger;
 
-const DropdownMenuGroup = DropdownMenuPrimitive.Group;
+const DropdownMenuGroup: React.FC<DropdownMenuPrimitive.DropdownMenuGroupProps> = DropdownMenuPrimitive.Group;
 
-const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
+const DropdownMenuPortal: React.FC<DropdownMenuPrimitive.DropdownMenuPortalProps> =
+  DropdownMenuPrimitive.Portal;
 
-const DropdownMenuSub = DropdownMenuPrimitive.Sub;
+const DropdownMenuSub: React.FC<DropdownMenuPrimitive.DropdownMenuSubProps> = DropdownMenuPrimitive.Sub;
 
-const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
+const DropdownMenuRadioGroup: React.FC<DropdownMenuPrimitive.DropdownMenuRadioGroupProps> =
+  DropdownMenuPrimitive.RadioGroup;
 
 const DropdownMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,

@@ -1,14 +1,14 @@
 "use client";
 
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useProduct } from "@/lib/products/products";
 import { getQuestionDefaults, questionTypes, universalQuestionPresets } from "@/lib/questions";
+import { cn } from "@formbricks/lib/cn";
+import { ErrorComponent } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { useProduct } from "@/lib/products/products";
-import { ErrorComponent } from "@/../../packages/ui";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
@@ -29,11 +29,11 @@ export default function AddQuestionButton({ addQuestion, environmentId }: AddQue
       onOpenChange={setOpen}
       className={cn(
         open ? "scale-100 shadow-lg" : "scale-97 shadow-md",
-        "w-full space-y-2 rounded-lg border border-dashed border-slate-300 bg-white transition-transform duration-300 ease-in-out hover:cursor-pointer"
+        "group w-full space-y-2 rounded-lg border  border-slate-300 bg-white transition-all duration-300 ease-in-out hover:scale-100 hover:cursor-pointer hover:bg-slate-50"
       )}>
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
         <div className="inline-flex">
-          <div className="bg-brand-dark flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-bl-none">
+          <div className="bg-brand-dark flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-bl-none group-aria-expanded:rounded-br">
             <PlusIcon className="h-6 w-6 text-white" />
           </div>
           <div className="px-4 py-3">
@@ -47,7 +47,7 @@ export default function AddQuestionButton({ addQuestion, environmentId }: AddQue
         {questionTypes.map((questionType) => (
           <button
             key={questionType.id}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 last:mb-2 hover:bg-slate-100"
+            className="mx-2 inline-flex items-center rounded p-0.5 px-4 py-2 font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
             onClick={() => {
               addQuestion({
                 id: createId(),

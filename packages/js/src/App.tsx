@@ -1,4 +1,4 @@
-import type { JsConfig, Survey } from "@formbricks/types/js";
+import type { JsConfig, Survey } from "../../types/js";
 import { VNode, h } from "preact";
 import { useState } from "preact/hooks";
 import Modal from "./components/Modal";
@@ -25,13 +25,7 @@ export default function App({ config, survey, closeSurvey, errorHandler }: AppPr
   return (
     <div id="fbjs">
       <Modal isOpen={isOpen} close={close}>
-        <SurveyView
-          config={config}
-          survey={survey}
-          close={close}
-          brandColor={config.settings?.brandColor}
-          errorHandler={errorHandler}
-        />
+        <SurveyView config={config} survey={survey} close={close} errorHandler={errorHandler} />
       </Modal>
     </div>
   );

@@ -12,6 +12,32 @@ generator client {
   //provider = "prisma-dbml-generator"
 }
 
+generator json {
+  provider = "prisma-json-types-generator"
+  // namespace = "PrismaJson"
+  // clientOutput = "<finds it automatically>"
+  // (./ -> relative to schema, or an importable path to require() it)
+  // useType = "MyType"
+  // In case you need to use a type, export it inside the namespace and we will add a index signature to it
+  // (e.g.  export namespace PrismaJson { export type MyType = {a: 1, b: 2} }; will generate namespace.MyType["TYPE HERE"])
+}
+
+enum PipelineTriggers {
+  responseCreated
+  responseUpdated
+  responseFinished
+}
+
+model Webhook {
+  id            String             @id @default(cuid())
+  createdAt     DateTime           @default(now()) @map(name: "created_at")
+  updatedAt     DateTime           @updatedAt @map(name: "updated_at")
+  url           String
+  environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId String
+  triggers      PipelineTriggers[]
+}
+
 model Attribute {
   id               String         @id @default(cuid())
   createdAt        DateTime       @default(now()) @map(name: "created_at")
@@ -32,15 +58,16 @@ enum AttributeType {
 }
 
 model AttributeClass {
-  id            String        @id @default(cuid())
-  createdAt     DateTime      @default(now()) @map(name: "created_at")
-  updatedAt     DateTime      @updatedAt @map(name: "updated_at")
-  name          String
-  description   String?
-  type          AttributeType
-  environment   Environment   @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  environmentId String
-  attributes    Attribute[]
+  id               String                  @id @default(cuid())
+  createdAt        DateTime                @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                @updatedAt @map(name: "updated_at")
+  name             String
+  description      String?
+  type             AttributeType
+  environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId    String
+  attributes       Attribute[]
+  attributeFilters SurveyAttributeFilter[]
 
   @@unique([name, environmentId])
 }
@@ -58,18 +85,18 @@ model Person {
 }
 
 model Response {
-  id             String   @id @default(cuid())
-  createdAt      DateTime @default(now()) @map(name: "created_at")
-  updatedAt      DateTime @updatedAt @map(name: "updated_at")
-  finished       Boolean  @default(false)
-  survey         Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId       String
-  person         Person?  @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId       String?
-  data           Json     @default("{}")
-  meta           Json     @default("{}")
-  userAttributes Json     @default("[]")
-  tags           String[]
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  finished  Boolean  @default(false)
+  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId  String
+  person    Person?  @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId  String?
+  /// [ResponseData]
+  data      Json     @default("{}")
+  /// [ResponseMeta]
+  meta      Json     @default("{}")
 }
 
 enum SurveyStatus {
@@ -108,6 +135,25 @@ model SurveyTrigger {
   @@unique([surveyId, eventClassId])
 }
 
+enum SurveyAttributeFilterCondition {
+  equals
+  notEquals
+}
+
+model SurveyAttributeFilter {
+  id               String                         @id @default(cuid())
+  createdAt        DateTime                       @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                       @updatedAt @map(name: "updated_at")
+  attributeClass   AttributeClass                 @relation(fields: [attributeClassId], references: [id], onDelete: Cascade)
+  attributeClassId String
+  survey           Survey                         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId         String
+  condition        SurveyAttributeFilterCondition
+  value            String
+
+  @@unique([surveyId, attributeClassId])
+}
+
 enum SurveyType {
   email
   link
@@ -122,21 +168,25 @@ enum displayOptions {
 }
 
 model Survey {
-  id            String          @id @default(cuid())
-  createdAt     DateTime        @default(now()) @map(name: "created_at")
-  updatedAt     DateTime        @updatedAt @map(name: "updated_at")
-  name          String
-  type          SurveyType      @default(web)
-  environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  environmentId String
-  status        SurveyStatus    @default(draft)
-  questions     Json            @default("[]")
-  thankYouCard  Json            @default("{\"enabled\": false}")
-  responses     Response[]
-  displayOption displayOptions  @default(displayOnce)
-  recontactDays Int?
-  triggers      SurveyTrigger[]
-  displays      Display[]
+  id               String                  @id @default(cuid())
+  createdAt        DateTime                @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                @updatedAt @map(name: "updated_at")
+  name             String
+  type             SurveyType              @default(web)
+  environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId    String
+  status           SurveyStatus            @default(draft)
+  /// [SurveyQuestions]
+  questions        Json                    @default("[]")
+  /// [SurveyThankYouCard]
+  thankYouCard     Json                    @default("{\"enabled\": false}")
+  responses        Response[]
+  displayOption    displayOptions          @default(displayOnce)
+  recontactDays    Int?
+  triggers         SurveyTrigger[]
+  attributeFilters SurveyAttributeFilter[]
+  displays         Display[]
+  autoClose        Int?
 }
 
 model Event {
@@ -146,6 +196,7 @@ model Event {
   eventClassId String?
   session      Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId    String
+  /// [EventProperties]
   properties   Json        @default("{}")
 }
 
@@ -163,6 +214,7 @@ model EventClass {
   description   String?
   type          EventType
   events        Event[]
+  /// [EventClassNoCodeConfig]
   noCodeConfig  Json?
   environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
@@ -198,18 +250,20 @@ model Environment {
   eventClasses         EventClass[]
   attributeClasses     AttributeClass[]
   apiKeys              ApiKey[]
+  webhooks             Webhook[]
 }
 
 model Product {
-  id            String        @id @default(cuid())
-  createdAt     DateTime      @default(now()) @map(name: "created_at")
-  updatedAt     DateTime      @updatedAt @map(name: "updated_at")
-  name          String
-  team          Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId        String
-  environments  Environment[]
-  brandColor    String        @default("#334155")
-  recontactDays Int           @default(7)
+  id                  String        @id @default(cuid())
+  createdAt           DateTime      @default(now()) @map(name: "created_at")
+  updatedAt           DateTime      @updatedAt @map(name: "updated_at")
+  name                String
+  team                Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId              String
+  environments        Environment[]
+  brandColor          String        @default("#64748b")
+  recontactDays       Int           @default(7)
+  formbricksSignature Boolean       @default(true)
 }
 
 enum Plan {
@@ -279,6 +333,7 @@ model ApiKey {
 enum IdentityProvider {
   email
   github
+  google
 }
 
 model Account {
@@ -301,6 +356,31 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
+enum Role {
+  project_manager
+  engineer
+  founder
+  marketing_specialist
+  other
+}
+
+enum Objective {
+  increase_conversion
+  improve_user_retention
+  increase_user_adoption
+  sharpen_marketing_messaging
+  support_sales
+  other
+}
+
+enum Intention {
+  survey_user_segments
+  survey_at_specific_point_in_user_journey
+  enrich_customer_profiles
+  collect_all_user_feedback_on_one_platform
+  other
+}
+
 model User {
   id                        String           @id @default(cuid())
   createdAt                 DateTime         @default(now()) @map(name: "created_at")
@@ -309,6 +389,7 @@ model User {
   email                     String           @unique
   emailVerified             DateTime?        @map(name: "email_verified")
   password                  String?
+  onboardingCompleted       Boolean          @default(false)
   identityProvider          IdentityProvider @default(email)
   identityProviderAccountId String?
   memberships               Membership[]
@@ -316,4 +397,8 @@ model User {
   groupId                   String?
   invitesCreated            Invite[]         @relation("inviteCreatedBy")
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
+  role                      Role?
+  objective                 Objective?
+  /// [UserNotificationSettings]
+  notificationSettings      Json             @default("{}")
 }

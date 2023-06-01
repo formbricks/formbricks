@@ -1,4 +1,4 @@
-export function VeryDisappointedIcon(props: any) {
+export const VeryDisappointedIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g clipPath="url(#clip0_1_422)">
@@ -46,4 +46,4 @@ export function VeryDisappointedIcon(props: any) {
       </defs>
     </svg>
   );
-}
+};

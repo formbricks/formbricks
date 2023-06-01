@@ -24,11 +24,23 @@ const navigation = [
     ],
   },
   {
-    title: "Events",
+    title: "Actions",
     links: [
-      { title: "Why Events?", href: "/docs/events/why" },
-      { title: "No-Code Events", href: "/docs/events/no-code" },
-      { title: "Code Events", href: "/docs/events/code" },
+      { title: "Why Actions?", href: "/docs/actions/why" },
+      { title: "No-Code Actions", href: "/docs/actions/no-code" },
+      { title: "Code Actions", href: "/docs/actions/code" },
+    ],
+  },
+  {
+    title: "Best Practices",
+    links: [
+      { title: "Learn from Churn", href: "/docs/best-practices/cancel-subscription" },
+      { title: "Interview Prompt", href: "/docs/best-practices/interview-prompt" },
+      { title: "Product-Market Fit", href: "/docs/best-practices/pmf-survey" },
+      { title: "Trial Conversion", href: "/docs/best-practices/improve-trial-cr" },
+      { title: "Feature Chaser", href: "/docs/best-practices/feature-chaser" },
+      { title: "Feedback Box", href: "/docs/best-practices/feedback-box" },
+      { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
     ],
   },
   {

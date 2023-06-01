@@ -1,7 +1,22 @@
-import { Question } from "./questions";
+import type { Question } from "./questions";
 
-export interface QuestionSummary {
-  question: Question;
+export interface Response {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  finished: boolean;
+  surveyId: string;
+  personId?: string;
+  data: {
+    [questionId: string]: string;
+  };
+  meta: {
+    [key: string]: string;
+  };
+}
+
+export interface QuestionSummary<T extends Question> {
+  question: T;
   responses: {
     id: string;
     personId: string;

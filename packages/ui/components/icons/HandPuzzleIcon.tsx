@@ -1,4 +1,4 @@
-export function HandPuzzleIcon(props: any) {
+export const HandPuzzleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
   return (
     <svg width="77" height="77" viewBox="0 0 77 77" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g clipPath="url(#clip0_914_610)">
@@ -51,4 +51,4 @@ export function HandPuzzleIcon(props: any) {
       </defs>
     </svg>
   );
-}
+};

@@ -1,10 +1,11 @@
-import { ProgressBar } from "@formbricks/ui";
+import { MultipleChoiceMultiQuestion, MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
+import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 
 interface MultipleChoiceSummaryProps {
-  questionSummary: QuestionSummary;
+  questionSummary: QuestionSummary<MultipleChoiceMultiQuestion | MultipleChoiceSingleQuestion>;
 }
 
 interface ChoiceResult {
@@ -51,7 +52,7 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
     // sort by count and transform to array
     const results = Object.values(resultsDict).sort((a: any, b: any) => b.count - a.count);
     return results;
-  }, [questionSummary]);
+  }, [questionSummary, isSingleChoice]);
 
   const totalResponses = useMemo(() => {
     let total = 0;

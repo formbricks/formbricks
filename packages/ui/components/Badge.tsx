@@ -11,7 +11,14 @@ interface BadgeProps {
   className?: string;
 }
 
-export function Badge({ text, type, size, StartIcon, startIconClassName, className }: BadgeProps) {
+export const Badge: React.FC<BadgeProps> = ({
+  text,
+  type,
+  size,
+  StartIcon,
+  startIconClassName,
+  className,
+}) => {
   const bgColor = {
     warning: "bg-amber-100",
     success: "bg-green-100",
@@ -52,4 +59,4 @@ export function Badge({ text, type, size, StartIcon, startIconClassName, classNa
       {text}
     </span>
   );
-}
+};

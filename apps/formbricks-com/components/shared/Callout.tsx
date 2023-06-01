@@ -4,7 +4,7 @@ import { Icon } from "@/components/shared/Icon";
 
 const styles = {
   note: {
-    container: "bg-slate-50 dark:bg-slate-800/60 dark:ring-1 dark:ring-slate-300/10",
+    container: "bg-slate-100 dark:bg-slate-800/60 dark:ring-1 dark:ring-slate-300/10",
     title: "text-slate-900 dark:text-slate-400",
     body: "text-slate-800 [--tw-prose-background:theme(colors.slate.50)] prose-a:text-slate-900 prose-code:text-slate-900 dark:text-slate-300 dark:prose-code:text-slate-300",
   },

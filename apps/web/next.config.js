@@ -1,18 +1,27 @@
 /** @type {import('next').NextConfig} */
 
+const path = require("path");
+const Dotenv = require("dotenv-webpack");
+
+const rootPath = path.join(__dirname, "..", "..");
+
 const { createId } = require("@paralleldrive/cuid2");
 
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   output: "standalone",
+  experimental: {
+    serverActions: true,
+  },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "avatars.githubusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
       },
     ],
   },
@@ -48,8 +57,17 @@ const nextConfig = {
       },
     ];
   },
+  webpack: (config) => {
+    config.plugins.push(
+      new Dotenv({
+        path: path.resolve(rootPath, ".env"),
+      })
+    );
+    return config;
+  },
   env: {
     INSTANCE_ID: createId(),
+    INTERNAL_SECRET: createId(),
   },
 };
 

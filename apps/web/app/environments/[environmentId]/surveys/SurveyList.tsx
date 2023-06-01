@@ -1,5 +1,6 @@
 "use client";
 
+import { Template } from "@/../../packages/types/templates";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import {
   DropdownMenu,
@@ -10,32 +11,53 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { deleteSurvey, useSurveys } from "@/lib/surveys/surveys";
+import { useEnvironment } from "@/lib/environments/environments";
+import { createSurvey, deleteSurvey, duplicateSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Badge, ErrorComponent } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import {
   ComputerDesktopIcon,
+  DocumentDuplicateIcon,
   EllipsisHorizontalIcon,
   LinkIcon,
   PencilSquareIcon,
+  EyeIcon,
   TrashIcon,
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import TemplateList from "./templates/TemplateList";
 
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
+  const { environment } = useEnvironment(environmentId);
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
 
   const [activeSurvey, setActiveSurvey] = useState("" as any);
   const [activeSurveyIdx, setActiveSurveyIdx] = useState("" as any);
 
   const newSurvey = async () => {
     router.push(`/environments/${environmentId}/surveys/templates`);
+  };
+
+  const newSurveyFromTemplate = async (template: Template) => {
+    setIsCreateSurveyLoading(true);
+    const augmentedTemplate = {
+      ...template.preset,
+      type: environment?.widgetSetupCompleted ? "web" : "link",
+    };
+    try {
+      const survey = await createSurvey(environmentId, augmentedTemplate);
+      router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
+    } catch (e) {
+      toast.error("An error occured creating a new survey");
+      setIsCreateSurveyLoading(false);
+    }
   };
 
   const deleteSurveyAction = async (survey, surveyIdx) => {
@@ -52,6 +74,16 @@ export default function SurveysList({ environmentId }) {
     }
   };
 
+  const duplicateSurveyAndRefresh = async (surveyId) => {
+    try {
+      await duplicateSurvey(environmentId, surveyId);
+      mutateSurveys();
+      toast.success("Survey duplicated successfully.");
+    } catch (error) {
+      toast.error("Failed to duplicate the survey.");
+    }
+  };
+
   if (isLoadingSurveys) {
     return <LoadingSpinner />;
   }
@@ -60,13 +92,37 @@ export default function SurveysList({ environmentId }) {
     return <ErrorComponent />;
   }
 
+  if (surveys.length === 0) {
+    return (
+      <div className="mx-auto flex w-full max-w-5xl flex-col py-12">
+        {isCreateSurveyLoading ? (
+          <LoadingSpinner />
+        ) : (
+          <>
+            <div className="px-7 pb-4">
+              <h1 className="text-3xl font-extrabold text-slate-700">
+                You&apos;re all set! Time to create your first survey.
+              </h1>
+            </div>
+            <TemplateList
+              environmentId={environmentId}
+              onTemplateClick={(template) => {
+                newSurveyFromTemplate(template);
+              }}
+            />
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
       <ul className="grid grid-cols-2 place-content-stretch gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 ">
         <button onClick={() => newSurvey()}>
           <li className="col-span-1 h-56">
-            <div className="from-brand-light to-brand-dark delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-b font-light text-white shadow transition ease-in-out hover:scale-105">
-              <div className="px-4 py-8 sm:p-14 xl:p-10">
+            <div className="delay-50 flex h-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-slate-900 to-slate-800 font-light text-white shadow transition ease-in-out hover:scale-105 hover:from-slate-800 hover:to-slate-700">
+              <div id="main-cta" className="px-4 py-8 sm:p-14 xl:p-10">
                 <PlusIcon className="stroke-thin mx-auto h-14 w-14" />
                 Create Survey
               </div>
@@ -138,6 +194,24 @@ export default function SurveysList({ environmentId }) {
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <button
+                              className="flex w-full items-center"
+                              onClick={async () => {
+                                duplicateSurveyAndRefresh(survey.id);
+                              }}>
+                              <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
+                              Duplicate
+                            </button>
+                          </DropdownMenuItem>
+                          {/* <DropdownMenuItem>
+                            <Link
+                              className="flex w-full items-center"
+                              href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                              <ArrowUturnUpIcon className="mr-2 h-4 w-4" />
+                              Copy to Production
+                            </Link>
+                          </DropdownMenuItem> */}
+                          <DropdownMenuItem>
+                            <button
                               className="flex w-full  items-center"
                               onClick={() => {
                                 setActiveSurvey(survey);
@@ -148,6 +222,32 @@ export default function SurveysList({ environmentId }) {
                               Delete
                             </button>
                           </DropdownMenuItem>
+                          {survey.type === "link" && survey.status !== "draft" && (
+                            <>
+                              <DropdownMenuItem>
+                                <Link
+                                  className="flex w-full items-center"
+                                  href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}
+                                  target="_blank">
+                                  <EyeIcon className="mr-2 h-4 w-4" />
+                                  Preview Survey
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <button
+                                  className="flex w-full items-center"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(
+                                      `${window.location.protocol}//${window.location.host}/s/${survey.id}`
+                                    );
+                                    toast.success("Copied link to clipboard");
+                                  }}>
+                                  <LinkIcon className="mr-2 h-4 w-4" />
+                                  Copy Link
+                                </button>
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>

@@ -1,11 +1,11 @@
 "use client";
-import { useState } from "react";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useTeam } from "@/lib/teams";
+import { useTeam } from "@/lib/teams/teams";
 import { Badge, Button, ErrorComponent } from "@formbricks/ui";
+import { CheckIcon } from "@heroicons/react/24/outline";
 import type { Session } from "next-auth";
 import { useRouter } from "next/navigation";
-import { CheckIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 const stripeURl =
   process.env.NODE_ENV === "production"
@@ -87,7 +87,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
                 ))}
               </ul>
               <p className="mt-6 text-3xl">
-                <span className="text-slate-80 font-light">Always free</span>
+                <span className="text-slate-800font-light">Always free</span>
               </p>
               {session.user?.plan === "free" ? (
                 <Button variant="minimal" disabled className="mt-6 w-full justify-center py-4 shadow-sm">
@@ -105,7 +105,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
           </div>
         </div>
         <div className="">
-          <div className="float-right -mt-2 mr-6 animate-bounce rounded-full bg-slate-700 px-3 py-1 text-xs font-semibold text-slate-50">
+          <div className="float-right -mt-2 mr-6 rounded-full bg-slate-700 px-3 py-1 text-xs font-semibold text-slate-50">
             Limited Early Bird Deal
           </div>
           <div className="rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
@@ -141,7 +141,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
                 </Button>
               ) : (
                 <Button
-                  variant="highlight"
+                  variant="darkCTA"
                   className="mt-6 w-full justify-center py-4 text-white shadow-sm"
                   onClick={() => router.push(`${stripeURl}?client_reference_id=${team.id}`)}>
                   Upgrade

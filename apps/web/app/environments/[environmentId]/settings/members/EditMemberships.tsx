@@ -4,6 +4,7 @@ import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { addMember, deleteInvite, removeMember, resendInvite, useMembers } from "@/lib/members";
 import {
+  Badge,
   Button,
   ProfileAvatar,
   Tooltip,
@@ -13,15 +14,20 @@ import {
 } from "@formbricks/ui";
 import { PaperAirplaneIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
-import AddMemberModal from "./AddMemberModal";
-import { Badge } from "@formbricks/ui";
 import toast from "react-hot-toast";
+import AddMemberModal from "./AddMemberModal";
+import CreateTeamModal from "@/components/team/CreateTeamModal";
 
-export function EditMemberships({ environmentId }) {
+type EditMembershipsProps = {
+  environmentId: string;
+};
+
+export function EditMemberships({ environmentId }: EditMembershipsProps) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useMembers(environmentId);
 
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
+  const [isCreateTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
   const [activeMember, setActiveMember] = useState({} as any);
 
@@ -30,6 +36,16 @@ export function EditMemberships({ environmentId }) {
     setActiveMember(member);
     setDeleteMemberModalOpen(true);
   };
+
+  if (isLoadingTeam) {
+    return <LoadingSpinner />;
+  }
+
+  if (isErrorTeam || !team) {
+    console.error(isErrorTeam);
+    return <div>Error</div>;
+  }
+
   const handleDeleteMember = async () => {
     if (activeMember.accepted) {
       await removeMember(team.teamId, activeMember.userId);
@@ -50,18 +66,17 @@ export function EditMemberships({ environmentId }) {
     mutateTeam();
   };
 
-  if (isLoadingTeam) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorTeam) {
-    console.error(isErrorTeam);
-    return <div>Error</div>;
-  }
-
   return (
     <>
       <div className="mb-6 text-right">
+        <Button
+          variant="secondary"
+          className="mr-2"
+          onClick={() => {
+            setCreateTeamModalOpen(true);
+          }}>
+          Create New Team
+        </Button>
         <Button
           variant="primary"
           onClick={() => {
@@ -80,15 +95,17 @@ export function EditMemberships({ environmentId }) {
         <div className="grid-cols-7">
           {[...team.members, ...team.invitees].map((member) => (
             <div
-              className="grid h-12 w-full grid-cols-7 content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
+              className="grid h-auto w-full grid-cols-7 content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
               key={member.email}>
               <div className="h-58 px-6 ">
                 <ProfileAvatar userId={member.userId || member.email} />
               </div>
-              <div className="ph-no-capture col-span-2 flex flex-col justify-center">
+              <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
                 <p>{member.name}</p>
               </div>
-              <div className="ph-no-capture col-span-2 flex flex-col justify-center">{member.email}</div>
+              <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
+                {member.email}
+              </div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
                 {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}
                 {member.role !== "owner" && (
@@ -97,7 +114,7 @@ export function EditMemberships({ environmentId }) {
                   </button>
                 )}
                 {!member.accepted && (
-                  <TooltipProvider>
+                  <TooltipProvider delayDuration={50}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
@@ -119,7 +136,7 @@ export function EditMemberships({ environmentId }) {
           ))}
         </div>
       </div>
-
+      <CreateTeamModal open={isCreateTeamModalOpen} setOpen={(val) => setCreateTeamModalOpen(val)} />
       <AddMemberModal
         open={isAddMemberModalOpen}
         setOpen={setAddMemberModalOpen}

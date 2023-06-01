@@ -1,3 +1,4 @@
+import type { AttributeFilter } from "@formbricks/types/surveys";
 import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -28,6 +29,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
       include: {
         triggers: true,
+        attributeFilters: true,
       },
     });
 
@@ -56,6 +58,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       responseRate,
       numDisplays,
       triggers: surveyData.triggers.map((t) => t.eventClassId),
+      attributeFilters: surveyData.attributeFilters.map((f) => ({
+        attributeClassId: f.attributeClassId,
+        condition: f.condition,
+        value: f.value,
+      })),
     });
   }
 
@@ -66,8 +73,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         surveyId,
       },
     });
-    let data: any = { updatedAt: new Date() };
+    const currentAttributeFilters = await prisma.surveyAttributeFilter.findMany({
+      where: {
+        surveyId,
+      },
+    });
+    let data: any = {};
     const body = { ...req.body };
+
+    delete body.updatedAt;
 
     // delete unused fields for link surveys
     if (body.type === "link") {
@@ -78,7 +92,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (body.triggers) {
       const newTriggers: string[] = [];
       const removedTriggers: string[] = [];
-      // find removed triggers
+      // find added triggers
       for (const eventClassId of body.triggers) {
         if (!eventClassId) {
           continue;
@@ -119,6 +133,76 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       }
       delete body.triggers;
     }
+
+    const attributeFilters: AttributeFilter[] = body.attributeFilters;
+
+    if (attributeFilters) {
+      const newFilters: AttributeFilter[] = [];
+      const removedFilterIds: string[] = [];
+      // find added attribute filters
+      for (const attributeFilter of attributeFilters) {
+        if (!attributeFilter.attributeClassId || !attributeFilter.condition || !attributeFilter.value) {
+          continue;
+        }
+        if (
+          currentAttributeFilters.find(
+            (f) =>
+              f.attributeClassId === attributeFilter.attributeClassId &&
+              f.condition === attributeFilter.condition &&
+              f.value === attributeFilter.value
+          )
+        ) {
+          continue;
+        } else {
+          newFilters.push({
+            attributeClassId: attributeFilter.attributeClassId,
+            condition: attributeFilter.condition,
+            value: attributeFilter.value,
+          });
+        }
+      }
+      // find removed attribute filters
+      for (const attributeFilter of currentAttributeFilters) {
+        if (
+          attributeFilters.find(
+            (f) =>
+              f.attributeClassId === attributeFilter.attributeClassId &&
+              f.condition === attributeFilter.condition &&
+              f.value === attributeFilter.value
+          )
+        ) {
+          continue;
+        } else {
+          removedFilterIds.push(attributeFilter.attributeClassId);
+        }
+      }
+      // create new attribute filters
+      if (newFilters.length > 0) {
+        data.attributeFilters = {
+          ...(data.attributeFilters || []),
+          create: newFilters.map((attributeFilter) => ({
+            attributeClassId: attributeFilter.attributeClassId,
+            condition: attributeFilter.condition,
+            value: attributeFilter.value,
+          })),
+        };
+      }
+      // delete removed triggers
+      if (removedFilterIds.length > 0) {
+        // delete all attribute filters that match the removed attribute classes
+        await Promise.all(
+          removedFilterIds.map(async (attributeClassId) => {
+            await prisma.surveyAttributeFilter.deleteMany({
+              where: {
+                attributeClassId,
+              },
+            });
+          })
+        );
+      }
+      delete body.attributeFilters;
+    }
+
     data = {
       ...data,
       ...body,

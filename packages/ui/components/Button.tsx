@@ -6,14 +6,14 @@ import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, forwardRef } from "r
 type SVGComponent = React.FunctionComponent<React.SVGProps<SVGSVGElement>> | LucideIcon;
 
 export type ButtonBaseProps = {
-  variant?: "highlight" | "primary" | "secondary" | "minimal" | "warn" | "alert";
+  variant?: "highlight" | "primary" | "secondary" | "minimal" | "warn" | "alert" | "darkCTA";
   size?: "base" | "sm" | "lg" | "fab" | "icon";
   loading?: boolean;
   disabled?: boolean;
   onClick?: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void;
-  StartIcon?: SVGComponent;
+  StartIcon?: SVGComponent | React.ComponentType<React.ComponentProps<"svg">>;
   startIconClassName?: string;
-  EndIcon?: SVGComponent;
+  EndIcon?: SVGComponent | React.ComponentType<React.ComponentProps<"svg">>;
   endIconClassName?: string;
   shallow?: boolean;
 };
@@ -61,7 +61,7 @@ export const Button: React.ForwardRefExoticComponent<
         "inline-flex items-center appearance-none",
         // different styles depending on size
         size === "sm" && "px-3 py-2 text-sm leading-4 font-medium rounded-md",
-        size === "base" && "px-6 py-2 text-sm font-medium rounded-md",
+        size === "base" && "px-6 py-3 text-sm font-medium rounded-md",
         size === "lg" && "px-4 py-2 text-base font-medium rounded-md",
         size === "icon" &&
           "w-10 h-10 justify-center group p-2 border rounded-lg border-transparent text-neutral-400 hover:border-slate-200 transition",
@@ -90,11 +90,15 @@ export const Button: React.ForwardRefExoticComponent<
         variant === "secondary" &&
           (disabled
             ? "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800"
-            : "text-slate-600 hover:text-slate-500 bg-slate-200 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),
+            : "text-slate-600 hover:text-slate-500 bg-slate-200 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-300 focus:ring-neutral-500"),
         variant === "warn" &&
           (disabled
             ? "text-slate-400 bg-transparent"
             : "hover:bg-red-200 text-red-700 bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:bg-red-50 focus:ring-red-500"),
+        variant === "darkCTA" &&
+          (disabled
+            ? "text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800"
+            : "text-slate-100 hover:text-slate-50 bg-gradient-to-br from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 dark:bg-slate-200 dark:text-slate-700 dark:hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-1  focus:bg-slate-700 focus:ring-neutral-500"),
 
         // set not-allowed cursor if disabled
         loading ? "cursor-wait" : disabled ? "cursor-not-allowed" : "",
@@ -137,9 +141,7 @@ export const Button: React.ForwardRefExoticComponent<
           </svg>
         </div>
       )}
-      {EndIcon && (
-        <EndIcon className={cn("-mr-1 inline h-5 w-5 ltr:ml-2 rtl:mr-2", endIconClassName || "")} />
-      )}
+      {EndIcon && <EndIcon className={cn("-mr-1 ml-2 inline h-5 w-5 rtl:mr-2", endIconClassName || "")} />}
     </>
   );
   return props.href ? (

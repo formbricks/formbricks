@@ -1,13 +1,14 @@
 "use client";
 
 import type { Survey } from "@formbricks/types/surveys";
-import { DragDropContext } from "react-beautiful-dnd";
-import AddQuestionButton from "./AddQuestionButton";
-import QuestionCard from "./QuestionCard";
-import { StrictModeDroppable } from "./StrictModeDroppable";
-import EditThankYouCard from "./EditThankYouCard";
 import { createId } from "@paralleldrive/cuid2";
 import { useMemo } from "react";
+import { DragDropContext } from "react-beautiful-dnd";
+import toast from "react-hot-toast";
+import AddQuestionButton from "./AddQuestionButton";
+import EditThankYouCard from "./EditThankYouCard";
+import QuestionCard from "./QuestionCard";
+import { StrictModeDroppable } from "./StrictModeDroppable";
 
 interface QuestionsViewProps {
   localSurvey: Survey;
@@ -48,10 +49,53 @@ export default function QuestionsView({
   };
 
   const deleteQuestion = (questionIdx: number) => {
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    const questionId = localSurvey.questions[questionIdx].id;
+    const updatedSurvey: Survey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions.splice(questionIdx, 1);
+
+    updatedSurvey.questions.forEach((question) => {
+      if (!question.logic) return;
+      question.logic.forEach((rule) => {
+        if (rule.destination === questionId) {
+          rule.destination = "end";
+        }
+      });
+    });
+
     setLocalSurvey(updatedSurvey);
-    delete internalQuestionIdMap[localSurvey.questions[questionIdx].id];
+    delete internalQuestionIdMap[questionId];
+
+    if (questionId === activeQuestionId) {
+      if (questionIdx < localSurvey.questions.length - 1) {
+        setActiveQuestionId(localSurvey.questions[questionIdx + 1].id);
+      } else if (localSurvey.thankYouCard.enabled) {
+        setActiveQuestionId("thank-you-card");
+      } else {
+        setActiveQuestionId(localSurvey.questions[questionIdx - 1].id);
+      }
+    }
+    toast.success("Question deleted.");
+  };
+
+  const duplicateQuestion = (questionIdx: number) => {
+    const questionToDuplicate = JSON.parse(JSON.stringify(localSurvey.questions[questionIdx]));
+    const newQuestionId = createId();
+
+    // create a copy of the question with a new id
+    const duplicatedQuestion = {
+      ...questionToDuplicate,
+      id: newQuestionId,
+    };
+
+    // insert the new question right after the original one
+    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
+    updatedSurvey.questions.splice(questionIdx + 1, 0, duplicatedQuestion);
+
+    setLocalSurvey(updatedSurvey);
+    setActiveQuestionId(newQuestionId);
+    internalQuestionIdMap[newQuestionId] = createId();
+
+    toast.success("Question duplicated.");
   };
 
   const addQuestion = (question: any) => {
@@ -74,8 +118,19 @@ export default function QuestionsView({
     setLocalSurvey(updatedSurvey);
   };
 
+  const moveQuestion = (questionIndex: number, up: boolean) => {
+    // move the question up or down in the localSurvey questions array
+    const newQuestions = Array.from(localSurvey.questions);
+    const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
+    const destinationIndex = up ? questionIndex - 1 : questionIndex + 1;
+    newQuestions.splice(destinationIndex, 0, reorderedQuestion);
+
+    const updatedSurvey = { ...localSurvey, questions: newQuestions };
+    setLocalSurvey(updatedSurvey);
+  };
+
   return (
-    <div className="px-5 py-4">
+    <div className="mt-12 px-5 py-4">
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="mb-5 grid grid-cols-1 gap-5 ">
           <StrictModeDroppable droppableId="questionsList">
@@ -88,7 +143,9 @@ export default function QuestionsView({
                     localSurvey={localSurvey}
                     question={question}
                     questionIdx={questionIdx}
+                    moveQuestion={moveQuestion}
                     updateQuestion={updateQuestion}
+                    duplicateQuestion={duplicateQuestion}
                     deleteQuestion={deleteQuestion}
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}

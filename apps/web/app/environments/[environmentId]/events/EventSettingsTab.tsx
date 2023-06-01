@@ -1,19 +1,27 @@
+import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
-import { ErrorComponent } from "@formbricks/ui";
-import { Input } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { deleteEventClass, useEventClass, useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { useEventClassMutation } from "@/lib/eventClasses/mutateEventClasses";
-import { Controller, useForm } from "react-hook-form";
-import type { NoCodeConfig, Event } from "@formbricks/types/events";
-import { testURLmatch } from "./testURLmatch";
-import { useState } from "react";
-import { toast } from "react-hot-toast";
-import clsx from "clsx";
+import type { Event, NoCodeConfig } from "@formbricks/types/events";
+import {
+  Button,
+  ErrorComponent,
+  Input,
+  Label,
+  RadioGroup,
+  RadioGroupItem,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import clsx from "clsx";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { testURLmatch } from "./testURLmatch";
 
 interface EventSettingsTabProps {
   environmentId: string;

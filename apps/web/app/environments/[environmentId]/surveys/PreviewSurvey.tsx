@@ -1,45 +1,118 @@
+import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Modal from "@/components/preview/Modal";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
-import ContentWrapper from "@/components/shared/ContentWrapper";
-import type { Question } from "@formbricks/types/questions";
+import { useEnvironment } from "@/lib/environments/environments";
+import { useProduct } from "@/lib/products/products";
+import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface PreviewSurveyProps {
-  localSurvey?: Survey;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
   questions: Question[];
   brandColor: string;
+  environmentId: string;
+  surveyType: Survey["type"];
+  thankYouCard: Survey["thankYouCard"];
+  autoClose: Survey["autoClose"];
+  previewType?: "modal" | "fullwidth" | "email";
 }
 
 export default function PreviewSurvey({
-  localSurvey,
   setActiveQuestionId,
   activeQuestionId,
   questions,
   brandColor,
+  environmentId,
+  surveyType,
+  thankYouCard,
+  autoClose,
+  previewType,
 }: PreviewSurveyProps) {
+  const { environment } = useEnvironment(environmentId);
+  const { product } = useProduct(environmentId);
+
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
+  const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
+  const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
+  const [showFormbricksSignature, setShowFormbricksSignature] = useState(false);
 
   useEffect(() => {
-    if (activeQuestionId && localSurvey) {
-      setProgress(calculateProgress(localSurvey));
+    if (product) {
+      setShowFormbricksSignature(product.formbricksSignature);
+    }
+  }, [product]);
+
+  const [countdownProgress, setCountdownProgress] = useState(1);
+  const startRef = useRef(performance.now());
+  const frameRef = useRef<number | null>(null);
+  const [countdownStop, setCountdownStop] = useState(false);
+
+  const handleStopCountdown = () => {
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+      setCountdownStop(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!autoClose) return;
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
     }
 
-    function calculateProgress(survey) {
-      const elementIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
-      return elementIdx / survey.questions.length;
+    const frame = () => {
+      if (!autoClose || !startRef.current) return;
+
+      const timeout = autoClose * 1000;
+      const elapsed = performance.now() - startRef.current;
+      const remaining = Math.max(0, timeout - elapsed);
+
+      setCountdownProgress(remaining / timeout);
+
+      if (remaining > 0) {
+        frameRef.current = requestAnimationFrame(frame);
+      } else {
+        handleStopCountdown();
+        // close modal
+      }
+    };
+
+    setCountdownStop(false);
+    setCountdownProgress(1);
+    startRef.current = performance.now();
+    frameRef.current = requestAnimationFrame(frame);
+
+    return () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, [autoClose]);
+
+  useEffect(() => {
+    if (activeQuestionId) {
+      setLastActiveQuestionId(activeQuestionId);
+      setProgress(calculateProgress(questions, activeQuestionId));
+    } else if (lastActiveQuestionId) {
+      setProgress(calculateProgress(questions, lastActiveQuestionId));
     }
-  }, [activeQuestionId, localSurvey]);
+
+    function calculateProgress(questions, activeQuestionId) {
+      if (activeQuestionId === "thank-you-card") return 1;
+
+      const elementIdx = questions.findIndex((e) => e.id === activeQuestionId);
+      return elementIdx / questions.length;
+    }
+  }, [activeQuestionId, lastActiveQuestionId, questions]);
 
   useEffect(() => {
     // close modal if there are no questions left
-    if (localSurvey?.type === "web" && !localSurvey?.thankYouCard.enabled) {
+    if (surveyType === "web" && !thankYouCard.enabled) {
       if (activeQuestionId === "thank-you-card") {
         setIsModalOpen(false);
         setTimeout(() => {
@@ -48,99 +121,149 @@ export default function PreviewSurvey({
         }, 500);
       }
     }
-  }, [activeQuestionId, localSurvey, questions, setActiveQuestionId]);
+  }, [activeQuestionId, surveyType, questions, setActiveQuestionId, thankYouCard]);
 
-  const gotoNextQuestion = () => {
-    const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
-    if (currentIndex < questions.length - 1) {
-      setActiveQuestionId(questions[currentIndex + 1].id);
+  function evaluateCondition(logic: Logic, answerValue: any): boolean {
+    switch (logic.condition) {
+      case "equals":
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 1 && answerValue.includes(logic.value)) ||
+          answerValue.toString() === logic.value
+        );
+      case "notEquals":
+        return answerValue !== logic.value;
+      case "lessThan":
+        return answerValue < logic.value;
+      case "lessEqual":
+        return answerValue <= logic.value;
+      case "greaterThan":
+        return answerValue > logic.value;
+      case "greaterEqual":
+        return answerValue >= logic.value;
+      case "includesAll":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.every((v) => answerValue.includes(v))
+        );
+      case "includesOne":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.some((v) => answerValue.includes(v))
+        );
+      case "submitted":
+        if (typeof answerValue === "string") {
+          return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
+        } else if (Array.isArray(answerValue)) {
+          return answerValue.length > 0;
+        } else if (typeof answerValue === "number") {
+          return answerValue !== null;
+        }
+        return false;
+      case "skipped":
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 0) ||
+          answerValue === "" ||
+          answerValue === null ||
+          answerValue === "dismissed"
+        );
+      default:
+        return false;
+    }
+  }
+
+  function getNextQuestion(answer: any): string {
+    // extract activeQuestionId from answer to make it work when form is collapsed.
+    const activeQuestionId = Object.keys(answer)[0];
+    if (!activeQuestionId) return "";
+
+    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
+
+    const answerValue = answer[activeQuestionId];
+    const currentQuestion = questions[currentQuestionIndex];
+
+    if (currentQuestion.logic && currentQuestion.logic.length > 0) {
+      for (let logic of currentQuestion.logic) {
+        if (!logic.destination) continue;
+
+        if (evaluateCondition(logic, answerValue)) {
+          return logic.destination;
+        }
+      }
+    }
+    return questions[currentQuestionIndex + 1]?.id || "end";
+  }
+
+  const gotoNextQuestion = (data) => {
+    const nextQuestionId = getNextQuestion(data);
+
+    if (nextQuestionId !== "end") {
+      setActiveQuestionId(nextQuestionId);
     } else {
-      if (localSurvey?.thankYouCard?.enabled) {
+      if (thankYouCard?.enabled) {
         setActiveQuestionId("thank-you-card");
+        setProgress(1);
       } else {
         setIsModalOpen(false);
         setTimeout(() => {
           setActiveQuestionId(questions[0].id);
           setIsModalOpen(true);
         }, 500);
-        if (localSurvey?.thankYouCard?.enabled) {
-          setActiveQuestionId("thank-you-card");
-          setProgress(1);
-        } else {
-          setIsModalOpen(false);
-          setTimeout(() => {
-            setActiveQuestionId(questions[0].id);
-            setIsModalOpen(true);
-          }, 500);
-        }
       }
     }
   };
 
-  const resetPreview = () => {
-    setIsModalOpen(false);
-    setTimeout(() => {
-      setActiveQuestionId(questions[0].id);
-      setIsModalOpen(true);
-    }, 500);
-  };
+  useEffect(() => {
+    if (environment && environment.widgetSetupCompleted) {
+      setWidgetSetupCompleted(true);
+    } else {
+      setWidgetSetupCompleted(false);
+    }
+  }, [environment]);
 
-  if (!activeQuestionId) {
-    return null;
+  if (!previewType) {
+    previewType = widgetSetupCompleted ? "modal" : "fullwidth";
+
+    if (!activeQuestionId) {
+      return <></>;
+    }
   }
 
   return (
-    <>
-      {localSurvey?.type === "link" ? (
-        <div className="relative flex h-full flex-1 flex-shrink-0 flex-col overflow-hidden border border-amber-400">
-          <div
-            className="absolute right-3 mr-6 flex items-center rounded-b bg-amber-500 px-3 text-sm font-semibold text-white opacity-100 transition-all duration-500 ease-in-out hover:cursor-pointer"
-            onClick={resetPreview}>
-            <ArrowPathIcon className="mr-1.5 mt-0.5 h-4 w-4 " />
-            Preview
-          </div>
-          <div className="flex h-full flex-1 items-center overflow-y-auto bg-white">
-            <ContentWrapper className="max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-3xl">
-              {activeQuestionId == "thank-you-card" ? (
-                <ThankYouCard
-                  brandColor={brandColor}
-                  headline={localSurvey?.thankYouCard?.headline || ""}
-                  subheader={localSurvey?.thankYouCard?.subheader || ""}
-                />
-              ) : (
-                questions.map(
-                  (question, idx) =>
-                    activeQuestionId === question.id && (
-                      <QuestionConditional
-                        key={question.id}
-                        question={question}
-                        brandColor={brandColor}
-                        lastQuestion={idx === questions.length - 1}
-                        onSubmit={gotoNextQuestion}
-                      />
-                    )
-                )
-              )}
-            </ContentWrapper>
-          </div>
-          <div className="top-0 z-10 w-full border-b bg-white">
-            <div className="mx-auto max-w-lg p-6">
-              <Progress progress={progress} brandColor={brandColor} />
-            </div>
-          </div>
+    <div className="my-4 flex h-full w-5/6 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
+      <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
+        <div className="ml-6 flex space-x-2">
+          <div className="h-3 w-3 rounded-full bg-red-500"></div>
+          <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+          <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
         </div>
-      ) : (
-        <Modal isOpen={isModalOpen} reset={resetPreview}>
-          {activeQuestionId == "thank-you-card" ? (
-            <ThankYouCard
-              brandColor={brandColor}
-              headline={localSurvey?.thankYouCard?.headline || ""}
-              subheader={localSurvey?.thankYouCard?.subheader || ""}
-            />
-          ) : (
-            questions.map(
-              (question, idx) =>
-                activeQuestionId === question.id && (
+        <p>
+          <span className="ml-4 font-mono text-sm text-slate-400">
+            {previewType === "modal" ? "Your web app" : "Preview"}
+          </span>
+        </p>
+      </div>
+
+      {previewType === "modal" ? (
+        <Modal isOpen={isModalOpen}>
+          {!countdownStop && autoClose !== null && autoClose > 0 && (
+            <Progress progress={countdownProgress} brandColor={brandColor} />
+          )}
+          <div
+            onClick={() => handleStopCountdown()}
+            onMouseOver={() => handleStopCountdown()}
+            className="px-4 py-6 sm:p-6">
+            {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+              <ThankYouCard
+                brandColor={brandColor}
+                headline={thankYouCard?.headline || "Thank you!"}
+                subheader={thankYouCard?.subheader || "We appreciate your feedback."}
+              />
+            ) : (
+              questions.map((question, idx) =>
+                (activeQuestionId || lastActiveQuestionId) === question.id ? (
                   <QuestionConditional
                     key={question.id}
                     question={question}
@@ -148,11 +271,46 @@ export default function PreviewSurvey({
                     lastQuestion={idx === questions.length - 1}
                     onSubmit={gotoNextQuestion}
                   />
-                )
-            )
-          )}
+                ) : null
+              )
+            )}
+            {showFormbricksSignature && <FormbricksSignature />}
+          </div>
+          <Progress progress={progress} brandColor={brandColor} />
         </Modal>
+      ) : (
+        <div className="flex flex-grow flex-col">
+          <div className="flex w-full flex-grow flex-col items-center justify-center bg-white">
+            <div className="w-full max-w-md">
+              {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+                <ThankYouCard
+                  brandColor={brandColor}
+                  headline={thankYouCard?.headline || "Thank you!"}
+                  subheader={thankYouCard?.subheader || "We appreciate your feedback."}
+                />
+              ) : (
+                questions.map((question, idx) =>
+                  (activeQuestionId || lastActiveQuestionId) === question.id ? (
+                    <QuestionConditional
+                      key={question.id}
+                      question={question}
+                      brandColor={brandColor}
+                      lastQuestion={idx === questions.length - 1}
+                      onSubmit={gotoNextQuestion}
+                    />
+                  ) : null
+                )
+              )}
+            </div>
+          </div>
+          <div className="z-10 w-full rounded-b-lg bg-white">
+            <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
+              <Progress progress={progress} brandColor={brandColor} />
+              {showFormbricksSignature && <FormbricksSignature />}
+            </div>
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 }

@@ -2,7 +2,7 @@ import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 import { getServerSession } from "next-auth";
 import { EditName, EditAvatar } from "./editProfile";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 
 export default async function ProfileSettingsPage() {
   const session = await getServerSession(authOptions);

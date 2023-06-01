@@ -1,4 +1,7 @@
-export default function Subheader({ subheader, questionId }: { subheader?: string; questionId: string }) {
+export const Subheader: React.FC<{ subheader?: string; questionId: string }> = ({
+  subheader,
+  questionId,
+}) => {
   return (
     <label
       htmlFor={questionId}
@@ -6,4 +9,6 @@ export default function Subheader({ subheader, questionId }: { subheader?: strin
       {subheader}
     </label>
   );
-}
+};
+
+export default Subheader;

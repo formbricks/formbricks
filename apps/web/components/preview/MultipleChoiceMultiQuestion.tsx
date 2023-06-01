@@ -3,6 +3,7 @@ import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import SubmitButton from "@/components/preview/SubmitButton";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -43,7 +44,7 @@ export default function MultipleChoiceMultiQuestion({
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
         <fieldset>
-          <legend className="sr-only">Choices</legend>
+          <legend className="sr-only">Options</legend>
           <div className="relative space-y-2 rounded-md bg-white">
             {question.choices &&
               question.choices.map((choice) => (
@@ -93,12 +94,7 @@ export default function MultipleChoiceMultiQuestion({
       />
       <div className="mt-4 flex w-full justify-between">
         <div></div>
-        <button
-          type="submit"
-          className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-          style={{ backgroundColor: brandColor }}>
-          {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
-        </button>
+        <SubmitButton {...{ question, lastQuestion, brandColor }} />
       </div>
     </form>
   );

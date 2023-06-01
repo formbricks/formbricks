@@ -1,21 +1,24 @@
 "use client";
 
-import { ColorPicker } from "@formbricks/ui";
+import { cn } from "@formbricks/lib/cn";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Button } from "@formbricks/ui";
-import { Label } from "@formbricks/ui";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
-import { Switch } from "@formbricks/ui";
 import { useEnvironment } from "@/lib/environments/environments";
-import { useProduct } from "@/lib/products/products";
 import { useProductMutation } from "@/lib/products/mutateProducts";
+import { useProduct } from "@/lib/products/products";
+import {
+  Button,
+  ColorPicker,
+  ErrorComponent,
+  Label,
+  RadioGroup,
+  RadioGroupItem,
+  Switch,
+} from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { ErrorComponent } from "@formbricks/ui";
 
 export function EditBrandColor({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-
   const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
 
   const [color, setColor] = useState("");
@@ -37,6 +40,7 @@ export function EditBrandColor({ environmentId }) {
       <ColorPicker color={color} onChange={setColor} />
       <Button
         type="submit"
+        variant="darkCTA"
         className="mt-4"
         loading={isMutatingProduct}
         onClick={() => {
@@ -50,7 +54,6 @@ export function EditBrandColor({ environmentId }) {
         }}>
         Save
       </Button>
-      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
     </div>
   );
 }
@@ -85,7 +88,11 @@ export function EditPlacement({ environmentId }) {
                 checked={placement.default}
                 disabled={placement.disabled}
               />
-              <Label htmlFor={placement.value}>{placement.name}</Label>
+              <Label
+                htmlFor={placement.value}
+                className={cn(placement.disabled ? "cursor-not-allowed text-slate-500" : "text-slate-900")}>
+                {placement.name}
+              </Label>
             </div>
           ))}
         </RadioGroup>
@@ -93,34 +100,61 @@ export function EditPlacement({ environmentId }) {
           <div className="absolute bottom-3 right-3 h-16 w-16 rounded bg-slate-700"></div>
         </div>
       </div>
-      <Button type="submit" className="mt-4" disabled>
+      <Button type="submit" variant="darkCTA" className="mt-4" disabled>
         Save
       </Button>
-      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
     </div>
   );
 }
 
 export function EditFormbricksSignature({ environmentId }) {
   const { isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+  const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
 
-  if (isLoadingEnvironment) {
+  const [formbricksSignature, setFormbricksSignature] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      setFormbricksSignature(product.formbricksSignature);
+    }
+  }, [product]);
+
+  const toggleSignature = () => {
+    const newSignatureState = !formbricksSignature;
+    setFormbricksSignature(newSignatureState);
+    triggerProductMutate({ formbricksSignature: newSignatureState })
+      .then(() => {
+        toast.success(newSignatureState ? "Formbricks signature shown." : "Formbricks signature hidden.");
+      })
+      .catch((error) => {
+        toast.error(`Error: ${error.message}`);
+      });
+  };
+
+  if (isLoadingEnvironment || isLoadingProduct) {
     return <LoadingSpinner />;
   }
-  if (isErrorEnvironment) {
+
+  if (isErrorEnvironment || isErrorProduct) {
     return <ErrorComponent />;
   }
 
-  return (
-    <div className="w-full items-center">
-      <div className="flex items-center space-x-2">
-        <Switch disabled id="signature" />
-        <Label htmlFor="signature">Show Formbricks Signature</Label>
+  if (formbricksSignature !== null) {
+    return (
+      <div className="w-full items-center">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="signature"
+            checked={formbricksSignature}
+            onCheckedChange={toggleSignature}
+            disabled={isMutatingProduct}
+          />
+          <Label htmlFor="signature">Show &apos;Powered by Formbricks&apos; Signature</Label>
+        </div>
       </div>
-      <Button type="submit" className="mt-4" disabled>
-        Save
-      </Button>
-      {/*   <div className="whitespace-pre-wrap">{JSON.stringify(environment, null, 2)}</div>; */}
-    </div>
-  );
+    );
+  }
+
+  return null;
 }

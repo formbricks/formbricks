@@ -1,4 +1,4 @@
-import { JsConfig } from "@formbricks/types/js";
+import type { JsConfig } from "../../../types/js";
 import { Result, wrapThrows } from "./errors";
 
 export class Config {

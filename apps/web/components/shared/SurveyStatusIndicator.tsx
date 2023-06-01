@@ -58,7 +58,7 @@ export default function SurveyStatusIndicator({
                 </>
               ) : status === "paused" ? (
                 <>
-                  <span>Survey paused.</span>
+                  <span className="text-slate-800">Survey paused.</span>
                   <div className=" rounded-full bg-slate-300 p-1">
                     <PauseIcon className="h-3 w-3 text-slate-600" />
                   </div>

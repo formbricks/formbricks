@@ -1,4 +1,3 @@
-import type { Survey as PrismaSurvey } from "@prisma/client";
 import { Question } from "./questions";
 
 export interface ThankYouCard {
@@ -6,11 +5,28 @@ export interface ThankYouCard {
   headline?: string;
   subheader?: string;
 }
-export interface Survey extends Omit<PrismaSurvey, "questions" | "triggers" | "thankYouCard"> {
+
+export interface Survey {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  name: string;
+  type: "web" | "email" | "link" | "mobile";
+  environmentId: string;
+  status: "draft" | "inProgress" | "archived" | "paused" | "completed";
+  recontactDays: number | null;
   questions: Question[];
   thankYouCard: ThankYouCard;
   triggers: string[];
   numDisplays: number;
   responseRate: number;
-  displayOptions: "displayOnce" | "displayMultiple" | "respondMultiple";
+  displayOption: "displayOnce" | "displayMultiple" | "respondMultiple";
+  attributeFilters: AttributeFilter[];
+  autoClose: number | null;
+}
+
+export interface AttributeFilter {
+  attributeClassId: string;
+  condition: string;
+  value: string;
 }

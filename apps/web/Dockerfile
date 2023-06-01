@@ -10,7 +10,7 @@ COPY .env /app/apps/web/
 RUN pnpm install
 
 # Build the project
-RUN pnpm dlx prisma generate
+RUN pnpm prebuild --filter=web...
 RUN pnpm turbo run build --filter=web...
 
 FROM node:18-alpine AS runner

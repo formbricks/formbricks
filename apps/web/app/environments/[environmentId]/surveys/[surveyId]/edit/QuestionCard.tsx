@@ -1,28 +1,41 @@
 "use client";
 
+import LogicEditor from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/LogicEditor";
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Label, Switch } from "@formbricks/ui";
-import { Bars3BottomLeftIcon } from "@heroicons/react/24/solid";
+import {
+  ChatBubbleBottomCenterTextIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CursorArrowRippleIcon,
+  ListBulletIcon,
+  PresentationChartBarIcon,
+  QueueListIcon,
+  StarIcon,
+} from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
-import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
+import CTAQuestionForm from "./CTAQuestionForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
+import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
+import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionDropdown";
-import NPSQuestionForm from "./NPSQuestionForm";
+import RatingQuestionForm from "./RatingQuestionForm";
 import UpdateQuestionId from "./UpdateQuestionId";
-import CTAQuestionForm from "./CTAQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: Survey;
   question: Question;
   questionIdx: number;
+  moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;
+  duplicateQuestion: (questionIdx: number) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
@@ -32,7 +45,9 @@ export default function QuestionCard({
   localSurvey,
   question,
   questionIdx,
+  moveQuestion,
   updateQuestion,
+  duplicateQuestion,
   deleteQuestion,
   activeQuestionId,
   setActiveQuestionId,
@@ -54,7 +69,7 @@ export default function QuestionCard({
           <div
             className={cn(
               open ? "bg-slate-700" : "bg-slate-400",
-              "top-0 w-10 cursor-move rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-600"
+              "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-600"
             )}>
             {questionIdx + 1}
           </div>
@@ -62,17 +77,32 @@ export default function QuestionCard({
             open={open}
             onOpenChange={() => {
               if (activeQuestionId !== question.id) {
-                // only be able to open other question
                 setActiveQuestionId(question.id);
+              } else {
+                setActiveQuestionId(null);
               }
             }}
             className="flex-1 rounded-r-lg border border-slate-200">
             <Collapsible.CollapsibleTrigger
               asChild
-              className="flex cursor-pointer justify-between p-4 hover:bg-slate-50">
+              className={cn(open ? "" : "  ", "flex cursor-pointer justify-between p-4 hover:bg-slate-50")}>
               <div>
                 <div className="inline-flex">
-                  <Bars3BottomLeftIcon className="-ml-0.5 mr-2 h-5 w-5 text-slate-400" />
+                  <div className="-ml-0.5 mr-3 h-6 w-6 text-slate-400">
+                    {question.type === "openText" ? (
+                      <ChatBubbleBottomCenterTextIcon />
+                    ) : question.type === "multipleChoiceSingle" ? (
+                      <QueueListIcon />
+                    ) : question.type === "multipleChoiceMulti" ? (
+                      <ListBulletIcon />
+                    ) : question.type === "nps" ? (
+                      <PresentationChartBarIcon />
+                    ) : question.type === "cta" ? (
+                      <CursorArrowRippleIcon />
+                    ) : question.type === "rating" ? (
+                      <StarIcon />
+                    ) : null}
+                  </div>
                   <div>
                     <p className="text-sm font-semibold">
                       {question.headline || getQuestionTypeName(question.type)}
@@ -99,13 +129,20 @@ export default function QuestionCard({
                       />
                     </div>
                   )}
-                  <QuestionDropdown deleteQuestion={deleteQuestion} questionIdx={questionIdx} />
+                  <QuestionDropdown
+                    questionIdx={questionIdx}
+                    lastQuestion={lastQuestion}
+                    duplicateQuestion={duplicateQuestion}
+                    deleteQuestion={deleteQuestion}
+                    moveQuestion={moveQuestion}
+                  />
                 </div>
               </div>
             </Collapsible.CollapsibleTrigger>
             <Collapsible.CollapsibleContent className="px-4 pb-4">
               {question.type === "openText" ? (
                 <OpenQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -113,6 +150,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "multipleChoiceSingle" ? (
                 <MultipleChoiceSingleForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -120,6 +158,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "multipleChoiceMulti" ? (
                 <MultipleChoiceMultiForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -127,6 +166,7 @@ export default function QuestionCard({
                 />
               ) : question.type === "nps" ? (
                 <NPSQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -134,6 +174,15 @@ export default function QuestionCard({
                 />
               ) : question.type === "cta" ? (
                 <CTAQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                />
+              ) : question.type === "rating" ? (
+                <RatingQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
@@ -141,8 +190,19 @@ export default function QuestionCard({
                 />
               ) : null}
               <div className="mt-4 border-t border-slate-200">
-                <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-3">
-                  <Collapsible.CollapsibleTrigger className="text-sm text-slate-800">
+                <LogicEditor
+                  question={question}
+                  updateQuestion={updateQuestion}
+                  localSurvey={localSurvey}
+                  questionIdx={questionIdx}
+                />
+                <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
+                  <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700 ">
+                    {openAdvanced ? (
+                      <ChevronDownIcon className="mr-1 h-4 w-3" />
+                    ) : (
+                      <ChevronRightIcon className="mr-2 h-4 w-3" />
+                    )}
                     {openAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
                   </Collapsible.CollapsibleTrigger>
 

@@ -1,6 +1,7 @@
-import { JsConfig, Survey } from "@formbricks/types/js";
+import type { JsConfig, Survey } from "../../../types/js";
+import type { Logic } from "../../../types/questions";
 import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
 import { IErrorHandler } from "../lib/errors";
 import { Logger } from "../lib/logger";
@@ -9,21 +10,63 @@ import { cn } from "../lib/utils";
 import Progress from "./Progress";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
+import FormbricksSignature from "./FormbricksSignature";
 
 interface SurveyViewProps {
   config: JsConfig;
   survey: Survey;
   close: () => void;
-  brandColor: string;
   errorHandler: IErrorHandler;
 }
 
-export default function SurveyView({ config, survey, close, brandColor, errorHandler }: SurveyViewProps) {
+export default function SurveyView({ config, survey, close, errorHandler }: SurveyViewProps) {
   const [activeQuestionId, setActiveQuestionId] = useState(survey.questions[0].id);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
   const [loadingElement, setLoadingElement] = useState(false);
+
+  const [countdownProgress, setCountdownProgress] = useState(100);
+  const [countdownStop, setCountdownStop] = useState(false);
+  const startRef = useRef(performance.now());
+  const frameRef = useRef<number | null>(null);
+
+  const handleStopCountdown = () => {
+    if (frameRef.current !== null) {
+      setCountdownStop(true);
+      cancelAnimationFrame(frameRef.current);
+    }
+  };
+
+  useEffect(() => {
+    if (!survey.autoClose) return;
+    const frame = () => {
+      if (!survey.autoClose || !startRef.current) return;
+
+      const timeout = survey.autoClose * 1000;
+      const elapsed = performance.now() - startRef.current;
+      const remaining = Math.max(0, timeout - elapsed);
+
+      setCountdownProgress(remaining / timeout);
+
+      if (remaining > 0) {
+        frameRef.current = requestAnimationFrame(frame);
+      } else {
+        handleStopCountdown();
+        close();
+      }
+    };
+
+    setCountdownStop(false);
+    setCountdownProgress(1);
+    frameRef.current = requestAnimationFrame(frame);
+
+    return () => {
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, [survey.autoClose, close]);
 
   useEffect(() => {
     initDisplay();
@@ -48,10 +91,82 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
     }
   }, [activeQuestionId, survey]);
 
+  function evaluateCondition(logic: Logic, answerValue: any): boolean {
+    switch (logic.condition) {
+      case "equals":
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 1 && answerValue.includes(logic.value)) ||
+          answerValue.toString() === logic.value
+        );
+      case "notEquals":
+        return answerValue !== logic.value;
+      case "lessThan":
+        return answerValue < logic.value;
+      case "lessEqual":
+        return answerValue <= logic.value;
+      case "greaterThan":
+        return answerValue > logic.value;
+      case "greaterEqual":
+        return answerValue >= logic.value;
+      case "includesAll":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.every((v) => answerValue.includes(v))
+        );
+      case "includesOne":
+        return (
+          Array.isArray(answerValue) &&
+          Array.isArray(logic.value) &&
+          logic.value.some((v) => answerValue.includes(v))
+        );
+      case "submitted":
+        if (typeof answerValue === "string") {
+          return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
+        } else if (Array.isArray(answerValue)) {
+          return answerValue.length > 0;
+        } else if (typeof answerValue === "number") {
+          return answerValue !== null;
+        }
+        return false;
+      case "skipped":
+        return (
+          (Array.isArray(answerValue) && answerValue.length === 0) ||
+          answerValue === "" ||
+          answerValue === null ||
+          answerValue === "dismissed"
+        );
+      default:
+        return false;
+    }
+  }
+
+  function getNextQuestion(answer: any): string {
+    const questions = survey.questions;
+
+    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
+
+    const answerValue = answer[activeQuestionId];
+    const currentQuestion = questions[currentQuestionIndex];
+
+    if (currentQuestion.logic && currentQuestion.logic.length > 0) {
+      for (let logic of currentQuestion.logic) {
+        if (!logic.destination) continue;
+
+        if (evaluateCondition(logic, answerValue)) {
+          return logic.destination;
+        }
+      }
+    }
+    return questions[currentQuestionIndex + 1]?.id || "end";
+  }
+
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
-    const questionIdx = survey.questions.findIndex((e) => e.id === activeQuestionId);
-    const finished = questionIdx === survey.questions.length - 1;
+    const nextQuestionId = getNextQuestion(data);
+
+    const finished = nextQuestionId === "end";
     // build response
     const responseRequest = {
       surveyId: survey.id,
@@ -75,8 +190,9 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
       }
     }
     setLoadingElement(false);
-    if (!finished) {
-      setActiveQuestionId(survey.questions[questionIdx + 1].id);
+
+    if (!finished && nextQuestionId !== "end") {
+      setActiveQuestionId(nextQuestionId);
     } else {
       setProgress(100);
 
@@ -92,11 +208,16 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
 
   return (
     <div>
+      {!countdownStop && survey.autoClose && (
+        <Progress progress={countdownProgress} brandColor={config.settings?.brandColor} />
+      )}
       <div
         className={cn(
           loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
           "fb-text-slate-800 fb-font-sans fb-px-4 fb-py-6 sm:fb-p-6"
-        )}>
+        )}
+        onClick={() => handleStopCountdown()}
+        onMouseOver={() => handleStopCountdown()}>
         {progress === 100 && survey.thankYouCard.enabled ? (
           <ThankYouCard
             headline={survey.thankYouCard.headline}
@@ -109,7 +230,7 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
               activeQuestionId === question.id && (
                 <QuestionConditional
                   key={question.id}
-                  brandColor={brandColor}
+                  brandColor={config.settings?.brandColor}
                   lastQuestion={idx === survey.questions.length - 1}
                   onSubmit={submitResponse}
                   question={question}
@@ -118,7 +239,8 @@ export default function SurveyView({ config, survey, close, brandColor, errorHan
           )
         )}
       </div>
-      <Progress progress={progress} brandColor={brandColor} />
+      {config.settings?.formbricksSignature && <FormbricksSignature />}
+      <Progress progress={progress} brandColor={config.settings?.brandColor} />
     </div>
   );
 }

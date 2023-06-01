@@ -1,0 +1,25 @@
+import { Layout } from "@/components/docs/Layout";
+
+export const meta = {
+  title: "Code Actions",
+  description:
+    "Integrate code actions in Formbricks using formbricks.track() to trigger surveys based on user actions, like button clicks, for precise insights. All open-source.",
+};
+
+Actions can also be set in the code base. You can fire an action using `formbricks.track()`
+
+```javascript
+formbricks.track("Action Name");
+```
+
+Here is an example of how to fire an action when a user clicks a button:
+
+```javascript
+const handleClick = () => {
+  formbricks.track("Button Clicked");
+};
+
+return <button onClick={handleClick}>Click Me</button>;
+```
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

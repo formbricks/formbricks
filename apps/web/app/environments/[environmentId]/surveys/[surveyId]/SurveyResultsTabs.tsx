@@ -23,5 +23,5 @@ export default function SurveyResultsTab({ activeId, environmentId, surveyId }: 
     },
   ];
 
-  return <SecondNavbar tabs={tabs} activeId={activeId} />;
+  return <SecondNavbar tabs={tabs} activeId={activeId} surveyId={surveyId} environmentId={environmentId} />;
 }

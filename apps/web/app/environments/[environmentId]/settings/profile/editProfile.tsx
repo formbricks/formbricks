@@ -4,8 +4,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { useProfile } from "@/lib/profile/profile";
-import { Button } from "@formbricks/ui";
-import { ErrorComponent, Input, Label, ProfileAvatar } from "@formbricks/ui";
+import { Button, ErrorComponent, Input, Label, ProfileAvatar } from "@formbricks/ui";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -42,7 +41,7 @@ export function EditName() {
         <Label htmlFor="email">Email</Label>
         <Input type="email" id="fullname" defaultValue={profile.email} disabled />
       </div>
-      <Button type="submit" className="mt-4" loading={isMutatingProfile}>
+      <Button type="submit" variant="darkCTA" className="mt-4" loading={isMutatingProfile}>
         Update
       </Button>
     </form>
@@ -64,7 +63,7 @@ export function EditAvatar({ session }) {
         <ProfileAvatar userId={session?.user?.id} />
       )}
 
-      <Button className="mt-4" disabled={true}>
+      <Button className="mt-4" variant="darkCTA" disabled={true}>
         Upload Image
       </Button>
     </div>

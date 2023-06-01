@@ -1,9 +1,9 @@
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { Button } from "@formbricks/ui";
+import { getServerSession } from "next-auth";
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
-import { Button } from "@formbricks/ui";
 import PricingTable from "./PricingTable";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 const proPlan = false;
 
@@ -16,7 +16,7 @@ export default async function ProfileSettingsPage({ params }) {
         <SettingsCard
           title="Manage subscription"
           description="View, update and cancel your subscription in the billing portal.">
-          <Button variant="primary">Billing Portal</Button>
+          <Button variant="darkCTA">Billing Portal</Button>
         </SettingsCard>
       ) : (
         <PricingTable environmentId={params.environmentId} session={session} />

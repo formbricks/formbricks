@@ -40,10 +40,8 @@ export default function SurveyStatusDropdown({
       {survey.status === "draft" || survey.status === "archived" ? (
         <div className="flex items-center">
           <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
-          <span className="mr-3 italic text-slate-500">
-            {survey.status === "draft" && "Survey drafted"}
-            {survey.status === "archived" && "Survey archived"}
-          </span>
+          {survey.status === "draft" && <p className="text-sm italic text-slate-600">Draft</p>}
+          {survey.status === "archived" && <p className="text-sm italic text-slate-600">Archived</p>}
         </div>
       ) : (
         <Select
@@ -67,12 +65,12 @@ export default function SurveyStatusDropdown({
             if (updateLocalSurveyStatus)
               updateLocalSurveyStatus(value as "draft" | "inProgress" | "paused" | "completed" | "archived");
           }}>
-          <SelectTrigger className="w-[200px] bg-white py-1.5">
+          <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
             <SelectValue>
               <div className="flex items-center">
                 <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
                 <span className="ml-2 text-sm text-slate-700">
-                  {survey.status === "draft" && "Survey drafted"}
+                  {survey.status === "draft" && "Survey draft"}
                   {survey.status === "inProgress" && "Collecting insights"}
                   {survey.status === "paused" && "Survey paused"}
                   {survey.status === "completed" && "Survey complete"}

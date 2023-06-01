@@ -1,7 +1,7 @@
 import type { Survey } from "@formbricks/types/surveys";
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
-import ResponseOptionsCard from "./ResponseOptionsCard";
+/* import ResponseOptionsCard from "./ResponseOptionsCard"; */
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
 
@@ -13,10 +13,18 @@ interface AudienceViewProps {
 
 export default function AudienceView({ environmentId, localSurvey, setLocalSurvey }: AudienceViewProps) {
   return (
-    <div className="space-y-3 p-5">
-      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+    <div className="mt-12 space-y-3 p-5">
+      <HowToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environmentId={environmentId}
+      />
 
-      <WhoToSendCard localSurvey={localSurvey} />
+      <WhoToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        environmentId={environmentId}
+      />
 
       <WhenToSendCard
         localSurvey={localSurvey}
@@ -24,7 +32,7 @@ export default function AudienceView({ environmentId, localSurvey, setLocalSurve
         environmentId={environmentId}
       />
 
-      <ResponseOptionsCard />
+      {/*   <ResponseOptionsCard /> */}
 
       <RecontactOptionsCard
         localSurvey={localSurvey}

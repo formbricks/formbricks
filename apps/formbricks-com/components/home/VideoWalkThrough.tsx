@@ -6,7 +6,7 @@ interface VideoWalkThroughProps {
   setOpen: (v: boolean) => void;
 }
 
-export default function VideoWalkThrough({ open, setOpen }: VideoWalkThroughProps) {
+export const VideoWalkThrough: React.FC<VideoWalkThroughProps> = ({ open, setOpen }) => {
   return (
     <Modal open={open} setOpen={setOpen}>
       <div className="mt-5">
@@ -14,4 +14,4 @@ export default function VideoWalkThrough({ open, setOpen }: VideoWalkThroughProp
       </div>
     </Modal>
   );
-}
+};

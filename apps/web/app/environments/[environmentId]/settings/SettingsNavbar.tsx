@@ -1,163 +1,182 @@
 "use client";
 
+import { useProduct } from "@/lib/products/products";
+import { useTeam } from "@/lib/teams/teams";
+import { truncate } from "@/lib/utils";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import {
   AdjustmentsVerticalIcon,
+  BellAlertIcon,
   ChatBubbleLeftEllipsisIcon,
   CreditCardIcon,
   DocumentCheckIcon,
   DocumentMagnifyingGlassIcon,
+  KeyIcon,
   LinkIcon,
   PaintBrushIcon,
   UserCircleIcon,
   UsersIcon,
-  KeyIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
-
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 
 export default function SettingsNavbar({ environmentId }: { environmentId: string }) {
   const pathname = usePathname();
-  const navigation = [
-    {
-      title: "Account",
-      links: [
-        {
-          name: "Profile",
-          href: `/environments/${environmentId}/settings/profile`,
-          icon: UserCircleIcon,
-          current: pathname?.includes("/profile"),
-          hidden: false,
-        },
-        /*         {
-          name: "Notifications",
-          href: `/environments/${environmentId}/settings/notifications`,
-          icon: MegaphoneIcon,
-          current: pathname?.includes("/notifications"),
-        }, */
-      ],
-    },
-    {
-      title: "Product",
-      links: [
-        {
-          name: "Settings",
-          href: `/environments/${environmentId}/settings/product`,
-          icon: AdjustmentsVerticalIcon,
-          current: pathname?.includes("/product"),
-          hidden: false,
-        },
-        {
-          name: "Look & Feel",
-          href: `/environments/${environmentId}/settings/lookandfeel`,
-          icon: PaintBrushIcon,
-          current: pathname?.includes("/lookandfeel"),
-          hidden: false,
-        },
-        {
-          name: "API Keys",
-          href: `/environments/${environmentId}/settings/api-keys`,
-          icon: KeyIcon,
-          current: pathname?.includes("/api-keys"),
-          hidden: false,
-        },
-      ],
-    },
-    {
-      title: "Team",
-      links: [
-        {
-          name: "Members",
-          href: `/environments/${environmentId}/settings/members`,
-          icon: UsersIcon,
-          current: pathname?.includes("/members"),
-          hidden: false,
-        },
-        /* 
+  const { team } = useTeam(environmentId);
+  const { product } = useProduct(environmentId);
+  const navigation = useMemo(
+    () => [
+      {
+        title: "Account",
+        links: [
+          {
+            name: "Profile",
+            href: `/environments/${environmentId}/settings/profile`,
+            icon: UserCircleIcon,
+            current: pathname?.includes("/profile"),
+            hidden: false,
+          },
+          {
+            name: "Notifications",
+            href: `/environments/${environmentId}/settings/notifications`,
+            icon: BellAlertIcon,
+            current: pathname?.includes("/notifications"),
+            hidden: false,
+          },
+        ],
+      },
+      {
+        title: "Product",
+        links: [
+          {
+            name: "Settings",
+            href: `/environments/${environmentId}/settings/product`,
+            icon: AdjustmentsVerticalIcon,
+            current: pathname?.includes("/product"),
+            hidden: false,
+          },
+          {
+            name: "Look & Feel",
+            href: `/environments/${environmentId}/settings/lookandfeel`,
+            icon: PaintBrushIcon,
+            current: pathname?.includes("/lookandfeel"),
+            hidden: false,
+          },
+          {
+            name: "API Keys",
+            href: `/environments/${environmentId}/settings/api-keys`,
+            icon: KeyIcon,
+            current: pathname?.includes("/api-keys"),
+            hidden: false,
+          },
+        ],
+      },
+      {
+        title: "Team",
+        links: [
+          {
+            name: "Members",
+            href: `/environments/${environmentId}/settings/members`,
+            icon: UsersIcon,
+            current: pathname?.includes("/members"),
+            hidden: false,
+          },
+          /* 
         {
           name: "Tags",
           href: `/environments/${environmentId}/settings/tags`,
           icon: PlusCircleIcon,
            current: pathname?.includes("/tags"),
         }, */
-        {
-          name: "Billing & Plan",
-          href: `/environments/${environmentId}/settings/billing`,
-          icon: CreditCardIcon,
-          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
-          current: pathname?.includes("/billing"),
-        },
-      ],
-    },
-    {
-      title: "Setup",
-      links: [
-        {
-          name: "Setup Checklist",
-          href: `/environments/${environmentId}/settings/setup`,
-          icon: DocumentCheckIcon,
-          current: pathname?.includes("/setup"),
-          hidden: false,
-        },
-        {
-          name: "Documentation",
-          href: "https://formbricks.com/docs",
-          icon: DocumentMagnifyingGlassIcon,
-          target: "_blank",
-          hidden: false,
-        },
-        {
-          name: "Join Discord",
-          href: "https://formbricks.com/discord",
-          icon: ChatBubbleLeftEllipsisIcon,
-          target: "_blank",
-          hidden: false,
-        },
-      ],
-    },
-    {
-      title: "Compliance",
-      links: [
-        {
-          name: "GDPR & CCPA",
-          href: "https://formbricks.com/gdpr",
-          icon: LinkIcon,
-          target: "_blank",
-          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
-        },
-        {
-          name: "Privacy",
-          href: "https://formbricks.com/privacy",
-          icon: LinkIcon,
-          target: "_blank",
-          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
-        },
-        {
-          name: "Terms",
-          href: "https://formbricks.com/terms",
-          icon: LinkIcon,
-          target: "_blank",
-          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
-        },
-        {
-          name: "License",
-          href: "https://github.com/formbricks/formbricks/blob/main/LICENSE",
-          icon: LinkIcon,
-          target: "_blank",
-          hidden: false,
-        },
-      ],
-    },
-  ];
+          {
+            name: "Billing & Plan",
+            href: `/environments/${environmentId}/settings/billing`,
+            icon: CreditCardIcon,
+            hidden: !IS_FORMBRICKS_CLOUD,
+            current: pathname?.includes("/billing"),
+          },
+        ],
+      },
+      {
+        title: "Setup",
+        links: [
+          {
+            name: "Setup Checklist",
+            href: `/environments/${environmentId}/settings/setup`,
+            icon: DocumentCheckIcon,
+            current: pathname?.includes("/setup"),
+            hidden: false,
+          },
+          {
+            name: "Documentation",
+            href: "https://formbricks.com/docs",
+            icon: DocumentMagnifyingGlassIcon,
+            target: "_blank",
+            hidden: false,
+          },
+          {
+            name: "Join Discord",
+            href: "https://formbricks.com/discord",
+            icon: ChatBubbleLeftEllipsisIcon,
+            target: "_blank",
+            hidden: false,
+          },
+        ],
+      },
+      {
+        title: "Compliance",
+        links: [
+          {
+            name: "GDPR & CCPA",
+            href: "https://formbricks.com/gdpr",
+            icon: LinkIcon,
+            target: "_blank",
+            hidden: !IS_FORMBRICKS_CLOUD,
+          },
+          {
+            name: "Privacy",
+            href: "https://formbricks.com/privacy",
+            icon: LinkIcon,
+            target: "_blank",
+            hidden: !IS_FORMBRICKS_CLOUD,
+          },
+          {
+            name: "Terms",
+            href: "https://formbricks.com/terms",
+            icon: LinkIcon,
+            target: "_blank",
+            hidden: !IS_FORMBRICKS_CLOUD,
+          },
+          {
+            name: "License",
+            href: "https://github.com/formbricks/formbricks/blob/main/LICENSE",
+            icon: LinkIcon,
+            target: "_blank",
+            hidden: false,
+          },
+        ],
+      },
+    ],
+    [environmentId, pathname]
+  );
+
+  if (!navigation) return null;
 
   return (
     <div className="fixed h-full bg-white py-2 pl-4 pr-10">
       <nav className="flex-1 space-y-1 bg-white px-2">
         {navigation.map((item) => (
           <div key={item.title}>
-            <p className="mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              {item.title}
+            <p className="mt-6 pl-3 pr-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              {item.title}{" "}
+              {item.title === "Product" && product?.name && (
+                <span className="font-normal capitalize">({truncate(product?.name, 10)})</span>
+              )}
+              {item.title === "Team" && team?.name && (
+                <span className="font-normal capitalize">({truncate(team?.name, 14)})</span>
+              )}
             </p>
             <div className="ml-2 mt-1 space-y-1">
               {item.links

@@ -1,7 +1,9 @@
 import type { NPSQuestion } from "@formbricks/types/questions";
+import { Survey } from "@formbricks/types/surveys";
 import { Input, Label } from "@formbricks/ui";
 
 interface NPSQuestionFormProps {
+  localSurvey: Survey;
   question: NPSQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -13,7 +15,7 @@ export default function NPSQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-}: NPSQuestionFormProps) {
+}: NPSQuestionFormProps): JSX.Element {
   return (
     <form>
       <div className="mt-3">
@@ -65,18 +67,20 @@ export default function NPSQuestionForm({
         </div>
       </div>
 
-      <div className="mt-3">
-        <Label htmlFor="buttonLabel">Button Label</Label>
-        <div className="mt-2">
-          <Input
-            id="buttonLabel"
-            name="buttonLabel"
-            value={question.buttonLabel}
-            placeholder={lastQuestion ? "Finish" : "Next"}
-            onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
-          />
+      {!question.required && (
+        <div className="mt-3">
+          <Label htmlFor="buttonLabel">Button Label</Label>
+          <div className="mt-2">
+            <Input
+              id="buttonLabel"
+              name="buttonLabel"
+              value={question.buttonLabel}
+              placeholder={lastQuestion ? "Finish" : "Next"}
+              onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </form>
   );
 }

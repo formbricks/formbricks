@@ -33,8 +33,8 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
     notImplemented: {
       icon: ArrowDownIcon,
       color: "slate",
-      title: "Not implemented yet.",
-      subtitle: "Formbricks widget not yet implemented.",
+      title: "Connect Formbricks to your app.",
+      subtitle: "You have not yet connected Formbricks to your app. Follow setup guide.",
     },
     running: { icon: CheckIcon, color: "green", title: "Receiving data.", subtitle: "Last action received:" },
     issue: {
@@ -107,7 +107,7 @@ export default function WidgetStatusIndicator({ environmentId, type }: WidgetSta
   if (type === "mini") {
     return (
       <Link href={`/environments/${environmentId}/settings/setup`}>
-        <div className="group flex justify-center">
+        <div className="group my-4 flex justify-center">
           <div className=" flex rounded-full bg-slate-100 px-2 py-1">
             <p className="mr-2 text-sm text-slate-400 group-hover:underline">
               {currentStatus.subtitle}{" "}

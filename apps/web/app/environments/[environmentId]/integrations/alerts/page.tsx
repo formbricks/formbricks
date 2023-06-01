@@ -1,7 +1,5 @@
-import { Card } from "@formbricks/ui";
-import { EmailIcon } from "@formbricks/ui";
-import { PageTitle } from "@formbricks/ui";
 import SlackLogo from "@/images/slacklogo.png";
+import { Card, EmailIcon, PageTitle } from "@formbricks/ui";
 import Image from "next/image";
 import Link from "next/link";
 

@@ -8,9 +8,14 @@
         "FORMBRICKS_LEGACY_HOST",
         "GITHUB_ID",
         "GITHUB_SECRET",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "HEROKU_APP_NAME",
         "INSTANCE_ID",
+        "INTERNAL_SECRET",
         "MAIL_FROM",
         "NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED",
+        "NEXT_PUBLIC_GOOGLE_AUTH_ENABLED",
         "NEXT_PUBLIC_GITHUB_AUTH_ENABLED",
         "NEXT_PUBLIC_IS_FORMBRICKS_CLOUD",
         "NEXT_PUBLIC_PASSWORD_RESET_DISABLED",
@@ -38,16 +43,26 @@
         "NEXT_PUBLIC_FORMBRICKS_PMF_FORM_ID",
         "NEXT_PUBLIC_FORMBRICKS_URL",
         "NEXT_PUBLIC_IMPRINT_URL",
+        "NEXT_PUBLIC_VERCEL_URL",
         "NODE_ENV",
         "NEXT_PUBLIC_POSTHOG_API_HOST",
         "NEXT_PUBLIC_POSTHOG_API_KEY",
         "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
         "NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID",
         "NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID",
+        "NEXT_PUBLIC_WEBAPP_URL",
+        "RAILWAY_STATIC_URL",
+        "RENDER_EXTERNAL_URL",
         "SENTRY_DSN",
         "TELEMETRY_DISABLED",
         "VERCEL_URL"
       ]
+    },
+    "prebuild": {
+      "outputs": []
+    },
+    "db:migrate:dev": {
+      "outputs": []
     },
     "db:migrate:deploy": {
       "outputs": []
@@ -65,10 +80,16 @@
     "dev": {
       "cache": false
     },
+    "start": {
+      "outputs": []
+    },
     "generate": {
       "dependsOn": ["^generate"]
     },
     "lint": {
+      "outputs": []
+    },
+    "clean": {
       "outputs": []
     }
   }

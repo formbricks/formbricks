@@ -1,11 +1,9 @@
 "use client";
 
-import { Label } from "@formbricks/ui";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import { cn } from "@formbricks/lib/cn";
+import { Badge, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { Badge } from "@formbricks/ui";
-import { cn } from "@formbricks/lib/cn";
 import { useState } from "react";
 
 const options = [
@@ -32,12 +30,9 @@ export default function ResponseOptionsCard({}: ResponseOptionsCardProps) {
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className={cn(
-        open ? "" : "hover:bg-slate-50",
-        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
-      )}>
+      className="w-full rounded-lg border border-slate-300 bg-white">
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
-        <div className="inline-flex px-4 py-6">
+        <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>

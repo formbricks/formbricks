@@ -4,7 +4,7 @@ import { Button } from "@formbricks/ui";
 import { signIn } from "next-auth/react";
 import { FaGithub } from "react-icons/fa";
 
-export const GithubButton = ({ text = "Login with Github" }) => {
+export const GithubButton = ({ text = "Continue with Github" }) => {
   const handleLogin = async () => {
     await signIn("github", {
       redirect: true,
@@ -15,8 +15,8 @@ export const GithubButton = ({ text = "Login with Github" }) => {
   return (
     <Button
       type="button"
-      StartIcon={FaGithub}
-      startIconClassName="mr-2"
+      EndIcon={FaGithub}
+      startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"
       className="w-full justify-center">

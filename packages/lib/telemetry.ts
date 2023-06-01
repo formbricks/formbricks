@@ -7,7 +7,6 @@ export const captureTelemetry = async (eventName: string, properties = {}) => {
   if (
     process.env.TELEMETRY_DISABLED !== "1" &&
     process.env.NODE_ENV === "production" &&
-    process.env.NEXTAUTH_URL !== "http://localhost:3000" &&
     process.env.INSTANCE_ID
   ) {
     try {

@@ -3,6 +3,7 @@
 import { Button, Input, Label } from "@formbricks/ui";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function UpdateQuestionId({ localSurvey, question, questionIdx, updateQuestion }) {
   const [currentValue, setCurrentValue] = useState(question.id);
@@ -16,12 +17,13 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
       return;
     }
     updateQuestion(questionIdx, { id: currentValue });
+    toast.success("Question ID updated.");
   };
 
   return (
     <div>
       <Label className="block" htmlFor="questionId">
-        Internal Question Identifier
+        Question ID
       </Label>
       <div className="mt-2 inline-flex w-full">
         <Input

@@ -3,6 +3,7 @@ import { cn } from "@formbricks/lib/cn";
 import type { NPSQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import SubmitButton from "@/components/preview/SubmitButton";
 
 interface NPSQuestionProps {
   question: NPSQuestion;
@@ -13,6 +14,15 @@ interface NPSQuestionProps {
 
 export default function NPSQuestion({ question, onSubmit, lastQuestion, brandColor }: NPSQuestionProps) {
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
+
+  const handleSelect = (number: number) => {
+    setSelectedChoice(number);
+    if (question.required) {
+      onSubmit({
+        [question.id]: number,
+      });
+    }
+  };
 
   return (
     <form
@@ -30,42 +40,39 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="my-4">
         <fieldset>
-          <legend className="sr-only">Choices</legend>
+          <legend className="sr-only">Options</legend>
           <div className="flex">
             {Array.from({ length: 11 }, (_, i) => i).map((number) => (
               <label
                 key={number}
                 className={cn(
                   selectedChoice === number ? "z-10 border-slate-400 bg-slate-50" : "",
-                  "relative h-10 flex-1 cursor-pointer border bg-white  text-center text-sm leading-10 hover:bg-gray-100 focus:outline-none"
+                  "relative h-10 flex-1 cursor-pointer border bg-white text-center text-sm  leading-10 first:rounded-l-md last:rounded-r-md hover:bg-gray-100 focus:outline-none"
                 )}>
                 <input
                   type="radio"
                   name="nps"
                   value={number}
                   className="absolute h-full w-full cursor-pointer opacity-0"
-                  onChange={() => setSelectedChoice(number)}
+                  onChange={() => handleSelect(number)}
                   required={question.required}
                 />
                 {number}
               </label>
             ))}
           </div>
-          <div className="flex justify-between text-sm font-semibold leading-6">
+          <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
             <p>{question.lowerLabel}</p>
             <p>{question.upperLabel}</p>
           </div>
         </fieldset>
       </div>
-      <div className="mt-4 flex w-full justify-between">
-        <div></div>
-        <button
-          type="submit"
-          className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-          style={{ backgroundColor: brandColor }}>
-          {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
-        </button>
-      </div>
+      {!question.required && (
+        <div className="mt-4 flex w-full justify-between">
+          <div></div>
+          <SubmitButton {...{ question, lastQuestion, brandColor }} />
+        </div>
+      )}
     </form>
   );
 }

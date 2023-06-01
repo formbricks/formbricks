@@ -1,11 +1,11 @@
-import { ProgressBar } from "@formbricks/ui";
+import { NPSQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
+import { HalfCircle, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import { HalfCircle } from "@/../../packages/ui/components/ProgressBar";
 
 interface NPSSummaryProps {
-  questionSummary: QuestionSummary;
+  questionSummary: QuestionSummary<NPSQuestion>;
 }
 
 interface Result {
@@ -14,6 +14,12 @@ interface Result {
   detractors: number;
   total: number;
   score: number;
+}
+
+interface ChoiceResult {
+  label: string;
+  count: number;
+  percentage: number;
 }
 
 export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
@@ -49,6 +55,23 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
     return data;
   }, [questionSummary]);
 
+  const dismissed: ChoiceResult = useMemo(() => {
+    if (questionSummary.question.required) return { count: 0, label: "Dismissed", percentage: 0 };
+
+    const total = questionSummary.responses.length;
+    let count = 0;
+    for (const response of questionSummary.responses) {
+      if (!response.value) {
+        count += 1;
+      }
+    }
+    return {
+      count,
+      label: "Dismissed",
+      percentage: count / total,
+    };
+  }, [questionSummary]);
+
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-6 pb-5 pt-6">
@@ -63,7 +86,7 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
           </div>
         </div>
       </div>
-      <div className="space-y-5 rounded-b-lg bg-white px-6 pb-6 pt-4">
+      <div className="space-y-5 bg-white px-6 pb-6 pt-4">
         {["promoters", "passives", "detractors"].map((group) => (
           <div key={group}>
             <div className="mb-2 flex justify-between">
@@ -83,7 +106,27 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
           </div>
         ))}
       </div>
-      <div className="mb-4 mt-4 flex justify-center">
+      {dismissed.count > 0 && (
+        <div className="border-t bg-white px-6 pb-6 pt-4">
+          <div key={dismissed.label}>
+            <div className="text flex justify-between px-2 pb-2">
+              <div className="mr-8 flex space-x-1">
+                <p className="font-semibold text-slate-700">{dismissed.label}</p>
+                <div>
+                  <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
+                    {Math.round(dismissed.percentage * 100)}%
+                  </p>
+                </div>
+              </div>
+              <p className="flex w-32 items-end justify-end text-slate-600">
+                {dismissed.count} {dismissed.count === 1 ? "response" : "responses"}
+              </p>
+            </div>
+            <ProgressBar barColor="bg-slate-600" progress={dismissed.percentage} />
+          </div>
+        </div>
+      )}
+      <div className="flex justify-center rounded-b-lg bg-white pb-4 pt-4">
         <HalfCircle value={result.score} />
       </div>
     </div>
