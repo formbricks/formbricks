@@ -9,6 +9,7 @@ interface MultipleChoiceSummaryProps {
 }
 
 interface ChoiceResult {
+  id: string;
   label: string;
   count: number;
   percentage?: number;
@@ -23,21 +24,39 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
     const resultsDict: { [key: string]: ChoiceResult } = {};
     for (const choice of questionSummary.question.choices) {
       resultsDict[choice.label] = {
-        count: 0,
+        id: choice.id,
         label: choice.label,
+        count: 0,
         percentage: 0,
       };
     }
+
     // count the responses
     for (const response of questionSummary.responses) {
       // if single choice, only add responses that are in the choices
       if (isSingleChoice && response.value in resultsDict) {
         resultsDict[response.value].count += 1;
+      } else if (isSingleChoice) {
+        // if single choice and not in choices, add to other
+        for (const key in resultsDict) {
+          if (resultsDict[key].id === "other") {
+            resultsDict[key].count += 1;
+            break;
+          }
+        }
       } else {
         // if multi choice add all responses
         for (const choice of response.value) {
           if (choice in resultsDict) {
             resultsDict[choice].count += 1;
+          } else {
+            // if multi choice and not in choices, add to other
+            for (const key in resultsDict) {
+              if (resultsDict[key].id === "other" && choice !== "") {
+                resultsDict[key].count += 1;
+                break;
+              }
+            }
           }
         }
       }
@@ -49,8 +68,15 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
         resultsDict[key].percentage = resultsDict[key].count / total;
       }
     }
+
     // sort by count and transform to array
-    const results = Object.values(resultsDict).sort((a: any, b: any) => b.count - a.count);
+    const results = Object.values(resultsDict).sort((a: any, b: any) => {
+      if (a.id === "other") return 1; // Always put a after b if a's id is 'other'
+      if (b.id === "other") return -1; // Always put b after a if b's id is 'other'
+
+      // If neither id is 'other', compare counts
+      return b.count - a.count;
+    });
     return results;
   }, [questionSummary, isSingleChoice]);
 
