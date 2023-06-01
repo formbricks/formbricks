@@ -170,7 +170,7 @@ export default function MultipleChoiceSummary({
                       <div className="ph-no-capture col-span-1 pl-4 font-medium text-slate-900">
                         <span>{otherValue.value}</span>
                       </div>
-                      <div className="ph-no-capture col-span-1 pl-6 font-medium text-slate-900">
+                      <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
                         {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
                         <span>{otherValue.person.id}</span>
                       </div>
