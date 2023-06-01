@@ -26,14 +26,14 @@
   },
   "dependencies": {
     "@formbricks/types": "workspace:*",
-    "@prisma/client": "^4.14.1",
+    "@prisma/client": "^4.15.0",
     "prisma-json-types-generator": "^2.4.0"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
     "eslint": "^8.41.0",
     "eslint-config-formbricks": "workspace:*",
-    "prisma": "^4.14.1",
+    "prisma": "^4.15.0",
     "prisma-dbml-generator": "^0.10.0",
     "rimraf": "^5.0.1",
     "tsup": "^6.7.0",
