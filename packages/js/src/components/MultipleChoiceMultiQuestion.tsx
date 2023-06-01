@@ -20,16 +20,22 @@ export default function MultipleChoiceMultiQuestion({
   brandColor,
 }: MultipleChoiceMultiProps) {
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
+  const [showOther, setShowOther] = useState(false);
+  const [otherSpecified, setOtherSpecified] = useState("");
 
   const isAtLeastOneChecked = () => {
-    return selectedChoices.length > 0;
+    return selectedChoices.length > 0 || otherSpecified.length > 0;
   };
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (!isAtLeastOneChecked() && question.required) return;
+        selectedChoices.push(otherSpecified);
+
+        if (question.required && selectedChoices.length <= 0) {
+          return;
+        }
 
         const data = {
           [question.id]: selectedChoices,
@@ -37,6 +43,8 @@ export default function MultipleChoiceMultiQuestion({
 
         onSubmit(data);
         setSelectedChoices([]); // reset value
+        setShowOther(false);
+        setOtherSpecified("");
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -63,6 +71,12 @@ export default function MultipleChoiceMultiQuestion({
                       className="fb-h-4 fb-w-4 fb-border fb-border-slate-300 focus:fb-ring-0 focus:fb-ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
                       onChange={(e) => {
+                        if (choice.id === "other") {
+                          setShowOther(e.currentTarget.checked);
+
+                          return;
+                        }
+
                         if (e.currentTarget.checked) {
                           setSelectedChoices([...selectedChoices, e.currentTarget.value]);
                         } else {
@@ -71,13 +85,24 @@ export default function MultipleChoiceMultiQuestion({
                           );
                         }
                       }}
-                      checked={selectedChoices.includes(choice.label)}
+                      checked={selectedChoices.includes(choice.label) || (choice.id === "other" && showOther)}
                       style={{ borderColor: brandColor, color: brandColor }}
                     />
                     <span id={`${choice.id}-label`} className="fb-ml-3 fb-font-medium">
                       {choice.label}
                     </span>
                   </span>
+                  {choice.id === "other" && showOther && (
+                    <input
+                      type="text"
+                      id={`${choice.id}-label`}
+                      name={question.id}
+                      placeholder="Please specify"
+                      className="fb-mt-3 fb-flex fb-h-10 fb-w-full fb-rounded-md fb-border fb-border-slate-300 fb-bg-transparent fb-px-3 fb-py-2 fb-text-sm fb-text-slate-800 placeholder:fb-text-slate-400 focus:fb-outline-none  focus:fb-ring-2 focus:fb-ring-slate-400 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50 dark:fb-border-slate-500 dark:fb-text-slate-300"
+                      onChange={(e) => setOtherSpecified(e.currentTarget.value)}
+                      aria-labelledby={`${choice.id}-label`}
+                    />
+                  )}
                 </label>
               ))}
           </div>
