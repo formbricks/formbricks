@@ -9,6 +9,7 @@ import { NetworkError } from "../errors";
 import { EnvironmentId, KeyValueData, PersonId, RequestFn, ResponseId, SurveyId } from "../types";
 
 export interface CreateResponseOptions {
+  apiHost: string;
   environmentId: EnvironmentId;
   surveyId: SurveyId;
   personId: PersonId;
@@ -20,7 +21,7 @@ export const createResponse = async (
   options: CreateResponseOptions
 ): Promise<Result<CreateResponseResponse, NetworkError>> => {
   const result = await request<CreateResponseResponse, any, ResponseCreateRequest>(
-    `/api/v1/client/environments/${options.environmentId}/responses`,
+    `${options.apiHost}/api/v1/client/environments/${options.environmentId}/responses`,
     {
       surveyId: options.surveyId,
       personId: options.personId,
@@ -36,6 +37,7 @@ export const createResponse = async (
 };
 
 export interface UpdateResponseOptions {
+  apiHost: string;
   environmentId: EnvironmentId;
   data: KeyValueData;
   responseId: ResponseId;
@@ -44,7 +46,7 @@ export interface UpdateResponseOptions {
 
 export const updateResponse = async (request: RequestFn, options: UpdateResponseOptions) => {
   const result = await request<UpdateResponseResponse, any, ResponseUpdateRequest>(
-    `/api/v1/client/environments/${options.environmentId}/responses/${options.responseId}`,
+    `${options.apiHost}/api/v1/client/environments/${options.environmentId}/responses/${options.responseId}`,
     {
       response: {
         data: options.data,
