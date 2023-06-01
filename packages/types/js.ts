@@ -3,7 +3,7 @@ import { ThankYouCard } from "./surveys";
 
 export interface ResponseCreateRequest {
   surveyId: string;
-  personId: string;
+  personId?: string;
   response: {
     finished?: boolean;
     data: {

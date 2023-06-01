@@ -484,6 +484,13 @@ importers:
         version: 5.0.0
 
   packages/js:
+    dependencies:
+      '@formbricks/api':
+        specifier: workspace:*
+        version: link:../api
+      '@formbricks/errors':
+        specifier: workspace:*
+        version: link:../errors
     devDependencies:
       '@formbricks/types':
         specifier: workspace:*
@@ -4862,7 +4869,7 @@ packages:
       tailwindcss: '>=3.0.0 || >= 3.0.0-alpha.1'
     dependencies:
       mini-svg-data-uri: 1.4.4
-      tailwindcss: 3.3.1(postcss@8.4.21)
+      tailwindcss: 3.3.1(postcss@8.4.22)
     dev: true
 
   /@tailwindcss/forms@0.5.3(tailwindcss@3.3.2):

@@ -45,6 +45,10 @@
   },
   "author": "Formbricks <hola@formbricks.com>",
   "license": "MIT",
+  "dependencies": {
+    "@formbricks/api": "workspace:*",
+    "@formbricks/errors": "workspace:*"
+  },
   "devDependencies": {
     "@formbricks/types": "workspace:*",
     "@types/enzyme": "^3.10.13",

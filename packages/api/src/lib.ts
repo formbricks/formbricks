@@ -20,8 +20,9 @@ export class FormbricksAPI {
   private readonly environmentId: EnvironmentId;
 
   constructor(options: FormbricksAPIOptions) {
-    this.baseUrl = options.apiHost || ""; //TODO: add cloud hosted api url
+    this.baseUrl = options.apiHost || "https://app.formbricks.com";
     this.environmentId = options.environmentId;
+    this.request = this.request.bind(this);
   }
 
   async createResponse(
