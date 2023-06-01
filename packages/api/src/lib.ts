@@ -10,7 +10,7 @@ import {
 } from "./endpoints/response";
 import { EnvironmentId, RequestFn } from "./types";
 
-export interface IFormbricksAPIOptions {
+export interface FormbricksAPIOptions {
   apiHost?: string;
   environmentId: EnvironmentId;
 }
@@ -19,7 +19,7 @@ export class FormbricksAPI {
   private readonly baseUrl: string;
   private readonly environmentId: EnvironmentId;
 
-  constructor(options: IFormbricksAPIOptions) {
+  constructor(options: FormbricksAPIOptions) {
     this.baseUrl = options.apiHost || ""; //TODO: add cloud hosted api url
     this.environmentId = options.environmentId;
   }
