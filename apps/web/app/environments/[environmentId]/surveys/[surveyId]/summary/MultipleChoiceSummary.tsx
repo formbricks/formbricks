@@ -1,11 +1,13 @@
 import { MultipleChoiceMultiQuestion, MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { ProgressBar } from "@formbricks/ui";
+import { PersonAvatar, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
+import Link from "next/link";
 
 interface MultipleChoiceSummaryProps {
   questionSummary: QuestionSummary<MultipleChoiceMultiQuestion | MultipleChoiceSingleQuestion>;
+  environmentId: string;
 }
 
 interface ChoiceResult {
@@ -13,13 +15,25 @@ interface ChoiceResult {
   label: string;
   count: number;
   percentage?: number;
+  otherValues?: {
+    value: string;
+    person: {
+      id: string;
+      name?: string;
+      email?: string;
+    };
+  }[];
 }
 
-export default function MultipleChoiceSummary({ questionSummary }: MultipleChoiceSummaryProps) {
+export default function MultipleChoiceSummary({
+  questionSummary,
+  environmentId,
+}: MultipleChoiceSummaryProps) {
   const isSingleChoice = questionSummary.question.type === "multipleChoiceSingle";
 
   const results: ChoiceResult[] = useMemo(() => {
     if (!("choices" in questionSummary.question)) return [];
+    console.log(questionSummary.responses);
     // build a dictionary of choices
     const resultsDict: { [key: string]: ChoiceResult } = {};
     for (const choice of questionSummary.question.choices) {
@@ -28,8 +42,24 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
         label: choice.label,
         count: 0,
         percentage: 0,
+        otherValues: [],
       };
     }
+
+    const addOtherChoice = (response, value) => {
+      for (const key in resultsDict) {
+        if (resultsDict[key].id === "other" && value !== "") {
+          resultsDict[key].otherValues?.push({
+            value,
+            person: {
+              id: response.personId,
+            },
+          });
+          resultsDict[key].count += 1;
+          break;
+        }
+      }
+    };
 
     // count the responses
     for (const response of questionSummary.responses) {
@@ -38,12 +68,7 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
         resultsDict[response.value].count += 1;
       } else if (isSingleChoice) {
         // if single choice and not in choices, add to other
-        for (const key in resultsDict) {
-          if (resultsDict[key].id === "other") {
-            resultsDict[key].count += 1;
-            break;
-          }
-        }
+        addOtherChoice(response, response.value);
       } else {
         // if multi choice add all responses
         for (const choice of response.value) {
@@ -51,12 +76,7 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
             resultsDict[choice].count += 1;
           } else {
             // if multi choice and not in choices, add to other
-            for (const key in resultsDict) {
-              if (resultsDict[key].id === "other" && choice !== "") {
-                resultsDict[key].count += 1;
-                break;
-              }
-            }
+            addOtherChoice(response, choice);
           }
         }
       }
@@ -129,6 +149,35 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
               </p>
             </div>
             <ProgressBar barColor="bg-brand" progress={result.percentage} />
+            {result.otherValues.length > 0 && (
+              <div className="mt-4 rounded-lg border border-slate-200">
+                <div className="grid h-12 grid-cols-2 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+                  <div className="col-span-1 pl-6 ">Specified &quot;Other&quot; answer</div>
+                  <div className="col-span-1 pl-6 ">User</div>
+                </div>
+                {result.otherValues
+                  .filter((otherValue) => otherValue !== "")
+                  .map((otherValue, idx) => (
+                    <Link
+                      href={
+                        otherValue.person.id
+                          ? `/environments/${environmentId}/people/${otherValue.person.id}`
+                          : { pathname: null }
+                      }
+                      target="_blank"
+                      key={idx}
+                      className="m-2 grid h-16 grid-cols-2 items-center rounded-lg text-sm hover:bg-slate-100">
+                      <div className="ph-no-capture col-span-1 pl-4 font-medium text-slate-900">
+                        <span>{otherValue.value}</span>
+                      </div>
+                      <div className="ph-no-capture col-span-1 pl-6 font-medium text-slate-900">
+                        {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
+                        <span>{otherValue.person.id}</span>
+                      </div>
+                    </Link>
+                  ))}
+              </div>
+            )}
           </div>
         ))}
       </div>
