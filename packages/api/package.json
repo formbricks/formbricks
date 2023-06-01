@@ -1,0 +1,29 @@
+{
+  "name": "@formbricks/api",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint ./src --fix",
+    "clean": "rimraf .turbo node_modules dist"
+  },
+  "dependencies": {
+    "@formbricks/errors": "workspace:*"
+  },
+  "devDependencies": {
+    "@formbricks/types": "workspace:*",
+    "@formbricks/tsconfig": "workspace:*",
+    "eslint": "^8.39.0",
+    "eslint-config-formbricks": "workspace:*",
+    "rimraf": "^4.4.1",
+    "tsup": "^6.7.0"
+  }
+}

@@ -1,4 +1,5 @@
 import type { InitConfig } from "../../types/js";
+import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";
 import { trackEvent } from "./lib/event";
@@ -7,6 +8,8 @@ import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeEvents";
 import { resetPerson, setPersonAttribute, setPersonUserId } from "./lib/person";
 import { refreshSettings } from "./lib/settings";
+
+export type { EnvironmentId, KeyValueData, PersonId, ResponseId, SurveyId } from "@formbricks/api";
 
 const logger = Logger.getInstance();
 
@@ -46,6 +49,16 @@ const registerRouteChange = (): void => {
   queue.add(true, checkPageUrl);
 };
 
-const formbricks = { init, setUserId, setEmail, setAttribute, track, logout, refresh, registerRouteChange };
+const formbricks = {
+  init,
+  setUserId,
+  setEmail,
+  setAttribute,
+  track,
+  logout,
+  refresh,
+  registerRouteChange,
+  getApi,
+};
 
-export default formbricks;
+export { formbricks as default };

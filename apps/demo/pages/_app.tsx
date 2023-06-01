@@ -1,4 +1,4 @@
-import formbricks from "@formbricks/js";
+import formbricks, { PersonId, SurveyId } from "@formbricks/js";
 import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
