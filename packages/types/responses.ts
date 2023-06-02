@@ -8,7 +8,7 @@ export interface Response {
   surveyId: string;
   personId?: string;
   data: {
-    [questionId: string]: string | string[];
+    [questionId: string]: string;
   };
   meta: {
     [key: string]: string;
