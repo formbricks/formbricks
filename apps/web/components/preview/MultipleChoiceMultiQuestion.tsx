@@ -32,7 +32,10 @@ export default function MultipleChoiceMultiQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        selectedChoices.push(otherSpecified);
+
+        if (otherSpecified.length > 0 && showOther) {
+          selectedChoices.push(otherSpecified);
+        }
 
         if (question.required && selectedChoices.length <= 0) {
           return;
@@ -41,6 +44,7 @@ export default function MultipleChoiceMultiQuestion({
         const data = {
           [question.id]: selectedChoices,
         };
+
         onSubmit(data);
         // console.log(data);
         setSelectedChoices([]); // reset value
@@ -106,6 +110,7 @@ export default function MultipleChoiceMultiQuestion({
                           placeholder="Please specify"
                           onChange={(e) => setOtherSpecified(e.currentTarget.value)}
                           aria-labelledby={`${choice.id}-label`}
+                          required={question.required}
                         />
                       )}
                     </span>

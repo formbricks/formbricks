@@ -31,7 +31,10 @@ export default function MultipleChoiceMultiQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        selectedChoices.push(otherSpecified);
+
+        if (otherSpecified.length > 0 && showOther) {
+          selectedChoices.push(otherSpecified);
+        }
 
         if (question.required && selectedChoices.length <= 0) {
           return;
@@ -101,6 +104,7 @@ export default function MultipleChoiceMultiQuestion({
                       className="fb-mt-3 fb-flex fb-h-10 fb-w-full fb-rounded-md fb-border fb-border-slate-300 fb-bg-transparent fb-px-3 fb-py-2 fb-text-sm fb-text-slate-800 placeholder:fb-text-slate-400 focus:fb-outline-none  focus:fb-ring-2 focus:fb-ring-slate-400 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50 dark:fb-border-slate-500 dark:fb-text-slate-300"
                       onChange={(e) => setOtherSpecified(e.currentTarget.value)}
                       aria-labelledby={`${choice.id}-label`}
+                      required={question.required}
                     />
                   )}
                 </label>
