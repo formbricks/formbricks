@@ -75,7 +75,7 @@ export default function MultipleChoiceSingleQuestion({
                       name="other-specify"
                       placeholder="Please specify"
                       className="mt-3"
-                      required={question.required && idx === 0}
+                      required={question.required}
                     />
                   )}
                 </label>
