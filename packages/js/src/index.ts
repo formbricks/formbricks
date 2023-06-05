@@ -6,7 +6,7 @@ import { trackEvent } from "./lib/event";
 import { initialize } from "./lib/init";
 import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeEvents";
-import { resetPerson, setPersonAttribute, setPersonUserId } from "./lib/person";
+import { resetPerson, setPersonAttribute, setPersonUserId, getPerson } from "./lib/person";
 import { refreshSettings } from "./lib/settings";
 
 export type { EnvironmentId, KeyValueData, PersonId, ResponseId, SurveyId } from "@formbricks/api";
@@ -59,6 +59,7 @@ const formbricks = {
   refresh,
   registerRouteChange,
   getApi,
+  getPerson,
 };
 
 export { formbricks as default };

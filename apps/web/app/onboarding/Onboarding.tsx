@@ -15,6 +15,7 @@ import Greeting from "./Greeting";
 import Objective from "./Objective";
 import Product from "./Product";
 import Role from "./Role";
+import { ResponseId } from "@formbricks/js";
 
 const MAX_STEPS = 6;
 
@@ -26,6 +27,7 @@ export default function Onboarding({ session }: OnboardingProps) {
   const { data: environment, error } = useSWR(`/api/v1/environments/find-first`, fetcher);
   const { profile } = useProfile();
   const { triggerProfileMutate } = useProfileMutation();
+  const [formbricksResponseId, setFormbricksResponseId] = useState<ResponseId | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -94,8 +96,12 @@ export default function Onboarding({ session }: OnboardingProps) {
       </div>
       <div className="flex grow items-center justify-center">
         {currentStep === 1 && <Greeting next={next} skip={doLater} name={profile.name} session={session} />}
-        {currentStep === 2 && <Role next={next} skip={skipStep} />}
-        {currentStep === 3 && <Objective next={next} skip={skipStep} />}
+        {currentStep === 2 && (
+          <Role next={next} skip={skipStep} setFormbricksResponseId={setFormbricksResponseId} />
+        )}
+        {currentStep === 3 && (
+          <Objective next={next} skip={skipStep} formbricksResponseId={formbricksResponseId} />
+        )}
         {currentStep === 4 && <Product done={done} environmentId={environment.id} isLoading={isLoading} />}
       </div>
     </div>

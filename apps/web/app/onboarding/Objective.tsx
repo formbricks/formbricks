@@ -1,11 +1,13 @@
 "use client";
 
-import { cn } from "@/../../packages/lib/cn";
-import { Objective } from "@/../../packages/types/templates";
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
+import { formbricksEnabled, updateResponse } from "@/lib/formbricks";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
+import { ResponseId } from "@formbricks/js";
+import { cn } from "@formbricks/lib/cn";
+import { Objective } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -13,6 +15,7 @@ import { toast } from "react-hot-toast";
 type ObjectiveProps = {
   next: () => void;
   skip: () => void;
+  formbricksResponseId?: ResponseId;
 };
 
 type ObjectiveChoice = {
@@ -20,7 +23,7 @@ type ObjectiveChoice = {
   id: Objective;
 };
 
-const Objective: React.FC<ObjectiveProps> = ({ next, skip }) => {
+const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId }) => {
   const objectives: Array<ObjectiveChoice> = [
     { label: "Increase conversion", id: "increase_conversion" },
     { label: "Improve user retention", id: "improve_user_retention" },
@@ -45,6 +48,18 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip }) => {
         } catch (e) {
           console.error(e);
           toast.error("An error occured saving your settings");
+        }
+        if (
+          formbricksEnabled &&
+          process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID &&
+          formbricksResponseId
+        ) {
+          const res = await updateResponse(formbricksResponseId, {
+            objective: selectedObjective.id,
+          });
+          if (!res.ok) {
+            console.error("Error updating response", res.error);
+          }
         }
         next();
       }

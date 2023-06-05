@@ -80,6 +80,6 @@ export class FormbricksAPI {
       });
     }
 
-    return ok(resJson.data as T);
+    return ok(resJson as T);
   }
 }
