@@ -60,6 +60,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
+import { formbricksLogout } from "@/lib/formbricks";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -418,9 +419,10 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() => {
-                      signOut();
+                    onClick={async () => {
                       setLoading(true);
+                      await signOut();
+                      await formbricksLogout();
                     }}>
                     <div className="flex h-full w-full items-center">
                       <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
