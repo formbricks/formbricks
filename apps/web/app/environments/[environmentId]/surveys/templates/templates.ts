@@ -647,7 +647,7 @@ export const templates: Template[] = [
         {
           id: "rjeac33gd13h3nnbrbid1fb2",
           type: "rating",
-          logic: [{ value: 3, condition: "greaterEqual", destination: "nq88udm0jjtylr16ax87xlyc" }],
+          logic: [{ value: 4, condition: "greaterEqual", destination: "nq88udm0jjtylr16ax87xlyc" }],
           range: 5,
           scale: "number",
           headline: "How easy was it to achieve your goal?",
@@ -1508,7 +1508,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: "rating",
-          logic: [{ value: 5, condition: "equals", destination: "end" }],
+          logic: [{ value: "5", condition: "equals", destination: "end" }],
           range: 5,
           scale: "number",
           headline: "How likely are you to sign up for {{productName}}?",
