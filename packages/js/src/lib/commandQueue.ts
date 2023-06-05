@@ -38,12 +38,6 @@ export class CommandQueue {
 
       if (!result) continue;
 
-      /* logger.debug(
-        `Command result: ${result.ok === true ? "OK" : "Something went really wrong"}, ${
-          currentItem.command.name
-        }`
-      ); */
-
       if (result.ok !== true) errorHandler.handle(result.error);
     }
     this.running = false;

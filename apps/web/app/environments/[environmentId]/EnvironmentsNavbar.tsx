@@ -60,6 +60,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
+import { formbricksLogout } from "@/lib/formbricks";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -419,6 +420,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 <DropdownMenuGroup>
                   <DropdownMenuItem
                     onClick={() => {
+                      formbricksLogout();
                       signOut();
                       setLoading(true);
                     }}>

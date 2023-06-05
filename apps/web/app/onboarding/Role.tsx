@@ -52,7 +52,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
           const res = await createResponse(
             process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID as SurveyId,
             {
-              role: selectedRole.id,
+              role: selectedRole.label,
             }
           );
           if (res.ok) {

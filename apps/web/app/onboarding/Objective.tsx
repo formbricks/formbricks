@@ -55,7 +55,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId 
           formbricksResponseId
         ) {
           const res = await updateResponse(formbricksResponseId, {
-            objective: selectedObjective.id,
+            objective: selectedObjective.label,
           });
           if (!res.ok) {
             console.error("Error updating response", res.error);
