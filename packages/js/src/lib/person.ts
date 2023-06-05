@@ -217,3 +217,7 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
 
   return okVoid();
 };
+
+export const getPerson = (): Person => {
+  return config.get().person;
+};

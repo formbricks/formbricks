@@ -3,15 +3,19 @@
 import { cn } from "@/../../packages/lib/cn";
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
+import { createResponse, formbricksEnabled } from "@/lib/formbricks";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
+import { SurveyId } from "@formbricks/js";
 import { Button } from "@formbricks/ui";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { ResponseId } from "@formbricks/js";
 
-type Role = {
+type RoleProps = {
   next: () => void;
   skip: () => void;
+  setFormbricksResponseId: (id: ResponseId) => void;
 };
 
 type RoleChoice = {
@@ -19,7 +23,7 @@ type RoleChoice = {
   id: "project_manager" | "engineer" | "founder" | "marketing_specialist" | "other";
 };
 
-const Role: React.FC<Role> = ({ next, skip }) => {
+const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
 
   const { profile } = useProfile();
@@ -43,6 +47,20 @@ const Role: React.FC<Role> = ({ next, skip }) => {
         } catch (e) {
           toast.error("An error occured saving your settings");
           console.error(e);
+        }
+        if (formbricksEnabled && process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID) {
+          const res = await createResponse(
+            process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID as SurveyId,
+            {
+              role: selectedRole.id,
+            }
+          );
+          if (res.ok) {
+            const response = res.data;
+            setFormbricksResponseId(response.id);
+          } else {
+            console.error("Error sending response to Formbricks", res.error);
+          }
         }
         next();
       }
