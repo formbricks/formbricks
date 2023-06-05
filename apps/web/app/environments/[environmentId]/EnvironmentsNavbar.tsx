@@ -419,10 +419,10 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() => {
-                      formbricksLogout();
-                      signOut();
+                    onClick={async () => {
                       setLoading(true);
+                      await signOut();
+                      await formbricksLogout();
                     }}>
                     <div className="flex h-full w-full items-center">
                       <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />

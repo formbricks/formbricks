@@ -31,6 +31,6 @@ export const updateResponse = async (
   });
 };
 
-export const formbricksLogout = () => {
-  return formbricks.logout();
+export const formbricksLogout = async () => {
+  return await formbricks.logout();
 };
