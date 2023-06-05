@@ -101,7 +101,7 @@ export default function MultipleChoiceSingleForm({
                 )}
               </div>
             ))}
-          <Button variant="secondary" type="button" onClick={() => addChoice()}>
+          <Button variant="secondary" type="button" size="sm" onClick={() => addChoice()}>
             Add Option
           </Button>
         </div>
