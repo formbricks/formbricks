@@ -17,9 +17,9 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "eslint": "^8.39.0",
+    "eslint": "^8.41.0",
     "eslint-config-formbricks": "workspace:*",
-    "rimraf": "^4.4.1",
+    "rimraf": "^5.0.1",
     "tsup": "^6.7.0"
   }
 }

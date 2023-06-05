@@ -8,6 +8,6 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "rimraf": "^5.0.0"
+    "rimraf": "^5.0.1"
   }
 }

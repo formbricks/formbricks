@@ -13,6 +13,7 @@ export interface CreateResponseOptions {
   surveyId: SurveyId;
   personId?: PersonId;
   data: KeyValueData;
+  finished?: boolean;
 }
 
 export const createResponse = async (
@@ -26,7 +27,7 @@ export const createResponse = async (
       personId: options.personId,
       response: {
         data: options.data,
-        finished: false,
+        finished: options.finished || false,
       },
     },
     { method: "POST" }
