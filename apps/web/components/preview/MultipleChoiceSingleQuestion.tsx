@@ -74,8 +74,9 @@ export default function MultipleChoiceSingleQuestion({
                       id="other-specify"
                       name="other-specify"
                       placeholder="Please specify"
-                      className="mt-3"
+                      className="mt-3 bg-white"
                       required={question.required}
+                      autoFocus
                     />
                   )}
                 </label>

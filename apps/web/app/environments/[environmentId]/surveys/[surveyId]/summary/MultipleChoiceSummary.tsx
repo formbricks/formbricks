@@ -4,10 +4,12 @@ import { PersonAvatar, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import Link from "next/link";
+import { truncate } from "@/lib/utils";
 
 interface MultipleChoiceSummaryProps {
   questionSummary: QuestionSummary<MultipleChoiceMultiQuestion | MultipleChoiceSingleQuestion>;
   environmentId: string;
+  surveyType: string;
 }
 
 interface ChoiceResult {
@@ -28,6 +30,7 @@ interface ChoiceResult {
 export default function MultipleChoiceSummary({
   questionSummary,
   environmentId,
+  surveyType,
 }: MultipleChoiceSummaryProps) {
   const isSingleChoice = questionSummary.question.type === "multipleChoiceSingle";
 
@@ -46,13 +49,21 @@ export default function MultipleChoiceSummary({
       };
     }
 
+    function findEmail(person) {
+      const emailAttribute = person.attributes.find((attr) => attr.attributeClass.name === "email");
+      return emailAttribute ? emailAttribute.value : null;
+    }
+
     const addOtherChoice = (response, value) => {
       for (const key in resultsDict) {
         if (resultsDict[key].id === "other" && value !== "") {
+          const email = response.person && findEmail(response.person);
+          const displayIdentifier = email || truncate(response.personId, 16);
           resultsDict[key].otherValues?.push({
             value,
             person: {
               id: response.personId,
+              email: displayIdentifier,
             },
           });
           resultsDict[key].count += 1;
@@ -151,30 +162,40 @@ export default function MultipleChoiceSummary({
             <ProgressBar barColor="bg-brand" progress={result.percentage} />
             {result.otherValues.length > 0 && (
               <div className="mt-4 rounded-lg border border-slate-200">
-                <div className="grid h-12 grid-cols-2 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-                  <div className="col-span-1 pl-6 ">Specified &quot;Other&quot; answer</div>
-                  <div className="col-span-1 pl-6 ">User</div>
+                <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+                  <div className="col-span-1 pl-6 ">Specified &quot;Other&quot; answers</div>
+                  <div className="col-span-1 pl-6 ">{surveyType === "web" && "User"}</div>
                 </div>
                 {result.otherValues
                   .filter((otherValue) => otherValue !== "")
                   .map((otherValue, idx) => (
-                    <Link
-                      href={
-                        otherValue.person.id
-                          ? `/environments/${environmentId}/people/${otherValue.person.id}`
-                          : { pathname: null }
-                      }
-                      target="_blank"
-                      key={idx}
-                      className="m-2 grid h-16 grid-cols-2 items-center rounded-lg text-sm hover:bg-slate-100">
-                      <div className="ph-no-capture col-span-1 pl-4 font-medium text-slate-900">
-                        <span>{otherValue.value}</span>
-                      </div>
-                      <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
-                        {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
-                        <span>{otherValue.person.id}</span>
-                      </div>
-                    </Link>
+                    <div key={idx}>
+                      {surveyType === "link" && (
+                        <div
+                          key={idx}
+                          className="ph-no-capture col-span-1 m-2 flex h-10 items-center rounded-lg pl-4 text-sm font-medium text-slate-900">
+                          <span>{otherValue.value}</span>
+                        </div>
+                      )}
+                      {surveyType === "web" && (
+                        <Link
+                          href={
+                            otherValue.person.id
+                              ? `/environments/${environmentId}/people/${otherValue.person.id}`
+                              : { pathname: null }
+                          }
+                          key={idx}
+                          className="m-2 grid h-16 grid-cols-2 items-center rounded-lg text-sm hover:bg-slate-100">
+                          <div className="ph-no-capture col-span-1 pl-4 font-medium text-slate-900">
+                            <span>{otherValue.value}</span>
+                          </div>
+                          <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
+                            {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
+                            <span>{otherValue.person.email}</span>
+                          </div>
+                        </Link>
+                      )}
+                    </div>
                   ))}
               </div>
             )}

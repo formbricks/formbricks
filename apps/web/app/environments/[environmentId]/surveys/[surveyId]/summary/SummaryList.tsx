@@ -91,6 +91,7 @@ export default function SummaryList({ environmentId, surveyId }) {
                       >
                     }
                     environmentId={environmentId}
+                    surveyType={survey.type}
                   />
                 );
               }

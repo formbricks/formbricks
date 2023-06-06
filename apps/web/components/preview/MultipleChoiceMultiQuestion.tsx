@@ -106,11 +106,12 @@ export default function MultipleChoiceMultiQuestion({
                           type="text"
                           id={`${choice.id}-label`}
                           name={question.id}
-                          className="mt-2"
+                          className="mt-2 bg-white"
                           placeholder="Please specify"
                           onChange={(e) => setOtherSpecified(e.currentTarget.value)}
                           aria-labelledby={`${choice.id}-label`}
                           required={question.required}
+                          autoFocus
                         />
                       )}
                     </span>

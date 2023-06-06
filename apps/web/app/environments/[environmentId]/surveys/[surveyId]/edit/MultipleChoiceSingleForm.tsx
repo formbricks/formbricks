@@ -3,6 +3,7 @@ import { Survey } from "@formbricks/types/surveys";
 import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
+import { cn } from "@formbricks/lib/cn";
 
 interface OpenQuestionFormProps {
   localSurvey: Survey;
@@ -31,14 +32,21 @@ export default function MultipleChoiceSingleForm({
   };
 
   const addChoice = () => {
-    const newChoices = !question.choices ? [] : question.choices;
+    let newChoices = !question.choices ? [] : question.choices;
+    const otherChoice = newChoices.find((choice) => choice.id === "other");
+    if (otherChoice) {
+      newChoices = newChoices.filter((choice) => choice.id !== "other");
+    }
     newChoices.push({ id: createId(), label: "" });
+    if (otherChoice) {
+      newChoices.push(otherChoice);
+    }
     updateQuestion(questionIdx, { choices: newChoices });
   };
 
   const addOther = () => {
     if (question.choices.filter((c) => c.id === "other").length === 0) {
-      const newChoices = !question.choices ? [] : question.choices;
+      const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
       newChoices.push({ id: "other", label: "Other" });
       updateQuestion(questionIdx, { choices: newChoices });
     }
@@ -98,6 +106,7 @@ export default function MultipleChoiceSingleForm({
                   id={choice.id}
                   name={choice.id}
                   value={choice.label}
+                  className={cn(choice.id === "other" && "border-dashed")}
                   placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
                 />
@@ -116,7 +125,7 @@ export default function MultipleChoiceSingleForm({
             {question.choices.filter((c) => c.id === "other").length === 0 && (
               <>
                 <p>or</p>
-                <Button variant="minimal" type="button" onClick={() => addOther()}>
+                <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
                   Add &quot;Other&quot; with specify
                 </Button>
               </>
