@@ -10,7 +10,7 @@ const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 
 export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError | NetworkError>> => {
-  logger.debug("Checking page url");
+  logger.debug(`Checking page url: ${window.location.href}`);
   const { settings } = config.get();
   const pageUrlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
 
