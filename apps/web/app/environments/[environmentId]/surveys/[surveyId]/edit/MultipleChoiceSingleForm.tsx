@@ -3,6 +3,7 @@ import { Survey } from "@formbricks/types/surveys";
 import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
+import { useEffect, useRef } from "react";
 
 interface OpenQuestionFormProps {
   localSurvey: Survey;
@@ -18,6 +19,8 @@ export default function MultipleChoiceSingleForm({
   updateQuestion,
   lastQuestion,
 }: OpenQuestionFormProps): JSX.Element {
+  const lastChoiceRef = useRef<HTMLInputElement>(null);
+
   const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
     const newChoices = !question.choices
       ? []
@@ -54,6 +57,12 @@ export default function MultipleChoiceSingleForm({
     updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
   };
 
+  useEffect(() => {
+    if (lastChoiceRef.current) {
+      lastChoiceRef.current?.focus();
+    }
+  }, [question.choices?.length]);
+
   return (
     <form>
       <div className="mt-3">
@@ -87,6 +96,7 @@ export default function MultipleChoiceSingleForm({
             question.choices.map((choice, choiceIdx) => (
               <div key={choiceIdx} className="inline-flex w-full items-center">
                 <Input
+                  ref={choiceIdx === question.choices.length - 1 ? lastChoiceRef : null}
                   id={choice.id}
                   name={choice.id}
                   value={choice.label}
@@ -101,7 +111,7 @@ export default function MultipleChoiceSingleForm({
                 )}
               </div>
             ))}
-          <Button variant="secondary" type="button" onClick={() => addChoice()}>
+          <Button variant="secondary" size="sm" type="button" onClick={() => addChoice()}>
             Add Option
           </Button>
         </div>
