@@ -1,43 +1,93 @@
 import { MultipleChoiceMultiQuestion, MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { ProgressBar } from "@formbricks/ui";
+import { PersonAvatar, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
+import Link from "next/link";
+import { truncate } from "@/lib/utils";
 
 interface MultipleChoiceSummaryProps {
   questionSummary: QuestionSummary<MultipleChoiceMultiQuestion | MultipleChoiceSingleQuestion>;
+  environmentId: string;
+  surveyType: string;
 }
 
 interface ChoiceResult {
+  id: string;
   label: string;
   count: number;
   percentage?: number;
+  otherValues?: {
+    value: string;
+    person: {
+      id: string;
+      name?: string;
+      email?: string;
+    };
+  }[];
 }
 
-export default function MultipleChoiceSummary({ questionSummary }: MultipleChoiceSummaryProps) {
+export default function MultipleChoiceSummary({
+  questionSummary,
+  environmentId,
+  surveyType,
+}: MultipleChoiceSummaryProps) {
   const isSingleChoice = questionSummary.question.type === "multipleChoiceSingle";
 
   const results: ChoiceResult[] = useMemo(() => {
     if (!("choices" in questionSummary.question)) return [];
+    console.log(questionSummary.responses);
     // build a dictionary of choices
     const resultsDict: { [key: string]: ChoiceResult } = {};
     for (const choice of questionSummary.question.choices) {
       resultsDict[choice.label] = {
-        count: 0,
+        id: choice.id,
         label: choice.label,
+        count: 0,
         percentage: 0,
+        otherValues: [],
       };
     }
+
+    function findEmail(person) {
+      const emailAttribute = person.attributes.find((attr) => attr.attributeClass.name === "email");
+      return emailAttribute ? emailAttribute.value : null;
+    }
+
+    const addOtherChoice = (response, value) => {
+      for (const key in resultsDict) {
+        if (resultsDict[key].id === "other" && value !== "") {
+          const email = response.person && findEmail(response.person);
+          const displayIdentifier = email || truncate(response.personId, 16);
+          resultsDict[key].otherValues?.push({
+            value,
+            person: {
+              id: response.personId,
+              email: displayIdentifier,
+            },
+          });
+          resultsDict[key].count += 1;
+          break;
+        }
+      }
+    };
+
     // count the responses
     for (const response of questionSummary.responses) {
       // if single choice, only add responses that are in the choices
       if (isSingleChoice && response.value in resultsDict) {
         resultsDict[response.value].count += 1;
+      } else if (isSingleChoice) {
+        // if single choice and not in choices, add to other
+        addOtherChoice(response, response.value);
       } else {
         // if multi choice add all responses
         for (const choice of response.value) {
           if (choice in resultsDict) {
             resultsDict[choice].count += 1;
+          } else {
+            // if multi choice and not in choices, add to other
+            addOtherChoice(response, choice);
           }
         }
       }
@@ -49,8 +99,15 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
         resultsDict[key].percentage = resultsDict[key].count / total;
       }
     }
+
     // sort by count and transform to array
-    const results = Object.values(resultsDict).sort((a: any, b: any) => b.count - a.count);
+    const results = Object.values(resultsDict).sort((a: any, b: any) => {
+      if (a.id === "other") return 1; // Always put a after b if a's id is 'other'
+      if (b.id === "other") return -1; // Always put b after a if b's id is 'other'
+
+      // If neither id is 'other', compare counts
+      return b.count - a.count;
+    });
     return results;
   }, [questionSummary, isSingleChoice]);
 
@@ -103,6 +160,45 @@ export default function MultipleChoiceSummary({ questionSummary }: MultipleChoic
               </p>
             </div>
             <ProgressBar barColor="bg-brand" progress={result.percentage} />
+            {result.otherValues.length > 0 && (
+              <div className="mt-4 rounded-lg border border-slate-200">
+                <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+                  <div className="col-span-1 pl-6 ">Specified &quot;Other&quot; answers</div>
+                  <div className="col-span-1 pl-6 ">{surveyType === "web" && "User"}</div>
+                </div>
+                {result.otherValues
+                  .filter((otherValue) => otherValue !== "")
+                  .map((otherValue, idx) => (
+                    <div key={idx}>
+                      {surveyType === "link" && (
+                        <div
+                          key={idx}
+                          className="ph-no-capture col-span-1 m-2 flex h-10 items-center rounded-lg pl-4 text-sm font-medium text-slate-900">
+                          <span>{otherValue.value}</span>
+                        </div>
+                      )}
+                      {surveyType === "web" && (
+                        <Link
+                          href={
+                            otherValue.person.id
+                              ? `/environments/${environmentId}/people/${otherValue.person.id}`
+                              : { pathname: null }
+                          }
+                          key={idx}
+                          className="m-2 grid h-16 grid-cols-2 items-center rounded-lg text-sm hover:bg-slate-100">
+                          <div className="ph-no-capture col-span-1 pl-4 font-medium text-slate-900">
+                            <span>{otherValue.value}</span>
+                          </div>
+                          <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
+                            {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
+                            <span>{otherValue.person.email}</span>
+                          </div>
+                        </Link>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

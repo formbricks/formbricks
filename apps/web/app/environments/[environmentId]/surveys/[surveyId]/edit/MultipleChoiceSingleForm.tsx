@@ -3,6 +3,7 @@ import { Survey } from "@formbricks/types/surveys";
 import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
+import { cn } from "@formbricks/lib/cn";
 
 interface OpenQuestionFormProps {
   localSurvey: Survey;
@@ -31,9 +32,24 @@ export default function MultipleChoiceSingleForm({
   };
 
   const addChoice = () => {
-    const newChoices = !question.choices ? [] : question.choices;
+    let newChoices = !question.choices ? [] : question.choices;
+    const otherChoice = newChoices.find((choice) => choice.id === "other");
+    if (otherChoice) {
+      newChoices = newChoices.filter((choice) => choice.id !== "other");
+    }
     newChoices.push({ id: createId(), label: "" });
+    if (otherChoice) {
+      newChoices.push(otherChoice);
+    }
     updateQuestion(questionIdx, { choices: newChoices });
+  };
+
+  const addOther = () => {
+    if (question.choices.filter((c) => c.id === "other").length === 0) {
+      const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
+      newChoices.push({ id: "other", label: "Other" });
+      updateQuestion(questionIdx, { choices: newChoices });
+    }
   };
 
   const deleteChoice = (choiceIdx: number) => {
@@ -90,7 +106,8 @@ export default function MultipleChoiceSingleForm({
                   id={choice.id}
                   name={choice.id}
                   value={choice.label}
-                  placeholder={`Option ${choiceIdx + 1}`}
+                  className={cn(choice.id === "other" && "border-dashed")}
+                  placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
                 />
                 {question.choices && question.choices.length > 2 && (
@@ -101,9 +118,19 @@ export default function MultipleChoiceSingleForm({
                 )}
               </div>
             ))}
-          <Button variant="secondary" type="button" onClick={() => addChoice()}>
-            Add Option
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button variant="secondary" type="button" onClick={() => addChoice()}>
+              Add Option
+            </Button>
+            {question.choices.filter((c) => c.id === "other").length === 0 && (
+              <>
+                <p>or</p>
+                <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
+                  Add &quot;Other&quot; with specify
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
