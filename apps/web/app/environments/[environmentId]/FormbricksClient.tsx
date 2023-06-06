@@ -1,15 +1,14 @@
 "use client";
 
+import { formbricksEnabled } from "@/lib/formbricks";
 import formbricks from "@formbricks/js";
 import { useEffect } from "react";
-
-const formbricksEnabled =
-  typeof process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST && process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID;
 
 if (typeof window !== "undefined" && formbricksEnabled) {
   formbricks.init({
     environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
     apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
+    logLevel: "debug",
   });
 }
 

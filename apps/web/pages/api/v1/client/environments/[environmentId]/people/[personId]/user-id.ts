@@ -59,7 +59,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
     });
-    // if person exists, reconnect ression and delete old user
+    // if person exists, reconnect session and delete old user
     if (existingPerson) {
       // reconnect session to new person
       await prisma.session.update({

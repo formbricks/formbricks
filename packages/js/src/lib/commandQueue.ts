@@ -8,6 +8,8 @@ export class CommandQueue {
     commandArgs: any[];
   }[] = [];
   private running: boolean = false;
+  private resolvePromise: (() => void) | null = null;
+  private commandPromise: Promise<void> | null = null;
 
   public add<A>(
     checkInitialized: boolean = true,
@@ -17,7 +19,16 @@ export class CommandQueue {
     this.queue.push({ command, checkInitialized, commandArgs: args });
 
     if (!this.running) {
-      this.run();
+      this.commandPromise = new Promise((resolve) => {
+        this.resolvePromise = resolve;
+        this.run();
+      });
+    }
+  }
+
+  public async wait() {
+    if (this.running) {
+      await this.commandPromise;
     }
   }
 
@@ -38,14 +49,13 @@ export class CommandQueue {
 
       if (!result) continue;
 
-      /* logger.debug(
-        `Command result: ${result.ok === true ? "OK" : "Something went really wrong"}, ${
-          currentItem.command.name
-        }`
-      ); */
-
       if (result.ok !== true) errorHandler.handle(result.error);
     }
     this.running = false;
+    if (this.resolvePromise) {
+      this.resolvePromise();
+      this.resolvePromise = null;
+      this.commandPromise = null;
+    }
   }
 }
