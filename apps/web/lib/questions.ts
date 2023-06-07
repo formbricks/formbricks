@@ -99,9 +99,8 @@ export const questionTypes: QuestionType[] = [
     description: "Ask your users to accept something",
     icon: CheckIcon,
     preset: {
-      headline: "You are one of our power users!",
-      buttonLabel: "Book interview",
-      buttonExternal: false,
+      headline: "Terms and Conditions",
+      label: "I agree to the terms and conditions",
       dismissButtonLabel: "Skip",
     },
   },
