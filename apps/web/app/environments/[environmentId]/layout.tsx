@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import PosthogIdentify from "./PosthogIdentify";
-import FormbricksClient from "./FormbricksClient";
+import FormbricksClient from "../../FormbricksClient";
 import { PosthogClientWrapper } from "../../PosthogClientWrapper";
 
 export default async function EnvironmentLayout({ children, params }) {
