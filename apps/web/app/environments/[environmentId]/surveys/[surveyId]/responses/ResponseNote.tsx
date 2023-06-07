@@ -44,7 +44,7 @@ export default function ResponseNote({ data, environmentId, surveyId, isOpen, se
     >
         {!isOpen ?
         <div className="flex flex-col h-full">
-            <div className={clsx("space-y-2 px-2 pb-2 pt-2", responseNotes.length ? "bg-amber-50 h-16" : "bg-slate-200")}>
+            <div className={clsx("space-y-2 px-2 pb-2 pt-2 rounded-t-lg", responseNotes.length ? "bg-amber-50 h-16" : "bg-slate-200")}>
                 {!responseNotes.length ? 
                     <div className="flex items-center justify-end">
                         <div className="group flex items-center">
