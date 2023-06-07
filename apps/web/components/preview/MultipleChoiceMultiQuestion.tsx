@@ -46,7 +46,7 @@ export default function MultipleChoiceMultiQuestion({
         };
 
         onSubmit(data);
-        // console.log(data);
+
         setSelectedChoices([]); // reset value
         setShowOther(false);
         setOtherSpecified("");
