@@ -9,28 +9,30 @@ import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { NextResponse } from "next/server";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const { surveyId, userCuid, response } = await request.json();
+  const responseInput: TResponseInput = await request.json();
+  const inputValidation = ZResponseInput.safeParse(responseInput);
 
-  if (!surveyId) {
-    return responses.missingFieldResponse("surveyId", true);
+  console.log("inputValidation", JSON.stringify(inputValidation, null, 2));
+
+  if (!inputValidation.success) {
+    return responses.badRequestResponse(
+      `${inputValidation.error.issues[0].path.join(".")}: ${inputValidation.error.issues[0].message}`,
+      {},
+      true
+    );
   }
-
-  if (!response) {
-    return responses.missingFieldResponse("response", true);
-  }
-
-  // userCuid can be null, e.g. for link surveys
 
   // check if survey exists
   const survey = await prisma.survey.findUnique({
     where: {
-      id: surveyId,
+      id: responseInput.surveyId,
     },
     select: {
       id: true,
@@ -59,7 +61,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   });
 
   if (!survey) {
-    return responses.notFoundResponse("Survey", surveyId, true);
+    return responses.notFoundResponse("Survey", responseInput.surveyId, true);
   }
 
   const environmentId = survey.environment.id;
@@ -68,21 +70,21 @@ export async function POST(request: Request): Promise<NextResponse> {
   // find team owner
   const teamOwnerId = survey.environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
 
-  const createBody = {
+  const createBody: any = {
     data: {
       survey: {
         connect: {
-          id: surveyId,
+          id: responseInput.surveyId,
         },
       },
-      ...response,
+      ...responseInput,
     },
   };
 
-  if (userCuid) {
+  if (responseInput.personId) {
     createBody.data.person = {
       connect: {
-        id: userCuid,
+        id: responseInput.personId,
       },
     };
   }
@@ -105,7 +107,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     }),
   });
 
-  if (response.finished) {
+  if (responseInput.finished) {
     // send response to pipeline
     // don't await to not block the response
     fetch(`${WEBAPP_URL}/api/pipeline`, {
@@ -125,7 +127,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   captureTelemetry("response created");
   if (teamOwnerId) {
     await capturePosthogEvent(teamOwnerId, "response created", teamId, {
-      surveyId,
+      surveyId: responseInput.surveyId,
       surveyType: survey.type,
     });
   } else {
