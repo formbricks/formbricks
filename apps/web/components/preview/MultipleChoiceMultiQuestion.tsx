@@ -4,6 +4,7 @@ import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "@/components/preview/SubmitButton";
+import { Input } from "@/../../packages/ui";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -20,15 +21,21 @@ export default function MultipleChoiceMultiQuestion({
 }: MultipleChoiceMultiProps) {
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
+  const [showOther, setShowOther] = useState(false);
+  const [otherSpecified, setOtherSpecified] = useState("");
 
   useEffect(() => {
-    setIsAtLeastOneChecked(selectedChoices.length > 0);
-  }, [selectedChoices]);
+    setIsAtLeastOneChecked(selectedChoices.length > 0 || otherSpecified.length > 0);
+  }, [selectedChoices, otherSpecified]);
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
+
+        if (otherSpecified.length > 0 && showOther) {
+          selectedChoices.push(otherSpecified);
+        }
 
         if (question.required && selectedChoices.length <= 0) {
           return;
@@ -37,8 +44,12 @@ export default function MultipleChoiceMultiQuestion({
         const data = {
           [question.id]: selectedChoices,
         };
+
         onSubmit(data);
+        // console.log(data);
         setSelectedChoices([]); // reset value
+        setShowOther(false);
+        setOtherSpecified("");
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -48,39 +59,64 @@ export default function MultipleChoiceMultiQuestion({
           <div className="relative space-y-2 rounded-md bg-white">
             {question.choices &&
               question.choices.map((choice) => (
-                <label
-                  key={choice.id}
-                  className={cn(
-                    selectedChoices.includes(choice.label)
-                      ? "z-10 border-slate-400 bg-slate-50"
-                      : "border-gray-200",
-                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
-                  )}>
-                  <span className="flex items-center text-sm">
-                    <input
-                      type="checkbox"
-                      id={choice.id}
-                      name={question.id}
-                      value={choice.label}
-                      className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
-                      aria-labelledby={`${choice.id}-label`}
-                      checked={selectedChoices.includes(choice.label)}
-                      onChange={(e) => {
-                        if (e.currentTarget.checked) {
-                          setSelectedChoices([...selectedChoices, e.currentTarget.value]);
-                        } else {
-                          setSelectedChoices(
-                            selectedChoices.filter((label) => label !== e.currentTarget.value)
-                          );
-                        }
-                      }}
-                      style={{ borderColor: brandColor, color: brandColor }}
-                    />
-                    <span id={`${choice.id}-label`} className="ml-3 font-medium">
-                      {choice.label}
+                <>
+                  <label
+                    key={choice.id}
+                    className={cn(
+                      selectedChoices.includes(choice.label) || (choice.id === "other" && showOther)
+                        ? "z-10 border-slate-400 bg-slate-50"
+                        : "border-gray-200",
+                      "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
+                    )}>
+                    <span className="flex flex-col text-sm">
+                      <span className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={choice.id}
+                          name={question.id}
+                          value={choice.label}
+                          className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+                          aria-labelledby={`${choice.id}-label`}
+                          checked={
+                            selectedChoices.includes(choice.label) || (choice.id === "other" && showOther)
+                          }
+                          onChange={(e) => {
+                            if (choice.id === "other") {
+                              setShowOther(e.currentTarget.checked);
+
+                              return;
+                            }
+
+                            if (e.currentTarget.checked) {
+                              setSelectedChoices([...selectedChoices, e.currentTarget.value]);
+                            } else {
+                              setSelectedChoices(
+                                selectedChoices.filter((label) => label !== e.currentTarget.value)
+                              );
+                            }
+                          }}
+                          style={{ borderColor: brandColor, color: brandColor }}
+                        />
+                        <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                          {choice.label}
+                        </span>
+                      </span>
+                      {choice.id === "other" && showOther && (
+                        <Input
+                          type="text"
+                          id={`${choice.id}-label`}
+                          name={question.id}
+                          className="mt-2 bg-white"
+                          placeholder="Please specify"
+                          onChange={(e) => setOtherSpecified(e.currentTarget.value)}
+                          aria-labelledby={`${choice.id}-label`}
+                          required={question.required}
+                          autoFocus
+                        />
+                      )}
                     </span>
-                  </span>
-                </label>
+                  </label>
+                </>
               ))}
           </div>
         </fieldset>

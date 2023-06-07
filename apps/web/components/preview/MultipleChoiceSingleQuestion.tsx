@@ -4,6 +4,8 @@ import { useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "@/components/preview/SubmitButton";
+import { Input } from "@/../../packages/ui";
+import { useRef } from "react";
 
 interface MultipleChoiceSingleProps {
   question: MultipleChoiceSingleQuestion;
@@ -19,13 +21,18 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const otherSpecify = useRef<HTMLInputElement>(null);
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
+
+        const value = otherSpecify.current?.value || e.currentTarget[question.id].value;
         const data = {
-          [question.id]: e.currentTarget[question.id].value,
+          [question.id]: value,
         };
+        // console.log(data);
 
         onSubmit(data);
         setSelectedChoice(null); // reset form
@@ -52,10 +59,8 @@ export default function MultipleChoiceSingleQuestion({
                       value={choice.label}
                       className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
-                      onChange={(e) => {
-                        setSelectedChoice(e.currentTarget.value);
-                      }}
-                      checked={selectedChoice === choice.label}
+                      onChange={() => setSelectedChoice(choice.id)}
+                      checked={selectedChoice === choice.id}
                       style={{ borderColor: brandColor, color: brandColor }}
                       required={question.required && idx === 0}
                     />
@@ -63,6 +68,17 @@ export default function MultipleChoiceSingleQuestion({
                       {choice.label}
                     </span>
                   </span>
+                  {choice.id === "other" && selectedChoice === "other" && (
+                    <Input
+                      ref={otherSpecify}
+                      id="other-specify"
+                      name="other-specify"
+                      placeholder="Please specify"
+                      className="mt-3 bg-white"
+                      required={question.required}
+                      autoFocus
+                    />
+                  )}
                 </label>
               ))}
           </div>

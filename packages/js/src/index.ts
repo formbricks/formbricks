@@ -16,37 +16,45 @@ const logger = Logger.getInstance();
 logger.debug("Create command queue");
 const queue = new CommandQueue();
 
-const init = (initConfig: InitConfig) => {
+const init = async (initConfig: InitConfig) => {
   ErrorHandler.init(initConfig.errorHandler);
   queue.add(false, initialize, initConfig);
+  await queue.wait();
 };
 
-const setUserId = (userId: string): void => {
+const setUserId = async (userId: string): Promise<void> => {
   queue.add(true, setPersonUserId, userId);
+  await queue.wait();
 };
 
-const setEmail = (email: string): void => {
+const setEmail = async (email: string): Promise<void> => {
   setAttribute("email", email);
+  await queue.wait();
 };
 
-const setAttribute = (key: string, value: string): void => {
+const setAttribute = async (key: string, value: string): Promise<void> => {
   queue.add(true, setPersonAttribute, key, value);
+  await queue.wait();
 };
 
-const logout = (): void => {
+const logout = async (): Promise<void> => {
   queue.add(true, resetPerson);
+  await queue.wait();
 };
 
-const track = (eventName: string, properties: any = {}): void => {
+const track = async (eventName: string, properties: any = {}): Promise<void> => {
   queue.add(true, trackEvent, eventName, properties);
+  await queue.wait();
 };
 
-const refresh = (): void => {
+const refresh = async (): Promise<void> => {
   queue.add(true, refreshSettings);
+  await queue.wait();
 };
 
-const registerRouteChange = (): void => {
+const registerRouteChange = async (): Promise<void> => {
   queue.add(true, checkPageUrl);
+  await queue.wait();
 };
 
 const formbricks = {
