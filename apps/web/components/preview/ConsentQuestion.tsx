@@ -29,27 +29,21 @@ export default function ConsentQuestion({
           const checkbox = document.getElementById(question.id) as HTMLInputElement;
           onSubmit({ [question.id]: checkbox.checked ? "accepted" : "skipped" });
         }}>
-        <div className="mt-4 w-full ">
-          <label className="relative z-10 flex cursor-pointer flex-col rounded-md border border-gray-200 bg-slate-50 p-4 checked:border-slate-400 hover:bg-slate-50 focus:outline-none">
-            <span className="flex flex-col text-sm">
-              <span className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={question.id}
-                  name={question.id}
-                  value={question.label}
-                  className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
-                  aria-labelledby={`${question.id}-label`}
-                  style={{ borderColor: brandColor, color: brandColor }}
-                  required={question.required}
-                />
-                <span id={`${question.id}-label`} className="ml-3 font-medium">
-                  {question.label}
-                </span>
-              </span>
-            </span>
-          </label>
-        </div>
+        <label className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-gray-200 bg-slate-50 p-4 text-sm focus:outline-none">
+          <input
+            type="checkbox"
+            id={question.id}
+            name={question.id}
+            value={question.label}
+            className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+            aria-labelledby={`${question.id}-label`}
+            style={{ borderColor: brandColor, color: brandColor }}
+            required={question.required}
+          />
+          <span id={`${question.id}-label`} className="ml-3 font-medium">
+            {question.label}
+          </span>
+        </label>
 
         <div className="mt-4 flex w-full justify-end">
           {!question.required && (
