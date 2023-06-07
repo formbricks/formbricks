@@ -10,7 +10,6 @@ export type Objective =
 
 export interface Template {
   name: string;
-  icon: any;
   description: string;
   category?: "Product Experience" | "Exploration" | "Growth" | "Increase Revenue" | "Customer Success";
   objectives?: [Objective, Objective?, Objective?];

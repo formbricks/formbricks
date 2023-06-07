@@ -1,27 +1,4 @@
 import type { Template } from "@formbricks/types/templates";
-import {
-  AppPieChartIcon,
-  ArrowRightCircleIcon,
-  ArrowUpRightIcon,
-  BaseballIcon,
-  CancelSubscriptionIcon,
-  CashCalculatorIcon,
-  CheckMarkIcon,
-  CodeBookIcon,
-  DashboardIcon,
-  DogChaserIcon,
-  DoorIcon,
-  FeedbackIcon,
-  GaugeSpeedFastIcon,
-  HeartCommentIcon,
-  InterviewPromptIcon,
-  LoadingBarIcon,
-  OnboardingIcon,
-  PMFIcon,
-  TaskListSearchIcon,
-  UserSearchGlasIcon,
-  VideoTabletAdjustIcon,
-} from "@formbricks/ui";
 import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {
@@ -32,49 +9,7 @@ const thankYouCardDefault = {
 
 export const templates: Template[] = [
   {
-    name: "Product Market Fit Survey (short)",
-    icon: PMFIcon,
-    category: "Product Experience",
-
-    description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
-    preset: {
-      name: "Product Market Fit Survey (short)",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "How disappointed would you be if you could no longer use {{productName}}?",
-          subheader: "Please select one of the following options:",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Not at all disappointed",
-            },
-            {
-              id: createId(),
-              label: "Somewhat disappointed",
-            },
-            {
-              id: createId(),
-              label: "Very disappointed",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "How can we improve {{productName}} for you?",
-          subheader: "Please be as specific as possible.",
-          required: true,
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
     name: "Product Market Fit (Superhuman)",
-    icon: PMFIcon,
     category: "Product Experience",
 
     description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
@@ -167,7 +102,6 @@ export const templates: Template[] = [
   },
   {
     name: "Onboarding Segmentation",
-    icon: OnboardingIcon,
     category: "Product Experience",
     objectives: ["increase_user_adoption", "improve_user_retention"],
     description: "Learn more about who signed up to your product and why.",
@@ -266,120 +200,8 @@ export const templates: Template[] = [
     },
   },
   {
-    name: "Uncover Strengths & Weaknesses",
-    icon: TaskListSearchIcon,
-    category: "Growth",
-    objectives: ["sharpen_marketing_messaging", "improve_user_retention"],
-    description: "Find out what users like and don't like about your product or offering.",
-    preset: {
-      name: "Uncover Strengths & Weaknesses",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "What do you value most about our service?",
-          subheader: "Please select one of the following options:",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Ease of use",
-            },
-            {
-              id: createId(),
-              label: "Good value for money",
-            },
-            {
-              id: createId(),
-              label: "It's open-source",
-            },
-            {
-              id: createId(),
-              label: "The founders are pretty",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "What should we improve on?",
-          subheader: "Please select one of the following options:",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Documentation",
-            },
-            {
-              id: createId(),
-              label: "Customizability",
-            },
-            {
-              id: createId(),
-              label: "Pricing",
-            },
-            {
-              id: createId(),
-              label: "Humbleness of founders",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "Would you like to add something?",
-          subheader: "Feel free to speak your mind, we do too.",
-          required: false,
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Marketing Attribution",
-    icon: AppPieChartIcon,
-    category: "Growth",
-    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
-    description: "How did you first hear about us?",
-    preset: {
-      name: "Marketing Attribution",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "How did you hear about us first?",
-          subheader: "Please select one of the following options:",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Recommendation",
-            },
-            {
-              id: createId(),
-              label: "Social Media",
-            },
-            {
-              id: createId(),
-              label: "Ads",
-            },
-            {
-              id: createId(),
-              label: "Google Search",
-            },
-            {
-              id: createId(),
-              label: "In a Podcast",
-            },
-          ],
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
     name: "Churn Survey",
-    icon: CancelSubscriptionIcon,
+
     category: "Increase Revenue",
     objectives: ["sharpen_marketing_messaging", "improve_user_retention"],
     description: "Find out why people cancel their subscriptions. These insights are pure gold!",
@@ -461,8 +283,66 @@ export const templates: Template[] = [
     },
   },
   {
+    name: "Earned Advocacy Score (EAS)",
+    category: "Growth",
+    objectives: ["support_sales", "sharpen_marketing_messaging"],
+    description:
+      "The EAS is a riff off the NPS but asking for actual past behaviour instead of lofty intentions.",
+    preset: {
+      name: "Earned Advocacy Score (EAS)",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          logic: [{ value: "No", condition: "equals", destination: "duz2qp8eftix9wty1l221x1h" }],
+          choices: [
+            { id: createId(), label: "Yes" },
+            { id: createId(), label: "No" },
+          ],
+          headline: "Have you actively recommended {{productName}} to others?",
+          required: true,
+          subheader: "",
+        },
+        {
+          id: createId(),
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "yhfew1j3ng6luy7t7qynwj79" }],
+          headline: "Great to hear! Why did you recommend us?",
+          required: true,
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "duz2qp8eftix9wty1l221x1h",
+          type: "openText",
+          headline: "So sad. Why not?",
+          required: true,
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "yhfew1j3ng6luy7t7qynwj79",
+          type: "multipleChoiceSingle",
+          logic: [{ value: "No", condition: "equals", destination: "end" }],
+          choices: [
+            { id: createId(), label: "Yes" },
+            { id: createId(), label: "No" },
+          ],
+          headline: "Have you actively discouraged others from choosing {{produtName}}?",
+          required: true,
+          subheader: "",
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "What made you discourage them?",
+          required: true,
+          placeholder: "Type your answer here...",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
     name: "Improve Trial Conversion",
-    icon: BaseballIcon,
     category: "Increase Revenue",
     objectives: ["increase_user_adoption", "increase_conversion", "improve_user_retention"],
     description: "Find out why people stopped their trial. These insights help you improve your funnel.",
@@ -559,8 +439,292 @@ export const templates: Template[] = [
     },
   },
   {
+    name: "Review Prompt",
+
+    category: "Growth",
+    objectives: ["support_sales"],
+    description: "Invite users who love your product to review it publicly.",
+    preset: {
+      name: "Review Prompt",
+      questions: [
+        {
+          id: createId(),
+          type: "rating",
+          logic: [{ value: 3, condition: "lessEqual", destination: "tk9wpw2gxgb8fa6pbpp3qq5l" }],
+          range: 5,
+          scale: "star",
+          headline: "How do you like {{productName}}?",
+          required: true,
+          subheader: "",
+          lowerLabel: "",
+          upperLabel: "",
+        },
+        {
+          id: createId(),
+          html: '<p class="fb-editor-paragraph" dir="ltr"><span>This helps us a lot.</span></p>',
+          type: "cta",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "Happy to hear 🙏 Please write a review for us!",
+          required: true,
+          buttonUrl: "https://formbricks.com/github",
+          buttonLabel: "Write review",
+          buttonExternal: true,
+        },
+        {
+          id: "tk9wpw2gxgb8fa6pbpp3qq5l",
+          type: "openText",
+          headline: "Sorry to hear! What is ONE thing we can do better?",
+          required: true,
+          subheader: "Help us improve your experience.",
+          buttonLabel: "Send",
+          placeholder: "Type your answer here...",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Interview Prompt",
+
+    category: "Exploration",
+    objectives: ["improve_user_retention"],
+    description: "Invite a specific subset of your users to schedule an interview with your product team.",
+    preset: {
+      name: "Interview Prompt",
+      questions: [
+        {
+          id: createId(),
+          type: "cta",
+          headline: "Do you have 15 min to talk to us? 🙏",
+          html: "You're one of our power users. We would love to interview you briefly!",
+          buttonLabel: "Book slot",
+          buttonUrl: "https://cal.com/johannes",
+          buttonExternal: true,
+          required: false,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Reduce Onboarding Drop-Off",
+    category: "Product Experience",
+    objectives: ["increase_user_adoption", "increase_conversion"],
+    description: "Identify weaknesses in your onboarding flow to increase user activation.",
+    preset: {
+      name: "Onboarding Drop-Off Reasons",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          logic: [
+            {
+              value: "Difficult to set up or use",
+              condition: "equals",
+              destination: "r0zvi3vburf4hm7qewimzjux",
+            },
+            {
+              value: "Lacked features/functionality",
+              condition: "equals",
+              destination: "rbwz3y6y9avzqcfj30nu0qj4",
+            },
+            {
+              value: "Just haven't had the time",
+              condition: "equals",
+              destination: "gn6298zogd2ipdz7js17qy5i",
+            },
+            { value: "Something else", condition: "equals", destination: "c0exdyri3erugrv0ezkyseh6" },
+          ],
+          choices: [
+            { id: createId(), label: "Didn't seem useful to me" },
+            { id: createId(), label: "Difficult to set up or use" },
+            { id: createId(), label: "Lacked features/functionality" },
+            { id: createId(), label: "Just haven't had the time" },
+            { id: createId(), label: "Something else" },
+          ],
+          headline: "What's the main reason why you haven't finished setting up {{productName}}?",
+          required: true,
+          subheader: "",
+        },
+        {
+          id: createId(),
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "What made you think {{productName}} wouldn't be useful?",
+          required: true,
+          subheader: "",
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "r0zvi3vburf4hm7qewimzjux",
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "What was difficult about setting up or using {{productName}}?",
+          required: true,
+          subheader: "",
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "rbwz3y6y9avzqcfj30nu0qj4",
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "What features or functionality were missing?",
+          required: true,
+          subheader: "",
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "gn6298zogd2ipdz7js17qy5i",
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "How could we make it easier for you to get started?",
+          required: true,
+          subheader: "",
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "c0exdyri3erugrv0ezkyseh6",
+          type: "openText",
+          logic: [],
+          headline: "What was it? Please explain:",
+          required: false,
+          subheader: "We're eager to fix it asap.",
+          placeholder: "Type your answer here...",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Uncover Strengths & Weaknesses",
+    category: "Growth",
+    objectives: ["sharpen_marketing_messaging", "improve_user_retention"],
+    description: "Find out what users like and don't like about your product or offering.",
+    preset: {
+      name: "Uncover Strengths & Weaknesses",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          choices: [
+            { id: createId(), label: "Ease of use" },
+            { id: createId(), label: "Good value for money" },
+            { id: createId(), label: "It's open-source" },
+            { id: createId(), label: "The founders are cute" },
+            { id: "other", label: "Other" },
+          ],
+          headline: "What do you value most about {{productName}}?",
+          required: true,
+          subheader: "",
+        },
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          choices: [
+            { id: createId(), label: "Documentation" },
+            { id: createId(), label: "Customizability" },
+            { id: createId(), label: "Pricing" },
+            { id: "other", label: "Other" },
+          ],
+          headline: "What should we improve on?",
+          required: true,
+          subheader: "Please select one of the following options:",
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "Would you like to add something?",
+          required: false,
+          subheader: "Feel free to speak your mind, we do too.",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Product Market Fit Survey (Short)",
+    category: "Product Experience",
+    description: "Measure PMF by assessing how disappointed users would be if your product disappeared.",
+    preset: {
+      name: "Product Market Fit Survey (Short)",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "How disappointed would you be if you could no longer use {{productName}}?",
+          subheader: "Please select one of the following options:",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Not at all disappointed",
+            },
+            {
+              id: createId(),
+              label: "Somewhat disappointed",
+            },
+            {
+              id: createId(),
+              label: "Very disappointed",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "How can we improve {{productName}} for you?",
+          subheader: "Please be as specific as possible.",
+          required: true,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Marketing Attribution",
+
+    category: "Growth",
+    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
+    description: "How did you first hear about us?",
+    preset: {
+      name: "Marketing Attribution",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "How did you hear about us first?",
+          subheader: "Please select one of the following options:",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Recommendation",
+            },
+            {
+              id: createId(),
+              label: "Social Media",
+            },
+            {
+              id: createId(),
+              label: "Ads",
+            },
+            {
+              id: createId(),
+              label: "Google Search",
+            },
+            {
+              id: createId(),
+              label: "In a Podcast",
+            },
+          ],
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
     name: "Changing subscription experience",
-    icon: CashCalculatorIcon,
+
     category: "Increase Revenue",
     objectives: ["increase_conversion", "improve_user_retention"],
     description: "Find out what goes through peoples minds when changing their subscriptions.",
@@ -619,10 +783,690 @@ export const templates: Template[] = [
       thankYouCard: thankYouCardDefault,
     },
   },
+
+  {
+    name: "Identify Customer Goals",
+
+    category: "Product Experience",
+    objectives: ["increase_user_adoption", "sharpen_marketing_messaging", "improve_user_retention"],
+    description:
+      "Better understand if your messaging creates the right expectations of the value your product provides.",
+    preset: {
+      name: "Identify Customer Goals",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "What's your primary goal for using {{productName}}?",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Understand my user base deeply",
+            },
+            {
+              id: createId(),
+              label: "Identify upselling opportunities",
+            },
+            {
+              id: createId(),
+              label: "Build the best possible product",
+            },
+            {
+              id: createId(),
+              label: "Rule the world to make everyone breakfast brussels sprouts.",
+            },
+          ],
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Feature Chaser",
+
+    category: "Product Experience",
+    objectives: ["improve_user_retention"],
+    description: "Follow up with users who just used a specific feature.",
+    preset: {
+      name: "Feature Chaser",
+      questions: [
+        {
+          id: createId(),
+          type: "rating",
+          range: 5,
+          scale: "number",
+          headline: "How important is [ADD FEATURE] for you?",
+          required: true,
+          lowerLabel: "Not important",
+          upperLabel: "Very important",
+        },
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          choices: [
+            { id: createId(), label: "Aspect 1" },
+            { id: createId(), label: "Aspect 2" },
+            { id: createId(), label: "Aspect 3" },
+            { id: createId(), label: "Aspect 4" },
+          ],
+          headline: "Which aspect is most important?",
+          required: true,
+          subheader: "",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Fake Door Follow-Up",
+
+    category: "Exploration",
+    objectives: ["increase_user_adoption"],
+    description: "Follow up with users who ran into one of your Fake Door experiments.",
+    preset: {
+      name: "Fake Door Follow-Up",
+      questions: [
+        {
+          id: createId(),
+          type: "rating",
+          headline: "How important is this feature for you?",
+          required: true,
+          lowerLabel: "Not important",
+          upperLabel: "Very important",
+          range: 5,
+          scale: "number",
+        },
+        {
+          id: createId(),
+          type: "multipleChoiceMulti",
+          headline: "What should be definitely include building this?",
+          required: false,
+          choices: [
+            {
+              id: createId(),
+              label: "Aspect 1",
+            },
+            {
+              id: createId(),
+              label: "Aspect 2",
+            },
+            {
+              id: createId(),
+              label: "Aspect 3",
+            },
+            {
+              id: createId(),
+              label: "Aspect 4",
+            },
+          ],
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Feedback Box",
+
+    category: "Product Experience",
+    objectives: ["improve_user_retention"],
+    description: "Give your users the chance to seamlessly share what's on their minds.",
+    preset: {
+      name: "Feedback Box",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          logic: [
+            { value: "Bug report 🐞", condition: "equals", destination: "dnbiuq4l33l7jypcf2cg6vhh" },
+            { value: "Feature Request 💡", condition: "equals", destination: "en9nuuevbf7g9oa9rzcs1l50" },
+          ],
+          choices: [
+            { id: createId(), label: "Bug report 🐞" },
+            { id: createId(), label: "Feature Request 💡" },
+          ],
+          headline: "What's on your mind, boss?",
+          required: true,
+          subheader: "Thanks for sharing. We'll get back to you asap.",
+        },
+        {
+          id: "dnbiuq4l33l7jypcf2cg6vhh",
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "a6c76m5oocw6xp9agf3d2tam" }],
+          headline: "What's broken?",
+          required: true,
+          subheader: "The more detail, the better :)",
+        },
+        {
+          id: "a6c76m5oocw6xp9agf3d2tam",
+          html: '<p class="fb-editor-paragraph" dir="ltr"><span>We will fix this as soon as possible. Do you want to be notified when we did?</span></p>',
+          type: "cta",
+          logic: [
+            { condition: "submitted", destination: "end" },
+            { condition: "skipped", destination: "end" },
+          ],
+          headline: "Want to stay in the loop?",
+          required: false,
+          buttonLabel: "Yes, notify me",
+          buttonExternal: false,
+          dismissButtonLabel: "No, thanks",
+        },
+        {
+          id: "en9nuuevbf7g9oa9rzcs1l50",
+          type: "openText",
+          headline: "Lovely, tell us more!",
+          required: true,
+          subheader: "What problem do you want us to solve?",
+          buttonLabel: "Request feature",
+          placeholder: "Type your answer here...",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Integration Setup Survey",
+
+    category: "Product Experience",
+    objectives: ["increase_user_adoption"],
+    description: "Evaluate how easily users can add integrations to your product. Find blind spots.",
+    preset: {
+      name: "Integration Usage Survey",
+      questions: [
+        {
+          id: "s6ss6znzxdwjod1hv16fow4w",
+          type: "rating",
+          logic: [{ value: 4, condition: "greaterEqual", destination: "ef0qo3l8iisd517ikp078u1p" }],
+          range: 5,
+          scale: "number",
+          headline: "How easy was it to set this integration up?",
+          required: true,
+          subheader: "",
+          lowerLabel: "Not easy",
+          upperLabel: "Very easy",
+        },
+        {
+          id: "mko13ptjj6tpi5u2pl7a5drz",
+          type: "openText",
+          headline: "Why was it hard?",
+          required: false,
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "ef0qo3l8iisd517ikp078u1p",
+          type: "openText",
+          headline: "What other tools would you like to use with {{productName}}?",
+          required: false,
+          subheader: "We keep building integrations, yours can be next:",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "New Integration Survey",
+
+    category: "Exploration",
+    objectives: ["increase_user_adoption", "increase_conversion"],
+    description: "Find out which integrations your users would like to see next.",
+    preset: {
+      name: "New Integration Survey",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "Which other tools are you using?",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "PostHog",
+            },
+            {
+              id: createId(),
+              label: "Segment",
+            },
+            {
+              id: createId(),
+              label: "Hubspot",
+            },
+            {
+              id: createId(),
+              label: "Twilio",
+            },
+            { id: "other", label: "Other" },
+          ],
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Docs Feedback",
+
+    category: "Product Experience",
+    objectives: ["increase_user_adoption", "improve_user_retention"],
+    description: "Measure how clear each page of your developer documentation is.",
+    preset: {
+      name: "{{productName}} Docs Feedback",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "Was this page helpful?",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Yes 👍",
+            },
+            {
+              id: createId(),
+              label: "No 👎",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "Please elaborate:",
+          required: false,
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "Page URL",
+          required: false,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Net Promoter Score (NPS)",
+
+    category: "Customer Success",
+    objectives: ["support_sales"],
+    description: "Measure the Net Promoter Score of your product.",
+    preset: {
+      name: "{{productName}} NPS",
+      questions: [
+        {
+          id: createId(),
+          type: "nps",
+          headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
+          required: false,
+          lowerLabel: "Not likely",
+          upperLabel: "Very likely",
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "What made you give that rating?",
+          required: false,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Customer Satisfaction Score (CSAT)",
+
+    category: "Customer Success",
+    objectives: ["support_sales"],
+    description: "Measure the Customer Satisfaction Score of your product.",
+    preset: {
+      name: "{{productName}} CSAT",
+      questions: [
+        {
+          id: createId(),
+          type: "rating",
+          logic: [{ value: 3, condition: "lessEqual", destination: "vyo4mkw4ln95ts4ya7qp2tth" }],
+          range: 5,
+          scale: "smiley",
+          headline: "How satisfied are you with your {{productName}} experience?",
+          required: true,
+          subheader: "",
+          lowerLabel: "Not satisfied",
+          upperLabel: "Very satisfied",
+        },
+        {
+          id: createId(),
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "Lovely! Is there anything we can do to improve your experience?",
+          required: false,
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "vyo4mkw4ln95ts4ya7qp2tth",
+          type: "openText",
+          headline: "Ugh, sorry! Is there anything we can do to improve your experience?",
+          required: false,
+          placeholder: "Type your answer here...",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Identify upsell opportunities",
+
+    category: "Increase Revenue",
+    objectives: ["support_sales", "sharpen_marketing_messaging"],
+    description: "Find out how much time your product saves your user. Use it to upsell.",
+    preset: {
+      name: "Identify upsell opportunities",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "How many hours does your team save per week by using {{productName}}?",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Less than 1 hour",
+            },
+            {
+              id: createId(),
+              label: "1 to 2 hours",
+            },
+            {
+              id: createId(),
+              label: "3 to 5 hours",
+            },
+            {
+              id: createId(),
+              label: "5+ hours",
+            },
+          ],
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+
+  {
+    name: "Prioritize Features",
+
+    category: "Exploration",
+    objectives: ["increase_user_adoption"],
+    description: "Identify features your users need most and least.",
+    preset: {
+      name: "Feature Prioritization",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          logic: [],
+          choices: [
+            { id: createId(), label: "Feature 1" },
+            { id: createId(), label: "Feature 2" },
+            { id: createId(), label: "Feature 3" },
+            { id: "other", label: "Other" },
+          ],
+          headline: "Which of these features would be MOST valuable to you?",
+          required: true,
+          subheader: "",
+        },
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          logic: [],
+          choices: [
+            { id: createId(), label: "Feature 1" },
+            { id: createId(), label: "Feature 2" },
+            { id: createId(), label: "Feature 3" },
+          ],
+          headline: "Which of these features would be LEAST valuable to you?",
+          required: true,
+          subheader: "",
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "How else could we improve you experience with {{productName}}?",
+          required: true,
+          placeholder: "Type your answer here...",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Gauge Feature Satisfaction",
+
+    category: "Product Experience",
+    objectives: ["increase_user_adoption", "improve_user_retention"],
+    description: "Evaluate the satisfaction of specific features of your product.",
+    preset: {
+      name: "Gauge Feature Satisfaction",
+      questions: [
+        {
+          id: createId(),
+          type: "rating",
+          headline: "How easy was it to achieve ... ?",
+          required: true,
+          lowerLabel: "Not easy",
+          upperLabel: "Very easy",
+          scale: "number",
+          range: 5,
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "What is one thing we could do better?",
+          required: false,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Marketing Site Clarity",
+
+    category: "Growth",
+    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
+    description: "Identify users dropping off your marketing site. Improve your messaging.",
+    preset: {
+      name: "Marketing Site Clarity",
+      questions: [
+        {
+          id: createId(),
+          type: "multipleChoiceSingle",
+          headline: "Do you have all the info you need to give {{productName}} a try?",
+          required: true,
+          choices: [
+            {
+              id: createId(),
+              label: "Yes, totally",
+            },
+            {
+              id: createId(),
+              label: "Kind of...",
+            },
+            {
+              id: createId(),
+              label: "No, not at all",
+            },
+          ],
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "What’s missing or unclear to you about {{productName}}?",
+          required: false,
+        },
+        {
+          id: createId(),
+          type: "cta",
+          headline: "Thanks for your answer! Get 25% off your first 6 months:",
+          required: false,
+          buttonLabel: "Get discount",
+          buttonUrl: "https://app.formbricks.com/auth/signup",
+          buttonExternal: true,
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Customer Effort Score (CES)",
+
+    category: "Product Experience",
+    objectives: ["increase_user_adoption", "improve_user_retention"],
+    description: "Determine how easy it is to use a feature.",
+    preset: {
+      name: "Customer Effort Score (CES)",
+      questions: [
+        {
+          id: createId(),
+          type: "rating",
+          range: 5,
+          scale: "number",
+          headline: "{{productName}} makes it easy for me to [ADD GOAL]",
+          required: true,
+          subheader: "",
+          lowerLabel: "Disagree strongly",
+          upperLabel: "Agree strongly",
+        },
+        {
+          id: createId(),
+          type: "openText",
+          headline: "Thanks! How could we make it easier for you to [ADD GOAL]?",
+          required: true,
+          placeholder: "Type your answer here...",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+
+  {
+    name: "Rate Checkout Experience",
+
+    category: "Increase Revenue",
+    objectives: ["increase_conversion"],
+    description: "Let customers rate the checkout experience to tweak conversion.",
+    preset: {
+      name: "Rate Checkout Experience",
+      questions: [
+        {
+          id: createId(),
+          type: "rating",
+          logic: [{ value: 4, condition: "greaterEqual", destination: "lpof3d9t9hmnqvyjlpksmxd7" }],
+          range: 5,
+          scale: "number",
+          headline: "How easy or difficult was it to complete the checkout?",
+          required: true,
+          subheader: "",
+          lowerLabel: "Very difficult",
+          upperLabel: "Very easy",
+        },
+        {
+          id: createId(),
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "Sorry about that! What would have made it easier for you?",
+          required: true,
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "lpof3d9t9hmnqvyjlpksmxd7",
+          type: "openText",
+          headline: "Lovely! Is there anything we can do to improve your experience?",
+          required: true,
+          placeholder: "Type your answer here...",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Measure Search Experience",
+
+    category: "Product Experience",
+    objectives: ["improve_user_retention"],
+    description: "Measure how relevant your search results are.",
+    preset: {
+      name: "Measure Search Experience",
+      questions: [
+        {
+          id: createId(),
+          type: "rating",
+          logic: [{ value: 4, condition: "greaterEqual", destination: "adcs3d9t9hmnqvyjlpksmxd7" }],
+          range: 5,
+          scale: "number",
+          headline: "How relevant are these search results?",
+          required: true,
+          subheader: "",
+          lowerLabel: "Not at all relevant",
+          upperLabel: "Very relevant",
+        },
+        {
+          id: createId(),
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "Ugh! What makes the results irrelevant for you?",
+          required: true,
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "adcs3d9t9hmnqvyjlpksmxd7",
+          type: "openText",
+          headline: "Lovely! Is there anything we can do to improve your experience?",
+          required: true,
+          placeholder: "Type your answer here...",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
+  {
+    name: "Evaluate Content Quality",
+
+    category: "Growth",
+    objectives: ["increase_conversion"],
+    description: "Measure if your content marketing pieces hit right.",
+    preset: {
+      name: "Evaluate Content Quality",
+      questions: [
+        {
+          id: createId(),
+          type: "rating",
+          logic: [{ value: 4, condition: "greaterEqual", destination: "adcs3d9t9hmnqvyjlpkswi38" }],
+          range: 5,
+          scale: "number",
+          headline: "How well did this article address what you were hoping to learn?",
+          required: true,
+          subheader: "",
+          lowerLabel: "Not at all well",
+          upperLabel: "Extremely well",
+        },
+        {
+          id: createId(),
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "Hmpft! What were you hoping for?",
+          required: true,
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "adcs3d9t9hmnqvyjlpkswi38",
+          type: "openText",
+          headline: "Lovely! Is there anything else you would like us to cover?",
+          required: true,
+          placeholder: "Topics, trends, tutorials...",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
   {
     name: "Measure Task Accomplishment",
-    icon: CheckMarkIcon,
-    category: "Product Experience",
+
+    category: "Customer Success",
     objectives: ["increase_user_adoption", "improve_user_retention"],
     description: "See if people get their 'Job To Be Done' done. Successful people are better customers.",
     preset: {
@@ -690,804 +1534,8 @@ export const templates: Template[] = [
     },
   },
   {
-    name: "Identify Customer Goals",
-    icon: ArrowRightCircleIcon,
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "sharpen_marketing_messaging", "improve_user_retention"],
-    description:
-      "Better understand if your messaging creates the right expectations of the value your product provides.",
-    preset: {
-      name: "Identify Customer Goals",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "What's your primary goal for using {{productName}}?",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Understand my user base deeply",
-            },
-            {
-              id: createId(),
-              label: "Identify upselling opportunities",
-            },
-            {
-              id: createId(),
-              label: "Build the best possible product",
-            },
-            {
-              id: createId(),
-              label: "Rule the world to make everyone breakfast brussels sprouts.",
-            },
-          ],
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Feature Chaser",
-    icon: DogChaserIcon,
-    category: "Product Experience",
-    objectives: ["improve_user_retention"],
-    description: "Follow up with users who just used a specific feature.",
-    preset: {
-      name: "Feature Chaser",
-      questions: [
-        {
-          id: createId(),
-          type: "rating",
-          range: 5,
-          scale: "number",
-          headline: "How important is [ADD FEATURE] for you?",
-          required: true,
-          lowerLabel: "Not important",
-          upperLabel: "Very important",
-        },
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          choices: [
-            { id: createId(), label: "Aspect 1" },
-            { id: createId(), label: "Aspect 2" },
-            { id: createId(), label: "Aspect 3" },
-            { id: createId(), label: "Aspect 4" },
-          ],
-          headline: "Which aspect is most important?",
-          required: true,
-          subheader: "",
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Fake Door Follow-Up",
-    icon: DoorIcon,
-    category: "Exploration",
-    objectives: ["increase_user_adoption"],
-    description: "Follow up with users who ran into one of your Fake Door experiments.",
-    preset: {
-      name: "Fake Door Follow-Up",
-      questions: [
-        {
-          id: createId(),
-          type: "rating",
-          headline: "How important is this feature for you?",
-          required: true,
-          lowerLabel: "Not important",
-          upperLabel: "Very important",
-          range: 5,
-          scale: "number",
-        },
-        {
-          id: createId(),
-          type: "multipleChoiceMulti",
-          headline: "What should be definitely include building this?",
-          required: false,
-          choices: [
-            {
-              id: createId(),
-              label: "Aspect 1",
-            },
-            {
-              id: createId(),
-              label: "Aspect 2",
-            },
-            {
-              id: createId(),
-              label: "Aspect 3",
-            },
-            {
-              id: createId(),
-              label: "Aspect 4",
-            },
-          ],
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Feedback Box",
-    icon: FeedbackIcon,
-    category: "Product Experience",
-    objectives: ["improve_user_retention"],
-    description: "Give your users the chance to seamlessly share what's on their minds.",
-    preset: {
-      name: "Feedback Box",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          logic: [
-            { value: "Bug report 🐞", condition: "equals", destination: "dnbiuq4l33l7jypcf2cg6vhh" },
-            { value: "Feature Request 💡", condition: "equals", destination: "en9nuuevbf7g9oa9rzcs1l50" },
-          ],
-          choices: [
-            { id: createId(), label: "Bug report 🐞" },
-            { id: createId(), label: "Feature Request 💡" },
-          ],
-          headline: "What's on your mind, boss?",
-          required: true,
-          subheader: "Thanks for sharing. We'll get back to you asap.",
-        },
-        {
-          id: "dnbiuq4l33l7jypcf2cg6vhh",
-          type: "openText",
-          logic: [{ condition: "submitted", destination: "a6c76m5oocw6xp9agf3d2tam" }],
-          headline: "What's broken?",
-          required: true,
-          subheader: "The more detail, the better :)",
-        },
-        {
-          id: "a6c76m5oocw6xp9agf3d2tam",
-          html: '<p class="fb-editor-paragraph" dir="ltr"><span>We will fix this as soon as possible. Do you want to be notified when we did?</span></p>',
-          type: "cta",
-          logic: [
-            { condition: "submitted", destination: "end" },
-            { condition: "skipped", destination: "end" },
-          ],
-          headline: "Want to stay in the loop?",
-          required: false,
-          buttonLabel: "Yes, notify me",
-          buttonExternal: false,
-          dismissButtonLabel: "No, thanks",
-        },
-        {
-          id: "en9nuuevbf7g9oa9rzcs1l50",
-          type: "openText",
-          headline: "Lovely, tell us more!",
-          required: true,
-          subheader: "What problem do you want us to solve?",
-          buttonLabel: "Request feature",
-          placeholder: "Type your answer here...",
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Integration Setup Survey",
-    icon: DashboardIcon,
-    category: "Product Experience",
-    objectives: ["increase_user_adoption"],
-    description: "Evaluate how easily users can add integrations to your product. Find blind spots.",
-    preset: {
-      name: "Integration Usage Survey",
-      questions: [
-        {
-          id: "s6ss6znzxdwjod1hv16fow4w",
-          type: "rating",
-          logic: [{ value: 4, condition: "greaterEqual", destination: "ef0qo3l8iisd517ikp078u1p" }],
-          range: 5,
-          scale: "number",
-          headline: "How easy was it to set this integration up?",
-          required: true,
-          subheader: "",
-          lowerLabel: "Not easy",
-          upperLabel: "Very easy",
-        },
-        {
-          id: "mko13ptjj6tpi5u2pl7a5drz",
-          type: "openText",
-          headline: "Why was it hard?",
-          required: false,
-          placeholder: "Type your answer here...",
-        },
-        {
-          id: "ef0qo3l8iisd517ikp078u1p",
-          type: "openText",
-          headline: "What other tools would you like to use with {{productName}}?",
-          required: false,
-          subheader: "We keep building integrations, yours can be next:",
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "New Integration Survey",
-    icon: DashboardIcon,
-    category: "Exploration",
-    objectives: ["increase_user_adoption", "increase_conversion"],
-    description: "Find out which integrations your users would like to see next.",
-    preset: {
-      name: "New integration survey",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "Which other tools are you using?",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "PostHog",
-            },
-            {
-              id: createId(),
-              label: "Segment",
-            },
-            {
-              id: createId(),
-              label: "Hubspot",
-            },
-            {
-              id: createId(),
-              label: "Twilio",
-            },
-            {
-              id: createId(),
-              label: "Other",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "If you chose other, please clarify:",
-          required: false,
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Docs Feedback",
-    icon: CodeBookIcon,
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
-    description: "Measure how clear each page of your developer documentation is.",
-    preset: {
-      name: "{{productName}} Docs Feedback",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "Was this page helpful?",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Yes 👍",
-            },
-            {
-              id: createId(),
-              label: "No 👎",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "Please elaborate:",
-          required: false,
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "Page URL",
-          required: false,
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Interview Prompt",
-    icon: InterviewPromptIcon,
-    category: "Exploration",
-    objectives: ["improve_user_retention"],
-    description: "Invite a specific subset of your users to schedule an interview with your product team.",
-    preset: {
-      name: "Interview Prompt",
-      questions: [
-        {
-          id: createId(),
-          type: "cta",
-          headline: "Do you have 15 min to talk to us? 🙏",
-          html: "You're one of our power users. We would love to interview you briefly!",
-          buttonLabel: "Book slot",
-          buttonUrl: "https://cal.com/johannes",
-          buttonExternal: true,
-          required: false,
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Review Prompt",
-    icon: HeartCommentIcon,
-    category: "Growth",
-    objectives: ["support_sales"],
-    description: "Invite users who love your product to review it publicly.",
-    preset: {
-      name: "Review Prompt",
-      questions: [
-        {
-          id: createId(),
-          type: "rating",
-          logic: [{ value: 3, condition: "lessEqual", destination: "tk9wpw2gxgb8fa6pbpp3qq5l" }],
-          range: 5,
-          scale: "star",
-          headline: "How do you like {{productName}}?",
-          required: true,
-          subheader: "",
-          lowerLabel: "",
-          upperLabel: "",
-        },
-        {
-          id: createId(),
-          html: '<p class="fb-editor-paragraph" dir="ltr"><span>This helps us a lot.</span></p>',
-          type: "cta",
-          logic: [{ condition: "submitted", destination: "end" }],
-          headline: "Happy to hear 🙏 Please write a review for us!",
-          required: true,
-          buttonUrl: "https://formbricks.com/github",
-          buttonLabel: "Write review",
-          buttonExternal: true,
-        },
-        {
-          id: "tk9wpw2gxgb8fa6pbpp3qq5l",
-          type: "openText",
-          headline: "Sorry to hear! What is ONE thing we can do better?",
-          required: true,
-          subheader: "Help us improve your experience.",
-          buttonLabel: "Send",
-          placeholder: "Type your answer here...",
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Net Promoter Score (NPS)",
-    icon: GaugeSpeedFastIcon,
-    category: "Customer Success",
-    objectives: ["support_sales"],
-    description: "Measure the Net Promoter Score of your product.",
-    preset: {
-      name: "{{productName}} NPS",
-      questions: [
-        {
-          id: createId(),
-          type: "nps",
-          headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
-          required: false,
-          lowerLabel: "Not likely",
-          upperLabel: "Very likely",
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "What made you give that rating?",
-          required: false,
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Customer Satisfaction Score (CSAT)",
-    icon: GaugeSpeedFastIcon,
-    category: "Customer Success",
-    objectives: ["support_sales"],
-    description: "Measure the Customer Satisfaction Score of your product.",
-    preset: {
-      name: "{{productName}} CSAT",
-      questions: [
-        {
-          id: createId(),
-          type: "rating",
-          logic: [{ value: 3, condition: "lessEqual", destination: "vyo4mkw4ln95ts4ya7qp2tth" }],
-          range: 5,
-          scale: "smiley",
-          headline: "How satisfied are you with your {{productName}} experience?",
-          required: true,
-          subheader: "",
-          lowerLabel: "Not satisfied",
-          upperLabel: "Very satisfied",
-        },
-        {
-          id: createId(),
-          type: "openText",
-          logic: [{ condition: "submitted", destination: "end" }],
-          headline: "Lovely! Is there anything we can do to improve your experience?",
-          required: false,
-          placeholder: "Type your answer here...",
-        },
-        {
-          id: "vyo4mkw4ln95ts4ya7qp2tth",
-          type: "openText",
-          headline: "Ugh, sorry! Is there anything we can do to improve your experience?",
-          required: false,
-          placeholder: "Type your answer here...",
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Identify upsell opportunities",
-    icon: ArrowUpRightIcon,
-    category: "Increase Revenue",
-    objectives: ["support_sales", "sharpen_marketing_messaging"],
-    description: "Find out how much time your product saves your user. Use it to upsell.",
-    preset: {
-      name: "Identify upsell opportunities",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "How many hours does your team save per week by using {{productName}}?",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Less than 1 hour",
-            },
-            {
-              id: createId(),
-              label: "1 to 2 hours",
-            },
-            {
-              id: createId(),
-              label: "3 to 5 hours",
-            },
-            {
-              id: createId(),
-              label: "5+ hours",
-            },
-          ],
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Build Product Roadmap",
-    icon: LoadingBarIcon,
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
-    description: "Ask how users rate your product. Identify blind spots to build your roadmap.",
-    preset: {
-      name: "Build Product Roadmap",
-      questions: [
-        {
-          id: createId(),
-          type: "rating",
-          headline: "How satisfied are you with the features of {{productName}}?",
-          required: true,
-          lowerLabel: "Not satisfied",
-          upperLabel: "Very satisfied",
-          scale: "number",
-          range: 5,
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "What's the #1 thing you'd like to change in {{productName}}?",
-          required: false,
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Gauge Feature Satisfaction",
-    icon: UserSearchGlasIcon,
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
-    description: "Evaluate the satisfaction of specific features of your product.",
-    preset: {
-      name: "Gauge Feature Satisfaction",
-      questions: [
-        {
-          id: createId(),
-          type: "rating",
-          headline: "How easy was it to achieve ... ?",
-          required: true,
-          lowerLabel: "Not easy",
-          upperLabel: "Very easy",
-          scale: "number",
-          range: 5,
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "What is one thing we could do better?",
-          required: false,
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Marketing Site Clarity",
-    icon: VideoTabletAdjustIcon,
-    category: "Growth",
-    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
-    description: "Identify users dropping off your marketing site. Improve your messaging.",
-    preset: {
-      name: "Marketing Site Clarity",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          headline: "Do you have all the info you need to give {{productName}} a try?",
-          required: true,
-          choices: [
-            {
-              id: createId(),
-              label: "Yes, totally",
-            },
-            {
-              id: createId(),
-              label: "Kind of...",
-            },
-            {
-              id: createId(),
-              label: "No, not at all",
-            },
-          ],
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "What’s missing or unclear to you about {{productName}}?",
-          required: false,
-        },
-        {
-          id: createId(),
-          type: "cta",
-          headline: "Thanks for your answer! Get 25% off your first 6 months:",
-          required: false,
-          buttonLabel: "Get discount",
-          buttonUrl: "https://app.formbricks.com/auth/signup",
-          buttonExternal: true,
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Customer Effort Score (CES)",
-    icon: GaugeSpeedFastIcon,
-    category: "Product Experience",
-    objectives: ["increase_user_adoption", "improve_user_retention"],
-    description: "Determine how easy it is to use a feature.",
-    preset: {
-      name: "Customer Effort Score (CES)",
-      questions: [
-        {
-          id: createId(),
-          type: "rating",
-          range: 5,
-          scale: "number",
-          headline: "{{productName}} makes it easy for me to [ADD GOAL]",
-          required: true,
-          subheader: "",
-          lowerLabel: "Disagree strongly",
-          upperLabel: "Agree strongly",
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "Thanks! How could we make it easier for you to [ADD GOAL]?",
-          required: true,
-          placeholder: "Type your answer here...",
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Earned Advocacy Score (EAS)",
-    icon: GaugeSpeedFastIcon,
-    category: "Growth",
-    objectives: ["support_sales", "sharpen_marketing_messaging"],
-    description:
-      "The EAS is a riff off the NPS but asking for actual past behaviour instead of lofty intentions.",
-    preset: {
-      name: "Earned Advocacy Score (EAS)",
-      questions: [
-        {
-          id: createId(),
-          type: "multipleChoiceSingle",
-          logic: [{ value: "No", condition: "equals", destination: "duz2qp8eftix9wty1l221x1h" }],
-          choices: [
-            { id: createId(), label: "Yes" },
-            { id: createId(), label: "No" },
-          ],
-          headline: "Have you actively recommended {{productName}} to others?",
-          required: true,
-          subheader: "",
-        },
-        {
-          id: createId(),
-          type: "openText",
-          logic: [{ condition: "submitted", destination: "yhfew1j3ng6luy7t7qynwj79" }],
-          headline: "Great to hear! Why did you recommend us?",
-          required: true,
-          placeholder: "Type your answer here...",
-        },
-        {
-          id: "duz2qp8eftix9wty1l221x1h",
-          type: "openText",
-          headline: "So sad. Why not?",
-          required: true,
-          placeholder: "Type your answer here...",
-        },
-        {
-          id: "yhfew1j3ng6luy7t7qynwj79",
-          type: "multipleChoiceSingle",
-          logic: [{ value: "No", condition: "equals", destination: "end" }],
-          choices: [
-            { id: createId(), label: "Yes" },
-            { id: createId(), label: "No" },
-          ],
-          headline: "Have you actively discouraged others from choosing {{produtName}}?",
-          required: true,
-          subheader: "",
-        },
-        {
-          id: createId(),
-          type: "openText",
-          headline: "What made you discourage them?",
-          required: true,
-          placeholder: "Type your answer here...",
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Rate Checkout Experience",
-    icon: GaugeSpeedFastIcon,
-    category: "Increase Revenue",
-    objectives: ["increase_conversion"],
-    description: "Let customers rate the checkout experience to tweak conversion.",
-    preset: {
-      name: "Rate Checkout Experience",
-      questions: [
-        {
-          id: createId(),
-          type: "rating",
-          logic: [{ value: 4, condition: "greaterEqual", destination: "lpof3d9t9hmnqvyjlpksmxd7" }],
-          range: 5,
-          scale: "number",
-          headline: "How easy or difficult was it to complete the checkout?",
-          required: true,
-          subheader: "",
-          lowerLabel: "Very difficult",
-          upperLabel: "Very easy",
-        },
-        {
-          id: createId(),
-          type: "openText",
-          logic: [{ condition: "submitted", destination: "end" }],
-          headline: "Sorry about that! What would have made it easier for you?",
-          required: true,
-          placeholder: "Type your answer here...",
-        },
-        {
-          id: "lpof3d9t9hmnqvyjlpksmxd7",
-          type: "openText",
-          headline: "Lovely! Is there anything we can do to improve your experience?",
-          required: true,
-          placeholder: "Type your answer here...",
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Measure Search Experience",
-    icon: GaugeSpeedFastIcon,
-    category: "Product Experience",
-    objectives: ["improve_user_retention"],
-    description: "Measure how relevant your search results are.",
-    preset: {
-      name: "Measure Search Experience",
-      questions: [
-        {
-          id: createId(),
-          type: "rating",
-          logic: [{ value: 4, condition: "greaterEqual", destination: "adcs3d9t9hmnqvyjlpksmxd7" }],
-          range: 5,
-          scale: "number",
-          headline: "How relevant are these search results?",
-          required: true,
-          subheader: "",
-          lowerLabel: "Not at all relevant",
-          upperLabel: "Very relevant",
-        },
-        {
-          id: createId(),
-          type: "openText",
-          logic: [{ condition: "submitted", destination: "end" }],
-          headline: "Ugh! What makes the results irrelevant for you?",
-          required: true,
-          placeholder: "Type your answer here...",
-        },
-        {
-          id: "adcs3d9t9hmnqvyjlpksmxd7",
-          type: "openText",
-          headline: "Lovely! Is there anything we can do to improve your experience?",
-          required: true,
-          placeholder: "Type your answer here...",
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
-    name: "Evaluate Content Quality",
-    icon: GaugeSpeedFastIcon,
-    category: "Growth",
-    objectives: ["increase_conversion"],
-    description: "Measure if your content marketing pieces hit right.",
-    preset: {
-      name: "Evaluate Content Quality",
-      questions: [
-        {
-          id: createId(),
-          type: "rating",
-          logic: [{ value: 4, condition: "greaterEqual", destination: "adcs3d9t9hmnqvyjlpkswi38" }],
-          range: 5,
-          scale: "number",
-          headline: "How well did this article address what you were hoping to learn?",
-          required: true,
-          subheader: "",
-          lowerLabel: "Not at all well",
-          upperLabel: "Extremely well",
-        },
-        {
-          id: createId(),
-          type: "openText",
-          logic: [{ condition: "submitted", destination: "end" }],
-          headline: "Hmpft! What were you hoping for?",
-          required: true,
-          placeholder: "Type your answer here...",
-        },
-        {
-          id: "adcs3d9t9hmnqvyjlpkswi38",
-          type: "openText",
-          headline: "Lovely! Is there anything else you would like us to cover?",
-          required: true,
-          placeholder: "Topics, trends, tutorials...",
-        },
-      ],
-      thankYouCard: thankYouCardDefault,
-    },
-  },
-  {
     name: "Identify Sign Up Barriers",
-    icon: GaugeSpeedFastIcon,
+
     category: "Growth",
     objectives: ["increase_conversion"],
     description: "Offer a discount to gather insights about sign up barriers.",
@@ -1601,9 +1649,9 @@ export const templates: Template[] = [
     },
   },
   {
-    name: "Build Your Product Roadmap",
-    icon: GaugeSpeedFastIcon,
-    category: "Product Experience",
+    name: "Build Product Roadmap",
+
+    category: "Exploration",
     objectives: ["increase_user_adoption"],
     description: "Identify the ONE thing your users want the most and build it.",
     preset: {
@@ -1634,7 +1682,7 @@ export const templates: Template[] = [
   },
   {
     name: "Understand Purchase Intention",
-    icon: GaugeSpeedFastIcon,
+
     category: "Increase Revenue",
     objectives: ["increase_conversion", "increase_user_adoption"],
     description: "Find out how close your visitors are to buy or subscribe.",
@@ -1682,7 +1730,7 @@ export const templates: Template[] = [
   },
   {
     name: "Improve Newsletter Content",
-    icon: GaugeSpeedFastIcon,
+
     category: "Growth",
     objectives: ["increase_conversion", "sharpen_marketing_messaging"],
     description: "Find out how your subscribers like your newsletter content.",
@@ -1732,7 +1780,7 @@ export const templates: Template[] = [
   },
   {
     name: "Evaluate a Product Idea",
-    icon: GaugeSpeedFastIcon,
+
     category: "Exploration",
     objectives: ["improve_user_retention", "increase_user_adoption"],
     description: "Survey users about product or feature ideas. Get feedback rapidly.",
@@ -1824,10 +1872,101 @@ export const templates: Template[] = [
       thankYouCard: thankYouCardDefault,
     },
   },
+  {
+    name: "Understand Low Engagement",
+
+    category: "Product Experience",
+    objectives: ["improve_user_retention", "increase_user_adoption"],
+    description: "Identify reasons for low engagement to improve user adoption.",
+    preset: {
+      name: "Reasons for Low Engagement",
+      questions: [
+        {
+          id: "aq9dafe9nxe0kpm67b1os2z9",
+          type: "multipleChoiceSingle",
+          logic: [
+            { value: "Difficult to use", condition: "equals", destination: "r0zvi3vburf4hm7qewimzjux" },
+            {
+              value: "Found a better alternative",
+              condition: "equals",
+              destination: "g92s5wetp51ps6afmc6y7609",
+            },
+            {
+              value: "Just haven't had the time",
+              condition: "equals",
+              destination: "gn6298zogd2ipdz7js17qy5i",
+            },
+            {
+              value: "Lacked features I need",
+              condition: "equals",
+              destination: "rbwz3y6y9avzqcfj30nu0qj4",
+            },
+            { value: "Other", condition: "equals", destination: "c0exdyri3erugrv0ezkyseh6" },
+          ],
+          choices: [
+            { id: "xoqb0wjjsk4t0lx0i7jrhx26", label: "Difficult to use" },
+            { id: "p768nlw47ndehtgzx6m82dr6", label: "Found a better alternative" },
+            { id: "izt28ma5ep3s92531owxj1vg", label: "Just haven't had the time" },
+            { id: "dhkp2wb9e1tv7kfu8csjhzbh", label: "Lacked features I need" },
+            { id: "other", label: "Other" },
+          ],
+          headline: "What's the main reason you haven't been back to {{productName}} recently?",
+          required: true,
+          subheader: "",
+        },
+        {
+          id: "r0zvi3vburf4hm7qewimzjux",
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "What's difficult about using {{productName}}?",
+          required: true,
+          subheader: "",
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "g92s5wetp51ps6afmc6y7609",
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "Got it. Which alternative are you using instead?",
+          required: true,
+          subheader: "",
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "gn6298zogd2ipdz7js17qy5i",
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "Got it. How could we make it easier for you to get started?",
+          required: true,
+          subheader: "",
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "rbwz3y6y9avzqcfj30nu0qj4",
+          type: "openText",
+          logic: [{ condition: "submitted", destination: "end" }],
+          headline: "Got it. What features or functionality were missing?",
+          required: true,
+          subheader: "",
+          placeholder: "Type your answer here...",
+        },
+        {
+          id: "c0exdyri3erugrv0ezkyseh6",
+          type: "openText",
+          logic: [],
+          headline: "Please add more details:",
+          required: false,
+          subheader: "",
+          placeholder: "Type your answer here...",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+    },
+  },
 
   /* {
     name: "TEMPLATE MASTER",
-    icon: GaugeSpeedFastIcon,
+
     category: "X",
     objectives: ["X"],
     description: "X",
@@ -1851,7 +1990,6 @@ export const templates: Template[] = [
 export const customSurvey: Template = {
   name: "Start from scratch",
   description: "Create a survey without template.",
-  icon: null,
   preset: {
     name: "New Survey",
     questions: [
