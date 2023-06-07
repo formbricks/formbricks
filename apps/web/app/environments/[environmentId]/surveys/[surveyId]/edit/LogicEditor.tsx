@@ -80,6 +80,7 @@ export default function LogicEditor({
       "skipped",
     ],
     cta: ["submitted", "skipped"],
+    consent: ["submitted", "skipped"],
   };
   const logicConditions: LogicConditions = {
     submitted: {
