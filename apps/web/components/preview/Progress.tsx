@@ -4,7 +4,7 @@ const ProgressComponent = ({ progress, brandColor }) => {
   return (
     <div className="h-1 w-full rounded-full bg-slate-200">
       <div
-        className="transition-width h-1 rounded-full bg-slate-700 duration-500"
+        className="transition-width h-1 rounded-full duration-500"
         style={{ backgroundColor: brandColor, width: `${Math.floor(progress * 100)}%` }}></div>
     </div>
   );

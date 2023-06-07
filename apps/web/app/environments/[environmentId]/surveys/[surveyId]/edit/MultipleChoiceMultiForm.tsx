@@ -3,7 +3,7 @@ import { Survey } from "@formbricks/types/surveys";
 import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface OpenQuestionFormProps {
   localSurvey: Survey;
@@ -20,6 +20,8 @@ export default function MultipleChoiceMultiForm({
   lastQuestion,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
+  const [isNew, setIsNew] = useState(true);
+  const questionRef = useRef<HTMLInputElement>(null);
 
   const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
     const newChoices = !question.choices
@@ -34,6 +36,7 @@ export default function MultipleChoiceMultiForm({
   };
 
   const addChoice = () => {
+    setIsNew(false); // This question is no longer new.
     const newChoices = !question.choices ? [] : question.choices;
     newChoices.push({ id: createId(), label: "" });
     updateQuestion(questionIdx, { choices: newChoices });
@@ -63,12 +66,20 @@ export default function MultipleChoiceMultiForm({
     }
   }, [question.choices?.length]);
 
+  // This effect will run once on initial render, setting focus to the question input.
+  useEffect(() => {
+    if (isNew && questionRef.current) {
+      questionRef.current.focus();
+    }
+  }, [isNew]);
+
   return (
     <form>
       <div className="mt-3">
         <Label htmlFor="headline">Question</Label>
         <div className="mt-2">
           <Input
+            ref={questionRef}
             id="headline"
             name="headline"
             value={question.headline}
