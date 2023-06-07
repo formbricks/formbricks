@@ -85,18 +85,30 @@ model Person {
 }
 
 model Response {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @updatedAt @map(name: "updated_at")
-  finished  Boolean  @default(false)
-  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId  String
-  person    Person?  @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId  String?
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now()) @map(name: "created_at")
+  updatedAt     DateTime @updatedAt @map(name: "updated_at")
+  finished      Boolean  @default(false)
+  survey        Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId      String
+  person        Person?  @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId      String?
+  responseNote  ResponseNote[]
   /// [ResponseData]
   data      Json     @default("{}")
   /// [ResponseMeta]
   meta      Json     @default("{}")
+}
+
+model ResponseNote {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now()) @map(name: "created_at")
+  updatedAt  DateTime @updatedAt @map(name: "updated_at")
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  responseId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  text       String
 }
 
 enum SurveyStatus {
@@ -394,6 +406,7 @@ model User {
   identityProviderAccountId String?
   memberships               Membership[]
   accounts                  Account[]
+  responseNote              ResponseNote[]
   groupId                   String?
   invitesCreated            Invite[]         @relation("inviteCreatedBy")
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")

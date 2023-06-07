@@ -10,8 +10,10 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { RatingResponse } from "../RatingResponse";
 import { deleteSubmission, useResponses } from "@/lib/responses/responses";
+import clsx from "clsx";
+import ResponseNote from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/ResponseNote";
 
-interface OpenTextSummaryProps {
+export interface OpenTextSummaryProps {
   data: {
     id: string;
     personId: string;
@@ -23,6 +25,15 @@ interface OpenTextSummaryProps {
       environmentId: string;
       attributes: [];
     };
+    responseNote: {
+      updatedAt: string;
+      createdAt: string;
+      id: string;
+      text: string;
+      user: {
+        name: string
+      }
+    }[]
     value: string;
     updatedAt: string;
     finished: boolean;
@@ -50,6 +61,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { mutateResponses } = useResponses(environmentId, surveyId);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
 
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
@@ -61,68 +73,71 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
   };
 
   return (
-    <div className=" my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
-      <div className="space-y-2 px-6 pb-5 pt-6">
-        <div className="flex items-center justify-between">
-          {data.personId ? (
-            <Link
-              className="group flex items-center"
-              href={`/environments/${environmentId}/people/${data.personId}`}>
-              <PersonAvatar personId={data.personId} />
-              <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 group-hover:underline">
-                {displayIdentifier}
-              </h3>
-            </Link>
-          ) : (
-            <div className="group flex items-center">
-              <PersonAvatar personId="anonymous" />
-              <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
-            </div>
-          )}
-
-          <div className="flex space-x-4 text-sm">
-            {data.finished && (
-              <span className="flex items-center rounded-full bg-slate-100 px-3 text-slate-600">
-                Completed <CheckCircleIcon className="ml-1 h-5 w-5 text-green-400" />
-              </span>
+    <div className={clsx("relative group", isOpen && "min-h-[280px]")}>
+      <div className="my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm z-10 w-4/5 relative">
+        <div className="space-y-2 px-6 pb-5 pt-6">
+          <div className="flex items-center justify-between">
+            {data.personId ? (
+              <Link
+                className="group flex items-center"
+                href={`/environments/${environmentId}/people/${data.personId}`}>
+                <PersonAvatar personId={data.personId} />
+                <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 group-hover:underline">
+                  {displayIdentifier}
+                </h3>
+              </Link>
+            ) : (
+              <div className="group flex items-center">
+                <PersonAvatar personId="anonymous" />
+                <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
+              </div>
             )}
-            <time className="text-slate-500" dateTime={timeSince(data.updatedAt)}>
-              {timeSince(data.updatedAt)}
-            </time>
-            <button
-              onClick={() => {
-                setDeleteDialogOpen(true);
-              }}>
-              <TrashIcon className="h-4 w-4 text-slate-500 hover:text-red-700" />
-            </button>
+
+            <div className="flex space-x-4 text-sm">
+              {data.finished && (
+                <span className="flex items-center rounded-full bg-slate-100 px-3 text-slate-600">
+                  Completed <CheckCircleIcon className="ml-1 h-5 w-5 text-green-400" />
+                </span>
+              )}
+              <time className="text-slate-500" dateTime={timeSince(data.updatedAt)}>
+                {timeSince(data.updatedAt)}
+              </time>
+              <button
+                onClick={() => {
+                  setDeleteDialogOpen(true);
+                }}>
+                <TrashIcon className="h-4 w-4 text-slate-500 hover:text-red-700" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="space-y-6 rounded-b-lg bg-white p-6">
-        {data.responses.map((response, idx) => (
-          <div key={`${response.id}-${idx}`}>
-            <p className="text-sm text-slate-500">{response.question}</p>
-            {typeof response.answer !== "object" ? (
-              response.type === "rating" ? (
-                <div className="h-8">
-                  <RatingResponse scale={response.scale} answer={response.answer} range={response.range} />
-                </div>
+        <div className="space-y-6 rounded-b-lg bg-white p-6">
+          {data.responses.map((response, idx) => (
+            <div key={`${response.id}-${idx}`}>
+              <p className="text-sm text-slate-500">{response.question}</p>
+              {typeof response.answer !== "object" ? (
+                response.type === "rating" ? (
+                  <div className="h-8">
+                    <RatingResponse scale={response.scale} answer={response.answer} range={response.range} />
+                  </div>
+                ) : (
+                  <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer}</p>
+                )
               ) : (
-                <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer}</p>
-              )
-            ) : (
-              <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer.join(", ")}</p>
-            )}
-          </div>
-        ))}
+                <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer.join(", ")}</p>
+              )}
+            </div>
+          ))}
+        </div>
+        <DeleteDialog
+          open={deleteDialogOpen}
+          setOpen={setDeleteDialogOpen}
+          deleteWhat="response"
+          onDelete={handleDeleteSubmission}
+          isDeleting={isDeleting}
+        />
       </div>
-      <DeleteDialog
-        open={deleteDialogOpen}
-        setOpen={setDeleteDialogOpen}
-        deleteWhat="response"
-        onDelete={handleDeleteSubmission}
-        isDeleting={isDeleting}
-      />
+      <ResponseNote data={data} environmentId={environmentId} surveyId={surveyId} isOpen={isOpen} setIsOpen={setIsOpen} />
     </div>
   );
 }
