@@ -1,0 +1,78 @@
+import type { ConsentQuestion } from "@formbricks/types/questions";
+import Headline from "./Headline";
+import HtmlBody from "./HtmlBody";
+import { cn } from "@/../../packages/lib/cn";
+import { isLight } from "@/lib/utils";
+
+interface ConsentQuestionProps {
+  question: ConsentQuestion;
+  onSubmit: (data: { [x: string]: any }) => void;
+  lastQuestion: boolean;
+  brandColor: string;
+}
+
+export default function ConsentQuestion({
+  question,
+  onSubmit,
+  lastQuestion,
+  brandColor,
+}: ConsentQuestionProps) {
+  return (
+    <div>
+      <Headline headline={question.headline} questionId={question.id} />
+      <HtmlBody htmlString={question.html || ""} questionId={question.id} />
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+
+          const checkbox = document.getElementById(question.id) as HTMLInputElement;
+          onSubmit({ [question.id]: checkbox.checked ? "accepted" : "skipped" });
+        }}>
+        <div className="mt-4 w-full ">
+          <label className="relative z-10 flex cursor-pointer flex-col rounded-md border border-gray-200 bg-slate-50 p-4 checked:border-slate-400 hover:bg-slate-50 focus:outline-none">
+            <span className="flex flex-col text-sm">
+              <span className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={question.id}
+                  name={question.id}
+                  value={question.label}
+                  className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+                  aria-labelledby={`${question.id}-label`}
+                  style={{ borderColor: brandColor, color: brandColor }}
+                  required={question.required}
+                />
+                <span id={`${question.id}-label`} className="ml-3 font-medium">
+                  {question.label}
+                </span>
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <div className="mt-4 flex w-full justify-end">
+          {!question.required && (
+            <button
+              type="button"
+              onClick={() => {
+                onSubmit({ [question.id]: "skipped" });
+              }}
+              className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 text-slate-500 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:border-slate-400 dark:text-slate-400">
+              {question.dismissButtonLabel || "Skip"}
+            </button>
+          )}
+          <button
+            type="submit"
+            className={cn(
+              "flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2",
+              isLight(brandColor) ? "text-black" : "text-white"
+            )}
+            style={{ backgroundColor: brandColor }}>
+            {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
