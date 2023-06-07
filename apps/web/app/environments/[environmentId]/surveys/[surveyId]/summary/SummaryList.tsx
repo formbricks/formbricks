@@ -14,6 +14,7 @@ import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
 import type {
   CTAQuestion,
+  ConsentQuestion,
   MultipleChoiceMultiQuestion,
   MultipleChoiceSingleQuestion,
   NPSQuestion,
@@ -21,6 +22,7 @@ import type {
   Question,
   RatingQuestion,
 } from "@formbricks/types/questions";
+import ConsentSummary from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/ConsentSummary";
 
 export default function SummaryList({ environmentId, surveyId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
@@ -116,6 +118,14 @@ export default function SummaryList({ environmentId, surveyId }) {
                   <RatingSummary
                     key={questionSummary.question.id}
                     questionSummary={questionSummary as QuestionSummary<RatingQuestion>}
+                  />
+                );
+              }
+              if (questionSummary.question.type === "consent") {
+                return (
+                  <ConsentSummary
+                    key={questionSummary.question.id}
+                    questionSummary={questionSummary as QuestionSummary<ConsentQuestion>}
                   />
                 );
               }

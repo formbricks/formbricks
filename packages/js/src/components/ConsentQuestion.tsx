@@ -27,7 +27,7 @@ export default function ConsentQuestion({
           e.preventDefault();
 
           const checkbox = document.getElementById(question.id) as HTMLInputElement;
-          onSubmit({ [question.id]: checkbox.checked ? "accepted" : "skipped" });
+          onSubmit({ [question.id]: checkbox.checked ? "submitted" : "skipped" });
         }}>
         <label className="fb-relative fb-z-10 fb-mt-4 fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-rounded-md fb-border fb-border-gray-200 fb-bg-slate-50 fb-p-4 fb-text-sm focus:fb-outline-none">
           <input

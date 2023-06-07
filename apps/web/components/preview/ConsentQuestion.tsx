@@ -27,7 +27,7 @@ export default function ConsentQuestion({
           e.preventDefault();
 
           const checkbox = document.getElementById(question.id) as HTMLInputElement;
-          onSubmit({ [question.id]: checkbox.checked ? "accepted" : "skipped" });
+          onSubmit({ [question.id]: checkbox.checked ? "submitted" : "skipped" });
         }}>
         <label className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-gray-200 bg-slate-50 p-4 text-sm focus:outline-none">
           <input
