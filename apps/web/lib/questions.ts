@@ -5,6 +5,7 @@ import {
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
+  CheckIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -90,6 +91,18 @@ export const questionTypes: QuestionType[] = [
       range: 5,
       lowerLabel: "Not good",
       upperLabel: "Very good",
+    },
+  },
+  {
+    id: "consent",
+    label: "Consent",
+    description: "Ask your users to accept something",
+    icon: CheckIcon,
+    preset: {
+      headline: "You are one of our power users!",
+      buttonLabel: "Book interview",
+      buttonExternal: false,
+      dismissButtonLabel: "Skip",
     },
   },
 ];

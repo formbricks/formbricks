@@ -9,7 +9,8 @@ export type Question =
   | MultipleChoiceMultiQuestion
   | NPSQuestion
   | CTAQuestion
-  | RatingQuestion;
+  | RatingQuestion
+  | ConsentQuestion;
 
 export interface IQuestion<T extends Logic> {
   id: string;
@@ -56,6 +57,13 @@ export interface RatingQuestion extends IQuestion<RatingLogic> {
   range: 5 | 3 | 4 | 7 | 10;
   lowerLabel: string;
   upperLabel: string;
+}
+
+export interface ConsentQuestion extends IQuestion<CTALogic> {
+  type: "consent";
+  html?: string;
+  label: string;
+  dismissButtonLabel?: string;
 }
 
 export type LogicCondition =
@@ -118,10 +126,17 @@ export interface RatingLogic extends LogicBase {
     | undefined;
   value: number;
 }
+
+export interface ConsentLogic extends LogicBase {
+  condition: "submitted" | "skipped" | undefined;
+  value: undefined;
+}
+
 export type Logic =
   | OpenTextLogic
   | MultipleChoiceSingleLogic
   | MultipleChoiceMultiLogic
   | NPSLogic
   | CTALogic
-  | RatingLogic;
+  | RatingLogic
+  | ConsentLogic;
