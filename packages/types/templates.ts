@@ -11,6 +11,7 @@ export type Objective =
 export interface Template {
   name: string;
   description: string;
+  icon?: any;
   category?: "Product Experience" | "Exploration" | "Growth" | "Increase Revenue" | "Customer Success";
   objectives?: [Objective, Objective?, Objective?];
   preset: {

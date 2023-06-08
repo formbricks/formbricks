@@ -76,7 +76,7 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
 
   return (
     <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-3 focus:outline-none">
-      <div className="mb-6 flex flex-wrap space-x-2">
+      <div className="mb-6 flex flex-wrap gap-2">
         {categories.map((category) => (
           <button
             key={category}
@@ -149,7 +149,7 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
                     template.category === "Product Experience"
                       ? "border-blue-300 bg-blue-50 text-blue-500"
                       : template.category === "Exploration"
-                      ? "border-lime-300 bg-lime-50 text-lime-500"
+                      ? "border-pink-300 bg-pink-50 text-pink-500"
                       : template.category === "Growth"
                       ? "border-orange-300 bg-orange-50 text-orange-500"
                       : template.category === "Increase Revenue"
