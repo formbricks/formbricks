@@ -69,6 +69,7 @@ export interface ConsentQuestion extends IQuestion<CTALogic> {
 export type LogicCondition =
   | "submitted"
   | "skipped"
+  | "accepted"
   | "equals"
   | "notEquals"
   | "lessThan"
@@ -128,7 +129,7 @@ export interface RatingLogic extends LogicBase {
 }
 
 export interface ConsentLogic extends LogicBase {
-  condition: "submitted" | "skipped" | undefined;
+  condition: "submitted" | "skipped" | "accepted" | undefined;
   value: undefined;
 }
 
