@@ -19,10 +19,12 @@ export const renderWidget = (survey: Survey) => {
   }
   surveyRunning = true;
 
-  render(
-    h(App, { config: config.get(), survey, closeSurvey, errorHandler: errorHandler.handle }),
-    document.getElementById(containerId)
-  );
+  setTimeout(() => {
+    render(
+      h(App, { config: config.get(), survey, closeSurvey, errorHandler: errorHandler.handle }),
+      document.getElementById(containerId)
+    );
+  }, survey.delay * 1000);
 };
 
 export const closeSurvey = async (): Promise<void> => {
