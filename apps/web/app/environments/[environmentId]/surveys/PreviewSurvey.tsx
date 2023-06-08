@@ -152,6 +152,8 @@ export default function PreviewSurvey({
           Array.isArray(logic.value) &&
           logic.value.some((v) => answerValue.includes(v))
         );
+      case "accepted":
+        return answerValue === "accepted";
       case "submitted":
         if (typeof answerValue === "string") {
           return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
@@ -189,6 +191,7 @@ export default function PreviewSurvey({
         if (!logic.destination) continue;
 
         if (evaluateCondition(logic, answerValue)) {
+          console.log(answerValue, logic.condition);
           return logic.destination;
         }
       }
