@@ -37,12 +37,6 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
 
   const [categories, setCategories] = useState<Array<string>>([]);
 
-  /*   useEffect(() => {
-    if (product && templates?.length) {
-      setActiveTemplate(customSurvey);
-    }
-  }, [product]); */
-
   useEffect(() => {
     const defaultCategories = [
       /* ALL_CATEGORY_NAME, */
