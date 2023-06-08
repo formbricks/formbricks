@@ -108,6 +108,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
       },
       thankYouCard: true,
       autoClose: true,
+      delay: true,
     },
   });
 
