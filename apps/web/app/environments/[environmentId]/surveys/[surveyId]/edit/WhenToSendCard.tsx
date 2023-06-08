@@ -206,26 +206,28 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
             </Button>
           </div>
 
-          <div className="ml-2 flex items-center space-x-1 px-4 pb-4">
-            <label
-              htmlFor="triggerDelay"
-              className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-              <div className="">
-                <p className="text-sm font-semibold text-slate-700">
-                  Wait
-                  <Input
-                    type="number"
-                    min="0"
-                    id="triggerDelay"
-                    value={localSurvey.delay.toString()}
-                    onChange={(e) => handleTriggerDelay(e)}
-                    className="ml-2 mr-2 inline w-16 text-center text-sm"
-                  />
-                  seconds before showing the survey.
-                </p>
-              </div>
-            </label>
-          </div>
+          {localSurvey.type !== "link" && (
+            <div className="ml-2 flex items-center space-x-1 px-4 pb-4">
+              <label
+                htmlFor="triggerDelay"
+                className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                <div className="">
+                  <p className="text-sm font-semibold text-slate-700">
+                    Wait
+                    <Input
+                      type="number"
+                      min="0"
+                      id="triggerDelay"
+                      value={localSurvey.delay.toString()}
+                      onChange={(e) => handleTriggerDelay(e)}
+                      className="ml-2 mr-2 inline w-16 text-center text-sm"
+                    />
+                    seconds before showing the survey.
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
 
           <div className="ml-2 flex items-center space-x-1 p-4">
             <Switch id="autoClose" checked={autoClose} onCheckedChange={handleCheckMark} />
