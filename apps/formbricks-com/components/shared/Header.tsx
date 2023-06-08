@@ -260,7 +260,12 @@ export default function Header() {
           <Link
             href="/blog"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Blog <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
+            Blog {/* <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p> */}
+          </Link>
+          <Link
+            href="/careers"
+            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
+            Careers <p className="bg-brand inline rounded-full px-2 text-xs text-white">2</p>
           </Link>
 
           {/*           <Link
@@ -363,6 +368,7 @@ export default function Header() {
                 <Link href="#pricing">Pricing</Link>
                 <Link href="/docs">Docs</Link>
                 <Link href="/blog">Blog</Link>
+                <Link href="/careers">Careers</Link>
                 <Button
                   variant="secondary"
                   EndIcon={GitHubIcon}
