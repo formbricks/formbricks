@@ -46,16 +46,6 @@ export default function ConsentQuestion({
         </label>
 
         <div className="fb-mt-4 fb-flex fb-w-full fb-justify-end">
-          {!question.required && (
-            <button
-              type="button"
-              onClick={() => {
-                onSubmit({ [question.id]: "skipped" });
-              }}
-              className="fb-mr-4 fb-flex fb-items-center fb-rounded-md fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-text-slate-500 hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-slate-500 focus:fb-ring-offset-2 dark:fb-border-slate-400 dark:fb-text-slate-400">
-              {question.dismissButtonLabel || "Skip"}
-            </button>
-          )}
           <SubmitButton
             brandColor={brandColor}
             question={question}

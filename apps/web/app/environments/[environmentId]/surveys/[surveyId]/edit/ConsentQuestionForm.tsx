@@ -55,36 +55,27 @@ export default function ConsentQuestionForm({
         </div>
       </div>
 
-      <div className="mt-3 flex justify-between gap-8">
-        <div className="flex-1">
-          <Label htmlFor="label">Checkbox Label</Label>
-          <div className="mt-2">
-            <Input
-              id="label"
-              name="label"
-              value={question.label}
-              placeholder={lastQuestion ? "Finish" : "Next"}
-              onChange={(e) => updateQuestion(questionIdx, { label: e.target.value })}
-            />
-          </div>
-        </div>
-      </div>
-
       <div className="mt-3">
-        {!question.required && (
-          <div className="flex-1">
-            <Label htmlFor="dismissButtonLabel">Skip Button Label</Label>
-            <div className="mt-2">
-              <Input
-                id="dismissButtonLabel"
-                name="dismissButtonLabel"
-                value={question.dismissButtonLabel}
-                placeholder="Skip"
-                onChange={(e) => updateQuestion(questionIdx, { dismissButtonLabel: e.target.value })}
-              />
-            </div>
-          </div>
-        )}
+        <Label htmlFor="label">Checkbox Label</Label>
+        <Input
+          id="label"
+          name="label"
+          className="mt-2"
+          value={question.label}
+          placeholder="I agree to the terms and conditions"
+          onChange={(e) => updateQuestion(questionIdx, { label: e.target.value })}
+        />
+      </div>
+      <div className="mt-3">
+        <Label htmlFor="buttonLabel">Button Label</Label>
+        <Input
+          id="buttonLabel"
+          name="buttonLabel"
+          className="mt-2"
+          value={question.buttonLabel}
+          placeholder={lastQuestion ? "Finish" : "Next"}
+          onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+        />
       </div>
     </form>
   );

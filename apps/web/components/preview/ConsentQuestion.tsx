@@ -46,16 +46,6 @@ export default function ConsentQuestion({
         </label>
 
         <div className="mt-4 flex w-full justify-end">
-          {!question.required && (
-            <button
-              type="button"
-              onClick={() => {
-                onSubmit({ [question.id]: "skipped" });
-              }}
-              className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 text-slate-500 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:border-slate-400 dark:text-slate-400">
-              {question.dismissButtonLabel || "Skip"}
-            </button>
-          )}
           <button
             type="submit"
             className={cn(
