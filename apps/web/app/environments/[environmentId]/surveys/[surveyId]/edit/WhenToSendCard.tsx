@@ -249,7 +249,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
                       type="number"
                       min="1"
                       id="autoCloseSeconds"
-                      value={localSurvey.autoClose.toString()}
+                      value={localSurvey.autoClose?.toString()}
                       onChange={(e) => handleInputSeconds(e)}
                       className="ml-2 mr-2 inline w-16 text-center text-sm"
                     />
