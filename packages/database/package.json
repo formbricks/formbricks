@@ -7,7 +7,9 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist/**"
+    "dist/**",
+    "zod",
+    "zod-utils.ts"
   ],
   "scripts": {
     "build": "tsup",

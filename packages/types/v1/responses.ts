@@ -15,6 +15,8 @@ const ZResponse = z.object({
   data: ZResponseData,
 });
 
+export type TResponse = z.infer<typeof ZResponse>;
+
 export const ZResponseInput = z.object({
   surveyId: z.string().cuid2(),
   personId: z.string().cuid2(),
@@ -22,5 +24,4 @@ export const ZResponseInput = z.object({
   data: ZResponseData,
 });
 
-export type TResponse = z.infer<typeof ZResponse>;
 export type TResponseInput = z.infer<typeof ZResponseInput>;

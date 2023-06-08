@@ -152,3 +152,32 @@ export const ZSurveyQuestion = z.union([
 ]);
 
 export const ZSurveyQuestions = z.array(ZSurveyQuestion);
+
+export const ZSurvey = z.object({
+  id: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  name: z.string(),
+  type: z.union([z.literal("web"), z.literal("email"), z.literal("link"), z.literal("mobile")]),
+  environmentId: z.string(),
+  status: z.union([
+    z.literal("draft"),
+    z.literal("inProgress"),
+    z.literal("archived"),
+    z.literal("paused"),
+    z.literal("completed"),
+  ]),
+  recontactDays: z.union([z.number(), z.null()]),
+  questions: ZSurveyQuestions,
+  thankYouCard: ZSurveyThankYouCard,
+  triggers: z.array(z.string()),
+  numDisplays: z.number(),
+  responseRate: z.number(),
+  displayOption: z.union([
+    z.literal("displayOnce"),
+    z.literal("displayMultiple"),
+    z.literal("respondMultiple"),
+  ]),
+  attributeFilters: z.array(AttributeFilter),
+  autoClose: z.union([z.number(), z.null()]),
+});
