@@ -1,13 +1,4 @@
-export interface ResponseCreateRequest {
-  surveyId: string;
-  personId?: string;
-  response: {
-    finished?: boolean;
-    data: {
-      [name: string]: string | number | string[] | number[] | undefined;
-    };
-  };
-}
+import { TResponseInput } from "@formbricks/types/v1/responses";
 
 export interface ResponseUpdateRequest {
   response: {
@@ -30,15 +21,11 @@ export interface Response {
   };
 }
 
-export const createResponse = async (
-  responseRequest: ResponseCreateRequest,
-  apiHost: string,
-  environmentId: string
-): Promise<Response> => {
-  const res = await fetch(`${apiHost}/api/v1/client/environments/${environmentId}/responses`, {
+export const createResponse = async (responseInput: TResponseInput, apiHost: string): Promise<Response> => {
+  const res = await fetch(`${apiHost}/api/v1/client/responses`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(responseRequest),
+    body: JSON.stringify(responseInput),
   });
   if (!res.ok) {
     console.error(res.text);
@@ -48,15 +35,14 @@ export const createResponse = async (
 };
 
 export const updateResponse = async (
-  responseRequest: ResponseUpdateRequest,
+  responseInput: TResponseInput,
   responseId: string,
-  apiHost: string,
-  environmentId: string
+  apiHost: string
 ): Promise<Response> => {
-  const res = await fetch(`${apiHost}/api/v1/client/environments/${environmentId}/responses/${responseId}`, {
+  const res = await fetch(`${apiHost}/api/v1/client/responses/${responseId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(responseRequest),
+    body: JSON.stringify(responseInput),
   });
   if (!res.ok) {
     throw new Error("Could not update response");

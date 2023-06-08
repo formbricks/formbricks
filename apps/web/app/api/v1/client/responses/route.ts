@@ -1,8 +1,3 @@
-/*
-THIS FILE IS WORK IN PROGRESS
-PLEASE DO NOT USE IT YET
-*/
-
 import { responses } from "@/lib/api/response";
 import { prisma } from "@formbricks/database";
 import { transformErrorToDetails } from "@/lib/api/validator";

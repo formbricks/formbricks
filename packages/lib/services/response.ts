@@ -46,3 +46,41 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
   return response;
 };
+
+export const getResponse = async (responseId: string): Promise<TResponse | null> => {
+  const responsePrisma = await prisma.response.findUnique({
+    where: {
+      id: responseId,
+    },
+    include: {
+      person: {
+        select: {
+          id: true,
+          attributes: {
+            select: {
+              value: true,
+              attributeClass: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!responsePrisma) {
+    return null;
+  }
+
+  const response: TResponse = {
+    ...responsePrisma,
+    createdAt: responsePrisma.createdAt.toISOString(),
+    updatedAt: responsePrisma.updatedAt.toISOString(),
+    person: transformPrismaPerson(responsePrisma.person),
+  };
+
+  return response;
+};

@@ -151,15 +151,10 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     if (!responseId && !isPreview) {
       const response = await createResponse(
         responseRequest,
-        `${window.location.protocol}//${window.location.host}`,
-        survey.environmentId
+        `${window.location.protocol}//${window.location.host}`
       );
       if (displayId) {
-        markDisplayResponded(
-          displayId,
-          `${window.location.protocol}//${window.location.host}`,
-          survey.environmentId
-        );
+        markDisplayResponded(displayId, `${window.location.protocol}//${window.location.host}`);
       }
       setResponseId(response.id);
     } else if (responseId && !isPreview) {

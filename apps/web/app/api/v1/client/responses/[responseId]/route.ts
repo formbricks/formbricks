@@ -1,6 +1,10 @@
 import { responses } from "@/lib/api/response";
+import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getResponse } from "@formbricks/lib/services/response";
+import { getSurvey } from "@formbricks/lib/services/survey";
+import { ZResponseInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -9,31 +13,32 @@ export async function OPTIONS(): Promise<NextResponse> {
 
 export async function PUT(request: Request, params: { responseId: string }): Promise<NextResponse> {
   const { responseId } = params;
-  const { response } = await request.json();
+  const response = await request.json();
 
-  if (!response) {
-    return responses.missingFieldResponse("response", true);
+  const inputValidation = ZResponseInput.safeParse(response);
+
+  if (!inputValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(inputValidation.error),
+      true
+    );
   }
 
-  const currentResponse = await prisma.response.findUnique({
-    where: {
-      id: responseId,
-    },
-    select: {
-      data: true,
-      survey: {
-        select: {
-          environmentId: true,
-        },
-      },
-    },
-  });
+  // get current response
+  const currentResponse = await getResponse(responseId);
 
   if (!currentResponse) {
     return responses.notFoundResponse("Response", responseId, true);
   }
 
-  const environmentId = currentResponse.survey.environmentId;
+  // get survey to get environmentId
+  const survey = await getSurvey(currentResponse.surveyId);
+  if (!survey) {
+    // shouldn't happen as survey relation is required
+    return responses.notFoundResponse("Survey", currentResponse.surveyId, true);
+  }
+  const environmentId = survey.environmentId;
 
   const newResponseData = {
     ...JSON.parse(JSON.stringify(currentResponse?.data)),
