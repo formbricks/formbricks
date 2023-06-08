@@ -40,12 +40,6 @@ const OSSFriends = [
     href: "https://formbricks.com",
   },
   {
-    name: "Forward Email",
-    description:
-      "Free email forwarding for custom domains. For 6 years and counting, we are the go-to email service for thousands of creators, developers, and businesses.",
-    href: "https://forwardemail.net",
-  },
-  {
     name: "GitWonk",
     description:
       "GitWonk is an open-source technical documentation tool, designed and built focusing on the developer experience.",
