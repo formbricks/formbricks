@@ -6,3 +6,5 @@ export const ZUserNotificationSettings = z.record(
     weeklySummary: z.boolean(),
   })
 );
+
+export type TUserNotificationSettings = z.infer<typeof ZUserNotificationSettings>;

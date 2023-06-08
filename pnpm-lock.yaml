@@ -386,6 +386,9 @@ importers:
       '@prisma/client':
         specifier: ^4.15.0
         version: 4.15.0(prisma@4.15.0)
+      prisma-json-types-generator:
+        specifier: ^2.4.0
+        version: 2.4.0
       zod:
         specifier: ^3.21.4
         version: 3.21.4
@@ -4092,6 +4095,16 @@ packages:
       strip-ansi: 6.0.1
     dev: false
 
+  /@prisma/debug@4.15.0:
+    resolution: {integrity: sha512-dkbPz+gOVlWDBAaOEseSpAUz9NppT38UlwdryPyrwct6OClLirNC7wH+TpAQk5OZp9x59hNnfDz+T7XvL1v0/Q==}
+    dependencies:
+      '@types/debug': 4.1.8
+      debug: 4.3.4
+      strip-ansi: 6.0.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@prisma/debug@4.6.1:
     resolution: {integrity: sha512-BezDvSenTgQDQ6WA3TdTDGcrt0Oh4vmpZtmSOYm1KaSZiSVIL2xT0P9TFM3vtOa4wn7sn/003PyTSxyHS3mShg==}
     dependencies:
@@ -4168,6 +4181,17 @@ packages:
       '@types/cross-spawn': 6.0.2
       chalk: 4.1.2
       cross-spawn: 7.0.3
+    dev: false
+
+  /@prisma/generator-helper@4.15.0:
+    resolution: {integrity: sha512-JVHNgXr0LrcqXqmFrs+BzxfyRL6cFD5GLTMVWfCLU7kqSJdWuZxfoZW995tg6mOXnBgPTf6Ocv3RY4RLQq8k4g==}
+    dependencies:
+      '@prisma/debug': 4.15.0
+      '@types/cross-spawn': 6.0.2
+      cross-spawn: 7.0.3
+      kleur: 4.1.5
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /@prisma/generator-helper@4.6.1:
@@ -5635,6 +5659,12 @@ packages:
     resolution: {integrity: sha512-9AonUzyTjXXhEOa0DnqpzZi6VHlqKMswga9EXjpXnnqxwLtdvPPtlO8evrI5D9S6asFRCQ6v+wpiUKbw+vKqyg==}
     dependencies:
       '@types/ms': 0.7.31
+
+  /@types/debug@4.1.8:
+    resolution: {integrity: sha512-/vPO1EPOs306Cvhwv7KfVfYvOJqA/S/AXjaHQiJboCZzcNDb+TIJFN9/2C9DZ//ijSKWioNyUxD792QmDJ+HKQ==}
+    dependencies:
+      '@types/ms': 0.7.31
+    dev: false
 
   /@types/enzyme@3.10.13:
     resolution: {integrity: sha512-FCtoUhmFsud0Yx9fmZk179GkdZ4U9B0GFte64/Md+W/agx0L5SxsIIbhLBOxIb9y2UfBA4WQnaG1Od/UsUQs9Q==}
@@ -14371,7 +14401,7 @@ packages:
   /micromark@3.1.0:
     resolution: {integrity: sha512-6Mj0yHLdUZjHnOPgr5xfWIMqMWS12zDN6iws9SLuSz76W8jTtAv24MN4/CL7gJrl5vtxGInkkqDv/JIoRsQOvA==}
     dependencies:
-      '@types/debug': 4.1.7
+      '@types/debug': 4.1.8
       debug: 4.3.4
       decode-named-character-reference: 1.0.2
       micromark-core-commonmark: 1.0.6
@@ -17025,6 +17055,17 @@ packages:
       - encoding
       - supports-color
     dev: true
+
+  /prisma-json-types-generator@2.4.0:
+    resolution: {integrity: sha512-iOdo8sBoUz2jCi+kw5nwACbe0QHcPIIEToXyvn0cW5IJhPEhoYbY/XwMhEDIEla247YhXe1yYPiKwviFm9LNpg==}
+    engines: {node: '>=14.0'}
+    hasBin: true
+    dependencies:
+      '@prisma/generator-helper': 4.15.0
+      tslib: 2.5.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /prisma@4.15.0:
     resolution: {integrity: sha512-iKZZpobPl48gTcSZVawLMQ3lEy6BnXwtoMj7hluoGFYu2kQ6F9LBuBrUyF95zRVnNo8/3KzLXJXJ5TEnLSJFiA==}

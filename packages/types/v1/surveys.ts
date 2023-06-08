@@ -1,10 +1,13 @@
 import { z } from "zod";
+import { ZEventClass } from "./eventClasses";
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
   headline: z.optional(z.string()),
   subheader: z.optional(z.string()),
 });
+
+export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 
 export const ZSurveyChoice = z.object({
   id: z.string(),
@@ -153,9 +156,12 @@ export const ZSurveyQuestion = z.union([
 
 export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 
+export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
+
 export const ZSurveyAttributeFilter = z.object({
+  id: z.string().cuid2(),
   attributeClassId: z.string(),
-  condition: z.string(),
+  condition: z.enum(["equals", "notEquals"]),
   value: z.string(),
 });
 
@@ -173,17 +179,21 @@ export const ZSurvey = z.object({
     z.literal("paused"),
     z.literal("completed"),
   ]),
-  recontactDays: z.union([z.number(), z.null()]),
-  questions: ZSurveyQuestions,
-  thankYouCard: ZSurveyThankYouCard,
-  triggers: z.array(z.string()),
-  numDisplays: z.number(),
-  responseRate: z.number(),
+  attributeFilters: z.array(ZSurveyAttributeFilter),
   displayOption: z.union([
     z.literal("displayOnce"),
     z.literal("displayMultiple"),
     z.literal("respondMultiple"),
   ]),
-  attributeFilters: z.array(ZSurveyAttributeFilter),
   autoClose: z.union([z.number(), z.null()]),
+  triggers: z.array(ZEventClass),
+  recontactDays: z.union([z.number(), z.null()]),
+  questions: ZSurveyQuestions,
+  thankYouCard: ZSurveyThankYouCard,
+  analytics: z.object({
+    numDisplays: z.number(),
+    responseRate: z.number(),
+  }),
 });
+
+export type TSurvey = z.infer<typeof ZSurvey>;

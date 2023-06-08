@@ -7,10 +7,10 @@ import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
+import { getSurvey } from "@formbricks/lib/services/surveys";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
+import type { TResponse } from "@formbricks/types/v1/responses";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -29,45 +29,23 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   // check if survey exists
-  const survey = await prisma.survey.findUnique({
-    where: {
-      id: responseInput.surveyId,
-    },
-    select: {
-      id: true,
-      environment: {
-        select: {
-          id: true,
-          product: {
-            select: {
-              team: {
-                select: {
-                  id: true,
-                  memberships: {
-                    select: {
-                      userId: true,
-                      role: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      type: true,
-    },
-  });
+  const survey = await getSurvey(responseInput.surveyId);
 
   if (!survey) {
-    return responses.notFoundResponse("Survey", responseInput.surveyId, true);
+    return responses.badRequestResponse(
+      "Linked ressource not found",
+      {
+        surveyId: "Survey not found",
+      },
+      true
+    );
   }
 
-  const environmentId = survey.environment.id;
+  const environmentId = survey.environmentId;
 
-  const teamId = survey.environment.product.team.id;
+  /* const teamId = survey.environment.product.team.id;
   // find team owner
-  const teamOwnerId = survey.environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
+  const teamOwnerId = survey.environment.product.team.memberships.find((m) => m.role === "owner")?.userId; */
 
   const createBody: any = {
     data: {
@@ -123,7 +101,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
   }
 
-  captureTelemetry("response created");
+  /*   captureTelemetry("response created");
   if (teamOwnerId) {
     await capturePosthogEvent(teamOwnerId, "response created", teamId, {
       surveyId: responseInput.surveyId,
@@ -131,7 +109,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
   } else {
     console.warn("Posthog capture not possible. No team owner found");
-  }
+  } */
 
-  return responses.successResponse({ id: responseData.id }, true);
+  return responses.successResponse(responseData, true);
 }

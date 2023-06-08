@@ -19,6 +19,10 @@ generator zod {
   relationModel = "default"
 }
 
+generator json {
+  provider = "prisma-json-types-generator"
+}
+
 enum PipelineTriggers {
   responseCreated
   responseUpdated
@@ -91,8 +95,10 @@ model Response {
   person    Person?  @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId  String?
   /// @zod.custom(imports.ZResponseData)
+  /// [ResponseData]
   data      Json     @default("{}")
   /// @zod.custom(imports.ZResponseMeta)
+  /// [ResponseMeta]
   meta      Json     @default("{}")
 }
 
@@ -174,8 +180,10 @@ model Survey {
   environmentId    String
   status           SurveyStatus            @default(draft)
   /// @zod.custom(imports.ZSurveyQuestions)
+  /// [SurveyQuestions]
   questions        Json                    @default("[]")
   /// @zod.custom(imports.ZSurveyThankYouCard)
+  /// [SurveyThankYouCard]
   thankYouCard     Json                    @default("{\"enabled\": false}")
   responses        Response[]
   displayOption    displayOptions          @default(displayOnce)
@@ -194,6 +202,7 @@ model Event {
   session      Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId    String
   /// @zod.custom(imports.ZEventProperties)
+  /// [EventProperties]
   properties   Json        @default("{}")
 }
 
@@ -397,5 +406,6 @@ model User {
   role                      Role?
   objective                 Objective?
   /// @zod.custom(imports.ZUserNotificationSettings)
+  /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
 }

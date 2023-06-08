@@ -2,15 +2,19 @@ import { z } from "zod";
 
 export const ZResponseData = z.record(z.union([z.string(), z.number()]));
 
+export type TResponseData = z.infer<typeof ZResponseData>;
+
 const ZResponse = z.object({
   id: z.string().cuid2(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   surveyId: z.string().cuid2(),
-  person: z.object({
-    id: z.string().cuid2(),
-    attributes: z.record(z.union([z.string(), z.number()])),
-  }),
+  person: z
+    .object({
+      id: z.string().cuid2(),
+      attributes: z.record(z.union([z.string(), z.number()])),
+    })
+    .nullable(),
   finished: z.boolean(),
   data: ZResponseData,
 });
