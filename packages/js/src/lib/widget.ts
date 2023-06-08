@@ -17,7 +17,6 @@ export const renderWidget = (survey: Survey) => {
     logger.debug("A survey is already running. Skipping.");
     return;
   }
-  console.log(survey.delay);
   surveyRunning = true;
 
   render(
