@@ -101,7 +101,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
       case "notEquals":
         return answerValue !== logic.value;
       case "lessThan":
-        return answerValue < logic.value;
+        return logic.value !== undefined && answerValue < logic.value;
       case "lessEqual":
         return answerValue <= logic.value;
       case "greaterThan":
