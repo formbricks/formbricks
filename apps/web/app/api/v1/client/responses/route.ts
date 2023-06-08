@@ -4,13 +4,15 @@ PLEASE DO NOT USE IT YET
 */
 
 import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
+import { transformErrorToDetails } from "@/lib/api/validator";
+import { createResponse } from "@formbricks/lib/services/response";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getSurvey } from "@formbricks/lib/services/surveys";
+import { getSurvey } from "@formbricks/lib/services/survey";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
-import type { TResponse } from "@formbricks/types/v1/responses";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
+import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -43,31 +45,41 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const environmentId = survey.environmentId;
 
-  /* const teamId = survey.environment.product.team.id;
-  // find team owner
-  const teamOwnerId = survey.environment.product.team.memberships.find((m) => m.role === "owner")?.userId; */
-
-  const createBody: any = {
-    data: {
-      survey: {
-        connect: {
-          id: responseInput.surveyId,
+  // prisma call to get the teamId
+  // TODO use services
+  const environment = await prisma.environment.findUnique({
+    where: { id: environmentId },
+    include: {
+      product: {
+        select: {
+          team: {
+            select: {
+              id: true,
+              memberships: {
+                where: { role: "owner" },
+                select: { userId: true },
+                take: 1,
+              },
+            },
+          },
         },
       },
-      ...responseInput,
     },
-  };
+  });
 
-  if (responseInput.personId) {
-    createBody.data.person = {
-      connect: {
-        id: responseInput.personId,
-      },
-    };
+  if (!environment) {
+    throw new Error("Environment not found");
   }
 
-  // create new response
-  const responseData = await prisma.response.create(createBody);
+  const {
+    product: {
+      team: { id: teamId, memberships },
+    },
+  } = environment;
+
+  const teamOwnerId = memberships[0]?.userId;
+
+  const response = await createResponse(responseInput);
 
   // send response to pipeline
   // don't await to not block the response
@@ -80,7 +92,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       internalSecret: INTERNAL_SECRET,
       environmentId,
       event: "responseCreated",
-      data: responseData,
+      data: response,
     }),
   });
 
@@ -96,12 +108,12 @@ export async function POST(request: Request): Promise<NextResponse> {
         internalSecret: INTERNAL_SECRET,
         environmentId,
         event: "responseFinished",
-        data: responseData,
+        data: response,
       }),
     });
   }
 
-  /*   captureTelemetry("response created");
+  captureTelemetry("response created");
   if (teamOwnerId) {
     await capturePosthogEvent(teamOwnerId, "response created", teamId, {
       surveyId: responseInput.surveyId,
@@ -109,7 +121,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
   } else {
     console.warn("Posthog capture not possible. No team owner found");
-  } */
+  }
 
-  return responses.successResponse(responseData, true);
+  return responses.successResponse(response, true);
 }

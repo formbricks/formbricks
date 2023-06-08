@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { TResponse, TResponseInput } from "@formbricks/types/v1/responses";
-import { transformPrismaPerson } from "./people";
+import { transformPrismaPerson } from "./person";
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
   const responsePrisma = await prisma.response.create({
