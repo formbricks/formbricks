@@ -6,11 +6,12 @@ import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { createDisplay, markDisplayResponded } from "@formbricks/lib/clientDisplay/display";
-import { createResponse, updateResponse } from "@formbricks/lib/clientResponse/response";
+import { createDisplay, markDisplayResponded } from "@formbricks/lib/client/display";
+import { createResponse, updateResponse } from "@formbricks/lib/client/response";
 import { cn } from "@formbricks/lib/cn";
 import type { Logic, Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
+import { TResponseInput } from "@formbricks/types/v1/responses";
 import { Confetti } from "@formbricks/ui";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
@@ -144,9 +145,11 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
 
     const finished = nextQuestionId === "end";
     // build response
-    const responseRequest = {
+    const responseRequest: TResponseInput = {
       surveyId: survey.id,
-      response: { finished, data },
+      personId: null,
+      finished,
+      data,
     };
     if (!responseId && !isPreview) {
       const response = await createResponse(
@@ -154,15 +157,18 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         `${window.location.protocol}//${window.location.host}`
       );
       if (displayId) {
-        markDisplayResponded(displayId, `${window.location.protocol}//${window.location.host}`);
+        markDisplayResponded(
+          displayId,
+          `${window.location.protocol}//${window.location.host}`,
+          survey.environmentId
+        );
       }
       setResponseId(response.id);
     } else if (responseId && !isPreview) {
       await updateResponse(
         responseRequest,
         responseId,
-        `${window.location.protocol}//${window.location.host}`,
-        survey.environmentId
+        `${window.location.protocol}//${window.location.host}`
       );
     }
 

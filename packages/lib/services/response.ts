@@ -10,13 +10,15 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
           id: responseInput.surveyId,
         },
       },
-      person: {
-        connect: {
-          id: responseInput.personId,
-        },
-      },
       finished: responseInput.finished,
       data: responseInput.data,
+      ...(responseInput.personId && {
+        person: {
+          connect: {
+            id: responseInput.personId,
+          },
+        },
+      }),
     },
     include: {
       person: {
