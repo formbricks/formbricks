@@ -153,6 +153,12 @@ export const ZSurveyQuestion = z.union([
 
 export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 
+export const ZSurveyAttributeFilter = z.object({
+  attributeClassId: z.string(),
+  condition: z.string(),
+  value: z.string(),
+});
+
 export const ZSurvey = z.object({
   id: z.string(),
   createdAt: z.string(),
@@ -178,6 +184,6 @@ export const ZSurvey = z.object({
     z.literal("displayMultiple"),
     z.literal("respondMultiple"),
   ]),
-  attributeFilters: z.array(AttributeFilter),
+  attributeFilters: z.array(ZSurveyAttributeFilter),
   autoClose: z.union([z.number(), z.null()]),
 });
