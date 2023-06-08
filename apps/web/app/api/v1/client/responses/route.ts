@@ -4,12 +4,13 @@ PLEASE DO NOT USE IT YET
 */
 
 import { responses } from "@/lib/api/response";
+import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { NextResponse } from "next/server";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
+import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -19,12 +20,10 @@ export async function POST(request: Request): Promise<NextResponse> {
   const responseInput: TResponseInput = await request.json();
   const inputValidation = ZResponseInput.safeParse(responseInput);
 
-  console.log("inputValidation", JSON.stringify(inputValidation, null, 2));
-
   if (!inputValidation.success) {
     return responses.badRequestResponse(
-      `${inputValidation.error.issues[0].path.join(".")}: ${inputValidation.error.issues[0].message}`,
-      {},
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(inputValidation.error),
       true
     );
   }

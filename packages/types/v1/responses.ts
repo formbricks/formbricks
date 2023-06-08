@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const ZResponseData = z.record(z.union([z.string(), z.number()]));
+
 const ZResponse = z.object({
   id: z.string().cuid2(),
   createdAt: z.string().datetime(),
@@ -10,14 +12,14 @@ const ZResponse = z.object({
     attributes: z.record(z.union([z.string(), z.number()])),
   }),
   finished: z.boolean(),
-  data: z.record(z.union([z.string(), z.number()])),
+  data: ZResponseData,
 });
 
 export const ZResponseInput = z.object({
   surveyId: z.string().cuid2(),
   personId: z.string().cuid2(),
   finished: z.boolean(),
-  data: z.record(z.union([z.string(), z.number()])),
+  data: ZResponseData,
 });
 
 export type TResponse = z.infer<typeof ZResponse>;
