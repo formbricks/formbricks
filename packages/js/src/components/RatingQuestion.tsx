@@ -49,7 +49,7 @@ export default function RatingQuestion({
       type="radio"
       name="rating"
       value={number}
-      className="fb-absolute fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+      className="fb-absolute fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0 fb-left-0"
       onChange={() => handleSelect(number)}
       required={question.required}
     />

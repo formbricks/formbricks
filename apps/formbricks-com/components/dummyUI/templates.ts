@@ -28,7 +28,7 @@ import type { Template } from "@formbricks/types/templates";
 const thankYouCardDefault = {
   enabled: true,
   headline: "Thank you!",
-  subheader: "We appreciate your time and insight.",
+  subheader: "We appreciate your feedback.",
 };
 
 export const customSurvey: Template = {

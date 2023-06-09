@@ -199,6 +199,7 @@ model Survey {
   attributeFilters SurveyAttributeFilter[]
   displays         Display[]
   autoClose        Int?
+  delay            Int                     @default(0)
 }
 
 model Event {

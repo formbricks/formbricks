@@ -72,21 +72,21 @@ export type LogicCondition =
 
 export interface LogicBase {
   condition: LogicCondition | undefined;
-  value: number | string | string[] | undefined;
+  value?: number | string | string[] | undefined;
   destination: string | "end" | undefined;
 }
 
 export interface OpenTextLogic extends LogicBase {
   condition: "submitted" | "skipped" | undefined;
-  value: undefined;
+  value?: undefined;
 }
 export interface MultipleChoiceSingleLogic extends LogicBase {
   condition: "submitted" | "skipped" | "equals" | "notEquals" | undefined;
-  value: string;
+  value?: string;
 }
 export interface MultipleChoiceMultiLogic extends LogicBase {
   condition: "submitted" | "skipped" | "includesAll" | "includesOne" | undefined;
-  value: string[];
+  value?: string[];
 }
 export interface NPSLogic extends LogicBase {
   condition:
@@ -99,11 +99,11 @@ export interface NPSLogic extends LogicBase {
     | "equals"
     | "notEquals"
     | undefined;
-  value: number;
+  value?: number;
 }
 export interface CTALogic extends LogicBase {
   condition: "submitted" | "skipped" | undefined;
-  value: undefined;
+  value?: undefined;
 }
 export interface RatingLogic extends LogicBase {
   condition:
@@ -116,7 +116,7 @@ export interface RatingLogic extends LogicBase {
     | "equals"
     | "notEquals"
     | undefined;
-  value: number;
+  value?: number | string;
 }
 export type Logic =
   | OpenTextLogic
