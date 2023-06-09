@@ -133,13 +133,13 @@ export default function PreviewSurvey({
       case "notEquals":
         return answerValue !== logic.value;
       case "lessThan":
-        return answerValue < logic.value;
+        return logic.value !== undefined && answerValue < logic.value;
       case "lessEqual":
-        return answerValue <= logic.value;
+        return logic.value !== undefined && answerValue <= logic.value;
       case "greaterThan":
-        return answerValue > logic.value;
+        return logic.value !== undefined && answerValue > logic.value;
       case "greaterEqual":
-        return answerValue >= logic.value;
+        return logic.value !== undefined && answerValue >= logic.value;
       case "includesAll":
         return (
           Array.isArray(answerValue) &&

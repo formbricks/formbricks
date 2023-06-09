@@ -48,22 +48,6 @@ export default function TemplateList({ onTemplateClick, activeTemplate }: Templa
         ))}
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {/* <button
-          type="button"
-          onClick={() => {
-            onTemplateClick(activeTemplate);
-            setActiveTemplate(activeTemplate);
-          }}
-          className={cn(
-            activeTemplate?.name === customSurvey.name
-              ? "ring-brand border-transparent ring-2"
-              : "hover:border-brand-dark  border-dashed border-slate-300",
-            "duration-120  group relative rounded-lg border-2  bg-transparent p-8 transition-colors duration-150"
-          )}>
-          <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
-          <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 ">{customSurvey.name}</h3>
-          <p className="text-left text-xs text-slate-600 ">{customSurvey.description}</p>
-        </button> */}
         {templates
           .filter((template) => selectedFilter === ALL_CATEGORY_NAME || template.category === selectedFilter)
           .map((template: Template) => (
