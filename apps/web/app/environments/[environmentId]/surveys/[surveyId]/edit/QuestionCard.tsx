@@ -5,7 +5,7 @@ import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
-import { Label, Switch } from "@formbricks/ui";
+import { Input, Label, Switch } from "@formbricks/ui";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChevronDownIcon,
@@ -24,7 +24,7 @@ import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
 import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
-import QuestionDropdown from "./QuestionDropdown";
+import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
 import UpdateQuestionId from "./UpdateQuestionId";
 
@@ -116,19 +116,6 @@ export default function QuestionCard({
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  {open && (
-                    <div className="flex items-center space-x-2">
-                      <Label htmlFor="required-toggle">Required</Label>
-                      <Switch
-                        id="required-toggle"
-                        checked={question.required}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateQuestion(questionIdx, { required: !question.required });
-                        }}
-                      />
-                    </div>
-                  )}
                   <QuestionDropdown
                     questionIdx={questionIdx}
                     lastQuestion={lastQuestion}
@@ -190,12 +177,6 @@ export default function QuestionCard({
                 />
               ) : null}
               <div className="mt-4 border-t border-slate-200">
-                <LogicEditor
-                  question={question}
-                  updateQuestion={updateQuestion}
-                  localSurvey={localSurvey}
-                  questionIdx={questionIdx}
-                />
                 <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
                   <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700 ">
                     {openAdvanced ? (
@@ -208,6 +189,24 @@ export default function QuestionCard({
 
                   <Collapsible.CollapsibleContent className="space-y-2">
                     <div className="mt-3">
+                      <Label htmlFor="buttonLabel">Button Label</Label>
+                      <div className="mt-2">
+                        <Input
+                          id="buttonLabel"
+                          name="buttonLabel"
+                          value={question.buttonLabel}
+                          placeholder={lastQuestion ? "Finish" : "Next"}
+                          onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <LogicEditor
+                      question={question}
+                      updateQuestion={updateQuestion}
+                      localSurvey={localSurvey}
+                      questionIdx={questionIdx}
+                    />
+                    <div className="mt-3">
                       <UpdateQuestionId
                         question={question}
                         questionIdx={questionIdx}
@@ -219,6 +218,21 @@ export default function QuestionCard({
                 </Collapsible.Root>
               </div>
             </Collapsible.CollapsibleContent>
+            <div className="m-4 mt-0 border-t border-slate-200">
+              {open && (
+                <div className="mb-4 mr-4 mt-4 flex items-center justify-end space-x-2">
+                  <Label htmlFor="required-toggle">Required</Label>
+                  <Switch
+                    id="required-toggle"
+                    checked={question.required}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateQuestion(questionIdx, { required: !question.required });
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </Collapsible.Root>
         </div>
       )}
