@@ -24,6 +24,8 @@ export const questionTypes: QuestionType[] = [
     description: "A single line of text",
     icon: ChatBubbleBottomCenterTextIcon,
     preset: {
+      headline: "Who let the dogs out?",
+      subheader: "Who? Who? Who?",
       placeholder: "Type your answer here...",
     },
   },
