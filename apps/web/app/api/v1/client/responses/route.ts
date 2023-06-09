@@ -86,6 +86,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     body: JSON.stringify({
       internalSecret: INTERNAL_SECRET,
       environmentId,
+      surveyId: response.surveyId,
       event: "responseCreated",
       data: response,
     }),
@@ -102,6 +103,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       body: JSON.stringify({
         internalSecret: INTERNAL_SECRET,
         environmentId,
+        surveyId: response.surveyId,
         event: "responseFinished",
         data: response,
       }),
@@ -111,7 +113,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   captureTelemetry("response created");
   if (teamOwnerId) {
     await capturePosthogEvent(teamOwnerId, "response created", teamId, {
-      surveyId: responseInput.surveyId,
+      surveyId: response.surveyId,
       surveyType: survey.type,
     });
   } else {

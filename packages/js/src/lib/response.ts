@@ -26,7 +26,7 @@ export const createResponse = async (
     });
   }
 
-  return ok(jsonRes as TResponse);
+  return ok(jsonRes.data as TResponse);
 };
 
 export const updateResponse = async (
@@ -54,5 +54,5 @@ export const updateResponse = async (
     });
   }
 
-  return ok(resJson as TResponse);
+  return ok(resJson.data as TResponse);
 };

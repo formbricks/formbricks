@@ -1,21 +1,23 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getResponse } from "@formbricks/lib/services/response";
+import { getResponse, updateResponse } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";
-import { ZResponseInput } from "@formbricks/types/v1/responses";
+import { ZResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
-export async function PUT(request: Request, params: { responseId: string }): Promise<NextResponse> {
+export async function PUT(
+  request: Request,
+  { params }: { params: { responseId: string } }
+): Promise<NextResponse> {
   const { responseId } = params;
-  const response = await request.json();
+  const responseUpdate = await request.json();
 
-  const inputValidation = ZResponseInput.safeParse(response);
+  const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
 
   if (!inputValidation.success) {
     return responses.badRequestResponse(
@@ -40,20 +42,8 @@ export async function PUT(request: Request, params: { responseId: string }): Pro
   }
   const environmentId = survey.environmentId;
 
-  const newResponseData = {
-    ...JSON.parse(JSON.stringify(currentResponse?.data)),
-    ...response.data,
-  };
-
   // update response
-  const responseData = await prisma.response.update({
-    where: {
-      id: responseId,
-    },
-    data: {
-      ...{ ...response, data: newResponseData },
-    },
-  });
+  const response = await updateResponse(responseId, responseUpdate);
 
   // send response update to pipeline
   // don't await to not block the response
@@ -65,8 +55,9 @@ export async function PUT(request: Request, params: { responseId: string }): Pro
     body: JSON.stringify({
       internalSecret: INTERNAL_SECRET,
       environmentId,
+      surveyId: response.surveyId,
       event: "responseUpdated",
-      data: { id: responseId, ...response },
+      data: response,
     }),
   });
 
@@ -81,11 +72,12 @@ export async function PUT(request: Request, params: { responseId: string }): Pro
       body: JSON.stringify({
         internalSecret: INTERNAL_SECRET,
         environmentId,
+        surveyId: response.surveyId,
         event: "responseFinished",
-        data: responseData,
+        data: response,
       }),
     });
   }
 
-  return responses.successResponse({ ...responseData }, true);
+  return responses.successResponse(response, true);
 }

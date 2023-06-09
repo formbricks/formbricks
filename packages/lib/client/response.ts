@@ -1,4 +1,4 @@
-import { TResponseInput, TResponse } from "@formbricks/types/v1/responses";
+import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
 
 export const createResponse = async (responseInput: TResponseInput, apiHost: string): Promise<TResponse> => {
   const res = await fetch(`${apiHost}/api/v1/client/responses`, {
@@ -10,11 +10,12 @@ export const createResponse = async (responseInput: TResponseInput, apiHost: str
     console.error(res.text);
     throw new Error("Could not create response");
   }
-  return await res.json();
+  const resJson = await res.json();
+  return resJson.data;
 };
 
 export const updateResponse = async (
-  responseInput: TResponseInput,
+  responseInput: TResponseUpdateInput,
   responseId: string,
   apiHost: string
 ): Promise<TResponse> => {
@@ -26,5 +27,6 @@ export const updateResponse = async (
   if (!res.ok) {
     throw new Error("Could not update response");
   }
-  return await res.json();
+  const resJson = await res.json();
+  return resJson.data;
 };

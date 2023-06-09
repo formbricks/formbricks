@@ -29,3 +29,10 @@ export const ZResponseInput = z.object({
 });
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;
+
+export const ZResponseUpdateInput = z.object({
+  finished: z.boolean(),
+  data: ZResponseData,
+});
+
+export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;

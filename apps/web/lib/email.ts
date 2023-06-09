@@ -134,7 +134,10 @@ export const sendResponseFinishedEmail = async (
     <hr/> 
 
     ${getQuestionResponseMapping(survey, response)
-      .map((question) => `<p><strong>${question.question}</strong></p><p>${question.answer}</p>`)
+      .map(
+        (question) =>
+          question.answer && `<p><strong>${question.question}</strong></p><p>${question.answer}</p>`
+      )
       .join("")} 
    
     <hr/>
