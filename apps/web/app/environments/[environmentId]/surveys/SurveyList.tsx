@@ -14,7 +14,6 @@ import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { useEnvironment } from "@/lib/environments/environments";
 import { createSurvey, deleteSurvey, duplicateSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Badge, ErrorComponent } from "@formbricks/ui";
-import { PlusIcon } from "@heroicons/react/24/outline";
 import {
   ComputerDesktopIcon,
   DocumentDuplicateIcon,
@@ -23,6 +22,8 @@ import {
   PencilSquareIcon,
   EyeIcon,
   TrashIcon,
+  PlusIcon,
+  ArrowUpOnSquareStackIcon,
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -33,7 +34,7 @@ import TemplateList from "./templates/TemplateList";
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
-  const { environment } = useEnvironment(environmentId);
+  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
@@ -84,11 +85,11 @@ export default function SurveysList({ environmentId }) {
     }
   };
 
-  if (isLoadingSurveys) {
+  if (isLoadingSurveys || isLoadingEnvironment) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorSurveys) {
+  if (isErrorSurveys || isErrorEnvironment) {
     return <ErrorComponent />;
   }
 
@@ -115,6 +116,7 @@ export default function SurveysList({ environmentId }) {
       </div>
     );
   }
+  console.log(environment);
 
   return (
     <>
@@ -202,26 +204,33 @@ export default function SurveysList({ environmentId }) {
                               Duplicate
                             </button>
                           </DropdownMenuItem>
-                          {/* <DropdownMenuItem>
-                            <Link
-                              className="flex w-full items-center"
-                              href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                              <ArrowUturnUpIcon className="mr-2 h-4 w-4" />
-                              Copy to Production
-                            </Link>
-                          </DropdownMenuItem> */}
-                          <DropdownMenuItem>
-                            <button
-                              className="flex w-full  items-center"
-                              onClick={() => {
-                                setActiveSurvey(survey);
-                                setActiveSurveyIdx(surveyIdx);
-                                setDeleteDialogOpen(true);
-                              }}>
-                              <TrashIcon className="mr-2 h-4 w-4" />
-                              Delete
-                            </button>
-                          </DropdownMenuItem>
+                          {environment.type === "development" ? (
+                            <DropdownMenuItem>
+                              <button
+                                className="flex w-full items-center"
+                                onClick={() => {
+                                  // copy survey to other environment
+                                  // forward to environment
+                                  toast.success("Survey copied to production env.");
+                                }}>
+                                <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                                Copy to Prod.
+                              </button>
+                            </DropdownMenuItem>
+                          ) : environment.type === "production" ? (
+                            <DropdownMenuItem>
+                              <button
+                                className="flex w-full items-center"
+                                onClick={() => {
+                                  // copy survey to other environment
+                                  // forward to environment
+                                  toast.success("Survey copied to production env.");
+                                }}>
+                                <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                                Copy to Dev.
+                              </button>
+                            </DropdownMenuItem>
+                          ) : null}
                           {survey.type === "link" && survey.status !== "draft" && (
                             <>
                               <DropdownMenuItem>
@@ -248,6 +257,18 @@ export default function SurveysList({ environmentId }) {
                               </DropdownMenuItem>
                             </>
                           )}
+                          <DropdownMenuItem>
+                            <button
+                              className="flex w-full  items-center"
+                              onClick={() => {
+                                setActiveSurvey(survey);
+                                setActiveSurveyIdx(surveyIdx);
+                                setDeleteDialogOpen(true);
+                              }}>
+                              <TrashIcon className="mr-2 h-4 w-4" />
+                              Delete
+                            </button>
+                          </DropdownMenuItem>
                         </DropdownMenuGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
