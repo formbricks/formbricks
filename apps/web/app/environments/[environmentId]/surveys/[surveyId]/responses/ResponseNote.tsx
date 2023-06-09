@@ -48,16 +48,16 @@ export default function ResponseNote({ data, environmentId, surveyId, isOpen, se
                 {!responseNotes.length ? 
                     <div className="flex items-center justify-end">
                         <div className="group flex items-center">
-                        <h3 className="ml-4 pb-1 text-slate-600 float-left">Note</h3>
+                        <h3 className="ml-4 pb-1 text-slate-600 float-left text-sm">Note</h3>
                         </div>
                     </div> : 
-                    <div className="float-right">
+                    <div className="float-left mr-1.5">
                         <EyeIcon className="text-amber-400 w-4 h-4"/>
                     </div>
                 }
             </div>
             {!responseNotes.length ? 
-                <div className="flex-1  flex justify-end items-center pr-3">
+                <div className="flex-1  flex justify-end items-center pr-2">
                     <button className="bg-slate-600 w-6 h-6 rounded-full">
                         <span>
                             <PlusIcon className="text-white"/>
