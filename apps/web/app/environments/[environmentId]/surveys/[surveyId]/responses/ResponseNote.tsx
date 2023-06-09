@@ -1,7 +1,7 @@
 "use client";
 
 import { timeSince } from "@formbricks/lib/time";
-import { EyeSlashIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { EyeSlashIcon, PlusIcon, EyeIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useResponses } from "@/lib/responses/responses";
@@ -33,10 +33,10 @@ export default function ResponseNote({ data, environmentId, surveyId, isOpen, se
   return (
     <div
         className={clsx(
-            "rounded-lg border border-slate-200 shadow-sm absolute transition-all w-1/5",
+            "rounded-lg border border-slate-200 shadow-sm absolute transition-all w-1/5 cursor-pointer",
             !isOpen && responseNotes.length && "bg-white",
             !isOpen && !responseNotes.length && "bg-slate-50",
-            isOpen ? "h-full top-0 -right-5 bg-white" : "h-5/6 top-5 group-hover:right-[200px]"
+            isOpen ? "w-1/5 top-0 -right-5 h-full bg-white" : "w-1/12 top-[8.333%] right-[120px] group-hover:right-[60px] h-5/6 max-h-[600px]"
         )}
         onClick={() => {
             if(!isOpen) setIsOpen(true)
@@ -44,13 +44,17 @@ export default function ResponseNote({ data, environmentId, surveyId, isOpen, se
     >
         {!isOpen ?
         <div className="flex flex-col h-full">
-            <div className={clsx("space-y-2 px-2 pb-2 pt-2 rounded-t-lg", responseNotes.length ? "bg-amber-50 h-16" : "bg-slate-200")}>
+            <div className={clsx("space-y-2 px-2 pb-2 pt-2 rounded-t-lg", responseNotes.length ? "bg-amber-50 h-16 flex items-center justify-end" : "bg-slate-200")}>
                 {!responseNotes.length ? 
                     <div className="flex items-center justify-end">
                         <div className="group flex items-center">
                         <h3 className="ml-4 pb-1 text-slate-600 float-left">Note</h3>
                         </div>
-                    </div> : null}
+                    </div> : 
+                    <div className="float-right">
+                        <EyeIcon className="text-amber-400 w-4 h-4"/>
+                    </div>
+                }
             </div>
             {!responseNotes.length ? 
                 <div className="flex-1  flex justify-end items-center pr-3">
@@ -65,10 +69,10 @@ export default function ResponseNote({ data, environmentId, surveyId, isOpen, se
             <div className="px-4 pb-5 pt-6 bg-amber-50 rounded-t-lg">
                 <div className="flex items-center justify-between">
                     <div className="group flex items-center">
-                        <h3 className="pb-1  text-slate-600">Note</h3>
+                        <h3 className="pb-1 text-slate-600 text-sm">Note</h3>
                     </div>
                     <div
-                        className="w-8 h-8 cursor-pointer"
+                        className="w-4 h-4 cursor-pointer"
                         onClick={() => {
                             setIsOpen(!isOpen)
                         }}
@@ -77,7 +81,7 @@ export default function ResponseNote({ data, environmentId, surveyId, isOpen, se
                     </div>
                 </div>
             </div>
-            <div className="px-4 overflow-auto pt-2">
+            <div className="px-4 overflow-auto pt-2 flex-1">
                 {responseNotes.map((note) => (
                     <div className="mb-2" key={note.id}>
                         <span className="text-xs text-slate-500 block">
@@ -90,21 +94,31 @@ export default function ResponseNote({ data, environmentId, surveyId, isOpen, se
                     </div>
                 ))}
             </div>
-            <div className={clsx("flex-1 w-full px-4 pb-2", !responseNotes.length && "absolute bottom-0")}>
-                <form onSubmit={handleNoteSubmission}>
-                    <div className="mt-4">
-                        <textarea
-                            rows={2}
-                            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"
-                            onChange={(e) => setNoteText(e.target.value)}
-                            value={noteText}
-                        >
-                        </textarea>
-                    </div>
-                    <div className="mt-4 flex w-full justify-end">
-                        <Button className="bg-slate-600 hover:bg-slate-400" size="sm" type="submit" loading={isCreatingNote}>Send</Button>
-                    </div>
-                </form>
+            <div className="h-[120px]">
+                <div className={clsx("w-full px-4 pb-2 absolute bottom-0" , !responseNotes.length && "absolute bottom-0")}>
+                    <form onSubmit={handleNoteSubmission}>
+                        <div className="mt-4">
+                            <textarea
+                                rows={2}
+                                className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm resize-none"
+                                onChange={(e) => setNoteText(e.target.value)}
+                                value={noteText}
+                                autoFocus
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && noteText) {
+                                        e.preventDefault()
+                                        handleNoteSubmission(e)
+                                    }
+                                }}
+                                required
+                            >
+                            </textarea>
+                        </div>
+                        <div className="mt-4 flex w-full justify-end">
+                            <Button className="bg-slate-600 hover:bg-slate-400" size="sm" type="submit" loading={isCreatingNote}>Send</Button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>}
     </div>
