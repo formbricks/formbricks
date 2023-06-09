@@ -1,4 +1,4 @@
-import { EnvironmentId, FormbricksAPI } from "@formbricks/api";
+import { FormbricksAPI, EnvironmentId } from "@formbricks/api";
 import { Config } from "./config";
 
 export const getApi = (): FormbricksAPI => {

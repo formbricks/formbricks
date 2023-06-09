@@ -1,9 +1,10 @@
+import { Input } from "@/../../packages/ui";
+import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import { useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import SubmitButton from "@/components/preview/SubmitButton";
 
 interface MultipleChoiceSingleProps {
   question: MultipleChoiceSingleQuestion;
@@ -19,14 +20,15 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        const value = e.currentTarget[question.id].value;
         const data = {
-          [question.id]: e.currentTarget[question.id].value,
+          [question.id]: value,
         };
-
         onSubmit(data);
         setSelectedChoice(null); // reset form
       }}>
@@ -52,10 +54,8 @@ export default function MultipleChoiceSingleQuestion({
                       value={choice.label}
                       className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
-                      onChange={(e) => {
-                        setSelectedChoice(e.currentTarget.value);
-                      }}
-                      checked={selectedChoice === choice.label}
+                      onChange={() => setSelectedChoice(choice.id)}
+                      checked={selectedChoice === choice.id}
                       style={{ borderColor: brandColor, color: brandColor }}
                       required={question.required && idx === 0}
                     />
@@ -63,6 +63,17 @@ export default function MultipleChoiceSingleQuestion({
                       {choice.label}
                     </span>
                   </span>
+                  {choice.id === "other" && selectedChoice === "other" && (
+                    <Input
+                      id={`${choice.id}-label`}
+                      name={question.id}
+                      placeholder="Please specify"
+                      className="mt-3 bg-white focus:border-slate-300"
+                      required={question.required}
+                      aria-labelledby={`${choice.id}-label`}
+                      autoFocus
+                    />
+                  )}
                 </label>
               ))}
           </div>

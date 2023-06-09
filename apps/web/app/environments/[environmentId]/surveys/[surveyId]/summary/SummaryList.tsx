@@ -90,6 +90,8 @@ export default function SummaryList({ environmentId, surveyId }) {
                         MultipleChoiceMultiQuestion | MultipleChoiceSingleQuestion
                       >
                     }
+                    environmentId={environmentId}
+                    surveyType={survey.type}
                   />
                 );
               }

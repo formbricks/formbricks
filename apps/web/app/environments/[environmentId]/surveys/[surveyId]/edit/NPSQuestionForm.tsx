@@ -22,6 +22,7 @@ export default function NPSQuestionForm({
         <Label htmlFor="headline">Question</Label>
         <div className="mt-2">
           <Input
+            autoFocus
             id="headline"
             name="headline"
             value={question.headline}

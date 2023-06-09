@@ -292,7 +292,7 @@ export default function LogicEditor({
                   {localSurvey.questions.map(
                     (question, idx) =>
                       idx !== questionIdx && (
-                        <SelectItem key={question.id} value={question.id}>
+                        <SelectItem key={question.id} value={question.id} title={question.headline}>
                           {idx + 1} - {truncate(question.headline, 14)}
                         </SelectItem>
                       )
@@ -317,9 +317,10 @@ export default function LogicEditor({
       <div className="mt-2 flex items-center space-x-2">
         <Button
           id="logicJumps"
-          className="bg-slate-100 px-6 py-2 hover:bg-slate-50"
+          className="bg-slate-100 hover:bg-slate-50"
           type="button"
           name="logicJumps"
+          size="sm"
           variant="secondary"
           StartIcon={SplitIcon}
           onClick={() => addLogic()}>

@@ -125,7 +125,9 @@ export const sendResponseFinishedEmail = async (
   const personEmail = person?.attributes?.find((a) => a.attributeClass?.name === "email")?.value;
   await sendEmail({
     to: email,
-    subject: `A response for ${survey.name} was completed ✅`,
+    subject: personEmail
+      ? `${personEmail} just completed your ${survey.name} survey ✅`
+      : `A response for ${survey.name} was completed ✅`,
     replyTo: personEmail || process.env.MAIL_FROM,
     html: withEmailTemplate(`<h1>Survey completed</h1>Someone just completed your survey "${survey.name}"<br/>
 
@@ -134,8 +136,6 @@ export const sendResponseFinishedEmail = async (
     ${getQuestionResponseMapping(survey, response)
       .map((question) => `<p><strong>${question.question}</strong></p><p>${question.answer}</p>`)
       .join("")} 
-
-
    
     <hr/>
 
