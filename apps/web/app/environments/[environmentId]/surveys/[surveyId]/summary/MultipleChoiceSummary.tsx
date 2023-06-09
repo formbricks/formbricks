@@ -36,7 +36,7 @@ export default function MultipleChoiceSummary({
 
   const results: ChoiceResult[] = useMemo(() => {
     if (!("choices" in questionSummary.question)) return [];
-    console.log(questionSummary.responses);
+
     // build a dictionary of choices
     const resultsDict: { [key: string]: ChoiceResult } = {};
     for (const choice of questionSummary.question.choices) {

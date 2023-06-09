@@ -78,7 +78,12 @@ export default function PreviewSurvey({
         frameRef.current = requestAnimationFrame(frame);
       } else {
         handleStopCountdown();
-        // close modal
+        setIsModalOpen(false);
+        // reopen the modal after 1 second
+        setTimeout(() => {
+          setIsModalOpen(true);
+          setActiveQuestionId(questions[0]?.id || ""); // set first question as active
+        }, 1500);
       }
     };
 
@@ -133,13 +138,13 @@ export default function PreviewSurvey({
       case "notEquals":
         return answerValue !== logic.value;
       case "lessThan":
-        return answerValue < logic.value;
+        return logic.value !== undefined && answerValue < logic.value;
       case "lessEqual":
-        return answerValue <= logic.value;
+        return logic.value !== undefined && answerValue <= logic.value;
       case "greaterThan":
-        return answerValue > logic.value;
+        return logic.value !== undefined && answerValue > logic.value;
       case "greaterEqual":
-        return answerValue >= logic.value;
+        return logic.value !== undefined && answerValue >= logic.value;
       case "includesAll":
         return (
           Array.isArray(answerValue) &&

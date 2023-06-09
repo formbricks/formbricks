@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { Input } from "@/../../packages/ui";
+import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import SubmitButton from "@/components/preview/SubmitButton";
-import { Input } from "@/../../packages/ui";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -46,7 +46,7 @@ export default function MultipleChoiceMultiQuestion({
         };
 
         onSubmit(data);
-        // console.log(data);
+
         setSelectedChoices([]); // reset value
         setShowOther(false);
         setOtherSpecified("");
@@ -103,10 +103,9 @@ export default function MultipleChoiceMultiQuestion({
                       </span>
                       {choice.id === "other" && showOther && (
                         <Input
-                          type="text"
                           id={`${choice.id}-label`}
                           name={question.id}
-                          className="mt-2 bg-white"
+                          className="mt-2 bg-white focus:border-slate-300"
                           placeholder="Please specify"
                           onChange={(e) => setOtherSpecified(e.currentTarget.value)}
                           aria-labelledby={`${choice.id}-label`}
