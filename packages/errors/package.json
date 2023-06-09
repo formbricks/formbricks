@@ -1,7 +1,8 @@
 {
   "name": "@formbricks/errors",
   "version": "1.0.0",
-  "license": "MIT",
+  "private": true,
+  "license": "AGPLv3",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
