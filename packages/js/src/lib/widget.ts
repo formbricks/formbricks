@@ -19,6 +19,10 @@ export const renderWidget = (survey: Survey) => {
   }
   surveyRunning = true;
 
+  if (survey.delay) {
+    logger.debug(`Delaying survey by ${survey.delay} seconds.`);
+  }
+
   setTimeout(() => {
     render(
       h(App, { config: config.get(), survey, closeSurvey, errorHandler: errorHandler.handle }),
