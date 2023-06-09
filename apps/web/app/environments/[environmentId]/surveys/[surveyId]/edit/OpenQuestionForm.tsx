@@ -1,6 +1,7 @@
 import type { OpenTextQuestion } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { Input, Label } from "@formbricks/ui";
+import { TrashIcon } from "@heroicons/react/24/solid";
 
 interface OpenQuestionFormProps {
   localSurvey: Survey;
@@ -31,7 +32,7 @@ export default function OpenQuestionForm({
         </div>
       </div>
 
-      <div className="mt-3">
+      {/* <div className="mt-3">
         <Label htmlFor="subheader">Description</Label>
         <div className="mt-2">
           <Input
@@ -41,7 +42,25 @@ export default function OpenQuestionForm({
             onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
           />
         </div>
-      </div>
+      </div> */}
+
+      {question.subheader && (
+        <div className="mt-3">
+          <Label htmlFor="subheader">Description</Label>
+          <div className="mt-2 inline-flex w-full items-center">
+            <Input
+              id="subheader"
+              name="subheader"
+              value={question.subheader}
+              onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
+            />
+            <TrashIcon
+              className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => updateQuestion(questionIdx, { subheader: "" })}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="mt-3">
         <Label htmlFor="placeholder">Placeholder</Label>
@@ -51,19 +70,6 @@ export default function OpenQuestionForm({
             name="placeholder"
             value={question.placeholder}
             onChange={(e) => updateQuestion(questionIdx, { placeholder: e.target.value })}
-          />
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <Label htmlFor="buttonLabel">Button Label</Label>
-        <div className="mt-2">
-          <Input
-            id="buttonLabel"
-            name="buttonLabel"
-            value={question.buttonLabel}
-            placeholder={lastQuestion ? "Finish" : "Next"}
-            onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
           />
         </div>
       </div>

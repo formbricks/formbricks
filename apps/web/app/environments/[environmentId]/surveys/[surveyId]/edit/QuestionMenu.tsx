@@ -20,7 +20,9 @@ export default function QuestionActions({
   return (
     <div className="flex space-x-4">
       <ArrowUpIcon
-        className={`h-4 cursor-pointer text-slate-500 ${questionIdx === 0 ? "opacity-50" : ""}`}
+        className={`h-4 cursor-pointer text-slate-500 hover:text-slate-600 ${
+          questionIdx === 0 ? "opacity-50" : ""
+        }`}
         onClick={(e) => {
           if (questionIdx !== 0) {
             e.stopPropagation();
@@ -29,7 +31,9 @@ export default function QuestionActions({
         }}
       />
       <ArrowDownIcon
-        className={`h-4 cursor-pointer text-slate-500 ${lastQuestion ? "opacity-50" : ""}`}
+        className={`h-4 cursor-pointer text-slate-500 hover:text-slate-600 ${
+          lastQuestion ? "opacity-50" : ""
+        }`}
         onClick={(e) => {
           if (!lastQuestion) {
             e.stopPropagation();
@@ -38,14 +42,14 @@ export default function QuestionActions({
         }}
       />
       <DocumentDuplicateIcon
-        className="h-4 cursor-pointer text-slate-500"
+        className="h-4 cursor-pointer text-slate-500 hover:text-slate-600"
         onClick={(e) => {
           e.stopPropagation();
           duplicateQuestion(questionIdx);
         }}
       />
       <TrashIcon
-        className="h-4 cursor-pointer text-slate-500"
+        className="h-4 cursor-pointer text-slate-500 hover:text-slate-600"
         onClick={(e) => {
           e.stopPropagation();
           deleteQuestion(questionIdx);

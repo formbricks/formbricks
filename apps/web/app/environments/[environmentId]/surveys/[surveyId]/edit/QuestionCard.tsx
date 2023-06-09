@@ -26,7 +26,7 @@ import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
-import UpdateQuestionId from "./UpdateQuestionId";
+import AdvancedSettings from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/AdvancedSettings";
 
 interface QuestionCardProps {
   localSurvey: Survey;
@@ -54,7 +54,7 @@ export default function QuestionCard({
   lastQuestion,
 }: QuestionCardProps) {
   const open = activeQuestionId === question.id;
-  const [openAdvanced, setOpenAdvanced] = useState(false);
+  const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
@@ -176,9 +176,9 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                 />
               ) : null}
-              <div className="mt-4 border-t border-slate-200">
+              <div className="mt-4">
                 <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
-                  <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700 ">
+                  <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700">
                     {openAdvanced ? (
                       <ChevronDownIcon className="mr-1 h-4 w-3" />
                     ) : (
@@ -187,40 +187,36 @@ export default function QuestionCard({
                     {openAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
                   </Collapsible.CollapsibleTrigger>
 
-                  <Collapsible.CollapsibleContent className="space-y-2">
-                    <div className="mt-3">
-                      <Label htmlFor="buttonLabel">Button Label</Label>
-                      <div className="mt-2">
-                        <Input
-                          id="buttonLabel"
-                          name="buttonLabel"
-                          value={question.buttonLabel}
-                          placeholder={lastQuestion ? "Finish" : "Next"}
-                          onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
-                        />
+                  <Collapsible.CollapsibleContent className="space-y-4">
+                    {question.type !== "nps" && question.type !== "rating" && question.type !== "cta" ? (
+                      <div className="mt-4">
+                        <Label htmlFor="buttonLabel">Button Label</Label>
+                        <div className="mt-2">
+                          <Input
+                            id="buttonLabel"
+                            name="buttonLabel"
+                            value={question.buttonLabel}
+                            placeholder={lastQuestion ? "Finish" : "Next"}
+                            onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <LogicEditor
+                    ) : null}
+
+                    <AdvancedSettings
                       question={question}
-                      updateQuestion={updateQuestion}
-                      localSurvey={localSurvey}
                       questionIdx={questionIdx}
+                      localSurvey={localSurvey}
+                      updateQuestion={updateQuestion}
                     />
-                    <div className="mt-3">
-                      <UpdateQuestionId
-                        question={question}
-                        questionIdx={questionIdx}
-                        localSurvey={localSurvey}
-                        updateQuestion={updateQuestion}
-                      />
-                    </div>
                   </Collapsible.CollapsibleContent>
                 </Collapsible.Root>
               </div>
             </Collapsible.CollapsibleContent>
-            <div className="m-4 mt-0 border-t border-slate-200">
-              {open && (
-                <div className="mb-4 mr-4 mt-4 flex items-center justify-end space-x-2">
+
+            {open && (
+              <div className="m-4 mt-0  border-t border-slate-200">
+                <div className="m-4 mr-0 flex items-center justify-end space-x-2">
                   <Label htmlFor="required-toggle">Required</Label>
                   <Switch
                     id="required-toggle"
@@ -231,8 +227,8 @@ export default function QuestionCard({
                     }}
                   />
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </Collapsible.Root>
         </div>
       )}

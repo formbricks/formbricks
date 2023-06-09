@@ -148,10 +148,12 @@ export default function MultipleChoiceSingleForm({
                     onClick={() => deleteChoice(choiceIdx)}
                   />
                 )}
-                <PlusIcon
-                  className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                  onClick={() => addChoice(choiceIdx)}
-                />
+                {choice.id !== "other" && (
+                  <PlusIcon
+                    className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                    onClick={() => addChoice(choiceIdx)}
+                  />
+                )}
               </div>
             ))}
           <div className="flex items-center space-x-2">
