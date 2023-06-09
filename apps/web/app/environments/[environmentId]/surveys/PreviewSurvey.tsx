@@ -78,7 +78,12 @@ export default function PreviewSurvey({
         frameRef.current = requestAnimationFrame(frame);
       } else {
         handleStopCountdown();
-        // close modal
+        setIsModalOpen(false);
+        // reopen the modal after 1 second
+        setTimeout(() => {
+          setIsModalOpen(true);
+          setActiveQuestionId(questions[0]?.id || ""); // set first question as active
+        }, 1500);
       }
     };
 

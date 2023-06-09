@@ -4,6 +4,7 @@ import { Button, Input, Label } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";
+import { useEffect, useRef, useState } from "react";
 
 interface OpenQuestionFormProps {
   localSurvey: Survey;
@@ -19,6 +20,10 @@ export default function MultipleChoiceMultiForm({
   updateQuestion,
   lastQuestion,
 }: OpenQuestionFormProps): JSX.Element {
+  const lastChoiceRef = useRef<HTMLInputElement>(null);
+  const [isNew, setIsNew] = useState(true);
+  const questionRef = useRef<HTMLInputElement>(null);
+
   const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
     const newChoices = !question.choices
       ? []
@@ -32,6 +37,7 @@ export default function MultipleChoiceMultiForm({
   };
 
   const addChoice = () => {
+    setIsNew(false); // This question is no longer new.
     let newChoices = !question.choices ? [] : question.choices;
     const otherChoice = newChoices.find((choice) => choice.id === "other");
     if (otherChoice) {
@@ -70,12 +76,26 @@ export default function MultipleChoiceMultiForm({
     updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
   };
 
+  useEffect(() => {
+    if (lastChoiceRef.current) {
+      lastChoiceRef.current?.focus();
+    }
+  }, [question.choices?.length]);
+
+  // This effect will run once on initial render, setting focus to the question input.
+  useEffect(() => {
+    if (isNew && questionRef.current) {
+      questionRef.current.focus();
+    }
+  }, [isNew]);
+
   return (
     <form>
       <div className="mt-3">
         <Label htmlFor="headline">Question</Label>
         <div className="mt-2">
           <Input
+            ref={questionRef}
             id="headline"
             name="headline"
             value={question.headline}
@@ -103,6 +123,7 @@ export default function MultipleChoiceMultiForm({
             question.choices.map((choice, choiceIdx) => (
               <div key={choiceIdx} className="inline-flex w-full items-center">
                 <Input
+                  ref={choiceIdx === question.choices.length - 1 ? lastChoiceRef : null}
                   id={choice.id}
                   name={choice.id}
                   value={choice.label}
@@ -119,7 +140,7 @@ export default function MultipleChoiceMultiForm({
               </div>
             ))}
           <div className="flex items-center space-x-2">
-            <Button variant="secondary" type="button" onClick={() => addChoice()}>
+            <Button variant="secondary" size="sm" type="button" onClick={() => addChoice()}>
               Add Option
             </Button>
             {question.choices.filter((c) => c.id === "other").length === 0 && (

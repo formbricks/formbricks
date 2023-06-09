@@ -14,6 +14,7 @@ export const SignupForm = () => {
   const router = useRouter();
   const [error, setError] = useState<string>("");
   const [signingUp, setSigningUp] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: any) => {
     setSigningUp(true);
@@ -78,6 +79,7 @@ export const SignupForm = () => {
                   </label>
                   <div className="mt-1">
                     <input
+                      ref={nameRef}
                       id="name"
                       name="name"
                       type="text"
@@ -136,6 +138,8 @@ export const SignupForm = () => {
                 if (!showLogin) {
                   setShowLogin(true);
                   setButtonEnabled(false);
+                  // Add a slight delay before focusing the input field to ensure it's visible
+                  setTimeout(() => nameRef.current?.focus(), 100);
                 } else if (formRef.current) {
                   formRef.current.requestSubmit();
                 }

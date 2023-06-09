@@ -37,4 +37,5 @@ Fixes # (issue)
 - [ ] Checked for warnings, there are none
 - [ ] Removed all `console.logs`
 - [ ] Merged the latest changes from main onto my branch with `git pull origin main`
+- [ ] My changes don't cause any responsiveness issues
 - [ ] Updated the Formbricks Docs if changes were necessary

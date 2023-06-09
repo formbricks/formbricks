@@ -11,6 +11,7 @@ import { GithubButton } from "./GithubButton";
 
 export const SigninForm = () => {
   const searchParams = useSearchParams();
+  const emailRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e) => {
     setLoggingIn(true);
@@ -48,6 +49,7 @@ export const SigninForm = () => {
                     Email address
                   </label>
                   <input
+                    ref={emailRef}
                     id="email"
                     name="email"
                     type="email"
@@ -90,6 +92,8 @@ export const SigninForm = () => {
                 if (!showLogin) {
                   setShowLogin(true);
                   setButtonEnabled(false);
+                  // Add a slight delay before focusing the input field to ensure it's visible
+                  setTimeout(() => emailRef.current?.focus(), 100);
                 } else if (formRef.current) {
                   formRef.current.requestSubmit();
                 }
