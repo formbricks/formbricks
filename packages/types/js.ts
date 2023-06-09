@@ -80,6 +80,7 @@ export interface Survey {
   triggers: Trigger[];
   thankYouCard: ThankYouCard;
   autoClose?: number | null;
+  delay: number;
 }
 
 export interface Trigger {
