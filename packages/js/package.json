@@ -45,11 +45,9 @@
     ]
   },
   "author": "Formbricks <hola@formbricks.com>",
-  "dependencies": {
-    "@formbricks/api": "workspace:*",
-    "@formbricks/errors": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "@formbricks/api": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@types/enzyme": "^3.10.13",
     "@types/jest": "^29.5.2",
