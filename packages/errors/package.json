@@ -1,8 +1,7 @@
 {
   "name": "@formbricks/errors",
+  "description": "A helper package containing general error classes for Formbricks",
   "version": "1.0.0",
-  "private": true,
-  "license": "AGPLv3",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
