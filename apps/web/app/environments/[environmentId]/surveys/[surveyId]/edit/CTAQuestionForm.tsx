@@ -21,12 +21,14 @@ export default function CTAQuestionForm({
   lastQuestion,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
+
   return (
     <form>
       <div className="mt-3">
         <Label htmlFor="headline">Question</Label>
         <div className="mt-2">
           <Input
+            autoFocus
             id="headline"
             name="headline"
             value={question.headline}
