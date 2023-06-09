@@ -38,6 +38,11 @@ export const ZSurveyOpenTextLogic = ZSurveyLogicBase.extend({
   value: z.undefined(),
 });
 
+export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
+  condition: z.union([z.literal("submitted"), z.literal("skipped"), z.literal("accepted")]).optional(),
+  value: z.undefined(),
+});
+
 export const ZSurveyMultipleChoiceSingleLogic = ZSurveyLogicBase.extend({
   condition: z
     .union([z.literal("submitted"), z.literal("skipped"), z.literal("equals"), z.literal("notEquals")])
@@ -91,6 +96,7 @@ const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
 
 export const ZSurveyLogic = z.union([
   ZSurveyOpenTextLogic,
+  ZSurveyConsentLogic,
   ZSurveyMultipleChoiceSingleLogic,
   ZSurveyMultipleChoiceMultiLogic,
   ZSurveyNPSLogic,
@@ -110,6 +116,11 @@ const ZSurveyQuestionBase = z.object({
 
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal("openText"),
+  placeholder: z.string().optional(),
+});
+
+export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal("consent"),
   placeholder: z.string().optional(),
 });
 
@@ -147,6 +158,7 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
 
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
+  ZSurveyConsentQuestion,
   ZSurveyMultipleChoiceSingleQuestion,
   ZSurveyMultipleChoiceMultiQuestion,
   ZSurveyNPSQuestion,
