@@ -16,7 +16,6 @@ export default function OpenQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  lastQuestion,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 

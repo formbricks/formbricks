@@ -18,7 +18,6 @@ export default function MultipleChoiceMultiForm({
   question,
   questionIdx,
   updateQuestion,
-  lastQuestion,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -172,7 +171,7 @@ export default function MultipleChoiceMultiForm({
             {question.choices.filter((c) => c.id === "other").length === 0 && (
               <>
                 <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
-                  Add &quot;Other&quot; with specify
+                  Add &quot;Other&quot; 
                 </Button>
               </>
             )}
