@@ -37,3 +37,15 @@ export async function PUT(request: NextRequest) {
 
   return NextResponse.json(user);
 }
+
+export async function DELETE() {
+  const sessionUser = await getSessionUser();
+
+  if (!sessionUser) {
+    return new Response("Not authenticated", {
+      status: 401,
+    });
+  }
+
+  return NextResponse.json({ name: "fs" });
+}
