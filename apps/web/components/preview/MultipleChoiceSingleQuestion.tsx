@@ -2,9 +2,10 @@ import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
 
 interface MultipleChoiceSingleProps {
   question: MultipleChoiceSingleQuestion;
@@ -20,6 +21,11 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const [isIphone, setIsIphone] = useState(false);
+
+  useEffect(() => {
+    setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
+  }, []);
 
   return (
     <form
@@ -37,7 +43,7 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md py-1 pr-2">
+          <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
             {question.choices &&
               question.choices.map((choice, idx) => (
                 <label
@@ -77,6 +83,9 @@ export default function MultipleChoiceSingleQuestion({
                 </label>
               ))}
           </div>
+          {isIphone && question.choices.length > 5 && (
+            <ChevronDownIcon className="mx-auto h-5 w-5 text-slate-400" />
+          )}
         </fieldset>
       </div>
       <div className="mt-4 flex w-full justify-between">

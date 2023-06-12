@@ -5,7 +5,6 @@ import type { MultipleChoiceSingleQuestion } from "../../../types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
 
 interface MultipleChoiceSingleProps {
   question: MultipleChoiceSingleQuestion;
@@ -22,17 +21,12 @@ export default function MultipleChoiceSingleQuestion({
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const otherSpecify = useRef<HTMLInputElement>(null);
-  const [isIphone, setIsIphone] = useState(false);
 
   useEffect(() => {
     if (selectedChoice === "other") {
       otherSpecify.current?.focus();
     }
   }, [selectedChoice]);
-
-  useEffect(() => {
-    setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
-  }, []);
 
   return (
     <form
@@ -96,9 +90,6 @@ export default function MultipleChoiceSingleQuestion({
                 </label>
               ))}
           </div>
-          {isIphone && question.choices.length > 5 && (
-            <ChevronDownIcon className="mx-auto h-5 w-5 text-slate-400" />
-          )}
         </fieldset>
       </div>
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
