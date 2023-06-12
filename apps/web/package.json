@@ -48,7 +48,8 @@
     "react-use": "^17.4.0",
     "stripe": "^12.6.0",
     "swr": "^2.1.5",
-    "typescript": "5.0.4"
+    "typescript": "5.0.4",
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@formbricks/database": "workspace:*",

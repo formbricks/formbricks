@@ -1,16 +1,17 @@
-import type { JsConfig, Response, ResponseCreateRequest, ResponseUpdateRequest } from "../../../types/js";
+import type { JsConfig, Response } from "../../../types/js";
+import type { TResponse, TResponseInput } from "../../../types/v1/responses";
 import { NetworkError, Result, err, ok } from "./errors";
 
 export const createResponse = async (
-  responseRequest: ResponseCreateRequest,
+  responseInput: TResponseInput,
   config
-): Promise<Result<Response, NetworkError>> => {
-  const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/responses`;
+): Promise<Result<TResponse, NetworkError>> => {
+  const url = `${config.apiHost}/api/v1/client/responses`;
 
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(responseRequest),
+    body: JSON.stringify(responseInput),
   });
 
   const jsonRes = await res.json();
@@ -25,20 +26,20 @@ export const createResponse = async (
     });
   }
 
-  return ok(jsonRes as Response);
+  return ok(jsonRes.data as TResponse);
 };
 
 export const updateResponse = async (
-  responseRequest: ResponseUpdateRequest,
+  responseInput: TResponseInput,
   responseId: string,
   config: JsConfig
-): Promise<Result<Response, NetworkError>> => {
-  const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/responses/${responseId}`;
+): Promise<Result<TResponse, NetworkError>> => {
+  const url = `${config.apiHost}/api/v1/client/responses/${responseId}`;
 
   const res = await fetch(url, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(responseRequest),
+    body: JSON.stringify(responseInput),
   });
 
   const resJson = await res.json();
@@ -53,5 +54,5 @@ export const updateResponse = async (
     });
   }
 
-  return ok(resJson as Response);
+  return ok(resJson.data as TResponse);
 };

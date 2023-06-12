@@ -138,6 +138,7 @@ export default function SurveyMenuBar({
           <Button
             disabled={
               localSurvey.type === "web" &&
+              localSurvey.triggers &&
               (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
             }
             variant="darkCTA"

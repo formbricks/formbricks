@@ -12,14 +12,15 @@ generator client {
   //provider = "prisma-dbml-generator"
 }
 
+generator zod {
+  provider      = "zod-prisma"
+  output        = "./zod"
+  imports       = "./zod-utils"
+  relationModel = "default"
+}
+
 generator json {
   provider = "prisma-json-types-generator"
-  // namespace = "PrismaJson"
-  // clientOutput = "<finds it automatically>"
-  // (./ -> relative to schema, or an importable path to require() it)
-  // useType = "MyType"
-  // In case you need to use a type, export it inside the namespace and we will add a index signature to it
-  // (e.g.  export namespace PrismaJson { export type MyType = {a: 1, b: 2} }; will generate namespace.MyType["TYPE HERE"])
 }
 
 enum PipelineTriggers {
@@ -93,8 +94,10 @@ model Response {
   surveyId  String
   person    Person?  @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId  String?
+  /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
   data      Json     @default("{}")
+  /// @zod.custom(imports.ZResponseMeta)
   /// [ResponseMeta]
   meta      Json     @default("{}")
 }
@@ -176,8 +179,10 @@ model Survey {
   environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
   status           SurveyStatus            @default(draft)
+  /// @zod.custom(imports.ZSurveyQuestions)
   /// [SurveyQuestions]
   questions        Json                    @default("[]")
+  /// @zod.custom(imports.ZSurveyThankYouCard)
   /// [SurveyThankYouCard]
   thankYouCard     Json                    @default("{\"enabled\": false}")
   responses        Response[]
@@ -197,6 +202,7 @@ model Event {
   eventClassId String?
   session      Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId    String
+  /// @zod.custom(imports.ZEventProperties)
   /// [EventProperties]
   properties   Json        @default("{}")
 }
@@ -215,7 +221,7 @@ model EventClass {
   description   String?
   type          EventType
   events        Event[]
-  /// [EventClassNoCodeConfig]
+  /// @zod.custom(imports.ZEventClassNoCodeConfig)
   noCodeConfig  Json?
   environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
@@ -400,6 +406,7 @@ model User {
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
   role                      Role?
   objective                 Objective?
+  /// @zod.custom(imports.ZUserNotificationSettings)
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
 }

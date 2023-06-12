@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "prisma": {
-    "schema": "packages/database/prisma/schema.prisma"
+    "schema": "packages/database/schema.prisma"
   },
   "scripts": {
     "clean": "turbo run clean && rimraf node_modules",
@@ -35,6 +35,5 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "dependencies": {},
   "packageManager": "pnpm@8.1.1"
 }
