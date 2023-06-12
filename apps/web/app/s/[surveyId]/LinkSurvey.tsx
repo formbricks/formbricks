@@ -203,7 +203,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
           loadingElement && "animate-pulse opacity-60",
           "flex h-full flex-1 items-center overflow-y-auto bg-white"
         )}>
-        <ContentWrapper className="w-full md:max-w-lg">
+        <ContentWrapper className="h-full w-full md:max-w-lg">
           {isPreview && (
             <div className="absolute left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
               <div className="w-20"></div>

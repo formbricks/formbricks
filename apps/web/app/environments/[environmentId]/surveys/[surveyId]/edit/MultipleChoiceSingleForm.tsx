@@ -1,7 +1,7 @@
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { Button, Input, Label } from "@formbricks/ui";
-import { TrashIcon } from "@heroicons/react/24/solid";
+import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";
 import { useEffect, useRef, useState } from "react";
@@ -18,10 +18,10 @@ export default function MultipleChoiceSingleForm({
   question,
   questionIdx,
   updateQuestion,
-  lastQuestion,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
+  const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const questionRef = useRef<HTMLInputElement>(null);
 
   const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
@@ -36,14 +36,19 @@ export default function MultipleChoiceSingleForm({
     updateQuestion(questionIdx, { choices: newChoices });
   };
 
-  const addChoice = () => {
+  const addChoice = (choiceIdx?: number) => {
     setIsNew(false); // This question is no longer new.
     let newChoices = !question.choices ? [] : question.choices;
     const otherChoice = newChoices.find((choice) => choice.id === "other");
     if (otherChoice) {
       newChoices = newChoices.filter((choice) => choice.id !== "other");
     }
-    newChoices.push({ id: createId(), label: "" });
+    const newChoice = { id: createId(), label: "" };
+    if (choiceIdx !== undefined) {
+      newChoices.splice(choiceIdx + 1, 0, newChoice);
+    } else {
+      newChoices.push(newChoice);
+    }
     if (otherChoice) {
       newChoices.push(otherChoice);
     }
@@ -105,15 +110,32 @@ export default function MultipleChoiceSingleForm({
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="subheader">Description</Label>
-        <div className="mt-2">
-          <Input
-            id="subheader"
-            name="subheader"
-            value={question.subheader}
-            onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
-          />
-        </div>
+        {showSubheader && (
+          <>
+            <Label htmlFor="subheader">Description</Label>
+            <div className="mt-2 inline-flex w-full items-center">
+              <Input
+                id="subheader"
+                name="subheader"
+                value={question.subheader}
+                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
+              />
+              <TrashIcon
+                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                onClick={() => {
+                  setShowSubheader(false);
+                  updateQuestion(questionIdx, { subheader: "" });
+                }}
+              />
+            </div>
+          </>
+        )}
+        {!showSubheader && (
+          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+            <PlusIcon className="mr-1 h-4 w-4" />
+            Add Description
+          </Button>
+        )}
       </div>
 
       <div className="mt-3">
@@ -137,34 +159,21 @@ export default function MultipleChoiceSingleForm({
                     onClick={() => deleteChoice(choiceIdx)}
                   />
                 )}
+                {choice.id !== "other" && (
+                  <PlusIcon
+                    className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                    onClick={() => addChoice(choiceIdx)}
+                  />
+                )}
               </div>
             ))}
           <div className="flex items-center space-x-2">
-            <Button variant="secondary" size="sm" type="button" onClick={() => addChoice()}>
-              Add Option
-            </Button>
             {question.choices.filter((c) => c.id === "other").length === 0 && (
-              <>
-                <p>or</p>
-                <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
-                  Add &quot;Other&quot; with specify
-                </Button>
-              </>
+              <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
+                Add &quot;Other&quot;
+              </Button>
             )}
           </div>
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <Label htmlFor="buttonLabel">Button Label</Label>
-        <div className="mt-2">
-          <Input
-            id="buttonLabel"
-            name="buttonLabel"
-            value={question.buttonLabel}
-            placeholder={lastQuestion ? "Finish" : "Next"}
-            onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
-          />
         </div>
       </div>
     </form>
