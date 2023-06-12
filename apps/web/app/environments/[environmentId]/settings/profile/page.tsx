@@ -16,7 +16,7 @@ export default async function ProfileSettingsPage() {
         <EditAvatar session={session} />
       </SettingsCard>
       <SettingsCard title="Delete account" description="Just a sample description" dangerZone>
-        <DeleteAccount />
+        <DeleteAccount session={session} />
       </SettingsCard>
     </div>
   );
