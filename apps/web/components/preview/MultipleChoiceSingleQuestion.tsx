@@ -2,7 +2,7 @@ import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
@@ -24,8 +24,8 @@ export default function MultipleChoiceSingleQuestion({
 
   useEffect(() => {
     setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
-  }, []); */
-
+  }, []);
+ */
   return (
     <form
       onSubmit={(e) => {
@@ -42,14 +42,14 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
+          <div className="xs:max-h-[40vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
             {question.choices &&
               question.choices.map((choice, idx) => (
                 <label
                   key={choice.id}
                   className={cn(
                     selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
+                    "relative mb-2 flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
                   )}>
                   <span className="flex items-center text-sm">
                     <input
@@ -81,10 +81,10 @@ export default function MultipleChoiceSingleQuestion({
                   )}
                 </label>
               ))}
+            {/*             {isIphone && question.choices.length > 5 && (
+              <div className="z-50 -mt-8 h-8 bg-gradient-to-b from-transparent to-white"></div>
+            )} */}
           </div>
-          {/*           {isIphone && question.choices.length > 5 && (
-            <ChevronDownIcon className="mx-auto h-5 w-5 text-slate-400" />
-          )} */}
         </fieldset>
       </div>
       <div className="mt-4 flex w-full justify-between">
