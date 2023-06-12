@@ -8,6 +8,7 @@ import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { useProfile } from "@/lib/profile/profile";
 import { deleteProfile } from "@/lib/users/users";
 import { Button, ErrorComponent, Input, Label, ProfileAvatar } from "@formbricks/ui";
+import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { Dispatch, SetStateAction, useState } from "react";
@@ -78,10 +79,16 @@ export function EditAvatar({ session }) {
 interface DeleteAccounModaltProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  session: Session;
 }
 
-function DeleteAccountModal({ setOpen, open }: DeleteAccounModaltProps) {
+function DeleteAccountModal({ setOpen, open, session }: DeleteAccounModaltProps) {
   const [deleting, setDeleting] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+  };
 
   const deleteAccount = async () => {
     try {
@@ -96,24 +103,55 @@ function DeleteAccountModal({ setOpen, open }: DeleteAccounModaltProps) {
       setOpen(false);
     }
   };
+
   return (
     <DeleteDialog
       open={open}
       setOpen={setOpen}
       deleteWhat="account"
       onDelete={() => deleteAccount()}
-      text="Deleting your account will permanently remove all your personal information, saved preferences, and activity history associated with this account."
+      text="Before you proceed with deleting your account, please be aware of the following consequences:"
       isDeleting={deleting}
-    />
+      disabled={!(inputValue === session.user.email)}>
+      <div className="py-5">
+        <p>
+          Deleting your account will result in the permanent removal of all your personal information, saved
+          preferences, and your access to team data. If you are the owner of a team with multiple members,
+          ownership of that team will be transferred to another member.
+        </p>
+        <p className="py-5">
+          However, please note that if you are the sole member of a team, it will be irreversibly deleted
+          along with all associated data.
+        </p>
+        <form>
+          <label htmlFor="deleteAccountConfirmation">
+            Please enter <span className="font-bold">{session.user.email}</span> in the following field to
+            confirm the definitive deletion of your account.
+          </label>
+          <Input
+            value={inputValue}
+            onChange={handleInputChange}
+            className="mt-5"
+            type="text"
+            id="deleteAccountConfirmation"
+            name="deleteAccountConfirmation"
+          />
+        </form>
+      </div>
+    </DeleteDialog>
   );
 }
 
-export function DeleteAccount() {
+export function DeleteAccount({ session }: { session: Session | null }) {
   const [isModalOpen, setModalOpen] = useState(false);
+
+  if (!session) {
+    return null;
+  }
 
   return (
     <div>
-      <DeleteAccountModal open={isModalOpen} setOpen={setModalOpen} />
+      <DeleteAccountModal open={isModalOpen} setOpen={setModalOpen} session={session} />
       <Button className="mt-4" variant="warn" onClick={() => setModalOpen(!isModalOpen)}>
         Delete my account
       </Button>
