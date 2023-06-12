@@ -46,7 +46,7 @@ export default function MultipleChoiceSingleQuestion({
       <div className="fb-mt-4">
         <fieldset>
           <legend className="fb-sr-only">Options</legend>
-          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white">
+          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white fb-max-h-[42vh] fb-overflow-y-auto fb-pr-2 fb-py-0.5">
             {question.choices &&
               question.choices.map((choice, idx) => (
                 <label
