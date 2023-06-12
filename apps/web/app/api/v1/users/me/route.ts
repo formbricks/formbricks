@@ -39,6 +39,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE() {
+  // TODO: Enable soft delete
   try {
     const sessionUser = await getSessionUser();
 
@@ -72,15 +73,16 @@ export async function DELETE() {
       },
     });
 
-    memberships.forEach(() => async (membership) => {
+    for (const membership of memberships) {
       if (membership.role === "owner") {
         if (membership.team.memberships.length > 1) {
           const newOwerner = membership.team.memberships.find((team) => team.user.id !== sessionUser.id);
-
           await prisma.membership.update({
             where: {
-              teamId: membership.teamId,
-              userId: newOwerner.user.id,
+              userId_teamId: {
+                teamId: membership.teamId,
+                userId: newOwerner.user.id,
+              },
             },
             data: {
               role: "owner",
@@ -89,8 +91,10 @@ export async function DELETE() {
 
           await prisma.membership.update({
             where: {
-              teamId: membership.teamId,
-              userId: sessionUser.id,
+              userId_teamId: {
+                teamId: membership.teamId,
+                userId: sessionUser.id,
+              },
             },
             data: {
               role: "admin",
@@ -99,33 +103,33 @@ export async function DELETE() {
         } else {
           await prisma.membership.delete({
             where: {
-              teamId: membership.teamId,
-              userId: sessionUser.id,
+              userId_teamId: {
+                userId: sessionUser.id,
+                teamId: membership.teamId,
+              },
             },
           });
         }
       } else {
         await prisma.membership.delete({
           where: {
-            teamId: membership.teamId,
-            userId: sessionUser.id,
+            userId_teamId: {
+              userId: sessionUser.id,
+              teamId: membership.teamId,
+            },
           },
         });
       }
-    });
-
-    // TODO  Logout user before deleting account
-
+    }
     // Delete user
     await prisma.user.delete({
       where: {
         id: sessionUser.id,
       },
     });
-
-    return NextResponse.json({ name: memberships });
+    return NextResponse.json({ deletedUser: sessionUser }, { status: 200 });
   } catch (error) {
-    // TODO handle this error
-    console.log("error.message =>>>>>>>>>>>>>>>>>>>", error.message);
+    console.log(error.message);
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
