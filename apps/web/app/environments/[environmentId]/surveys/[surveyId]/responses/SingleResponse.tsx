@@ -58,6 +58,7 @@ function findEmail(person) {
 export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || data.personId;
+  const responseNotes = data?.responseNote;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { mutateResponses } = useResponses(environmentId, surveyId);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -74,7 +75,10 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
 
   return (
     <div className={clsx("relative group", isOpen && "min-h-[300px]")}>
-      <div className={clsx("my-6 rounded-lg border transition-all border-slate-200 bg-slate-50 shadow-sm z-10 relative", isOpen ? "w-4/5" : "w-full group-hover:w-11/12")}>
+      <div className={clsx(
+        "my-6 rounded-lg border transition-all border-slate-200 bg-slate-50 shadow-sm z-10 relative",
+        isOpen ? "w-4/5" : responseNotes.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]"
+      )}>
         <div className="space-y-2 px-6 pb-5 pt-6">
           <div className="flex items-center justify-between">
             {data.personId ? (
