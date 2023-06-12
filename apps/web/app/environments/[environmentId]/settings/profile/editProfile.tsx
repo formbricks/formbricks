@@ -1,7 +1,7 @@
 "use client";
 
+import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import Modal from "@/components/shared/Modal";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { useProfile } from "@/lib/profile/profile";
@@ -84,37 +84,14 @@ function DeleteAccountModal({ setOpen, open }: DeleteAccounModaltProps) {
     console.log(res);
   };
   return (
-    <Modal open={open} setOpen={setOpen}>
-      <div>
-        <h1 className="text-xl font-bold text-red-600">Delete Account Confirmation</h1>
-        <p>Are you sure you want to delete your account? This action cannot be undone.</p>
-        <p>
-          Deleting your account will permanently remove all your personal information, saved preferences, and
-          activity history associated with this account. You will lose access to all your saved data,
-          including messages, files, and any other content you have created or shared.
-        </p>
-        <p>
-          Please consider the following before proceeding:
-          <ol>
-            <li>Your account and all associated data will be irreversibly deleted.</li>
-            <li>
-              You will lose access to all features and services tied to this account. Any subscriptions or
-              memberships linked to this account will be canceled.
-            </li>
-            <li>
-              You will need to create a new account if you wish to use our services again in the future.
-            </li>
-          </ol>
-          <p>
-            If you still wish to proceed with the account deletion, please enter your account password below
-            and click the &quot;Delete Account&quot; button.
-          </p>
-          <Button className="mt-4" variant="warn" onClick={() => deleteAccount()}>
-            Delete my account
-          </Button>
-        </p>
-      </div>
-    </Modal>
+    <DeleteDialog
+      open={open}
+      setOpen={setOpen}
+      deleteWhat="account"
+      onDelete={() => deleteAccount()}
+      text="  Deleting your account will permanently remove all your personal information, saved preferences, and activity history associated with this account."
+      isDeleting={false}
+    />
   );
 }
 
