@@ -20,7 +20,13 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         },
       }),
     },
-    include: {
+    select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      surveyId: true,
+      finished: true,
+      data: true,
       person: {
         select: {
           id: true,
@@ -39,8 +45,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     },
   });
 
-  delete responsePrisma.personId;
-
   const response: TResponse = {
     ...responsePrisma,
     createdAt: responsePrisma.createdAt.toISOString(),
@@ -56,7 +60,13 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
     where: {
       id: responseId,
     },
-    include: {
+    select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      surveyId: true,
+      finished: true,
+      data: true,
       person: {
         select: {
           id: true,
@@ -78,8 +88,6 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
   if (!responsePrisma) {
     return null;
   }
-
-  delete responsePrisma.personId;
 
   const response: TResponse = {
     ...responsePrisma,
@@ -115,7 +123,13 @@ export const updateResponse = async (
       finished: responseInput.finished,
       data,
     },
-    include: {
+    select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      surveyId: true,
+      finished: true,
+      data: true,
       person: {
         select: {
           id: true,
@@ -133,8 +147,6 @@ export const updateResponse = async (
       },
     },
   });
-
-  delete responsePrisma.personId;
 
   const response: TResponse = {
     ...responsePrisma,
