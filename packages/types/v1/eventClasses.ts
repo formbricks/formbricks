@@ -24,8 +24,8 @@ export type TEventClassNoCodeConfig = z.infer<typeof ZEventClassNoCodeConfig>;
 export const ZEventClass = z.object({
   id: z.string().cuid2(),
   name: z.string(),
-  description: z.string(),
-  noCodeConfig: ZEventClassNoCodeConfig,
+  description: z.union([z.string(), z.null()]),
+  noCodeConfig: z.union([ZEventClassNoCodeConfig, z.null()]),
   type: z.enum(["code", "noCode", "automatic"]),
 });
 
