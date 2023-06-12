@@ -47,6 +47,7 @@ model Attribute {
   person           Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId         String
   value            String
+  archived         Boolean        @default(false)
 
   @@unique([attributeClassId, personId])
 }

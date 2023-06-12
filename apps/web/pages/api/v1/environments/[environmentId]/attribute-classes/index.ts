@@ -21,6 +21,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           id: environmentId,
         },
       },
+      include: {
+      attributes: true,
+    },
     });
 
     return res.json(attributeClasses);
