@@ -3,10 +3,12 @@
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
+import { formbricksLogout } from "@/lib/formbricks";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { useProfile } from "@/lib/profile/profile";
 import { deleteProfile } from "@/lib/users/users";
 import { Button, ErrorComponent, Input, Label, ProfileAvatar } from "@formbricks/ui";
+import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -79,9 +81,20 @@ interface DeleteAccounModaltProps {
 }
 
 function DeleteAccountModal({ setOpen, open }: DeleteAccounModaltProps) {
+  const [deleting, setDeleting] = useState(false);
+
   const deleteAccount = async () => {
-    const res = await deleteProfile();
-    console.log(res);
+    try {
+      setDeleting(true);
+      await deleteProfile();
+      await signOut();
+      await formbricksLogout();
+    } catch (error) {
+      toast.error("semething went wrong");
+    } finally {
+      setDeleting(false);
+      setOpen(false);
+    }
   };
   return (
     <DeleteDialog
@@ -89,8 +102,8 @@ function DeleteAccountModal({ setOpen, open }: DeleteAccounModaltProps) {
       setOpen={setOpen}
       deleteWhat="account"
       onDelete={() => deleteAccount()}
-      text="  Deleting your account will permanently remove all your personal information, saved preferences, and activity history associated with this account."
-      isDeleting={false}
+      text="Deleting your account will permanently remove all your personal information, saved preferences, and activity history associated with this account."
+      isDeleting={deleting}
     />
   );
 }
