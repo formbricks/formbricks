@@ -15,7 +15,10 @@ export default async function ProfileSettingsPage() {
       <SettingsCard title="Avatar" description="Assist your team in identifying you on Formbricks.">
         <EditAvatar session={session} />
       </SettingsCard>
-      <SettingsCard title="Delete account" description="Just a sample description" dangerZone>
+      <SettingsCard
+        title="Delete account"
+        description="Delete your account, your personal information, your preferences and access to your data"
+        dangerZone>
         <DeleteAccount session={session} />
       </SettingsCard>
     </div>
