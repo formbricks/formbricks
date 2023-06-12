@@ -1,11 +1,10 @@
 "use client";
 
-import LogicEditor from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/LogicEditor";
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
-import { Label, Switch } from "@formbricks/ui";
+import { Input, Label, Switch } from "@formbricks/ui";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChevronDownIcon,
@@ -24,9 +23,9 @@ import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
 import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
-import QuestionDropdown from "./QuestionDropdown";
+import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
-import UpdateQuestionId from "./UpdateQuestionId";
+import AdvancedSettings from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/AdvancedSettings";
 
 interface QuestionCardProps {
   localSurvey: Survey;
@@ -54,7 +53,7 @@ export default function QuestionCard({
   lastQuestion,
 }: QuestionCardProps) {
   const open = activeQuestionId === question.id;
-  const [openAdvanced, setOpenAdvanced] = useState(false);
+  const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
@@ -116,19 +115,6 @@ export default function QuestionCard({
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  {open && (
-                    <div className="flex items-center space-x-2">
-                      <Label htmlFor="required-toggle">Required</Label>
-                      <Switch
-                        id="required-toggle"
-                        checked={question.required}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateQuestion(questionIdx, { required: !question.required });
-                        }}
-                      />
-                    </div>
-                  )}
                   <QuestionDropdown
                     questionIdx={questionIdx}
                     lastQuestion={lastQuestion}
@@ -189,15 +175,9 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                 />
               ) : null}
-              <div className="mt-4 border-t border-slate-200">
-                <LogicEditor
-                  question={question}
-                  updateQuestion={updateQuestion}
-                  localSurvey={localSurvey}
-                  questionIdx={questionIdx}
-                />
+              <div className="mt-4">
                 <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
-                  <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700 ">
+                  <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700">
                     {openAdvanced ? (
                       <ChevronDownIcon className="mr-1 h-4 w-3" />
                     ) : (
@@ -206,19 +186,48 @@ export default function QuestionCard({
                     {openAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
                   </Collapsible.CollapsibleTrigger>
 
-                  <Collapsible.CollapsibleContent className="space-y-2">
-                    <div className="mt-3">
-                      <UpdateQuestionId
-                        question={question}
-                        questionIdx={questionIdx}
-                        localSurvey={localSurvey}
-                        updateQuestion={updateQuestion}
-                      />
-                    </div>
+                  <Collapsible.CollapsibleContent className="space-y-4">
+                    {question.type !== "nps" && question.type !== "rating" && question.type !== "cta" ? (
+                      <div className="mt-4">
+                        <Label htmlFor="buttonLabel">Button Label</Label>
+                        <div className="mt-2">
+                          <Input
+                            id="buttonLabel"
+                            name="buttonLabel"
+                            value={question.buttonLabel}
+                            placeholder={lastQuestion ? "Finish" : "Next"}
+                            onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <AdvancedSettings
+                      question={question}
+                      questionIdx={questionIdx}
+                      localSurvey={localSurvey}
+                      updateQuestion={updateQuestion}
+                    />
                   </Collapsible.CollapsibleContent>
                 </Collapsible.Root>
               </div>
             </Collapsible.CollapsibleContent>
+
+            {open && (
+              <div className="m-4 mt-0  border-t border-slate-200">
+                <div className="m-4 mr-0 flex items-center justify-end space-x-2">
+                  <Label htmlFor="required-toggle">Required</Label>
+                  <Switch
+                    id="required-toggle"
+                    checked={question.required}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateQuestion(questionIdx, { required: !question.required });
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </Collapsible.Root>
         </div>
       )}

@@ -34,6 +34,7 @@ export default function OpenTextQuestion({
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
         <textarea
+          autoFocus
           rows={3}
           name={question.id}
           id={question.id}
