@@ -1,6 +1,5 @@
 "use client";
 
-import LogicEditor from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/LogicEditor";
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import type { Question } from "@formbricks/types/questions";
