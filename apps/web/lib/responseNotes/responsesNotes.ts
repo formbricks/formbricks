@@ -6,7 +6,7 @@ export const addResponseNote = async (
 ) => {
   try {
     const res = await fetch(
-      `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}/responsesNote`,
+      `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}/responsesNotes`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
