@@ -2,7 +2,6 @@ import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
@@ -24,15 +23,15 @@ export default function MultipleChoiceMultiQuestion({
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
-  const [isIphone, setIsIphone] = useState(false);
-
+  /*   const [isIphone, setIsIphone] = useState(false);
+   */
   useEffect(() => {
     setIsAtLeastOneChecked(selectedChoices.length > 0 || otherSpecified.length > 0);
   }, [selectedChoices, otherSpecified]);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
-  }, []);
+  }, []); */
 
   return (
     <form
@@ -62,7 +61,7 @@ export default function MultipleChoiceMultiQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="xs:max-h-[60vh] relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
+          <div className="relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
             {question.choices &&
               question.choices.map((choice) => (
                 <>
