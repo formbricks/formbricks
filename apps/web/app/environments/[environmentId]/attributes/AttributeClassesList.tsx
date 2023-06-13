@@ -78,9 +78,9 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
                       <TagIcon className="h-8 w-8 flex-shrink-0 text-slate-500" />
                     </div>
                     <div className="ml-4 text-left">
-                      <div className="font-medium text-slate-900">{attributeClass.name} 
-                        <span>
-                          {attributeClass.archived && <Badge text="Archived" type="gray" size="tiny"/>}
+                      <div className="font-medium text-slate-900">{attributeClass.name}
+                        <span className="ml-2">
+                          {attributeClass.archived && <Badge text="Archived" type="gray" size="tiny" />}
                         </span>
                       </div>
                       <div className="text-xs text-slate-400">{attributeClass.description}</div>
