@@ -21,7 +21,7 @@ export default function ResponseNote({
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const { mutateResponses } = useResponses(environmentId, surveyId);
-  const responseNotes = data?.responseNote;
+  const responseNotes = data?.responseNotes;
   const handleNoteSubmission = async (e: FormEvent) => {
     e.preventDefault();
     setIsCreatingNote(true);

@@ -26,7 +26,9 @@
   "dependencies": {
     "@formbricks/types": "workspace:*",
     "@prisma/client": "^4.15.0",
-    "prisma-json-types-generator": "^2.4.0"
+    "prisma-json-types-generator": "^2.4.0",
+    "zod": "^3.21.4",
+    "zod-prisma": "^0.5.4"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",

@@ -34,6 +34,9 @@ yarn-error.log*
 .env.production.local
 !packages/database/.env
 
+# Prisma generated files
+packages/database/zod
+
 # turbo
 .turbo
 

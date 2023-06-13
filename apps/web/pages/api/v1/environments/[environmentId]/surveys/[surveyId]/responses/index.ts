@@ -49,7 +49,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             },
           },
         },
-        responseNote: {
+        responseNotes: {
           include: {
             response: true,
             user: true,

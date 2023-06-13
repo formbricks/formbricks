@@ -1,13 +1,12 @@
-/*
-THIS FILE IS WORK IN PROGRESS
-PLEASE DO NOT USE IT YET
-*/
-
 import { responses } from "@/lib/api/response";
 import { prisma } from "@formbricks/database";
+import { transformErrorToDetails } from "@/lib/api/validator";
+import { createResponse } from "@formbricks/lib/services/response";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
+import { getSurvey } from "@formbricks/lib/services/survey";
+import { TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -15,80 +14,67 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const { surveyId, userCuid, response } = await request.json();
+  const responseInput: TResponseInput = await request.json();
+  const inputValidation = ZResponseInput.safeParse(responseInput);
 
-  if (!surveyId) {
-    return responses.missingFieldResponse("surveyId", true);
+  if (!inputValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(inputValidation.error),
+      true
+    );
   }
-
-  if (!response) {
-    return responses.missingFieldResponse("response", true);
-  }
-
-  // userCuid can be null, e.g. for link surveys
 
   // check if survey exists
-  const survey = await prisma.survey.findUnique({
-    where: {
-      id: surveyId,
-    },
-    select: {
-      id: true,
-      environment: {
+  const survey = await getSurvey(responseInput.surveyId);
+
+  if (!survey) {
+    return responses.badRequestResponse(
+      "Linked ressource not found",
+      {
+        surveyId: "Survey not found",
+      },
+      true
+    );
+  }
+
+  const environmentId = survey.environmentId;
+
+  // prisma call to get the teamId
+  // TODO use services
+  const environment = await prisma.environment.findUnique({
+    where: { id: environmentId },
+    include: {
+      product: {
         select: {
-          id: true,
-          product: {
+          team: {
             select: {
-              team: {
-                select: {
-                  id: true,
-                  memberships: {
-                    select: {
-                      userId: true,
-                      role: true,
-                    },
-                  },
-                },
+              id: true,
+              memberships: {
+                where: { role: "owner" },
+                select: { userId: true },
+                take: 1,
               },
             },
           },
         },
       },
-      type: true,
     },
   });
 
-  if (!survey) {
-    return responses.notFoundResponse("Survey", surveyId, true);
+  if (!environment) {
+    throw new Error("Environment not found");
   }
 
-  const environmentId = survey.environment.id;
-
-  const teamId = survey.environment.product.team.id;
-  // find team owner
-  const teamOwnerId = survey.environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
-
-  const createBody = {
-    data: {
-      survey: {
-        connect: {
-          id: surveyId,
-        },
-      },
-      ...response,
+  const {
+    product: {
+      team: { id: teamId, memberships },
     },
-  };
+  } = environment;
 
-  if (userCuid) {
-    createBody.data.person = {
-      connect: {
-        id: userCuid,
-      },
-    };
-  }
+  const teamOwnerId = memberships[0]?.userId;
 
-  // create new response
-  const responseData = await prisma.response.create(createBody);
+  const response = await createResponse(responseInput);
 
   // send response to pipeline
   // don't await to not block the response
@@ -100,12 +86,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     body: JSON.stringify({
       internalSecret: INTERNAL_SECRET,
       environmentId,
+      surveyId: response.surveyId,
       event: "responseCreated",
-      data: responseData,
+      data: response,
     }),
   });
 
-  if (response.finished) {
+  if (responseInput.finished) {
     // send response to pipeline
     // don't await to not block the response
     fetch(`${WEBAPP_URL}/api/pipeline`, {
@@ -116,8 +103,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       body: JSON.stringify({
         internalSecret: INTERNAL_SECRET,
         environmentId,
+        surveyId: response.surveyId,
         event: "responseFinished",
-        data: responseData,
+        data: response,
       }),
     });
   }
@@ -125,12 +113,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   captureTelemetry("response created");
   if (teamOwnerId) {
     await capturePosthogEvent(teamOwnerId, "response created", teamId, {
-      surveyId,
+      surveyId: response.surveyId,
       surveyType: survey.type,
     });
   } else {
     console.warn("Posthog capture not possible. No team owner found");
   }
 
-  return responses.successResponse({ id: responseData.id }, true);
+  return responses.successResponse(response, true);
 }
