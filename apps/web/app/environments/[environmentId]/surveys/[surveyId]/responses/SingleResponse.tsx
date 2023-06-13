@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 import { RatingResponse } from "../RatingResponse";
 import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 import clsx from "clsx";
-import ResponseNote from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/ResponseNote";
+import ResponseNote from "./ResponseNote";
 
 export interface OpenTextSummaryProps {
   data: {
@@ -25,15 +25,15 @@ export interface OpenTextSummaryProps {
       environmentId: string;
       attributes: [];
     };
-    responseNote: {
+    responseNotes: {
       updatedAt: string;
       createdAt: string;
       id: string;
       text: string;
       user: {
         name: string;
-      }
-    }[]
+      };
+    }[];
     value: string;
     updatedAt: string;
     finished: boolean;
@@ -58,11 +58,11 @@ function findEmail(person) {
 export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || data.personId;
-  const responseNotes = data?.responseNote;
+  const responseNotes = data?.responseNotes;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { mutateResponses } = useResponses(environmentId, surveyId);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
@@ -74,11 +74,12 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
   };
 
   return (
-    <div className={clsx("relative group", isOpen && "min-h-[300px]")}>
-      <div className={clsx(
-        "my-6 rounded-lg border transition-all border-slate-200 bg-slate-50 shadow-sm z-10 relative",
-        isOpen ? "w-4/5" : responseNotes.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]"
-      )}>
+    <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
+      <div
+        className={clsx(
+          "relative z-10 my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm transition-all",
+          isOpen ? "w-3/4" : responseNotes.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]"
+        )}>
         <div className="space-y-2 px-6 pb-5 pt-6">
           <div className="flex items-center justify-between">
             {data.personId ? (
@@ -128,7 +129,9 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
                   <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer}</p>
                 )
               ) : (
-                <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.answer.join(", ")}</p>
+                <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                  {response.answer.join(", ")}
+                </p>
               )}
             </div>
           ))}
@@ -141,7 +144,13 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
           isDeleting={isDeleting}
         />
       </div>
-      <ResponseNote data={data} environmentId={environmentId} surveyId={surveyId} isOpen={isOpen} setIsOpen={setIsOpen} />
+      <ResponseNote
+        data={data}
+        environmentId={environmentId}
+        surveyId={surveyId}
+        isOpen={isOpen}
+        setIsOpen={setIsOpen}
+      />
     </div>
   );
 }
