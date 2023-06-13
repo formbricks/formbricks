@@ -1,0 +1,12 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "Client API Overview",
+  description:
+    "Explore the Formbricks Public Client API for client-side tasks and integration into your website.",
+};
+
+The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

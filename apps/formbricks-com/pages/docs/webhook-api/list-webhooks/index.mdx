@@ -1,0 +1,57 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { APILayout } from "@/components/shared/APILayout.tsx";
+
+export const meta = {
+  title: "API: List Webhooks",
+  description: "Learn how to retrieve a list of all webhooks via API.",
+};
+
+<APILayout
+  method="GET"
+  url="/api/v1/webhooks"
+  description="Retrieve a list of all webhooks."
+  headers={[
+    {
+      label: "X-Api-Key",
+      type: "string",
+      description: "Your Formbricks API key.",
+      required: true,
+    },
+  ]}
+  responses={[
+    {
+      color: "green",
+      statusCode: "200",
+      description: "Success. Returns an array of webhook objects as JSON.",
+      example: `{
+  "data": [
+    {
+      "id": "cliu1kdza000219zftad4ip6c",
+      "createdAt": "2023-06-13T08:49:04.198Z",
+      "updatedAt": "2023-06-13T08:49:04.198Z",
+      "url": "https://mysystem.com/myendpoint",
+      "environmentId": "clisypjy4000319t4imm289uo",
+      "triggers": [
+        "responseFinished"
+      ]
+    }
+  ]
+}`,
+    },
+    {
+      color: "brown",
+      statusCode: "401",
+      description: "Error. Not authenticated.",
+      example: `{
+  "code": "not_authenticated",
+  "message": "Not authenticated",
+  "details": {
+    "X-Api-Key": "Header not provided or API Key invalid"
+  }
+}`,
+    },
+  ]}
+/>
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
