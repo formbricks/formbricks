@@ -158,7 +158,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {attributeClasses.map((attributeClass) => (
+                    {attributeClasses.filter(attributeClass => !attributeClass.archived).map((attributeClass) => (
                       <SelectItem value={attributeClass.id}>{attributeClass.name}</SelectItem>
                     ))}
                   </SelectContent>
