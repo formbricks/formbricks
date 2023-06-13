@@ -47,8 +47,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
   const response: TResponse = {
     ...responsePrisma,
-    createdAt: responsePrisma.createdAt.toISOString(),
-    updatedAt: responsePrisma.updatedAt.toISOString(),
     person: transformPrismaPerson(responsePrisma.person),
   };
 
@@ -91,8 +89,6 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
 
   const response: TResponse = {
     ...responsePrisma,
-    createdAt: responsePrisma.createdAt.toISOString(),
-    updatedAt: responsePrisma.updatedAt.toISOString(),
     person: transformPrismaPerson(responsePrisma.person),
   };
 
@@ -150,8 +146,6 @@ export const updateResponse = async (
 
   const response: TResponse = {
     ...responsePrisma,
-    createdAt: responsePrisma.createdAt.toISOString(),
-    updatedAt: responsePrisma.updatedAt.toISOString(),
     person: transformPrismaPerson(responsePrisma.person),
   };
 

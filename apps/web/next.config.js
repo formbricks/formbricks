@@ -12,7 +12,13 @@ const nextConfig = {
   experimental: {
     serverActions: true,
   },
-  transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
+  transpilePackages: [
+    "@formbricks/database",
+    "@formbricks/ee",
+    "@formbricks/ui",
+    "@formbricks/lib",
+    "@formbricks/errors",
+  ],
   images: {
     remotePatterns: [
       {

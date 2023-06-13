@@ -192,6 +192,9 @@ importers:
       '@formbricks/ee':
         specifier: workspace:*
         version: link:../../packages/ee
+      '@formbricks/errors':
+        specifier: workspace:*
+        version: link:../../packages/errors
       '@formbricks/js':
         specifier: workspace:*
         version: link:../../packages/js
@@ -569,13 +572,16 @@ importers:
       '@formbricks/database':
         specifier: '*'
         version: link:../database
+      '@formbricks/errors':
+        specifier: '*'
+        version: link:../errors
+      '@formbricks/types':
+        specifier: '*'
+        version: link:../types
     devDependencies:
       '@formbricks/tsconfig':
         specifier: '*'
         version: link:../tsconfig
-      '@formbricks/types':
-        specifier: '*'
-        version: link:../types
       eslint:
         specifier: ^8.41.0
         version: 8.41.0
