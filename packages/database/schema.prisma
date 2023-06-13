@@ -64,6 +64,7 @@ model AttributeClass {
   updatedAt        DateTime                @updatedAt @map(name: "updated_at")
   name             String
   description      String?
+  archived         Boolean                 @default(false)
   type             AttributeType
   environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
