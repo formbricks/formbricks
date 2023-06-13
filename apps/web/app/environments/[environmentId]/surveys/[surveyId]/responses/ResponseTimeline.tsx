@@ -4,9 +4,11 @@ import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useResponses } from "@/lib/responses/responses";
 import { useSurvey } from "@/lib/surveys/surveys";
-import { ErrorComponent } from "@formbricks/ui";
+import { Button, ErrorComponent } from "@formbricks/ui";
 import { useMemo } from "react";
 import SingleResponse from "./SingleResponse";
+import { convertToCSV } from "@/lib/csvConversion";
+import { useCallback } from "react";
 
 export default function ResponseTimeline({ environmentId, surveyId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
@@ -51,6 +53,39 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
     return [];
   }, [survey, responses]);
 
+  const downloadResponses = useCallback(async () => {
+    let fieldsForCSV: string[] = [];
+    fieldsForCSV = matchQandA.forEach((response) => {
+      const { responses } = response;
+      responses.forEach(() => {
+        fieldsForCSV.push("response.question");
+        fieldsForCSV.push("response.answer");
+      });
+    });
+
+    const response = await convertToCSV({
+      json: matchQandA,
+      fields: fieldsForCSV,
+    });
+
+    // console.log({ response });
+
+    // Create a temporary link element to trigger the download
+    const link = document.createElement("a");
+    link.href = response.downloadUrl;
+    link.download = "survey_responses.csv";
+
+    // Append the link to the DOM and click it to start the download
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up by removing the temporary link
+    document.body.removeChild(link);
+
+    // Revoke the download URL
+    URL.revokeObjectURL(response.downloadUrl);
+  }, [matchQandA]);
+
   if (isLoadingResponses || isLoadingSurvey) {
     return <LoadingSpinner />;
   }
@@ -65,6 +100,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
         <EmptySpaceFiller type="response" environmentId={environmentId} />
       ) : (
         <div>
+          <Button onClick={() => downloadResponses()}>Download</Button>
           {matchQandA.map((updatedResponse) => {
             return (
               <SingleResponse
