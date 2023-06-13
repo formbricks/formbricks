@@ -22,6 +22,7 @@ export default function MultipleChoiceSingleQuestion({
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   /*   const [isIphone, setIsIphone] = useState(false);
 
+
   useEffect(() => {
     setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
   }, []);
@@ -81,6 +82,9 @@ export default function MultipleChoiceSingleQuestion({
                   )}
                 </label>
               ))}
+            {/*             {isIphone && question.choices.length > 5 && (
+              <div className="z-50 -mt-8 h-8 bg-gradient-to-b from-transparent to-white"></div>
+            )} */}
             {/*             {isIphone && question.choices.length > 5 && (
               <div className="z-50 -mt-8 h-8 bg-gradient-to-b from-transparent to-white"></div>
             )} */}

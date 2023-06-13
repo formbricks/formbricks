@@ -192,8 +192,10 @@ model Survey {
   environmentId    String
   status           SurveyStatus            @default(draft)
   /// @zod.custom(imports.ZSurveyQuestions)
+  /// @zod.custom(imports.ZSurveyQuestions)
   /// [SurveyQuestions]
   questions        Json                    @default("[]")
+  /// @zod.custom(imports.ZSurveyThankYouCard)
   /// @zod.custom(imports.ZSurveyThankYouCard)
   /// [SurveyThankYouCard]
   thankYouCard     Json                    @default("{\"enabled\": false}")
@@ -214,6 +216,7 @@ model Event {
   eventClassId String?
   session      Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId    String
+  /// @zod.custom(imports.ZEventProperties)
   /// @zod.custom(imports.ZEventProperties)
   /// [EventProperties]
   properties   Json        @default("{}")
@@ -419,6 +422,7 @@ model User {
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
   role                      Role?
   objective                 Objective?
+  /// @zod.custom(imports.ZUserNotificationSettings)
   /// @zod.custom(imports.ZUserNotificationSettings)
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
