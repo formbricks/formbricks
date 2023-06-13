@@ -76,30 +76,32 @@ export async function DELETE() {
     for (const membership of memberships) {
       if (membership.role === "owner") {
         if (membership.team.memberships.length > 1) {
-          const newOwerner = membership.team.memberships.find((team) => team.user.id !== sessionUser.id);
-          await prisma.membership.update({
-            where: {
-              userId_teamId: {
-                teamId: membership.teamId,
-                userId: newOwerner.user.id,
+          const newOwner = membership.team.memberships.find((team) => team.user.id !== sessionUser.id);
+          if (newOwner) {
+            await prisma.membership.update({
+              where: {
+                userId_teamId: {
+                  teamId: membership.teamId,
+                  userId: newOwner.user.id,
+                },
               },
-            },
-            data: {
-              role: "owner",
-            },
-          });
+              data: {
+                role: "owner",
+              },
+            });
 
-          await prisma.membership.update({
-            where: {
-              userId_teamId: {
-                teamId: membership.teamId,
-                userId: sessionUser.id,
+            await prisma.membership.update({
+              where: {
+                userId_teamId: {
+                  teamId: membership.teamId,
+                  userId: sessionUser.id,
+                },
               },
-            },
-            data: {
-              role: "admin",
-            },
-          });
+              data: {
+                role: "admin",
+              },
+            });
+          }
         } else {
           await prisma.membership.delete({
             where: {
