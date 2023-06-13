@@ -8,6 +8,12 @@ export const meta = {
 
 Formbricks' Webhook API offers a powerful interface for interacting with webhooks. Webhooks in Formbricks allow you to receive real-time HTTP notifications of changes to specific objects in the Formbricks environment.
 
+Before you start managing webhooks, you need to create an API key. This will be used for authorization when making requests to the Webhook API. Please see the [API key setup page](/docs/api/api-key-setup) for more details on how to create and manage your API keys.
+
+The behavior of the webhooks is determined by their trigger settings. The trigger determines which updates the webhook sends. Current available triggers include "responseCreated", "responseUpdated", and "responseFinished". This allows you to customize your webhooks to only send notifications for the events that are relevant to your application.
+
+Webhooks are tied to a specific Formbricks environment. Once set, a webhook will receive updates from all surveys within this environment. This makes it easy to manage your data flow and ensure that all relevant updates are caught by the webhook.
+
 Our API has several REST endpoints enabling you to manage these webhooks, providing a great deal of flexibility:
 
 1. **List Webhooks:** Retrieve a list of all existing webhooks.
