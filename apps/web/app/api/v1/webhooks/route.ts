@@ -2,13 +2,12 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
 import { hashApiKey } from "@/lib/api/apiHelper";
+import { responses } from "@/lib/api/response";
 
 export async function GET() {
   const apiKey = headers().get("x-api-key");
   if (!apiKey) {
-    return new Response("Not authenticated. This route is only available via API-Key authorization", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
   const apiKeyData = await prisma.apiKey.findUnique({
     where: {
@@ -19,9 +18,7 @@ export async function GET() {
     },
   });
   if (!apiKeyData) {
-    return new Response("Not authenticated", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
 
   // add webhook to database
@@ -36,9 +33,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const apiKey = headers().get("x-api-key");
   if (!apiKey) {
-    return new Response("Not authenticated. This route is only available via API-Key authorization", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
   const apiKeyData = await prisma.apiKey.findUnique({
     where: {
@@ -49,21 +44,15 @@ export async function POST(request: Request) {
     },
   });
   if (!apiKeyData) {
-    return new Response("Not authenticated", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
   const { url, trigger } = await request.json();
   if (!url) {
-    return new Response("Missing url", {
-      status: 400,
-    });
+    return responses.missingFieldResponse("url");
   }
 
   if (!trigger) {
-    return new Response("Missing trigger", {
-      status: 400,
-    });
+    return responses.missingFieldResponse("trigger");
   }
 
   // add webhook to database
@@ -78,5 +67,5 @@ export async function POST(request: Request) {
       },
     },
   });
-  return NextResponse.json({ data: webhook });
+  return responses.successResponse(webhook);
 }

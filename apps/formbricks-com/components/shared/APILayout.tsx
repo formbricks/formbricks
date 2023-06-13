@@ -56,7 +56,7 @@ export function APILayout({ method, url, description, headers, bodies, responses
         {method}
       </div>
       <div className="inline text-sm text-slate-500 ">
-        http://localhost:300
+        https://app.formbricks.com
         <span className="font-bold text-black dark:text-slate-300">{url}</span>
       </div>
       <div className="ml-8 mt-4 font-bold dark:text-slate-400">{description}</div>
@@ -75,30 +75,34 @@ export function APILayout({ method, url, description, headers, bodies, responses
               </div>
             )}
 
-            <div className="mt-4 text-base">
-              <p className="not-prose -mb-1 pt-2 font-bold">Body</p>
-              <div>
-                {}
-                {bodies.map((b) => (
-                  <Parameter
-                    key={b.label}
-                    label={b.label}
-                    type={b.type}
-                    description={b.description}
-                    required={b.required}
-                  />
-                ))}
-                {example && (
-                  <div>
-                    <p className="not-prose mb-2 pt-2 font-bold">Body Example</p>
+            {bodies && (
+              <div className="mt-4 text-base">
+                <p className="not-prose -mb-1 pt-2 font-bold">Body</p>
+                <div>
+                  {}
+                  {bodies?.map((b) => (
+                    <Parameter
+                      key={b.label}
+                      label={b.label}
+                      type={b.type}
+                      description={b.description}
+                      required={b.required}
+                    />
+                  ))}
+                  {example && (
                     <div>
-                      <pre>
-                        <code>{example}</code>
-                      </pre>
+                      <p className="not-prose mb-2 pt-2 font-bold">Body Example</p>
+                      <div>
+                        <pre>
+                          <code>{example}</code>
+                        </pre>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
+            )}
+            <div>
               <div className="mt-4 text-base">
                 <p className="not-prose -mb-1 pt-2 font-bold">Responses</p>
                 <div>
@@ -194,7 +198,7 @@ function Response({ color, statusCode, description, example }: RespProps) {
         </div>
       </div>
       {example && toggleExample && (
-        <div className="col-span-2 my-3 rounded-lg bg-slate-300 p-2 font-mono dark:bg-slate-600 dark:text-slate-300">
+        <div className="col-span-2 my-3 whitespace-pre-wrap rounded-lg bg-slate-300 p-2 font-mono dark:bg-slate-600 dark:text-slate-300">
           {example}
         </div>
       )}

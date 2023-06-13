@@ -1,0 +1,67 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { APILayout } from "@/components/shared/APILayout.tsx";
+
+export const meta = {
+  title: "API: Delete Webhook",
+  description: "Learn how to delete a specific webhook by its ID via API.",
+};
+
+<APILayout
+  method="DELETE"
+  url="/api/v1/webhooks/[webhookId]"
+  description="Delete a specific webhook by its ID."
+  headers={[
+    {
+      label: "X-Api-Key",
+      type: "string",
+      description: "Your Formbricks API key.",
+      required: true,
+    },
+  ]}
+  responses={[
+    {
+      color: "green",
+      statusCode: "200",
+      description: "Success. Returns the deleted webhook object as JSON.",
+      example: `{
+  "data": {
+    "id": "cliu167rk000019zfhbo68bar",
+    "createdAt": "2023-06-13T08:38:02.960Z",
+    "updatedAt": "2023-06-13T08:38:02.960Z",
+    "url": "https://mysystem.com/myendpoint",
+    "environmentId": "clisypjy4000319t4imm289uo",
+    "triggers": [
+      "responseFinished"
+    ]
+  }
+}`,
+    },
+    {
+      color: "brown",
+      statusCode: "401",
+      description: "Error. Not authenticated.",
+      example: `{
+  "code": "not_authenticated",
+  "message": "Not authenticated",
+  "details": {
+    "X-Api-Key": "Header not provided or API Key invalid"
+  }
+}`,
+    },
+    {
+      color: "brown",
+      statusCode: "404",
+      description: "Error. Webhook not found.",
+      example: `{
+  "code": "not_found",
+  "message": "Webhook not found.",
+  "details": {
+    "webhookId": "The requested webhook does not exist."
+  }
+}`,
+    },
+  ]}
+/>
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

@@ -1,14 +1,12 @@
-import { headers } from "next/headers";
-import { prisma } from "@formbricks/database";
-import { NextResponse } from "next/server";
 import { hashApiKey } from "@/lib/api/apiHelper";
+import { responses } from "@/lib/api/response";
+import { prisma } from "@formbricks/database";
+import { headers } from "next/headers";
 
 export async function GET(_: Request, { params }: { params: { webhookId: string } }) {
   const apiKey = headers().get("x-api-key");
   if (!apiKey) {
-    return new Response("Not authenticated. This route is only available via API-Key authorization", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
   const apiKeyData = await prisma.apiKey.findUnique({
     where: {
@@ -19,9 +17,7 @@ export async function GET(_: Request, { params }: { params: { webhookId: string 
     },
   });
   if (!apiKeyData) {
-    return new Response("Not authenticated", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
 
   // add webhook to database
@@ -31,19 +27,15 @@ export async function GET(_: Request, { params }: { params: { webhookId: string 
     },
   });
   if (!webhook) {
-    return new Response("Webhook not found", {
-      status: 404,
-    });
+    return responses.notFoundResponse("Webhook", params.webhookId);
   }
-  return NextResponse.json({ data: webhook });
+  return responses.successResponse(webhook);
 }
 
 export async function DELETE(_: Request, { params }: { params: { webhookId: string } }) {
   const apiKey = headers().get("x-api-key");
   if (!apiKey) {
-    return new Response("Not authenticated. This route is only available via API-Key authorization", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
   const apiKeyData = await prisma.apiKey.findUnique({
     where: {
@@ -54,9 +46,7 @@ export async function DELETE(_: Request, { params }: { params: { webhookId: stri
     },
   });
   if (!apiKeyData) {
-    return new Response("Not authenticated", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
 
   // add webhook to database
@@ -66,9 +56,7 @@ export async function DELETE(_: Request, { params }: { params: { webhookId: stri
     },
   });
   if (!webhook) {
-    return new Response("Webhook not found", {
-      status: 404,
-    });
+    return responses.notFoundResponse("Webhook", params.webhookId);
   }
-  return NextResponse.json({ data: webhook });
+  return responses.successResponse(webhook);
 }
