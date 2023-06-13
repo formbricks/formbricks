@@ -87,7 +87,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
                 className="group flex items-center"
                 href={`/environments/${environmentId}/people/${data.personId}`}>
                 <PersonAvatar personId={data.personId} />
-                <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 group-hover:underline">
+                <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                   {displayIdentifier}
                 </h3>
               </Link>

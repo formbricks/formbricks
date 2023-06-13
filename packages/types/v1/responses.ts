@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ZResponseData = z.record(z.union([z.string(), z.number()]));
+export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
