@@ -1,0 +1,26 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+
+export const meta = {
+  title: "Webhook API Overview",
+  description: "Learn how to use the Formbricks Webhook API.",
+};
+
+Formbricks' Webhook API offers a powerful interface for interacting with webhooks. Webhooks in Formbricks allow you to receive real-time HTTP notifications of changes to specific objects in the Formbricks environment.
+
+Before you start managing webhooks, you need to create an API key. This will be used for authorization when making requests to the Webhook API. Please see the [API key setup page](/docs/api/api-key-setup) for more details on how to create and manage your API keys.
+
+The behavior of the webhooks is determined by their trigger settings. The trigger determines which updates the webhook sends. Current available triggers include "responseCreated", "responseUpdated", and "responseFinished". This allows you to customize your webhooks to only send notifications for the events that are relevant to your application.
+
+Webhooks are tied to a specific Formbricks environment. Once set, a webhook will receive updates from all surveys within this environment. This makes it easy to manage your data flow and ensure that all relevant updates are caught by the webhook.
+
+Our API has several REST endpoints enabling you to manage these webhooks, providing a great deal of flexibility:
+
+1. **List Webhooks:** Retrieve a list of all existing webhooks.
+2. **Create a New Webhook:** Add a new webhook to your system.
+3. **Get a Specific Webhook:** Query the details of a specific webhook using its unique ID.
+4. **Delete a Webhook:** Remove an existing webhook.
+
+These APIs are designed to facilitate seamless integration of Formbricks with third-party systems. By making use of our webhook API, you can automate the process of sending data to these systems whenever significant events occur within your Formbricks environment.
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
