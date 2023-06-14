@@ -73,6 +73,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
               select: {
                 name: true,
                 description: true,
+                archived: true,
               },
             },
           },
