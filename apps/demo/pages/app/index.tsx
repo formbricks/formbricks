@@ -20,7 +20,7 @@ export default function AppPage({}) {
             <p className="text-slate-700">
               Copy the environment ID of your Formbricks app to the env variable in demo/.env
             </p>
-            <Image src={fbsetup} alt="fb setup" className="mt-4 rounded" />
+            <Image src={fbsetup} alt="fb setup" className="mt-4 rounded" priority />
           </div>
           <div className="mt-4 rounded-lg border border-slate-300 bg-slate-100 p-6">
             <h3 className="text-lg font-semibold">Console</h3>
