@@ -19,7 +19,7 @@ export default function SignUpPage() {
         <FormWrapper>
           {(
             inviteToken
-              ? process.env.NEXT_PUBLIC_INVITE_DISABLED === "1" && process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1"
+              ? process.env.NEXT_PUBLIC_INVITE_DISABLED === "1"
               : process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1"
           ) ? (
             <>

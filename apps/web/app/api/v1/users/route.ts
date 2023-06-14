@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   let { inviteToken, ...user } = await request.json();
   if (
     inviteToken
-      ? process.env.NEXT_PUBLIC_INVITE_DISABLED === "1" && process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1"
+      ? process.env.NEXT_PUBLIC_INVITE_DISABLED === "1"
       : process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1"
   ) {
     return NextResponse.json({ error: "Signup disabled" }, { status: 403 });
