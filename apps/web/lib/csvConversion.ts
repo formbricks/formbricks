@@ -7,5 +7,7 @@ export const convertToCSV = async (data: { json: any; fields?: string[] }) => {
     body: JSON.stringify(data),
   });
 
+  if (!response.ok) throw new Error("Failed to convert to CSV");
+
   return response.json();
 };

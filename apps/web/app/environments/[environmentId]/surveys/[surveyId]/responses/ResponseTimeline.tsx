@@ -11,6 +11,7 @@ import { convertToCSV } from "@/lib/csvConversion";
 import { useCallback } from "react";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 export default function ResponseTimeline({ environmentId, surveyId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
@@ -19,8 +20,6 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
   const responses = responsesData?.responses;
 
   const { attributeMap, questionNames } = generateQuestionsAndAttributes(survey, responses);
-
-  console.log({ attributeMap, questionNames, survey, responses });
 
   const [isDownloadCSVLoading, setIsDownloadCSVLoading] = useState(false);
 
@@ -60,8 +59,6 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
     }
     return [];
   }, [survey, responses]);
-
-  console.log("matchQandA", matchQandA);
 
   const downloadResponses = useCallback(async () => {
     const csvData = matchQandA.map((response) => {
@@ -117,10 +114,18 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
 
     setIsDownloadCSVLoading(true);
 
-    const response = await convertToCSV({
-      json: csvData,
-      fields,
-    });
+    let response;
+
+    try {
+      response = await convertToCSV({
+        json: csvData,
+        fields,
+      });
+    } catch (err) {
+      toast.error("Error downloading CSV");
+      setIsDownloadCSVLoading(false);
+      return;
+    }
 
     setIsDownloadCSVLoading(false);
 
