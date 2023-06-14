@@ -31,7 +31,7 @@ export async function PUT(
   // update response
   let response;
   try {
-    response = await updateResponse(responseId, responseUpdate);
+    response = await updateResponse(responseId, inputValidation.data);
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       return responses.notFoundResponse("Response", responseId, true);
@@ -62,7 +62,11 @@ export async function PUT(
   sendToPipeline("responseUpdated", {
     environmentId: survey.environmentId,
     surveyId: survey.id,
-    data: response,
+    // only send the updated fields
+    data: {
+      ...response,
+      data: inputValidation.data.data,
+    },
   });
 
   if (response.finished) {
