@@ -3,18 +3,26 @@
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useResponses } from "@/lib/responses/responses";
-import { useSurvey } from "@/lib/surveys/surveys";
+import { generateQuestionsAndAttributes, useSurvey } from "@/lib/surveys/surveys";
 import { Button, ErrorComponent } from "@formbricks/ui";
 import { useMemo } from "react";
 import SingleResponse from "./SingleResponse";
 import { convertToCSV } from "@/lib/csvConversion";
 import { useCallback } from "react";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
 
 export default function ResponseTimeline({ environmentId, surveyId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
 
   const responses = responsesData?.responses;
+
+  const { attributeMap, questionNames } = generateQuestionsAndAttributes(survey, responses);
+
+  console.log({ attributeMap, questionNames, survey, responses });
+
+  const [isDownloadCSVLoading, setIsDownloadCSVLoading] = useState(false);
 
   const matchQandA = useMemo(() => {
     if (survey && responses) {
@@ -53,38 +61,80 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
     return [];
   }, [survey, responses]);
 
+  console.log("matchQandA", matchQandA);
+
   const downloadResponses = useCallback(async () => {
-    let fieldsForCSV: string[] = [];
-    fieldsForCSV = matchQandA.forEach((response) => {
-      const { responses } = response;
-      responses.forEach(() => {
-        fieldsForCSV.push("response.question");
-        fieldsForCSV.push("response.answer");
+    const csvData = matchQandA.map((response) => {
+      const csvResponse = {
+        "Response ID": response.id,
+        "Date Submitted": response.createdAt,
+        Finished: response.finished,
+        "Survey ID": response.surveyId,
+        "Internal User ID": response.person?.id ?? "",
+      };
+
+      // Map each question name to its corresponding answer
+      questionNames.forEach((questionName: string) => {
+        const matchingQuestion = response.responses.find((question) => question.question === questionName);
+        let transformedAnswer = "";
+        if (matchingQuestion) {
+          const answer = matchingQuestion.answer;
+          if (Array.isArray(answer)) {
+            transformedAnswer = answer.join("; ");
+          } else {
+            transformedAnswer = answer;
+          }
+        }
+        csvResponse[questionName] = matchingQuestion ? transformedAnswer : "";
+      });
+
+      return csvResponse;
+    });
+
+    // Add attribute columns to the CSV
+
+    Object.keys(attributeMap).forEach((attributeName) => {
+      const attributeValues = attributeMap[attributeName];
+      Object.keys(attributeValues).forEach((personId) => {
+        const value = attributeValues[personId];
+        const matchingResponse = csvData.find((response) => response["Internal User ID"] === personId);
+        if (matchingResponse) {
+          matchingResponse[attributeName] = value;
+        }
       });
     });
 
+    // Fields which will be used as column headers in the CSV
+    const fields = [
+      "Response ID",
+      "Date Submitted",
+      "Finished",
+      "Survey ID",
+      "Internal User ID",
+      ...Object.keys(attributeMap),
+      ...questionNames,
+    ];
+
+    setIsDownloadCSVLoading(true);
+
     const response = await convertToCSV({
-      json: matchQandA,
-      fields: fieldsForCSV,
+      json: csvData,
+      fields,
     });
 
-    // console.log({ response });
+    setIsDownloadCSVLoading(false);
 
-    // Create a temporary link element to trigger the download
     const link = document.createElement("a");
     link.href = response.downloadUrl;
     link.download = "survey_responses.csv";
 
-    // Append the link to the DOM and click it to start the download
     document.body.appendChild(link);
     link.click();
 
-    // Clean up by removing the temporary link
     document.body.removeChild(link);
 
-    // Revoke the download URL
     URL.revokeObjectURL(response.downloadUrl);
-  }, [matchQandA]);
+  }, [attributeMap, matchQandA, questionNames]);
 
   if (isLoadingResponses || isLoadingSurvey) {
     return <LoadingSpinner />;
@@ -100,7 +150,12 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
         <EmptySpaceFiller type="response" environmentId={environmentId} />
       ) : (
         <div>
-          <Button onClick={() => downloadResponses()}>Download</Button>
+          <Button onClick={() => downloadResponses()} loading={isDownloadCSVLoading}>
+            <div className="flex items-center gap-2">
+              <ArrowDownTrayIcon width={16} height={16} />
+              <span className="text-sm">Download CSV</span>
+            </div>
+          </Button>
           {matchQandA.map((updatedResponse) => {
             return (
               <SingleResponse
