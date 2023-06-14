@@ -97,7 +97,7 @@ function DeleteAccountModal({ setOpen, open, session }: DeleteAccounModaltProps)
       await signOut();
       await formbricksLogout();
     } catch (error) {
-      toast.error("semething went wrong");
+      toast.error("Something went wrong");
     } finally {
       setDeleting(false);
       setOpen(false);
