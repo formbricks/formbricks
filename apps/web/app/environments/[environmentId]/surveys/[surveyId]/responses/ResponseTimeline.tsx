@@ -130,8 +130,12 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
 
     setIsDownloadCSVLoading(false);
 
+    const blob = new Blob([response.csvResponse], { type: "text/csv;charset=utf-8;" });
+    const downloadUrl = URL.createObjectURL(blob);
+
     const link = document.createElement("a");
-    link.href = response.downloadUrl;
+    link.href = downloadUrl;
+
     link.download = "survey_responses.csv";
 
     document.body.appendChild(link);
@@ -139,7 +143,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
 
     document.body.removeChild(link);
 
-    URL.revokeObjectURL(response.downloadUrl);
+    URL.revokeObjectURL(downloadUrl);
   }, [attributeMap, matchQandA, questionNames]);
 
   if (isLoadingResponses || isLoadingSurvey) {
