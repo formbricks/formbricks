@@ -8,6 +8,7 @@ import { useState } from "react";
 import AttributeDetailModal from "./AttributeDetailModal";
 import UploadAttributesModal from "./UploadAttributesModal";
 import { timeSinceConditionally } from "@formbricks/lib/time";
+import { useMemo } from "react";
 
 export default function AttributeClassesList({ environmentId }: { environmentId: string }) {
   const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
@@ -17,6 +18,14 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
   const [isUploadCSVModalOpen, setUploadCSVModalOpen] = useState(false);
   const [activeAttributeClass, setActiveAttributeClass] = useState("" as any);
   const [showArchived, setShowArchived] = useState(false);
+
+  const displayedAttributeClasses = useMemo(() => {
+    return attributeClasses ? (showArchived ? attributeClasses : attributeClasses.filter(ac => !ac.archived)) : [];
+}, [showArchived, attributeClasses]);
+
+const hasArchived = useMemo(() => {
+    return attributeClasses ? attributeClasses.some(ac => ac.archived) : false;
+}, [attributeClasses]);
 
   if (isLoadingAttributeClasses) {
     return <LoadingSpinner />;
@@ -34,9 +43,6 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
   const toggleShowArchived = () => {
     setShowArchived(!showArchived);
   };
-
-  const displayedAttributeClasses = showArchived ? attributeClasses : attributeClasses.filter(ac => !ac.archived);
-  const hasArchived = attributeClasses.some(ac => ac.archived);
 
   return (
     <>

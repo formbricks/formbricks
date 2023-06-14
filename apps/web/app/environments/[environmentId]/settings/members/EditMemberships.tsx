@@ -17,6 +17,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import AddMemberModal from "./AddMemberModal";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
+import { capitalizeFirstLetter } from "@/lib/utils";
 
 type EditMembershipsProps = {
   environmentId: string;
@@ -86,16 +87,17 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
         </Button>
       </div>
       <div className="rounded-lg border border-slate-200">
-        <div className="grid h-12 grid-cols-7 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+        <div className="grid h-12 grid-cols-8 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="px-6"></div>
           <div className="col-span-2">Fullname</div>
           <div className="col-span-2">Email</div>
+          <div className="">Role</div>
           <div className=""></div>
         </div>
-        <div className="grid-cols-7">
+        <div className="grid-cols-8">
           {[...team.members, ...team.invitees].map((member) => (
             <div
-              className="grid h-auto w-full grid-cols-7 content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
+              className="grid h-auto w-full grid-cols-8 content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
               key={member.email}>
               <div className="h-58 px-6 ">
                 <ProfileAvatar userId={member.userId || member.email} />
@@ -105,6 +107,9 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
               </div>
               <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
                 {member.email}
+              </div>
+              <div className="ph-no-capture col-span-1 flex flex-col justify-center items-start break-all">
+                <Badge text={capitalizeFirstLetter(member.role)} type="gray" size="tiny" />
               </div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
                 {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}
