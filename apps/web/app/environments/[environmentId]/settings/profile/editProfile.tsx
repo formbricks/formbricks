@@ -112,7 +112,7 @@ function DeleteAccountModal({ setOpen, open, session }: DeleteAccounModaltProps)
       onDelete={() => deleteAccount()}
       text="Before you proceed with deleting your account, please be aware of the following consequences:"
       isDeleting={deleting}
-      disabled={!(inputValue === session.user.email)}>
+      disabled={inputValue !== session.user.email}>
       <div className="py-5">
         <p>
           Deleting your account will result in the permanent removal of all your personal information, saved
