@@ -39,7 +39,6 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE() {
-  // TODO: Enable soft delete
   try {
     const sessionUser = await getSessionUser();
 
@@ -66,6 +65,10 @@ export async function DELETE() {
                     name: true,
                   },
                 },
+                role: true,
+              },
+              where: {
+                role: "admin",
               },
             },
           },
@@ -75,33 +78,19 @@ export async function DELETE() {
 
     for (const membership of memberships) {
       if (membership.role === "owner") {
-        if (membership.team.memberships.length > 1) {
-          const newOwner = membership.team.memberships.find((team) => team.user.id !== sessionUser.id);
-          if (newOwner) {
-            await prisma.membership.update({
-              where: {
-                userId_teamId: {
-                  teamId: membership.teamId,
-                  userId: newOwner.user.id,
-                },
+        if (membership.team.memberships.length) {
+          const newOwner = membership.team.memberships[0];
+          await prisma.membership.update({
+            where: {
+              userId_teamId: {
+                teamId: membership.teamId,
+                userId: newOwner.user.id,
               },
-              data: {
-                role: "owner",
-              },
-            });
-
-            await prisma.membership.update({
-              where: {
-                userId_teamId: {
-                  teamId: membership.teamId,
-                  userId: sessionUser.id,
-                },
-              },
-              data: {
-                role: "admin",
-              },
-            });
-          }
+            },
+            data: {
+              role: "owner",
+            },
+          });
         } else {
           await prisma.membership.delete({
             where: {
