@@ -12,6 +12,7 @@ import { useCallback } from "react";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { convertDateString } from "@formbricks/lib/time";
 
 export default function ResponseTimeline({ environmentId, surveyId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
@@ -64,7 +65,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
     const csvData = matchQandA.map((response) => {
       const csvResponse = {
         "Response ID": response.id,
-        "Date Submitted": response.createdAt,
+        "Date Submitted": response.createdAt ? convertDateString(response.createdAt) : "",
         Finished: response.finished,
         "Survey ID": response.surveyId,
         "Internal User ID": response.person?.id ?? "",
@@ -155,10 +156,10 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
         <EmptySpaceFiller type="response" environmentId={environmentId} />
       ) : (
         <div>
-          <Button onClick={() => downloadResponses()} loading={isDownloadCSVLoading}>
+          <Button variant="darkCTA" onClick={() => downloadResponses()} loading={isDownloadCSVLoading}>
             <div className="flex items-center gap-2">
               <ArrowDownTrayIcon width={16} height={16} />
-              <span className="text-sm">Download CSV</span>
+              <span className="text-sm">Export to CSV</span>
             </div>
           </Button>
           {matchQandA.map((updatedResponse) => {
