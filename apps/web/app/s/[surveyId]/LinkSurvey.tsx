@@ -26,6 +26,7 @@ interface LinkSurveyProps {
 
 export default function LinkSurvey({ survey }: LinkSurveyProps) {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [prefilling, setPrefilling] = useState(false);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [finished, setFinished] = useState(false);
   const [loadingElement, setLoadingElement] = useState(false);
@@ -63,12 +64,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     if (currentQuestion && survey) {
       setProgress(calculateProgress(currentQuestion, survey));
     }
-
-    // function calculateProgress(currentQuestion, survey) {
-    //   const elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id);
-    //   return elementIdx / survey.questions.length;
-    // }
-  }, []);
+  }, [currentQuestion]);
 
   function evaluateCondition(logic: Logic, answerValue: any): boolean {
     switch (logic.condition) {
@@ -196,44 +192,53 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
 
   const checkValidity = useCallback((question: Question, answer: any): boolean => {
     if (question.required && (!answer || answer === "")) return false;
-    switch (question.type) {
-      case QuestionType.OpenText: {
-        return true;
-      }
-      case QuestionType.MultipleChoiceSingle: {
-        const hasOther = question.choices[question.choices.length - 1].id === "other";
-        if (!hasOther) {
-          if (!question.choices.find((o) => o.label === answer)) return false;
+    try {
+      switch (question.type) {
+        case QuestionType.OpenText: {
           return true;
         }
-        return true;
-      }
-      case QuestionType.MultipleChoiceMulti: {
-        answer = answer.split(",");
-        const hasOther = question.choices[question.choices.length - 1].id === "other";
-        if (!hasOther) {
-          if (!answer.every((a: string) => question.choices.find((o) => o.label === a))) return false;
+        case QuestionType.MultipleChoiceSingle: {
+          const hasOther = question.choices[question.choices.length - 1].id === "other";
+          if (!hasOther) {
+            if (!question.choices.find((choice) => choice.label === answer)) return false;
+            return true;
+          }
           return true;
         }
-        return true;
+        case QuestionType.MultipleChoiceMulti: {
+          answer = answer.split(",");
+          const hasOther = question.choices[question.choices.length - 1].id === "other";
+          if (!hasOther) {
+            if (!answer.every((ans: string) => question.choices.find((choice) => choice.label === ans)))
+              return false;
+            return true;
+          }
+          return true;
+        }
+        case QuestionType.NPS: {
+          answer = answer.replace(/&/g, ";");
+          const answerNumber = Number(JSON.parse(answer));
+
+          if (isNaN(answerNumber)) return false;
+          if (answerNumber < 0 || answerNumber > 10) return false;
+          return true;
+        }
+        case QuestionType.CTA: {
+          if (question.required && answer === "dismissed") return false;
+          if (answer !== "clicked" && answer !== "dismissed") return false;
+          return true;
+        }
+        case QuestionType.Rating: {
+          answer = answer.replace(/&/g, ";");
+          const answerNumber = Number(JSON.parse(answer));
+          if (answerNumber < 1 || answerNumber > question.range) return false;
+          return true;
+        }
+        default:
+          return false;
       }
-      case QuestionType.NPS: {
-        const answerNumber = Number(answer);
-        if (answerNumber < 0 || answerNumber > 10) return false;
-        return true;
-      }
-      case QuestionType.CTA: {
-        if (question.required && answer === "dismissed") return false;
-        if (answer !== "clicked" && answer !== "dismissed") return false;
-        return true;
-      }
-      case QuestionType.Rating: {
-        const answerNumber = Number(answer);
-        if (answerNumber < 1 || answerNumber > question.range) return false;
-        return true;
-      }
-      default:
-        return false;
+    } catch (e) {
+      return false;
     }
   }, []);
 
@@ -247,7 +252,8 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
 
       case QuestionType.Rating:
       case QuestionType.NPS: {
-        return Number(answer);
+        answer = answer.replace(/&/g, ";");
+        return Number(JSON.parse(answer));
       }
 
       case QuestionType.MultipleChoiceMulti: {
@@ -269,21 +275,29 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
   }, []);
 
   useEffect(() => {
-    if (hasFirstQuestionPrefill) {
-      const firstQuestionId = survey.questions[0].id;
-      const question = survey.questions.find((q) => q.id === firstQuestionId);
-      if (!question) throw new Error("Question not found");
-      if (!currentQuestion) return;
+    try {
+      if (hasFirstQuestionPrefill) {
+        if (!currentQuestion) return;
+        const firstQuestionId = survey.questions[0].id;
+        if (currentQuestion.id !== firstQuestionId) return;
+        setPrefilling(true);
+        const question = survey.questions.find((q) => q.id === firstQuestionId);
+        if (!question) throw new Error("Question not found");
 
-      const isValid = checkValidity(question, firstQuestionPrefill);
-      if (!isValid) return;
-      const answer = createAnswer(question, firstQuestionPrefill || "");
-      const answerObj = { [firstQuestionId]: answer };
-      submitResponse(answerObj);
+        const isValid = checkValidity(question, firstQuestionPrefill);
+        console.log(isValid);
+        if (!isValid) return;
+
+        const answer = createAnswer(question, firstQuestionPrefill || "");
+        const answerObj = { [firstQuestionId]: answer };
+        submitResponse(answerObj);
+      }
+    } finally {
+      setPrefilling(false);
     }
   }, [currentQuestion, firstQuestionPrefill]);
 
-  if (!currentQuestion) {
+  if (!currentQuestion || prefilling) {
     return (
       <div className="flex h-full flex-1 items-center justify-center">
         <LoadingSpinner />
