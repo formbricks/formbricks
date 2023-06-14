@@ -9,11 +9,11 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { createDisplay, markDisplayResponded } from "@formbricks/lib/clientDisplay/display";
 import { createResponse, updateResponse } from "@formbricks/lib/clientResponse/response";
 import { cn } from "@formbricks/lib/cn";
-import type { Logic, Question } from "@formbricks/types/questions";
+import { QuestionType, type Logic, type Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Confetti } from "@formbricks/ui";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 type EnhancedSurvey = Survey & {
   brandColor: string;
@@ -32,7 +32,10 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
 
-  const isPreview = new URLSearchParams(window.location.search).get("preview") === "true";
+  const URLParams = new URLSearchParams(window.location.search);
+  const isPreview = URLParams.get("preview") === "true";
+  const hasFirstQuestionPrefill = URLParams.has(survey.questions[0].id);
+  const firstQuestionPrefill = hasFirstQuestionPrefill ? URLParams.get(survey.questions[0].id) : null;
 
   useEffect(() => {
     if (survey) {
@@ -51,16 +54,21 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     }
   }, [survey, isPreview]);
 
+  const calculateProgress = useCallback((currentQuestion, survey) => {
+    const elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id);
+    return elementIdx / survey.questions.length;
+  }, []);
+
   useEffect(() => {
     if (currentQuestion && survey) {
       setProgress(calculateProgress(currentQuestion, survey));
     }
 
-    function calculateProgress(currentQuestion, survey) {
-      const elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id);
-      return elementIdx / survey.questions.length;
-    }
-  }, [currentQuestion, survey]);
+    // function calculateProgress(currentQuestion, survey) {
+    //   const elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id);
+    //   return elementIdx / survey.questions.length;
+    // }
+  }, []);
 
   function evaluateCondition(logic: Logic, answerValue: any): boolean {
     switch (logic.condition) {
@@ -185,6 +193,95 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
       setFinished(true);
     }
   };
+
+  const checkValidity = useCallback((question: Question, answer: any): boolean => {
+    if (question.required && (!answer || answer === "")) return false;
+    switch (question.type) {
+      case QuestionType.OpenText: {
+        return true;
+      }
+      case QuestionType.MultipleChoiceSingle: {
+        const hasOther = question.choices[question.choices.length - 1].id === "other";
+        if (!hasOther) {
+          if (!question.choices.find((o) => o.label === answer)) return false;
+          return true;
+        }
+        return true;
+      }
+      case QuestionType.MultipleChoiceMulti: {
+        answer = answer.split(",");
+        const hasOther = question.choices[question.choices.length - 1].id === "other";
+        if (!hasOther) {
+          if (!answer.every((a: string) => question.choices.find((o) => o.label === a))) return false;
+          return true;
+        }
+        return true;
+      }
+      case QuestionType.NPS: {
+        const answerNumber = Number(answer);
+        if (answerNumber < 0 || answerNumber > 10) return false;
+        return true;
+      }
+      case QuestionType.CTA: {
+        if (question.required && answer === "dismissed") return false;
+        if (answer !== "clicked" && answer !== "dismissed") return false;
+        return true;
+      }
+      case QuestionType.Rating: {
+        const answerNumber = Number(answer);
+        if (answerNumber < 1 || answerNumber > question.range) return false;
+        return true;
+      }
+      default:
+        return false;
+    }
+  }, []);
+
+  const createAnswer = useCallback((question: Question, answer: string): string | number | string[] => {
+    switch (question.type) {
+      case QuestionType.OpenText:
+      case QuestionType.MultipleChoiceSingle:
+      case QuestionType.CTA: {
+        return answer;
+      }
+
+      case QuestionType.Rating:
+      case QuestionType.NPS: {
+        return Number(answer);
+      }
+
+      case QuestionType.MultipleChoiceMulti: {
+        let ansArr = answer.split(",");
+        const hasOthers = question.choices[question.choices.length - 1].id === "other";
+        if (!hasOthers) return ansArr;
+
+        // answer can be "a,b,c,d" and options can be a,c,others so we are filtering out the options that are not in the options list and sending these non-existing values as a single string(representing others) like "a", "c", "b,d"
+        const options = question.choices.map((o) => o.label);
+        const others = ansArr.filter((a: string) => !options.includes(a));
+        if (others.length > 0) ansArr = ansArr.filter((a: string) => options.includes(a));
+        if (others.length > 0) ansArr.push(others.join(","));
+        return ansArr;
+      }
+
+      default:
+        return "dismissed";
+    }
+  }, []);
+
+  useEffect(() => {
+    if (hasFirstQuestionPrefill) {
+      const firstQuestionId = survey.questions[0].id;
+      const question = survey.questions.find((q) => q.id === firstQuestionId);
+      if (!question) throw new Error("Question not found");
+      if (!currentQuestion) return;
+
+      const isValid = checkValidity(question, firstQuestionPrefill);
+      if (!isValid) return;
+      const answer = createAnswer(question, firstQuestionPrefill || "");
+      const answerObj = { [firstQuestionId]: answer };
+      submitResponse(answerObj);
+    }
+  }, [currentQuestion, firstQuestionPrefill]);
 
   if (!currentQuestion) {
     return (
