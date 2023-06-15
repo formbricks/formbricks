@@ -12,7 +12,7 @@ import { useCallback } from "react";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { convertDateString } from "@formbricks/lib/time";
+import { getTodaysDateFormatted } from "@formbricks/lib/time";
 
 export default function ResponseTimeline({ environmentId, surveyId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
@@ -61,11 +61,20 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
     return [];
   }, [survey, responses]);
 
+  const csvFileName = useMemo(() => {
+    if (survey) {
+      const formattedDateString = getTodaysDateFormatted("_");
+      return `${survey.name.split(" ").join("_")}_responses_${formattedDateString}`.toLocaleLowerCase();
+    }
+
+    return "my_survey_responses";
+  }, [survey]);
+
   const downloadResponses = useCallback(async () => {
     const csvData = matchQandA.map((response) => {
       const csvResponse = {
         "Response ID": response.id,
-        "Date Submitted": response.createdAt ? convertDateString(response.createdAt) : "",
+        Timestamp: response.createdAt,
         Finished: response.finished,
         "Survey ID": response.surveyId,
         "Formbricks User ID": response.person?.id ?? "",
@@ -105,7 +114,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
     // Fields which will be used as column headers in the CSV
     const fields = [
       "Response ID",
-      "Date Submitted",
+      "Timestamp",
       "Finished",
       "Survey ID",
       "Formbricks User ID",
@@ -121,6 +130,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
       response = await convertToCSV({
         json: csvData,
         fields,
+        fileName: csvFileName,
       });
     } catch (err) {
       toast.error("Error downloading CSV");
@@ -136,7 +146,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
     const link = document.createElement("a");
     link.href = downloadUrl;
 
-    link.download = "survey_responses.csv";
+    link.download = `${csvFileName}.csv`;
 
     document.body.appendChild(link);
     link.click();
@@ -144,7 +154,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
     document.body.removeChild(link);
 
     URL.revokeObjectURL(downloadUrl);
-  }, [attributeMap, matchQandA, questionNames]);
+  }, [attributeMap, csvFileName, matchQandA, questionNames]);
 
   if (isLoadingResponses || isLoadingSurvey) {
     return <LoadingSpinner />;

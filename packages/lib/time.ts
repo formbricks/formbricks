@@ -87,3 +87,10 @@ export const timeSinceConditionally = (dateString: string) => {
     ? convertDateTimeString(dateString)
     : timeSince(dateString);
 };
+
+export const getTodaysDateFormatted = (seperator: string) => {
+  const date = new Date();
+  const formattedDate = date.toISOString().split("T")[0].split("-").join(seperator);
+
+  return formattedDate;
+};

@@ -1,4 +1,4 @@
-export const convertToCSV = async (data: { json: any; fields?: string[] }) => {
+export const convertToCSV = async (data: { json: any; fields?: string[]; fileName?: string }) => {
   const response = await fetch("/api/csv-conversion", {
     method: "POST",
     headers: {
