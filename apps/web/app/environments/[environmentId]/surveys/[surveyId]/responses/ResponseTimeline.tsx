@@ -68,7 +68,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
         "Date Submitted": response.createdAt ? convertDateString(response.createdAt) : "",
         Finished: response.finished,
         "Survey ID": response.surveyId,
-        "Internal User ID": response.person?.id ?? "",
+        "Formbricks User ID": response.person?.id ?? "",
       };
 
       // Map each question name to its corresponding answer
@@ -95,7 +95,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
       const attributeValues = attributeMap[attributeName];
       Object.keys(attributeValues).forEach((personId) => {
         const value = attributeValues[personId];
-        const matchingResponse = csvData.find((response) => response["Internal User ID"] === personId);
+        const matchingResponse = csvData.find((response) => response["Formbricks User ID"] === personId);
         if (matchingResponse) {
           matchingResponse[attributeName] = value;
         }
@@ -108,7 +108,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
       "Date Submitted",
       "Finished",
       "Survey ID",
-      "Internal User ID",
+      "Formbricks User ID",
       ...Object.keys(attributeMap),
       ...questionNames,
     ];
