@@ -65,6 +65,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     if (currentQuestion && survey) {
       setProgress(calculateProgress(currentQuestion, survey));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion]);
 
   function evaluateCondition(logic: Logic, answerValue: any): boolean {
@@ -145,6 +146,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
 
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
+
     const nextQuestionId = getNextQuestionId(data);
 
     const finished = nextQuestionId === "end";
@@ -275,7 +277,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     }
   }, []);
 
-  useEffect(() => {
+  const handlePrefilling = useCallback(async () => {
     try {
       if (hasFirstQuestionPrefill) {
         if (!currentQuestion) return;
@@ -286,17 +288,21 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
         if (!question) throw new Error("Question not found");
 
         const isValid = checkValidity(question, firstQuestionPrefill);
-        console.log(isValid);
         if (!isValid) return;
 
         const answer = createAnswer(question, firstQuestionPrefill || "");
         const answerObj = { [firstQuestionId]: answer };
-        submitResponse(answerObj);
+        await submitResponse(answerObj);
       }
     } finally {
       setPrefilling(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion, firstQuestionPrefill]);
+
+  useEffect(() => {
+    handlePrefilling();
+  }, [handlePrefilling]);
 
   if (!currentQuestion || prefilling) {
     return (
