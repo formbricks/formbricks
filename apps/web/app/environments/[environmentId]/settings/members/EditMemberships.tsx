@@ -77,13 +77,16 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
           }}>
           Create New Team
         </Button>
-        <Button
-          variant="primary"
-          onClick={() => {
-            setAddMemberModalOpen(true);
-          }}>
-          Add Member
-        </Button>
+
+        {process.env.NEXT_PUBLIC_INVITE_DISABLED === '0' && (
+          <Button
+            variant="primary"
+            onClick={() => {
+              setAddMemberModalOpen(true);
+            }}>
+            Add Member
+          </Button>
+        )}
       </div>
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-7 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
