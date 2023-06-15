@@ -45,16 +45,6 @@ const deleteUser = async (userId: string) => {
     },
   });
 };
-const deleteMembership = async (teamId: string, userId: string) => {
-  await prisma.membership.delete({
-    where: {
-      userId_teamId: {
-        userId,
-        teamId,
-      },
-    },
-  });
-};
 
 // I created this type because I don't have access to prisma unums.
 // TODO find a way to get access to prisma enums
@@ -127,15 +117,9 @@ export async function DELETE() {
       if (teamHasOnlyOneMember) {
         await deleteTeam(teamId);
       } else {
-        if (currentUserIsTeamOwner) {
-          if (teamHasAtLeastOneAdmin) {
-            const firstAdmin = teamAdminMemberships[0];
-            await updateUserMembership(teamId, firstAdmin.userId, "owner");
-          } else {
-            await deleteMembership(teamId, currentUser.id);
-          }
-        } else {
-          await deleteMembership(teamId, currentUser.id);
+        if (currentUserIsTeamOwner && teamHasAtLeastOneAdmin) {
+          const firstAdmin = teamAdminMemberships[0];
+          await updateUserMembership(teamId, firstAdmin.userId, "owner");
         }
       }
     }
