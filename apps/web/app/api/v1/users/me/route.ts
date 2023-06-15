@@ -38,8 +38,6 @@ export async function PUT(request: NextRequest) {
   return NextResponse.json(user);
 }
 
-const teamHasAtLeastOneAdmin = (teamAdminMemberships) => teamAdminMemberships.length;
-
 const deleteUser = async (userId: string) => {
   await prisma.user.delete({
     where: {
@@ -76,6 +74,16 @@ const updateUserMembership = async (teamId: string, userId: string, role: Member
   });
 };
 
+const getAdminMemberships = (memberships) => memberships.filter((membership) => membership.role === "admin");
+
+const deleteTeam = async (teamId: string) => {
+  await prisma.team.delete({
+    where: {
+      id: teamId,
+    },
+  });
+};
+
 export async function DELETE() {
   try {
     const currentUser = await getSessionUser();
@@ -100,32 +108,42 @@ export async function DELETE() {
                 userId: true,
                 role: true,
               },
-              where: {
-                role: "admin",
-              },
             },
           },
         },
       },
     });
 
-    for (const membership of currentUserMemberships) {
-      if (membership.role === "owner") {
-        if (teamHasAtLeastOneAdmin(membership.team.memberships)) {
-          const firstAdmin = membership.team.memberships[0];
-          await updateUserMembership(membership.teamId, firstAdmin.userId, "owner");
-        } else {
-          await deleteMembership(membership.teamId, currentUser.id);
-        }
+    for (const currentUserMembership of currentUserMemberships) {
+      const teamMemberships = currentUserMembership.team.memberships;
+      const role = currentUserMembership.role;
+      const teamId = currentUserMembership.teamId;
+
+      const teamAdminMemberships = getAdminMemberships(teamMemberships);
+      const teamHasAtLeastOneAdmin = teamAdminMemberships.length > 0;
+      const teamHasOnlyOneMember = teamMemberships.length === 1;
+      const currentUserIsTeamOwner = role === "owner";
+
+      if (teamHasOnlyOneMember) {
+        await deleteTeam(teamId);
       } else {
-        await deleteMembership(membership.teamId, currentUser.id);
+        if (currentUserIsTeamOwner) {
+          if (teamHasAtLeastOneAdmin) {
+            const firstAdmin = teamAdminMemberships[0];
+            await updateUserMembership(teamId, firstAdmin.userId, "owner");
+          } else {
+            await deleteMembership(teamId, currentUser.id);
+          }
+        } else {
+          await deleteMembership(teamId, currentUser.id);
+        }
       }
     }
 
     await deleteUser(currentUser.id);
+
     return NextResponse.json({ deletedUser: currentUser }, { status: 200 });
   } catch (error) {
-    console.log("-----------------------------", error.message);
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
