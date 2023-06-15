@@ -12,11 +12,12 @@
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
   },
   "dependencies": {
-    "@formbricks/database": "*"
+    "@formbricks/database": "*",
+    "@formbricks/types": "*",
+    "@formbricks/errors": "*"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "*",
-    "@formbricks/types": "*",
     "eslint": "^8.41.0",
     "eslint-config-formbricks": "workspace:*",
     "typescript": "^5.0.4"

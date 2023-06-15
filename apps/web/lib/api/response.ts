@@ -112,8 +112,22 @@ const successResponse = (data: Object, cors: boolean = false) =>
     }
   );
 
+const internalServerErrorResponse = (message: string, cors: boolean = false) =>
+  NextResponse.json(
+    {
+      code: "internal_server_error",
+      message,
+      details: {},
+    } as ApiErrorResponse,
+    {
+      status: 500,
+      ...(cors && { headers: corsHeaders }),
+    }
+  );
+
 export const responses = {
   badRequestResponse,
+  internalServerErrorResponse,
   missingFieldResponse,
   methodNotAllowedResponse,
   notAuthenticatedResponse,

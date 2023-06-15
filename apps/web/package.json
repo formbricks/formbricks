@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@formbricks/ee": "workspace:*",
+    "@formbricks/errors": "workspace:*",
     "@formbricks/js": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/ui": "workspace:*",

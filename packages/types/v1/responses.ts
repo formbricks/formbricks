@@ -6,8 +6,8 @@ export type TResponseData = z.infer<typeof ZResponseData>;
 
 const ZResponse = z.object({
   id: z.string().cuid2(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
   surveyId: z.string().cuid2(),
   person: z
     .object({
