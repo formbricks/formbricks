@@ -53,8 +53,19 @@ const navigation = [
   {
     title: "Client API",
     links: [
-      { title: "Create Response", href: "/docs/api/create-response" },
-      { title: "Update Response", href: "/docs/api/update-response" },
+      { title: "Overview", href: "/docs/client-api/overview" },
+      { title: "Create Response", href: "/docs/client-api/create-response" },
+      { title: "Update Response", href: "/docs/client-api/update-response" },
+    ],
+  },
+  {
+    title: "Webhook API",
+    links: [
+      { title: "Overview", href: "/docs/webhook-api/overview" },
+      { title: "List Webhooks", href: "/docs/webhook-api/list-webhooks" },
+      { title: "Get Webhook", href: "/docs/webhook-api/get-webhook" },
+      { title: "Create Webhook", href: "/docs/webhook-api/create-webhook" },
+      { title: "Delete Webhook", href: "/docs/webhook-api/delete-webhook" },
     ],
   },
   {

@@ -23,10 +23,15 @@ export default function MultipleChoiceMultiQuestion({
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
-
+  /*   const [isIphone, setIsIphone] = useState(false);
+   */
   useEffect(() => {
     setIsAtLeastOneChecked(selectedChoices.length > 0 || otherSpecified.length > 0);
   }, [selectedChoices, otherSpecified]);
+
+  /*   useEffect(() => {
+    setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
+  }, []); */
 
   return (
     <form
@@ -56,7 +61,7 @@ export default function MultipleChoiceMultiQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative space-y-2 rounded-md bg-white">
+          <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
             {question.choices &&
               question.choices.map((choice) => (
                 <>

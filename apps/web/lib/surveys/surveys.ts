@@ -116,3 +116,37 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
     throw Error(`duplicateSurvey: unable to duplicate survey: ${error.message}`);
   }
 };
+
+export const generateQuestionsAndAttributes = (survey, responses) => {
+  let questionNames: string[] = [];
+
+  if (survey?.questions) {
+    questionNames = survey.questions.map((question) => question.headline);
+  }
+
+  const attributeMap: Record<string, Record<string, string | null>> = {};
+
+  if (responses) {
+    responses.forEach((response) => {
+      const { person } = response;
+      if (person !== null) {
+        const { id, attributes } = person;
+        attributes.forEach((attribute) => {
+          const { attributeClass, value } = attribute;
+          const attributeName = attributeClass.name;
+
+          if (!attributeMap.hasOwnProperty(attributeName)) {
+            attributeMap[attributeName] = {};
+          }
+
+          attributeMap[attributeName][id] = value;
+        });
+      }
+    });
+  }
+
+  return {
+    questionNames,
+    attributeMap,
+  };
+};

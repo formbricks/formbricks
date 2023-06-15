@@ -20,7 +20,13 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  /*   const [isIphone, setIsIphone] = useState(false);
 
+
+  useEffect(() => {
+    setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
+  }, []);
+ */
   return (
     <form
       onSubmit={(e) => {
@@ -37,14 +43,14 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative space-y-2 rounded-md">
+          <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
             {question.choices &&
               question.choices.map((choice, idx) => (
                 <label
                   key={choice.id}
                   className={cn(
                     selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
-                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
+                    "relative mb-2 flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
                   )}>
                   <span className="flex items-center text-sm">
                     <input
@@ -76,6 +82,12 @@ export default function MultipleChoiceSingleQuestion({
                   )}
                 </label>
               ))}
+            {/*             {isIphone && question.choices.length > 5 && (
+              <div className="z-50 -mt-8 h-8 bg-gradient-to-b from-transparent to-white"></div>
+            )} */}
+            {/*             {isIphone && question.choices.length > 5 && (
+              <div className="z-50 -mt-8 h-8 bg-gradient-to-b from-transparent to-white"></div>
+            )} */}
           </div>
         </fieldset>
       </div>

@@ -36,7 +36,7 @@ export default function EventClassesList({ environmentId }) {
     <>
       <div className="mb-6 text-right">
         <Button
-          variant="primary"
+          variant="darkCTA"
           onClick={() => {
             setAddEventModalOpen(true);
           }}>

@@ -15,6 +15,7 @@
     "@formbricks/lib": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@heroicons/react": "^2.0.18",
+    "@json2csv/node": "^7.0.1",
     "@paralleldrive/cuid2": "^2.2.0",
     "@radix-ui/react-alert-dialog": "^1.0.3",
     "@radix-ui/react-collapsible": "^1.0.2",
@@ -48,7 +49,8 @@
     "react-use": "^17.4.0",
     "stripe": "^12.6.0",
     "swr": "^2.1.5",
-    "typescript": "5.0.4"
+    "typescript": "5.0.4",
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@formbricks/database": "workspace:*",

@@ -12,14 +12,15 @@ generator client {
   //provider = "prisma-dbml-generator"
 }
 
+generator zod {
+  provider      = "zod-prisma"
+  output        = "./zod"
+  imports       = "./zod-utils"
+  relationModel = "default"
+}
+
 generator json {
   provider = "prisma-json-types-generator"
-  // namespace = "PrismaJson"
-  // clientOutput = "<finds it automatically>"
-  // (./ -> relative to schema, or an importable path to require() it)
-  // useType = "MyType"
-  // In case you need to use a type, export it inside the namespace and we will add a index signature to it
-  // (e.g.  export namespace PrismaJson { export type MyType = {a: 1, b: 2} }; will generate namespace.MyType["TYPE HERE"])
 }
 
 enum PipelineTriggers {
@@ -63,6 +64,7 @@ model AttributeClass {
   updatedAt        DateTime                @updatedAt @map(name: "updated_at")
   name             String
   description      String?
+  archived         Boolean                 @default(false)
   type             AttributeType
   environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
@@ -85,18 +87,32 @@ model Person {
 }
 
 model Response {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @updatedAt @map(name: "updated_at")
-  finished  Boolean  @default(false)
-  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId  String
-  person    Person?  @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId  String?
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now()) @map(name: "created_at")
+  updatedAt     DateTime @updatedAt @map(name: "updated_at")
+  finished      Boolean  @default(false)
+  survey        Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId      String
+  person        Person?  @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId      String?
+  responseNotes  ResponseNote[]
+    /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
   data      Json     @default("{}")
+  /// @zod.custom(imports.ZResponseMeta)
   /// [ResponseMeta]
   meta      Json     @default("{}")
+}
+
+model ResponseNote {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now()) @map(name: "created_at")
+  updatedAt  DateTime @updatedAt @map(name: "updated_at")
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  responseId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  text       String
 }
 
 enum SurveyStatus {
@@ -176,8 +192,12 @@ model Survey {
   environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
   status           SurveyStatus            @default(draft)
+  /// @zod.custom(imports.ZSurveyQuestions)
+  /// @zod.custom(imports.ZSurveyQuestions)
   /// [SurveyQuestions]
   questions        Json                    @default("[]")
+  /// @zod.custom(imports.ZSurveyThankYouCard)
+  /// @zod.custom(imports.ZSurveyThankYouCard)
   /// [SurveyThankYouCard]
   thankYouCard     Json                    @default("{\"enabled\": false}")
   responses        Response[]
@@ -197,6 +217,8 @@ model Event {
   eventClassId String?
   session      Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId    String
+  /// @zod.custom(imports.ZEventProperties)
+  /// @zod.custom(imports.ZEventProperties)
   /// [EventProperties]
   properties   Json        @default("{}")
 }
@@ -215,7 +237,7 @@ model EventClass {
   description   String?
   type          EventType
   events        Event[]
-  /// [EventClassNoCodeConfig]
+  /// @zod.custom(imports.ZEventClassNoCodeConfig)
   noCodeConfig  Json?
   environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
@@ -395,11 +417,14 @@ model User {
   identityProviderAccountId String?
   memberships               Membership[]
   accounts                  Account[]
+  responseNote              ResponseNote[]
   groupId                   String?
   invitesCreated            Invite[]         @relation("inviteCreatedBy")
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
   role                      Role?
   objective                 Objective?
+  /// @zod.custom(imports.ZUserNotificationSettings)
+  /// @zod.custom(imports.ZUserNotificationSettings)
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
 }
