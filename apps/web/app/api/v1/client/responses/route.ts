@@ -1,14 +1,14 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { sendToPipeline } from "@/lib/pipelines";
-import { DatabaseError, InvalidInputError } from "@formbricks/errors";
+import { prisma } from "@formbricks/database";
+import { InvalidInputError } from "@formbricks/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
-import { prisma } from "@formbricks/database";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
