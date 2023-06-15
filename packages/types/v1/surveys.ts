@@ -178,9 +178,9 @@ export const ZSurveyAttributeFilter = z.object({
 });
 
 export const ZSurvey = z.object({
-  id: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  id: z.string().cuid2(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
   name: z.string(),
   type: z.union([z.literal("web"), z.literal("email"), z.literal("link"), z.literal("mobile")]),
   environmentId: z.string(),

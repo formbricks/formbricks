@@ -1,5 +1,7 @@
-import { TPerson } from "@formbricks/types/v1/people";
 import { prisma } from "@formbricks/database";
+import { TPerson } from "@formbricks/types/v1/people";
+import { Prisma } from "@prisma/client";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 
 type TransformPersonInput = {
   id: string;
@@ -33,24 +35,36 @@ export const transformPrismaPerson = (person: TransformPersonInput | null): Tran
 };
 
 export const getPerson = async (personId: string): Promise<TPerson | null> => {
-  const personPrisma = await prisma.person.findUnique({
-    where: {
-      id: personId,
-    },
-    include: {
-      attributes: {
-        include: {
-          attributeClass: {
-            select: {
-              name: true,
+  try {
+    const personPrisma = await prisma.person.findUnique({
+      where: {
+        id: personId,
+      },
+      include: {
+        attributes: {
+          include: {
+            attributeClass: {
+              select: {
+                name: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    });
 
-  const person = transformPrismaPerson(personPrisma);
+    if (!personPrisma) {
+      throw new ResourceNotFoundError("Person", personId);
+    }
 
-  return person;
+    const person = transformPrismaPerson(personPrisma);
+
+    return person;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
 };

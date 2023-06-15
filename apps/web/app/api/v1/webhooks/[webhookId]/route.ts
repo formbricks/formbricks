@@ -1,6 +1,6 @@
-import { hashApiKey } from "@/lib/api/apiHelper";
 import { responses } from "@/lib/api/response";
-import { prisma } from "@formbricks/database";
+import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
+import { deleteWebhook, getWebhook } from "@formbricks/lib/services/webhook";
 import { headers } from "next/headers";
 
 export async function GET(_: Request, { params }: { params: { webhookId: string } }) {
@@ -8,24 +8,13 @@ export async function GET(_: Request, { params }: { params: { webhookId: string 
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
   }
-  const apiKeyData = await prisma.apiKey.findUnique({
-    where: {
-      hashedKey: hashApiKey(apiKey),
-    },
-    select: {
-      environmentId: true,
-    },
-  });
+  const apiKeyData = await getApiKeyFromKey(apiKey);
   if (!apiKeyData) {
     return responses.notAuthenticatedResponse();
   }
 
   // add webhook to database
-  const webhook = await prisma.webhook.findUnique({
-    where: {
-      id: params.webhookId,
-    },
-  });
+  const webhook = await getWebhook(params.webhookId);
   if (!webhook) {
     return responses.notFoundResponse("Webhook", params.webhookId);
   }
@@ -37,26 +26,17 @@ export async function DELETE(_: Request, { params }: { params: { webhookId: stri
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
   }
-  const apiKeyData = await prisma.apiKey.findUnique({
-    where: {
-      hashedKey: hashApiKey(apiKey),
-    },
-    select: {
-      environmentId: true,
-    },
-  });
+  const apiKeyData = await getApiKeyFromKey(apiKey);
   if (!apiKeyData) {
     return responses.notAuthenticatedResponse();
   }
 
   // add webhook to database
-  const webhook = await prisma.webhook.delete({
-    where: {
-      id: params.webhookId,
-    },
-  });
-  if (!webhook) {
+  try {
+    const webhook = await deleteWebhook(params.webhookId);
+    return responses.successResponse(webhook);
+  } catch (e) {
+    console.error(e.message);
     return responses.notFoundResponse("Webhook", params.webhookId);
   }
-  return responses.successResponse(webhook);
 }

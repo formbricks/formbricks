@@ -1,7 +1,8 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getResponse, updateResponse } from "@formbricks/lib/services/response";
+import { sendToPipeline } from "@/lib/pipelines";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
+import { updateResponse } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";
 import { ZResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
@@ -27,55 +28,54 @@ export async function PUT(
     );
   }
 
-  // get current response
-  const currentResponse = await getResponse(responseId);
-
-  if (!currentResponse) {
-    return responses.notFoundResponse("Response", responseId, true);
+  // update response
+  let response;
+  try {
+    response = await updateResponse(responseId, inputValidation.data);
+  } catch (error) {
+    if (error instanceof ResourceNotFoundError) {
+      return responses.notFoundResponse("Response", responseId, true);
+    }
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    }
+    if (error instanceof DatabaseError) {
+      return responses.internalServerErrorResponse(error.message);
+    }
   }
 
   // get survey to get environmentId
-  const survey = await getSurvey(currentResponse.surveyId);
-  if (!survey) {
-    // shouldn't happen as survey relation is required
-    return responses.notFoundResponse("Survey", currentResponse.surveyId, true);
+  let survey;
+  try {
+    survey = await getSurvey(response.surveyId);
+  } catch (error) {
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    }
+    if (error instanceof DatabaseError) {
+      return responses.internalServerErrorResponse(error.message);
+    }
   }
-  const environmentId = survey.environmentId;
-
-  // update response
-  const response = await updateResponse(responseId, responseUpdate);
 
   // send response update to pipeline
   // don't await to not block the response
-  fetch(`${WEBAPP_URL}/api/pipeline`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  sendToPipeline("responseUpdated", {
+    environmentId: survey.environmentId,
+    surveyId: survey.id,
+    // only send the updated fields
+    data: {
+      ...response,
+      data: inputValidation.data.data,
     },
-    body: JSON.stringify({
-      internalSecret: INTERNAL_SECRET,
-      environmentId,
-      surveyId: response.surveyId,
-      event: "responseUpdated",
-      data: response,
-    }),
   });
 
   if (response.finished) {
     // send response to pipeline
     // don't await to not block the response
-    fetch(`${WEBAPP_URL}/api/pipeline`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        internalSecret: INTERNAL_SECRET,
-        environmentId,
-        surveyId: response.surveyId,
-        event: "responseFinished",
-        data: response,
-      }),
+    sendToPipeline("responseFinished", {
+      environmentId: survey.environmentId,
+      surveyId: survey.id,
+      data: response,
     });
   }
 

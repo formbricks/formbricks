@@ -1,13 +1,14 @@
 import { responses } from "@/lib/api/response";
-import { prisma } from "@formbricks/database";
 import { transformErrorToDetails } from "@/lib/api/validator";
+import { sendToPipeline } from "@/lib/pipelines";
+import { DatabaseError, InvalidInputError } from "@formbricks/errors";
+import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/services/response";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getSurvey } from "@formbricks/lib/services/survey";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { prisma } from "@formbricks/database";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -25,25 +26,22 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  // check if survey exists
-  const survey = await getSurvey(responseInput.surveyId);
+  let survey;
 
-  if (!survey) {
-    return responses.badRequestResponse(
-      "Linked ressource not found",
-      {
-        surveyId: "Survey not found",
-      },
-      true
-    );
+  try {
+    survey = await getSurvey(responseInput.surveyId);
+  } catch (error) {
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    } else {
+      return responses.internalServerErrorResponse(error.message);
+    }
   }
-
-  const environmentId = survey.environmentId;
 
   // prisma call to get the teamId
   // TODO use services
   const environment = await prisma.environment.findUnique({
-    where: { id: environmentId },
+    where: { id: survey.environmentId },
     include: {
       product: {
         select: {
@@ -63,9 +61,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   });
 
   if (!environment) {
-    throw new Error("Environment not found");
+    return responses.internalServerErrorResponse("Environment not found");
   }
-
   const {
     product: {
       team: { id: teamId, memberships },
@@ -74,39 +71,28 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const teamOwnerId = memberships[0]?.userId;
 
-  const response = await createResponse(responseInput);
+  let response;
+  try {
+    response = await createResponse(responseInput);
+  } catch (error) {
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    } else {
+      return responses.internalServerErrorResponse(error.message);
+    }
+  }
 
-  // send response to pipeline
-  // don't await to not block the response
-  fetch(`${WEBAPP_URL}/api/pipeline`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      internalSecret: INTERNAL_SECRET,
-      environmentId,
-      surveyId: response.surveyId,
-      event: "responseCreated",
-      data: response,
-    }),
+  sendToPipeline("responseCreated", {
+    environmentId: survey.environmentId,
+    surveyId: response.surveyId,
+    data: response,
   });
 
   if (responseInput.finished) {
-    // send response to pipeline
-    // don't await to not block the response
-    fetch(`${WEBAPP_URL}/api/pipeline`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        internalSecret: INTERNAL_SECRET,
-        environmentId,
-        surveyId: response.surveyId,
-        event: "responseFinished",
-        data: response,
-      }),
+    sendToPipeline("responseFinished", {
+      environmentId: survey.environmentId,
+      surveyId: response.surveyId,
+      data: response,
     });
   }
 
