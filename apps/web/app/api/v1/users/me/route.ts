@@ -38,19 +38,57 @@ export async function PUT(request: NextRequest) {
   return NextResponse.json(user);
 }
 
+const teamHasAtLeastOneAdmin = (teamAdminMemberships) => teamAdminMemberships.length;
+
+const deleteUser = async (userId: string) => {
+  await prisma.user.delete({
+    where: {
+      id: userId,
+    },
+  });
+};
+const deleteMembership = async (teamId: string, userId: string) => {
+  await prisma.membership.delete({
+    where: {
+      userId_teamId: {
+        userId,
+        teamId,
+      },
+    },
+  });
+};
+
+// I created this type because I don't have access to prisma unums.
+// TODO find a way to get access to prisma enums
+type MembershipRole = "admin" | "owner";
+
+const updateUserMembership = async (teamId: string, userId: string, role: MembershipRole) => {
+  await prisma.membership.update({
+    where: {
+      userId_teamId: {
+        userId,
+        teamId,
+      },
+    },
+    data: {
+      role,
+    },
+  });
+};
+
 export async function DELETE() {
   try {
-    const sessionUser = await getSessionUser();
+    const currentUser = await getSessionUser();
 
-    if (!sessionUser) {
+    if (!currentUser) {
       return new Response("Not authenticated", {
         status: 401,
       });
     }
 
-    const memberships = await prisma.membership.findMany({
+    const currentUserMemberships = await prisma.membership.findMany({
       where: {
-        userId: sessionUser.id,
+        userId: currentUser.id,
       },
       include: {
         team: {
@@ -59,12 +97,7 @@ export async function DELETE() {
             name: true,
             memberships: {
               select: {
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
+                userId: true,
                 role: true,
               },
               where: {
@@ -76,51 +109,23 @@ export async function DELETE() {
       },
     });
 
-    for (const membership of memberships) {
+    for (const membership of currentUserMemberships) {
       if (membership.role === "owner") {
-        if (membership.team.memberships.length) {
-          const newOwner = membership.team.memberships[0];
-          await prisma.membership.update({
-            where: {
-              userId_teamId: {
-                teamId: membership.teamId,
-                userId: newOwner.user.id,
-              },
-            },
-            data: {
-              role: "owner",
-            },
-          });
+        if (teamHasAtLeastOneAdmin(membership.team.memberships)) {
+          const firstAdmin = membership.team.memberships[0];
+          await updateUserMembership(membership.teamId, firstAdmin.userId, "owner");
         } else {
-          await prisma.membership.delete({
-            where: {
-              userId_teamId: {
-                userId: sessionUser.id,
-                teamId: membership.teamId,
-              },
-            },
-          });
+          await deleteMembership(membership.teamId, currentUser.id);
         }
       } else {
-        await prisma.membership.delete({
-          where: {
-            userId_teamId: {
-              userId: sessionUser.id,
-              teamId: membership.teamId,
-            },
-          },
-        });
+        await deleteMembership(membership.teamId, currentUser.id);
       }
     }
-    // Delete user
-    await prisma.user.delete({
-      where: {
-        id: sessionUser.id,
-      },
-    });
-    return NextResponse.json({ deletedUser: sessionUser }, { status: 200 });
+
+    await deleteUser(currentUser.id);
+    return NextResponse.json({ deletedUser: currentUser }, { status: 200 });
   } catch (error) {
-    console.log(error.message);
+    console.log("-----------------------------", error.message);
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
