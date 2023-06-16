@@ -67,7 +67,7 @@ const App: FC<IProps> = ({
   }
 
   return (
-    <div className='w-full px-5 py-5'>
+    <div className='w-full px-5 py-5 bg-ui-gray-light'>
       <SnoopForm
         key={id} // used to reset form
         domain={window.location.host}
@@ -84,9 +84,10 @@ const App: FC<IProps> = ({
           thankyou={false}
           time={findTimer(page, startDate)}
           countDown={isTimedPage(page)}
+          
         >
           {page.blocks.map((block: PageBlock) => (
-            <div key={block.id}>
+            <div key={block.id} className="bg-white px-5 py-5 rounded">
               {block.type === "paragraph" ? (
                 <p
                   className='ce-paragraph'
