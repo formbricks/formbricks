@@ -9,5 +9,8 @@
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
     "rimraf": "^5.0.1"
+  },
+  "dependencies": {
+    "zod": "^3.21.4"
   }
 }

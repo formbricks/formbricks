@@ -8,7 +8,13 @@ export interface ApiSuccessResponse<T = { [key: string]: any }> {
 }
 
 export interface ApiErrorResponse {
-  code: "not_found" | "bad_request" | "internal_server_error" | "unauthorized" | "method_not_allowed";
+  code:
+    | "not_found"
+    | "bad_request"
+    | "internal_server_error"
+    | "unauthorized"
+    | "method_not_allowed"
+    | "not_authenticated";
   message: string;
   details: {
     [key: string]: string | string[] | number | number[] | boolean | boolean[];
@@ -80,6 +86,21 @@ const notFoundResponse = (resourceType: string, resourceId: string, cors: boolea
     }
   );
 
+const notAuthenticatedResponse = (cors: boolean = false) =>
+  NextResponse.json(
+    {
+      code: "not_authenticated",
+      message: "Not authenticated",
+      details: {
+        "X-Api-Key": "Header not provided or API Key invalid",
+      },
+    } as ApiErrorResponse,
+    {
+      status: 401,
+      ...(cors && { headers: corsHeaders }),
+    }
+  );
+
 const successResponse = (data: Object, cors: boolean = false) =>
   NextResponse.json(
     {
@@ -91,10 +112,25 @@ const successResponse = (data: Object, cors: boolean = false) =>
     }
   );
 
+const internalServerErrorResponse = (message: string, cors: boolean = false) =>
+  NextResponse.json(
+    {
+      code: "internal_server_error",
+      message,
+      details: {},
+    } as ApiErrorResponse,
+    {
+      status: 500,
+      ...(cors && { headers: corsHeaders }),
+    }
+  );
+
 export const responses = {
   badRequestResponse,
+  internalServerErrorResponse,
   missingFieldResponse,
   methodNotAllowedResponse,
+  notAuthenticatedResponse,
   notFoundResponse,
   successResponse,
 };

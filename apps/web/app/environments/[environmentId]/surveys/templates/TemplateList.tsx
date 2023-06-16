@@ -14,6 +14,8 @@ import { SparklesIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { customSurvey, templates } from "./templates";
+import { SplitIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 
 type TemplateList = {
   environmentId: string;
@@ -34,12 +36,6 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
   const [selectedFilter, setSelectedFilter] = useState(RECOMMENDED_CATEGORY_NAME);
 
   const [categories, setCategories] = useState<Array<string>>([]);
-
-  /*   useEffect(() => {
-    if (product && templates?.length) {
-      setActiveTemplate(customSurvey);
-    }
-  }, [product]); */
 
   useEffect(() => {
     const defaultCategories = [
@@ -74,7 +70,7 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
 
   return (
     <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-3 focus:outline-none">
-      <div className="mb-6 flex flex-wrap space-x-2">
+      <div className="mb-6 flex flex-wrap gap-2">
         {categories.map((category) => (
           <button
             key={category}
@@ -103,7 +99,7 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
             activeTemplate?.name === customSurvey.name
               ? "ring-brand border-transparent ring-2"
               : "hover:border-brand-dark  border-dashed border-slate-300",
-            "duration-120  group relative rounded-lg border-2  bg-transparent p-8 transition-colors duration-150"
+            "duration-120  group relative rounded-lg border-2  bg-transparent p-6 transition-colors duration-150"
           )}>
           <PlusCircleIcon className="text-brand-dark h-8 w-8 transition-all duration-150 group-hover:scale-110" />
           <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700 ">{customSurvey.name}</h3>
@@ -138,13 +134,41 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
               }}
               key={template.name}
               className={cn(
-                activeTemplate?.name === template.name && "ring-brand ring-2",
-                "duration-120  group  relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105"
+                activeTemplate?.name === template.name && "ring-2 ring-slate-400",
+                "duration-120 group relative cursor-pointer rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105"
               )}>
-              <div className="absolute right-6 top-6 rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500">
-                {template.category}
+              <div className="flex">
+                <div
+                  className={`rounded border px-1.5 py-0.5 text-xs ${
+                    template.category === "Product Experience"
+                      ? "border-blue-300 bg-blue-50 text-blue-500"
+                      : template.category === "Exploration"
+                      ? "border-pink-300 bg-pink-50 text-pink-500"
+                      : template.category === "Growth"
+                      ? "border-orange-300 bg-orange-50 text-orange-500"
+                      : template.category === "Increase Revenue"
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-500"
+                      : template.category === "Customer Success"
+                      ? "border-violet-300 bg-violet-50 text-violet-500"
+                      : "border-slate-300 bg-slate-50 text-slate-500" // default color
+                  }`}>
+                  {template.category}
+                </div>
+                {template.preset.questions.some(
+                  (question) => question.logic && question.logic.length > 0
+                ) && (
+                  <TooltipProvider delayDuration={80}>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div>
+                          <SplitIcon className="ml-1.5 h-5 w-5  rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>This survey uses branching logic.</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
-              <template.icon className="h-8 w-8" />
               <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
               <p className="text-left text-xs text-slate-600">{template.description}</p>
               {activeTemplate?.name === template.name && (

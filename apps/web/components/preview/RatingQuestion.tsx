@@ -51,7 +51,7 @@ export default function RatingQuestion({
       type="radio"
       name="rating"
       value={number}
-      className="absolute h-full w-full cursor-pointer opacity-0"
+      className="absolute left-0 h-full w-full cursor-pointer opacity-0"
       onChange={() => handleSelect(number)}
       required={question.required}
     />
