@@ -30,6 +30,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import TemplateList from "./templates/TemplateList";
+import { useEffect } from "react";
+import { changeEnvironment } from "@/lib/environments/changeEnvironments";
 
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
@@ -41,6 +43,13 @@ export default function SurveysList({ environmentId }) {
 
   const [activeSurvey, setActiveSurvey] = useState("" as any);
   const [activeSurveyIdx, setActiveSurveyIdx] = useState("" as any);
+  const [otherEnvironment, setOtherEnvironment] = useState("" as any);
+  
+  useEffect(()=>{
+    if(environment){
+      setOtherEnvironment(environment.product.environments.find((e)=>e.type!==environment.type))    
+    }
+  },[environment])
 
   const newSurvey = async () => {
     router.push(`/environments/${environmentId}/surveys/templates`);
@@ -84,6 +93,22 @@ export default function SurveysList({ environmentId }) {
       toast.error("Failed to duplicate the survey.");
     }
   };
+
+  const copyToOtherEnvironment= async (surveyId)=>{
+    try{
+      const survey=surveys.find((s)=>s.id===surveyId)
+      let {id,environmentId,createdAt,updatedAt,_count,...rest}=survey
+      await createSurvey(otherEnvironment.id, rest)
+      if(otherEnvironment.type==="production"){
+        toast.success("Survey copied to production env.");
+      }else if(otherEnvironment.type==="development"){
+        toast.success("Survey copied to development env.");
+      }
+      changeEnvironment(otherEnvironment.type,environment,router);
+    }catch(error){
+      toast.error(`Failed to copy to ${otherEnvironment.type}`);
+    }
+  }
 
   if (isLoadingSurveys || isLoadingEnvironment) {
     return <LoadingSpinner />;
@@ -209,9 +234,7 @@ export default function SurveysList({ environmentId }) {
                               <button
                                 className="flex w-full items-center"
                                 onClick={() => {
-                                  // copy survey to other environment
-                                  // forward to environment
-                                  toast.success("Survey copied to production env.");
+                                  copyToOtherEnvironment(survey.id)
                                 }}>
                                 <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
                                 Copy to Prod.
@@ -222,9 +245,7 @@ export default function SurveysList({ environmentId }) {
                               <button
                                 className="flex w-full items-center"
                                 onClick={() => {
-                                  // copy survey to other environment
-                                  // forward to environment
-                                  toast.success("Survey copied to production env.");
+                                  copyToOtherEnvironment(survey.id)
                                 }}>
                                 <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
                                 Copy to Dev.
