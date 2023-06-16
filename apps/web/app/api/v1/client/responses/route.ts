@@ -82,14 +82,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
   }
 
-  sendToPipeline("responseCreated", {
+  sendToPipeline({
+    event: "responseCreated",
     environmentId: survey.environmentId,
     surveyId: response.surveyId,
     data: response,
   });
 
   if (responseInput.finished) {
-    sendToPipeline("responseFinished", {
+    sendToPipeline({
+      event: "responseFinished",
       environmentId: survey.environmentId,
       surveyId: response.surveyId,
       data: response,
