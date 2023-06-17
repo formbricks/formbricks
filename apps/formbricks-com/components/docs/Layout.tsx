@@ -12,6 +12,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import MetaInformation from "../shared/MetaInformation";
 import DocsFeedback from "./DocsFeedback";
+import { useRef } from "react";
 
 function GitHubIcon(props: any) {
   return (
@@ -92,6 +93,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, meta }) => {
   let nextPage = allLinks[linkIndex + 1];
   let section = navigation.find((section) => section.links.find((link) => link.href === router.pathname));
 
+  const linkRef = useRef<HTMLLIElement>(null);
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const preserveScroll = () => {
+    const scroll = Math.abs(linkRef.current.getBoundingClientRect().top - linkRef.current.offsetTop);
+    sessionStorage.setItem("scrollPosition", (scroll + 89).toString());
+  };
+
+  useEffect(() => {
+    if (parentRef.current) {
+      const scrollPosition = Number.parseInt(sessionStorage.getItem("scrollPosition"), 10);
+      if (scrollPosition) {
+        parentRef.current.scrollTop = scrollPosition;
+      }
+    }
+  }, []);
+
   return (
     <>
       <MetaInformation
@@ -107,8 +125,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, meta }) => {
           <div className="absolute inset-y-0 right-0 w-[50vw] bg-slate-50 dark:hidden" />
           <div className="absolute bottom-0 right-0 top-16 hidden h-12 w-px bg-gradient-to-t from-slate-800 dark:block" />
           <div className="absolute bottom-0 right-0 top-28 hidden w-px bg-slate-800 dark:block" />
-          <div className="sticky top-[4.5rem] -ml-0.5 h-[calc(100vh-4.5rem)] overflow-y-auto overflow-x-hidden py-16 pl-0.5">
-            <Navigation navigation={navigation} className="w-64 pr-8 xl:w-72 xl:pr-16" />
+          <div
+            className="sticky top-[4.5rem] -ml-0.5 h-[calc(100vh-4.5rem)] overflow-y-auto overflow-x-hidden py-16 pl-0.5"
+            ref={parentRef}>
+            <Navigation
+              navigation={navigation}
+              preserveScroll={preserveScroll}
+              linkRef={linkRef}
+              className="w-64 pr-8 xl:w-72 xl:pr-16"
+            />
           </div>
         </div>
         <div className="min-w-0 max-w-2xl flex-auto px-4 py-16 lg:max-w-none lg:pl-8 lg:pr-0 xl:px-16">
