@@ -118,3 +118,12 @@ test("Formbricks should register for route change", async () => {
     await formbricks.registerRouteChange()
     expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/Checking page url/));
 })
+
+test("Formbricks should logout", async () => {
+    await formbricks.logout()
+    let currentState = formbricks.getPerson()
+    const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
+
+    expect(currentState.environmentId).toEqual(constants.environmentId)
+    expect(currentStateAttributes.length).toBe(0)
+})
