@@ -5,6 +5,8 @@ import formbricks from "../src/index";
 import { constants } from "./constants"
 import { Attribute } from "./types";
 
+const logSpy = jest.spyOn(global.console, 'log');
+
 test("Test Jest", () => {
     expect(1 + 9).toBe(10);
 });
@@ -94,4 +96,25 @@ test("Formbricks should update attribute", async () => {
                 expect(0).toEqual(1)
         }
     })
+})
+
+test("Formbricks should track event", async () => {
+    const mockButton = document.createElement("button");
+    mockButton.addEventListener("click", async () => {
+        await formbricks.track("Button Clicked");
+    });
+    mockButton.click();
+    await new Promise((unused) => setTimeout(unused, 1000)); // to wait for the DOM interaction & logging of event tracking to happen
+
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/Formbricks: Event "Button Clicked" tracked/));
+});
+
+test("Formbricks should refresh", async () => {
+    await formbricks.refresh()
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/Settings refreshed/));
+})
+
+test("Formbricks should register for route change", async () => {
+    await formbricks.registerRouteChange()
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/Checking page url/));
 })
