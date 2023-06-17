@@ -22,6 +22,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
             },
           },
         }),
+        ...(responseInput.meta && { meta: responseInput?.meta }),
       },
       select: {
         id: true,
@@ -76,6 +77,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
         surveyId: true,
         finished: true,
         data: true,
+        meta: true,
         person: {
           select: {
             id: true,
