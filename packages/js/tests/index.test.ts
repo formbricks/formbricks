@@ -24,15 +24,14 @@ test("Formbricks should Initialise", async () => {
 
     if (configFromBrowser) {
         const jsonSavedConfig = JSON.parse(configFromBrowser);
-        expect(jsonSavedConfig.environmentId).toEqual(constants.environmentId);
-        expect(jsonSavedConfig.apiHost).toEqual(constants.apiHost);
+        expect(jsonSavedConfig.environmentId).toStrictEqual(constants.environmentId);
+        expect(jsonSavedConfig.apiHost).toStrictEqual(constants.apiHost);
     }
 });
 
 test("Formbricks should get no current person", () => {
-    let currentState = formbricks.getPerson()
+    const currentState = formbricks.getPerson()
     if (currentState != undefined) {
-        let currentState = formbricks.getPerson()
         const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
         expect(currentStateAttributes).toHaveLength(0)
     } else {
@@ -45,27 +44,27 @@ test("Formbricks should set attributes", async () => {
     formbricks.setEmail(constants.initialUserEmail)
     await formbricks.setAttribute(constants.customAttributeKey, constants.customAttributeValue)
 
-    let currentState = formbricks.getPerson()
-    expect(currentState.environmentId).toEqual(constants.environmentId)
+    const currentState = formbricks.getPerson()
+    expect(currentState.environmentId).toStrictEqual(constants.environmentId)
 
     const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
 
-    let numberOfUserAttributes = currentStateAttributes.length
-    expect(numberOfUserAttributes).toEqual(3)
+    const numberOfUserAttributes = currentStateAttributes.length
+    expect(numberOfUserAttributes).toStrictEqual(3)
 
     currentStateAttributes.forEach((attribute) => {
         switch (attribute.attributeClass.name) {
             case "userId":
-                expect(attribute.value).toEqual(constants.initialUserId)
+                expect(attribute.value).toStrictEqual(constants.initialUserId)
                 break;
             case "email":
-                expect(attribute.value).toEqual(constants.initialUserEmail)
+                expect(attribute.value).toStrictEqual(constants.initialUserEmail)
                 break;
             case constants.customAttributeKey:
-                expect(attribute.value).toEqual(constants.customAttributeValue)
+                expect(attribute.value).toStrictEqual(constants.customAttributeValue)
                 break;
             default:
-                expect(0).toEqual(1)
+                expect(0).toStrictEqual(1)
         }
     })
 })
@@ -73,27 +72,27 @@ test("Formbricks should set attributes", async () => {
 test("Formbricks should update attribute", async () => {
     await formbricks.setEmail(constants.updatedUserEmail)
 
-    let currentState = formbricks.getPerson()
-    expect(currentState.environmentId).toEqual(constants.environmentId)
+    const currentState = formbricks.getPerson()
+    expect(currentState.environmentId).toStrictEqual(constants.environmentId)
 
     const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
 
-    let numberOfUserAttributes = currentStateAttributes.length
-    expect(numberOfUserAttributes).toEqual(3)
+    const numberOfUserAttributes = currentStateAttributes.length
+    expect(numberOfUserAttributes).toStrictEqual(3)
 
     currentStateAttributes.forEach((attribute) => {
         switch (attribute.attributeClass.name) {
             case "email":
-                expect(attribute.value).toEqual(constants.updatedUserEmail)
+                expect(attribute.value).toStrictEqual(constants.updatedUserEmail)
                 break;
             case "userId":
-                expect(attribute.value).toEqual(constants.initialUserId)
+                expect(attribute.value).toStrictEqual(constants.initialUserId)
                 break;
             case constants.customAttributeKey:
-                expect(attribute.value).toEqual(constants.customAttributeValue)
+                expect(attribute.value).toStrictEqual(constants.customAttributeValue)
                 break;
             default:
-                expect(0).toEqual(1)
+                expect(0).toStrictEqual(1)
         }
     })
 })
@@ -121,9 +120,9 @@ test("Formbricks should register for route change", async () => {
 
 test("Formbricks should logout", async () => {
     await formbricks.logout()
-    let currentState = formbricks.getPerson()
+    const currentState = formbricks.getPerson()
     const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
 
-    expect(currentState.environmentId).toEqual(constants.environmentId)
+    expect(currentState.environmentId).toStrictEqual(constants.environmentId)
     expect(currentStateAttributes.length).toBe(0)
 })
