@@ -11,8 +11,11 @@ const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
+let exitIntentListener: ((e: MouseEvent) => void) | null = null;
+let scrollDepthListener: ((e: Event) => void) | null = null;
 
 export const renderWidget = (survey: Survey) => {
+  logger.debug("widget rendered")
   if (surveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
@@ -29,10 +32,12 @@ export const renderWidget = (survey: Survey) => {
       document.getElementById(containerId)
     );
   }, survey.delay * 1000);
+
+  addExitIntentListener(survey);
+  addScrollDepthListener(survey);
 };
 
 export const closeSurvey = async (): Promise<void> => {
-  // remove container element from DOM
   document.getElementById(containerId).remove();
   addWidgetContainer();
 
@@ -48,6 +53,51 @@ export const closeSurvey = async (): Promise<void> => {
       errorHandler.handle(error);
     }
   );
+
+    removeExitIntentListener();
+    removeScrollDepthListener();
+};
+
+
+const addExitIntentListener = (survey: Survey) => {
+  logger.debug("AddExitIntentListener being created")
+  exitIntentListener = function(e) {
+    if (e.clientY <= 0) {
+      renderWidget(survey);
+      removeExitIntentListener();
+    }
+  };
+  document.addEventListener('mousemove', exitIntentListener);
+};
+
+
+const addScrollDepthListener = (survey: Survey) => {
+  logger.debug("addScrollDepthListener being created")
+
+  scrollDepthListener = function() {
+    let scrollDepth = (window.pageYOffset / document.body.scrollHeight) * 100;
+    if (scrollDepth > 50) {
+      renderWidget(survey);
+      removeScrollDepthListener();
+    }
+  };
+  window.addEventListener('scroll', scrollDepthListener);
+};
+
+
+const removeExitIntentListener = () => {
+  if (exitIntentListener) {
+    document.removeEventListener('mousemove', exitIntentListener);
+    exitIntentListener = null;
+  }
+};
+
+
+const removeScrollDepthListener = () => {
+  if (scrollDepthListener) {
+    window.removeEventListener('scroll', scrollDepthListener);
+    scrollDepthListener = null;
+  }
 };
 
 export const addWidgetContainer = (): void => {
