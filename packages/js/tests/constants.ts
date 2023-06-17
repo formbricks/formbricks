@@ -29,6 +29,7 @@ export const constants = {
     apiHost: "https://app.formbricks.com",
     initialUserId: generateUserId(),
     initialUserEmail: generateEmailId(),
+    updatedUserEmail: generateEmailId(),
     customAttributeKey: generateRandomString(),
     customAttributeValue: generateRandomString(),
 } as const;

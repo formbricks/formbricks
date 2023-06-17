@@ -67,3 +67,31 @@ test("Formbricks should set attributes", async () => {
         }
     })
 })
+
+test("Formbricks should update attribute", async () => {
+    await formbricks.setEmail(constants.updatedUserEmail)
+
+    let currentState = formbricks.getPerson()
+    expect(currentState.environmentId).toEqual(constants.environmentId)
+
+    const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
+
+    let numberOfUserAttributes = currentStateAttributes.length
+    expect(numberOfUserAttributes).toEqual(3)
+
+    currentStateAttributes.forEach((attribute) => {
+        switch (attribute.attributeClass.name) {
+            case "email":
+                expect(attribute.value).toEqual(constants.updatedUserEmail)
+                break;
+            case "userId":
+                expect(attribute.value).toEqual(constants.initialUserId)
+                break;
+            case constants.customAttributeKey:
+                expect(attribute.value).toEqual(constants.customAttributeValue)
+                break;
+            default:
+                expect(0).toEqual(1)
+        }
+    })
+})
