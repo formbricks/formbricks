@@ -12,6 +12,7 @@ import { RatingResponse } from "../RatingResponse";
 import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
+import { TooltipContent, TooltipProvider, TooltipTrigger, Tooltip } from "@formbricks/ui";
 
 export interface OpenTextSummaryProps {
   data: {
@@ -45,6 +46,13 @@ export interface OpenTextSummaryProps {
       scale?: "number" | "star" | "smiley";
       range?: number;
     }[];
+    meta?: {
+      userAgent?: {
+        browser?: string;
+        os?: string;
+        device?: string;
+      };
+    };
   };
   environmentId: string;
   surveyId: string;
@@ -72,6 +80,13 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
     setDeleteDialogOpen(false);
     setIsDeleting(false);
   };
+  const tooltipContent = (
+    <TooltipContent>
+      {data.meta?.userAgent?.browser && <p>Browser: {data.meta?.userAgent?.browser}</p>}
+      {data.meta?.userAgent?.os && <p>OS: {data.meta?.userAgent?.os}</p>}
+      {data.meta?.userAgent?.device && <p>Device: {data.meta?.userAgent?.device}</p>}
+    </TooltipContent>
+  );
 
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
@@ -86,14 +101,29 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
               <Link
                 className="group flex items-center"
                 href={`/environments/${environmentId}/people/${data.personId}`}>
-                <PersonAvatar personId={data.personId} />
-                <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <PersonAvatar personId={data.personId} />
+                    </TooltipTrigger>
+                    {tooltipContent}
+                  </Tooltip>
+                </TooltipProvider>
+                <h3 className=" ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                   {displayIdentifier}
                 </h3>
               </Link>
             ) : (
               <div className="group flex items-center">
-                <PersonAvatar personId="anonymous" />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <PersonAvatar personId="anonymous" />
+                    </TooltipTrigger>
+                    {tooltipContent}
+                  </Tooltip>
+                </TooltipProvider>
+
                 <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
               </div>
             )}
