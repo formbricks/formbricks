@@ -22,7 +22,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
             },
           },
         }),
-        ...(responseInput.meta && { meta: responseInput?.meta }),
+        ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
       },
       select: {
         id: true,
