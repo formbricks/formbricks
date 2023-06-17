@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 import AddMemberModal from "./AddMemberModal";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import { useProfile } from "@/lib/profile";
 
 type EditMembershipsProps = {
   environmentId: string;
@@ -31,6 +32,10 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
   const [isCreateTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
   const [activeMember, setActiveMember] = useState({} as any);
+  const { profile } = useProfile();
+
+  const role = team?.members?.filter((member) => member?.userId === profile?.id)[0]?.role;
+  const isAdminOrOwner = role === "admin" || role === "owner";
 
   const handleOpenDeleteMemberModal = (e, member) => {
     e.preventDefault();
@@ -78,13 +83,15 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
           }}>
           Create New Team
         </Button>
-        <Button
-          variant="primary"
-          onClick={() => {
-            setAddMemberModalOpen(true);
-          }}>
-          Add Member
-        </Button>
+        {isAdminOrOwner && (
+          <Button
+            variant="darkCTA"
+            onClick={() => {
+              setAddMemberModalOpen(true);
+            }}>
+            Add Member
+          </Button>
+        )}
       </div>
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-8 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
@@ -108,7 +115,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
               <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
                 {member.email}
               </div>
-              <div className="ph-no-capture col-span-1 flex flex-col justify-center items-start break-all">
+              <div className="ph-no-capture col-span-1 flex flex-col items-start justify-center break-all">
                 <Badge text={capitalizeFirstLetter(member.role)} type="gray" size="tiny" />
               </div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
