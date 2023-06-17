@@ -19,7 +19,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   if (!hasAccess) {
     return res.status(403).json({ message: "Not authorized" });
   }
-  // TODO check if User is ADMIN or OWNER
+
+  const isOwnerOrAdmin = currentUser.role === "OWNER" || currentUser.role === "ADMIN";
+  if (!isOwnerOrAdmin) {
+    return res.status(403).json({ message: "Not authorized" });
+  }
 
   // POST /api/v1/teams/[teamId]/invite
   if (req.method === "POST") {
