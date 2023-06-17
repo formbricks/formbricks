@@ -1,6 +1,12 @@
-import { configure } from "enzyme";
-import Adapter from "enzyme-adapter-preact-pure";
+/** @type {import('jest').Config} */
+const config = {
+    verbose: true,
+    testEnvironment: 'jsdom'
 
-configure({
-    adapter: new Adapter()
-});
+};
+import 'regenerator-runtime/runtime'
+import fetch from 'isomorphic-fetch'
+
+global.fetch = fetch;
+
+module.exports = config;
