@@ -1,7 +1,7 @@
 import type { MultipleChoiceMultiQuestion } from "../../../types/questions";
 import { h } from "preact";
 import { useState, useRef, useEffect } from "preact/hooks";
-import { cn } from "../lib/utils";
+import { cn, shuffleArray } from "../lib/utils";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
@@ -22,6 +22,9 @@ export default function MultipleChoiceMultiQuestion({
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
+  const [questionChoices, setQuestionChoices] = useState<any[]>(question.choices
+    ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+    : []);
   const otherInputRef = useRef(null);
 
   const isAtLeastOneChecked = () => {
@@ -33,6 +36,12 @@ export default function MultipleChoiceMultiQuestion({
       otherInputRef.current.focus();
     }
   }, [showOther]);
+
+  useEffect(() => {
+    setQuestionChoices(question.choices
+      ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+      : [])
+  }, [question.choices, question.choicesOrder])
 
   return (
     <form
@@ -62,8 +71,7 @@ export default function MultipleChoiceMultiQuestion({
         <fieldset>
           <legend className="fb-sr-only">Options</legend>
           <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white fb-max-h-[42vh] fb-overflow-y-auto fb-pr-2 fb-py-0.5">
-            {question.choices &&
-              question.choices.map((choice) => (
+            {questionChoices.map((choice) => (
                 <label
                   key={choice.id}
                   className={cn(

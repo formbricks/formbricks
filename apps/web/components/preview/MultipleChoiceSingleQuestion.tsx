@@ -2,9 +2,10 @@ import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { shuffleArray } from "@/lib/utils";
 
 interface MultipleChoiceSingleProps {
   question: MultipleChoiceSingleQuestion;
@@ -20,6 +21,9 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const [questionChoices, setQuestionChoices] = useState<any[]>(question.choices
+    ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+    : []);
   /*   const [isIphone, setIsIphone] = useState(false);
 
 
@@ -27,6 +31,13 @@ export default function MultipleChoiceSingleQuestion({
     setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
   }, []);
  */
+  
+  useEffect(() => {
+    setQuestionChoices(question.choices
+      ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+      : [])
+  }, [question.choices, question.choicesOrder])
+  
   return (
     <form
       onSubmit={(e) => {
@@ -44,8 +55,7 @@ export default function MultipleChoiceSingleQuestion({
         <fieldset>
           <legend className="sr-only">Options</legend>
           <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
-            {question.choices &&
-              question.choices.map((choice, idx) => (
+            {questionChoices.map((choice, idx) => (
                 <label
                   key={choice.id}
                   className={cn(

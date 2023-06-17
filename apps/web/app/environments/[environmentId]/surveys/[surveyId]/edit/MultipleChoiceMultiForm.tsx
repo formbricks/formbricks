@@ -1,6 +1,6 @@
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { Button, Input, Label } from "@formbricks/ui";
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";
@@ -23,6 +23,17 @@ export default function MultipleChoiceMultiForm({
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const questionRef = useRef<HTMLInputElement>(null);
+
+  const responseOrdering = {
+    current: {
+    id: 'current',
+      label: 'Current Order (Default)'
+    },
+    random: {
+      id: 'random',
+        label: 'Randomize Order'
+    },
+  }
 
   const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
     const newChoices = !question.choices
@@ -167,14 +178,36 @@ export default function MultipleChoiceMultiForm({
                 )}
               </div>
             ))}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 justify-between">
             {question.choices.filter((c) => c.id === "other").length === 0 && (
-              <>
+
                 <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
                   Add &quot;Other&quot; 
                 </Button>
-              </>
+
             )}
+
+            <div className="flex flex-1 justify-end items-center gap-2">
+
+              <p className="text-slate-700 text-sm">Ordering</p>
+
+              <Select
+                defaultValue={question.choicesOrder}
+                onValueChange={(e) => { updateQuestion(questionIdx, { choicesOrder: e });}}>
+                <SelectTrigger className="w-fit overflow-hidden ">
+                  <SelectValue placeholder="Select ordering" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(responseOrdering).map((orderType) =>
+                      (
+                        <SelectItem key={orderType.id} value={orderType.id} title={orderType.label}>
+                          {orderType.label}
+                        </SelectItem>
+                      )
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>

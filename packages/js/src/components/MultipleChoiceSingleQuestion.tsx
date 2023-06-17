@@ -1,6 +1,6 @@
 import { h } from "preact";
 import { useRef, useState, useEffect } from "preact/hooks";
-import { cn } from "../lib/utils";
+import { cn, shuffleArray } from "../lib/utils";
 import type { MultipleChoiceSingleQuestion } from "../../../types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
@@ -20,6 +20,9 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const [questionChoices, setQuestionChoices] = useState<any[]>(question.choices
+    ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+    : []);
   const otherSpecify = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -27,6 +30,12 @@ export default function MultipleChoiceSingleQuestion({
       otherSpecify.current?.focus();
     }
   }, [selectedChoice]);
+
+  useEffect(() => {
+    setQuestionChoices(question.choices
+      ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+      : [])
+  }, [question.choices, question.choicesOrder])
 
   return (
     <form
@@ -47,8 +56,7 @@ export default function MultipleChoiceSingleQuestion({
         <fieldset>
           <legend className="fb-sr-only">Options</legend>
           <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white fb-max-h-[42vh] fb-overflow-y-auto fb-pr-2 fb-py-0.5">
-            {question.choices &&
-              question.choices.map((choice, idx) => (
+            {questionChoices.map((choice, idx) => (
                 <label
                   key={choice.id}
                   className={cn(

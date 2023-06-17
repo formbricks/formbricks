@@ -29,11 +29,13 @@ export interface OpenTextQuestion extends IQuestion<OpenTextLogic> {
 export interface MultipleChoiceSingleQuestion extends IQuestion<MultipleChoiceSingleLogic> {
   type: "multipleChoiceSingle";
   choices: Choice[];
+  choicesOrder: string
 }
 
 export interface MultipleChoiceMultiQuestion extends IQuestion<MultipleChoiceMultiLogic> {
   type: "multipleChoiceMulti";
   choices: Choice[];
+  choicesOrder: string
 }
 
 export interface NPSQuestion extends IQuestion<NPSLogic> {

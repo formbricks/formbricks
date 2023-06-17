@@ -62,3 +62,16 @@ export const toJson = (obj: any): Object | null => {
     return null;
   }
 };
+
+export const shuffleArray = (array: any[]) => {
+  const newArray = [...array];
+  const otherIndex = newArray.findIndex(item => item.id === "other");
+  if (otherIndex !== -1) {
+    const otherItem = newArray.splice(otherIndex, 1)[0];
+    newArray.sort(() => Math.random() - 0.5);
+    newArray.push(otherItem);
+  } else {
+    newArray.sort(() => Math.random() - 0.5);
+  }
+  return newArray;
+}

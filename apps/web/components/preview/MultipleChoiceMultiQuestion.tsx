@@ -5,6 +5,7 @@ import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { shuffleArray } from "@/lib/utils";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -23,6 +24,9 @@ export default function MultipleChoiceMultiQuestion({
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
+  const [questionChoices, setQuestionChoices] = useState<any[]>(question.choices
+    ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+    : []);
   /*   const [isIphone, setIsIphone] = useState(false);
    */
   useEffect(() => {
@@ -33,6 +37,12 @@ export default function MultipleChoiceMultiQuestion({
     setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
   }, []); */
 
+  useEffect(() => {
+    setQuestionChoices(question.choices
+      ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+      : [])
+  }, [question.choices, question.choicesOrder])
+  
   return (
     <form
       onSubmit={(e) => {
@@ -62,8 +72,7 @@ export default function MultipleChoiceMultiQuestion({
         <fieldset>
           <legend className="sr-only">Options</legend>
           <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
-            {question.choices &&
-              question.choices.map((choice) => (
+            {questionChoices.map((choice) => (
                 <>
                   <label
                     key={choice.id}
