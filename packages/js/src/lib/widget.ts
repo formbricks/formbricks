@@ -20,14 +20,14 @@ export const renderWidget = (survey: Survey) => {
     logger.debug("A survey is already running. Skipping.");
     return;
   }
-  surveyRunning = true;
 
   if (survey.delay) {
     logger.debug(`Delaying survey by ${survey.delay} seconds.`);
   }
 
   setTimeout(() => {
-    render(
+  surveyRunning = true;
+  render(
       h(App, { config: config.get(), survey, closeSurvey, errorHandler: errorHandler.handle }),
       document.getElementById(containerId)
     );
@@ -54,17 +54,14 @@ export const closeSurvey = async (): Promise<void> => {
     }
   );
 
-    removeExitIntentListener();
-    removeScrollDepthListener();
+    
 };
-
 
 const addExitIntentListener = (survey: Survey) => {
   logger.debug("AddExitIntentListener being created")
   exitIntentListener = function(e) {
-    if (e.clientY <= 0) {
+    if (e.clientY <= 0 && !surveyRunning) {
       renderWidget(survey);
-      removeExitIntentListener();
     }
   };
   document.addEventListener('mousemove', exitIntentListener);
@@ -75,30 +72,14 @@ const addScrollDepthListener = (survey: Survey) => {
   logger.debug("addScrollDepthListener being created")
 
   scrollDepthListener = function() {
-    let scrollDepth = (window.pageYOffset / document.body.scrollHeight) * 100;
-    if (scrollDepth > 50) {
+    let scrollDepth = (window.pageYOffset / (document.body.scrollHeight - window.innerHeight)) * 100;
+    if (scrollDepth > 50 && !surveyRunning) {
       renderWidget(survey);
-      removeScrollDepthListener();
     }
   };
   window.addEventListener('scroll', scrollDepthListener);
 };
 
-
-const removeExitIntentListener = () => {
-  if (exitIntentListener) {
-    document.removeEventListener('mousemove', exitIntentListener);
-    exitIntentListener = null;
-  }
-};
-
-
-const removeScrollDepthListener = () => {
-  if (scrollDepthListener) {
-    window.removeEventListener('scroll', scrollDepthListener);
-    scrollDepthListener = null;
-  }
-};
 
 export const addWidgetContainer = (): void => {
   const containerElement = document.createElement("div");
