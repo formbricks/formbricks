@@ -5,6 +5,7 @@ import { Config } from "./config";
 import { ErrorHandler, match } from "./errors";
 import { Logger } from "./logger";
 import { getSettings } from "./settings";
+import { trackEvent } from "./event";
 
 const containerId = "formbricks-web-container";
 const config = Config.getInstance();
@@ -59,26 +60,58 @@ export const closeSurvey = async (): Promise<void> => {
 
 const addExitIntentListener = (survey: Survey) => {
   logger.debug("AddExitIntentListener being created")
-  exitIntentListener = function(e) {
+  exitIntentListener = async function(e) {
     if (e.clientY <= 0 && !surveyRunning) {
+      const trackResult = await trackEvent('Exit Intent');
+      if (trackResult.ok !== true) {
+        errorHandler.handle(trackResult.error);
+        return;
+      }
       renderWidget(survey);
     }
   };
   document.addEventListener('mousemove', exitIntentListener);
 };
 
-
 const addScrollDepthListener = (survey: Survey) => {
   logger.debug("addScrollDepthListener being created")
 
-  scrollDepthListener = function() {
-    let scrollDepth = (window.pageYOffset / (document.body.scrollHeight - window.innerHeight)) * 100;
+  scrollDepthListener = async function() {
+    let scrollDepth = (window.scrollY  / (document.body.scrollHeight - window.innerHeight)) * 100;
     if (scrollDepth > 50 && !surveyRunning) {
+      const trackResult = await trackEvent('50% Scroll');
+      if (trackResult.ok !== true) {
+        errorHandler.handle(trackResult.error);
+        return;
+      }
       renderWidget(survey);
     }
   };
   window.addEventListener('scroll', scrollDepthListener);
 };
+
+// const addExitIntentListener = (survey: Survey) => {
+//   logger.debug("AddExitIntentListener being created")
+//   exitIntentListener = function(e) {
+//     if (e.clientY <= 0 && !surveyRunning) {
+//       renderWidget(survey);
+//     }
+//   };
+//   document.addEventListener('mousemove', exitIntentListener);
+// };
+
+
+// const addScrollDepthListener = (survey: Survey) => {
+//   logger.debug("addScrollDepthListener being created")
+
+//   scrollDepthListener = function() {
+//     let scrollDepth = (window.pageYOffset / (document.body.scrollHeight - window.innerHeight)) * 100;
+//     if (scrollDepth > 50 && !surveyRunning) {
+//       renderWidget(survey);
+//     }
+//   };
+//   window.addEventListener('scroll', scrollDepthListener);
+// };
 
 
 export const addWidgetContainer = (): void => {
