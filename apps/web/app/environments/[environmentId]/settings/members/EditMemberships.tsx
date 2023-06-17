@@ -6,6 +6,13 @@ import { addMember, deleteInvite, removeMember, resendInvite, useMembers } from 
 import {
   Badge,
   Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   ProfileAvatar,
   Tooltip,
   TooltipContent,
@@ -19,10 +26,18 @@ import AddMemberModal from "./AddMemberModal";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { useProfile } from "@/lib/profile";
+import { EditIcon } from "lucide-react";
 
 type EditMembershipsProps = {
   environmentId: string;
 };
+
+enum MembershipRole {
+  Admin = "admin",
+  Editor = "editor",
+  Developer = "developer",
+  Viewer = "viewer",
+}
 
 export function EditMemberships({ environmentId }: EditMembershipsProps) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useMembers(environmentId);
@@ -36,6 +51,8 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
 
   const role = team?.members?.filter((member) => member?.userId === profile?.id)[0]?.role;
   const isAdminOrOwner = role === "admin" || role === "owner";
+
+  // const [position, setPosition] = useState("bottom");
 
   const handleOpenDeleteMemberModal = (e, member) => {
     e.preventDefault();
@@ -116,7 +133,34 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                 {member.email}
               </div>
               <div className="ph-no-capture col-span-1 flex flex-col items-start justify-center break-all">
-                <Badge text={capitalizeFirstLetter(member.role)} type="gray" size="tiny" />
+                {!isAdminOrOwner || member.role === "owner" ? (
+                  <Button variant="secondary" disabled size="sm" className="text-xs">
+                    {capitalizeFirstLetter(member.role)}
+                  </Button>
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="secondary" className="flex items-center gap-1 p-1.5 text-xs" size="sm">
+                        <span className="ml-1">{capitalizeFirstLetter(member.role)}</span>
+                        <EditIcon className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel className="text-center">Select Role</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuRadioGroup
+                        value={capitalizeFirstLetter(member.role)}
+                        // onValueChange={setPosition}
+                      >
+                        {Object.keys(MembershipRole).map((role) => (
+                          <DropdownMenuRadioItem value={role}>
+                            {capitalizeFirstLetter(role)}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
                 {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}
