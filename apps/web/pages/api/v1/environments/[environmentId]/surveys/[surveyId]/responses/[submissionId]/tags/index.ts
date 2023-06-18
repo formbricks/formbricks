@@ -3,6 +3,7 @@ import { hasEnvironmentAccess, getSessionUser } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { responses } from "@/lib/api/response";
+import { Prisma } from "@prisma/client";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -37,12 +38,44 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "You are not authorized to access this environment! " });
   }
 
+  // GET /api/environments[environmentId]/survey[surveyId]/responses/[submissionId]/tags
+
+  // Get all tags for a response
+
+  if (req.method === "GET") {
+    let tags;
+
+    try {
+      tags = await prisma.tag.findMany({
+        where: {
+          responses: {
+            some: {
+              responseId,
+            },
+          },
+        },
+      });
+    } catch (e) {
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+
+    captureTelemetry(`tags retrieved for response ${responseId}`);
+    return res.json(tags);
+  }
+
   let tagName: string;
+  let productId: string;
 
   try {
     tagName = JSON.parse(req.body).name;
   } catch (e) {
     return res.status(400).json({ message: "Invalid tag name" });
+  }
+
+  try {
+    productId = JSON.parse(req.body).productId;
+  } catch (e) {
+    return res.status(400).json({ message: "Invalid product Id" });
   }
 
   const currentResponse = await prisma.response.findUnique({
@@ -63,31 +96,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return responses.notFoundResponse("Response", responseId, true);
   }
 
-  // GET /api/environments[environmentId]/survey[surveyId]/responses/[submissionId]/tags
-
-  // Get all tags for a response
-
-  if (req.method === "GET") {
-    let tags;
-
-    try {
-      tags = await prisma.tag.findMany({
-        where: {
-          responses: {
-            some: {
-              id: responseId,
-            },
-          },
-        },
-      });
-    } catch (e) {
-      return res.status(500).json({ message: "Internal Server Error" });
-    }
-
-    captureTelemetry(`tags retrieved for response ${responseId}`);
-    return res.json(tags);
-  }
-
   // POST /api/environments[environmentId]/survey[surveyId]/responses/[submissionId]/tags
 
   // Create a tag for a response
@@ -99,14 +107,26 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       newTag = await prisma.tag.create({
         data: {
           name: tagName,
+          productId,
           responses: {
-            connect: {
-              id: responseId,
+            create: {
+              response: {
+                connect: {
+                  id: responseId,
+                },
+              },
             },
           },
         },
       });
     } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === "P2002") {
+          return res.status(400).json({ message: "Tag already exists" });
+        }
+      }
+      console.log("body: ", req.body);
+      console.log({ e });
       return res.status(500).json({ message: "Internal Server Error" });
     }
 

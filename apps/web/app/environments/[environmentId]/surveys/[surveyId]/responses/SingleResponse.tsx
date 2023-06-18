@@ -13,6 +13,8 @@ import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
 import { useCreateTag } from "@/lib/tags/mutateTags";
+import { useProduct } from "@/lib/products/products";
+import { useTags } from "@/lib/tags/tags";
 
 export interface OpenTextSummaryProps {
   data: {
@@ -65,7 +67,14 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  const { createTag, isCreatingTag } = useCreateTag(environmentId, surveyId, data.id, "first tag");
+  const { product } = useProduct(environmentId);
+
+  const { data: responseTags, isLoading: isLoadingResponseTags } = useTags(environmentId, surveyId, data.id);
+
+  const { createTag, isCreatingTag } = useCreateTag(environmentId, surveyId, data.id, {
+    productId: product?.id,
+    tagName: "Some Tag",
+  });
 
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
