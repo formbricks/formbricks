@@ -1,5 +1,6 @@
 import { useResponses } from "@/lib/responses/responses";
 import { useCreateTag } from "@/lib/tags/mutateTags";
+import { useTagsForProduct } from "@/lib/tags/tags";
 import { cn } from "@formbricks/lib/cn";
 import {
   Button,
@@ -29,30 +30,7 @@ interface IResponseTagsWrapperProps {
   responseId: string;
 }
 
-const frameworks = [
-  {
-    value: "next.js",
-    label: "Next.js",
-  },
-  {
-    value: "sveltekit",
-    label: "SvelteKit",
-  },
-  {
-    value: "nuxt.js",
-    label: "Nuxt.js",
-  },
-  {
-    value: "remix",
-    label: "Remix",
-  },
-  {
-    value: "astro",
-    label: "Astro",
-  },
-];
-
-export function ComboboxDemo() {
+export function ComboboxDemo({ data }: { data: any }) {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState("");
 
@@ -71,7 +49,7 @@ export function ComboboxDemo() {
           <CommandInput placeholder="Search framework..." />
           <CommandEmpty>No framework found.</CommandEmpty>
           <CommandGroup>
-            {frameworks.map((framework) => (
+            {data?.map((framework) => (
               <CommandItem
                 key={framework.value}
                 onSelect={(currentValue) => {
@@ -103,9 +81,11 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
 
   const { mutateResponses } = useResponses(environmentId, surveyId);
 
+  const { data: productTags } = useTagsForProduct(environmentId, productId);
+
   return (
     <div className="flex items-center gap-3 p-6">
-      <ComboboxDemo />
+      <ComboboxDemo data={productTags?.map((tag) => ({ value: tag.name, label: tag.name }))} />
       <div className="flex items-center gap-2">
         {data.map((tag) => (
           <div

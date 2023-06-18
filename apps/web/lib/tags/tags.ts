@@ -10,3 +10,9 @@ export const useTags = (environmentId: string, surveyId: string, responseId: str
 
   return responseTags;
 };
+
+export const useTagsForProduct = (environmentId: string, productId: string) => {
+  const tagsForProducts = useSWR(`/api/v1/environments/${environmentId}/product/${productId}/tags`, fetcher);
+
+  return tagsForProducts;
+};
