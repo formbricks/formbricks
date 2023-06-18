@@ -15,6 +15,7 @@ const ZResponse = z.object({
       attributes: z.record(z.union([z.string(), z.number()])),
     })
     .nullable(),
+  personAttributes: z.record(z.union([z.string(), z.number()])).optional(),
   finished: z.boolean(),
   data: ZResponseData,
 });

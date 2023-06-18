@@ -13,7 +13,7 @@ type TransformPersonInput = {
   }[];
 };
 
-type TransformPersonOutput = {
+export type TransformPersonOutput = {
   id: string;
   attributes: Record<string, string | number>;
 };
