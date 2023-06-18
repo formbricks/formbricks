@@ -93,7 +93,8 @@ model Response {
   finished      Boolean        @default(false)
   survey        Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId      String
-  person        Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  person        Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
+
   personId      String?
   responseNotes ResponseNote[]
   /// @zod.custom(imports.ZResponseData)
