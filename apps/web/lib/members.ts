@@ -16,6 +16,20 @@ export const useMembers = (environmentId: string) => {
   };
 };
 
+export const updateMemberRole = async (teamId: string, userId: string, role: string) => {
+  try {
+    const result = await fetch(`/api/v1/teams/${teamId}/members/${userId}/`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
+    });
+    return result.status === 200;
+  } catch (error) {
+    console.error(error);
+    return error;
+  }
+};
+
 export const removeMember = async (teamId: string, userId: string) => {
   try {
     const result = await fetch(`/api/v1/teams/${teamId}/members/${userId}/`, {

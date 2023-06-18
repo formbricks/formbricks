@@ -2,7 +2,14 @@
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { addMember, deleteInvite, removeMember, resendInvite, useMembers } from "@/lib/members";
+import {
+  addMember,
+  deleteInvite,
+  removeMember,
+  resendInvite,
+  updateMemberRole,
+  useMembers,
+} from "@/lib/members";
 import {
   Badge,
   Button,
@@ -35,6 +42,10 @@ type EditMembershipsProps = {
 type Role = {
   isAdminOrOwner: boolean;
   memberRole: string;
+  teamId: string;
+  memberId: string;
+  environmentId: string;
+  userId: string;
 };
 
 enum MembershipRole {
@@ -44,37 +55,64 @@ enum MembershipRole {
   Viewer = "viewer",
 }
 
-function RoleElement({ isAdminOrOwner, memberRole }: Role) {
-  if (!isAdminOrOwner || memberRole !== "owner") {
+function RoleElement({ isAdminOrOwner, memberRole, teamId, memberId, environmentId, userId }: Role) {
+  const { mutateTeam } = useMembers(environmentId);
+  const [loading, setLoading] = useState(false);
+  const disableRole = memberRole === "owner" || memberId === userId;
+
+  const handleMemberRoleUpdate = async (role: string) => {
+    try {
+      setLoading(true);
+      await updateMemberRole(teamId, memberId, role);
+      setLoading(false);
+    } catch (error) {
+      toast.error("Could not update member role");
+    }
+    toast.success("Member role updated");
+    mutateTeam();
+  };
+
+  if (isAdminOrOwner) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="secondary" className="flex items-center gap-1 p-1.5 text-xs" size="sm">
-            <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
-            <EditIcon className="h-3 w-3" />
-          </Button>
+          <div>
+            <TooltipProvider delayDuration={50}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    disabled={disableRole}
+                    variant="secondary"
+                    className="flex items-center gap-1 p-1.5 text-xs"
+                    loading={loading}
+                    size="sm">
+                    <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
+                    <EditIcon className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="TooltipContent" sideOffset={5}>
+                  {!disableRole ? "Edit Member Role" : "You can't edit the follwing role"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuLabel className="text-center">Select Role</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuRadioGroup
-            value={capitalizeFirstLetter(memberRole)}
-            // onValueChange={setPosition}
-          >
-            {Object.keys(MembershipRole).map((role) => (
-              <DropdownMenuRadioItem value={role}>{capitalizeFirstLetter(role)}</DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
+        {!disableRole && (
+          <DropdownMenuContent>
+            <DropdownMenuLabel className="text-center">Select Role</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup
+              value={capitalizeFirstLetter(memberRole)}
+              onValueChange={(value) => handleMemberRoleUpdate(value.toLowerCase())}>
+              {Object.keys(MembershipRole).map((role) => (
+                <DropdownMenuRadioItem key={role} value={role}>
+                  {capitalizeFirstLetter(role)}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        )}
       </DropdownMenu>
-    );
-  }
-
-  if (memberRole === "owner") {
-    return (
-      <Button variant="secondary" disabled className="flex items-center gap-1 p-1.5 text-xs" size="sm">
-        {capitalizeFirstLetter(memberRole)}
-      </Button>
     );
   }
 
@@ -173,7 +211,14 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                 {member.email}
               </div>
               <div className="ph-no-capture col-span-1 flex flex-col items-start justify-center break-all">
-                <RoleElement isAdminOrOwner={isAdminOrOwner} memberRole={member.role} />
+                <RoleElement
+                  isAdminOrOwner={isAdminOrOwner}
+                  memberRole={member.role}
+                  memberId={member.userId}
+                  teamId={team.teamId}
+                  environmentId={environmentId}
+                  userId={profile.id}
+                />
               </div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
                 {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}
