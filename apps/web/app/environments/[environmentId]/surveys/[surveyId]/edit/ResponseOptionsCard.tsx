@@ -1,11 +1,10 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
-import { Badge, Input, Label, Switch } from "@formbricks/ui";
+import { Input, Label, Switch } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface ResponseOptionsCardProps {
   localSurvey: Survey;
@@ -32,32 +31,15 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setLocalSurvey(updatedSurvey);
   };
 
-  useEffect(() => {
-    if (localSurvey.type === "link") {
-      setOpen(false);
-    }
-  }, [localSurvey.type]);
-
   return (
     <Collapsible.Root
       open={open}
-      onOpenChange={(openState) => {
-        if (localSurvey.type !== "link") {
-          setOpen(openState);
-        }
-      }}
+      onOpenChange={setOpen}
       className="w-full rounded-lg border border-slate-300 bg-white">
-      <Collapsible.CollapsibleTrigger
-        asChild
-        className={cn(
-          localSurvey.type !== "link" ? "cursor-pointer hover:bg-slate-50" : "cursor-not-allowed bg-slate-50",
-          "h-full w-full rounded-lg "
-        )}>
+      <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon
-              className={cn(localSurvey.type !== "link" ? "text-green-400" : "text-slate-300", "h-8 w-8 ")}
-            />
+            <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
             <p className="font-semibold text-slate-800">Response Options</p>
@@ -65,11 +47,6 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
               Decide how and how long people can respond.
             </p>
           </div>
-          {localSurvey.type === "link" && (
-            <div className="flex w-full items-center justify-end pr-2">
-              <Badge size="normal" text="In-app survey settings" type="warning" />
-            </div>
-          )}
         </div>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent>
@@ -80,7 +57,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
             <Label htmlFor="autoComplete" className="cursor-pointer">
               <div className="ml-2">
                 <h3 className="text-sm font-semibold text-slate-700">
-                  Autocomplete survey on response limit
+                  Auto complete survey on response limit
                 </h3>
               </div>
             </Label>
