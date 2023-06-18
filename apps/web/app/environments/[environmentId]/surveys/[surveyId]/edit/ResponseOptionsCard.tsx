@@ -79,7 +79,9 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
             <Switch id="autoComplete" checked={autoComplete} onCheckedChange={handleCheckMark} />
             <Label htmlFor="autoComplete" className="cursor-pointer">
               <div className="ml-2">
-                <h3 className="text-sm font-semibold text-slate-700">Auto complete survey</h3>
+                <h3 className="text-sm font-semibold text-slate-700">
+                  Autocomplete survey on response limit
+                </h3>
               </div>
             </Label>
           </div>
