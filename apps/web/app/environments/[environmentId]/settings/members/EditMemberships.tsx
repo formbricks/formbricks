@@ -7,6 +7,7 @@ import {
   deleteInvite,
   removeMember,
   resendInvite,
+  updateInviteeRole,
   updateMemberRole,
   useMembers,
 } from "@/lib/members";
@@ -46,6 +47,8 @@ type Role = {
   memberId: string;
   environmentId: string;
   userId: string;
+  memberAccepted: boolean;
+  inviteId: string;
 };
 
 enum MembershipRole {
@@ -55,20 +58,29 @@ enum MembershipRole {
   Viewer = "viewer",
 }
 
-function RoleElement({ isAdminOrOwner, memberRole, teamId, memberId, environmentId, userId }: Role) {
+function RoleElement({
+  isAdminOrOwner,
+  memberRole,
+  teamId,
+  memberId,
+  environmentId,
+  userId,
+  memberAccepted,
+  inviteId,
+}: Role) {
   const { mutateTeam } = useMembers(environmentId);
   const [loading, setLoading] = useState(false);
-  const disableRole = memberRole === "owner" || memberId === userId;
+  const disableRole =
+    memberRole && memberId && userId ? memberRole === "owner" || memberId === userId : false;
 
   const handleMemberRoleUpdate = async (role: string) => {
-    try {
-      setLoading(true);
+    setLoading(true);
+    if (memberAccepted) {
       await updateMemberRole(teamId, memberId, role);
-      setLoading(false);
-    } catch (error) {
-      toast.error("Could not update member role");
+    } else {
+      await updateInviteeRole(teamId, inviteId, role);
     }
-    toast.success("Member role updated");
+    setLoading(false);
     mutateTeam();
   };
 
@@ -217,7 +229,9 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                   memberId={member.userId}
                   teamId={team.teamId}
                   environmentId={environmentId}
-                  userId={profile.id}
+                  userId={profile?.id}
+                  memberAccepted={member.accepted}
+                  inviteId={member?.inviteId}
                 />
               </div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
