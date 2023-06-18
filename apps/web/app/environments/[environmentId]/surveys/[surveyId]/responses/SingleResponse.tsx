@@ -2,7 +2,7 @@
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import { timeSince } from "@formbricks/lib/time";
-import { PersonAvatar } from "@formbricks/ui";
+import { Button, PersonAvatar } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -12,6 +12,7 @@ import { RatingResponse } from "../RatingResponse";
 import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
+import { useCreateTag } from "@/lib/tags/mutateTags";
 
 export interface OpenTextSummaryProps {
   data: {
@@ -63,6 +64,8 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
   const { mutateResponses } = useResponses(environmentId, surveyId);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  const { createTag, isCreatingTag } = useCreateTag(environmentId, surveyId, data.id, "first tag");
 
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
@@ -136,6 +139,11 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
             </div>
           ))}
         </div>
+
+        <Button onClick={() => createTag()} loading={isCreatingTag}>
+          Create a Tag for this response
+        </Button>
+
         <DeleteDialog
           open={deleteDialogOpen}
           setOpen={setDeleteDialogOpen}

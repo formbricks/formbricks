@@ -37,9 +37,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "You are not authorized to access this environment! " });
   }
 
-  const tagName = req.body.name as string;
+  let tagName: string;
 
-  if (!tagName) {
+  try {
+    tagName = JSON.parse(req.body).name;
+  } catch (e) {
     return res.status(400).json({ message: "Invalid tag name" });
   }
 
