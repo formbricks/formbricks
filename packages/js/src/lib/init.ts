@@ -139,7 +139,6 @@ export const initialize = async (
         exitIntentTriggered = true;
       }
     };
-    document.addEventListener('mousemove', exitIntentListener);
     document.addEventListener('mouseleave', exitIntentListener);
  }
 
