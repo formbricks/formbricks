@@ -7,7 +7,11 @@ import { getServerSession } from "next-auth";
 
 export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 
-export const hasEnvironmentAccess = async (req, res, environmentId) => {
+export const hasEnvironmentAccess = async (
+  req: NextApiRequest,
+  res: NextApiResponse,
+  environmentId: string
+) => {
   if (req.headers["x-api-key"]) {
     const ownership = await hasApiEnvironmentAccess(req.headers["x-api-key"].toString(), environmentId);
     if (!ownership) {
