@@ -2,7 +2,7 @@
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import { timeSince } from "@formbricks/lib/time";
-import { PersonAvatar } from "@formbricks/ui";
+import { PersonAvatar, TooltipContent, TooltipProvider, TooltipTrigger, Tooltip } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -24,6 +24,9 @@ export interface OpenTextSummaryProps {
       updatedAt: string;
       environmentId: string;
       attributes: [];
+    };
+    personAttributes: {
+      [key: string]: string;
     };
     responseNotes: {
       updatedAt: string;
@@ -73,6 +76,19 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
     setIsDeleting(false);
   };
 
+  const tooltipContent = (
+    <TooltipContent>
+      {data.personAttributes &&
+        Object.keys(data.personAttributes).map((key) => {
+          return (
+            <p>
+              {key}: <span className="font-bold">{data.personAttributes[key]}</span>
+            </p>
+          );
+        })}
+    </TooltipContent>
+  );
+
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
       <div
@@ -86,7 +102,18 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
               <Link
                 className="group flex items-center"
                 href={`/environments/${environmentId}/people/${data.personId}`}>
-                <PersonAvatar personId={data.personId} />
+                {data.personAttributes ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <PersonAvatar personId={data.personId} />
+                      </TooltipTrigger>
+                      {tooltipContent}
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <PersonAvatar personId={data.personId} />
+                )}
                 <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                   {displayIdentifier}
                 </h3>
