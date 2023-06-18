@@ -2,7 +2,7 @@
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import { timeSince } from "@formbricks/lib/time";
-import { Button, PersonAvatar } from "@formbricks/ui";
+import { PersonAvatar } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -12,9 +12,7 @@ import { RatingResponse } from "../RatingResponse";
 import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
-import { useCreateTag } from "@/lib/tags/mutateTags";
-import { useProduct } from "@/lib/products/products";
-import { useTags } from "@/lib/tags/tags";
+import ResponseTagsWrapper from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/ResponseTagsWrapper";
 
 export interface OpenTextSummaryProps {
   data: {
@@ -37,6 +35,17 @@ export interface OpenTextSummaryProps {
         name: string;
       };
     }[];
+    tags: {
+      responseId: string;
+      tagId: string;
+      tag: {
+        id: string;
+        name: string;
+        createdAt: string;
+        updatedAt: string;
+        productId: string;
+      };
+    }[];
     value: string;
     updatedAt: string;
     finished: boolean;
@@ -51,6 +60,7 @@ export interface OpenTextSummaryProps {
   };
   environmentId: string;
   surveyId: string;
+  productId: string;
 }
 
 function findEmail(person) {
@@ -58,7 +68,7 @@ function findEmail(person) {
   return emailAttribute ? emailAttribute.value : null;
 }
 
-export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
+export default function SingleResponse({ data, environmentId, surveyId, productId }: OpenTextSummaryProps) {
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || data.personId;
   const responseNotes = data?.responseNotes;
@@ -66,15 +76,6 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
   const { mutateResponses } = useResponses(environmentId, surveyId);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
-  const { product } = useProduct(environmentId);
-
-  const { data: responseTags, isLoading: isLoadingResponseTags } = useTags(environmentId, surveyId, data.id);
-
-  const { createTag, isCreatingTag } = useCreateTag(environmentId, surveyId, data.id, {
-    productId: product?.id,
-    tagName: "Some Tag",
-  });
 
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
@@ -149,9 +150,16 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
           ))}
         </div>
 
-        <Button onClick={() => createTag()} loading={isCreatingTag}>
-          Create a Tag for this response
-        </Button>
+        <ResponseTagsWrapper
+          environmentId={environmentId}
+          surveyId={surveyId}
+          productId={productId}
+          responseId={data.id}
+          data={data.tags.map((tag) => ({
+            tagId: tag.tagId,
+            tagName: tag.tag.name,
+          }))}
+        />
 
         <DeleteDialog
           open={deleteDialogOpen}
@@ -167,6 +175,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
         surveyId={surveyId}
         isOpen={isOpen}
         setIsOpen={setIsOpen}
+        productId={productId}
       />
     </div>
   );

@@ -13,10 +13,12 @@ import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { getTodaysDateFormatted } from "@formbricks/lib/time";
+import { useProduct } from "@/lib/products/products";
 
 export default function ResponseTimeline({ environmentId, surveyId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
+  const { product } = useProduct(environmentId);
 
   const responses = responsesData?.responses;
 
@@ -183,6 +185,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
                 data={updatedResponse}
                 surveyId={surveyId}
                 environmentId={environmentId}
+                productId={product?.id ?? ""}
               />
             );
           })}

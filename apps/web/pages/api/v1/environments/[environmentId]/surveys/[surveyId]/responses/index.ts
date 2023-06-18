@@ -55,6 +55,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             user: true,
           },
         },
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
       },
     });
 
