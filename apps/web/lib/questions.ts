@@ -41,7 +41,7 @@ export const questionTypes: QuestionType[] = [
         { id: createId(), label: "Eat the cake 🍰" },
         { id: createId(), label: "Have the cake 🎂" },
       ],
-      choicesOrder: 'current'
+      randomOrdering: false
     },
   },
   {
@@ -56,7 +56,7 @@ export const questionTypes: QuestionType[] = [
         { id: createId(), label: "Ocean 🌊" },
         { id: createId(), label: "Palms 🌴" },
       ],
-      choicesOrder: 'current'
+      randomOrdering: false
     },
   },
   {

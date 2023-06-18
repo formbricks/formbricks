@@ -51,7 +51,7 @@ export default function SurveyMenuBar({
       setDeleteDialogOpen(false);
       router.back();
     } catch (error) {
-      console.log("An error occured deleting the survey");
+      console.log("An error occurred deleting the survey");
     }
   };
 

@@ -21,7 +21,7 @@ export default function MultipleChoiceSingleQuestion({
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [questionChoices, setQuestionChoices] = useState<any[]>(question.choices
-    ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+    ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
     : []);
   const otherSpecify = useRef<HTMLInputElement>(null);
 
@@ -33,9 +33,9 @@ export default function MultipleChoiceSingleQuestion({
 
   useEffect(() => {
     setQuestionChoices(question.choices
-      ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+      ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
       : [])
-  }, [question.choices, question.choicesOrder])
+  }, [question.choices, question.randomOrdering])
 
   return (
     <form

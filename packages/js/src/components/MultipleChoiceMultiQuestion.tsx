@@ -23,7 +23,7 @@ export default function MultipleChoiceMultiQuestion({
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
   const [questionChoices, setQuestionChoices] = useState<any[]>(question.choices
-    ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+    ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
     : []);
   const otherInputRef = useRef(null);
 
@@ -39,9 +39,9 @@ export default function MultipleChoiceMultiQuestion({
 
   useEffect(() => {
     setQuestionChoices(question.choices
-      ? question.choicesOrder === 'random' ? shuffleArray(question.choices) : question.choices
+      ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
       : [])
-  }, [question.choices, question.choicesOrder])
+  }, [question.choices, question.randomOrdering])
 
   return (
     <form
