@@ -32,11 +32,53 @@ type EditMembershipsProps = {
   environmentId: string;
 };
 
+type Role = {
+  isAdminOrOwner: boolean;
+  memberRole: string;
+};
+
 enum MembershipRole {
   Admin = "admin",
   Editor = "editor",
   Developer = "developer",
   Viewer = "viewer",
+}
+
+function RoleElement({ isAdminOrOwner, memberRole }: Role) {
+  if (!isAdminOrOwner || memberRole !== "owner") {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="secondary" className="flex items-center gap-1 p-1.5 text-xs" size="sm">
+            <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
+            <EditIcon className="h-3 w-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuLabel className="text-center">Select Role</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuRadioGroup
+            value={capitalizeFirstLetter(memberRole)}
+            // onValueChange={setPosition}
+          >
+            {Object.keys(MembershipRole).map((role) => (
+              <DropdownMenuRadioItem value={role}>{capitalizeFirstLetter(role)}</DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  if (memberRole === "owner") {
+    return (
+      <Button variant="secondary" disabled className="flex items-center gap-1 p-1.5 text-xs" size="sm">
+        {capitalizeFirstLetter(memberRole)}
+      </Button>
+    );
+  }
+
+  return <Badge text={capitalizeFirstLetter(memberRole)} type="gray" size="tiny" />;
 }
 
 export function EditMemberships({ environmentId }: EditMembershipsProps) {
@@ -51,8 +93,6 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
 
   const role = team?.members?.filter((member) => member?.userId === profile?.id)[0]?.role;
   const isAdminOrOwner = role === "admin" || role === "owner";
-
-  // const [position, setPosition] = useState("bottom");
 
   const handleOpenDeleteMemberModal = (e, member) => {
     e.preventDefault();
@@ -133,34 +173,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                 {member.email}
               </div>
               <div className="ph-no-capture col-span-1 flex flex-col items-start justify-center break-all">
-                {!isAdminOrOwner || member.role === "owner" ? (
-                  <Button variant="secondary" disabled size="sm" className="text-xs">
-                    {capitalizeFirstLetter(member.role)}
-                  </Button>
-                ) : (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="secondary" className="flex items-center gap-1 p-1.5 text-xs" size="sm">
-                        <span className="ml-1">{capitalizeFirstLetter(member.role)}</span>
-                        <EditIcon className="h-3 w-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuLabel className="text-center">Select Role</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuRadioGroup
-                        value={capitalizeFirstLetter(member.role)}
-                        // onValueChange={setPosition}
-                      >
-                        {Object.keys(MembershipRole).map((role) => (
-                          <DropdownMenuRadioItem value={role}>
-                            {capitalizeFirstLetter(role)}
-                          </DropdownMenuRadioItem>
-                        ))}
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                <RoleElement isAdminOrOwner={isAdminOrOwner} memberRole={member.role} />
               </div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
                 {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}
