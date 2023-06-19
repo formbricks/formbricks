@@ -17,8 +17,12 @@ export const SignupForm = () => {
   const nameRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: any) => {
-    setSigningUp(true);
     e.preventDefault();
+    if(e.target.elements.password.value.length < 8){
+      setError("Password should be at least 8 characters")
+      return
+    }
+    setSigningUp(true);
     try {
       await createUser(
         e.target.elements.name.value,
@@ -134,7 +138,8 @@ export const SignupForm = () => {
               </div>
             )}
             <Button
-              onClick={() => {
+              onClick={(e:any) => {
+                e.preventDefault()
                 if (!showLogin) {
                   setShowLogin(true);
                   setButtonEnabled(false);
