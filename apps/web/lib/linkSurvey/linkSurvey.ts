@@ -6,6 +6,7 @@ import { QuestionType, type Logic, type Question } from "@formbricks/types/quest
 import { TResponseInput } from "@formbricks/types/v1/responses";
 import { useState, useEffect, useCallback } from "react";
 import type { Survey } from "@formbricks/types/surveys";
+import { useRouter } from "next/navigation";
 
 export const useLinkSurvey = (surveyId: string) => {
   const { data, error, mutate, isLoading } = useSWR(`/api/v1/client/surveys/${surveyId}`, fetcher);
@@ -26,7 +27,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   const [loadingElement, setLoadingElement] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
-
+  const router = useRouter()
   const URLParams = new URLSearchParams(window.location.search);
   const isPreview = URLParams.get("preview") === "true";
   const hasFirstQuestionPrefill = URLParams.has(survey.questions[0].id);
@@ -135,6 +136,9 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     } else {
       setProgress(1);
       setFinished(true);
+      if(survey.redirectLink){
+        router.push(survey.redirectLink);
+      }
     }
   };
 

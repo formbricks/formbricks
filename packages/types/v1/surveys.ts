@@ -199,6 +199,7 @@ export const ZSurvey = z.object({
   ]),
   autoClose: z.union([z.number(), z.null()]),
   triggers: z.array(ZEventClass),
+  redirectLink: z.union([z.string(), z.null()]),
   recontactDays: z.union([z.number(), z.null()]),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
