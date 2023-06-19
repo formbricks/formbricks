@@ -1,12 +1,12 @@
 import useSWRMutation from "swr/mutation";
 
-export const useCreateTag = (environmentId: string, surveyId: string, responseId: string) => {
+export const useCreateTag = (environmentId: string, productId: string) => {
   const { trigger: createTag, isMutating: isCreatingTag } = useSWRMutation(
-    `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}/tags`,
-    (url, { arg }: { arg: { productId: string; name: string } }) => {
+    `/api/v1/environments/${environmentId}/product/${productId}/tags`,
+    (url, { arg }: { arg: { responseId: string; name: string } }) => {
       return fetch(url, {
         method: "POST",
-        body: JSON.stringify({ name: arg.name, productId: arg.productId }),
+        body: JSON.stringify({ name: arg.name, responseId: arg.responseId }),
       });
     }
   );

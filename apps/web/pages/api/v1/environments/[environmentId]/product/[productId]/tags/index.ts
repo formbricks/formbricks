@@ -51,6 +51,48 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.json(tags);
   }
 
+  // POST /api/environments/[environmentId]/product/[productId]/tags
+
+  // Create a new tag for a product (with name and responseId)
+
+  if (req.method === "POST") {
+    let name: string;
+    let responseId: string;
+
+    try {
+      name = JSON.parse(req.body).name;
+    } catch (e) {
+      return res.status(400).json({ message: "Invalid name" });
+    }
+
+    try {
+      responseId = JSON.parse(req.body).responseId;
+    } catch (e) {
+      return res.status(400).json({ message: "Invalid responseId" });
+    }
+
+    let tag;
+
+    try {
+      tag = await prisma.tag.create({
+        data: {
+          name,
+          productId,
+          responses: {
+            create: {
+              responseId,
+            },
+          },
+        },
+      });
+    } catch (e) {
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+
+    captureTelemetry(`tag created for product ${productId} with name ${name} and responseId ${responseId}`);
+    return res.json(tag);
+  }
+
   // Unknown HTTP Method
   else {
     throw new Error(`The HTTP ${req.method} method is not supported by this route.`);

@@ -29,12 +29,12 @@ export const deleteSubmission = async (environmentId: string, surveyId: string, 
 
 export const useAddTagToResponse = (environmentId: string, surveyId: string, responseId: string) => {
   const response = useSWRMutation(
-    `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}`,
+    `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}/tags`,
 
     async (url, { arg }: { arg: { tagIdToAdd: string } }) => {
       return fetch(url, {
-        method: "PATCH",
-        body: JSON.stringify({ tagIdToAdd: arg.tagIdToAdd }),
+        method: "POST",
+        body: JSON.stringify({ tagId: arg.tagIdToAdd }),
       }).then((res) => res.json());
     }
   );
@@ -42,32 +42,31 @@ export const useAddTagToResponse = (environmentId: string, surveyId: string, res
   return response;
 };
 
-export const useRemoveTagFromResponse = (environmentId: string, surveyId: string, responseId: string) => {
-  const response = useSWRMutation(
-    `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}`,
+// export const useRemoveTagFromResponse = (environmentId: string, surveyId: string, responseId: string) => {
+//   const response = useSWRMutation(
+//     `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}/tags`,
 
-    async (url, { arg }: { arg: { tagIdToRemove: string } }) => {
-      return await fetch(url, {
-        method: "PATCH",
-        body: JSON.stringify({ tagIdToRemove: arg.tagIdToRemove }),
-      }).then((res) => res.json());
-    }
-  );
+//     async (url, { arg }: { arg: { tagIdToRemove: string } }) => {
+//       return await fetch(url, {
+//         method: "DELETE",
+//         body: JSON.stringify({ tagId: arg.tagIdToRemove }),
+//       }).then((res) => res.json());
+//     }
+//   );
 
-  return response;
-};
+//   return response;
+// };
 
-export const deleteTagFromResponse = async (
+export const removeTagFromResponse = async (
   environmentId: string,
   surveyId: string,
   responseId: string,
   tagId: string
 ) => {
   const response = await fetch(
-    `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}`,
+    `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}/tags/${tagId}`,
     {
-      method: "PATCH",
-      body: JSON.stringify({ tagIdToDelete: tagId }),
+      method: "DELETE",
     }
   );
 

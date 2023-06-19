@@ -46,13 +46,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     let tags;
 
     try {
-      tags = await prisma.tag.findMany({
+      tags = await prisma.tagsOnResponses.findMany({
         where: {
-          responses: {
-            some: {
-              responseId,
-            },
-          },
+          responseId,
+        },
+        include: {
+          response: true,
+          tag: true,
         },
       });
     } catch (e) {
@@ -101,22 +101,24 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Create a tag for a response
 
   if (req.method === "POST") {
-    let newTag;
+    let tagId: string;
+    let addedTag;
 
     try {
-      newTag = await prisma.tag.create({
+      tagId = JSON.parse(req.body).tagId;
+    } catch (e) {
+      return res.status(400).json({ message: "Invalid tag name" });
+    }
+
+    try {
+      addedTag = await prisma.tagsOnResponses.create({
         data: {
-          name: tagName,
-          productId,
-          responses: {
-            create: {
-              response: {
-                connect: {
-                  id: responseId,
-                },
-              },
-            },
-          },
+          responseId,
+          tagId,
+        },
+        include: {
+          response: true,
+          tag: true,
         },
       });
     } catch (e) {
@@ -125,13 +127,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           return res.status(400).json({ message: "Tag already exists" });
         }
       }
-      console.log("body: ", req.body);
-      console.log({ e });
+
       return res.status(500).json({ message: "Internal Server Error" });
     }
 
-    captureTelemetry(`tag ${newTag.id} created for response ${responseId}`);
-    return res.json(newTag);
+    // captureTelemetry(`tag ${newTag.id} created for response ${responseId}`);
+    return res.json(addedTag);
   }
 
   // Unknown HTTP Method

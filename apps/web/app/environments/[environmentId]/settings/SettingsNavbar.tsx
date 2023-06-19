@@ -14,6 +14,7 @@ import {
   KeyIcon,
   LinkIcon,
   PaintBrushIcon,
+  PlusCircleIcon,
   UserCircleIcon,
   UsersIcon,
 } from "@heroicons/react/24/solid";
@@ -83,13 +84,12 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
             current: pathname?.includes("/members"),
             hidden: false,
           },
-          /* 
-        {
-          name: "Tags",
-          href: `/environments/${environmentId}/settings/tags`,
-          icon: PlusCircleIcon,
-           current: pathname?.includes("/tags"),
-        }, */
+          {
+            name: "Tags",
+            href: `/environments/${environmentId}/settings/tags`,
+            icon: PlusCircleIcon,
+            current: pathname?.includes("/tags"),
+          },
           {
             name: "Billing & Plan",
             href: `/environments/${environmentId}/settings/billing`,

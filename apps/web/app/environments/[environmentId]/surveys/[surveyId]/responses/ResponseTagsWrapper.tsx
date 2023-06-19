@@ -1,4 +1,4 @@
-import { useAddTagToResponse, useRemoveTagFromResponse, useResponses } from "@/lib/responses/responses";
+import { removeTagFromResponse, useAddTagToResponse, useResponses } from "@/lib/responses/responses";
 import { useCreateTag } from "@/lib/tags/mutateTags";
 import { useTagsForProduct } from "@/lib/tags/tags";
 import { cn } from "@formbricks/lib/cn";
@@ -109,26 +109,28 @@ export function ComboboxDemo({
 }
 
 export function Tag({
-  tag,
+  tagId,
+  tagName,
   onDelete,
 }: {
-  tag: { tagId: string; tagName: string };
+  tagId: string;
+  tagName: string;
   onDelete: (tagId: string) => void;
 }) {
   const [deleteButtonVisible, setDeleteButtonVisible] = useState(false);
 
   return (
     <div
-      key={tag.tagId}
+      key={tagId}
       onMouseEnter={() => setDeleteButtonVisible(true)}
       onMouseLeave={() => setDeleteButtonVisible(false)}
       className="relative flex flex-col items-center justify-between rounded-lg border border-teal-500 bg-teal-300 px-2 py-1">
-      <span className="text-sm">#{tag.tagName}</span>
+      <span className="text-sm">#{tagName}</span>
       {deleteButtonVisible ? (
         <span
           className="absolute -right-2 -top-2 cursor-pointer text-sm"
           onClick={() => {
-            onDelete(tag.tagId);
+            onDelete(tagId);
           }}>
           <XCircleIcon fontSize={24} className="h-4 w-4 text-slate-900" />
         </span>
@@ -147,9 +149,8 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
   const [value, setValue] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [open, setOpen] = React.useState(false);
-  const [deleteButtonVisible, setDeleteButtonVisible] = useState(false);
 
-  const { createTag, isCreatingTag } = useCreateTag(environmentId, surveyId, responseId);
+  const { createTag, isCreatingTag } = useCreateTag(environmentId, productId);
 
   const { mutateResponses } = useResponses(environmentId, surveyId);
 
@@ -160,30 +161,21 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
     responseId
   );
 
-  const { trigger: removeTagFromReponse, isMutating: isRemoving } = useRemoveTagFromResponse(
-    environmentId,
-    surveyId,
-    responseId
-  );
+  const onDelete = async (tagId: string) => {
+    try {
+      await removeTagFromResponse(environmentId, surveyId, responseId, tagId);
 
-  const onDelete = (tagId: string) => {
-    removeTagFromReponse(
-      {
-        tagIdToRemove: tagId,
-      },
-      {
-        onSuccess: () => {
-          mutateResponses();
-        },
-      }
-    );
+      mutateResponses();
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   return (
     <div className="flex items-center gap-3 p-6">
       <div className="flex items-center gap-2">
         {tags.map((tag) => (
-          <Tag onDelete={onDelete} tag={tag} />
+          <Tag onDelete={onDelete} tagId={tag.tagId} tagName={tag.tagName} />
         ))}
 
         {isAdding ? (
@@ -233,7 +225,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
               createTag(
                 {
                   name: tagName,
-                  productId,
+                  responseId,
                 },
                 {
                   onSuccess: () => {
