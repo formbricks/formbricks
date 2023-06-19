@@ -84,9 +84,17 @@ export default function AttributeSettingsTab({
             {attributeClass.type !== "automatic" && (
               <Button className="ml-3" variant="secondary" onClick={handleArchiveToggle}>
                 {attributeClass.archived ? (
-                  <> <ArchiveBoxXMarkIcon className="h-4 mr-2 text-slate-600" /><span>Unarchive</span></>
+                  <>
+                    {" "}
+                    <ArchiveBoxXMarkIcon className="mr-2 h-4 text-slate-600" />
+                    <span>Unarchive</span>
+                  </>
                 ) : (
-                  <> <ArchiveBoxArrowDownIcon className="h-4 mr-2  text-slate-600" /><span>Archive</span></>
+                  <>
+                    {" "}
+                    <ArchiveBoxArrowDownIcon className="mr-2 h-4  text-slate-600" />
+                    <span>Archive</span>
+                  </>
                 )}
               </Button>
             )}

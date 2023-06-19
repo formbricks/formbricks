@@ -20,12 +20,16 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
   const [showArchived, setShowArchived] = useState(false);
 
   const displayedAttributeClasses = useMemo(() => {
-    return attributeClasses ? (showArchived ? attributeClasses : attributeClasses.filter(ac => !ac.archived)) : [];
-}, [showArchived, attributeClasses]);
+    return attributeClasses
+      ? showArchived
+        ? attributeClasses
+        : attributeClasses.filter((ac) => !ac.archived)
+      : [];
+  }, [showArchived, attributeClasses]);
 
-const hasArchived = useMemo(() => {
-    return attributeClasses ? attributeClasses.some(ac => ac.archived) : false;
-}, [attributeClasses]);
+  const hasArchived = useMemo(() => {
+    return attributeClasses ? attributeClasses.some((ac) => ac.archived) : false;
+  }, [attributeClasses]);
 
   if (isLoadingAttributeClasses) {
     return <LoadingSpinner />;
@@ -46,15 +50,13 @@ const hasArchived = useMemo(() => {
 
   return (
     <>
-      <div className="mb-6 text-right flex items-center justify-end">
-        {hasArchived && <div className="flex items-center text-sm font-medium">
-          Show archived
-          <Switch
-            className="mx-3"
-            checked={showArchived}
-            onCheckedChange={toggleShowArchived}
-          />
-        </div>}
+      <div className="mb-6 flex items-center justify-end text-right">
+        {hasArchived && (
+          <div className="flex items-center text-sm font-medium">
+            Show archived
+            <Switch className="mx-3" checked={showArchived} onCheckedChange={toggleShowArchived} />
+          </div>
+        )}
         <Button
           variant="secondary"
           href="http://formbricks.com/docs/attributes/custom-attributes"
@@ -84,7 +86,8 @@ const hasArchived = useMemo(() => {
                       <TagIcon className="h-8 w-8 flex-shrink-0 text-slate-500" />
                     </div>
                     <div className="ml-4 text-left">
-                      <div className="font-medium text-slate-900">{attributeClass.name}
+                      <div className="font-medium text-slate-900">
+                        {attributeClass.name}
                         <span className="ml-2">
                           {attributeClass.archived && <Badge text="Archived" type="gray" size="tiny" />}
                         </span>
