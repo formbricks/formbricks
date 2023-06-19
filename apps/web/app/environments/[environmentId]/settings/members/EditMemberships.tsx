@@ -108,7 +108,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
               <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
                 {member.email}
               </div>
-              <div className="ph-no-capture col-span-1 flex flex-col justify-center items-start break-all">
+              <div className="ph-no-capture col-span-1 flex flex-col items-start justify-center break-all">
                 <Badge text={capitalizeFirstLetter(member.role)} type="gray" size="tiny" />
               </div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">

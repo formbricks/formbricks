@@ -23,7 +23,6 @@ export default function DeleteDialog({
   isDeleting,
   useSaveInsteadOfCancel = false,
   onSave,
-
 }: DeleteDialogProps) {
   return (
     <Modal open={open} setOpen={setOpen} title={`Delete ${deleteWhat}`}>
@@ -37,7 +36,7 @@ export default function DeleteDialog({
             }
             setOpen(false);
           }}>
-           {useSaveInsteadOfCancel ? 'Save' : 'Cancel'}
+          {useSaveInsteadOfCancel ? "Save" : "Cancel"}
         </Button>
         <Button variant="warn" onClick={onDelete} loading={isDeleting}>
           Delete
