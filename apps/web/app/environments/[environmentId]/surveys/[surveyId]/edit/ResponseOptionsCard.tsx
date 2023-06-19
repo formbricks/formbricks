@@ -1,39 +1,40 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
 import type { Survey } from "@formbricks/types/surveys";
-import { Badge, Input, Label, RadioGroup, RadioGroupItem, Switch } from "@formbricks/ui";
+import { Input, Label, Switch } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
 
-const options = [
-  {
-    id: "ongoing",
-    name: "Ongoing",
-    description: "Collects responses until survey is stopped manually.",
-    disabled: false,
-  },
-  {
-    id: "limit",
-    name: "Limit responses",
-    description: "Stops collecting responses when number of responses is reached.",
-    disabled: true,
-  },
-];
-
 interface ResponseOptionsCardProps {
   localSurvey: Survey;
   setLocalSurvey: (survey: Survey) => void;
-  environmentId: string;
 }
 
 export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
+  const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
   const [redirectLink, setRedirectLink] = useState<string | null>("");
 
   const handleCheckMark = () => {
+    if (autoComplete) {
+      const updatedSurvey: Survey = { ...localSurvey, autoComplete: null };
+      setLocalSurvey(updatedSurvey);
+    } else {
+      const updatedSurvey: Survey = { ...localSurvey, autoComplete: 25 };
+      setLocalSurvey(updatedSurvey);
+    }
+  };
+
+  const handleInputResponse = (e: any) => {
+    let value = parseInt(e.target.value);
+    if (value < 1) value = 1;
+    const updatedSurvey: Survey = { ...localSurvey, autoComplete: value };
+    setLocalSurvey(updatedSurvey);
+  };
+
+  const handleRedirectCheckMark = () => {
     if (redirectToggle && localSurvey.redirectLink) {
       setRedirectToggle(false);
       setRedirectLink(null);
@@ -80,47 +81,42 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
-          <div className="mb-4 ml-2">
-            <h3 className="font-semibold text-slate-700">Survey end</h3>
-            <p className="text-xs text-slate-500">How long can the survey collect responses?</p>
+          <div className="ml-2 flex items-center space-x-1 p-4">
+            <Switch id="autoComplete" checked={autoComplete} onCheckedChange={handleCheckMark} />
+            <Label htmlFor="autoComplete" className="cursor-pointer">
+              <div className="ml-2">
+                <h3 className="text-sm font-semibold text-slate-700">
+                  Auto complete survey on response limit
+                </h3>
+              </div>
+            </Label>
           </div>
-          <RadioGroup value="ongoing" className="flex flex-col space-y-3">
-            {options.map((option) => (
-              <Label
-                key={option.id}
-                htmlFor={option.id}
-                className={cn(
-                  "flex w-full  items-center rounded-lg border bg-slate-50 p-4",
-                  option.disabled
-                    ? "border-slate-200 bg-slate-50/50"
-                    : "border-brand-dark cursor-pointer bg-slate-50"
-                )}>
-                <RadioGroupItem
-                  value={option.id}
-                  id={option.id}
-                  disabled={option.disabled}
-                  className="aria-checked:border-brand-dark  mx-5 disabled:cursor-not-allowed disabled:border-slate-400 aria-checked:border-2"
-                />
-                <div>
-                  <div className="inline-flex items-center">
-                    <p className={cn("font-semibold", option.disabled ? "text-slate-500" : "text-slate-800")}>
-                      {option.name}
-                    </p>
-                    {option.disabled && (
-                      <Badge text="coming soon" size="normal" type="warning" className="ml-2" />
-                    )}
-                  </div>
-                  <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
+          {autoComplete && (
+            <div className="ml-2 flex items-center space-x-1 px-4 pb-4">
+              <label
+                htmlFor="autoCompleteResponses"
+                className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                <div className="">
+                  <p className="text-sm font-semibold text-slate-700">
+                    Automatically mark the survey as complete after
+                    <Input
+                      type="number"
+                      min="1"
+                      id="autoCompleteResponses"
+                      value={localSurvey.autoComplete?.toString()}
+                      onChange={(e) => handleInputResponse(e)}
+                      className="ml-2 mr-2 inline w-16 text-center text-sm"
+                    />
+                    completed responses.
+                  </p>
                 </div>
-              </Label>
-            ))}
-          </RadioGroup>
-        </div>
+              </label>
+            </div>
+          )}
           <div className="p-3 ">
             <div className="ml-2 flex items-center space-x-1">
-              <Switch id="recontactDays" checked={redirectToggle} onCheckedChange={handleCheckMark} />
-              {/* <Checkbox id="recontactDays" checked={ignoreWaiting} onCheckedChange={handleCheckMark} /> */}
-              <Label htmlFor="recontactDays" className="cursor-pointer">
+              <Switch id="redirectLink" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
+              <Label htmlFor="redirectLink" className="cursor-pointer">
                 <div className="ml-2">
                   <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
                   <p className="text-xs font-normal text-slate-500">
@@ -140,6 +136,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
               )}
             </div>
           </div>
+        </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );

@@ -32,11 +32,7 @@ export default function AudienceView({ environmentId, localSurvey, setLocalSurve
         environmentId={environmentId}
       />
 
-      {localSurvey.type === "link" && <ResponseOptionsCard
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
-        environmentId={environmentId}
-      />}
+      {localSurvey.type === "link" && <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />}
 
       <RecontactOptionsCard
         localSurvey={localSurvey}
