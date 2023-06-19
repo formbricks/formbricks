@@ -1,4 +1,4 @@
-import { useResponses } from "@/lib/responses/responses";
+import { addTagToResponse, useResponses } from "@/lib/responses/responses";
 import { useCreateTag } from "@/lib/tags/mutateTags";
 import { useTagsForProduct } from "@/lib/tags/tags";
 import { cn } from "@formbricks/lib/cn";
@@ -9,17 +9,17 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  Input,
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@formbricks/ui";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check } from "lucide-react";
 import React from "react";
+import { useMemo } from "react";
 import { useState } from "react";
 
 interface IResponseTagsWrapperProps {
-  data: {
+  tags: {
     tagId: string;
     tagName: string;
   }[];
@@ -30,9 +30,28 @@ interface IResponseTagsWrapperProps {
   responseId: string;
 }
 
-export function ComboboxDemo({ data }: { data: any }) {
+export function ComboboxDemo({
+  tags,
+  currentTags,
+  addTag,
+}: {
+  tags: { label: string; value: string }[];
+  currentTags: { label: string; value: string }[];
+  addTag: (tagName: string) => void;
+}) {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState("");
+  const [searchValue, setSearchValue] = useState("");
+
+  const tagsToSearch = useMemo(
+    () =>
+      tags.filter((tag) => {
+        const found = currentTags.findIndex((currentTag) => currentTag.value === tag.value);
+
+        return found === -1;
+      }),
+    [currentTags, tags]
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -42,24 +61,34 @@ export function ComboboxDemo({ data }: { data: any }) {
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button> */}
 
-        <Button variant="darkCTA">+ Add Tag</Button>
+        <Button variant="minimal">+ Add Tag</Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
-          <CommandInput placeholder="Search framework..." />
-          <CommandEmpty>No framework found.</CommandEmpty>
+          <div className="p-1">
+            <CommandInput
+              placeholder="Search Tags..."
+              className="border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
+              value={searchValue}
+              onValueChange={(search) => setSearchValue(search)}
+            />
+          </div>
+          <CommandEmpty>
+            <div className="text-muted-foreground flex h-16 items-center justify-center">
+              + Add {searchValue}
+            </div>
+          </CommandEmpty>
           <CommandGroup>
-            {data?.map((framework) => (
+            {tagsToSearch?.map((tag) => (
               <CommandItem
-                key={framework.value}
+                key={tag.value}
                 onSelect={(currentValue) => {
                   setValue(currentValue === value ? "" : currentValue);
                   setOpen(false);
+                  addTag(currentValue);
                 }}>
-                <Check
-                  className={cn("mr-2 h-4 w-4", value === framework.value ? "opacity-100" : "opacity-0")}
-                />
-                {framework.label}
+                <Check className={cn("mr-2 h-4 w-4", value === tag.value ? "opacity-100" : "opacity-0")} />
+                {tag.label}
               </CommandItem>
             ))}
           </CommandGroup>
@@ -70,13 +99,12 @@ export function ComboboxDemo({ data }: { data: any }) {
 }
 
 const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
-  data,
+  tags,
   environmentId,
   productId,
   responseId,
   surveyId,
 }) => {
-  const [newTagValue, setNewTagValue] = useState("");
   const { createTag, isCreatingTag } = useCreateTag(environmentId, surveyId, responseId);
 
   const { mutateResponses } = useResponses(environmentId, surveyId);
@@ -85,9 +113,8 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
 
   return (
     <div className="flex items-center gap-3 p-6">
-      <ComboboxDemo data={productTags?.map((tag) => ({ value: tag.name, label: tag.name }))} />
       <div className="flex items-center gap-2">
-        {data.map((tag) => (
+        {tags.map((tag) => (
           <div
             key={tag.tagId}
             className="relative flex items-center justify-between rounded-lg border border-teal-500 bg-teal-300 px-2 py-1">
@@ -97,15 +124,46 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
       </div>
 
       <div className="flex items-center gap-2">
-        <Input
+        {/* <Input
           type="text"
           value={newTagValue}
           onChange={(e) => {
             setNewTagValue(e.target.value);
           }}
-        />
+        /> */}
 
-        <Button
+        {!!productTags ? (
+          <ComboboxDemo
+            tags={productTags?.map((tag) => ({ value: tag.name, label: tag.name }))}
+            currentTags={tags.map((tag) => ({ value: tag.tagName, label: tag.tagName }))}
+            addTag={
+              (tagName) => {
+                const res = addTagToResponse(
+                  environmentId,
+                  surveyId,
+                  responseId,
+                  productTags.find((tag) => tag.name === tagName)?.id ?? ""
+                );
+                // console.log({ res });
+
+                mutateResponses();
+              }
+              // createTag(
+              //   {
+              //     name: tagName,
+              //     productId,
+              //   },
+              //   {
+              //     onSuccess: () => {
+              //       mutateResponses();
+              //     },
+              //   }
+              // )
+            }
+          />
+        ) : null}
+
+        {/* <Button
           variant="darkCTA"
           onClick={() =>
             createTag(
@@ -123,7 +181,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
             <span>+</span>
             <span>Add</span>
           </div>
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

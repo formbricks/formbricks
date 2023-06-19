@@ -25,3 +25,20 @@ export const deleteSubmission = async (environmentId: string, surveyId: string, 
 
   return response.json();
 };
+
+export const addTagToResponse = async (
+  environmentId: string,
+  surveyId: string,
+  responseId: string,
+  tagName: string
+) => {
+  const response = await fetch(
+    `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ tagName }),
+    }
+  );
+
+  return response.json();
+};

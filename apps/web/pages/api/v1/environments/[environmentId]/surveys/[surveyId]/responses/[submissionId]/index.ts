@@ -1,11 +1,11 @@
 import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
-import { prisma } from "@formbricks/database";
+import { prisma } from "@formbricks/database/src/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
   const surveyId = req.query.surveyId?.toString();
-  const responseId = req.query.responseId?.toString();
+  const responseId = req.query.submissionId?.toString();
 
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
   if (!hasAccess) {
@@ -33,6 +33,32 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       where: { id: responseId },
       data,
     });
+    return res.json(prismaRes);
+  } else if (req.method === "PATCH") {
+    const tagIdToAdd = JSON.parse(req.body).tagId;
+
+    const prismaRes = await prisma.response.update({
+      where: {
+        id: responseId,
+      },
+      data: {
+        tags: {
+          connectOrCreate: {
+            create: {
+              tagId: tagIdToAdd,
+            },
+            where: {
+              responseId: responseId!,
+              responseId_tagId: {
+                responseId: responseId!,
+                tagId: tagIdToAdd,
+              },
+            },
+          },
+        },
+      },
+    });
+
     return res.json(prismaRes);
   }
 

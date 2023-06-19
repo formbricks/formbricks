@@ -155,7 +155,7 @@ export default function SingleResponse({ data, environmentId, surveyId, productI
           surveyId={surveyId}
           productId={productId}
           responseId={data.id}
-          data={data.tags.map((tag) => ({
+          tags={data.tags.map((tag) => ({
             tagId: tag.tagId,
             tagName: tag.tag.name,
           }))}
