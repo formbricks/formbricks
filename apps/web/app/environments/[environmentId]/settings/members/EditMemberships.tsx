@@ -34,22 +34,22 @@ import AddMemberModal from "./AddMemberModal";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { useProfile } from "@/lib/profile";
-import { EditIcon } from "lucide-react";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 
 type EditMembershipsProps = {
   environmentId: string;
 };
 
-type Role = {
+interface Role {
   isAdminOrOwner: boolean;
-  memberRole: string;
+  memberRole: MembershipRole;
   teamId: string;
   memberId: string;
   environmentId: string;
   userId: string;
   memberAccepted: boolean;
   inviteId: string;
-};
+}
 
 enum MembershipRole {
   Admin = "admin",
@@ -71,7 +71,9 @@ function RoleElement({
   const { mutateTeam } = useMembers(environmentId);
   const [loading, setLoading] = useState(false);
   const disableRole =
-    memberRole && memberId && userId ? memberRole === "owner" || memberId === userId : false;
+    memberRole && memberId && userId
+      ? memberRole === ("owner" as MembershipRole) || memberId === userId
+      : false;
 
   const handleMemberRoleUpdate = async (role: string) => {
     setLoading(true);
@@ -88,26 +90,15 @@ function RoleElement({
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div>
-            <TooltipProvider delayDuration={50}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    disabled={disableRole}
-                    variant="secondary"
-                    className="flex items-center gap-1 p-1.5 text-xs"
-                    loading={loading}
-                    size="sm">
-                    <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
-                    <EditIcon className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="TooltipContent" sideOffset={5}>
-                  {!disableRole ? "Edit Member Role" : "You can't edit the follwing role"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+          <Button
+            disabled={disableRole}
+            variant="secondary"
+            className="flex items-center gap-1 p-1.5 text-xs"
+            loading={loading}
+            size="sm">
+            <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
+            <ChevronDownIcon className="h-4 w-4" />
+          </Button>
         </DropdownMenuTrigger>
         {!disableRole && (
           <DropdownMenuContent>

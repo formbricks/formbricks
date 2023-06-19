@@ -24,12 +24,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(400).json({ message: "Missing userId" });
   }
 
-  const hasOwnerOrAdminAccess = await isAdminOrOwner(currentUser, teamId);
-
   // PATCH /api/v1/teams/[teamId]/members/[userId]
   // Update a member's role
 
   if (req.method === "PATCH") {
+    const hasOwnerOrAdminAccess = await isAdminOrOwner(currentUser, teamId);
     if (!hasOwnerOrAdminAccess) {
       return res.status(403).json({ message: "You are not allowed to update member's role in this team" });
     }
