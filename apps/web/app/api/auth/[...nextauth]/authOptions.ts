@@ -287,7 +287,7 @@ export const authOptions: NextAuthOptions = {
                                         type: "automatic",
                                       },
                                       {
-                                        name: "Exit Intent",
+                                        name: "Exit Intent (Desktop)",
                                         description: "A user on Desktop leaves the website with the cursor.",
                                         type: "automatic",
                                       },
@@ -323,7 +323,7 @@ export const authOptions: NextAuthOptions = {
                                         type: "automatic",
                                       },
                                       {
-                                        name: "Exit Intent",
+                                        name: "Exit Intent (Desktop)",
                                         description: "A user on Desktop leaves the website with the cursor.",
                                         type: "automatic",
                                       },

@@ -30,7 +30,7 @@ export async function createTeam(teamName: string, ownerUserId: string): Promise
                         type: "automatic",
                       },
                       {
-                        name: "Exit Intent",
+                        name: "Exit Intent (Desktop)",
                         description: "A user on Desktop leaves the website with the cursor.",
                         type: "automatic",
                       },

@@ -8,7 +8,7 @@ export const populateEnvironment = {
         type: EventType.automatic,
       },
       {
-        name: "Exit Intent",
+        name: "Exit Intent (Desktop)",
         description: "A user on Desktop leaves the website with the cursor.",
         type: EventType.automatic,
       },
