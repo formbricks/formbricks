@@ -1,4 +1,4 @@
-import { addTagToResponse, deleteTagFromResponse, useResponses } from "@/lib/responses/responses";
+import { useAddTagToResponse, useRemoveTagFromResponse, useResponses } from "@/lib/responses/responses";
 import { useCreateTag } from "@/lib/tags/mutateTags";
 import { useTagsForProduct } from "@/lib/tags/tags";
 import { cn } from "@formbricks/lib/cn";
@@ -110,6 +110,8 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
   const { mutateResponses } = useResponses(environmentId, surveyId);
 
   const { data: productTags } = useTagsForProduct(environmentId, productId);
+  const { trigger: addTagToResponse } = useAddTagToResponse(environmentId, surveyId, responseId);
+  const { trigger: removeTagFromReponse } = useRemoveTagFromResponse(environmentId, surveyId, responseId);
 
   return (
     <div className="flex items-center gap-3 p-6">
@@ -122,10 +124,16 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
             <span
               className="cursor-pointer text-sm"
               onClick={() => {
-                const res = deleteTagFromResponse(environmentId, surveyId, responseId, tag.tagId);
-                // console.log({ res });
-
-                mutateResponses();
+                removeTagFromReponse(
+                  {
+                    tagIdToRemove: tag.tagId,
+                  },
+                  {
+                    onSuccess: () => {
+                      mutateResponses();
+                    },
+                  }
+                );
               }}>
               Del
             </span>
@@ -148,15 +156,16 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
             currentTags={tags.map((tag) => ({ value: tag.tagName, label: tag.tagName }))}
             addTag={
               (tagName) => {
-                const res = addTagToResponse(
-                  environmentId,
-                  surveyId,
-                  responseId,
-                  productTags.find((tag) => tag.name === tagName)?.id ?? ""
+                addTagToResponse(
+                  {
+                    tagIdToAdd: productTags.find((tag) => tag.name === tagName)?.id ?? "",
+                  },
+                  {
+                    onSuccess: () => {
+                      mutateResponses();
+                    },
+                  }
                 );
-                // console.log({ res });
-
-                mutateResponses();
               }
               // createTag(
               //   {

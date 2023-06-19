@@ -1,4 +1,5 @@
 import { fetcher } from "@formbricks/lib/fetcher";
+import useSWRMutation from "swr/mutation";
 import useSWR from "swr";
 
 export const useResponses = (environmentId: string, surveyId: string) => {
@@ -26,21 +27,34 @@ export const deleteSubmission = async (environmentId: string, surveyId: string, 
   return response.json();
 };
 
-export const addTagToResponse = async (
-  environmentId: string,
-  surveyId: string,
-  responseId: string,
-  tagIdToAdd: string
-) => {
-  const response = await fetch(
+export const useAddTagToResponse = (environmentId: string, surveyId: string, responseId: string) => {
+  const response = useSWRMutation(
     `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}`,
-    {
-      method: "PATCH",
-      body: JSON.stringify({ tagIdToAdd }),
+
+    (url, { arg }: { arg: { tagIdToAdd: string } }) => {
+      return fetch(url, {
+        method: "PATCH",
+        body: JSON.stringify({ tagIdToAdd: arg.tagIdToAdd }),
+      });
     }
   );
 
-  return response.json();
+  return response;
+};
+
+export const useRemoveTagFromResponse = (environmentId: string, surveyId: string, responseId: string) => {
+  const response = useSWRMutation(
+    `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}`,
+
+    (url, { arg }: { arg: { tagIdToRemove: string } }) => {
+      return fetch(url, {
+        method: "PATCH",
+        body: JSON.stringify({ tagIdToRemove: arg.tagIdToRemove }),
+      });
+    }
+  );
+
+  return response;
 };
 
 export const deleteTagFromResponse = async (

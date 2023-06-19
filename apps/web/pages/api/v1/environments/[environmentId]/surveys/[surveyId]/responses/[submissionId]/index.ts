@@ -36,7 +36,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.json(prismaRes);
   } else if (req.method === "PATCH") {
     let tagIdToAdd: string = "";
-    let tagIdToDelete: string = "";
+    let tagIdToRemove: string = "";
 
     try {
       tagIdToAdd = JSON.parse(req.body).tagIdToAdd;
@@ -45,12 +45,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     try {
-      tagIdToDelete = JSON.parse(req.body).tagIdToDelete;
+      tagIdToRemove = JSON.parse(req.body).tagIdToRemove;
     } catch (e) {
       res.status(400).json({ message: "Invalid tagId" });
     }
 
-    if (!!tagIdToDelete) {
+    if (!!tagIdToRemove) {
       const prismaRes = await prisma.response.update({
         where: {
           id: responseId,
@@ -60,7 +60,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             delete: {
               responseId_tagId: {
                 responseId: responseId!,
-                tagId: tagIdToDelete,
+                tagId: tagIdToRemove,
               },
             },
           },
