@@ -1,24 +1,44 @@
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useAttributeClass } from "@/lib/attributeClasses/attributeClasses";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { Label } from "@formbricks/ui";
+import { ErrorComponent, Label } from "@formbricks/ui";
 import { TagIcon } from "@heroicons/react/24/solid";
-import type { AttributeClass } from "@prisma/client";
 
 interface EventActivityTabProps {
-  attributeClass: AttributeClass;
+  attributeClassId: string;
+  environmentId: string;
 }
 
-export default function AttributeActivityTab({ attributeClass }: EventActivityTabProps) {
+export default function AttributeActivityTab({ environmentId, attributeClassId }: EventActivityTabProps) {
+  const { attributeClass, isLoadingAttributeClass, isErrorAttributeClass } = useAttributeClass(
+    environmentId,
+    attributeClassId
+  );
+
+  if (isLoadingAttributeClass) return <LoadingSpinner />;
+  if (isErrorAttributeClass) return <ErrorComponent />;
+
   return (
     <div className="grid grid-cols-3 pb-2">
       <div className="col-span-2 space-y-4 pr-6">
         <div>
           <Label className="text-slate-500">Active surveys</Label>
-          <p className="text-sm text-slate-900">-</p>
+          {attributeClass.activeSurveys.length === 0 && <p className="text-sm text-slate-900">-</p>}
+          {attributeClass.activeSurveys.map((surveyName) => (
+            <p key={surveyName} className="text-sm text-slate-900">
+              {surveyName}
+            </p>
+          ))}
         </div>
         <div>
           <Label className="text-slate-500">Inactive surveys</Label>
-          <p className="text-sm text-slate-900">-</p>
+          {attributeClass.inactiveSurveys.length === 0 && <p className="text-sm text-slate-900">-</p>}
+          {attributeClass.inactiveSurveys.map((surveyName) => (
+            <p key={surveyName} className="text-sm text-slate-900">
+              {surveyName}
+            </p>
+          ))}
         </div>
       </div>
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
