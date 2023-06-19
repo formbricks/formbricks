@@ -30,7 +30,7 @@ export const fetcher = async (url: string) => {
   return res.json();
 };
 
-export const updateRessource = async (url: string, { arg }: any) => {
+export const updateRessource = async (url: string, { arg }: { arg: any }) => {
   return fetch(url, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
