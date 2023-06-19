@@ -67,14 +67,14 @@ const App: FC<IProps> = ({
   }
 
   return (
-    <div className='w-full px-5 py-5 bg-ui-gray-light'>
+    <div className='w-full bg-slate-200'>
       <SnoopForm
         key={id} // used to reset form
         domain={window.location.host}
         protocol={window.location.protocol === "http:" ? "http" : "https"}
         formId={formId}
         localOnly={localOnly}
-        className='w-full max-w-3xl mx-auto space-y-6'
+        className='w-full max-w-3xl mx-auto'
         onSubmit={onSubmit}
         setFieldErrors={setFieldErrors}
         page={page}
@@ -87,7 +87,7 @@ const App: FC<IProps> = ({
           
         >
           {page.blocks.map((block: PageBlock) => (
-            <div key={block.id} className="bg-white px-5 py-5 rounded">
+            <div key={block.id} className={`bg-white px-5 py-5 ${/Question/.test(block.type) ? "mb-6 rounded-b-md": ""}`}>
               {block.type === "paragraph" ? (
                 <p
                   className='ce-paragraph'

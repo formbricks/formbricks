@@ -336,21 +336,6 @@ export default function UpdateProfile() {
         </div>
       </div>
 
-      <hr />
-      <div style={{ padding: '30px' }} className="flex min-h-screen bg-ui-gray-light">
-      <SnoopForm domain="app.snoopforms.com" protocol="https" formId="abcd">
-        <SnoopPage name="basicInfo" time={0}>
-          <SnoopElement
-            type="warn"
-            name="Warning"
-            label="Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer"
-            required
-          />
-          
-        </SnoopPage>
-        
-      </SnoopForm>
-    </div>
     </BaseLayoutUnauthorized>
   );
 }
