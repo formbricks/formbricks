@@ -23,6 +23,8 @@ export interface Survey {
   displayOption: "displayOnce" | "displayMultiple" | "respondMultiple";
   attributeFilters: AttributeFilter[];
   autoClose: number | null;
+  delay: number;
+  autoComplete: number | null;
 }
 
 export interface AttributeFilter {

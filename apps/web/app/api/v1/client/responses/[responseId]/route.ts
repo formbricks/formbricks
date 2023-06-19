@@ -1,86 +1,85 @@
 import { responses } from "@/lib/api/response";
-import { prisma } from "@formbricks/database";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { transformErrorToDetails } from "@/lib/api/validator";
+import { sendToPipeline } from "@/lib/pipelines";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
+import { updateResponse } from "@formbricks/lib/services/response";
+import { getSurvey } from "@formbricks/lib/services/survey";
+import { ZResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
-export async function PUT(request: Request, params: { responseId: string }): Promise<NextResponse> {
+export async function PUT(
+  request: Request,
+  { params }: { params: { responseId: string } }
+): Promise<NextResponse> {
   const { responseId } = params;
-  const { response } = await request.json();
+  const responseUpdate = await request.json();
 
-  if (!response) {
-    return responses.missingFieldResponse("response", true);
+  const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
+
+  if (!inputValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(inputValidation.error),
+      true
+    );
   }
-
-  const currentResponse = await prisma.response.findUnique({
-    where: {
-      id: responseId,
-    },
-    select: {
-      data: true,
-      survey: {
-        select: {
-          environmentId: true,
-        },
-      },
-    },
-  });
-
-  if (!currentResponse) {
-    return responses.notFoundResponse("Response", responseId, true);
-  }
-
-  const environmentId = currentResponse.survey.environmentId;
-
-  const newResponseData = {
-    ...JSON.parse(JSON.stringify(currentResponse?.data)),
-    ...response.data,
-  };
 
   // update response
-  const responseData = await prisma.response.update({
-    where: {
-      id: responseId,
-    },
-    data: {
-      ...{ ...response, data: newResponseData },
-    },
-  });
+  let response;
+  try {
+    response = await updateResponse(responseId, inputValidation.data);
+  } catch (error) {
+    if (error instanceof ResourceNotFoundError) {
+      return responses.notFoundResponse("Response", responseId, true);
+    }
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    }
+    if (error instanceof DatabaseError) {
+      return responses.internalServerErrorResponse(error.message);
+    }
+  }
+
+  // get survey to get environmentId
+  let survey;
+  try {
+    survey = await getSurvey(response.surveyId);
+  } catch (error) {
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    }
+    if (error instanceof DatabaseError) {
+      return responses.internalServerErrorResponse(error.message);
+    }
+  }
 
   // send response update to pipeline
   // don't await to not block the response
-  fetch(`${WEBAPP_URL}/api/pipeline`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  sendToPipeline({
+    event: "responseUpdated",
+    environmentId: survey.environmentId,
+    surveyId: survey.id,
+    // only send the updated fields
+    data: {
+      ...response,
+      data: inputValidation.data.data,
     },
-    body: JSON.stringify({
-      internalSecret: INTERNAL_SECRET,
-      environmentId,
-      event: "responseUpdated",
-      data: { id: responseId, ...response },
-    }),
   });
 
   if (response.finished) {
     // send response to pipeline
     // don't await to not block the response
-    fetch(`${WEBAPP_URL}/api/pipeline`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        internalSecret: INTERNAL_SECRET,
-        environmentId,
-        event: "responseFinished",
-        data: responseData,
-      }),
+    sendToPipeline({
+      event: "responseFinished",
+      environmentId: survey.environmentId,
+      surveyId: survey.id,
+      data: response,
     });
   }
 
-  return responses.successResponse({ ...responseData }, true);
+  return responses.successResponse(response, true);
 }

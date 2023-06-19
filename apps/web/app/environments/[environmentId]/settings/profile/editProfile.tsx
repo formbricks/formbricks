@@ -97,7 +97,11 @@ function DeleteAccountModal({ setOpen, open, session }: DeleteAccounModaltProps)
       await signOut();
       await formbricksLogout();
     } catch (error) {
+<<<<<<< HEAD
       toast.error("Something went wrong");
+=======
+      toast.error("semething went wrong");
+>>>>>>> main
     } finally {
       setDeleting(false);
       setOpen(false);
@@ -112,7 +116,11 @@ function DeleteAccountModal({ setOpen, open, session }: DeleteAccounModaltProps)
       onDelete={() => deleteAccount()}
       text="Before you proceed with deleting your account, please be aware of the following consequences:"
       isDeleting={deleting}
+<<<<<<< HEAD
       disabled={inputValue !== session.user.email}>
+=======
+      disabled={!(inputValue === session.user.email)}>
+>>>>>>> main
       <div className="py-5">
         <p>
           Deleting your account will result in the permanent removal of all your personal information, saved

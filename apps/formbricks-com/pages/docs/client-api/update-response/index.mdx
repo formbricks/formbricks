@@ -1,0 +1,84 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { APILayout } from "@/components/shared/APILayout.tsx";
+
+export const meta = {
+  title: "API: Update submission",
+  description: "Learn how to update a new response to a survey via API.",
+};
+
+<APILayout
+  method="POST"
+  url="/api/v1/client/responses/[responseId]"
+  description="Update an existing response in a survey."
+  headers={[]}
+  bodies={[
+    {
+      label: "data",
+      type: "string",
+      description: "The data of the response as JSON object (key: questionId, value: answer).",
+      required: true,
+    },
+  ]}
+  example={`{
+  "personId: "clfqjny0v000ayzgsycx54a2c",
+  "surveyId": "clfqz1esd0000yzah51trddn8",
+  "finished": true,
+  "data": {
+      "clggpvpvu0009n40g8ikawby8": 5,
+    }
+}`}
+  responses={[
+    {
+      color: "green",
+      statusCode: "200",
+      description: "success. Returns a response object as JSON.",
+      example: `{
+  "data": {
+    "id": "clisyqeoi000219t52m5gopke",
+    "surveyId": "clfqz1esd0000yzah51trddn8",
+    "finished": true,
+    "person": {
+      id: "clfqjny0v000ayzgsycx54a2c",
+      attributes: {
+        "email": "me@johndoe.com"
+      }
+    },
+    "data": {
+        "clfqjny0v0003yzgscnog1j9i": 10,
+        "clfqjtn8n0070yzgs6jgx9rog": "I love Formbricks",
+        "clggpvpvu0009n40g8ikawby8": 5
+      }
+    }
+}`,
+    },
+    {
+      color: "brown",
+      statusCode: "400",
+      description: "error. bad request",
+      example: `{
+  "code": "bad_request",
+  "message": "data was not provided.",
+  "details": {
+    "data": "This field is required."
+  }
+}`,
+    },
+    {
+      color: "brown",
+      statusCode: "404",
+      description: "error. not found",
+      example: `{
+  "code": "not_found",
+  "message": "Response not found"
+}`,
+    },
+  ]}
+/>
+
+| field name | required | default | description                                                                                                                                    |
+| ---------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| data       | yes      | -       | The response data object (answers to the survey). In this object the key is the questionId, the value the answer of the user to this question. |
+| finished   | yes      | false   | Mark a response as complete to be able to filter accordingly.                                                                                  |
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

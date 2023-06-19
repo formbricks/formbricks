@@ -29,7 +29,7 @@ export default function Modal({
             show ? "fb-translate-x-0 fb-opacity-100" : "fb-translate-x-28 fb-opacity-0",
             "fb-pointer-events-auto fb-relative fb-w-full fb-max-w-sm fb-overflow-hidden fb-rounded-lg fb-bg-white fb-shadow-lg fb-ring-1 fb-ring-black fb-ring-opacity-5 fb-transition-all fb-duration-500 fb-ease-in-out fb-m-4"
           )}>
-          <div class="fb-absolute fb-top-0 fb-right-0 fb-hidden fb-pt-4 fb-pr-4 sm:fb-block">
+          <div class="fb-absolute fb-top-0 fb-right-0 fb-pt-4 fb-pr-4 fb-block">
             <button
               type="button"
               onClick={close}

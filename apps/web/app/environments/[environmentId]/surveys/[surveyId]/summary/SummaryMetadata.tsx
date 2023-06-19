@@ -20,6 +20,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import LinkSurveyModal from "./LinkSurveyModal";
+import { timeSinceConditionally } from "@formbricks/lib/time";
 
 export default function SummaryMetadata({ surveyId, environmentId }) {
   const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
@@ -128,7 +129,9 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
           </TooltipProvider>
         </div>
         <div className="flex flex-col justify-between lg:col-span-1">
-          <div className=""></div>
+          <div className="text-right text-xs text-slate-400">
+            Last updated: {timeSinceConditionally(survey.updatedAt)}
+          </div>
           <div className="flex justify-end gap-x-1.5">
             {survey.type === "link" && (
               <Button
@@ -143,6 +146,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
               <SurveyStatusDropdown surveyId={surveyId} environmentId={environmentId} />
             ) : null}
             <Button
+              variant="darkCTA"
               className="h-full w-full px-3 lg:px-6"
               href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>
               <PencilSquareIcon className="mr-2 h-5  w-5 text-white" />

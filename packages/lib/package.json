@@ -5,17 +5,19 @@
   "version": "0.0.0",
   "main": "./index.ts",
   "types": "./index.ts",
-  "license": "MIT",
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@formbricks/database": "*",
+    "@formbricks/types": "*",
+    "@formbricks/errors": "*"
+  },
   "devDependencies": {
     "@formbricks/tsconfig": "*",
-    "@formbricks/types": "*",
     "eslint": "^8.41.0",
     "eslint-config-formbricks": "workspace:*",
     "typescript": "^5.0.4"

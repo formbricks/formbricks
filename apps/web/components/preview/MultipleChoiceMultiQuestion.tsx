@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { Input } from "@/../../packages/ui";
+import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import SubmitButton from "@/components/preview/SubmitButton";
-import { Input } from "@/../../packages/ui";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -23,10 +23,15 @@ export default function MultipleChoiceMultiQuestion({
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
-
+  /*   const [isIphone, setIsIphone] = useState(false);
+   */
   useEffect(() => {
     setIsAtLeastOneChecked(selectedChoices.length > 0 || otherSpecified.length > 0);
   }, [selectedChoices, otherSpecified]);
+
+  /*   useEffect(() => {
+    setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
+  }, []); */
 
   return (
     <form
@@ -46,7 +51,7 @@ export default function MultipleChoiceMultiQuestion({
         };
 
         onSubmit(data);
-        // console.log(data);
+
         setSelectedChoices([]); // reset value
         setShowOther(false);
         setOtherSpecified("");
@@ -56,7 +61,7 @@ export default function MultipleChoiceMultiQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="relative space-y-2 rounded-md bg-white">
+          <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
             {question.choices &&
               question.choices.map((choice) => (
                 <>
@@ -103,10 +108,9 @@ export default function MultipleChoiceMultiQuestion({
                       </span>
                       {choice.id === "other" && showOther && (
                         <Input
-                          type="text"
                           id={`${choice.id}-label`}
                           name={question.id}
-                          className="mt-2 bg-white"
+                          className="mt-2 bg-white focus:border-slate-300"
                           placeholder="Please specify"
                           onChange={(e) => setOtherSpecified(e.currentTarget.value)}
                           aria-labelledby={`${choice.id}-label`}

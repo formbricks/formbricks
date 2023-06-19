@@ -10,6 +10,8 @@ interface DeleteDialogProps {
   onDelete: () => void;
   text?: string;
   isDeleting?: boolean;
+  useSaveInsteadOfCancel?: boolean;
+  onSave?: () => void;
   children?: React.ReactNode;
   disabled?: boolean;
 }
@@ -21,6 +23,8 @@ export default function DeleteDialog({
   onDelete,
   text,
   isDeleting,
+  useSaveInsteadOfCancel = false,
+  onSave,
   children,
   disabled,
 }: DeleteDialogProps) {
@@ -32,9 +36,12 @@ export default function DeleteDialog({
         <Button
           variant="secondary"
           onClick={() => {
+            if (useSaveInsteadOfCancel && onSave) {
+              onSave();
+            }
             setOpen(false);
           }}>
-          Cancel
+          {useSaveInsteadOfCancel ? "Save" : "Cancel"}
         </Button>
         <Button variant="warn" onClick={onDelete} loading={isDeleting} disabled={disabled}>
           Delete

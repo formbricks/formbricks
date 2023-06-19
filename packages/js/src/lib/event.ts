@@ -2,7 +2,7 @@ import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { renderWidget } from "./widget";
-
+import { Survey } from "@formbricks/types/js";
 const logger = Logger.getInstance();
 const config = Config.getInstance();
 
@@ -39,13 +39,21 @@ export const trackEvent = async (
   }
 
   logger.debug(`Formbricks: Event "${eventName}" tracked`);
-  triggerSurvey(eventName);
+
+  // get a list of surveys that are collecting insights
+  const activeSurveys = config.get().settings?.surveys;
+
+  if (activeSurveys.length > 0) {
+    triggerSurvey(eventName, activeSurveys);
+  } else {
+    logger.debug("No active surveys to display");
+  }
 
   return okVoid();
 };
 
-export const triggerSurvey = (eventName: string): void => {
-  for (const survey of config.get().settings?.surveys) {
+export const triggerSurvey = (eventName: string, activeSurveys: Survey[]): void => {
+  for (const survey of activeSurveys) {
     for (const trigger of survey.triggers) {
       if (trigger.eventClass?.name === eventName) {
         logger.debug(`Formbricks: survey ${survey.id} triggered by event "${eventName}"`);

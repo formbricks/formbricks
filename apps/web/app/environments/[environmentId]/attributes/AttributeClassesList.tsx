@@ -2,12 +2,13 @@
 
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
-import { Button, ErrorComponent } from "@formbricks/ui";
+import { Badge, Button, ErrorComponent, Switch } from "@formbricks/ui";
 import { QuestionMarkCircleIcon, TagIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import AttributeDetailModal from "./AttributeDetailModal";
 import UploadAttributesModal from "./UploadAttributesModal";
 import { timeSinceConditionally } from "@formbricks/lib/time";
+import { useMemo } from "react";
 
 export default function AttributeClassesList({ environmentId }: { environmentId: string }) {
   const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
@@ -16,6 +17,19 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
   const [isAttributeDetailModalOpen, setAttributeDetailModalOpen] = useState(false);
   const [isUploadCSVModalOpen, setUploadCSVModalOpen] = useState(false);
   const [activeAttributeClass, setActiveAttributeClass] = useState("" as any);
+  const [showArchived, setShowArchived] = useState(false);
+
+  const displayedAttributeClasses = useMemo(() => {
+    return attributeClasses
+      ? showArchived
+        ? attributeClasses
+        : attributeClasses.filter((ac) => !ac.archived)
+      : [];
+  }, [showArchived, attributeClasses]);
+
+  const hasArchived = useMemo(() => {
+    return attributeClasses ? attributeClasses.some((ac) => ac.archived) : false;
+  }, [attributeClasses]);
 
   if (isLoadingAttributeClasses) {
     return <LoadingSpinner />;
@@ -30,9 +44,19 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
     setAttributeDetailModalOpen(true);
   };
 
+  const toggleShowArchived = () => {
+    setShowArchived(!showArchived);
+  };
+
   return (
     <>
-      <div className="mb-6 text-right">
+      <div className="mb-6 flex items-center justify-end text-right">
+        {hasArchived && (
+          <div className="flex items-center text-sm font-medium">
+            Show archived
+            <Switch className="mx-3" checked={showArchived} onCheckedChange={toggleShowArchived} />
+          </div>
+        )}
         <Button
           variant="secondary"
           href="http://formbricks.com/docs/attributes/custom-attributes"
@@ -48,7 +72,7 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
           <div className="text-center">Last Updated</div>
         </div>
         <div className="grid-cols-7">
-          {attributeClasses.map((attributeClass) => (
+          {displayedAttributeClasses.map((attributeClass) => (
             <button
               onClick={(e) => {
                 handleOpenAttributeDetailModalClick(e, attributeClass);
@@ -62,7 +86,12 @@ export default function AttributeClassesList({ environmentId }: { environmentId:
                       <TagIcon className="h-8 w-8 flex-shrink-0 text-slate-500" />
                     </div>
                     <div className="ml-4 text-left">
-                      <div className="font-medium text-slate-900">{attributeClass.name}</div>
+                      <div className="font-medium text-slate-900">
+                        {attributeClass.name}
+                        <span className="ml-2">
+                          {attributeClass.archived && <Badge text="Archived" type="gray" size="tiny" />}
+                        </span>
+                      </div>
                       <div className="text-xs text-slate-400">{attributeClass.description}</div>
                     </div>
                   </div>
