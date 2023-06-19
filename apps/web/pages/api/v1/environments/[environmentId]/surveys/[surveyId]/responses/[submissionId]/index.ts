@@ -91,11 +91,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
       select: {
-        tags: true,
+        tags: {
+          select: {
+            tag: true,
+          },
+        },
       },
     });
 
-    return res.json(prismaRes.tags);
+    return res.json(prismaRes);
   }
 
   // Delete /api/environments[environmentId]/surveys/[surveyId]/responses/[responseId]

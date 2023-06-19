@@ -13,10 +13,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@formbricks/ui";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import React from "react";
 import { useMemo } from "react";
 import { useState } from "react";
+import { XCircleIcon } from "@heroicons/react/24/solid";
 
 interface IResponseTagsWrapperProps {
   tags: {
@@ -34,15 +35,25 @@ export function ComboboxDemo({
   tags,
   currentTags,
   addTag,
+  createTag,
+  setValue,
+  value,
+  searchValue,
+  setSearchValue,
+  open,
+  setOpen,
 }: {
   tags: { label: string; value: string }[];
   currentTags: { label: string; value: string }[];
   addTag: (tagName: string) => void;
+  createTag?: (tagName: string) => void;
+  value: string;
+  setValue: React.Dispatch<React.SetStateAction<string>>;
+  searchValue: string;
+  setSearchValue: React.Dispatch<React.SetStateAction<string>>;
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
-  const [searchValue, setSearchValue] = useState("");
-
   const tagsToSearch = useMemo(
     () =>
       tags.filter((tag) => {
@@ -56,11 +67,6 @@ export function ComboboxDemo({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        {/* <Button variant="darkCTA" role="combobox" aria-expanded={open} className="w-[200px] justify-between">
-          {value ? frameworks.find((framework) => framework.value === value)?.label : "Select framework..."}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button> */}
-
         <Button variant="minimal">+ Add Tag</Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
@@ -74,11 +80,15 @@ export function ComboboxDemo({
             />
           </div>
           <CommandEmpty>
-            <div className="text-muted-foreground flex h-16 items-center justify-center">
+            <a
+              onClick={() => createTag?.(searchValue)}
+              className="text-muted-foreground flex h-6 cursor-pointer items-center justify-center focus:!shadow-none focus:outline-none">
               + Add {searchValue}
-            </div>
+            </a>
           </CommandEmpty>
           <CommandGroup>
+            {tagsToSearch?.length === 0 ? <CommandItem>No tags found</CommandItem> : null}
+
             {tagsToSearch?.map((tag) => (
               <CommandItem
                 key={tag.value}
@@ -98,6 +108,35 @@ export function ComboboxDemo({
   );
 }
 
+export function Tag({
+  tag,
+  onDelete,
+}: {
+  tag: { tagId: string; tagName: string };
+  onDelete: (tagId: string) => void;
+}) {
+  const [deleteButtonVisible, setDeleteButtonVisible] = useState(false);
+
+  return (
+    <div
+      key={tag.tagId}
+      onMouseEnter={() => setDeleteButtonVisible(true)}
+      onMouseLeave={() => setDeleteButtonVisible(false)}
+      className="relative flex flex-col items-center justify-between rounded-lg border border-teal-500 bg-teal-300 px-2 py-1">
+      <span className="text-sm">#{tag.tagName}</span>
+      {deleteButtonVisible ? (
+        <span
+          className="absolute -right-2 -top-2 cursor-pointer text-sm"
+          onClick={() => {
+            onDelete(tag.tagId);
+          }}>
+          <XCircleIcon fontSize={24} className="h-4 w-4 text-slate-900" />
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
   tags,
   environmentId,
@@ -105,113 +144,128 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
   responseId,
   surveyId,
 }) => {
+  const [value, setValue] = useState("");
+  const [searchValue, setSearchValue] = useState("");
+  const [open, setOpen] = React.useState(false);
+  const [deleteButtonVisible, setDeleteButtonVisible] = useState(false);
+
   const { createTag, isCreatingTag } = useCreateTag(environmentId, surveyId, responseId);
 
-  const { mutateResponses, responsesData } = useResponses(environmentId, surveyId);
+  const { mutateResponses } = useResponses(environmentId, surveyId);
 
-  const { data: productTags } = useTagsForProduct(environmentId, productId);
-  const { trigger: addTagToResponse } = useAddTagToResponse(environmentId, surveyId, responseId);
-  const { trigger: removeTagFromReponse } = useRemoveTagFromResponse(environmentId, surveyId, responseId);
+  const { data: productTags, mutate: refetchProductTags } = useTagsForProduct(environmentId, productId);
+  const { trigger: addTagToResponse, isMutating: isAdding } = useAddTagToResponse(
+    environmentId,
+    surveyId,
+    responseId
+  );
+
+  const { trigger: removeTagFromReponse, isMutating: isRemoving } = useRemoveTagFromResponse(
+    environmentId,
+    surveyId,
+    responseId
+  );
+
+  const onDelete = (tagId: string) => {
+    removeTagFromReponse(
+      {
+        tagIdToRemove: tagId,
+      },
+      {
+        onSuccess: () => {
+          mutateResponses();
+        },
+      }
+    );
+  };
 
   return (
     <div className="flex items-center gap-3 p-6">
       <div className="flex items-center gap-2">
         {tags.map((tag) => (
-          <div
-            key={tag.tagId}
-            className="relative flex flex-col items-center justify-between rounded-lg border border-teal-500 bg-teal-300 px-2 py-1">
-            <span className="text-sm">#{tag.tagName}</span>
-            <span
-              className="cursor-pointer text-sm"
-              onClick={() => {
-                removeTagFromReponse(
-                  {
-                    tagIdToRemove: tag.tagId,
-                  },
-                  {
-                    onSuccess: (removedTag) => {
-                      console.log({ removedTag });
-                      mutateResponses();
-                    },
-                  }
-                );
-              }}>
-              Del
-            </span>
-          </div>
+          <Tag onDelete={onDelete} tag={tag} />
         ))}
+
+        {isAdding ? (
+          <div className="relative">
+            <div className="absolute inset-0 z-50 grid place-items-center bg-black bg-opacity-50">
+              <Loader2 className="h-5 w-5 animate-spin" />
+            </div>
+
+            <div className="relative flex flex-col items-center justify-between rounded-lg border border-teal-500 bg-teal-300 px-2 py-1">
+              <span className="text-sm">#{value}</span>
+              <span className="absolute -right-2 -top-2 cursor-pointer text-sm">
+                <XCircleIcon fontSize={24} className="h-4 w-4 text-slate-900" />
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        {isCreatingTag ? (
+          <div className="relative">
+            <div className="absolute inset-0 z-50 grid place-items-center bg-black bg-opacity-50">
+              <Loader2 className="h-5 w-5 animate-spin" />
+            </div>
+
+            <div className="relative flex flex-col items-center justify-between rounded-lg border border-teal-500 bg-teal-300 px-2 py-1">
+              <span className="text-sm">#{searchValue}</span>
+
+              <span className="absolute -right-2 -top-2 cursor-pointer text-sm">
+                <XCircleIcon fontSize={24} className="h-4 w-4 text-slate-900" />
+              </span>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex items-center gap-2">
-        {/* <Input
-          type="text"
-          value={newTagValue}
-          onChange={(e) => {
-            setNewTagValue(e.target.value);
-          }}
-        /> */}
-
         {!!productTags ? (
           <ComboboxDemo
+            open={open}
+            setOpen={setOpen}
+            searchValue={searchValue}
+            setSearchValue={setSearchValue}
+            setValue={setValue}
+            value={value}
             tags={productTags?.map((tag) => ({ value: tag.name, label: tag.name }))}
             currentTags={tags.map((tag) => ({ value: tag.tagName, label: tag.tagName }))}
-            addTag={
-              (tagName) => {
-                addTagToResponse(
-                  {
-                    tagIdToAdd: productTags.find((tag) => tag.name === tagName)?.id ?? "",
-                  },
-                  {
-                    onSuccess: (newTag) => {
-                      console.log({ newTag });
-                      mutateResponses();
-                    },
-                    // optimisticData: {
-                    //   ...responsesData,
-                    //   tags: [
-                    //     ...responsesData?.tags,
-                    //     {
+            createTag={(tagName) => {
+              createTag(
+                {
+                  name: tagName,
+                  productId,
+                },
+                {
+                  onSuccess: () => {
+                    setValue("");
+                    setSearchValue("");
+                    setOpen(false);
+                    mutateResponses();
 
-                    //     }
-                    //   ]
-                    // },
-                  }
-                );
-              }
-              // createTag(
-              //   {
-              //     name: tagName,
-              //     productId,
-              //   },
-              //   {
-              //     onSuccess: () => {
-              //       mutateResponses();
-              //     },
-              //   }
-              // )
-            }
+                    refetchProductTags();
+                  },
+                }
+              );
+            }}
+            addTag={(tagName) => {
+              addTagToResponse(
+                {
+                  tagIdToAdd: productTags.find((tag) => tag.name === tagName)?.id ?? "",
+                },
+                {
+                  onSuccess: () => {
+                    setValue("");
+                    setSearchValue("");
+                    setOpen(false);
+                    mutateResponses();
+
+                    refetchProductTags();
+                  },
+                }
+              );
+            }}
           />
         ) : null}
-
-        {/* <Button
-          variant="darkCTA"
-          onClick={() =>
-            createTag(
-              { name: newTagValue, productId },
-              {
-                onSuccess: () => {
-                  mutateResponses();
-                  setNewTagValue("");
-                },
-              }
-            )
-          }
-          loading={isCreatingTag}>
-          <div className="flex items-center gap-1">
-            <span>+</span>
-            <span>Add</span>
-          </div>
-        </Button> */}
       </div>
     </div>
   );
