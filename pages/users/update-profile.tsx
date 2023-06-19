@@ -9,6 +9,7 @@ import { DRCProvinces } from "../../lib/enums";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { Address } from "@prisma/client";
 import Loading from "../../components/Loading";
+import { SnoopElement, SnoopForm, SnoopPage } from "../../kda-snoopforms-react/src";
 
 export default function UpdateProfile() {
   const router = useRouter();
@@ -334,6 +335,22 @@ export default function UpdateProfile() {
           </div>
         </div>
       </div>
+
+      <hr />
+      <div style={{ padding: '30px' }} className="flex min-h-screen bg-ui-gray-light">
+      <SnoopForm domain="app.snoopforms.com" protocol="https" formId="abcd">
+        <SnoopPage name="basicInfo" time={0}>
+          <SnoopElement
+            type="warn"
+            name="Warning"
+            label="Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer"
+            required
+          />
+          
+        </SnoopPage>
+        
+      </SnoopForm>
+    </div>
     </BaseLayoutUnauthorized>
   );
 }
