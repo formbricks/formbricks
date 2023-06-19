@@ -78,7 +78,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
           Create New Team
         </Button>
 
-        {process.env.NEXT_PUBLIC_INVITE_DISABLED === '0' && (
+        {process.env.NEXT_PUBLIC_INVITE_DISABLED !== '1' && (
           <Button
             variant="primary"
             onClick={() => {
