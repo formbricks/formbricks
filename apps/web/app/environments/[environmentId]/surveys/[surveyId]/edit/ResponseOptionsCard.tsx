@@ -1,10 +1,11 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { Badge, Label, RadioGroup, RadioGroupItem } from "@formbricks/ui";
+import type { Survey } from "@formbricks/types/surveys";
+import { Badge, Input, Label, RadioGroup, RadioGroupItem, Switch } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const options = [
   {
@@ -21,10 +22,42 @@ const options = [
   },
 ];
 
-interface ResponseOptionsCardProps {}
+interface ResponseOptionsCardProps {
+  localSurvey: Survey;
+  setLocalSurvey: (survey: Survey) => void;
+  environmentId: string;
+}
 
-export default function ResponseOptionsCard({}: ResponseOptionsCardProps) {
+export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
+  const [redirectToggle, setRedirectToggle] = useState(false);
+  const [redirectLink, setRedirectLink] = useState<string | null>("");
+
+  const handleCheckMark = () => {
+    if (redirectToggle && localSurvey.redirectLink) {
+      setRedirectToggle(false);
+      setRedirectLink(null);
+      setLocalSurvey({ ...localSurvey, redirectLink: null });
+      return;
+    }
+    if (redirectToggle) {
+      setRedirectToggle(false);
+      return
+    }
+    setRedirectToggle(true);
+  };
+
+  const handleRedirectLinkChange = (link: string) => {
+    setRedirectLink(link);
+    setLocalSurvey({ ...localSurvey, redirectLink: link });
+  };
+
+  useEffect(() => {
+    if (localSurvey.redirectLink) {
+      setRedirectLink(localSurvey.redirectLink);
+      setRedirectToggle(true);
+    }
+  }, []);
 
   return (
     <Collapsible.Root
@@ -83,6 +116,30 @@ export default function ResponseOptionsCard({}: ResponseOptionsCardProps) {
             ))}
           </RadioGroup>
         </div>
+          <div className="p-3 ">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch id="recontactDays" checked={redirectToggle} onCheckedChange={handleCheckMark} />
+              {/* <Checkbox id="recontactDays" checked={ignoreWaiting} onCheckedChange={handleCheckMark} /> */}
+              <Label htmlFor="recontactDays" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
+                  <p className="text-xs font-normal text-slate-500">
+                    Redirect user to specified link on survey completion
+                  </p>
+                </div>
+              </Label>
+            </div>
+            <div className="mt-4">
+              {redirectToggle && (
+                <Input
+                  type="url"
+                  placeholder="https://www.example.com"
+                  value={redirectLink ? redirectLink : ""}
+                  onChange={(e) => handleRedirectLinkChange(e.target.value)}
+                />
+              )}
+            </div>
+          </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );

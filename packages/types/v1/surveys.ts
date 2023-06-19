@@ -182,6 +182,7 @@ export const ZSurvey = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
+  redirectLink: z.union([z.string(), z.null()]),
   type: z.union([z.literal("web"), z.literal("email"), z.literal("link"), z.literal("mobile")]),
   environmentId: z.string(),
   status: z.union([
