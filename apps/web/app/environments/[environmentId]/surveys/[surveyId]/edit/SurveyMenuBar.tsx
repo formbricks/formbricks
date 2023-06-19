@@ -1,6 +1,6 @@
 "use client";
 
-import AlertDialog from "@/components/shared/CustomAlertDialog";
+import AlertDialog from "@/components/shared/AlertDialog";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useProduct } from "@/lib/products/products";
