@@ -52,7 +52,7 @@ export default function Modal({ open, setOpen, onClick, message }) {
                       AVERTISSEMENT
                     </h2>
                   </span>
-                  <span>{message}</span>
+                  {message}
                   <span className="mt-5 sm:mt-6">
                     <StandardButton onClick={onClick} fullwidth>
                       J&apos;accepte

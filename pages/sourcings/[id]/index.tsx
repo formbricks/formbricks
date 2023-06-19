@@ -44,7 +44,7 @@ function NoCodeFormPublic() {
 
   const { user } = session.data;
   const [openDisclaimer, setOpenDisclaimer] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
+  const [modalMessage, setModalMessage] = useState();
   const [pageIdOnModal, setPageIdOnModal] = useState("");
   const [roll, setRoll] = useState();
 
@@ -112,17 +112,29 @@ function NoCodeFormPublic() {
       if (isTimedPage(page)) {
         setOpenDisclaimer(true);
         setPageIdOnModal(page.id);
-        setModalMessage(
-          `Tu es sur le point de commencer un formulaire chronométré et tu disposes de ${getPageTimer(
-            page.blocks
-          )} minutes pour remplir ce formulaire. Une fois commencé, tu ne peux plus quitter le formulaire, sous peine de voir tes réponses considérées comme soumises.`
-        );
+        setModalMessage(getDisclaimerMessage(getPageTimer(page.blocks)));
       } else router.push(`/sourcings/${formId}/${page.id}`);
     } else {
       router.push(`/sourcings/${formId}/${pageIdOnModal}`);
     }
   };
 
+  const getDisclaimerMessage = (timer) => {
+    return (
+      <>
+        Tu es sur le point de commencer un formulaire chronométré
+        <li>Tu disposes de <b>{timer} minutes</b> pour remplir ce formulaire</li>
+        <li>
+          Une fois commencé, <b>tu ne peux plus quitter le formulaire</b>, sous peine
+          de voir tes réponses considérées comme soumises.
+        </li>
+        <li>
+          Tu n'as droit qu'à <b>une seule tentative</b> pour effectuer ton test !
+        </li>
+      </>
+    );
+  };
+  
   return (
     <BaseLayoutManagement
       title={"Forms - Kadea Sourcing"}
