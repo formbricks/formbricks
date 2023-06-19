@@ -31,11 +31,11 @@ export const useAddTagToResponse = (environmentId: string, surveyId: string, res
   const response = useSWRMutation(
     `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}`,
 
-    (url, { arg }: { arg: { tagIdToAdd: string } }) => {
+    async (url, { arg }: { arg: { tagIdToAdd: string } }) => {
       return fetch(url, {
         method: "PATCH",
         body: JSON.stringify({ tagIdToAdd: arg.tagIdToAdd }),
-      });
+      }).then((res) => res.json());
     }
   );
 
@@ -46,11 +46,11 @@ export const useRemoveTagFromResponse = (environmentId: string, surveyId: string
   const response = useSWRMutation(
     `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}`,
 
-    (url, { arg }: { arg: { tagIdToRemove: string } }) => {
-      return fetch(url, {
+    async (url, { arg }: { arg: { tagIdToRemove: string } }) => {
+      return await fetch(url, {
         method: "PATCH",
         body: JSON.stringify({ tagIdToRemove: arg.tagIdToRemove }),
-      });
+      }).then((res) => res.json());
     }
   );
 

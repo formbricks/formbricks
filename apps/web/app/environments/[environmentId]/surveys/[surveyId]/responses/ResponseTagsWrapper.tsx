@@ -107,7 +107,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
 }) => {
   const { createTag, isCreatingTag } = useCreateTag(environmentId, surveyId, responseId);
 
-  const { mutateResponses } = useResponses(environmentId, surveyId);
+  const { mutateResponses, responsesData } = useResponses(environmentId, surveyId);
 
   const { data: productTags } = useTagsForProduct(environmentId, productId);
   const { trigger: addTagToResponse } = useAddTagToResponse(environmentId, surveyId, responseId);
@@ -129,7 +129,8 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                     tagIdToRemove: tag.tagId,
                   },
                   {
-                    onSuccess: () => {
+                    onSuccess: (removedTag) => {
+                      console.log({ removedTag });
                       mutateResponses();
                     },
                   }
@@ -161,9 +162,19 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                     tagIdToAdd: productTags.find((tag) => tag.name === tagName)?.id ?? "",
                   },
                   {
-                    onSuccess: () => {
+                    onSuccess: (newTag) => {
+                      console.log({ newTag });
                       mutateResponses();
                     },
+                    // optimisticData: {
+                    //   ...responsesData,
+                    //   tags: [
+                    //     ...responsesData?.tags,
+                    //     {
+
+                    //     }
+                    //   ]
+                    // },
                   }
                 );
               }
