@@ -35,7 +35,40 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
     return res.json(prismaRes);
   } else if (req.method === "PATCH") {
-    const tagIdToAdd = JSON.parse(req.body).tagId;
+    let tagIdToAdd: string = "";
+    let tagIdToDelete: string = "";
+
+    try {
+      tagIdToAdd = JSON.parse(req.body).tagIdToAdd;
+    } catch (e) {
+      res.status(400).json({ message: "Invalid tagId" });
+    }
+
+    try {
+      tagIdToDelete = JSON.parse(req.body).tagIdToDelete;
+    } catch (e) {
+      res.status(400).json({ message: "Invalid tagId" });
+    }
+
+    if (!!tagIdToDelete) {
+      const prismaRes = await prisma.response.update({
+        where: {
+          id: responseId,
+        },
+        data: {
+          tags: {
+            delete: {
+              responseId_tagId: {
+                responseId: responseId!,
+                tagId: tagIdToDelete,
+              },
+            },
+          },
+        },
+      });
+
+      return res.json(prismaRes);
+    }
 
     const prismaRes = await prisma.response.update({
       where: {

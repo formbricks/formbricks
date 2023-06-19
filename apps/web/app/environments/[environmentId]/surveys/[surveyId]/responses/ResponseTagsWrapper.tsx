@@ -1,4 +1,4 @@
-import { addTagToResponse, useResponses } from "@/lib/responses/responses";
+import { addTagToResponse, deleteTagFromResponse, useResponses } from "@/lib/responses/responses";
 import { useCreateTag } from "@/lib/tags/mutateTags";
 import { useTagsForProduct } from "@/lib/tags/tags";
 import { cn } from "@formbricks/lib/cn";
@@ -117,8 +117,18 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
         {tags.map((tag) => (
           <div
             key={tag.tagId}
-            className="relative flex items-center justify-between rounded-lg border border-teal-500 bg-teal-300 px-2 py-1">
+            className="relative flex flex-col items-center justify-between rounded-lg border border-teal-500 bg-teal-300 px-2 py-1">
             <span className="text-sm">#{tag.tagName}</span>
+            <span
+              className="cursor-pointer text-sm"
+              onClick={() => {
+                const res = deleteTagFromResponse(environmentId, surveyId, responseId, tag.tagId);
+                // console.log({ res });
+
+                mutateResponses();
+              }}>
+              Del
+            </span>
           </div>
         ))}
       </div>

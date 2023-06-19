@@ -30,13 +30,30 @@ export const addTagToResponse = async (
   environmentId: string,
   surveyId: string,
   responseId: string,
-  tagName: string
+  tagIdToAdd: string
 ) => {
   const response = await fetch(
     `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}`,
     {
       method: "PATCH",
-      body: JSON.stringify({ tagName }),
+      body: JSON.stringify({ tagIdToAdd }),
+    }
+  );
+
+  return response.json();
+};
+
+export const deleteTagFromResponse = async (
+  environmentId: string,
+  surveyId: string,
+  responseId: string,
+  tagId: string
+) => {
+  const response = await fetch(
+    `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ tagIdToDelete: tagId }),
     }
   );
 
