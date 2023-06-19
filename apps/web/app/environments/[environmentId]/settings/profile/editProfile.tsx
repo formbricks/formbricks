@@ -116,12 +116,12 @@ function DeleteAccountModal({ setOpen, open, session }: DeleteAccounModaltProps)
       <div className="py-5">
         <p>
           Deleting your account will result in the permanent removal of all your personal information, saved
-          preferences, and your access to team data. If you are the owner of a team with multiple members,
-          ownership of that team will be transferred to another member.
+          preferences, and access to team data. If you are the owner of a team with other admins, the
+          ownership of that team will be transferred to another admin.
         </p>
         <p className="py-5">
-          However, please note that if you are the sole member of a team, it will be irreversibly deleted
-          along with all associated data.
+          Please note, however, that if you are the only member of a team or there is no other admin present,
+          the team will be irreversibly deleted along with all associated data.
         </p>
         <form>
           <label htmlFor="deleteAccountConfirmation">
