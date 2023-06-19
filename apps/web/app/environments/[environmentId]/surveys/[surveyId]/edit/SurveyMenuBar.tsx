@@ -1,10 +1,12 @@
 "use client";
 
+import AlertDialog from "@/components/shared/CustomAlertDialog";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useProduct } from "@/lib/products/products";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { deleteSurvey } from "@/lib/surveys/surveys";
+import { deepEqual } from "@/lib/utils";
 import type { Survey } from "@formbricks/types/surveys";
 import { Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
@@ -14,6 +16,7 @@ import toast from "react-hot-toast";
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
+  survey: Survey;
   setLocalSurvey: (survey: Survey) => void;
   environmentId: string;
   activeId: "questions" | "settings";
@@ -22,6 +25,7 @@ interface SurveyMenuBarProps {
 
 export default function SurveyMenuBar({
   localSurvey,
+  survey,
   environmentId,
   setLocalSurvey,
   activeId,
@@ -31,6 +35,7 @@ export default function SurveyMenuBar({
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const { product } = useProduct(environmentId);
 
   useEffect(() => {
@@ -58,6 +63,8 @@ export default function SurveyMenuBar({
   const handleBack = () => {
     if (localSurvey.createdAt === localSurvey.updatedAt && localSurvey.status === "draft") {
       setDeleteDialogOpen(true);
+    } else if (!deepEqual(localSurvey, survey)) {
+      setConfirmDialogOpen(true);
     } else {
       router.back();
     }
@@ -162,6 +169,18 @@ export default function SurveyMenuBar({
         setOpen={setDeleteDialogOpen}
         onDelete={() => deleteSurveyAction(localSurvey)}
         text="Do you want to delete this draft?"
+        useSaveInsteadOfCancel={true}
+        onSave={() => saveSurveyAction(true)}
+      />
+      <AlertDialog
+        confirmWhat="Survey changes"
+        open={isConfirmDialogOpen}
+        setOpen={setConfirmDialogOpen}
+        onDiscard={() => {
+          setConfirmDialogOpen(false);
+          router.back();
+        }}
+        text="You have unsaved changes in your survey. Would you like to save them before leaving?"
         useSaveInsteadOfCancel={true}
         onSave={() => saveSurveyAction(true)}
       />

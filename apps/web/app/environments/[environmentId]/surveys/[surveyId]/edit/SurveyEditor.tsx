@@ -65,6 +65,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
       <SurveyMenuBar
         setLocalSurvey={setLocalSurvey}
         localSurvey={localSurvey}
+        survey={survey}
         environmentId={environmentId}
         activeId={activeView}
         setActiveId={setActiveView}
