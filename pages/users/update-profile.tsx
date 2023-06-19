@@ -9,6 +9,7 @@ import { DRCProvinces } from "../../lib/enums";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { Address } from "@prisma/client";
 import Loading from "../../components/Loading";
+import { SnoopElement, SnoopForm, SnoopPage } from "../../kda-snoopforms-react/src";
 
 export default function UpdateProfile() {
   const router = useRouter();
@@ -334,6 +335,7 @@ export default function UpdateProfile() {
           </div>
         </div>
       </div>
+
     </BaseLayoutUnauthorized>
   );
 }
