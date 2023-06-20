@@ -4,6 +4,8 @@ import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { responses } from "@/lib/api/response";
 import { Prisma } from "@prisma/client";
+import { TTag } from "@formbricks/types/v1/tags";
+import { TResponse } from "@formbricks/types/v1/responses";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -92,17 +94,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(400).json({ message: "Invalid tag Id" });
     }
 
-    let addedTag;
-
     try {
-      addedTag = await prisma.tagsOnResponses.create({
+      await prisma.tagsOnResponses.create({
         data: {
           responseId,
           tagId,
-        },
-        include: {
-          response: true,
-          tag: true,
         },
       });
     } catch (e) {
@@ -116,7 +112,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // captureTelemetry(`tag ${newTag.id} created for response ${responseId}`);
-    return res.json(addedTag);
+    return res.json({
+      success: true,
+      message: `Tag ${tagId} created for response ${responseId}`,
+    });
   }
 
   // Unknown HTTP Method

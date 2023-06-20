@@ -25,7 +25,7 @@ export const useAddTagToResponse = (environmentId: string, surveyId: string, res
   const response = useSWRMutation(
     `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}/tags`,
 
-    async (url, { arg }: { arg: { tagIdToAdd: string } }) => {
+    async (url, { arg }: { arg: { tagIdToAdd: string } }): Promise<{ success: boolean; message: string }> => {
       return fetch(url, {
         method: "POST",
         headers: {
@@ -53,4 +53,20 @@ export const removeTagFromResponse = async (
   );
 
   return response.json();
+};
+
+export const useDeleteTag = (environmentId: string, productId: string, tagId: string) => {
+  const { trigger: deleteTag, isMutating: isDeletingTag } = useSWRMutation(
+    `/api/v1/environments/${environmentId}/product/${productId}/tags/${tagId}`,
+    async (url): Promise<TTag> => {
+      return fetch(url, {
+        method: "DELETE",
+      }).then((res) => res.json());
+    }
+  );
+
+  return {
+    deleteTag,
+    isDeletingTag,
+  };
 };

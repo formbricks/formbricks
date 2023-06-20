@@ -1,4 +1,4 @@
-import EditTagsWrapper from "@/app/environments/[environmentId]/settings/tags/EditTagsWrapper";
+import EditTagsWrapper from "./EditTagsWrapper";
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 

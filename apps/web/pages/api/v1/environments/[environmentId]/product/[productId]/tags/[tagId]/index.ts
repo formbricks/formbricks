@@ -8,6 +8,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
   const productId = req.query.productId?.toString();
+  const tagId = req.query.tagId?.toString();
 
   // Check Authentication
   const currentUser = await getSessionUser(req, res);
@@ -25,6 +26,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(400).json({ message: "Invalid productId" });
   }
 
+  // Check tagId
+  if (!tagId) {
+    return res.status(400).json({ message: "Invalid tagId" });
+  }
+
   // Check whether user has access to the environment
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
 
@@ -32,45 +38,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "You are not authorized to access this environment! " });
   }
 
-  // GET /api/environments/[environmentId]/product/[productId]/tags
+  // DELETE /api/environments/[environmentId]/product/[productId]/tags/[tagId]
+  // Delete a tag for a product
 
-  // Get all tags for a product
-
-  if (req.method === "GET") {
-    let tags;
-
-    try {
-      tags = await prisma.tag.findMany({
-        where: {
-          productId,
-        },
-      });
-    } catch (e) {
-      return res.status(500).json({ message: "Internal Server Error" });
-    }
-
-    captureTelemetry(`tags retrived for product ${productId}`);
-    return res.json(tags);
-  }
-
-  // POST /api/environments/[environmentId]/product/[productId]/tags
-
-  // Create a new tag for a product
-
-  if (req.method === "POST") {
-    const name = req.body.name;
-
-    if (!name) {
-      return res.status(400).json({ message: "Invalid name" });
-    }
-
+  if (req.method === "DELETE") {
     let tag: TTag;
 
     try {
-      tag = await prisma.tag.create({
-        data: {
-          name,
-          productId,
+      tag = await prisma.tag.delete({
+        where: {
+          id: tagId,
         },
       });
     } catch (e) {
