@@ -30,7 +30,7 @@ export const ZSurveyLogicCondition = z.enum([
 
 export const ZSurveyLogicBase = z.object({
   condition: ZSurveyLogicCondition.optional(),
-  value: z.union([z.number(), z.string(), z.array(z.string())]).optional(),
+  value: z.union([z.string(), z.array(z.string())]).optional(),
   destination: z.union([z.string(), z.literal("end")]).optional(),
 });
 
@@ -46,49 +46,49 @@ export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
 
 export const ZSurveyMultipleChoiceSingleLogic = ZSurveyLogicBase.extend({
   condition: z.enum(["submitted", "skipped", "equals", "notEquals"]).optional(),
-  value: z.string(),
+  value: z.string().optional(),
 });
 
 export const ZSurveyMultipleChoiceMultiLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped", "includesAll", "includesOne"]).optional(),
-  value: z.array(z.string()),
+  condition: z.enum(["submitted", "skipped", "includesAll", "includesOne", "equals"]).optional(),
+  value: z.union([z.array(z.string()), z.string()]).optional(),
 });
 
 export const ZSurveyNPSLogic = ZSurveyLogicBase.extend({
   condition: z
     .enum([
-      "submitted",
-      "skipped",
+      "equals",
+      "notEquals",
       "lessThan",
       "lessEqual",
       "greaterThan",
       "greaterEqual",
-      "equals",
-      "notEquals",
+      "submitted",
+      "skipped",
     ])
     .optional(),
-  value: z.number(),
+  value: z.union([z.string(), z.number()]).optional(),
 });
 
 const ZSurveyCTALogic = ZSurveyLogicBase.extend({
-  condition: z.union([z.literal("submitted"), z.literal("skipped")]).optional(),
+  condition: z.enum(["submitted", "skipped"]).optional(),
   value: z.undefined(),
 });
 
 const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
   condition: z
     .enum([
-      "submitted",
-      "skipped",
+      "equals",
+      "notEquals",
       "lessThan",
       "lessEqual",
       "greaterThan",
       "greaterEqual",
-      "equals",
-      "notEquals",
+      "submitted",
+      "skipped",
     ])
     .optional(),
-  value: z.number(),
+  value: z.union([z.string(), z.number()]).optional(),
 });
 
 export const ZSurveyLogic = z.union([
@@ -114,27 +114,32 @@ const ZSurveyQuestionBase = z.object({
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.OpenText),
   placeholder: z.string().optional(),
+  logic: z.array(ZSurveyOpenTextLogic).optional(),
 });
 
 export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.Consent),
   placeholder: z.string().optional(),
+  logic: z.array(ZSurveyConsentLogic).optional(),
 });
 
 export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.MultipleChoiceSingle),
   choices: z.array(ZSurveyChoice),
+  logic: z.array(ZSurveyMultipleChoiceSingleLogic).optional(),
 });
 
 export const ZSurveyMultipleChoiceMultiQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.MultipleChoiceMulti),
   choices: z.array(ZSurveyChoice),
+  logic: z.array(ZSurveyMultipleChoiceMultiLogic).optional(),
 });
 
 export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.NPS),
   lowerLabel: z.string(),
   upperLabel: z.string(),
+  logic: z.array(ZSurveyNPSLogic).optional(),
 });
 
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
@@ -143,6 +148,7 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
   dismissButtonLabel: z.string().optional(),
+  logic: z.array(ZSurveyCTALogic).optional(),
 });
 
 export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
@@ -151,6 +157,7 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
   lowerLabel: z.string(),
   upperLabel: z.string(),
+  logic: z.array(ZSurveyRatingLogic).optional(),
 });
 
 export const ZSurveyQuestion = z.union([
