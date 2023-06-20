@@ -1,3 +1,5 @@
+"use client";
+
 import CodeBlock from "@/components/shared/CodeBlock";
 import Modal from "@/components/shared/Modal";
 import { Survey } from "@formbricks/types/surveys";
@@ -18,12 +20,13 @@ export default function LinkSurveyModal({ survey, open, setOpen }: LinkSurveyMod
   const linkTextRef = useRef(null);
   const [showEmbed, setShowEmbed] = useState(false);
 
-  const iframeCode = `<iframe
+  const iframeCode = `<div style="position: relative; height:100vh; max-height:100vh; 
+overflow:auto;"> 
+<iframe 
 src="${window.location.protocol}//${window.location.host}/s/${survey.id}" 
-width="100%"
-height="500px"
-frameborder="0">
-</iframe>`;
+frameborder="0" style="position: absolute; left:0;
+top:0; width:100%; height:100%; border:0;">
+</iframe></div>`;
   const handleTextSelection = () => {
     if (linkTextRef.current) {
       const range = document.createRange();
