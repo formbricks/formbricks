@@ -17,12 +17,8 @@ export const SignupForm = () => {
   const nameRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    if(e.target.elements.password.value.length < 8){
-      setError("Password should be at least 8 characters")
-      return
-    }
     setSigningUp(true);
+    e.preventDefault();
     try {
       await createUser(
         e.target.elements.name.value,
@@ -54,7 +50,7 @@ export const SignupForm = () => {
     }
   };
 
-  const dismissError = () => {
+  const dismissError =()=>{
     setError("")
   }
 
