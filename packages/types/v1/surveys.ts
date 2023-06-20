@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZEventClass } from "./eventClasses";
+import { QuestionType } from "../questions";
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
@@ -115,33 +116,33 @@ const ZSurveyQuestionBase = z.object({
 });
 
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal("openText"),
+  type: z.literal(QuestionType.OpenText),
   placeholder: z.string().optional(),
 });
 
 export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal("consent"),
+  type: z.literal(QuestionType.Consent),
   placeholder: z.string().optional(),
 });
 
 export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal("multipleChoiceSingle"),
+  type: z.literal(QuestionType.MultipleChoiceSingle),
   choices: z.array(ZSurveyChoice),
 });
 
 export const ZSurveyMultipleChoiceMultiQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal("multipleChoiceMulti"),
+  type: z.literal(QuestionType.MultipleChoiceMulti),
   choices: z.array(ZSurveyChoice),
 });
 
 export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal("nps"),
+  type: z.literal(QuestionType.NPS),
   lowerLabel: z.string(),
   upperLabel: z.string(),
 });
 
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal("cta"),
+  type: z.literal(QuestionType.CTA),
   html: z.string().optional(),
   buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
@@ -149,7 +150,7 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
 });
 
 export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal("rating"),
+  type: z.literal(QuestionType.Rating),
   scale: z.union([z.literal("number"), z.literal("smiley"), z.literal("star")]),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
   lowerLabel: z.string(),
