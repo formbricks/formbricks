@@ -1,6 +1,12 @@
 import { getSessionUser } from "@/lib/api/apiHelper";
+import { MembershipRole } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { NextRequest, NextResponse } from "next/server";
+
+interface Membership {
+  role: MembershipRole;
+  userId: string;
+}
 
 export async function GET() {
   const sessionUser = await getSessionUser();
@@ -46,10 +52,6 @@ const deleteUser = async (userId: string) => {
   });
 };
 
-// I created this type because I don't have access to prisma unums.
-// TODO find a way to get access to prisma enums
-type MembershipRole = "admin" | "owner";
-
 const updateUserMembership = async (teamId: string, userId: string, role: MembershipRole) => {
   await prisma.membership.update({
     where: {
@@ -64,7 +66,8 @@ const updateUserMembership = async (teamId: string, userId: string, role: Member
   });
 };
 
-const getAdminMemberships = (memberships) => memberships.filter((membership) => membership.role === "admin");
+const getAdminMemberships = (memberships: Membership[]) =>
+  memberships.filter((membership) => membership.role === MembershipRole.admin);
 
 const deleteTeam = async (teamId: string) => {
   await prisma.team.delete({
@@ -112,15 +115,15 @@ export async function DELETE() {
       const teamAdminMemberships = getAdminMemberships(teamMemberships);
       const teamHasAtLeastOneAdmin = teamAdminMemberships.length > 0;
       const teamHasOnlyOneMember = teamMemberships.length === 1;
-      const currentUserIsTeamOwner = role === "owner";
+      const currentUserIsTeamOwner = role === MembershipRole.owner;
 
       if (teamHasOnlyOneMember) {
         await deleteTeam(teamId);
-      } else {
-        if (currentUserIsTeamOwner && teamHasAtLeastOneAdmin) {
-          const firstAdmin = teamAdminMemberships[0];
-          await updateUserMembership(teamId, firstAdmin.userId, "owner");
-        }
+      } else if (currentUserIsTeamOwner && teamHasAtLeastOneAdmin) {
+        const firstAdmin = teamAdminMemberships[0];
+        await updateUserMembership(teamId, firstAdmin.userId, MembershipRole.owner);
+      } else if (currentUserIsTeamOwner) {
+        deleteTeam(teamId);
       }
     }
 
