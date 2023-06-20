@@ -53,7 +53,7 @@ const nextConfig = {
   },
   api: {
     bodyParser: {
-      sizeLimit: '4mb',
+      sizeLimit: process.env.NEXTAPI_SIZE_LIMIT,
     },
   },
 };
