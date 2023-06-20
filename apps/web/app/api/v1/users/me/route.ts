@@ -123,7 +123,7 @@ export async function DELETE() {
         const firstAdmin = teamAdminMemberships[0];
         await updateUserMembership(teamId, firstAdmin.userId, MembershipRole.owner);
       } else if (currentUserIsTeamOwner) {
-        deleteTeam(teamId);
+        await deleteTeam(teamId);
       }
     }
 
