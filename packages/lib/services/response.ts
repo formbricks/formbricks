@@ -2,31 +2,14 @@ import { prisma } from "@formbricks/database";
 import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
-import { TransformPersonOutput, transformPrismaPerson } from "./person";
+import { getPerson, TransformPersonOutput, transformPrismaPerson } from "./person";
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
   try {
-    let transformedPerson: TransformPersonOutput | null = null;
+    let person: TransformPersonOutput | null = null;
 
     if (responseInput.personId) {
-      const person = await prisma.person.findUnique({
-        where: { id: responseInput.personId },
-        select: {
-          id: true,
-          attributes: {
-            select: {
-              value: true,
-              attributeClass: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      transformedPerson = transformPrismaPerson(person);
+      person = await getPerson(responseInput.personId);
     }
 
     const responsePrisma = await prisma.response.create({
@@ -44,7 +27,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
               id: responseInput.personId,
             },
           },
-          personAttributes: transformedPerson?.attributes,
+          personAttributes: person?.attributes,
         }),
       },
       select: {
@@ -59,7 +42,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const response: TResponse = {
       ...responsePrisma,
-      person: transformedPerson,
+      person,
     };
 
     return response;

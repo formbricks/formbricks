@@ -96,6 +96,8 @@ model Response {
   person           Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId         String?
   responseNotes    ResponseNote[]
+  /// @zod.custom(imports.ZPersonAttributesData)
+  /// [PersonAttributesData]
   personAttributes Json?
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]

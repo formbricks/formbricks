@@ -4,6 +4,10 @@ export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
+export const ZPersonAttributesData = z.record(z.union([z.string(), z.number()])).optional();
+
+export type TPersonAttributesData = z.infer<typeof ZPersonAttributesData>;
+
 const ZResponse = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -15,7 +19,7 @@ const ZResponse = z.object({
       attributes: z.record(z.union([z.string(), z.number()])),
     })
     .nullable(),
-  personAttributes: z.record(z.union([z.string(), z.number()])).optional(),
+  personAttributes: ZPersonAttributesData,
   finished: z.boolean(),
   data: ZResponseData,
 });

@@ -76,16 +76,15 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
     setIsDeleting(false);
   };
 
-  const tooltipContent = (
+  const tooltipContent = data.personAttributes && Object.keys(data.personAttributes).length > 0 && (
     <TooltipContent>
-      {data.personAttributes &&
-        Object.keys(data.personAttributes).map((key) => {
-          return (
-            <p>
-              {key}: <span className="font-bold">{data.personAttributes[key]}</span>
-            </p>
-          );
-        })}
+      {Object.keys(data.personAttributes).map((key) => {
+        return (
+          <p>
+            {key}: <span className="font-bold">{data.personAttributes[key]}</span>
+          </p>
+        );
+      })}
     </TooltipContent>
   );
 
@@ -102,18 +101,14 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
               <Link
                 className="group flex items-center"
                 href={`/environments/${environmentId}/people/${data.personId}`}>
-                {data.personAttributes ? (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <PersonAvatar personId={data.personId} />
-                      </TooltipTrigger>
-                      {tooltipContent}
-                    </Tooltip>
-                  </TooltipProvider>
-                ) : (
-                  <PersonAvatar personId={data.personId} />
-                )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <PersonAvatar personId={data.personId} />
+                    </TooltipTrigger>
+                    {tooltipContent}
+                  </Tooltip>
+                </TooltipProvider>
                 <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                   {displayIdentifier}
                 </h3>
