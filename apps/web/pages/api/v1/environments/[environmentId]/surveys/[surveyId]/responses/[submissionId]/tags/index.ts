@@ -1,6 +1,6 @@
 import { captureTelemetry } from "@/../../packages/lib/telemetry";
 import { hasEnvironmentAccess, getSessionUser } from "@/lib/api/apiHelper";
-import { prisma } from "@formbricks/database/src/client";
+import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { responses } from "@/lib/api/response";
 import { Prisma } from "@prisma/client";
@@ -38,6 +38,24 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "You are not authorized to access this environment! " });
   }
 
+  const currentResponse = await prisma.response.findUnique({
+    where: {
+      id: responseId,
+    },
+    select: {
+      data: true,
+      survey: {
+        select: {
+          environmentId: true,
+        },
+      },
+    },
+  });
+
+  if (!currentResponse) {
+    return responses.notFoundResponse("Response", responseId, true);
+  }
+
   // GET /api/environments[environmentId]/survey[surveyId]/responses/[submissionId]/tags
 
   // Get all tags for a response
@@ -63,52 +81,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.json(tags);
   }
 
-  let tagName: string;
-  let productId: string;
-
-  try {
-    tagName = JSON.parse(req.body).name;
-  } catch (e) {
-    return res.status(400).json({ message: "Invalid tag name" });
-  }
-
-  try {
-    productId = JSON.parse(req.body).productId;
-  } catch (e) {
-    return res.status(400).json({ message: "Invalid product Id" });
-  }
-
-  const currentResponse = await prisma.response.findUnique({
-    where: {
-      id: responseId,
-    },
-    select: {
-      data: true,
-      survey: {
-        select: {
-          environmentId: true,
-        },
-      },
-    },
-  });
-
-  if (!currentResponse) {
-    return responses.notFoundResponse("Response", responseId, true);
-  }
-
   // POST /api/environments[environmentId]/survey[surveyId]/responses/[submissionId]/tags
 
   // Create a tag for a response
 
   if (req.method === "POST") {
-    let tagId: string;
-    let addedTag;
+    const tagId = req.body.tagId;
 
-    try {
-      tagId = JSON.parse(req.body).tagId;
-    } catch (e) {
-      return res.status(400).json({ message: "Invalid tag name" });
+    if (!tagId) {
+      return res.status(400).json({ message: "Invalid tag Id" });
     }
+
+    let addedTag;
 
     try {
       addedTag = await prisma.tagsOnResponses.create({

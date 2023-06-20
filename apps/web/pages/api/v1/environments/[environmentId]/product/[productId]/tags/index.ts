@@ -1,6 +1,7 @@
 import { captureTelemetry } from "@/../../packages/lib/telemetry";
 import { hasEnvironmentAccess, getSessionUser } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
+import { Prisma } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -56,20 +57,26 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Create a new tag for a product (with name and responseId)
 
   if (req.method === "POST") {
-    let name: string;
-    let responseId: string;
+    // let name: string;
+    // let responseId: string;
 
-    try {
-      name = JSON.parse(req.body).name;
-    } catch (e) {
+    const name = req.body.name;
+
+    if (!name) {
       return res.status(400).json({ message: "Invalid name" });
     }
 
-    try {
-      responseId = JSON.parse(req.body).responseId;
-    } catch (e) {
-      return res.status(400).json({ message: "Invalid responseId" });
-    }
+    // try {
+    //   name = JSON.parse(req.body).name;
+    // } catch (e) {
+    //   return res.status(400).json({ message: "Invalid name" });
+    // }
+
+    // try {
+    //   responseId = JSON.parse(req.body).responseId;
+    // } catch (e) {
+    //   return res.status(400).json({ message: "Invalid responseId" });
+    // }
 
     let tag;
 
@@ -78,18 +85,23 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         data: {
           name,
           productId,
-          responses: {
-            create: {
-              responseId,
-            },
-          },
+          // responses: {
+          //   create: {
+          //     responseId,
+          //   },
+          // },
         },
       });
     } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === "P2002") {
+          return res.status(400).json({ message: "Tag already exists" });
+        }
+      }
       return res.status(500).json({ message: "Internal Server Error" });
     }
 
-    captureTelemetry(`tag created for product ${productId} with name ${name} and responseId ${responseId}`);
+    // captureTelemetry(`tag created for product ${productId} with name ${name} and responseId ${responseId}`);
     return res.json(tag);
   }
 

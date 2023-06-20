@@ -1,23 +1,12 @@
-import { removeTagFromResponse, useAddTagToResponse, useResponses } from "@/lib/responses/responses";
+import { useResponses } from "@/lib/responses/responses";
+import { removeTagFromResponse, useAddTagToResponse } from "@/lib/tags/mutateTags";
 import { useCreateTag } from "@/lib/tags/mutateTags";
 import { useTagsForProduct } from "@/lib/tags/tags";
-import { cn } from "@formbricks/lib/cn";
-import {
-  Button,
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@formbricks/ui";
-import { Check, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import React from "react";
-import { useMemo } from "react";
 import { useState } from "react";
 import { XCircleIcon } from "@heroicons/react/24/solid";
+import TagsCombobox from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/TagsCombobox";
 
 interface IResponseTagsWrapperProps {
   tags: {
@@ -29,83 +18,6 @@ interface IResponseTagsWrapperProps {
   surveyId: string;
   productId: string;
   responseId: string;
-}
-
-export function ComboboxDemo({
-  tags,
-  currentTags,
-  addTag,
-  createTag,
-  setValue,
-  value,
-  searchValue,
-  setSearchValue,
-  open,
-  setOpen,
-}: {
-  tags: { label: string; value: string }[];
-  currentTags: { label: string; value: string }[];
-  addTag: (tagName: string) => void;
-  createTag?: (tagName: string) => void;
-  value: string;
-  setValue: React.Dispatch<React.SetStateAction<string>>;
-  searchValue: string;
-  setSearchValue: React.Dispatch<React.SetStateAction<string>>;
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}) {
-  const tagsToSearch = useMemo(
-    () =>
-      tags.filter((tag) => {
-        const found = currentTags.findIndex((currentTag) => currentTag.value === tag.value);
-
-        return found === -1;
-      }),
-    [currentTags, tags]
-  );
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="minimal">+ Add Tag</Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
-        <Command>
-          <div className="p-1">
-            <CommandInput
-              placeholder="Search Tags..."
-              className="border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
-              value={searchValue}
-              onValueChange={(search) => setSearchValue(search)}
-            />
-          </div>
-          <CommandEmpty>
-            <a
-              onClick={() => createTag?.(searchValue)}
-              className="text-muted-foreground flex h-6 cursor-pointer items-center justify-center focus:!shadow-none focus:outline-none">
-              + Add {searchValue}
-            </a>
-          </CommandEmpty>
-          <CommandGroup>
-            {tagsToSearch?.length === 0 ? <CommandItem>No tags found</CommandItem> : null}
-
-            {tagsToSearch?.map((tag) => (
-              <CommandItem
-                key={tag.value}
-                onSelect={(currentValue) => {
-                  setValue(currentValue === value ? "" : currentValue);
-                  setOpen(false);
-                  addTag(currentValue);
-                }}>
-                <Check className={cn("mr-2 h-4 w-4", value === tag.value ? "opacity-100" : "opacity-0")} />
-                {tag.label}
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
 }
 
 export function Tag({
@@ -155,6 +67,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
   const { mutateResponses } = useResponses(environmentId, surveyId);
 
   const { data: productTags, mutate: refetchProductTags } = useTagsForProduct(environmentId, productId);
+
   const { trigger: addTagToResponse, isMutating: isAdding } = useAddTagToResponse(
     environmentId,
     surveyId,
@@ -212,7 +125,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
 
       <div className="flex items-center gap-2">
         {!!productTags ? (
-          <ComboboxDemo
+          <TagsCombobox
             open={open}
             setOpen={setOpen}
             searchValue={searchValue}
@@ -225,16 +138,26 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
               createTag(
                 {
                   name: tagName,
-                  responseId,
                 },
                 {
-                  onSuccess: () => {
-                    setValue("");
-                    setSearchValue("");
-                    setOpen(false);
-                    mutateResponses();
+                  onSuccess: (data) => {
+                    setValue(data.name);
 
-                    refetchProductTags();
+                    addTagToResponse(
+                      {
+                        tagIdToAdd: data.id,
+                      },
+                      {
+                        onSuccess: () => {
+                          setValue("");
+                          setSearchValue("");
+                          setOpen(false);
+                          mutateResponses();
+
+                          refetchProductTags();
+                        },
+                      }
+                    );
                   },
                 }
               );
