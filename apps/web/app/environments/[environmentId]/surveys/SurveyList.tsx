@@ -96,9 +96,7 @@ export default function SurveysList({ environmentId }) {
 
   const copyToOtherEnvironment = async (surveyId) => {
     try {
-      const survey = surveys.find((s) => s.id === surveyId);
-      let { id, environmentId, createdAt, updatedAt, _count, name, ...rest } = survey;
-      await createSurvey(otherEnvironment.id, { name: `${name} (copy)`, ...rest });
+      await duplicateSurvey(environmentId, surveyId, otherEnvironment.id);
       if (otherEnvironment.type === "production") {
         toast.success("Survey copied to production env.");
       } else if (otherEnvironment.type === "development") {

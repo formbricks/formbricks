@@ -28,10 +28,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         environmentId,
       },
       include: {
-        triggers: true,
+        triggers: true
       },
     });
-
+    
     if (!existingSurvey) {
       return res.status(404).json({ message: "Survey not found" });
     }
