@@ -1,5 +1,3 @@
-"use client";
-
 import CodeBlock from "@/components/shared/CodeBlock";
 import Modal from "@/components/shared/Modal";
 import { Survey } from "@formbricks/types/surveys";
