@@ -24,6 +24,7 @@ export interface Survey {
   attributeFilters: AttributeFilter[];
   autoClose: number | null;
   delay: number;
+  autoComplete: number | null;
 }
 
 export interface AttributeFilter {
