@@ -48,9 +48,9 @@ export const sendVerificationEmail = async (user, url = "/sourcings") => {
     to: user.email,
     subject: `Merci pour ton enregistrement ${user.firstname} x Kadea Academy !`,
     html: `<div>
-      <h3>Hello ${user.firstname} !</h3><br/><br/>
-      <p>Merci d’être enregistré à Kadea Academy.</p><br/>
-      <p>Je suis ravi de t'accueillir parmi nous.</p><br/>
+      <p>Hello ${user.firstname} !</p>
+      <p>Merci d’être enregistré à Kadea Academy.</p>
+      <p>Je suis ravi de t'accueillir parmi nous.</p>
       <p>La prochaine étape de ton processus d'inscription consiste à passer ce <a href="${verifyLink}">test en ligne</a>, 
       non ce n’est pas un test pour évaluer ton niveau de code mais pour :</p>
       <ul>
@@ -60,9 +60,9 @@ export const sendVerificationEmail = async (user, url = "/sourcings") => {
       </ul>
 
       <p>Suite à ce test Gail, notre responsable admission te contactera pour répondre à toutes tes questions.</p>
-      <p>Est-ce que cela te convient ?</p>
-      <a style="background-color: rgba(245, 59, 87); color:#fff; padding:8px; border: 2px solid red; border-radius: 15px;">Commencer le test en ligne</a>
-      
+      <p>Est-ce que cela te convient ?</p><br/>
+      <a href="${verifyLink}" style="background-color: rgba(245, 59, 87); color:#fff; padding:8px; border: 2px solid red; border-radius: 15px;">Commencer le test en ligne</a>
+      <br/>
     <p>Le lien est valide pour une journée. S'il a expiré, tu peux générer un nouveau <a href="${verificationRequestLink}">lien en cliquant ici !</a>!</p>
     <p>À très bientôt</p><br/>
     <p>Jean-Louis MBAKA</p>
