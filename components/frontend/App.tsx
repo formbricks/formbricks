@@ -65,9 +65,9 @@ const App: FC<IProps> = ({
       </div>
     );
   }
-
+  
   return (
-    <div className='w-full bg-slate-200'>
+    <div className='w-full h-screen bg-slate-200 pb-6'>
       <SnoopForm
         key={id} // used to reset form
         domain={window.location.host}
@@ -87,7 +87,7 @@ const App: FC<IProps> = ({
           
         >
           {page.blocks.map((block: PageBlock) => (
-            <div key={block.id} className={`bg-white px-5 py-5 ${/Question/.test(block.type) ? "mb-6 rounded-b-md": ""}`}>
+            <div key={block.id} className={`${block.type === "submitButton"?"":"bg-white"} px-5 py-5 ${/Question/.test(block.type) ? "mb-6 rounded-b-md": ""}`}>
               {block.type === "paragraph" ? (
                 <p
                   className='ce-paragraph'
