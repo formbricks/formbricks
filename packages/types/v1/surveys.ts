@@ -15,17 +15,17 @@ export const ZSurveyChoice = z.object({
   label: z.string(),
 });
 
-export const ZSurveyLogicCondition = z.union([
-  z.literal("submitted"),
-  z.literal("skipped"),
-  z.literal("equals"),
-  z.literal("notEquals"),
-  z.literal("lessThan"),
-  z.literal("lessEqual"),
-  z.literal("greaterThan"),
-  z.literal("greaterEqual"),
-  z.literal("includesAll"),
-  z.literal("includesOne"),
+export const ZSurveyLogicCondition = z.enum([
+  "submitted",
+  "skipped",
+  "equals",
+  "notEquals",
+  "lessThan",
+  "lessEqual",
+  "greaterThan",
+  "greaterEqual",
+  "includesAll",
+  "includesOne",
 ]);
 
 export const ZSurveyLogicBase = z.object({
@@ -35,40 +35,36 @@ export const ZSurveyLogicBase = z.object({
 });
 
 export const ZSurveyOpenTextLogic = ZSurveyLogicBase.extend({
-  condition: z.union([z.literal("submitted"), z.literal("skipped")]).optional(),
+  condition: z.enum(["submitted", "skipped"]).optional(),
   value: z.undefined(),
 });
 
 export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
-  condition: z.union([z.literal("submitted"), z.literal("skipped"), z.literal("accepted")]).optional(),
+  condition: z.enum(["submitted", "skipped", "accepted"]).optional(),
   value: z.undefined(),
 });
 
 export const ZSurveyMultipleChoiceSingleLogic = ZSurveyLogicBase.extend({
-  condition: z
-    .union([z.literal("submitted"), z.literal("skipped"), z.literal("equals"), z.literal("notEquals")])
-    .optional(),
+  condition: z.enum(["submitted", "skipped", "equals", "notEquals"]).optional(),
   value: z.string(),
 });
 
 export const ZSurveyMultipleChoiceMultiLogic = ZSurveyLogicBase.extend({
-  condition: z
-    .union([z.literal("submitted"), z.literal("skipped"), z.literal("includesAll"), z.literal("includesOne")])
-    .optional(),
+  condition: z.enum(["submitted", "skipped", "includesAll", "includesOne"]).optional(),
   value: z.array(z.string()),
 });
 
 export const ZSurveyNPSLogic = ZSurveyLogicBase.extend({
   condition: z
-    .union([
-      z.literal("submitted"),
-      z.literal("skipped"),
-      z.literal("lessThan"),
-      z.literal("lessEqual"),
-      z.literal("greaterThan"),
-      z.literal("greaterEqual"),
-      z.literal("equals"),
-      z.literal("notEquals"),
+    .enum([
+      "submitted",
+      "skipped",
+      "lessThan",
+      "lessEqual",
+      "greaterThan",
+      "greaterEqual",
+      "equals",
+      "notEquals",
     ])
     .optional(),
   value: z.number(),
@@ -81,15 +77,15 @@ const ZSurveyCTALogic = ZSurveyLogicBase.extend({
 
 const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
   condition: z
-    .union([
-      z.literal("submitted"),
-      z.literal("skipped"),
-      z.literal("lessThan"),
-      z.literal("lessEqual"),
-      z.literal("greaterThan"),
-      z.literal("greaterEqual"),
-      z.literal("equals"),
-      z.literal("notEquals"),
+    .enum([
+      "submitted",
+      "skipped",
+      "lessThan",
+      "lessEqual",
+      "greaterThan",
+      "greaterEqual",
+      "equals",
+      "notEquals",
     ])
     .optional(),
   value: z.number(),
@@ -183,26 +179,18 @@ export const ZSurvey = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
-  type: z.union([z.literal("web"), z.literal("email"), z.literal("link"), z.literal("mobile")]),
+  type: z.enum(["web", "email", "link", "mobile"]),
   environmentId: z.string(),
-  status: z.union([
-    z.literal("draft"),
-    z.literal("inProgress"),
-    z.literal("archived"),
-    z.literal("paused"),
-    z.literal("completed"),
-  ]),
+  status: z.enum(["draft", "inProgress", "archived", "paused", "completed"]),
   attributeFilters: z.array(ZSurveyAttributeFilter),
-  displayOption: z.union([
-    z.literal("displayOnce"),
-    z.literal("displayMultiple"),
-    z.literal("respondMultiple"),
-  ]),
+  displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
   autoClose: z.union([z.number(), z.null()]),
   triggers: z.array(ZEventClass),
   recontactDays: z.union([z.number(), z.null()]),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
+  delay: z.number(),
+  autoComplete: z.union([z.boolean(), z.null()]),
   analytics: z.object({
     numDisplays: z.number(),
     responseRate: z.number(),
