@@ -46,10 +46,28 @@ export const sendVerificationEmail = async (user, url = "/sourcings") => {
     )}&callbackUrl=${encodeURIComponent(url)}`;
   await sendEmail({
     to: user.email,
-    subject: "Bienvenue sur le site de Kadea Sourcing",
-    html: `<p>Bienvenue sur le site de Kadea Sourcing!<br/><br/>Pour vérifier votre adresse e-mail et commencer à utiliser Kadea Sourcing, veuillez cliquer sur ce <a href="${verifyLink}">lien</a>!</p>
-    <p>Le lien est valide pour une journée. S'il a expiré, <a href="${verificationRequestLink}">veuillez en demander un nouveau</a>!</p>
-    <p>L'équipe Kadea</p>`,
+    subject: `Merci pour ton enregistrement ${user.firstname} x Kadea Academy !`,
+    html: `<div>
+      <h3>Hello ${user.firstname} !</h3><br/><br/>
+      <p>Merci d’être enregistré à Kadea Academy.</p><br/>
+      <p>Je suis ravi de t'accueillir parmi nous.</p><br/>
+      <p>La prochaine étape de ton processus d'inscription consiste à passer ce <a href="${verifyLink}">test en ligne</a>, 
+      non ce n’est pas un test pour évaluer ton niveau de code mais pour :</p>
+      <ul>
+        <li>Évaluer ta motivation</li>
+        <li>Sentir ta détermination</li>
+        <li>Comprendre tes objectifs</li>
+      </ul>
+
+      <p>Suite à ce test Gail, notre responsable admission te contactera pour répondre à toutes tes questions.</p>
+      <p>Est-ce que cela te convient ?</p>
+      <a style="background-color: rgba(245, 59, 87); color:#fff; padding:8px; border: 2px solid red; border-radius: 15px;">Commencer le test en ligne</a>
+      
+    <p>Le lien est valide pour une journée. S'il a expiré, tu peux générer un nouveau <a href="${verificationRequestLink}">lien en cliquant ici !</a>!</p>
+    <p>À très bientôt</p><br/>
+    <p>Jean-Louis MBAKA</p>
+    <p>Directeur Kadea Academy</p>
+    </div>`,
   });
 };
 
