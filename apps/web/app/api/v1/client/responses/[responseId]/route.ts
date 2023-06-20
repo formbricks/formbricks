@@ -59,7 +59,8 @@ export async function PUT(
 
   // send response update to pipeline
   // don't await to not block the response
-  sendToPipeline("responseUpdated", {
+  sendToPipeline({
+    event: "responseUpdated",
     environmentId: survey.environmentId,
     surveyId: survey.id,
     // only send the updated fields
@@ -72,7 +73,8 @@ export async function PUT(
   if (response.finished) {
     // send response to pipeline
     // don't await to not block the response
-    sendToPipeline("responseFinished", {
+    sendToPipeline({
+      event: "responseFinished",
       environmentId: survey.environmentId,
       surveyId: survey.id,
       data: response,

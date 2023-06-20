@@ -1,6 +1,17 @@
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 
-export async function sendToPipeline(event, data) {
+export async function sendToPipeline({
+  event,
+  surveyId,
+  environmentId,
+  data,
+}: {
+  event: TPipelineTrigger;
+  surveyId: string;
+  environmentId: string;
+  data: any;
+}) {
   return fetch(`${WEBAPP_URL}/api/pipeline`, {
     method: "POST",
     headers: {
@@ -8,8 +19,8 @@ export async function sendToPipeline(event, data) {
     },
     body: JSON.stringify({
       internalSecret: INTERNAL_SECRET,
-      environmentId: data.environmentId,
-      surveyId: data.surveyId,
+      environmentId: environmentId,
+      surveyId: surveyId,
       event,
       data,
     }),
