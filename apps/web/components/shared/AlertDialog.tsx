@@ -26,8 +26,11 @@ export default function AlertDialog({
     <Modal open={open} setOpen={setOpen} title={`Confirm ${confirmWhat}`}>
       <p>{text || "Are you sure? This action cannot be undone."}</p>
       <div className="my-4 space-x-2 text-right">
+        <Button variant="warn" onClick={onDiscard}>
+          Discard
+        </Button>
         <Button
-          variant="secondary"
+          variant="darkCTA"
           onClick={() => {
             if (useSaveInsteadOfCancel && onSave) {
               onSave();
@@ -35,9 +38,6 @@ export default function AlertDialog({
             setOpen(false);
           }}>
           {useSaveInsteadOfCancel ? "Save" : "Cancel"}
-        </Button>
-        <Button variant="warn" onClick={onDiscard}>
-          Discard
         </Button>
       </div>
     </Modal>
