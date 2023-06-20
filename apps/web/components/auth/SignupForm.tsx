@@ -17,8 +17,12 @@ export const SignupForm = () => {
   const nameRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: any) => {
-    setSigningUp(true);
     e.preventDefault();
+    if(e.target.elements.password.value.length < 8){
+      setError("Password should be at least 8 characters")
+      return
+    }
+    setSigningUp(true);
     try {
       await createUser(
         e.target.elements.name.value,
@@ -50,13 +54,17 @@ export const SignupForm = () => {
     }
   };
 
+  const dismissError = () => {
+    setError("")
+  }
+
   return (
     <>
       {error && (
         <div className="absolute top-10 rounded-md bg-teal-50 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <XCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
+              <XCircleIcon onClick={dismissError} className="h-5 w-5 text-teal-400 cursor-pointer" aria-hidden="true" />
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-teal-800">An error occurred when logging you in</h3>
