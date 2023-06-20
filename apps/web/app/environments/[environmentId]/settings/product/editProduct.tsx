@@ -126,15 +126,16 @@ export function DeleteProduct({ environmentId }) {
       setIsDeleteDialogOpen(false);
       return;
     }
-    const deleteResponse = await deleteProduct(environmentId);
+    const deleteProductRes = await deleteProduct(environmentId);
 
-    if (deleteResponse?.message?.length > 0) {
-      toast.error(deleteResponse.message);
-      setIsDeleteDialogOpen(false);
-    }
-    if (deleteResponse?.id?.length > 0) {
+    if (deleteProductRes?.id?.length > 0) {
       toast.success("Product deleted successfully.");
       router.push("/environments");
+    } else if (deleteProductRes?.message?.length > 0) {
+      toast.error(deleteProductRes.message);
+      setIsDeleteDialogOpen(false);
+    } else {
+      toast.error("Error deleting product. Please try again.");
     }
   };
 
@@ -165,7 +166,10 @@ export function DeleteProduct({ environmentId }) {
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteProduct}
-        text="Are you sure you want to delete this Product? This action cannot be undone."
+        text={`Are you sure you want to delete "${truncate(
+          product?.name,
+          30
+        )}"? This action cannot be undone.`}
       />
     </div>
   );
