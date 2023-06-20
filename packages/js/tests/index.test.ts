@@ -4,6 +4,7 @@
 import formbricks from "../src/index";
 import { constants } from "./constants"
 import { Attribute } from "./types";
+import { mockEventTrackResponse, mockInitResponse, mockLogoutResponse, mockRefreshResponse, mockRegisterRouteChangeResponse, mockSetCustomAttributeResponse, mockSetEmailIdResponse, mockSetUserIdResponse, mockUpdateEmailResponse } from "./__mocks__/apiMock";
 
 const logSpy = jest.spyOn(global.console, "log");
 
@@ -13,13 +14,18 @@ test("Test Jest", () => {
 
 const { environmentId, apiHost, initialUserId, initialUserEmail, updatedUserEmail, customAttributeKey, customAttributeValue } = constants
 
+beforeEach(() => {
+    fetchMock.resetMocks();
+});
+
 test("Formbricks should Initialise", async () => {
-    formbricks.init({
+    mockInitResponse()
+
+    await formbricks.init({
         environmentId,
         apiHost,
         logLevel: "debug",
     });
-    await new Promise((unused) => setTimeout(unused, 2000)); // Need to wait for the init() to fetch and log everything
 
     const configFromBrowser = localStorage.getItem("formbricksConfig");
     expect(configFromBrowser).toBeTruthy();
@@ -33,17 +39,19 @@ test("Formbricks should Initialise", async () => {
 
 test("Formbricks should get no current person", () => {
     const currentState = formbricks.getPerson()
-    if (currentState != undefined) {
-        const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
-        expect(currentStateAttributes).toHaveLength(0)
-    } else {
-        expect(currentState).toBeUndefined()
-    }
+
+    const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
+    expect(currentStateAttributes).toHaveLength(0)
 })
 
 test("Formbricks should set attributes", async () => {
-    formbricks.setUserId(initialUserId)
-    formbricks.setEmail(initialUserEmail)
+    mockSetUserIdResponse()
+    await formbricks.setUserId(initialUserId)
+
+    mockSetEmailIdResponse()
+    await formbricks.setEmail(initialUserEmail)
+
+    mockSetCustomAttributeResponse()
     await formbricks.setAttribute(customAttributeKey, customAttributeValue)
 
     const currentState = formbricks.getPerson()
@@ -72,6 +80,7 @@ test("Formbricks should set attributes", async () => {
 })
 
 test("Formbricks should update attribute", async () => {
+    mockUpdateEmailResponse()
     await formbricks.setEmail(updatedUserEmail)
 
     const currentState = formbricks.getPerson()
@@ -100,27 +109,29 @@ test("Formbricks should update attribute", async () => {
 })
 
 test("Formbricks should track event", async () => {
+    mockEventTrackResponse()
     const mockButton = document.createElement("button");
     mockButton.addEventListener("click", async () => {
         await formbricks.track("Button Clicked");
     });
-    mockButton.click();
-    await new Promise((unused) => setTimeout(unused, 1000)); // to wait for the DOM interaction & logging of event tracking to happen
-
+    await mockButton.click();
     expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/Formbricks: Event "Button Clicked" tracked/));
 });
 
 test("Formbricks should refresh", async () => {
+    mockRefreshResponse()
     await formbricks.refresh()
     expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/Settings refreshed/));
 })
 
 test("Formbricks should register for route change", async () => {
+    mockRegisterRouteChangeResponse()
     await formbricks.registerRouteChange()
     expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/Checking page url/));
 })
 
 test("Formbricks should logout", async () => {
+    mockLogoutResponse()
     await formbricks.logout()
     const currentState = formbricks.getPerson()
     const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;

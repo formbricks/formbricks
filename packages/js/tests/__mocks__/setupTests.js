@@ -1,12 +1,10 @@
 /** @type {import('jest').Config} */
 const config = {
     verbose: true,
-    testEnvironment: 'jsdom'
-
+    testEnvironment: "jsdom"
 };
-import 'regenerator-runtime/runtime'
-import fetch from 'isomorphic-fetch'
 
-global.fetch = fetch;
+import fetchMock from "jest-fetch-mock";
+fetchMock.enableMocks();
 
 module.exports = config;

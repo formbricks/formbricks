@@ -25,11 +25,19 @@ const generateRandomString = () => {
 };
 
 export const constants = {
-    environmentId: "take-this-from-gh-actions-env",
-    apiHost: "https://app.formbricks.com",
+    environmentId: "mockedEnvironmentId",
+    apiHost: "mockedApiHost",
+    initialPersonUid: generateRandomString(),
+    newPersonUid: generateRandomString(),
     initialUserId: generateUserId(),
     initialUserEmail: generateEmailId(),
     updatedUserEmail: generateEmailId(),
     customAttributeKey: generateRandomString(),
     customAttributeValue: generateRandomString(),
+    userIdAttributeId: generateRandomString(),
+    userInitialEmailAttributeId: generateRandomString(),
+    userCustomAttrAttributeId: generateRandomString(),
+    userUpdatedEmailAttributeId: generateRandomString(),
+    eventIdForEventTracking: generateRandomString(),
+    eventIdForRouteChange: generateRandomString()
 } as const;
