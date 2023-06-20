@@ -52,9 +52,7 @@ const nextConfig = {
     return config;
   },
   api: {
-    bodyParser: {
-      sizeLimit: process.env.NEXTAPI_SIZE_LIMIT,
-    },
+    responseLimit: process.env.NEXTAPI_SIZE_LIMIT,
   },
 };
 
