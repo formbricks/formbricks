@@ -1,7 +1,7 @@
 import type { Survey } from "@formbricks/types/surveys";
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
-/* import ResponseOptionsCard from "./ResponseOptionsCard"; */
+import ResponseOptionsCard from "./ResponseOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
 
@@ -32,7 +32,7 @@ export default function AudienceView({ environmentId, localSurvey, setLocalSurve
         environmentId={environmentId}
       />
 
-      {/*   <ResponseOptionsCard /> */}
+      <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
       <RecontactOptionsCard
         localSurvey={localSurvey}
