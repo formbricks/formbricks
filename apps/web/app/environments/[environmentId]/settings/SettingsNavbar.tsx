@@ -72,6 +72,12 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
             current: pathname?.includes("/api-keys"),
             hidden: false,
           },
+          {
+            name: "Tags",
+            href: `/environments/${environmentId}/settings/tags`,
+            icon: PlusCircleIcon,
+            current: pathname?.includes("/tags"),
+          },
         ],
       },
       {
@@ -83,12 +89,6 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
             icon: UsersIcon,
             current: pathname?.includes("/members"),
             hidden: false,
-          },
-          {
-            name: "Tags",
-            href: `/environments/${environmentId}/settings/tags`,
-            icon: PlusCircleIcon,
-            current: pathname?.includes("/tags"),
           },
           {
             name: "Billing & Plan",

@@ -70,3 +70,24 @@ export const useDeleteTag = (environmentId: string, productId: string, tagId: st
     isDeletingTag,
   };
 };
+
+export const useUpdateTag = (environmentId: string, productId: string, tagId: string) => {
+  const { trigger: updateTag, isMutating: isUpdatingTag } = useSWRMutation(
+    `/api/v1/environments/${environmentId}/product/${productId}/tags/${tagId}`,
+
+    async (url, { arg }: { arg: { name: string } }): Promise<TTag> => {
+      return fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: arg.name }),
+      }).then((res) => res.json());
+    }
+  );
+
+  return {
+    updateTag,
+    isUpdatingTag,
+  };
+};

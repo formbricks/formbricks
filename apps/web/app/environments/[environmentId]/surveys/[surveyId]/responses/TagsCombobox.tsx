@@ -54,9 +54,9 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="minimal">+ Add Tag</Button>
+        <Button variant="darkCTA">+ Add Tag</Button>
       </PopoverTrigger>
-      <PopoverContent className="max-h-60 w-[200px] overflow-y-scroll p-0">
+      <PopoverContent className="max-h-60 w-[200px] overflow-y-auto p-0">
         <Command>
           <div className="p-1">
             <CommandInput

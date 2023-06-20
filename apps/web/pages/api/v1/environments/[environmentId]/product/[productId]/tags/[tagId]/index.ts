@@ -1,6 +1,6 @@
-import { captureTelemetry } from "@/../../packages/lib/telemetry";
 import { hasEnvironmentAccess, getSessionUser } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
+import { DatabaseError } from "@formbricks/errors";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -36,6 +36,38 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   if (!hasAccess) {
     return res.status(403).json({ message: "You are not authorized to access this environment! " });
+  }
+
+  // PATCH /api/environments/[environmentId]/product/[productId]/tags/[tagId]
+  // Update a tag for a product
+
+  if (req.method === "PATCH") {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ message: "Invalid name" });
+    }
+
+    let tag: TTag;
+
+    try {
+      tag = await prisma.tag.update({
+        where: {
+          id: tagId,
+        },
+        data: {
+          name: name,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError("Database operation failed");
+      }
+
+      throw error;
+    }
+
+    return res.json(tag);
   }
 
   // DELETE /api/environments/[environmentId]/product/[productId]/tags/[tagId]

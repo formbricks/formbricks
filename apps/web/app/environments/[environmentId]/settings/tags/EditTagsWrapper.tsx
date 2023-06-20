@@ -1,11 +1,15 @@
 "use client";
 
+import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
-import { useDeleteTag } from "@/lib/tags/mutateTags";
+import { useDeleteTag, useUpdateTag } from "@/lib/tags/mutateTags";
 import { useTagsForProduct } from "@/lib/tags/tags";
-import { Button } from "@formbricks/ui";
+import { Button, Input } from "@formbricks/ui";
 import React from "react";
+import debounce from "lodash.debounce";
+import { useMemo } from "react";
+import { toast } from "react-hot-toast";
 
 interface IEditTagsWrapperProps {
   environmentId: string;
@@ -20,10 +24,36 @@ const SingleTag: React.FC<{
   const { mutate: refetchProductTags } = useTagsForProduct(environmentId, productId);
   const { deleteTag, isDeletingTag } = useDeleteTag(environmentId, productId, tagId);
 
+  const { updateTag } = useUpdateTag(environmentId, productId, tagId);
+
+  const debouncedChangeHandler = useMemo(
+    () =>
+      debounce(
+        (name: string) =>
+          updateTag(
+            { name },
+            {
+              onSuccess: () => {
+                toast.success("Tag updated");
+              },
+            }
+          ),
+        1000
+      ),
+    [updateTag]
+  );
+
   return (
     <div key={tagId} className="flex items-center justify-between">
       <div>
-        <p>{tagName}</p>
+        <Input
+          defaultValue={tagName}
+          onChange={(e) => {
+            // updateTag({ name: e.target.value }, { onSuccess: () => refetchProductTags() });
+            debouncedChangeHandler(e.target.value);
+          }}
+          className="w-72 border-transparent hover:border-slate-200"
+        />
       </div>
 
       <div>
@@ -63,6 +93,7 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
 
   return (
     <div className="flex w-full flex-col gap-4">
+      {productTags?.length === 0 ? <EmptySpaceFiller type="response" environmentId={environmentId} /> : null}
       {productTags?.map((tag) => (
         <SingleTag
           key={tag.id}
