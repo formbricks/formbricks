@@ -39,7 +39,7 @@ export default function BaseLayoutManagement({
   if (!user.profileIsValid) {
     router.push({
       pathname: `/users/update-profile`,
-      query: {next : asPath} 
+      query: { next: asPath },
     });
     return <Loading />;
   }
@@ -61,7 +61,7 @@ export default function BaseLayoutManagement({
         <div
           className={classNames(
             limitHeightScreen ? "max-h-full" : "h-full",
-            "flex flex-col flex-1 w-full"
+            "flex flex-row flex-wrap flex-1 w-full min-h-screen"
           )}
         >
           <header className="w-full">
@@ -108,6 +108,33 @@ export default function BaseLayoutManagement({
             </div>
           </header>
           {children}
+          <footer className="w-full self-end bg-red flex flex-col justify-between items-center py-6 ">
+            <div className="flex flex-col  justify-between items-center ">
+              <Link href="/forms/">
+                <a className="text-ui-gray-dark hover:text-ui-gray-dark">
+                  <Image
+                    src="/img/logo-white.webp"
+                    alt="Kadea  academy logo"
+                    width={140}
+                    height={30}
+                  />
+                </a>
+              </Link>
+              <p className="text-center py-4 lg:text-left text-white">
+                {
+                  "Si vous avez des questions, n'hésitez pas à contacter l'équipe chargée des admissions par courrier électronique"
+                }
+              </p>
+              <address>
+                <a
+                  className="text-center py-4 lg:text-left text-white"
+                  href="mailto:admissions@kadea.academy"
+                >
+                  admissions@kadea.academy
+                </a>
+              </address>
+            </div>
+          </footer>
         </div>
       </div>
     </>
