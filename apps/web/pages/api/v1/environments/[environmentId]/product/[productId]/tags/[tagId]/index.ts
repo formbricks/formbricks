@@ -61,6 +61,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if(error.code === "P2002") {
+          res.status(400).send({ message: "Tag already exists" });
+        }
+
         throw new DatabaseError("Database operation failed");
       }
 

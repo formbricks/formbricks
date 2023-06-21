@@ -72,23 +72,33 @@ export const useDeleteTag = (environmentId: string, productId: string, tagId: st
 };
 
 export const useUpdateTag = (environmentId: string, productId: string, tagId: string) => {
-  const { trigger: updateTag, isMutating: isUpdatingTag } = useSWRMutation(
+  const { trigger: updateTag, isMutating: isUpdatingTag,
+    data: updateTagData, error: updateTagError } = useSWRMutation(
     `/api/v1/environments/${environmentId}/product/${productId}/tags/${tagId}`,
 
     async (url, { arg }: { arg: { name: string } }): Promise<TTag> => {
-      return fetch(url, {
+      const res = await fetch(url, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ name: arg.name }),
-      }).then((res) => res.json());
+      })
+
+      if(!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message)
+      }
+
+      return res.json();
     }
   );
 
   return {
     updateTag,
     isUpdatingTag,
+    updateTagData,
+    updateTagError
   };
 };
 

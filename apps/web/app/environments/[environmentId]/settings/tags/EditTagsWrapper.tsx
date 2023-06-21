@@ -11,7 +11,7 @@ import debounce from "lodash.debounce";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
 import MergeTagsCombobox from "@/app/environments/[environmentId]/settings/tags/MergeTagsCombobox";
-import { TagIcon } from "@heroicons/react/24/solid";
+import { cn } from "@formbricks/lib/cn";
 
 interface IEditTagsWrapperProps {
   environmentId: string;
@@ -29,7 +29,7 @@ const SingleTag: React.FC<{
   const { mutate: refetchProductTags, data: productTags } = useTagsForProduct(environmentId, productId);
   const { deleteTag, isDeletingTag } = useDeleteTag(environmentId, productId, tagId);
 
-  const { updateTag } = useUpdateTag(environmentId, productId, tagId);
+  const { updateTag, updateTagError } = useUpdateTag(environmentId, productId, tagId);
   const { mergeTags, isMergingTags } = useMergeTags(environmentId, productId)
 
   const debouncedChangeHandler = useMemo(
@@ -43,6 +43,9 @@ const SingleTag: React.FC<{
                 toast.success("Tag updated");
                 refetchProductTags()
               },
+              onError: (error) => {
+                toast.error(error?.message ?? "Failed to update tag")
+              }
             }
           ),
         1000
@@ -58,10 +61,15 @@ const SingleTag: React.FC<{
         <div className="flex items-center">
           <div className="text-left">
             <Input
-              className="font-medium text-slate-900 border-transparent hover:border-slate-200"
+              className={
+                cn(
+                  "font-medium text-slate-900 border-transparent hover:border-slate-200",
+                  updateTagError ? "border-red-500 focus:border-red-500" : "border-transparent",
+                )
+              }
               defaultValue={tagName}
               onChange={(e) => {
-                debouncedChangeHandler(e.target.value);
+                debouncedChangeHandler(e.target.value.trim());
               }}
             />
           </div>
@@ -107,7 +115,7 @@ const SingleTag: React.FC<{
         </div>
 
         <div>
-          <Button variant="minimal" loading={isDeletingTag} className="focus:shadow-transparent focus:outline-transparent focus:border-transparent focus:ring-0 focus:ring-transparent font-medium text-slate-900"
+          <Button variant="secondary" size="sm" loading={isDeletingTag} className="focus:shadow-transparent focus:outline-transparent focus:border-transparent focus:ring-0 focus:ring-transparent font-medium text-slate-900"
             onClick={() => {
               deleteTag(
                 null,
