@@ -4,8 +4,6 @@ import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { responses } from "@/lib/api/response";
 import { Prisma } from "@prisma/client";
-import { TTag } from "@formbricks/types/v1/tags";
-import { TResponse } from "@formbricks/types/v1/responses";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();

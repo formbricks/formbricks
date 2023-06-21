@@ -4,7 +4,7 @@ import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { useDeleteTag, useUpdateTag } from "@/lib/tags/mutateTags";
-import { useTagsForProduct } from "@/lib/tags/tags";
+import { useTagsCountForProduct, useTagsForProduct } from "@/lib/tags/tags";
 import { Button, Input } from "@formbricks/ui";
 import React from "react";
 import debounce from "lodash.debounce";
@@ -20,7 +20,8 @@ const SingleTag: React.FC<{
   tagName: string;
   environmentId: string;
   productId: string;
-}> = ({ environmentId, productId, tagId, tagName }) => {
+  tagCount?: number;
+}> = ({ environmentId, productId, tagId, tagName, tagCount = 0 }) => {
   const { mutate: refetchProductTags } = useTagsForProduct(environmentId, productId);
   const { deleteTag, isDeletingTag } = useDeleteTag(environmentId, productId, tagId);
 
@@ -56,20 +57,32 @@ const SingleTag: React.FC<{
         />
       </div>
 
-      <div>
-        <Button variant="warn" loading={isDeletingTag}>
-          <span
-            className="text-sm"
-            onClick={() => {
-              deleteTag(null, {
-                onSuccess: () => {
-                  refetchProductTags();
-                },
-              });
-            }}>
-            Delete
-          </span>
-        </Button>
+      <div className="text-sm text-slate-500">{tagCount} tags</div>
+
+      <div className="flex items-center gap-2">
+        <div>
+          <Button
+            variant="minimal"
+        >
+            Merge
+          </Button>
+        </div>
+
+        <div>
+          <Button variant="warn" loading={isDeletingTag}>
+            <span
+              className="text-sm"
+              onClick={() => {
+                deleteTag(null, {
+                  onSuccess: () => {
+                    refetchProductTags();
+                  },
+                });
+              }}>
+              Delete
+            </span>
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -82,6 +95,8 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
     environmentId,
     product?.id
   );
+
+  const {tagsCount} = useTagsCountForProduct(environmentId, product?.id);
 
   if (isLoadingProductTags) {
     return (
@@ -101,6 +116,9 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
           productId={product?.id}
           tagId={tag.id}
           tagName={tag.name}
+          tagCount={
+            tagsCount?.find((count) => count.tagId === tag.id)?.count ?? 0
+          }
         />
       ))}
     </div>
