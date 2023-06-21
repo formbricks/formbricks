@@ -1,4 +1,5 @@
 import type { InitConfig } from "../../../types/js";
+import { addExitIntentListener, addScrollDepthListener } from "./automaticEvents";
 import { Config } from "./config";
 import {
   ErrorHandler,
@@ -128,43 +129,12 @@ export const initialize = async (
   addClickEventListener();
 
   logger.debug("Add exit intent (Desktop) listener");
-  if(typeof document !== undefined){
-    const exitIntentListener = async function(e) {
-      if (e.clientY <= 0) {
-        const trackResult = await trackEvent('Exit Intent (Desktop)');
-        if (trackResult.ok !== true) {
-          return err(trackResult.error);
-        }
-      }
-    };
-    document.addEventListener('mouseleave', exitIntentListener);
- }
+  addExitIntentListener();
 
- 
- logger.debug("Add scroll depth 50% listener");
- if (typeof window !== "undefined") {
-    let scrollDepthTriggered = false;
-    // 'load' event is used to setup listener after full page load
-    window.addEventListener('load', () => {
-      window.addEventListener('scroll', async () => {
-        const scrollPosition = window.pageYOffset;
-        const windowSize     = window.innerHeight;
-        const bodyHeight     = document.documentElement.scrollHeight;
-        if (scrollPosition === 0) {
-            scrollDepthTriggered = false;
-        }
-        if (!scrollDepthTriggered && (scrollPosition / (bodyHeight - windowSize)) >= 0.5) {
-          scrollDepthTriggered = true;
-          const trackResult = await trackEvent('50% Scroll');
-          if (trackResult.ok !== true) {
-            return err(trackResult.error);
-          }
-        }
-    });
-  });
- }
+  logger.debug("Add scroll depth 50% listener");
+  addScrollDepthListener();
 
-logger.debug("Initialized");
+  logger.debug("Initialized");
 
   // check page url if initialized after page load
   checkPageUrl();
