@@ -11,7 +11,6 @@ import AudienceView from "./AudienceView";
 import QuestionsAudienceTabs from "./QuestionsAudienceTabs";
 import QuestionsView from "./QuestionsView";
 import SurveyMenuBar from "./SurveyMenuBar";
-import { deepEqual } from "@/lib/utils";
 
 interface SurveyEditorProps {
   environmentId: string;
@@ -38,19 +37,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     }
   }, [survey]);
 
-  useEffect(() => {
-    const warningText = "You have unsaved changes - are you sure you wish to leave this page?";
-    const handleWindowClose = (e: BeforeUnloadEvent) => {
-      if (!deepEqual(localSurvey, survey)) return;
-      e.preventDefault();
-      return (e.returnValue = warningText);
-    };
-
-    window.addEventListener("beforeunload", handleWindowClose);
-    return () => {
-      window.removeEventListener("beforeunload", handleWindowClose);
-    };
-  }, []);
 
   if (isLoadingSurvey || isLoadingProduct || !localSurvey) {
     return <LoadingSpinner />;

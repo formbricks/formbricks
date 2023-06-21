@@ -44,6 +44,20 @@ export default function SurveyMenuBar({
     }
   }, [activeId, audiencePrompt]);
 
+  useEffect(() => {
+    const warningText = "You have unsaved changes - are you sure you wish to leave this page?";
+    const handleWindowClose = (e: BeforeUnloadEvent) => {
+      if (!deepEqual(localSurvey, survey)) return;
+      e.preventDefault();
+      return (e.returnValue = warningText);
+    };
+
+    window.addEventListener("beforeunload", handleWindowClose);
+    return () => {
+      window.removeEventListener("beforeunload", handleWindowClose);
+    };
+  }, []);
+
   // write a function which updates the local survey status
   const updateLocalSurveyStatus = (status: Survey["status"]) => {
     const updatedSurvey = { ...localSurvey, status };
