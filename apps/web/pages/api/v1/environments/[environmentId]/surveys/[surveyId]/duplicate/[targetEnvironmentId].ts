@@ -50,8 +50,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     let targetEnvironmentTriggers: string[] = [];
     // map the local triggers to the target environment
-    for (let i = 0; i < existingSurvey.triggers.length; i++) {
-      const trigger = existingSurvey.triggers[i];
+    for (const trigger of existingSurvey.triggers) {
       const targetEnvironmentTrigger = await prisma.eventClass.findFirst({
         where: {
           name: trigger.eventClass.name,
@@ -70,8 +69,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 id: targetEnvironmentId,
               },
             },
-            createdAt: new Date(),
-            updatedAt: new Date(),
             description: trigger.eventClass.description,
             type: trigger.eventClass.type,
             noCodeConfig: trigger.eventClass.noCodeConfig
@@ -88,8 +85,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     let targetEnvironmentAttributeFilters: string[] = [];
     // map the local attributeFilters to the target env
-    for (let i = 0; i < existingSurvey.attributeFilters.length; i++) {
-      const attributeFilter = existingSurvey.attributeFilters[i];
+    for (const attributeFilter of existingSurvey.attributeFilters) {
       // check if attributeClass exists in target env.
       // if not, create it
       const targetEnvironmentAttributeClass = await prisma.attributeClass.findFirst({
