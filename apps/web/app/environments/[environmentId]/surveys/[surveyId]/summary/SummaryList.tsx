@@ -12,14 +12,15 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
-import type {
-  CTAQuestion,
-  MultipleChoiceMultiQuestion,
-  MultipleChoiceSingleQuestion,
-  NPSQuestion,
-  OpenTextQuestion,
-  Question,
-  RatingQuestion,
+import {
+  QuestionType,
+  type CTAQuestion,
+  type MultipleChoiceMultiQuestion,
+  type MultipleChoiceSingleQuestion,
+  type NPSQuestion,
+  type OpenTextQuestion,
+  type Question,
+  type RatingQuestion,
 } from "@formbricks/types/questions";
 
 export default function SummaryList({ environmentId, surveyId }) {
@@ -69,7 +70,7 @@ export default function SummaryList({ environmentId, surveyId }) {
         ) : (
           <>
             {summaryData.map((questionSummary) => {
-              if (questionSummary.question.type === "openText") {
+              if (questionSummary.question.type === QuestionType.OpenText) {
                 return (
                   <OpenTextSummary
                     key={questionSummary.question.id}
@@ -79,8 +80,8 @@ export default function SummaryList({ environmentId, surveyId }) {
                 );
               }
               if (
-                questionSummary.question.type === "multipleChoiceSingle" ||
-                questionSummary.question.type === "multipleChoiceMulti"
+                questionSummary.question.type === QuestionType.MultipleChoiceSingle ||
+                questionSummary.question.type === QuestionType.MultipleChoiceMulti
               ) {
                 return (
                   <MultipleChoiceSummary
@@ -95,7 +96,7 @@ export default function SummaryList({ environmentId, surveyId }) {
                   />
                 );
               }
-              if (questionSummary.question.type === "nps") {
+              if (questionSummary.question.type === QuestionType.NPS) {
                 return (
                   <NPSSummary
                     key={questionSummary.question.id}
@@ -103,7 +104,7 @@ export default function SummaryList({ environmentId, surveyId }) {
                   />
                 );
               }
-              if (questionSummary.question.type === "cta") {
+              if (questionSummary.question.type === QuestionType.CTA) {
                 return (
                   <CTASummary
                     key={questionSummary.question.id}
@@ -111,7 +112,7 @@ export default function SummaryList({ environmentId, surveyId }) {
                   />
                 );
               }
-              if (questionSummary.question.type === "rating") {
+              if (questionSummary.question.type === QuestionType.Rating) {
                 return (
                   <RatingSummary
                     key={questionSummary.question.id}

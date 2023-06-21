@@ -1,4 +1,8 @@
-import { MultipleChoiceMultiQuestion, MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
+import {
+  MultipleChoiceMultiQuestion,
+  MultipleChoiceSingleQuestion,
+  QuestionType,
+} from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { PersonAvatar, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
@@ -32,7 +36,7 @@ export default function MultipleChoiceSummary({
   environmentId,
   surveyType,
 }: MultipleChoiceSummaryProps) {
-  const isSingleChoice = questionSummary.question.type === "multipleChoiceSingle";
+  const isSingleChoice = questionSummary.question.type === QuestionType.MultipleChoiceSingle;
 
   const results: ChoiceResult[] = useMemo(() => {
     if (!("choices" in questionSummary.question)) return [];

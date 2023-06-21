@@ -12,6 +12,7 @@ import { RatingResponse } from "../RatingResponse";
 import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
+import { QuestionType } from "@formbricks/types/questions";
 
 export interface OpenTextSummaryProps {
   data: {
@@ -121,7 +122,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
             <div key={`${response.id}-${idx}`}>
               <p className="text-sm text-slate-500">{response.question}</p>
               {typeof response.answer !== "object" ? (
-                response.type === "rating" ? (
+                response.type === QuestionType.Rating ? (
                   <div className="h-8">
                     <RatingResponse scale={response.scale} answer={response.answer} range={response.range} />
                   </div>
