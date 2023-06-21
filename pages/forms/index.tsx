@@ -14,11 +14,8 @@ function FormsPage({}) {
   return (
     <BaseLayoutManagement
       title={"Sourcings - Kadea Sourcing"}
-      breadcrumbs={[
-        { name: "Sourcings", href: "#", current: true },
-        { name: "Gestion des utilisateurs", href: "/users", current: false },
-      ]}
-      activeMenu="forms"
+      breadcrumbs={[{ name: "Sourcings", href: "#", current: true }, { name: "Gestion des utilisateurs", href: "/users", current: false }]}
+      activeMenu='forms'
     >
       <LimitedWidth>
         <FormList />

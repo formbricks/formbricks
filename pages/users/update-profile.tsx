@@ -9,11 +9,7 @@ import { DRCProvinces } from "../../lib/enums";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { Address } from "@prisma/client";
 import Loading from "../../components/Loading";
-import {
-  SnoopElement,
-  SnoopForm,
-  SnoopPage,
-} from "../../kda-snoopforms-react/src";
+import { SnoopElement, SnoopForm, SnoopPage } from "../../kda-snoopforms-react/src";
 
 export default function UpdateProfile() {
   const router = useRouter();
@@ -36,7 +32,7 @@ export default function UpdateProfile() {
   }, [session]);
 
   const handleBlur = (e, source) => {
-    if (e.target.value === "") toast.error("Renseignez votre " + `'${source}'`);
+    if(e.target.value === "") toast.error("Renseignez votre " +`'${source}'`);
   };
 
   const handleInputChange = (e) => {
@@ -79,18 +75,18 @@ export default function UpdateProfile() {
 
     try {
       let userUpdateData = user;
-      userUpdateData.dob = new Date(userUpdateData.dob);
-      delete userUpdateData.address;
-      const res = await updateUser(userUpdateData, address);
+        userUpdateData.dob = new Date(userUpdateData.dob);
+        delete userUpdateData.address;
+        const res = await updateUser(userUpdateData, address);
 
-      if (res.status != 200) {
-        toast.error("Erreur, veuillez ressayer");
-      } else {
-        session.data.user = userUpdateData;
-        session.data.user.address = address;
-        toast.success("Votre profil a bien été mis à jour");
-        router.push(`/`);
-      }
+        if (res.status != 200) {
+          toast.error("Erreur, veuillez ressayer");
+        } else {
+          session.data.user = userUpdateData
+          session.data.user.address = address
+          toast.success("Votre profil a bien été mis à jour");
+          router.push(`/`);
+        }
     } catch (e) {
       toast(e.message);
     }
@@ -128,9 +124,7 @@ export default function UpdateProfile() {
               <div className="text-2xl font-bold text-center mb-2 mt-3 text-ui-gray-dark">
                 {user.firstname} {user.lastname}
               </div>
-              <p className="font-medium text-sm text-center mb-2 mt-3 text-red">
-                {user.email}
-              </p>
+              <p className="font-medium text-sm text-center mb-2 mt-3 text-red">{user.email}</p>
             </div>
 
             <div className="mt-4">
@@ -200,11 +194,7 @@ export default function UpdateProfile() {
                         <input
                           id="dob"
                           name="dob"
-                          value={
-                            user.dob
-                              ? user.dob.toString().substring(0, 10)
-                              : new Date().toISOString().substring(0, 10)
-                          }
+                          value={user.dob ? user.dob.toString().substring(0, 10) : new Date().toISOString().substring(0, 10)}
                           onChange={handleInputChange}
                           onBlur={(e) => handleBlur(e, "Date de naissance")}
                           type="date"
@@ -275,9 +265,7 @@ export default function UpdateProfile() {
                           type="text"
                           value={address ? address.line2 : ""}
                           onChange={handleInputChange}
-                          onBlur={(e) =>
-                            handleBlur(e, "une référence d'adresse")
-                          }
+                          onBlur={(e) => handleBlur(e, "une référence d'adresse")}
                           placeholder="Réf. Silikin Village, Concession COTEX"
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
@@ -347,6 +335,7 @@ export default function UpdateProfile() {
           </div>
         </div>
       </div>
+
     </BaseLayoutUnauthorized>
   );
 }

@@ -39,7 +39,7 @@ export default function BaseLayoutManagement({
   if (!user.profileIsValid) {
     router.push({
       pathname: `/users/update-profile`,
-      query: { next: asPath },
+      query: { next: asPath }
     });
     return <Loading />;
   }
