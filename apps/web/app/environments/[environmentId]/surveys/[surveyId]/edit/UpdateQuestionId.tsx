@@ -22,9 +22,7 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
 
   return (
     <div>
-      <Label htmlFor="questionId">
-        Question ID
-      </Label>
+      <Label htmlFor="questionId">Question ID</Label>
       <div className="mt-2 inline-flex w-full">
         <Input
           id="questionId"

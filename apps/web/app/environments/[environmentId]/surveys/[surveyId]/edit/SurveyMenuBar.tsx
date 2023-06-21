@@ -63,6 +63,29 @@ export default function SurveyMenuBar({
     }
   };
 
+  const saveSurveyAction = (shouldNavigateBack = false) => {
+    triggerSurveyMutate({ ...localSurvey })
+      .then(async (response) => {
+        if (!response?.ok) {
+          throw new Error(await response?.text());
+        }
+        const updatedSurvey = await response.json();
+        setLocalSurvey(updatedSurvey);
+        toast.success("Changes saved.");
+        if (shouldNavigateBack) {
+          router.back();
+        } else {
+          if (localSurvey.status !== "draft") {
+            router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary`);
+          } else {
+            router.push(`/environments/${environmentId}/surveys`);
+          }
+        }
+      })
+      .catch(() => {
+        toast.error(`Error saving changes`);
+      });
+  };
   return (
     <div className="border-b border-slate-200 bg-white px-5 py-3 sm:flex sm:items-center sm:justify-between">
       <div className="flex items-center space-x-2 whitespace-nowrap">
@@ -102,25 +125,7 @@ export default function SurveyMenuBar({
           variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
           className="mr-3"
           loading={isMutatingSurvey}
-          onClick={() => {
-            triggerSurveyMutate({ ...localSurvey })
-              .then(async (response) => {
-                if (!response?.ok) {
-                  throw new Error(await response?.text());
-                }
-                const updatedSurvey = await response.json();
-                setLocalSurvey(updatedSurvey); // update local survey state
-                toast.success("Changes saved.");
-                if (localSurvey.status !== "draft") {
-                  router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary`);
-                } else {
-                  router.push(`/environments/${environmentId}/surveys`);
-                }
-              })
-              .catch(() => {
-                toast.error(`Error saving changes`);
-              });
-          }}>
+          onClick={() => saveSurveyAction()}>
           Save
         </Button>
         {localSurvey.status === "draft" && audiencePrompt && (
@@ -157,6 +162,8 @@ export default function SurveyMenuBar({
         setOpen={setDeleteDialogOpen}
         onDelete={() => deleteSurveyAction(localSurvey)}
         text="Do you want to delete this draft?"
+        useSaveInsteadOfCancel={true}
+        onSave={() => saveSurveyAction(true)}
       />
     </div>
   );

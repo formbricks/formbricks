@@ -208,6 +208,7 @@ model Survey {
   displays         Display[]
   autoClose        Int?
   delay            Int                     @default(0)
+  autoComplete     Int?
 }
 
 model Event {

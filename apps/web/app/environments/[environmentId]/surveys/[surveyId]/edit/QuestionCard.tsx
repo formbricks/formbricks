@@ -2,7 +2,7 @@
 
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
-import type { Question } from "@formbricks/types/questions";
+import { QuestionType, type Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Input, Label, Switch } from "@formbricks/ui";
 import {
@@ -88,17 +88,17 @@ export default function QuestionCard({
               <div>
                 <div className="inline-flex">
                   <div className="-ml-0.5 mr-3 h-6 w-6 text-slate-400">
-                    {question.type === "openText" ? (
+                    {question.type === QuestionType.OpenText ? (
                       <ChatBubbleBottomCenterTextIcon />
-                    ) : question.type === "multipleChoiceSingle" ? (
+                    ) : question.type === QuestionType.MultipleChoiceSingle ? (
                       <QueueListIcon />
-                    ) : question.type === "multipleChoiceMulti" ? (
+                    ) : question.type === QuestionType.MultipleChoiceMulti ? (
                       <ListBulletIcon />
-                    ) : question.type === "nps" ? (
+                    ) : question.type === QuestionType.NPS ? (
                       <PresentationChartBarIcon />
-                    ) : question.type === "cta" ? (
+                    ) : question.type === QuestionType.CTA ? (
                       <CursorArrowRippleIcon />
-                    ) : question.type === "rating" ? (
+                    ) : question.type === QuestionType.Rating ? (
                       <StarIcon />
                     ) : null}
                   </div>
@@ -126,7 +126,7 @@ export default function QuestionCard({
               </div>
             </Collapsible.CollapsibleTrigger>
             <Collapsible.CollapsibleContent className="px-4 pb-4">
-              {question.type === "openText" ? (
+              {question.type === QuestionType.OpenText ? (
                 <OpenQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -134,7 +134,7 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                 />
-              ) : question.type === "multipleChoiceSingle" ? (
+              ) : question.type === QuestionType.MultipleChoiceSingle ? (
                 <MultipleChoiceSingleForm
                   localSurvey={localSurvey}
                   question={question}
@@ -142,7 +142,7 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                 />
-              ) : question.type === "multipleChoiceMulti" ? (
+              ) : question.type === QuestionType.MultipleChoiceMulti ? (
                 <MultipleChoiceMultiForm
                   localSurvey={localSurvey}
                   question={question}
@@ -150,7 +150,7 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                 />
-              ) : question.type === "nps" ? (
+              ) : question.type === QuestionType.NPS ? (
                 <NPSQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -158,7 +158,7 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                 />
-              ) : question.type === "cta" ? (
+              ) : question.type === QuestionType.CTA ? (
                 <CTAQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -166,7 +166,7 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                 />
-              ) : question.type === "rating" ? (
+              ) : question.type === QuestionType.Rating ? (
                 <RatingQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -187,7 +187,9 @@ export default function QuestionCard({
                   </Collapsible.CollapsibleTrigger>
 
                   <Collapsible.CollapsibleContent className="space-y-4">
-                    {question.type !== "nps" && question.type !== "rating" && question.type !== "cta" ? (
+                    {question.type !== QuestionType.NPS &&
+                    question.type !== QuestionType.Rating &&
+                    question.type !== QuestionType.CTA ? (
                       <div className="mt-4">
                         <Label htmlFor="buttonLabel">Button Label</Label>
                         <div className="mt-2">

@@ -27,7 +27,48 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
-    return res.json(attributeClass);
+    const activeSurveysData = await prisma.surveyAttributeFilter.findMany({
+      where: {
+        attributeClassId,
+        survey: {
+          status: "inProgress",
+        },
+      },
+      select: {
+        survey: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    const activeSurveys = activeSurveysData.map((t) => t.survey.name);
+
+    const inactiveSurveysData = await prisma.surveyAttributeFilter.findMany({
+      where: {
+        attributeClassId,
+        survey: {
+          status: {
+            in: ["paused", "completed"],
+          },
+        },
+      },
+      select: {
+        survey: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+    const inactiveSurveys = inactiveSurveysData.map((t) => t.survey.name);
+
+    return res.json({
+      ...attributeClass,
+      activeSurveys,
+      inactiveSurveys,
+    });
   }
 
   // PUT

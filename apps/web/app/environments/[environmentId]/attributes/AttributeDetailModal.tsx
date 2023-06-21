@@ -20,7 +20,7 @@ export default function AttributeDetailModal({
   const tabs = [
     {
       title: "Activity",
-      children: <AttributeActivityTab attributeClass={attributeClass} />,
+      children: <AttributeActivityTab environmentId={environmentId} attributeClassId={attributeClass.id} />,
     },
     {
       title: "Settings",

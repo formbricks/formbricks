@@ -11,9 +11,11 @@ interface NavigationProps {
     }[];
   }[];
   className: string;
+  preserveScroll: () => void;
+  linkRef: React.RefObject<HTMLLIElement>;
 }
 
-export function Navigation({ navigation, className }: NavigationProps) {
+export function Navigation({ navigation, className, preserveScroll, linkRef }: NavigationProps) {
   let router = useRouter();
 
   return (
@@ -26,8 +28,9 @@ export function Navigation({ navigation, className }: NavigationProps) {
               role="list"
               className="mt-2 space-y-2 border-l-2 border-slate-100 dark:border-slate-800 lg:mt-4 lg:space-y-4 lg:border-slate-200">
               {section.links.map((link) => (
-                <li key={link.href} className="relative">
+                <li key={link.href} className="relative" ref={linkRef}>
                   <Link
+                    onClick={preserveScroll}
                     href={link.href}
                     className={clsx(
                       "block w-full pl-3.5 before:pointer-events-none before:absolute before:-left-1 before:top-1/2 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full",

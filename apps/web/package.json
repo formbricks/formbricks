@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "@formbricks/ee": "workspace:*",
+    "@formbricks/errors": "workspace:*",
     "@formbricks/js": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@heroicons/react": "^2.0.18",
+    "@json2csv/node": "^7.0.1",
     "@paralleldrive/cuid2": "^2.2.0",
     "@radix-ui/react-alert-dialog": "^1.0.3",
     "@radix-ui/react-collapsible": "^1.0.2",
