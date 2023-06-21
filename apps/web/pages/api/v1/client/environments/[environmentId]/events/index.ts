@@ -23,6 +23,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(400).json({ message: "Missing eventName" });
     }
 
+    let eventType = "code";
+    if (eventName === "Exit Intent (Desktop)" || eventName === "50% Scroll") {
+      eventType = "automatic";
+    }
+
     const eventData = await prisma.event.create({
       data: {
         properties,
@@ -41,7 +46,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             },
             create: {
               name: eventName,
-              type: "code",
+              type: eventType,
               environment: {
                 connect: {
                   id: environmentId,
