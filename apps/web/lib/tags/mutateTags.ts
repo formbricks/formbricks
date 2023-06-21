@@ -91,3 +91,23 @@ export const useUpdateTag = (environmentId: string, productId: string, tagId: st
     isUpdatingTag,
   };
 };
+
+export const useMergeTags = (environmentId: string, productId: string) => {
+  const { trigger: mergeTags, isMutating: isMergingTags } = useSWRMutation(
+    `/api/v1/environments/${environmentId}/product/${productId}/tags/merge`,
+    async (url, { arg }: { arg: { originalTagId: string; newTagId: string }}): Promise<{status: boolean; message: string}> => {
+      return fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ originalTagId: arg.originalTagId, newTagId: arg.newTagId }),
+      }).then((res) => res.json());
+    }
+  );
+
+  return {
+    mergeTags,
+    isMergingTags,
+  };
+}
