@@ -30,6 +30,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     progress,
     isPreview,
     lastQuestion,
+    initiateCountdown,
     restartSurvey,
     submitResponse,
   } = useLinkSurveyUtils(survey);
@@ -68,6 +69,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
                 headline={survey.thankYouCard.headline || "Thank you!"}
                 subheader={survey.thankYouCard.subheader || "Your response has been recorded."}
                 brandColor={survey.brandColor}
+                initiateCountdown={initiateCountdown}
               />
             </div>
           ) : (
