@@ -2,7 +2,10 @@ import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handle(req: NextApiRequest, res: NextApiResponse) {
+export default async function handle(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const environmentId = req.query.environmentId?.toString();
   const targetEnvironmentId = req.query.targetEnvironmentId?.toString();
 
@@ -16,7 +19,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
 
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
-  const hasTargetEnvAccess = await hasEnvironmentAccess(req, res, targetEnvironmentId);
+  const hasTargetEnvAccess = await hasEnvironmentAccess(
+    req,
+    res,
+    targetEnvironmentId
+  );
 
   if (!hasAccess || !hasTargetEnvAccess) {
     return res.status(403).json({ message: "Not authorized" });
@@ -36,11 +43,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             eventClass: true,
           },
         },
-        attributeFilters:{
-          include:{
-            attributeClass:true
-          }
-        }
+        attributeFilters: {
+          include: {
+            attributeClass: true,
+          },
+        },
       },
     });
 
@@ -82,38 +89,40 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       }
     }
 
-
     let targetEnvironmentAttributeFilters: string[] = [];
     // map the local attributeFilters to the target env
     for (const attributeFilter of existingSurvey.attributeFilters) {
       // check if attributeClass exists in target env.
       // if not, create it
-      const targetEnvironmentAttributeClass = await prisma.attributeClass.findFirst({
-        where: {
-          name: attributeFilter.attributeClass.name,
-          environment: {
-            id: targetEnvironmentId,
+      const targetEnvironmentAttributeClass =
+        await prisma.attributeClass.findFirst({
+          where: {
+            name: attributeFilter.attributeClass.name,
+            environment: {
+              id: targetEnvironmentId,
+            },
           },
-        },
-      });
+        });
       if (!targetEnvironmentAttributeClass) {
-        const newAttributeClass=await prisma.attributeClass.create({
-          data:{
+        const newAttributeClass = await prisma.attributeClass.create({
+          data: {
             name: attributeFilter.attributeClass.name,
             description: attributeFilter.attributeClass.description,
             type: attributeFilter.attributeClass.type,
-            environment:{
-              connect:{
-                id:targetEnvironmentId
-            }
-          }
-        }
-      })
-      targetEnvironmentAttributeFilters.push(newAttributeClass.id)
-    }else{
-      targetEnvironmentAttributeFilters.push(targetEnvironmentAttributeClass.id)
+            environment: {
+              connect: {
+                id: targetEnvironmentId,
+              },
+            },
+          },
+        });
+        targetEnvironmentAttributeFilters.push(newAttributeClass.id);
+      } else {
+        targetEnvironmentAttributeFilters.push(
+          targetEnvironmentAttributeClass.id
+        );
+      }
     }
-  }
 
     // create new survey with the data of the existing survey
     const newSurvey = await prisma.survey.create({
@@ -130,12 +139,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             eventClassId: eventClassId,
           })),
         },
-        attributeFilters:{
-          create: existingSurvey.attributeFilters.map((attributeFilter,idx) => ({
-            attributeClassId:targetEnvironmentAttributeFilters[idx],
-            condition: attributeFilter.condition,
-            value: attributeFilter.value
-            }))
+        attributeFilters: {
+          create: existingSurvey.attributeFilters.map(
+            (attributeFilter, idx) => ({
+              attributeClassId: targetEnvironmentAttributeFilters[idx],
+              condition: attributeFilter.condition,
+              value: attributeFilter.value,
+            })
+          ),
         },
         environment: {
           connect: {
@@ -150,6 +161,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // Unknown HTTP Method
   else {
-    throw new Error(`The HTTP ${req.method} method is not supported by this route.`);
+    throw new Error(
+      `The HTTP ${req.method} method is not supported by this route.`
+    );
   }
 }
