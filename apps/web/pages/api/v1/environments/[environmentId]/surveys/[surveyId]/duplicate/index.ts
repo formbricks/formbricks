@@ -28,10 +28,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         environmentId,
       },
       include: {
-        triggers: true
+        triggers: true,
+        attributeFilters: true,
       },
     });
-    
+
     if (!existingSurvey) {
       return res.status(404).json({ message: "Survey not found" });
     }
@@ -51,6 +52,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         triggers: {
           create: existingSurvey.triggers.map((trigger) => ({
             eventClassId: trigger.eventClassId,
+          })),
+        },
+        attributeFilters: {
+          create: existingSurvey.attributeFilters.map((attributeFilter) => ({
+            attributeClassId: attributeFilter.attributeClassId,
+            condition: attributeFilter.condition,
+            value: attributeFilter.value,
           })),
         },
         environment: {
