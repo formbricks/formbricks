@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
 import { GoogleButton } from "@/components/auth/GoogleButton";
+import IsPassowrdValid from "@/components/auth/IsPassowrdValid";
 
 export const SignupForm = () => {
   const searchParams = useSearchParams();
@@ -18,8 +19,10 @@ export const SignupForm = () => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    if(e.target.elements.password.value.length < 8){
-      setError("Password should be at least 8 characters")
+
+    setSubmitted(true)
+
+    if(!isValid){
       return
     }
     setSigningUp(true);
@@ -46,6 +49,9 @@ export const SignupForm = () => {
   const [isButtonEnabled, setButtonEnabled] = useState(true);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const [password, setPassword] = useState<string|null>(null)
+  const [isValid, setIsValid] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   const checkFormValidity = () => {
     // If all fields are filled, enable the button
@@ -54,13 +60,17 @@ export const SignupForm = () => {
     }
   };
 
+  const dismissError =()=>{
+    setError("")
+  }
+
   return (
     <>
       {error && (
         <div className="absolute top-10 rounded-md bg-teal-50 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <XCircleIcon className="h-5 w-5 text-teal-400" aria-hidden="true" />
+              <XCircleIcon onClick={dismissError} className="h-5 w-5 text-teal-400 cursor-pointer" aria-hidden="true" />
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-teal-800">An error occurred when logging you in</h3>
@@ -118,6 +128,8 @@ export const SignupForm = () => {
                     id="password"
                     name="password"
                     type="password"
+                    value={password?password:""}
+                    onChange={(e)=>setPassword(e.target.value)}
                     autoComplete="current-password"
                     placeholder="*******"
                     aria-placeholder="password"
@@ -135,11 +147,11 @@ export const SignupForm = () => {
                     </Link>
                   </div>
                 )}
+                <IsPassowrdValid password={password} setIsValid={setIsValid} submitted={submitted} />
               </div>
             )}
             <Button
-              onClick={(e:any) => {
-                e.preventDefault()
+              onClick={() => {
                 if (!showLogin) {
                   setShowLogin(true);
                   setButtonEnabled(false);
