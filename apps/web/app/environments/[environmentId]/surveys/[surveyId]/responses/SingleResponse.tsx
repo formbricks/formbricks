@@ -13,6 +13,7 @@ import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
 import ResponseTagsWrapper from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/ResponseTagsWrapper";
+import { TTag } from "@formbricks/types/v1/tags";
 
 export interface OpenTextSummaryProps {
   data: {
@@ -36,15 +37,7 @@ export interface OpenTextSummaryProps {
       };
     }[];
     tags: {
-      responseId: string;
-      tagId: string;
-      tag: {
-        id: string;
-        name: string;
-        createdAt: string;
-        updatedAt: string;
-        productId: string;
-      };
+      tag: TTag
     }[];
     value: string;
     updatedAt: string;
@@ -155,10 +148,7 @@ export default function SingleResponse({ data, environmentId, surveyId, productI
           surveyId={surveyId}
           productId={productId}
           responseId={data.id}
-          tags={data.tags.map((tag) => ({
-            tagId: tag.tagId,
-            tagName: tag.tag.name,
-          }))}
+          tags={data.tags.map(tag => ({tagId: tag.tag.id, tagName: tag.tag.name}))}
         />
 
         <DeleteDialog

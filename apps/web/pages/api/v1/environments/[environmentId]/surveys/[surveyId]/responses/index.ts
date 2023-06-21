@@ -56,10 +56,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           },
         },
         tags: {
-          include: {
+          select: {
             tag: true,
-          },
-        },
+          }
+        }
       },
     });
 
