@@ -1,12 +1,13 @@
 import { z } from "zod";
+import { ZPersonAttributes } from "./people";
 
 export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
-export const ZPersonAttributesData = z.record(z.union([z.string(), z.number()])).optional();
+export const ZResponsePersonAttributes = ZPersonAttributes.optional();
 
-export type TPersonAttributesData = z.infer<typeof ZPersonAttributesData>;
+export type TResponsePersonAttributes = z.infer<typeof ZResponsePersonAttributes>;
 
 const ZResponse = z.object({
   id: z.string().cuid2(),
@@ -19,7 +20,7 @@ const ZResponse = z.object({
       attributes: z.record(z.union([z.string(), z.number()])),
     })
     .nullable(),
-  personAttributes: ZPersonAttributesData,
+  personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
   data: ZResponseData,
 });
