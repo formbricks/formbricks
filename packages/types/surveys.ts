@@ -1,4 +1,5 @@
 import { Question } from "./questions";
+import { Response } from "./responses";
 
 export interface ThankYouCard {
   enabled: boolean;
@@ -31,4 +32,16 @@ export interface AttributeFilter {
   attributeClassId: string;
   condition: string;
   value: string;
+}
+
+export interface SurveyNotificationData {
+  id: string;
+  numDisplays: number;
+  numDisplaysResponded: number;
+  responseLenght: number;
+  responseCompletedLength: number;
+  latestResponse: any;
+  questions: Question[];
+  status: "draft" | "inProgress" | "archived" | "paused" | "completed";
+  name: String;
 }
