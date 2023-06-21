@@ -44,8 +44,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: undefined, // id is auto-generated
         environmentId: undefined, // environmentId is set below
         name: `${existingSurvey.name} (copy)`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
         status: "draft",
         questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
         thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),

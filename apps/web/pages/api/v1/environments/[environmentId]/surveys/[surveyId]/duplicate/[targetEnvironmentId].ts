@@ -36,6 +36,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             eventClass: true,
           },
         },
+        attributeFilters:{
+          include:{
+            attributeClass:true
+          }
+        }
       },
     });
 
@@ -80,6 +85,40 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       }
     }
 
+
+    let targetEnvironmentAttributeFilters: string[] = [];
+    // map the local attributeFilters to the target env
+    for (let i = 0; i < existingSurvey.attributeFilters.length; i++) {
+      const attributeFilter = existingSurvey.attributeFilters[i];
+      // check if attributeClass exists in target env.
+      // if not, create it
+      const targetEnvironmentAttributeClass = await prisma.attributeClass.findFirst({
+        where: {
+          name: attributeFilter.attributeClass.name,
+          environment: {
+            id: targetEnvironmentId,
+          },
+        },
+      });
+      if (!targetEnvironmentAttributeClass) {
+        const newAttributeClass=await prisma.attributeClass.create({
+          data:{
+            name: attributeFilter.attributeClass.name,
+            description: attributeFilter.attributeClass.description,
+            type: attributeFilter.attributeClass.type,
+            environment:{
+              connect:{
+                id:targetEnvironmentId
+            }
+          }
+        }
+      })
+      targetEnvironmentAttributeFilters.push(newAttributeClass.id)
+    }else{
+      targetEnvironmentAttributeFilters.push(targetEnvironmentAttributeClass.id)
+    }
+  }
+
     // create new survey with the data of the existing survey
     const newSurvey = await prisma.survey.create({
       data: {
@@ -87,8 +126,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: undefined, // id is auto-generated
         environmentId: undefined, // environmentId is set below
         name: `${existingSurvey.name} (copy)`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
         status: "draft",
         questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
         thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
@@ -96,6 +133,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           create: targetEnvironmentTriggers.map((eventClassId) => ({
             eventClassId: eventClassId,
           })),
+        },
+        attributeFilters:{
+          create: existingSurvey.attributeFilters.map((attributeFilter,idx) => ({
+            attributeClassId:targetEnvironmentAttributeFilters[idx],
+            condition: attributeFilter.condition,
+            value: attributeFilter.value
+            }))
         },
         environment: {
           connect: {
