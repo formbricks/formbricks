@@ -37,6 +37,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     }
   }, [survey]);
 
+
   if (isLoadingSurvey || isLoadingProduct || !localSurvey) {
     return <LoadingSpinner />;
   }
@@ -50,6 +51,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
       <SurveyMenuBar
         setLocalSurvey={setLocalSurvey}
         localSurvey={localSurvey}
+        survey={survey}
         environmentId={environmentId}
         activeId={activeView}
         setActiveId={setActiveView}

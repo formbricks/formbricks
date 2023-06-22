@@ -1,5 +1,6 @@
 "use client";
 
+import AlertDialog from "@/components/shared/AlertDialog";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useProduct } from "@/lib/products/products";
@@ -11,9 +12,11 @@ import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicon
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { isEqual } from 'lodash';
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
+  survey: Survey;
   setLocalSurvey: (survey: Survey) => void;
   environmentId: string;
   activeId: "questions" | "settings";
@@ -22,6 +25,7 @@ interface SurveyMenuBarProps {
 
 export default function SurveyMenuBar({
   localSurvey,
+  survey,
   environmentId,
   setLocalSurvey,
   activeId,
@@ -31,6 +35,7 @@ export default function SurveyMenuBar({
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const { product } = useProduct(environmentId);
 
   useEffect(() => {
@@ -38,6 +43,21 @@ export default function SurveyMenuBar({
       setAudiencePrompt(false);
     }
   }, [activeId, audiencePrompt]);
+
+  useEffect(() => {
+    const warningText = "You have unsaved changes - are you sure you wish to leave this page?";
+    const handleWindowClose = (e: BeforeUnloadEvent) => {      
+      if(!isEqual(localSurvey, survey)){
+        e.preventDefault();
+        return e.returnValue = warningText
+      }
+    };
+
+    window.addEventListener("beforeunload", handleWindowClose);
+    return () => {
+      window.removeEventListener("beforeunload", handleWindowClose);
+    };
+  }, [localSurvey, survey]);
 
   // write a function which updates the local survey status
   const updateLocalSurveyStatus = (status: Survey["status"]) => {
@@ -58,6 +78,8 @@ export default function SurveyMenuBar({
   const handleBack = () => {
     if (localSurvey.createdAt === localSurvey.updatedAt && localSurvey.status === "draft") {
       setDeleteDialogOpen(true);
+    } else if (!isEqual(localSurvey, survey)) {
+      setConfirmDialogOpen(true);
     } else {
       router.back();
     }
@@ -162,6 +184,18 @@ export default function SurveyMenuBar({
         setOpen={setDeleteDialogOpen}
         onDelete={() => deleteSurveyAction(localSurvey)}
         text="Do you want to delete this draft?"
+        useSaveInsteadOfCancel={true}
+        onSave={() => saveSurveyAction(true)}
+      />
+      <AlertDialog
+        confirmWhat="Survey changes"
+        open={isConfirmDialogOpen}
+        setOpen={setConfirmDialogOpen}
+        onDiscard={() => {
+          setConfirmDialogOpen(false);
+          router.back();
+        }}
+        text="You have unsaved changes in your survey. Would you like to save them before leaving?"
         useSaveInsteadOfCancel={true}
         onSave={() => saveSurveyAction(true)}
       />

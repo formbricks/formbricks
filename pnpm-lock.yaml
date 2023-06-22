@@ -220,9 +220,6 @@ importers:
       '@paralleldrive/cuid2':
         specifier: ^2.2.0
         version: 2.2.0
-      '@radix-ui/react-alert-dialog':
-        specifier: ^1.0.3
-        version: 1.0.3(@types/react@18.2.7)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-collapsible':
         specifier: ^1.0.2
         version: 1.0.2(react-dom@18.2.0)(react@18.2.0)
@@ -259,6 +256,9 @@ importers:
       jsonwebtoken:
         specifier: ^9.0.0
         version: 9.0.0
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       lucide-react:
         specifier: ^0.221.0
         version: 0.221.0(react@18.2.0)
@@ -341,6 +341,9 @@ importers:
       '@types/bcryptjs':
         specifier: ^2.4.2
         version: 2.4.2
+      '@types/lodash':
+        specifier: ^4.14.195
+        version: 4.14.195
       '@types/markdown-it':
         specifier: ^12.2.3
         version: 12.2.3
@@ -496,7 +499,7 @@ importers:
         version: 8.8.0(eslint@8.41.0)
       eslint-config-turbo:
         specifier: latest
-        version: 1.8.8(eslint@8.41.0)
+        version: 1.10.3(eslint@8.41.0)
       eslint-plugin-react:
         specifier: 7.32.2
         version: 7.32.2(eslint@8.41.0)
@@ -4438,25 +4441,6 @@ packages:
       '@babel/runtime': 7.21.0
     dev: false
 
-  /@radix-ui/react-alert-dialog@1.0.3(@types/react@18.2.7)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-QXFy7+bhGi0u+paF2QbJeSCHZs4gLMJIPm6sajUamyW0fro6g1CaSGc5zmc4QmK2NlSGUrq8m+UsUqJYtzvXow==}
-    peerDependencies:
-      react: ^16.8 || ^17.0 || ^18.0
-      react-dom: ^16.8 || ^17.0 || ^18.0
-    dependencies:
-      '@babel/runtime': 7.21.0
-      '@radix-ui/primitive': 1.0.0
-      '@radix-ui/react-compose-refs': 1.0.0(react@18.2.0)
-      '@radix-ui/react-context': 1.0.0(react@18.2.0)
-      '@radix-ui/react-dialog': 1.0.3(@types/react@18.2.7)(react-dom@18.2.0)(react@18.2.0)
-      '@radix-ui/react-primitive': 1.0.2(react-dom@18.2.0)(react@18.2.0)
-      '@radix-ui/react-slot': 1.0.1(react@18.2.0)
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-    transitivePeerDependencies:
-      - '@types/react'
-    dev: false
-
   /@radix-ui/react-arrow@1.0.2(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-fqYwhhI9IarZ0ll2cUSfKuXHlJK0qE4AfnRrPBbRwEH/4mGQn04/QFGomLi8TXWIdv9WJk//KgGm+aDxVIr1wA==}
     peerDependencies:
@@ -4620,33 +4604,6 @@ packages:
       '@babel/runtime': 7.21.0
       '@types/react': 18.2.7
       react: 18.2.0
-    dev: false
-
-  /@radix-ui/react-dialog@1.0.3(@types/react@18.2.7)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-owNhq36kNPqC2/a+zJRioPg6HHnTn5B/sh/NjTY8r4W9g1L5VJlrzZIVcBr7R9Mg8iLjVmh6MGgMlfoVf/WO/A==}
-    peerDependencies:
-      react: ^16.8 || ^17.0 || ^18.0
-      react-dom: ^16.8 || ^17.0 || ^18.0
-    dependencies:
-      '@babel/runtime': 7.21.0
-      '@radix-ui/primitive': 1.0.0
-      '@radix-ui/react-compose-refs': 1.0.0(react@18.2.0)
-      '@radix-ui/react-context': 1.0.0(react@18.2.0)
-      '@radix-ui/react-dismissable-layer': 1.0.3(react-dom@18.2.0)(react@18.2.0)
-      '@radix-ui/react-focus-guards': 1.0.0(react@18.2.0)
-      '@radix-ui/react-focus-scope': 1.0.2(react-dom@18.2.0)(react@18.2.0)
-      '@radix-ui/react-id': 1.0.0(react@18.2.0)
-      '@radix-ui/react-portal': 1.0.2(react-dom@18.2.0)(react@18.2.0)
-      '@radix-ui/react-presence': 1.0.0(react-dom@18.2.0)(react@18.2.0)
-      '@radix-ui/react-primitive': 1.0.2(react-dom@18.2.0)(react@18.2.0)
-      '@radix-ui/react-slot': 1.0.1(react@18.2.0)
-      '@radix-ui/react-use-controllable-state': 1.0.0(react@18.2.0)
-      aria-hidden: 1.2.3
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-      react-remove-scroll: 2.5.5(@types/react@18.2.7)(react@18.2.0)
-    transitivePeerDependencies:
-      - '@types/react'
     dev: false
 
   /@radix-ui/react-direction@1.0.0(react@18.2.0):
@@ -5948,6 +5905,10 @@ packages:
 
   /@types/linkify-it@3.0.2:
     resolution: {integrity: sha512-HZQYqbiFVWufzCwexrvh694SOim8z2d+xJl5UNamcvQFejLY/2YUtzXHYi3cHdI7PMlS8ejH2slRAOJQ32aNbA==}
+    dev: true
+
+  /@types/lodash@4.14.195:
+    resolution: {integrity: sha512-Hwx9EUgdwf2GLarOjQp5ZH8ZmblzcbTBC2wtQWNKARBSxM9ezRIAUpeDTgoQRAFB0+8CNWXVA9+MaSOzOF3nPg==}
     dev: true
 
   /@types/markdown-it@12.2.3:
@@ -10350,13 +10311,13 @@ packages:
       eslint: 8.41.0
     dev: false
 
-  /eslint-config-turbo@1.8.8(eslint@8.41.0):
-    resolution: {integrity: sha512-+yT22sHOT5iC1sbBXfLIdXfbZuiv9bAyOXsxTxFCWelTeFFnANqmuKB3x274CFvf7WRuZ/vYP/VMjzU9xnFnxA==}
+  /eslint-config-turbo@1.10.3(eslint@8.41.0):
+    resolution: {integrity: sha512-ggzPfTJfMsMS383oZ4zfTP1zQvyMyiigOQJRUnLt1nqII6SKkTzdKZdwmXRDHU24KFwUfEFtT6c8vnm2VhL0uQ==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
       eslint: 8.41.0
-      eslint-plugin-turbo: 1.8.8(eslint@8.41.0)
+      eslint-plugin-turbo: 1.10.3(eslint@8.41.0)
     dev: false
 
   /eslint-import-resolver-node@0.3.6:
@@ -10575,8 +10536,8 @@ packages:
       string.prototype.matchall: 4.0.8
     dev: true
 
-  /eslint-plugin-turbo@1.8.8(eslint@8.41.0):
-    resolution: {integrity: sha512-zqyTIvveOY4YU5jviDWw9GXHd4RiKmfEgwsjBrV/a965w0PpDwJgEUoSMB/C/dU310Sv9mF3DSdEjxjJLaw6rA==}
+  /eslint-plugin-turbo@1.10.3(eslint@8.41.0):
+    resolution: {integrity: sha512-g3Mnnk7el1FqxHfqbE/MayLvCsYjA/vKmAnUj66kV4AlM7p/EZqdt42NMcMSKtDVEm0w+utQkkzWG2Xsa0Pd/g==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
