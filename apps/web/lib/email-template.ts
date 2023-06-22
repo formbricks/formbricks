@@ -215,3 +215,97 @@ export const withEmailTemplate = (content: string) =>
     </body>
   </html>
   `;
+
+
+export const notificationHeader = (productName, startDate, endDate, startYear, endYear) => 
+  `
+  <div style="display: block; padding: 1rem;">
+    <div style="float: left;">
+        <h1>Hey 👋</h1>
+    </div>
+    <div style="float: right;">    
+        <p style="text-align: right; margin: 0; font-weight: bold;">Weekly Report for ${productName}</p>
+        ${getNotificationHeaderimePeriod(startDate, endDate, startYear, endYear)}
+    </div>
+  </div>
+    
+  <br/>
+  <br/>
+  `;
+
+export const getNotificationHeaderimePeriod = (startDate, endDate, startYear, endYear) => {
+  if (startYear == endYear) {
+    return `<p style="text-align: right; margin: 0;">${startDate} - ${endDate} ${endYear}</p>`
+  } else {
+    return `<p style="text-align: right; margin: 0;">${startDate} ${startYear} - ${endDate} ${endYear}</p>`
+  }
+  
+};
+
+export const notificationInsight = (insights) => 
+  `<div style="display: block;">
+    <table style="background-color: #f1f5f9;">
+        <tr>
+          <td>
+            <p>Live surverys</p>
+            <h1>${insights.numLiveSurvey}</h1>
+          </td>
+          <td>
+            <p>Total Displays</p>
+            <h1>${insights.totalDisplays}</h1>
+          </td>
+          <td>
+            <p>Total Responses</p>
+            <h1>${insights.totalResponses}</h1>
+          </td>
+          <td>
+            <p>Completed</p>
+            <h1>${insights.totalCompletedResponses}</h1>
+          </td>
+          <td>
+            <p>Completion %</p>
+            <h1>${insights.completionRate.toFixed(2)}%</h1>
+          </td>
+        </tr>
+      </table>
+  </div>
+`;
+
+export const notificationLiveSurveys = (surverys) => {
+  if (surverys.length == 0) {
+    return `
+
+    `;
+  } else {
+    let liveSurveys = `
+      <div style="display: block;">
+          <p> Live surverys</p>
+        </div>
+    `;
+
+    for (const survey of surverys) {
+      liveSurveys += `
+
+      <div style="display: block;">
+        <h2 style="text-decoration: underline;">${survey.surveyName}</h2>
+        ${createSurveyFields(survey.responses)}
+        <a class="button" href="/" style="background: black;">View all Responses</a><br/>
+      </div>
+
+      <br/><br/>
+      `;
+    }
+    return liveSurveys;
+  }
+};
+
+const createSurveyFields = (surveryResponse) => {
+  let surveyFields = "";
+  for (const response of surveryResponse) {
+    surveyFields += `
+      <p>${response.title}</p>
+      <p style="font-weight: bold;">${response.answer}</p>
+    `;
+  }
+  return surveyFields;
+};

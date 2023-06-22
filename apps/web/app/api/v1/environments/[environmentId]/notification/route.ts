@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/api/apiHelper";
 import { hasApiEnvironmentAccess, hasUserEnvironmentAccess } from "@/lib/api/apiHelper"; 
+import { sendNotificationEmail } from "@/lib/email";
 
 export async function GET(_: Request, { params }: { params: { environmentId: string } }) {
 
@@ -32,6 +33,14 @@ export async function GET(_: Request, { params }: { params: { environmentId: str
     }
 
     console.log("Start");
+
+    const productName = await getProductName(environmentId);
+    if(productName == null) {
+        return new Response("No product found for the given environmentId", {
+                    status: 404,
+                });
+    }
+
     const currentDate = new Date();
     const lastWeekDate = new Date();
     lastWeekDate.setDate(currentDate.getDate() - 7);
@@ -50,23 +59,24 @@ export async function GET(_: Request, { params }: { params: { environmentId: str
         }
     });
 
-    const rawNotificationData = await getNotificationData(surveys);
+    const rawNotificationData = await getNotificationData(surveys, currentDate, lastWeekDate);
     const insights = await getSurveyInsights(rawNotificationData);
-    const latestResponse = await getLatestSuveryResponses(rawNotificationData);
+    const surveyData = await getLatestSuveryResponses(rawNotificationData);
     console.log("End");
-    await sendEmailNotification(email, rawNotificationData);
-    return NextResponse.json({
-        surveyData: latestResponse,
+    const notificationResponse = {
+        currentDate: currentDate,
+        lastWeekDate: lastWeekDate,
+        productName: productName,
+        surveyData: surveyData,
         insights: insights,
-    });
+    };
+    await sendEmailNotification(email, notificationResponse);
+    return NextResponse.json(notificationResponse);
 }
 
-const getNotificationData = async (surveys: any) => {
+const getNotificationData = async (surveys: any, currentDate: Date, lastWeekDate: Date) => {
 
     const surveyNotificationData: SurveyNotificationData[] = [];
-    const currentDate = new Date();
-    const lastWeekDate = new Date();
-    lastWeekDate.setDate(currentDate.getDate() - 7);
 
     for await (const survey of surveys) {
         const surveyId = survey.id;
@@ -215,9 +225,8 @@ const getEmailForNotification = async (headersList) => {
     }
 };
 
-const sendEmailNotification = async (email, responseData) => {
-    email;
-    responseData;
+const sendEmailNotification = async (email, notificationResponse) => {
+    await sendNotificationEmail(email, notificationResponse);
 };
 
 const hasEnvironmentAccess = async (headersList, environmentId) => {
@@ -238,3 +247,55 @@ const hasEnvironmentAccess = async (headersList, environmentId) => {
     }
     return true;
   };
+
+const getProductName = async (environmentId) => {
+    const environment = await prisma.environment.findUnique({
+        where: {
+          id: environmentId,
+        },
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              teamId: true,
+              brandColor: true,
+              environments: true,
+            },
+          },
+        },
+      });
+  
+      if (environment === null) {
+        return null;
+      }
+  
+      const products = await prisma.product.findMany({
+        where: {
+          teamId: environment.product.teamId,
+        },
+        select: {
+          id: true,
+          name: true,
+          brandColor: true,
+          environments: {
+            where: {
+              type: "production",
+            },
+            select: {
+              id: true,
+            },
+          },
+        },
+      });
+      
+      let productName = null;
+      for await (const product of products) {
+          if (product.id == environment.productId) {
+            productName = product.name;
+            break;
+          }
+      }
+
+      return productName;
+};

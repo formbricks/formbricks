@@ -3,7 +3,7 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Question } from "@formbricks/types/questions";
 import { Response } from "@formbricks/types/responses";
 import { AttributeClass } from "@prisma/client";
-import { withEmailTemplate } from "./email-template";
+import { withEmailTemplate, notificationHeader, notificationInsight, notificationLiveSurveys } from "./email-template";
 import { createInviteToken, createToken } from "./jwt";
 
 const nodemailer = require("nodemailer");
@@ -156,4 +156,24 @@ export const sendResponseFinishedEmail = async (
     }/responses">View response</a>
     `),
   });
+};
+
+
+export const sendNotificationEmail = async (email, notificationData) => {
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  console.log("Start Send Email");
+  const startDate = `${notificationData.lastWeekDate.getDate()} ${monthNames[notificationData.lastWeekDate.getMonth()]}`;
+  const endDate = `${notificationData.currentDate.getDate()} ${monthNames[notificationData.currentDate.getMonth()]}`;
+  const startYear = notificationData.lastWeekDate.getFullYear();
+  const endYear = notificationData.currentDate.getFullYear();
+  await sendEmail({
+    to: email,
+    subject: `${notificationData.productName} User Insights - Last Week by Formbricks`,
+    html: withEmailTemplate(`
+      ${notificationHeader(notificationData.productName, startDate, endDate, startYear, endYear)}
+      ${notificationInsight(notificationData.insights)}
+      ${notificationLiveSurveys(notificationData.surveyData)}
+    `),
+  });
+  console.log("End Send Email");
 };
