@@ -92,7 +92,7 @@ top:0; width:100%; height:100%; border:0;">
               Copy URL
             </Button>
             <Button
-              variant="primary"
+              variant="darkCTA"
               title="Preview survey"
               aria-label="Preview survey"
               href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}
