@@ -1,8 +1,7 @@
-import Layout from "@/components/shared/Layout";
 import HeroTitle from "@/components/shared/HeroTitle";
-import Link from "next/link";
+import Layout from "@/components/shared/Layout";
 
-const Roles = [
+/* const Roles = [
   {
     name: "Full-Stack Engineer",
     description: "Join early and be a part of our journey from start to IPO 🚀",
@@ -15,7 +14,7 @@ const Roles = [
     location: "Worldwide",
     workplace: "Remote",
   },
-];
+]; */
 
 export default function CareersPage() {
   return (
