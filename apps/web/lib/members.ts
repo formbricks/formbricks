@@ -16,11 +16,40 @@ export const useMembers = (environmentId: string) => {
   };
 };
 
+export const updateMemberRole = async (teamId: string, userId: string, role: string) => {
+  try {
+    const result = await fetch(`/api/v1/teams/${teamId}/members/${userId}/`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
+    });
+    return result.status === 200;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
+
 export const removeMember = async (teamId: string, userId: string) => {
   try {
     const result = await fetch(`/api/v1/teams/${teamId}/members/${userId}/`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
+    });
+    return result.status === 200;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
+
+// update invitee's role
+export const updateInviteeRole = async (teamId: string, inviteId: string, role: string) => {
+  try {
+    const result = await fetch(`/api/v1/teams/${teamId}/invite/${inviteId}/`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role }),
     });
     return result.status === 200;
   } catch (error) {

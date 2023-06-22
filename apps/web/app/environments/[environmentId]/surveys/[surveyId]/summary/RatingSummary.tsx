@@ -3,7 +3,7 @@ import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import { RatingResponse } from "../RatingResponse";
-import { RatingQuestion } from "@formbricks/types/questions";
+import { QuestionType, RatingQuestion } from "@formbricks/types/questions";
 
 interface RatingSummaryProps {
   questionSummary: QuestionSummary<RatingQuestion>;
@@ -17,7 +17,7 @@ interface ChoiceResult {
 
 export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
   const results: ChoiceResult[] = useMemo(() => {
-    if (questionSummary.question.type !== "rating") return [];
+    if (questionSummary.question.type !== QuestionType.Rating) return [];
     // build a dictionary of choices
     const resultsDict: { [key: string]: ChoiceResult } = {};
     for (let i = 1; i <= questionSummary.question.range; i++) {

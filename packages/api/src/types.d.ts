@@ -23,5 +23,5 @@ export interface ApiErrorResponse {
   message: string;
   details: {
     [key: string]: string | string[] | number | number[] | boolean | boolean[];
-  }
+  };
 }
