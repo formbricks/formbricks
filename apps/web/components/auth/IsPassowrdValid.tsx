@@ -29,8 +29,13 @@ export default function IsPasswordValid({password,submitted,setIsValid}:
     checkPasswordLength()
     checkMixOfUpperAndLower()
     checkContainsAtLeastOneNumber()
-    setIsValid(validations.every((validation) => validation.state === true))
+    
   }, [password]);
+
+  useEffect(() => {
+    setIsValid(validations.every((validation) => validation.state === true))
+  }, [validations])
+  
 
   const resetValidations = (state) => {
     setValidations((prevValidations) =>

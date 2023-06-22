@@ -81,6 +81,7 @@ export const SignupForm = () => {
           </div>
         </div>
       )}
+      {console.log(isValid)}
       <div className="text-center">
         <h1 className="mb-4 text-slate-700">Create your Formbricks account</h1>
         <div className="space-y-2">
@@ -164,7 +165,7 @@ export const SignupForm = () => {
               variant="darkCTA"
               className="w-full justify-center"
               loading={signingUp}
-              disabled={!isButtonEnabled}>
+              disabled={!isButtonEnabled || !isValid}>
               Continue with Email
             </Button>
           </form>
