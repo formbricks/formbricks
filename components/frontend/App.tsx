@@ -67,7 +67,7 @@ const App: FC<IProps> = ({
   }
   
   return (
-    <div className='w-full h-screen bg-slate-200 pb-6'>
+    <div className='w-full min-h-screen bg-slate-200 pb-6'>
       <SnoopForm
         key={id} // used to reset form
         domain={window.location.host}
