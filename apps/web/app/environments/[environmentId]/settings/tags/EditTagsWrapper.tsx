@@ -78,11 +78,11 @@ const SingleTag: React.FC<{
 
       <div className="col-span-1 my-auto whitespace-nowrap text-center text-sm text-slate-500">
         <div className="text-slate-900">
-          {tagCountLoading ? <LoadingSpinner /> : <p>{tagCount} tags</p>}
+          {tagCountLoading ? <LoadingSpinner /> : <p>{tagCount}</p>}
         </div>
       </div>
 
-      <div className="col-span-2 flex items-center justify-center my-auto whitespace-nowrap text-center text-sm text-slate-500">
+      <div className="col-span-2 flex items-center gap-4 justify-end my-auto whitespace-nowrap text-center text-sm text-slate-500">
         <div>
           {
             isMergingTags ?
@@ -115,7 +115,7 @@ const SingleTag: React.FC<{
         </div>
 
         <div>
-          <Button variant="secondary" size="sm" loading={isDeletingTag} className="focus:shadow-transparent focus:outline-transparent focus:border-transparent focus:ring-0 focus:ring-transparent font-medium text-slate-900"
+          <Button variant="alert" size="sm" loading={isDeletingTag} className="text-slate-50 focus:shadow-transparent focus:outline-transparent focus:border-transparent focus:ring-0 focus:ring-transparent font-medium"
             onClick={() => {
               deleteTag(
                 null,
@@ -166,7 +166,7 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
           <div className="grid h-12 grid-cols-5 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
             <div className="col-span-2 pl-6">Name</div>
             <div className="text-center col-span-1">Count</div>
-            <div className="text-center col-span-2">Actions</div>
+            <div className="text-center col-span-2 flex justify-end mr-4">Actions</div>
           </div>
           : null
         }

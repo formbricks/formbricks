@@ -7,7 +7,6 @@ import { Search } from "lucide-react";
 
 import { cn } from "@formbricks/lib/cn";
 import { Dialog, DialogContent } from "./Dialog";
-import { Input } from "./Input";
 
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,

@@ -40,7 +40,6 @@ export function Tag({
       className="relative flex items-center gap-2 justify-between rounded-full border text-slate-100 bg-slate-800 px-2 py-1"
     >
       <div className="flex items-center gap-2">
-        <PlusCircle size={12} />
         <span className="text-sm">
           {tagName}
         </span>
@@ -115,8 +114,8 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
             setSearchValue={setSearchValue}
             setValue={setValue}
             value={value}
-            tags={productTags?.map((tag) => ({ value: tag.name, label: tag.name }))}
-            currentTags={tags.map((tag) => ({ value: tag.tagName, label: tag.tagName }))}
+            tags={productTags?.map((tag) => ({ value: tag.id, label: tag.name }))}
+            currentTags={tags.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
             createTag={(tagName) => {
               createTag(
                 {
@@ -161,18 +160,18 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                 }
               );
             }}
-            addTag={(tagName) => {
+            addTag={(tagId) => {
               setTagsState((prevTags) => [
                 ...prevTags,
                 {
-                  tagId: productTags.find((tag) => tag.name === tagName)?.id ?? "",
-                  tagName,
+                  tagId,
+                  tagName: productTags.find((tag) => tag.id === tagId)?.name ?? "",
                 }
               ])
 
               addTagToRespone(
                 {
-                  tagIdToAdd: productTags.find((tag) => tag.name === tagName)?.id ?? "",
+                  tagIdToAdd: tagId,
                 },
                 {
                   onSuccess: () => {

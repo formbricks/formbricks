@@ -32,7 +32,7 @@ const MergeTagsCombobox: React.FC<IMergeTagsComboboxProps> = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="minimal"
+          variant="secondary"
           size="sm"
           className="focus:shadow-transparent focus:outline-transparent focus:border-transparent focus:ring-0 focus:ring-transparent font-medium text-slate-900"
         >
