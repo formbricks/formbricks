@@ -9,7 +9,6 @@ import { DRCProvinces } from "../../lib/enums";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { Address } from "@prisma/client";
 import Loading from "../../components/Loading";
-import { SnoopElement, SnoopForm, SnoopPage } from "../../kda-snoopforms-react/src";
 
 export default function UpdateProfile() {
   const router = useRouter();
@@ -73,23 +72,26 @@ export default function UpdateProfile() {
     let photo;
     file ? (photo = (await upload(file)).Location) : "";
 
-    try {
-      let userUpdateData = user;
-        userUpdateData.dob = new Date(userUpdateData.dob);
-        delete userUpdateData.address;
-        const res = await updateUser(userUpdateData, address);
+    if (e.target.elements.province.value != "Votre province"){
+      try {
+        let userUpdateData = user;
+          userUpdateData.dob = new Date(userUpdateData.dob);
+          delete userUpdateData.address;
+          const res = await updateUser(userUpdateData, address);
 
-        if (res.status != 200) {
-          toast.error("Erreur, veuillez ressayer");
-        } else {
-          session.data.user = userUpdateData
-          session.data.user.address = address
-          toast.success("Votre profil a bien été mis à jour");
-          router.push(`/`);
-        }
-    } catch (e) {
-      toast(e.message);
+          if (res.status != 200) {
+            toast.error("Erreur, veuillez ressayer");
+          } else {
+            session.data.user = userUpdateData
+            session.data.user.address = address
+            toast.success("Votre profil a bien été mis à jour");
+            router.push(`/`);
+          }
+      } catch (e) {
+        toast(e.message);
+      }
     }
+    else toast.warning("Indiquez votre province")
   };
 
   if (!user) return <Loading />;
