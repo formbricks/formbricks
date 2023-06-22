@@ -30,7 +30,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   if (!hasAccess) {
     return res.status(403).json({ message: "You are not authorized to access this environment! " });
   }
-  
+
   // POST /api/environments/[environmentId]/product/[productId]/tags/merge
 
   // Merge tags together
@@ -56,7 +56,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: originalTagId
       }
     })
-    
+
     if (!originalTag) {
       return res.status(404).json({ message: "Tag not found" });
     }
@@ -68,30 +68,94 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: newTagId
       }
     })
-    
+
     if (!newTag) {
       return res.status(404).json({ message: "Tag not found" });
     }
 
+    // finds all the responses that have both the tags
+
+    let responsesWithBothTags = await prisma.response.findMany({
+      where: {
+        AND: [
+          {
+            tags: {
+              some: {
+                tagId: {
+                  in: [originalTagId]
+                }
+              }
+            }
+          },
+          {
+            tags: {
+              some: {
+                tagId: {
+                  in: [newTagId]
+                }
+              }
+            }
+          }
+        ]
+      }
+    })
+
+    if (!!responsesWithBothTags?.length) {
+      try {
+        responsesWithBothTags.map(async (response) => {
+
+          await prisma.$transaction([
+            prisma.tagsOnResponses.deleteMany({
+              where: {
+                responseId: response.id,
+                tagId: {
+                  in: [originalTagId, newTagId]
+                }
+              }
+            }),
+  
+            prisma.tagsOnResponses.create({
+              data: {
+                responseId: response.id,
+                tagId: newTagId
+              }
+            })
+          ])
+        })
+
+        await prisma.tag.delete({
+          where: {
+            id: originalTagId
+          }
+        })
+
+        return res.json({
+          success: true,
+          message: "Tag merged successfully"
+        })
+      } catch (err) {
+        return res.status(500).json({ message: "Internal Server Error" });
+      }
+    }
+
     try {
-     await prisma.$transaction([
-       prisma.tagsOnResponses.updateMany({
-        where: {
-          tagId: originalTagId
-        }, 
-        data: {
-          tagId: newTagId
-        }
-      }),
-      
-      prisma.tag.delete({
-        where: {
-          id: originalTagId
-        }
-      })
-     ])
+      await prisma.$transaction([
+        prisma.tagsOnResponses.updateMany({
+          where: {
+            tagId: originalTagId
+          },
+          data: {
+            tagId: newTagId
+          }
+        }),
+
+        prisma.tag.delete({
+          where: {
+            id: originalTagId
+          }
+        })
+      ])
     } catch (e) {
-      console.log({error: e})
       return res.status(500).json({ message: "Internal Server Error" });
     }
 

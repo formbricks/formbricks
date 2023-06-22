@@ -149,6 +149,8 @@ export default function SingleResponse({ data, environmentId, surveyId, productI
           productId={productId}
           responseId={data.id}
           tags={data.tags.map(tag => ({tagId: tag.tag.id, tagName: tag.tag.name}))}
+          // re-render the component when the tags change using the key prop
+          key={data.tags.map(tag => tag.tag.id).join("-")}
         />
 
         <DeleteDialog

@@ -2,11 +2,12 @@ import { useResponses } from "@/lib/responses/responses";
 import { removeTagFromResponse, useAddTagToResponse } from "@/lib/tags/mutateTags";
 import { useCreateTag } from "@/lib/tags/mutateTags";
 import { useTagsForProduct } from "@/lib/tags/tags";
-import {  PlusCircle } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import React from "react";
 import { useState } from "react";
-import {  XCircleIcon } from "@heroicons/react/24/solid";
+import { XCircleIcon } from "@heroicons/react/24/solid";
 import TagsCombobox from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/TagsCombobox";
+import { toast } from "react-hot-toast";
 
 interface IResponseTagsWrapperProps {
   tags: {
@@ -36,25 +37,25 @@ export function Tag({
   return (
     <div
       key={tagId}
-      className="relative flex items-center gap-2 justify-between rounded-full border text-slate-100 bg-slate-900 px-2 py-1"
-      >
-        <div className="flex items-center gap-2">
-          <PlusCircle size={12} />
-          <span className="text-sm">
-            {tagName}
-          </span> 
-        </div>
-       
-        <span
-          className="cursor-pointer text-sm"
-          onClick={() => {
-            setTagsState(tags.filter((tag) => tag.tagId !== tagId));
-
-            onDelete(tagId);
-          }}>
-          <XCircleIcon fontSize={24} className="h-4 w-4 text-slate-100 hover:text-slate-200" />
+      className="relative flex items-center gap-2 justify-between rounded-full border text-slate-100 bg-slate-800 px-2 py-1"
+    >
+      <div className="flex items-center gap-2">
+        <PlusCircle size={12} />
+        <span className="text-sm">
+          {tagName}
         </span>
-        
+      </div>
+
+      <span
+        className="cursor-pointer text-sm"
+        onClick={() => {
+          setTagsState(tags.filter((tag) => tag.tagId !== tagId));
+
+          onDelete(tagId);
+        }}>
+        <XCircleIcon fontSize={24} className="h-4 w-4 text-slate-100 hover:text-slate-200" />
+      </span>
+
     </div>
   );
 }
@@ -77,7 +78,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
 
   const { data: productTags, mutate: refetchProductTags } = useTagsForProduct(environmentId, productId);
 
-  const { trigger: addTagToResponse } = useAddTagToResponse(
+  const { addTagToRespone } = useAddTagToResponse(
     environmentId,
     surveyId,
     responseId
@@ -94,14 +95,16 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-3 p-6">
-      <div className="flex items-center gap-2">
-        {tagsState.map((tag) => (
-          <Tag key={tag.tagId} onDelete={onDelete} tagId={tag.tagId} tagName={tag.tagName}
-          tags={tagsState} setTagsState={setTagsState}
-          />
-        ))}
-      </div>
+    <div className="flex items-start gap-3 p-6">
+      {
+        tagsState?.length > 0 ? <div className="flex max-w-[60%] flex-wrap items-center gap-2">
+          {tagsState.map((tag) => (
+            <Tag key={tag.tagId} onDelete={onDelete} tagId={tag.tagId} tagName={tag.tagName}
+              tags={tagsState} setTagsState={setTagsState}
+            />
+          ))}
+        </div> : null
+      }
 
       <div className="flex items-center gap-2">
         {!!productTags ? (
@@ -125,12 +128,11 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                       ...prevTags,
                       {
                         tagId: data.id,
-                        tagName: data.name,
+                        tagName: data.name
                       }
                     ])
-
                     setValue(data.name);
-                    addTagToResponse(
+                    addTagToRespone(
                       {
                         tagIdToAdd: data.id,
                       },
@@ -146,23 +148,34 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                       }
                     );
                   },
+                  onError:(err) => {
+                    toast.error(err?.message ?? "Something went wrong")
+
+                    setValue("");
+                    setSearchValue("");
+                    setOpen(false);
+                    mutateResponses();
+
+                    refetchProductTags();
+                  }
                 }
               );
             }}
             addTag={(tagName) => {
-              addTagToResponse(
+              setTagsState((prevTags) => [
+                ...prevTags,
+                {
+                  tagId: productTags.find((tag) => tag.name === tagName)?.id ?? "",
+                  tagName,
+                }
+              ])
+
+              addTagToRespone(
                 {
                   tagIdToAdd: productTags.find((tag) => tag.name === tagName)?.id ?? "",
                 },
                 {
                   onSuccess: () => {
-                    setTagsState((prevTags) => [
-                      ...prevTags,
-                      {
-                        tagId: productTags.find((tag) => tag.name === tagName)?.id ?? "",
-                        tagName,
-                      }
-                    ])
                     setValue("");
                     setSearchValue("");
                     setOpen(false);

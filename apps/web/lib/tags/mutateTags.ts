@@ -5,13 +5,20 @@ export const useCreateTag = (environmentId: string, productId: string) => {
   const { trigger: createTag, isMutating: isCreatingTag } = useSWRMutation(
     `/api/v1/environments/${environmentId}/product/${productId}/tags`,
     async (url, { arg }: { arg: { name: string } }): Promise<TTag> => {
-      return fetch(url, {
+      const response = await  fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ name: arg.name }),
-      }).then((res) => res.json());
+      })
+
+      if(!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message)
+      }
+
+      return response.json();
     }
   );
 
@@ -22,7 +29,7 @@ export const useCreateTag = (environmentId: string, productId: string) => {
 };
 
 export const useAddTagToResponse = (environmentId: string, surveyId: string, responseId: string) => {
-  const response = useSWRMutation(
+  const {trigger: addTagToRespone, isMutating: isLoadingAddTagToResponse} = useSWRMutation(
     `/api/v1/environments/${environmentId}/surveys/${surveyId}/responses/${responseId}/tags`,
 
     async (url, { arg }: { arg: { tagIdToAdd: string } }): Promise<{ success: boolean; message: string }> => {
@@ -36,7 +43,10 @@ export const useAddTagToResponse = (environmentId: string, surveyId: string, res
     }
   );
 
-  return response;
+  return {
+    addTagToRespone,
+    isLoadingAddTagToResponse
+  }
 };
 
 export const removeTagFromResponse = async (
@@ -106,13 +116,20 @@ export const useMergeTags = (environmentId: string, productId: string) => {
   const { trigger: mergeTags, isMutating: isMergingTags } = useSWRMutation(
     `/api/v1/environments/${environmentId}/product/${productId}/tags/merge`,
     async (url, { arg }: { arg: { originalTagId: string; newTagId: string }}): Promise<{status: boolean; message: string}> => {
-      return fetch(url, {
+      const response = await fetch(url, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ originalTagId: arg.originalTagId, newTagId: arg.newTagId }),
-      }).then((res) => res.json());
+      })
+
+      if(!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message)
+      }
+
+      return response.json();
     }
   );
 
