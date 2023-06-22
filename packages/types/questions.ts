@@ -10,6 +10,7 @@ export enum QuestionType {
   NPS = "nps",
   CTA = "cta",
   Rating = "rating",
+  Consent = "consent",
 }
 
 export type Question =

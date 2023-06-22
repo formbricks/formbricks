@@ -21,7 +21,7 @@ export default function ConfirmationPage() {
               improve your user research.
             </p>
           </div>
-          <Button className="w-full justify-center" href="/">
+          <Button variant="darkCTA" className="w-full justify-center" href="/">
             Back to my surveys
           </Button>
         </div>

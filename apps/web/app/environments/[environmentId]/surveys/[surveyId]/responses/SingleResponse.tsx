@@ -2,7 +2,7 @@
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import { timeSince } from "@formbricks/lib/time";
-import { PersonAvatar } from "@formbricks/ui";
+import { PersonAvatar, TooltipContent, TooltipProvider, TooltipTrigger, Tooltip } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -12,6 +12,7 @@ import { RatingResponse } from "../RatingResponse";
 import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
+import { QuestionType } from "@formbricks/types/questions";
 
 export interface OpenTextSummaryProps {
   data: {
@@ -24,6 +25,9 @@ export interface OpenTextSummaryProps {
       updatedAt: string;
       environmentId: string;
       attributes: [];
+    };
+    personAttributes: {
+      [key: string]: string;
     };
     responseNotes: {
       updatedAt: string;
@@ -73,6 +77,18 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
     setIsDeleting(false);
   };
 
+  const tooltipContent = data.personAttributes && Object.keys(data.personAttributes).length > 0 && (
+    <TooltipContent>
+      {Object.keys(data.personAttributes).map((key) => {
+        return (
+          <p>
+            {key}: <span className="font-bold">{data.personAttributes[key]}</span>
+          </p>
+        );
+      })}
+    </TooltipContent>
+  );
+
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
       <div
@@ -86,7 +102,14 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
               <Link
                 className="group flex items-center"
                 href={`/environments/${environmentId}/people/${data.personId}`}>
-                <PersonAvatar personId={data.personId} />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <PersonAvatar personId={data.personId} />
+                    </TooltipTrigger>
+                    {tooltipContent}
+                  </Tooltip>
+                </TooltipProvider>
                 <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                   {displayIdentifier}
                 </h3>
@@ -121,7 +144,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
             <div key={`${response.id}-${idx}`}>
               <p className="text-sm text-slate-500">{response.question}</p>
               {typeof response.answer !== "object" ? (
-                response.type === "rating" ? (
+                response.type === QuestionType.Rating ? (
                   <div className="h-8">
                     <RatingResponse scale={response.scale} answer={response.answer} range={response.range} />
                   </div>
