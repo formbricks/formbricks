@@ -22,6 +22,7 @@ export function AlertSwitch({ surveyId, userId, notificationSettings }: AlertSwi
       onCheckedChange={async () => {
         // update notificiation settings
         const updatedNotificationSettings = { ...notificationSettings };
+        console.log("notificationSettings in alertSwitch", notificationSettings);
         updatedNotificationSettings[surveyId]["responseFinished"] =
           !updatedNotificationSettings[surveyId]["responseFinished"];
         // update db

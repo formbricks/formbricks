@@ -271,7 +271,7 @@ export const notificationInsight = (insights) =>
   </div>
 `;
 
-export const notificationLiveSurveys = (surverys) => {
+export const notificationLiveSurveys = (surverys, environmentId, webUrl) => {
   if (surverys.length == 0) {
     return `
 
@@ -279,7 +279,7 @@ export const notificationLiveSurveys = (surverys) => {
   } else {
     let liveSurveys = `
       <div style="display: block;">
-          <p> Live surverys</p>
+          <p>Review surverys</p>
         </div>
     `;
 
@@ -289,7 +289,7 @@ export const notificationLiveSurveys = (surverys) => {
       <div style="display: block;">
         <h2 style="text-decoration: underline;">${survey.surveyName}</h2>
         ${createSurveyFields(survey.responses)}
-        <a class="button" href="/" style="background: black;">View all Responses</a><br/>
+        <a class="button" href="${webUrl}/environments/${environmentId}/surveys/${survey.id}/responses" style="background: black;">View all Responses</a><br/>
       </div>
 
       <br/><br/>
@@ -308,4 +308,22 @@ const createSurveyFields = (surveryResponse) => {
     `;
   }
   return surveyFields;
+};
+
+export const createReminderNotificationBody = (notificationData, webUrl) => {
+  return `
+    <p>We’d love to send you a Weekly Summary, but you currently there are no surveys running for ${notificationData.productName}.</p>
+
+    <p style="font-weight: bold;">Don’t let a week pass without learning about your users.</p>
+
+    <a class="button" href="${webUrl}/environments/${notificationData.environmentId}/surveys" style="background: black;">Setup a new survey</a>
+    
+    <br/>
+    <p>Need help finding the right survey for your product?</p>
+
+    <p>Pick a 15 minute slot with <a href="https://cal.com/johannes+matti/30">in our CEOs calendar</a> or reply to this email :)</p>
+      
+    <p>All the best</p>
+    <p>The Formbricks Team</p>
+  `;
 };

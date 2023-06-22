@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/api/apiHelper";
 import { hasApiEnvironmentAccess, hasUserEnvironmentAccess } from "@/lib/api/apiHelper"; 
-import { sendNotificationEmail } from "@/lib/email";
+import { sendWeeklySummaryNotificationEmail, sendNoLiveSurveyNotificationEmail } from "@/lib/email";
 
 export async function GET(_: Request, { params }: { params: { environmentId: string } }) {
 
@@ -64,6 +64,7 @@ export async function GET(_: Request, { params }: { params: { environmentId: str
     const surveyData = await getLatestSuveryResponses(rawNotificationData);
     console.log("End");
     const notificationResponse = {
+        environmentId: environmentId,
         currentDate: currentDate,
         lastWeekDate: lastWeekDate,
         productName: productName,
@@ -192,12 +193,13 @@ const getSurveyInsights = async (notificationDatas) => {
 };
 
 const getLatestSuveryResponses = async (notificationDatas) => {
+    const liveSurveyStatus = ["inProgress", "paused", "completed"];
     const surveyResponses: any[] = [];
 
     for await (const notificationData of notificationDatas) {
         const responses: any[] = [];
 
-        if (notificationData.status != "inProgress" || notificationData.latestResponse == null) {
+        if (!liveSurveyStatus.includes(notificationData.status) || notificationData.latestResponse == null) {
             continue;
         } else if (notificationData.questions && notificationData.latestResponse) {
             for await (const question of notificationData.questions) {
@@ -208,6 +210,7 @@ const getLatestSuveryResponses = async (notificationDatas) => {
         }
 
         surveyResponses.push({
+            id: notificationData.id,
             surveyName: notificationData.name,
             responses: responses
         });
@@ -226,7 +229,11 @@ const getEmailForNotification = async (headersList) => {
 };
 
 const sendEmailNotification = async (email, notificationResponse) => {
-    await sendNotificationEmail(email, notificationResponse);
+  if (notificationResponse.surveyData.length > 0) {
+    await sendWeeklySummaryNotificationEmail(email, notificationResponse);
+  } else {
+    await sendNoLiveSurveyNotificationEmail(email, notificationResponse);
+  }
 };
 
 const hasEnvironmentAccess = async (headersList, environmentId) => {

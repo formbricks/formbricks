@@ -3,7 +3,7 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Question } from "@formbricks/types/questions";
 import { Response } from "@formbricks/types/responses";
 import { AttributeClass } from "@prisma/client";
-import { withEmailTemplate, notificationHeader, notificationInsight, notificationLiveSurveys } from "./email-template";
+import { withEmailTemplate, notificationHeader, notificationInsight, notificationLiveSurveys, createReminderNotificationBody } from "./email-template";
 import { createInviteToken, createToken } from "./jwt";
 
 const nodemailer = require("nodemailer");
@@ -159,7 +159,7 @@ export const sendResponseFinishedEmail = async (
 };
 
 
-export const sendNotificationEmail = async (email, notificationData) => {
+export const sendWeeklySummaryNotificationEmail = async (email, notificationData) => {
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   console.log("Start Send Email");
   const startDate = `${notificationData.lastWeekDate.getDate()} ${monthNames[notificationData.lastWeekDate.getMonth()]}`;
@@ -172,8 +172,26 @@ export const sendNotificationEmail = async (email, notificationData) => {
     html: withEmailTemplate(`
       ${notificationHeader(notificationData.productName, startDate, endDate, startYear, endYear)}
       ${notificationInsight(notificationData.insights)}
-      ${notificationLiveSurveys(notificationData.surveyData)}
+      ${notificationLiveSurveys(notificationData.surveyData, notificationData.environmentId, WEBAPP_URL)}
     `),
   });
   console.log("End Send Email");
+};
+
+export const sendNoLiveSurveyNotificationEmail = async (email, notificationData) => {
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  console.log("Start Send reminder Email");
+  const startDate = `${notificationData.lastWeekDate.getDate()} ${monthNames[notificationData.lastWeekDate.getMonth()]}`;
+  const endDate = `${notificationData.currentDate.getDate()} ${monthNames[notificationData.currentDate.getMonth()]}`;
+  const startYear = notificationData.lastWeekDate.getFullYear();
+  const endYear = notificationData.currentDate.getFullYear();
+  await sendEmail({
+    to: email,
+    subject: `NO LIVE SURVEY`,
+    html: withEmailTemplate(`
+      ${notificationHeader(notificationData.productName, startDate, endDate, startYear, endYear)}
+      ${createReminderNotificationBody(notificationData, WEBAPP_URL)}
+    `),
+  });
+  console.log("End Send reminder Email");
 };
