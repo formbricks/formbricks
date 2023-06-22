@@ -12,7 +12,7 @@ import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicon
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import isEqual from 'lodash/isEqual'
+import { isEqual } from 'lodash';
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
