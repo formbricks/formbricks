@@ -6,13 +6,13 @@ import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useProduct } from "@/lib/products/products";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { deleteSurvey } from "@/lib/surveys/surveys";
-import { deepEqual } from "@/lib/utils";
 import type { Survey } from "@formbricks/types/surveys";
 import { Button, Input } from "@formbricks/ui";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import isEqual from 'lodash/isEqual'
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
@@ -46,17 +46,18 @@ export default function SurveyMenuBar({
 
   useEffect(() => {
     const warningText = "You have unsaved changes - are you sure you wish to leave this page?";
-    const handleWindowClose = (e: BeforeUnloadEvent) => {
-      if (!deepEqual(localSurvey, survey)) return;
-      e.preventDefault();
-      return (e.returnValue = warningText);
+    const handleWindowClose = (e: BeforeUnloadEvent) => {      
+      if(!isEqual(localSurvey, survey)){
+        e.preventDefault();
+        return e.returnValue = warningText
+      }
     };
 
     window.addEventListener("beforeunload", handleWindowClose);
     return () => {
       window.removeEventListener("beforeunload", handleWindowClose);
     };
-  }, []);
+  }, [localSurvey, survey]);
 
   // write a function which updates the local survey status
   const updateLocalSurveyStatus = (status: Survey["status"]) => {
@@ -77,7 +78,7 @@ export default function SurveyMenuBar({
   const handleBack = () => {
     if (localSurvey.createdAt === localSurvey.updatedAt && localSurvey.status === "draft") {
       setDeleteDialogOpen(true);
-    } else if (!deepEqual(localSurvey, survey)) {
+    } else if (!isEqual(localSurvey, survey)) {
       setConfirmDialogOpen(true);
     } else {
       router.back();
