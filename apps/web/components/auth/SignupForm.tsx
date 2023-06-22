@@ -57,17 +57,13 @@ export const SignupForm = () => {
     }
   };
 
-  const dismissError =()=>{
-    setError("")
-  }
-
   return (
     <>
       {error && (
         <div className="absolute top-10 rounded-md bg-teal-50 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <XCircleIcon onClick={dismissError} className="h-5 w-5 text-teal-400 cursor-pointer" aria-hidden="true" />
+              <XCircleIcon className="h-5 w-5 text-teal-400 cursor-pointer" aria-hidden="true" />
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-teal-800">An error occurred when logging you in</h3>
@@ -148,7 +144,8 @@ export const SignupForm = () => {
               </div>
             )}
             <Button
-              onClick={() => {
+              onClick={(e:any) => {
+                e.preventDefault()
                 if (!showLogin) {
                   setShowLogin(true);
                   setButtonEnabled(false);
@@ -161,7 +158,7 @@ export const SignupForm = () => {
               variant="darkCTA"
               className="w-full justify-center"
               loading={signingUp}
-              disabled={!isButtonEnabled || !isValid}>
+              disabled={formRef.current ? (!isButtonEnabled || !isValid): !isButtonEnabled}>
               Continue with Email
             </Button>
           </form>
