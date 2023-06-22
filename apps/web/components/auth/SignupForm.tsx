@@ -15,15 +15,13 @@ export const SignupForm = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string>("");
-  const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
   const [signingUp, setSigningUp] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
-  const passRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    if (!isValid) {
+    if(!isValid){
       return
     }
     setSigningUp(true);
@@ -50,7 +48,7 @@ export const SignupForm = () => {
   const [isButtonEnabled, setButtonEnabled] = useState(true);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const [password, setPassword] = useState<string | null>(null)
+  const [password, setPassword] = useState<string|null>(null)
   const [isValid, setIsValid] = useState(false)
 
   const checkFormValidity = () => {
@@ -59,14 +57,6 @@ export const SignupForm = () => {
       setButtonEnabled(formRef.current.checkValidity());
     }
   };
-
-  const togglePasswordDisplay = () => {
-    if (isPasswordVisible) {
-      setIsPasswordVisible(false)
-      return
-    }
-    setIsPasswordVisible(true)
-  }
 
   return (
     <>
@@ -168,7 +158,7 @@ export const SignupForm = () => {
               variant="darkCTA"
               className="w-full justify-center"
               loading={signingUp}
-              disabled={formRef.current ? (!isButtonEnabled || !isValid) : !isButtonEnabled}>
+              disabled={formRef.current ? (!isButtonEnabled || !isValid): !isButtonEnabled}>
               Continue with Email
             </Button>
           </form>
