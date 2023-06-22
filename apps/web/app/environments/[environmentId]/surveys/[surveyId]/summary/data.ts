@@ -1,4 +1,3 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { IS_FORMBRICKS_CLOUD, RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
 import { getSurveyResponses } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";

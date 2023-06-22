@@ -1,4 +1,3 @@
-import type { Question } from "./questions";
 import { TPerson } from "./v1/people";
 
 export interface Response {
@@ -16,7 +15,7 @@ export interface Response {
   };
 }
 
-export interface QuestionSummary<T> { 
+export interface QuestionSummary<T> {
   question: T;
   responses: {
     id: string;
