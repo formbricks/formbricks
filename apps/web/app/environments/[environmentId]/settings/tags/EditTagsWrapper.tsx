@@ -2,7 +2,6 @@
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProduct } from "@/lib/products/products";
 import { useDeleteTag, useMergeTags, useUpdateTag } from "@/lib/tags/mutateTags";
 import { useTagsCountForEnvironment, useTagsForEnvironment } from "@/lib/tags/tags";
 import { Button, Input } from "@formbricks/ui";

@@ -58,7 +58,13 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
         }
         return { ...response, responses: updatedResponse, person: response.person };
       });
-      return updatedResponses;
+
+      const updatedResponsesWithTags = updatedResponses.map((response) => ({
+        ...response,
+        tags: response.tags?.map((tag) => tag.tag),
+      }));
+
+      return updatedResponsesWithTags;
     }
     return [];
   }, [survey, responses]);
