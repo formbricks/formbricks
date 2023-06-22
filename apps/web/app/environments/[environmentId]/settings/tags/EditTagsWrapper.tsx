@@ -7,7 +7,7 @@ import { useDeleteTag, useMergeTags, useUpdateTag } from "@/lib/tags/mutateTags"
 import { useTagsCountForProduct, useTagsForProduct } from "@/lib/tags/tags";
 import { Button, Input } from "@formbricks/ui";
 import React from "react";
-import debounce from "lodash.debounce";
+import debounce from "lodash/debounce";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
 import MergeTagsCombobox from "@/app/environments/[environmentId]/settings/tags/MergeTagsCombobox";
