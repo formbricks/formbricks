@@ -12,9 +12,11 @@ export const ZTag = z.object({
 
 export type TTagsCount = z.infer<typeof ZTagsCount>;
 
-export const ZTagsCount = z.array(z.object({
-  tagId: z.string().cuid2(),
-  _count: z.object({
-    _all: z.number(),
+export const ZTagsCount = z.array(
+  z.object({
+    tagId: z.string().cuid2(),
+    _count: z.object({
+      _all: z.number(),
+    }),
   })
-}))
+);

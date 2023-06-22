@@ -37,8 +37,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         by: ["tagId"],
         _count: {
           _all: true,
-        }
-      })
+        },
+      });
     } catch (e) {
       return res.status(500).json({ message: "Internal Server Error" });
     }

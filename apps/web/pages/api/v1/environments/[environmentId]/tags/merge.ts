@@ -1,4 +1,3 @@
-
 import { hasEnvironmentAccess, getSessionUser } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
 import { TTag } from "@formbricks/types/v1/tags";
@@ -30,10 +29,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Merge tags together
 
   if (req.method === "PATCH") {
-    const {
-      originalTagId,
-      newTagId
-    } = req.body
+    const { originalTagId, newTagId } = req.body;
 
     if (!originalTagId) {
       return res.status(400).json({ message: "Invalid Tag Id" });
@@ -47,9 +43,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     originalTag = await prisma.tag.findUnique({
       where: {
-        id: originalTagId
-      }
-    })
+        id: originalTagId,
+      },
+    });
 
     if (!originalTag) {
       return res.status(404).json({ message: "Tag not found" });
@@ -59,9 +55,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     newTag = await prisma.tag.findUnique({
       where: {
-        id: newTagId
-      }
-    })
+        id: newTagId,
+      },
+    });
 
     if (!newTag) {
       return res.status(404).json({ message: "Tag not found" });
@@ -76,57 +72,56 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             tags: {
               some: {
                 tagId: {
-                  in: [originalTagId]
-                }
-              }
-            }
+                  in: [originalTagId],
+                },
+              },
+            },
           },
           {
             tags: {
               some: {
                 tagId: {
-                  in: [newTagId]
-                }
-              }
-            }
-          }
-        ]
-      }
-    })
+                  in: [newTagId],
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
 
     if (!!responsesWithBothTags?.length) {
       try {
         responsesWithBothTags.map(async (response) => {
-
           await prisma.$transaction([
             prisma.tagsOnResponses.deleteMany({
               where: {
                 responseId: response.id,
                 tagId: {
-                  in: [originalTagId, newTagId]
-                }
-              }
+                  in: [originalTagId, newTagId],
+                },
+              },
             }),
-  
+
             prisma.tagsOnResponses.create({
               data: {
                 responseId: response.id,
-                tagId: newTagId
-              }
-            })
-          ])
-        })
+                tagId: newTagId,
+              },
+            }),
+          ]);
+        });
 
         await prisma.tag.delete({
           where: {
-            id: originalTagId
-          }
-        })
+            id: originalTagId,
+          },
+        });
 
         return res.json({
           success: true,
-          message: "Tag merged successfully"
-        })
+          message: "Tag merged successfully",
+        });
       } catch (err) {
         return res.status(500).json({ message: "Internal Server Error" });
       }
@@ -136,26 +131,26 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       await prisma.$transaction([
         prisma.tagsOnResponses.updateMany({
           where: {
-            tagId: originalTagId
+            tagId: originalTagId,
           },
           data: {
-            tagId: newTagId
-          }
+            tagId: newTagId,
+          },
         }),
 
         prisma.tag.delete({
           where: {
-            id: originalTagId
-          }
-        })
-      ])
+            id: originalTagId,
+          },
+        }),
+      ]);
     } catch (e) {
       return res.status(500).json({ message: "Internal Server Error" });
     }
 
     return res.json({
       success: true,
-      message: "Tag merged successfully"
+      message: "Tag merged successfully",
     });
   }
 

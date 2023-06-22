@@ -41,7 +41,7 @@ export interface OpenTextSummaryProps {
       };
     }[];
     tags: {
-      tag: TTag
+      tag: TTag;
     }[];
     value: string;
     updatedAt: string;
@@ -171,8 +171,8 @@ export default function SingleResponse({ data, environmentId, surveyId, productI
           surveyId={surveyId}
           productId={productId}
           responseId={data.id}
-          tags={data.tags.map(tag => ({tagId: tag.tag.id, tagName: tag.tag.name}))}
-          key={data.tags.map(tag => tag.tag.id).join("-")}
+          tags={data.tags.map((tag) => ({ tagId: tag.tag.id, tagName: tag.tag.name }))}
+          key={data.tags.map((tag) => tag.tag.id).join("-")}
         />
 
         <DeleteDialog

@@ -25,7 +25,7 @@ export function Tag({
   tagName,
   onDelete,
   tags,
-  setTagsState
+  setTagsState,
 }: {
   tagId: string;
   tagName: string;
@@ -36,12 +36,9 @@ export function Tag({
   return (
     <div
       key={tagId}
-      className="relative flex items-center gap-2 justify-between rounded-full border text-slate-100 bg-slate-800 px-2 py-1"
-    >
+      className="relative flex items-center justify-between gap-2 rounded-full border bg-slate-800 px-2 py-1 text-slate-100">
       <div className="flex items-center gap-2">
-        <span className="text-sm">
-          {tagName}
-        </span>
+        <span className="text-sm">{tagName}</span>
       </div>
 
       <span
@@ -53,7 +50,6 @@ export function Tag({
         }}>
         <XCircleIcon fontSize={24} className="h-4 w-4 text-slate-100 hover:text-slate-200" />
       </span>
-
     </div>
   );
 }
@@ -67,7 +63,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
   const [value, setValue] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [open, setOpen] = React.useState(false);
-  const [tagsState, setTagsState] = useState(tags)
+  const [tagsState, setTagsState] = useState(tags);
 
   const { createTag } = useCreateTag(environmentId);
 
@@ -75,11 +71,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
 
   const { data: environmentTags, mutate: refetchEnvironmentTags } = useTagsForEnvironment(environmentId);
 
-  const { addTagToRespone } = useAddTagToResponse(
-    environmentId,
-    surveyId,
-    responseId
-  );
+  const { addTagToRespone } = useAddTagToResponse(environmentId, surveyId, responseId);
 
   const onDelete = async (tagId: string) => {
     try {
@@ -93,15 +85,20 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
 
   return (
     <div className="flex items-start gap-3 p-6">
-      {
-        tagsState?.length > 0 ? <div className="flex max-w-[60%] flex-wrap items-center gap-2">
+      {tagsState?.length > 0 ? (
+        <div className="flex max-w-[60%] flex-wrap items-center gap-2">
           {tagsState.map((tag) => (
-            <Tag key={tag.tagId} onDelete={onDelete} tagId={tag.tagId} tagName={tag.tagName}
-              tags={tagsState} setTagsState={setTagsState}
+            <Tag
+              key={tag.tagId}
+              onDelete={onDelete}
+              tagId={tag.tagId}
+              tagName={tag.tagName}
+              tags={tagsState}
+              setTagsState={setTagsState}
             />
           ))}
-        </div> : null
-      }
+        </div>
+      ) : null}
 
       <div className="flex items-center gap-2">
         {!!environmentTags ? (
@@ -125,9 +122,9 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                       ...prevTags,
                       {
                         tagId: data.id,
-                        tagName: data.name
-                      }
-                    ])
+                        tagName: data.name,
+                      },
+                    ]);
                     setValue(data.name);
                     addTagToRespone(
                       {
@@ -145,8 +142,8 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                       }
                     );
                   },
-                  onError:(err) => {
-                    toast.error(err?.message ?? "Something went wrong")
+                  onError: (err) => {
+                    toast.error(err?.message ?? "Something went wrong");
 
                     setValue("");
                     setSearchValue("");
@@ -154,7 +151,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                     mutateResponses();
 
                     refetchEnvironmentTags();
-                  }
+                  },
                 }
               );
             }}
@@ -164,8 +161,8 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                 {
                   tagId,
                   tagName: environmentTags.find((tag) => tag.id === tagId)?.name ?? "",
-                }
-              ])
+                },
+              ]);
 
               addTagToRespone(
                 {

@@ -21,12 +21,9 @@ type Tag = {
   value: string;
 };
 
-const MergeTagsCombobox: React.FC<IMergeTagsComboboxProps> = ({
-  tags,
-  onSelect
-}) => {
-  const [open, setOpen] = useState(false)
-  const [value, setValue] = useState("")
+const MergeTagsCombobox: React.FC<IMergeTagsComboboxProps> = ({ tags, onSelect }) => {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -34,8 +31,7 @@ const MergeTagsCombobox: React.FC<IMergeTagsComboboxProps> = ({
         <Button
           variant="secondary"
           size="sm"
-          className="focus:shadow-transparent focus:outline-transparent focus:border-transparent focus:ring-0 focus:ring-transparent font-medium text-slate-900"
-        >
+          className="font-medium text-slate-900 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent">
           Merge
         </Button>
       </PopoverTrigger>
@@ -60,8 +56,7 @@ const MergeTagsCombobox: React.FC<IMergeTagsComboboxProps> = ({
                   setValue(currentValue === value ? "" : currentValue);
                   setOpen(false);
                   onSelect(tag.value);
-                }}
-                >
+                }}>
                 {tag.label}
               </CommandItem>
             ))}
