@@ -1,10 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
 import NextCors from "nextjs-cors";
 import { processApiEvent, validateEvents } from "../../../../lib/apiEvents";
-import { formatPages, getFormPages } from "../../../../lib/utils";
+import {
+  computeStepScore,
+  formatPages,
+  formatScoreSummary,
+  getFormPages,
+  setCandidateSubmissionCompletedEvent,
+  syncCandidatesEvents,
+} from "../../../../lib/utils";
 import { prisma } from "../../../../lib/prisma";
-import { computeScore } from "../../../../lib/computeScore";
 
 ///api/submissionsession
 export default async function handle(
@@ -82,6 +87,9 @@ export default async function handle(
     ],
   });
 
+  let flag = 0;
+  const NB_QUERIES = 1;
+
   Promise.all(
     candidates.map(async (candidate) => {
       const submissions = {};
@@ -91,98 +99,61 @@ export default async function handle(
         const candidateEvents = allEvents.filter(({ data }) => {
           return data?.candidateId === candidate.id;
         });
+        let pagesSubmited = [];
+        const formTotalPages = Object.keys(pagesFormated).length - 1;
 
-        const candidateLastEvent = candidateEvents;
-        candidateLastEvent.map((event) => {
+        candidateEvents.map((event) => {
           const pageTitle = pagesFormated[event.data["pageName"]]?.title;
           let goodAnswer = 0;
           const length = event.data["submission"]
             ? Object.keys(event.data["submission"]).length
             : 0;
           const isFinanceStep = pageTitle?.toLowerCase().includes("finance");
+          const isAdminiInfos = pageTitle?.toLowerCase().includes("administratif") || pageTitle?.toLowerCase().includes("administratif");
           let candidateResponse = {};
+        
 
-          if (pageTitle?.toLowerCase().includes("test") || isFinanceStep) {
-            if (event.data["submission"]) {
-              Object.keys(event.data["submission"]).map((key) => {
-                const submission = {};
-                const response = event.data["submission"][key];
-                goodAnswer =
-                  pagesFormated[event.data["pageName"]].blocks[key]?.data
-                    ?.response === response
-                    ? goodAnswer + 1
-                    : goodAnswer;
+          const ispageExistInPagesSubmited = pagesSubmited.findIndex(
+            (title) => title === pageTitle
+          );
+          if (ispageExistInPagesSubmited < 0 && pageTitle)
+            pagesSubmited.push(pageTitle);
 
-                const question =
-                  pagesFormated[event.data["pageName"]].blocks[key]?.data.label;
-                submission[question] = response;
-                candidateResponse[question] = response;
-              });
-              // event.data["submission"]["score"] = goodAnswer / length;
-              if (isFinanceStep) {
-                if (
-                  Object.values(candidateResponse)
-                    [Object.values(candidateResponse).length - 1]?.split(" ")[1]
-                    ?.replace("*", "")
-                    ?.includes("pr")
-                ) {
-                  submissions[pageTitle] = "p";
-                } else {
-                  submissions[pageTitle] = parseInt(
-                    Object.values(candidateResponse)
-                      [Object.values(candidateResponse).length - 1]?.split(
-                        " "
-                      )[1]
-                      ?.replace("*", ""),
-                    10
-                  );
-                }
-              } else {
-                submissions[pageTitle] = (goodAnswer / length) * 100;
-              }
-            }
-          }
+          computeStepScore(pageTitle, isFinanceStep, event, goodAnswer, pagesFormated, candidateResponse, submissions, length, isAdminiInfos);
         });
 
-        Object.values(pagesFormated).map(({ title }) => {
+          console.log({submissions})
+          Object.values(pagesFormated).map(({ title }) => {
           if (
             title &&
             !submissions[title] &&
             title.toLowerCase().includes("test")
           ) {
             submissions[title] = 0;
-          } else if (title && !submissions[title]) {
+          } else if (title && !submissions[title] && (!title?.toLowerCase().includes("administratif") || !title?.toLowerCase().includes("administratif"))) {
             submissions[title] = "";
           }
         });
 
+          await setCandidateSubmissionCompletedEvent(
+          candidate.id,
+          formId,
+          pagesSubmited,
+          formTotalPages,
+          events
+        );
+
 
         const error = validateEvents(events);
-        if (error) {submissions
+        if (error) {
+          submissions;
           const { status, message } = error;
           return res.status(status).json({ error: message });
         }
 
-        for (const event of events) {
-          // event.data =  {...event.data, ...form, submissions}
-          event.data.type = "scoreSummary";
-          event.data = {
-            ...event.data,
-            formId,
-            formName: form.name,
-            submissions,
-          };
-          
-          delete event.data.createdAt;
-          delete event.data.updatedAt;
-          delete event.data.ownerId;
-          delete event.data.formType;
-          delete event.data.answeringOrder;
-          delete event.data.description;
-          delete event.data.dueDate;
-          delete event.data.schema;
-          event.type = "scoreSummary"
-          const candidateEvent = { user: candidate, ...event };
+          formatScoreSummary(events, formId, form, submissions);
+          events[0].type = "scoreSummary";
+          const candidateEvent = { user: candidate, ...events[0] };
 
           updateCandidatesEvents.push({
             candidateEvent,
@@ -190,7 +161,6 @@ export default async function handle(
             candidateId: candidate.id,
             candidateName: `${candidate.firstname} - ${candidate.lastname}`,
           });
-        }
       } else {
         throw new Error(
           `The HTTP ${req.method} method is not supported by this route.`
@@ -198,33 +168,11 @@ export default async function handle(
       }
     })
   ).then(() => {
-    syncCandidatesEvents(updateCandidatesEvents);
+    syncCandidatesEvents(updateCandidatesEvents, flag, NB_QUERIES, processApiEvent);
   });
-
-  let flag = 0;
-  const NB_QUERIES = 1;
-  const syncCandidatesEvents = (updateCandidatesEvents) => {
-    Promise.all(
-      updateCandidatesEvents
-        .slice(flag, flag + NB_QUERIES)
-        .map((updateCandidateEvent) => {
-          return processApiEvent(
-            updateCandidateEvent.candidateEvent,
-            updateCandidateEvent.formId,
-            updateCandidateEvent.candidateId
-          );
-        })
-    ).then(() => {
-      flag += NB_QUERIES;
-      if (flag < updateCandidatesEvents.length) {
-        setTimeout(() => {
-          syncCandidatesEvents(updateCandidatesEvents);
-        }, 1000);
-      }
-    });
-  };
-
-  // await  processApiEvent(candidateEvent, formId, candidate.id);
-
   res.json({ success: true });
 }
+
+
+
+
