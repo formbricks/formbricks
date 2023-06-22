@@ -87,24 +87,24 @@ model Person {
 }
 
 model Response {
-  id            String         @id @default(cuid())
-  createdAt     DateTime       @default(now()) @map(name: "created_at")
-  updatedAt     DateTime       @updatedAt @map(name: "updated_at")
-  finished      Boolean        @default(false)
-  survey        Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId      String
-  person        Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  finished  Boolean  @default(false)
+  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId  String
+  person    Person?  @relation(fields: [personId], references: [id], onDelete: Cascade)
 
   personId      String?
   responseNotes ResponseNote[]
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
-  data          Json           @default("{}")
+  data          Json              @default("{}")
   /// @zod.custom(imports.ZResponseMeta)
   /// [ResponseMeta]
-  meta          Json           @default("{}")
+  meta          Json              @default("{}")
   tags          TagsOnResponses[]
- 
+
   /// @zod.custom(imports.ZResponsePersonAttributes)
   /// [ResponsePersonAttributes]
   personAttributes Json?
@@ -127,10 +127,11 @@ model Tag {
   updatedAt DateTime          @updatedAt @map(name: "updated_at")
   name      String
   responses TagsOnResponses[]
-  product   Product          @relation(fields: [productId], references: [id])
-  productId String
 
-  @@unique([productId, name])
+  environmentId String
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@unique([environmentId, name])
 }
 
 model TagsOnResponses {
@@ -303,6 +304,7 @@ model Environment {
   attributeClasses     AttributeClass[]
   apiKeys              ApiKey[]
   webhooks             Webhook[]
+  tags                 Tag[]
 }
 
 model Product {
@@ -316,7 +318,6 @@ model Product {
   brandColor          String        @default("#64748b")
   recontactDays       Int           @default(7)
   formbricksSignature Boolean       @default(true)
-  tags                Tag[]
 }
 
 enum Plan {
