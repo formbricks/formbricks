@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
 import { GoogleButton } from "@/components/auth/GoogleButton";
-import IsPassowrdValid from "@/components/auth/IsPassowrdValid";
+import IsPasswordValid from "@/components/auth/IsPasswordValid";
 
 export const SignupForm = () => {
   const searchParams = useSearchParams();
@@ -19,8 +19,6 @@ export const SignupForm = () => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-
-    setSubmitted(true)
 
     if(!isValid){
       return
@@ -51,7 +49,6 @@ export const SignupForm = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const [password, setPassword] = useState<string|null>(null)
   const [isValid, setIsValid] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
 
   const checkFormValidity = () => {
     // If all fields are filled, enable the button
@@ -81,7 +78,6 @@ export const SignupForm = () => {
           </div>
         </div>
       )}
-      {console.log(isValid)}
       <div className="text-center">
         <h1 className="mb-4 text-slate-700">Create your Formbricks account</h1>
         <div className="space-y-2">
@@ -148,7 +144,7 @@ export const SignupForm = () => {
                     </Link>
                   </div>
                 )}
-                <IsPassowrdValid password={password} setIsValid={setIsValid} submitted={submitted} />
+                <IsPasswordValid password={password} setIsValid={setIsValid} />
               </div>
             )}
             <Button

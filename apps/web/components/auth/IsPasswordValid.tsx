@@ -2,8 +2,8 @@ import { CheckIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 
-export default function IsPasswordValid({password,submitted,setIsValid}:
-    {password: string | null,submitted:boolean,setIsValid: (isValid: boolean) => void}) {
+export default function IsPasswordValid({password,setIsValid}:
+    {password: string | null,setIsValid: (isValid: boolean) => void}) {
 
     interface Validation {
         label: string;
@@ -19,10 +19,6 @@ export default function IsPasswordValid({password,submitted,setIsValid}:
 
   useEffect(() => {
     if(!password){
-        if(submitted){
-            resetValidations(false)
-            return
-        }
         resetValidations(null)
         return
     }
@@ -93,7 +89,7 @@ export default function IsPasswordValid({password,submitted,setIsValid}:
         {validations.map((validation, index) => (
           <li key={index}>
             <div className="flex items-center">
-              {renderIcon(submitted ? validation.state: (validation.state? validation.state : null))}
+              {renderIcon(validation.state)}
               {validation.label}
             </div>
           </li>
