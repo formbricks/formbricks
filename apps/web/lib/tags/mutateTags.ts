@@ -1,9 +1,9 @@
 import { TTag } from "@formbricks/types/v1/tags";
 import useSWRMutation from "swr/mutation";
 
-export const useCreateTag = (environmentId: string, productId: string) => {
+export const useCreateTag = (environmentId: string) => {
   const { trigger: createTag, isMutating: isCreatingTag } = useSWRMutation(
-    `/api/v1/environments/${environmentId}/product/${productId}/tags`,
+    `/api/v1/environments/${environmentId}/tags`,
     async (url, { arg }: { arg: { name: string } }): Promise<TTag> => {
       const response = await  fetch(url, {
         method: "POST",
@@ -65,9 +65,9 @@ export const removeTagFromResponse = async (
   return response.json();
 };
 
-export const useDeleteTag = (environmentId: string, productId: string, tagId: string) => {
+export const useDeleteTag = (environmentId: string, tagId: string) => {
   const { trigger: deleteTag, isMutating: isDeletingTag } = useSWRMutation(
-    `/api/v1/environments/${environmentId}/product/${productId}/tags/${tagId}`,
+    `/api/v1/environments/${environmentId}/tags/${tagId}`,
     async (url): Promise<TTag> => {
       return fetch(url, {
         method: "DELETE",
@@ -81,10 +81,10 @@ export const useDeleteTag = (environmentId: string, productId: string, tagId: st
   };
 };
 
-export const useUpdateTag = (environmentId: string, productId: string, tagId: string) => {
+export const useUpdateTag = (environmentId: string, tagId: string) => {
   const { trigger: updateTag, isMutating: isUpdatingTag,
     data: updateTagData, error: updateTagError } = useSWRMutation(
-    `/api/v1/environments/${environmentId}/product/${productId}/tags/${tagId}`,
+    `/api/v1/environments/${environmentId}/tags/${tagId}`,
 
     async (url, { arg }: { arg: { name: string } }): Promise<TTag> => {
       const res = await fetch(url, {
@@ -112,9 +112,9 @@ export const useUpdateTag = (environmentId: string, productId: string, tagId: st
   };
 };
 
-export const useMergeTags = (environmentId: string, productId: string) => {
+export const useMergeTags = (environmentId: string) => {
   const { trigger: mergeTags, isMutating: isMergingTags } = useSWRMutation(
-    `/api/v1/environments/${environmentId}/product/${productId}/tags/merge`,
+    `/api/v1/environments/${environmentId}/tags/merge`,
     async (url, { arg }: { arg: { originalTagId: string; newTagId: string }}): Promise<{status: boolean; message: string}> => {
       const response = await fetch(url, {
         method: "PATCH",

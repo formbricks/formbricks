@@ -7,7 +7,7 @@ export const ZTag = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
-  productId: z.string(),
+  environmentId: z.string(),
 });
 
 export type TTagsCount = z.infer<typeof ZTagsCount>;

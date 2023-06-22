@@ -3,18 +3,18 @@ import useSWR from "swr";
 import { TTag, TTagsCount } from "@formbricks/types/v1/tags";
 import { useMemo } from "react";
 
-export const useTagsForProduct = (environmentId: string, productId: string) => {
+export const useTagsForEnvironment = (environmentId: string) => {
   const tagsForProducts = useSWR<TTag[]>(
-    `/api/v1/environments/${environmentId}/product/${productId}/tags`,
+    `/api/v1/environments/${environmentId}/tags`,
     fetcher
   );
 
   return tagsForProducts;
 };
 
-export const useTagsCountForProduct = (environmentId: string, productId: string) => {
+export const useTagsCountForEnvironment = (environmentId: string) => {
   const {data: tagsCount, isLoading: isLoadingTagsCount, mutate: mutateTagsCount} = useSWR<TTagsCount>(
-    `/api/v1/environments/${environmentId}/product/${productId}/tags/count`,
+    `/api/v1/environments/${environmentId}/tags/count`,
     fetcher,
   );
 

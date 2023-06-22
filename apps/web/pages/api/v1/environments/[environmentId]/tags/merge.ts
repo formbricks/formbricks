@@ -6,7 +6,6 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
-  const productId = req.query.productId?.toString();
 
   // Check Authentication
   const currentUser = await getSessionUser(req, res);
@@ -19,11 +18,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(400).json({ message: "Invalid environmentId" });
   }
 
-  // Check productId
-  if (!productId) {
-    return res.status(400).json({ message: "Invalid productId" });
-  }
-
   // Check whether user has access to the environment
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
 
@@ -31,7 +25,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "You are not authorized to access this environment! " });
   }
 
-  // POST /api/environments/[environmentId]/product/[productId]/tags/merge
+  // POST /api/environments/[environmentId]/tags/merge
 
   // Merge tags together
 

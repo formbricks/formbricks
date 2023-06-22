@@ -7,7 +7,6 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
-  const productId = req.query.productId?.toString();
   const tagId = req.query.tagId?.toString();
 
   // Check Authentication
@@ -19,11 +18,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Check environmentId
   if (!environmentId) {
     return res.status(400).json({ message: "Invalid environmentId" });
-  }
-
-  // Check productId
-  if (!productId) {
-    return res.status(400).json({ message: "Invalid productId" });
   }
 
   // Check tagId
@@ -74,7 +68,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.json(tag);
   }
 
-  // DELETE /api/environments/[environmentId]/product/[productId]/tags/[tagId]
+  // DELETE /api/environments/[environmentId]/tags/[tagId]
   // Delete a tag for a product
 
   if (req.method === "DELETE") {
@@ -87,11 +81,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       });
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === "P2002") {
-          return res.status(400).json({ message: "Tag already exists" });
-        }
-      }
       return res.status(500).json({ message: "Internal Server Error" });
     }
 

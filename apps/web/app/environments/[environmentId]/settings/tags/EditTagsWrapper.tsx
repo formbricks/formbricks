@@ -4,7 +4,7 @@ import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { useDeleteTag, useMergeTags, useUpdateTag } from "@/lib/tags/mutateTags";
-import { useTagsCountForProduct, useTagsForProduct } from "@/lib/tags/tags";
+import { useTagsCountForEnvironment, useTagsForEnvironment } from "@/lib/tags/tags";
 import { Button, Input } from "@formbricks/ui";
 import React from "react";
 import debounce from "lodash/debounce";
@@ -21,16 +21,15 @@ const SingleTag: React.FC<{
   tagId: string;
   tagName: string;
   environmentId: string;
-  productId: string;
   tagCount?: number;
   tagCountLoading?: boolean
   updateTagsCount?: () => void
-}> = ({ environmentId, productId, tagId, tagName, tagCount = 0, tagCountLoading = false, updateTagsCount = () => { } }) => {
-  const { mutate: refetchProductTags, data: productTags } = useTagsForProduct(environmentId, productId);
-  const { deleteTag, isDeletingTag } = useDeleteTag(environmentId, productId, tagId);
+}> = ({ environmentId, tagId, tagName, tagCount = 0, tagCountLoading = false, updateTagsCount = () => {} }) => {
+  const { mutate: refetchProductTags, data: productTags } = useTagsForEnvironment(environmentId);
+  const { deleteTag, isDeletingTag } = useDeleteTag(environmentId, tagId);
 
-  const { updateTag, updateTagError } = useUpdateTag(environmentId, productId, tagId);
-  const { mergeTags, isMergingTags } = useMergeTags(environmentId, productId)
+  const { updateTag, updateTagError } = useUpdateTag(environmentId, tagId);
+  const { mergeTags, isMergingTags } = useMergeTags(environmentId);
 
   const debouncedChangeHandler = useMemo(
     () =>
@@ -140,15 +139,13 @@ const SingleTag: React.FC<{
 
 const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
   const { environmentId } = props;
-  const { product } = useProduct(environmentId);
-  const { data: productTags, isLoading: isLoadingProductTags } = useTagsForProduct(
+  const { data: environmentTags, isLoading: isLoadingEnvironmentTags } = useTagsForEnvironment(
     environmentId,
-    product?.id
   );
 
-  const { tagsCount, isLoadingTagsCount, mutateTagsCount } = useTagsCountForProduct(environmentId, product?.id);
+  const { tagsCount, isLoadingTagsCount, mutateTagsCount } = useTagsCountForEnvironment(environmentId);
 
-  if (isLoadingProductTags) {
+  if (isLoadingEnvironmentTags) {
     return (
       <div className="text-center">
         <LoadingSpinner />
@@ -158,11 +155,11 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
 
   return (
     <div className="flex w-full flex-col gap-4">
-      {productTags?.length === 0 ? <EmptySpaceFiller type="response" environmentId={environmentId} /> : null}
+      {environmentTags?.length === 0 ? <EmptySpaceFiller type="response" environmentId={environmentId} /> : null}
 
       <div className="rounded-lg border border-slate-200">
         {
-          !!productTags?.length ?
+          !!environmentTags?.length ?
           <div className="grid h-12 grid-cols-5 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
             <div className="col-span-2 pl-6">Name</div>
             <div className="text-center col-span-1">Count</div>
@@ -171,11 +168,10 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
           : null
         }
 
-        {productTags?.map((tag) => (
+        {environmentTags?.map((tag) => (
           <SingleTag
             key={tag.id}
             environmentId={environmentId}
-            productId={product?.id}
             tagId={tag.id}
             tagName={tag.name}
             tagCount={

@@ -5,7 +5,7 @@ export default function MembersSettingsPage({ params }) {
   return (
     <div>
       <SettingsTitle title="Tags" />
-        <EditTagsWrapper environmentId={params.environmentId} />
+      <EditTagsWrapper environmentId={params.environmentId} />
     </div>
   );
 }

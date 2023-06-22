@@ -1,8 +1,7 @@
 import { useResponses } from "@/lib/responses/responses";
 import { removeTagFromResponse, useAddTagToResponse } from "@/lib/tags/mutateTags";
 import { useCreateTag } from "@/lib/tags/mutateTags";
-import { useTagsForProduct } from "@/lib/tags/tags";
-import { PlusCircle } from "lucide-react";
+import { useTagsForEnvironment } from "@/lib/tags/tags";
 import React from "react";
 import { useState } from "react";
 import { XCircleIcon } from "@heroicons/react/24/solid";
@@ -62,7 +61,6 @@ export function Tag({
 const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
   tags,
   environmentId,
-  productId,
   responseId,
   surveyId,
 }) => {
@@ -71,11 +69,11 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
   const [open, setOpen] = React.useState(false);
   const [tagsState, setTagsState] = useState(tags)
 
-  const { createTag } = useCreateTag(environmentId, productId);
+  const { createTag } = useCreateTag(environmentId);
 
   const { mutateResponses } = useResponses(environmentId, surveyId);
 
-  const { data: productTags, mutate: refetchProductTags } = useTagsForProduct(environmentId, productId);
+  const { data: environmentTags, mutate: refetchEnvironmentTags } = useTagsForEnvironment(environmentId);
 
   const { addTagToRespone } = useAddTagToResponse(
     environmentId,
@@ -106,7 +104,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
       }
 
       <div className="flex items-center gap-2">
-        {!!productTags ? (
+        {!!environmentTags ? (
           <TagsCombobox
             open={open}
             setOpen={setOpen}
@@ -114,7 +112,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
             setSearchValue={setSearchValue}
             setValue={setValue}
             value={value}
-            tags={productTags?.map((tag) => ({ value: tag.id, label: tag.name }))}
+            tags={environmentTags?.map((tag) => ({ value: tag.id, label: tag.name }))}
             currentTags={tags.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
             createTag={(tagName) => {
               createTag(
@@ -142,7 +140,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                           setOpen(false);
                           mutateResponses();
 
-                          refetchProductTags();
+                          refetchEnvironmentTags();
                         },
                       }
                     );
@@ -155,7 +153,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                     setOpen(false);
                     mutateResponses();
 
-                    refetchProductTags();
+                    refetchEnvironmentTags();
                   }
                 }
               );
@@ -165,7 +163,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                 ...prevTags,
                 {
                   tagId,
-                  tagName: productTags.find((tag) => tag.id === tagId)?.name ?? "",
+                  tagName: environmentTags.find((tag) => tag.id === tagId)?.name ?? "",
                 }
               ])
 
@@ -180,7 +178,7 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
                     setOpen(false);
                     mutateResponses();
 
-                    refetchProductTags();
+                    refetchEnvironmentTags();
                   },
                 }
               );

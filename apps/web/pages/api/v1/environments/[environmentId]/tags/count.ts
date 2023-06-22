@@ -1,4 +1,3 @@
-import { captureTelemetry } from "@/../../packages/lib/telemetry";
 import { hasEnvironmentAccess, getSessionUser } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database/src/client";
 import { TTag } from "@formbricks/types/v1/tags";
@@ -7,7 +6,6 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
-  const productId = req.query.productId?.toString();
 
   // Check Authentication
   const currentUser = await getSessionUser(req, res);
@@ -20,11 +18,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(400).json({ message: "Invalid environmentId" });
   }
 
-  // Check productId
-  if (!productId) {
-    return res.status(400).json({ message: "Invalid productId" });
-  }
-
   // Check whether user has access to the environment
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
 
@@ -32,28 +25,28 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "You are not authorized to access this environment! " });
   }
 
-  // GET /api/environments/[environmentId]/product/[productId]/tags
+  // GET /api/environments/[environmentId]/tags
 
-  // Get all tags for a product
+  // Get all tags for an environment
 
   if (req.method === "GET") {
-    let tags;
+    let tagsCounts;
 
     try {
-      tags = await prisma.tag.findMany({
-        where: {
-          productId,
-        },
-      });
+      tagsCounts = await prisma.tagsOnResponses.groupBy({
+        by: ["tagId"],
+        _count: {
+          _all: true,
+        }
+      })
     } catch (e) {
       return res.status(500).json({ message: "Internal Server Error" });
     }
 
-    captureTelemetry(`tags retrived for product ${productId}`);
-    return res.json(tags);
+    return res.json(tagsCounts);
   }
 
-  // POST /api/environments/[environmentId]/product/[productId]/tags
+  // POST /api/environments/[environmentId]/tags
 
   // Create a new tag for a product
 
@@ -70,7 +63,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       tag = await prisma.tag.create({
         data: {
           name,
-          productId,
+          environmentId,
         },
       });
     } catch (e) {

@@ -109,7 +109,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(500).json({ message: "Internal Server Error" });
     }
 
-    // captureTelemetry(`tag ${newTag.id} created for response ${responseId}`);
     return res.json({
       success: true,
       message: `Tag ${tagId} created for response ${responseId}`,
