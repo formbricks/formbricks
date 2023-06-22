@@ -29,9 +29,9 @@ const PasswordInput = ({ className, ...rest }: PasswordInputProps) => {
         onClick={togglePasswordVisibility}
       >
         {showPassword ? (
-          <EyeSlashIcon className="h-5 w-5 text-gray-500" />
+          <EyeSlashIcon className="h-5 w-5 text-slate-400 " />
         ) : (
-          <EyeIcon className="h-5 w-5 text-gray-500" />
+          <EyeIcon className="h-5 w-5 text-slate-400 " />
         )}
       </button>
     </div>
