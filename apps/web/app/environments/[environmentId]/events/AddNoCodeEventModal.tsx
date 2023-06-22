@@ -263,7 +263,7 @@ export default function AddNoCodeEventModal({
                 }}>
                 Cancel
               </Button>
-              <Button variant="primary" type="submit">
+              <Button variant="darkCTA" type="submit">
                 Add Action
               </Button>
             </div>

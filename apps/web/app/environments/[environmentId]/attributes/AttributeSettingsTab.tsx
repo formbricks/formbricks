@@ -101,7 +101,7 @@ export default function AttributeSettingsTab({
           </div>
           {attributeClass.type !== "automatic" && (
             <div className="flex space-x-2">
-              <Button type="submit" variant="primary" loading={isMutatingAttributeClass}>
+              <Button type="submit" variant="darkCTA" loading={isMutatingAttributeClass}>
                 Save changes
               </Button>
             </div>

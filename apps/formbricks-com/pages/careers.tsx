@@ -26,10 +26,12 @@ export default function CareersPage() {
         headingPt1="Help teams make"
         headingTeal="customer-centric"
         headingPt2="decisions."
-        subheading="We are hiring! Please see all open roles below:"
+        subheading="We are currently not hiring. Contributions are always welcome!"
       />
+       {/*
       <div className="mx-auto w-3/4">
-        {Roles.map((role) => (
+ 
+         {Roles.map((role) => (
           <Link
             href="https://formbricks.notion.site/Work-at-Formbricks-6c3ad218b2c7461ca2714ce2101730e4?pvs=4"
             target="_blank"
@@ -40,7 +42,7 @@ export default function CareersPage() {
             </div>
           </Link>
         ))}
-      </div>
+      </div>*/}
     </Layout>
   );
 }
