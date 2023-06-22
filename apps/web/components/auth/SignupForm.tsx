@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@formbricks/ui";
+import { PasswordInput } from "@formbricks/ui";
 import { createUser } from "@/lib/users/users";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -14,13 +15,15 @@ export const SignupForm = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string>("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
   const [signingUp, setSigningUp] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const passRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    if(!isValid){
+    if (!isValid) {
       return
     }
     setSigningUp(true);
@@ -47,7 +50,7 @@ export const SignupForm = () => {
   const [isButtonEnabled, setButtonEnabled] = useState(true);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const [password, setPassword] = useState<string|null>(null)
+  const [password, setPassword] = useState<string | null>(null)
   const [isValid, setIsValid] = useState(false)
 
   const checkFormValidity = () => {
@@ -56,6 +59,14 @@ export const SignupForm = () => {
       setButtonEnabled(formRef.current.checkValidity());
     }
   };
+
+  const togglePasswordDisplay = () => {
+    if (isPasswordVisible) {
+      setIsPasswordVisible(false)
+      return
+    }
+    setIsPasswordVisible(true)
+  }
 
   return (
     <>
@@ -117,18 +128,17 @@ export const SignupForm = () => {
                   <label htmlFor="password" className="sr-only">
                     Password
                   </label>
-                  <input
+                  <PasswordInput
                     id="password"
                     name="password"
-                    type="password"
-                    value={password?password:""}
-                    onChange={(e)=>setPassword(e.target.value)}
+                    value={password ? password : ""}
+                    onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                     placeholder="*******"
                     aria-placeholder="password"
                     onFocus={() => setIsPasswordFocused(true)}
                     required
-                    className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                    className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
                   />
                 </div>
                 {process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && isPasswordFocused && (
@@ -144,7 +154,7 @@ export const SignupForm = () => {
               </div>
             )}
             <Button
-              onClick={(e:any) => {
+              onClick={(e: any) => {
                 e.preventDefault()
                 if (!showLogin) {
                   setShowLogin(true);
@@ -158,7 +168,7 @@ export const SignupForm = () => {
               variant="darkCTA"
               className="w-full justify-center"
               loading={signingUp}
-              disabled={formRef.current ? (!isButtonEnabled || !isValid): !isButtonEnabled}>
+              disabled={formRef.current ? (!isButtonEnabled || !isValid) : !isButtonEnabled}>
               Continue with Email
             </Button>
           </form>
