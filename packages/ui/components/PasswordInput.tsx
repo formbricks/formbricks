@@ -1,15 +1,12 @@
 "use client";
 
-import {useState} from "react";
+import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { EyeIcon,EyeSlashIcon } from "@heroicons/react/24/solid";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 
-export interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
-  toggleButtonClassName?: string;
-}
+export interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {}
 
-const PasswordInput = (props: PasswordInputProps) => {
-  const { className, toggleButtonClassName, ...rest } = props;
+const PasswordInput = ({ className, ...rest }: PasswordInputProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -21,14 +18,14 @@ const PasswordInput = (props: PasswordInputProps) => {
       <input
         type={showPassword ? "text" : "password"}
         className={cn(
-            "flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...rest}
       />
       <button
         type="button"
-        className={cn("absolute top-1/2 right-3 transform -translate-y-1/2", toggleButtonClassName)}
+        className={cn("absolute top-1/2 right-3 transform -translate-y-1/2")}
         onClick={togglePasswordVisibility}
       >
         {showPassword ? (
@@ -41,4 +38,5 @@ const PasswordInput = (props: PasswordInputProps) => {
   );
 };
 
-export  {PasswordInput};
+export { PasswordInput };
+
