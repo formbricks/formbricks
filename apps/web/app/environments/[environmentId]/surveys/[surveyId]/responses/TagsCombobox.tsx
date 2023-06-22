@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@formbricks/ui";
+import { useEffect } from "react";
 import { useMemo } from "react";
 
 interface ITagsComboboxProps {
@@ -53,6 +54,14 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
     [currentTags, tags]
   );
 
+  useEffect(() => {
+    // reset search value and value when closing the combobox
+    if (!open) {
+      setSearchValue("");
+      setValue("");
+    }
+  }, [open, setSearchValue, setValue]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -68,6 +77,17 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
               className="border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
               value={searchValue}
               onValueChange={(search) => setSearchValue(search)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchValue !== "") {
+                  if (
+                    !tagsToSearch?.find((tag) =>
+                      tag?.label?.toLowerCase().includes(searchValue?.toLowerCase())
+                    )
+                  ) {
+                    createTag?.(searchValue);
+                  }
+                }
+              }}
             />
           </div>
           <CommandEmpty className="p-3">

@@ -14,7 +14,7 @@ import {
   KeyIcon,
   LinkIcon,
   PaintBrushIcon,
-  PlusCircleIcon,
+  HashtagIcon,
   UserCircleIcon,
   UsersIcon,
 } from "@heroicons/react/24/solid";
@@ -75,7 +75,7 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
           {
             name: "Tags",
             href: `/environments/${environmentId}/settings/tags`,
-            icon: PlusCircleIcon,
+            icon: HashtagIcon,
             current: pathname?.includes("/tags"),
           },
         ],

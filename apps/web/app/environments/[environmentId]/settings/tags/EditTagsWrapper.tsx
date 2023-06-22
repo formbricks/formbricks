@@ -31,7 +31,7 @@ const SingleTag: React.FC<{
   tagCountLoading = false,
   updateTagsCount = () => {},
 }) => {
-  const { mutate: refetchProductTags, data: productTags } = useTagsForEnvironment(environmentId);
+  const { mutate: refetchEnvironmentTags, data: environmentTags } = useTagsForEnvironment(environmentId);
   const { deleteTag, isDeletingTag } = useDeleteTag(environmentId, tagId);
 
   const { updateTag, updateTagError } = useUpdateTag(environmentId, tagId);
@@ -46,7 +46,7 @@ const SingleTag: React.FC<{
             {
               onSuccess: () => {
                 toast.success("Tag updated");
-                refetchProductTags();
+                refetchEnvironmentTags();
               },
               onError: (error) => {
                 toast.error(error?.message ?? "Failed to update tag");
@@ -55,26 +55,26 @@ const SingleTag: React.FC<{
           ),
         1000
       ),
-    [refetchProductTags, updateTag]
+    [refetchEnvironmentTags, updateTag]
   );
 
   return (
     <div className="w-full" key={tagId}>
-      <div className="m-2 grid h-16 grid-cols-5 content-center rounded-lg">
+      <div className="m-2 grid h-16 grid-cols-4 content-center rounded-lg">
         <div className="col-span-2 flex items-center text-sm">
-          <div className="flex items-center">
-            <div className="text-left">
-              <Input
-                className={cn(
-                  "border-transparent font-medium text-slate-900 hover:border-slate-200",
-                  updateTagError ? "border-red-500 focus:border-red-500" : "border-transparent"
-                )}
-                defaultValue={tagName}
-                onChange={(e) => {
-                  debouncedChangeHandler(e.target.value.trim());
-                }}
-              />
-            </div>
+          <div className="w-full text-left">
+            <Input
+              className={cn(
+                "w-full border font-medium text-slate-900",
+                updateTagError
+                  ? "border-red-500 focus:border-red-500"
+                  : "border-slate-200 focus:border-slate-500"
+              )}
+              defaultValue={tagName}
+              onChange={(e) => {
+                debouncedChangeHandler(e.target.value.trim());
+              }}
+            />
           </div>
         </div>
 
@@ -82,7 +82,7 @@ const SingleTag: React.FC<{
           <div className="text-slate-900">{tagCountLoading ? <LoadingSpinner /> : <p>{tagCount}</p>}</div>
         </div>
 
-        <div className="col-span-2 my-auto flex items-center justify-end gap-4 whitespace-nowrap text-center text-sm text-slate-500">
+        <div className="col-span-1 my-auto flex items-center justify-end gap-4 whitespace-nowrap text-center text-sm text-slate-500">
           <div>
             {isMergingTags ? (
               <div className="w-24">
@@ -91,7 +91,7 @@ const SingleTag: React.FC<{
             ) : (
               <MergeTagsCombobox
                 tags={
-                  productTags
+                  environmentTags
                     ?.filter((tag) => tag.id !== tagId)
                     ?.map((tag) => ({ label: tag.name, value: tag.id })) ?? []
                 }
@@ -104,7 +104,7 @@ const SingleTag: React.FC<{
                     {
                       onSuccess: () => {
                         toast.success("Tags merged");
-                        refetchProductTags();
+                        refetchEnvironmentTags();
                         updateTagsCount();
                       },
                     }
@@ -124,7 +124,7 @@ const SingleTag: React.FC<{
                 deleteTag(null, {
                   onSuccess: () => {
                     toast.success("Tag deleted");
-                    refetchProductTags();
+                    refetchEnvironmentTags();
                     updateTagsCount();
                   },
                 });
@@ -160,10 +160,10 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
 
       <div className="rounded-lg border border-slate-200">
         {!!environmentTags?.length ? (
-          <div className="grid h-12 grid-cols-5 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+          <div className="grid h-12 grid-cols-4 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
             <div className="col-span-2 pl-6">Name</div>
             <div className="col-span-1 text-center">Count</div>
-            <div className="col-span-2 mr-4 flex justify-end text-center">Actions</div>
+            <div className="col-span-1 mr-4 flex justify-center text-center">Actions</div>
           </div>
         ) : null}
 
