@@ -26,24 +26,24 @@ export default function SignUpPage() {
     try {
       await createUser(
         {
-          firstname: e.target.elements.firstname.value,
-          lastname: e.target.elements.lastname.value,
-          gender: e.target.elements.gender.value,
-          phone: handlePhoneNumberValidity(e.target.elements.phone.value, "Téléphone"),
-          dob : new Date(e.target.elements.dob.value),
+          firstname: e.target.elements.firstname.value.trim(),
+          lastname: e.target.elements.lastname.value.trim(),
+          gender: e.target.elements.gender.value.trim(),
+          phone: handlePhoneNumberValidity(e.target.elements.phone.value.trim(), "Téléphone"),
+          dob : new Date(e.target.elements.dob.value.trim()),
           address : {
             create:
               {
-                line1: e.target.elements.line1.value,
-                line2: e.target.elements.line2.value,
-                commune:e.target.elements.commune.value,
-                ville:e.target.elements.ville.value,
-                province :e.target.elements.province.value
+                line1: e.target.elements.line1.value.trim(),
+                line2: e.target.elements.line2.value.trim(),
+                commune:e.target.elements.commune.value.trim(),
+                ville:e.target.elements.ville.value.trim(),
+                province :e.target.elements.province.value.trim()
               },
           },
-          whatsapp: e.target.elements.whatsapp.value, 
-          email: e.target.elements.email.value,
-          password: e.target.elements.password.value,
+          whatsapp: e.target.elements.whatsapp.value.trim(), 
+          email: e.target.elements.email.value.trim(),
+          password: e.target.elements.password.value.trim(),
         },
         callbackUrl
       );

@@ -36,7 +36,7 @@ export default function UpdateProfile() {
   };
 
   const handleInputChange = (e) => {
-    const value = e.target.value;
+    const value = e.target.value.trim();
     const name = e.target.name;
     if (["line1", "line2", "commune", "ville", "province"].includes(name)) {
       setAddress({
