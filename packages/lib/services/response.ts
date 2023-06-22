@@ -107,6 +107,54 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
   }
 };
 
+export const getSurveyResponses = async (surveyId: string): Promise<TResponse[]> => {
+  try {
+    const responsesPrisma = await prisma.response.findMany({
+      where: {
+        surveyId,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        surveyId: true,
+        finished: true,
+        data: true,
+        personAttributes: true,
+        person: {
+          select: {
+            id: true,
+            attributes: {
+              select: {
+                value: true,
+                attributeClass: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const responses: TResponse[] = responsesPrisma.map((responsePrisma) => ({
+      ...responsePrisma,
+      personAttributes: responsePrisma.personAttributes as Record<string, string | number>,
+      person: transformPrismaPerson(responsePrisma.person),
+    }));
+
+    return responses;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
 export const updateResponse = async (
   responseId: string,
   responseInput: TResponseUpdateInput

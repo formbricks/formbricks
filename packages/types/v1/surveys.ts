@@ -108,6 +108,8 @@ const ZSurveyQuestionBase = z.object({
   subheader: z.string().optional(),
   required: z.boolean(),
   buttonLabel: z.string().optional(),
+  scale: z.enum(["number", "smiley", "star"]).optional(),
+  range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
 });
 
@@ -153,7 +155,7 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
 
 export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.Rating),
-  scale: z.union([z.literal("number"), z.literal("smiley"), z.literal("star")]),
+  scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
   lowerLabel: z.string(),
   upperLabel: z.string(),
@@ -169,6 +171,8 @@ export const ZSurveyQuestion = z.union([
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
 ]);
+
+export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
 
 export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 

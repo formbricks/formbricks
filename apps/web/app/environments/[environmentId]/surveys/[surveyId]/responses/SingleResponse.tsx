@@ -13,33 +13,25 @@ import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
 import { QuestionType } from "@formbricks/types/questions";
+import { TPerson } from "@formbricks/types/v1/people";
+import { truncate } from "@/lib/utils";
 
 export interface OpenTextSummaryProps {
   data: {
     id: string;
-    personId: string;
     surveyId: string;
-    person: {
-      id: string;
-      createdAt: string;
-      updatedAt: string;
-      environmentId: string;
-      attributes: [];
-    };
-    personAttributes: {
-      [key: string]: string;
-    };
-    responseNotes: {
-      updatedAt: string;
-      createdAt: string;
+    person: TPerson | null;
+    personAttributes?: { [key: string]: string | number };
+    responseNotes?: {
+      updatedAt: Date;
+      createdAt: Date;
       id: string;
       text: string;
       user: {
         name: string;
       };
     }[];
-    value: string;
-    updatedAt: string;
+    updatedAt: Date;
     finished: boolean;
     responses: {
       id: string;
@@ -61,7 +53,7 @@ function findEmail(person) {
 
 export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
   const email = data.person && findEmail(data.person);
-  const displayIdentifier = email || data.personId;
+  const displayIdentifier = email || (data.person && truncate(data.person.id, 16)) || null;
   const responseNotes = data?.responseNotes;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { mutateResponses } = useResponses(environmentId, surveyId);
@@ -82,7 +74,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
       {Object.keys(data.personAttributes).map((key) => {
         return (
           <p>
-            {key}: <span className="font-bold">{data.personAttributes[key]}</span>
+            {key}: <span className="font-bold">{data.personAttributes && data.personAttributes[key]}</span>
           </p>
         );
       })}
@@ -94,18 +86,18 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
       <div
         className={clsx(
           "relative z-10 my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm transition-all",
-          isOpen ? "w-3/4" : responseNotes.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]"
+          isOpen ? "w-3/4" : responseNotes?.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]"
         )}>
         <div className="space-y-2 px-6 pb-5 pt-6">
           <div className="flex items-center justify-between">
-            {data.personId ? (
+            {data.person?.id ? (
               <Link
                 className="group flex items-center"
-                href={`/environments/${environmentId}/people/${data.personId}`}>
+                href={`/environments/${environmentId}/people/${data.person.id}`}>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <PersonAvatar personId={data.personId} />
+                      <PersonAvatar personId={data.person.id} />
                     </TooltipTrigger>
                     {tooltipContent}
                   </Tooltip>
@@ -127,8 +119,8 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
                   Completed <CheckCircleIcon className="ml-1 h-5 w-5 text-green-400" />
                 </span>
               )}
-              <time className="text-slate-500" dateTime={timeSince(data.updatedAt)}>
-                {timeSince(data.updatedAt)}
+              <time className="text-slate-500" dateTime={timeSince(data.updatedAt.toISOString())}>
+                {timeSince(data.updatedAt.toISOString())}
               </time>
               <button
                 onClick={() => {

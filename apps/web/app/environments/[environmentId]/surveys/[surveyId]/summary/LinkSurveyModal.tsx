@@ -2,16 +2,15 @@
 
 import CodeBlock from "@/components/shared/CodeBlock";
 import Modal from "@/components/shared/Modal";
-import { Survey } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import { Button } from "@formbricks/ui";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { CodeBracketIcon, DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 interface LinkSurveyModalProps {
-  survey: Survey;
+  survey: TSurvey;
   open: boolean;
   setOpen: (open: boolean) => void;
 }
