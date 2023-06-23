@@ -2,10 +2,7 @@ import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handle(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
   const targetEnvironmentId = req.query.targetEnvironmentId?.toString();
 
@@ -19,11 +16,7 @@ export default async function handle(
   }
 
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
-  const hasTargetEnvAccess = await hasEnvironmentAccess(
-    req,
-    res,
-    targetEnvironmentId
-  );
+  const hasTargetEnvAccess = await hasEnvironmentAccess(req, res, targetEnvironmentId);
 
   if (!hasAccess || !hasTargetEnvAccess) {
     return res.status(403).json({ message: "Not authorized" });
@@ -94,15 +87,14 @@ export default async function handle(
     for (const attributeFilter of existingSurvey.attributeFilters) {
       // check if attributeClass exists in target env.
       // if not, create it
-      const targetEnvironmentAttributeClass =
-        await prisma.attributeClass.findFirst({
-          where: {
-            name: attributeFilter.attributeClass.name,
-            environment: {
-              id: targetEnvironmentId,
-            },
+      const targetEnvironmentAttributeClass = await prisma.attributeClass.findFirst({
+        where: {
+          name: attributeFilter.attributeClass.name,
+          environment: {
+            id: targetEnvironmentId,
           },
-        });
+        },
+      });
       if (!targetEnvironmentAttributeClass) {
         const newAttributeClass = await prisma.attributeClass.create({
           data: {
@@ -118,9 +110,7 @@ export default async function handle(
         });
         targetEnvironmentAttributeFilters.push(newAttributeClass.id);
       } else {
-        targetEnvironmentAttributeFilters.push(
-          targetEnvironmentAttributeClass.id
-        );
+        targetEnvironmentAttributeFilters.push(targetEnvironmentAttributeClass.id);
       }
     }
 
@@ -140,13 +130,11 @@ export default async function handle(
           })),
         },
         attributeFilters: {
-          create: existingSurvey.attributeFilters.map(
-            (attributeFilter, idx) => ({
-              attributeClassId: targetEnvironmentAttributeFilters[idx],
-              condition: attributeFilter.condition,
-              value: attributeFilter.value,
-            })
-          ),
+          create: existingSurvey.attributeFilters.map((attributeFilter, idx) => ({
+            attributeClassId: targetEnvironmentAttributeFilters[idx],
+            condition: attributeFilter.condition,
+            value: attributeFilter.value,
+          })),
         },
         environment: {
           connect: {
@@ -161,8 +149,6 @@ export default async function handle(
 
   // Unknown HTTP Method
   else {
-    throw new Error(
-      `The HTTP ${req.method} method is not supported by this route.`
-    );
+    throw new Error(`The HTTP ${req.method} method is not supported by this route.`);
   }
 }
