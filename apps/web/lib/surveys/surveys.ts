@@ -104,13 +104,30 @@ export const getSurveyPage = (survey, pageId) => {
   return page;
 };
 
-export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
+// used to duplicate the survey in the same environment when targetEnvironment is null and
+// used to duplicate the survey in a different environment when targetEnvironment is not null
+export const duplicateSurvey = async (
+  environmentId: string,
+  surveyId: string,
+  targetEnvironmentId: string | undefined = undefined
+) => {
   try {
-    const res = await fetch(`/api/v1/environments/${environmentId}/surveys/${surveyId}/duplicate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    });
-    return await res.json();
+    if (targetEnvironmentId === undefined) {
+      const res = await fetch(`/api/v1/environments/${environmentId}/surveys/${surveyId}/duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      return await res.json();
+    } else {
+      const res = await fetch(
+        `/api/v1/environments/${environmentId}/surveys/${surveyId}/duplicate/${targetEnvironmentId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      return await res.json();
+    }
   } catch (error) {
     console.error(error);
     throw Error(`duplicateSurvey: unable to duplicate survey: ${error.message}`);

@@ -181,7 +181,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
           }}>
           Create New Team
         </Button>
-        {isAdminOrOwner && (
+        {process.env.NEXT_PUBLIC_INVITE_DISABLED !== "1" && isAdminOrOwner && (
           <Button
             variant="darkCTA"
             onClick={() => {

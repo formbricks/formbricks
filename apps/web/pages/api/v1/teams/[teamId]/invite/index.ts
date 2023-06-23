@@ -20,6 +20,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "Not authorized" });
   }
 
+  if (process.env.NEXT_PUBLIC_INVITE_DISABLED === "1") {
+    return res.status(403).json({ message: "Invite Disabled" });
+  }
+
   const hasOwnerOrAdminAccess = await isAdminOrOwner(currentUser, teamId);
   if (!hasOwnerOrAdminAccess) {
     return res.status(403).json({ message: "Not authorized" });
