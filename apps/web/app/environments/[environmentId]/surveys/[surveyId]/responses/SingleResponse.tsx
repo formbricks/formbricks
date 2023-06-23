@@ -125,7 +125,6 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
           <b>Device info</b>
           {data.meta?.userAgent?.browser && <p>Browser: {data.meta.userAgent.browser}</p>}
           {data.meta?.userAgent?.os && <p>OS: {data.meta.userAgent.os}</p>}
-          {data.meta?.userAgent?.device && <p>Device: {data.meta.userAgent.device}</p>}
           {data.meta?.userAgent && (
             <p>Device: {data.meta.userAgent.device ? data.meta.userAgent.device : "PC / Generic device"}</p>
           )}
