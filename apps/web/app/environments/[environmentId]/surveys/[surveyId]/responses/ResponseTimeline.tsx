@@ -27,10 +27,7 @@ export default function ResponseTimeline({
   survey,
 }: ResponseTimelineProps) {
   const { attributeMap, questionNames } = generateQuestionsAndAttributes(survey, responses);
-
   const [isDownloadCSVLoading, setIsDownloadCSVLoading] = useState(false);
-
-  console.log(JSON.stringify(responses, null, 2));
 
   const matchQandA = useMemo(() => {
     if (survey && responses) {
@@ -64,7 +61,7 @@ export default function ResponseTimeline({
             });
           }
         }
-        return { ...response, responses: updatedResponse, person: response.person };
+        return { ...response, responses: updatedResponse };
       });
       return updatedResponses;
     }

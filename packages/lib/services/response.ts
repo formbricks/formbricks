@@ -165,6 +165,11 @@ export const getSurveyResponses = async (surveyId: string): Promise<TResponse[]>
           },
         },
       },
+      orderBy: [
+        {
+          createdAt: "desc",
+        },
+      ],
     });
 
     const responses: TResponse[] = responsesPrisma.map((responsePrisma) => ({

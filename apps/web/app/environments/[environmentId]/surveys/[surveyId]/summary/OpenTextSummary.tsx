@@ -12,7 +12,7 @@ interface OpenTextSummaryProps {
 }
 
 function findEmail(person) {
-  const emailAttribute = person.attributes.find((attr) => attr.attributeClass.name === "email");
+  const emailAttribute = person.attributes.email;
   return emailAttribute ? emailAttribute.value : null;
 }
 
@@ -48,7 +48,7 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
                 {response.person ? (
                   <Link
                     className="ph-no-capture group flex items-center"
-                    href={`/environments/${environmentId}/people/${response.person}`}>
+                    href={`/environments/${environmentId}/people/${response.person.id}`}>
                     <PersonAvatar personId={response.person.id} />
 
                     <p className="ph-no-capture ml-2 text-slate-600 group-hover:underline">

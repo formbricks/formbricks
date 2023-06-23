@@ -54,7 +54,7 @@ export default function MultipleChoiceSummary({
     }
 
     function findEmail(person) {
-      const emailAttribute = person.attributes.find((attr) => attr.attributeClass.name === "email");
+      const emailAttribute = person.attributes.email;
       return emailAttribute ? emailAttribute.value : null;
     }
 

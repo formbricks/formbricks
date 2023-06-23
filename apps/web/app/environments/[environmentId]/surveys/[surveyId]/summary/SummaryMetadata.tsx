@@ -25,32 +25,39 @@ import LinkSurveyModal from "./LinkSurveyModal";
 interface SummaryMetadataProps {
   surveyId: string;
   environmentId: string;
-  responses: TResponse[]; 
+  responses: TResponse[];
   survey: TSurvey;
 }
 
-export default function SummaryMetadata({ surveyId, environmentId, responses, survey }: SummaryMetadataProps) {
+export default function SummaryMetadata({
+  surveyId,
+  environmentId,
+  responses,
+  survey,
+}: SummaryMetadataProps) {
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
   const [confetti, setConfetti] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const newSurveyParam = searchParams?.get("success");
-    if (newSurveyParam && survey && environment) {
-      setConfetti(true);
-      toast.success(
-        survey.type === "web" && !environment.widgetSetupCompleted
-          ? "Almost there! Install widget to start receiving responses."
-          : "Congrats! Your survey is live.",
-        {
-          icon: survey.type === "web" && !environment.widgetSetupCompleted ? "🤏" : "🎉",
-          duration: 5000,
-          position: "bottom-right",
+    if (environment) {
+      const newSurveyParam = searchParams?.get("success");
+      if (newSurveyParam && survey && environment) {
+        setConfetti(true);
+        toast.success(
+          survey.type === "web" && !environment.widgetSetupCompleted
+            ? "Almost there! Install widget to start receiving responses."
+            : "Congrats! Your survey is live.",
+          {
+            icon: survey.type === "web" && !environment.widgetSetupCompleted ? "🤏" : "🎉",
+            duration: 5000,
+            position: "bottom-right",
+          }
+        );
+        if (survey.type === "link") {
+          setShowLinkModal(true);
         }
-      );
-      if (survey.type === "link") {
-        setShowLinkModal(true);
       }
     }
   }, [environment, searchParams, survey]);
@@ -66,7 +73,7 @@ export default function SummaryMetadata({ surveyId, environmentId, responses, su
 
   if (isErrorEnvironment) {
     return <ErrorComponent />;
-  } 
+  }
 
   return (
     <div className="mb-4 ">

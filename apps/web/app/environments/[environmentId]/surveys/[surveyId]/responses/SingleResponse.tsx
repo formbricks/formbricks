@@ -1,38 +1,25 @@
 "use client";
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
+import { deleteSubmission, useResponses } from "@/lib/responses/responses";
+import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
-import { PersonAvatar, TooltipContent, TooltipProvider, TooltipTrigger, Tooltip } from "@formbricks/ui";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { QuestionType } from "@formbricks/types/questions";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { PersonAvatar, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import clsx from "clsx";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { RatingResponse } from "../RatingResponse";
-import { deleteSubmission, useResponses } from "@/lib/responses/responses";
-import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
-import { QuestionType } from "@formbricks/types/questions";
-import { TPerson } from "@formbricks/types/v1/people";
-import { truncate } from "@/lib/utils";
 
 export interface OpenTextSummaryProps {
-  data: {
-    id: string;
-    surveyId: string;
-    person: TPerson | null;
-    personAttributes?: { [key: string]: string | number };
-    responseNotes?: {
-      updatedAt: Date;
-      createdAt: Date;
-      id: string;
-      text: string;
-      user: {
-        name: string;
-      };
-    }[];
-    updatedAt: Date;
-    finished: boolean;
+  environmentId: string;
+  surveyId: string;
+  data: TResponse & {
     responses: {
       id: string;
       question: string;
@@ -42,19 +29,16 @@ export interface OpenTextSummaryProps {
       range?: number;
     }[];
   };
-  environmentId: string;
-  surveyId: string;
 }
 
 function findEmail(person) {
-  const emailAttribute = person.attributes.find((attr) => attr.attributeClass.name === "email");
+  const emailAttribute = person.attributes.email;
   return emailAttribute ? emailAttribute.value : null;
 }
 
 export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || (data.person && truncate(data.person.id, 16)) || null;
-  const responseNotes = data?.responseNotes;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { mutateResponses } = useResponses(environmentId, surveyId);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -86,7 +70,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
       <div
         className={clsx(
           "relative z-10 my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm transition-all",
-          isOpen ? "w-3/4" : responseNotes?.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]"
+          isOpen ? "w-3/4" : data.notes.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]"
         )}>
         <div className="space-y-2 px-6 pb-5 pt-6">
           <div className="flex items-center justify-between">
@@ -160,7 +144,8 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
         />
       </div>
       <ResponseNote
-        data={data}
+        responseId={data.id}
+        notes={data.notes}
         environmentId={environmentId}
         surveyId={surveyId}
         isOpen={isOpen}
