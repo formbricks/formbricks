@@ -10,7 +10,6 @@ import { sendWeeklySummaryNotificationEmail, sendNoLiveSurveyNotificationEmail }
 export async function GET(_: Request, { params }: { params: { environmentId: string } }) {
 
     const headersList = headers();
-    console.log("params", params);
     const environmentId = params.environmentId;
     if (!environmentId) {
         return new Response("Missing environmentId", {
@@ -32,7 +31,7 @@ export async function GET(_: Request, { params }: { params: { environmentId: str
         });
     }
 
-    console.log("Start");
+    const notificationSetting = await getUserNotificationSetting(email);
 
     const productName = await getProductName(environmentId);
     if(productName == null) {
@@ -59,10 +58,10 @@ export async function GET(_: Request, { params }: { params: { environmentId: str
         }
     });
 
-    const rawNotificationData = await getNotificationData(surveys, currentDate, lastWeekDate);
+    const rawNotificationData = await getNotificationData(surveys, currentDate, lastWeekDate, notificationSetting);
     const insights = await getSurveyInsights(rawNotificationData);
     const surveyData = await getLatestSuveryResponses(rawNotificationData);
-    console.log("End");
+
     const notificationResponse = {
         environmentId: environmentId,
         currentDate: currentDate,
@@ -75,12 +74,15 @@ export async function GET(_: Request, { params }: { params: { environmentId: str
     return NextResponse.json(notificationResponse);
 }
 
-const getNotificationData = async (surveys: any, currentDate: Date, lastWeekDate: Date) => {
+const getNotificationData = async (surveys: any, currentDate: Date, lastWeekDate: Date, notificationSetting) => {
 
     const surveyNotificationData: SurveyNotificationData[] = [];
 
     for await (const survey of surveys) {
         const surveyId = survey.id;
+        if (!notificationSetting[surveyId]["weeklySummary"]) {
+          continue;
+        }
         const latestResponseData = await prisma.response.findFirst({
             where: {
               survey: {
@@ -175,12 +177,10 @@ const getSurveyInsights = async (notificationDatas) => {
     let totalDisplays = 0;
     let totalResponses = 0;
     let totalCompletedResponses = 0;
-    let totalResponseLength = 0
     for await (const notificationData of notificationDatas) {
         totalDisplays += notificationData.numDisplays;
-        totalResponses += notificationData.numDisplaysResponded
-        totalCompletedResponses += notificationData.responseCompletedLength
-        totalResponseLength += notificationData.responseLenght
+        totalResponses += notificationData.numDisplaysResponded;
+        totalCompletedResponses += notificationData.responseCompletedLength;
     }
 
     return {
@@ -226,6 +226,15 @@ const getEmailForNotification = async (headersList) => {
         const sessionUser = await getSessionUser();
         return sessionUser?.email;
     }
+};
+
+const getUserNotificationSetting = async (emailId) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      email: emailId,
+    },
+  });
+  return user?.notificationSettings;
 };
 
 const sendEmailNotification = async (email, notificationResponse) => {
@@ -296,13 +305,9 @@ const getProductName = async (environmentId) => {
         },
       });
       
-      let productName = null;
       for await (const product of products) {
           if (product.id == environment.productId) {
-            productName = product.name;
-            break;
+            return product.name;
           }
       }
-
-      return productName;
 };

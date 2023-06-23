@@ -161,7 +161,7 @@ export const sendResponseFinishedEmail = async (
 
 export const sendWeeklySummaryNotificationEmail = async (email, notificationData) => {
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  console.log("Start Send Email");
+
   const startDate = `${notificationData.lastWeekDate.getDate()} ${monthNames[notificationData.lastWeekDate.getMonth()]}`;
   const endDate = `${notificationData.currentDate.getDate()} ${monthNames[notificationData.currentDate.getMonth()]}`;
   const startYear = notificationData.lastWeekDate.getFullYear();
@@ -175,12 +175,12 @@ export const sendWeeklySummaryNotificationEmail = async (email, notificationData
       ${notificationLiveSurveys(notificationData.surveyData, notificationData.environmentId, WEBAPP_URL)}
     `),
   });
-  console.log("End Send Email");
+
 };
 
 export const sendNoLiveSurveyNotificationEmail = async (email, notificationData) => {
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  console.log("Start Send reminder Email");
+
   const startDate = `${notificationData.lastWeekDate.getDate()} ${monthNames[notificationData.lastWeekDate.getMonth()]}`;
   const endDate = `${notificationData.currentDate.getDate()} ${monthNames[notificationData.currentDate.getMonth()]}`;
   const startYear = notificationData.lastWeekDate.getFullYear();
@@ -193,5 +193,5 @@ export const sendNoLiveSurveyNotificationEmail = async (email, notificationData)
       ${createReminderNotificationBody(notificationData, WEBAPP_URL)}
     `),
   });
-  console.log("End Send reminder Email");
+
 };
