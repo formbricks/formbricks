@@ -7,6 +7,8 @@ import { useState } from "react";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import TagsCombobox from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/TagsCombobox";
 import { toast } from "react-hot-toast";
+import { cn } from "@formbricks/lib/cn";
+import { useEffect } from "react";
 
 interface IResponseTagsWrapperProps {
   tags: {
@@ -26,17 +28,22 @@ export function Tag({
   onDelete,
   tags,
   setTagsState,
+  highlight,
 }: {
   tagId: string;
   tagName: string;
   onDelete: (tagId: string) => void;
   tags: IResponseTagsWrapperProps["tags"];
   setTagsState: (tags: IResponseTagsWrapperProps["tags"]) => void;
+  highlight?: boolean;
 }) {
   return (
     <div
       key={tagId}
-      className="relative flex items-center justify-between gap-2 rounded-full border bg-slate-800 px-2 py-1 text-slate-100">
+      className={cn(
+        "relative flex items-center justify-between gap-2 rounded-full border bg-slate-600 px-2 py-1 text-slate-100",
+        highlight && "border-2 border-green-600"
+      )}>
       <div className="flex items-center gap-2">
         <span className="text-sm">{tagName}</span>
       </div>
@@ -60,10 +67,10 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
   responseId,
   surveyId,
 }) => {
-  const [value, setValue] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [open, setOpen] = React.useState(false);
   const [tagsState, setTagsState] = useState(tags);
+  const [tagIdToHighlight, setTagIdToHighlight] = useState("");
 
   const { createTag } = useCreateTag(environmentId);
 
@@ -83,105 +90,109 @@ const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
     }
   };
 
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (tagIdToHighlight) {
+        setTagIdToHighlight("");
+      }
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
+  }, [tagIdToHighlight]);
+
   return (
     <div className="flex items-start gap-3 p-6">
-      {tagsState?.length > 0 ? (
-        <div className="flex max-w-[60%] flex-wrap items-center gap-2">
-          {tagsState.map((tag) => (
-            <Tag
-              key={tag.tagId}
-              onDelete={onDelete}
-              tagId={tag.tagId}
-              tagName={tag.tagName}
-              tags={tagsState}
-              setTagsState={setTagsState}
-            />
-          ))}
-        </div>
-      ) : null}
-
-      <div className="flex items-center gap-2">
-        {!!environmentTags ? (
-          <TagsCombobox
-            open={open}
-            setOpen={setOpen}
-            searchValue={searchValue}
-            setSearchValue={setSearchValue}
-            setValue={setValue}
-            value={value}
-            tags={environmentTags?.map((tag) => ({ value: tag.id, label: tag.name }))}
-            currentTags={tags.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
-            createTag={(tagName) => {
-              createTag(
-                {
-                  name: tagName,
-                },
-                {
-                  onSuccess: (data) => {
-                    setTagsState((prevTags) => [
-                      ...prevTags,
-                      {
-                        tagId: data.id,
-                        tagName: data.name,
-                      },
-                    ]);
-                    setValue(data.name);
-                    addTagToRespone(
-                      {
-                        tagIdToAdd: data.id,
-                      },
-                      {
-                        onSuccess: () => {
-                          setValue("");
-                          setSearchValue("");
-                          setOpen(false);
-                          mutateResponses();
-
-                          refetchEnvironmentTags();
-                        },
-                      }
-                    );
-                  },
-                  onError: (err) => {
-                    toast.error(err?.message ?? "Something went wrong");
-
-                    setValue("");
-                    setSearchValue("");
-                    setOpen(false);
-                    mutateResponses();
-
-                    refetchEnvironmentTags();
-                  },
-                }
-              );
-            }}
-            addTag={(tagId) => {
-              setTagsState((prevTags) => [
-                ...prevTags,
-                {
-                  tagId,
-                  tagName: environmentTags.find((tag) => tag.id === tagId)?.name ?? "",
-                },
-              ]);
-
-              addTagToRespone(
-                {
-                  tagIdToAdd: tagId,
-                },
-                {
-                  onSuccess: () => {
-                    setValue("");
-                    setSearchValue("");
-                    setOpen(false);
-                    mutateResponses();
-
-                    refetchEnvironmentTags();
-                  },
-                }
-              );
-            }}
+      <div className="flex flex-wrap items-center gap-2">
+        {tagsState?.map((tag) => (
+          <Tag
+            key={tag.tagId}
+            onDelete={onDelete}
+            tagId={tag.tagId}
+            tagName={tag.tagName}
+            tags={tagsState}
+            setTagsState={setTagsState}
+            highlight={tagIdToHighlight === tag.tagId}
           />
-        ) : null}
+        ))}
+
+        <TagsCombobox
+          open={open}
+          setOpen={setOpen}
+          searchValue={searchValue}
+          setSearchValue={setSearchValue}
+          tags={environmentTags?.map((tag) => ({ value: tag.id, label: tag.name })) ?? []}
+          currentTags={tags.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
+          createTag={(tagName) => {
+            createTag(
+              {
+                name: tagName?.trim() ?? "",
+              },
+              {
+                onSuccess: (data) => {
+                  setTagsState((prevTags) => [
+                    ...prevTags,
+                    {
+                      tagId: data.id,
+                      tagName: data.name,
+                    },
+                  ]);
+                  addTagToRespone(
+                    {
+                      tagIdToAdd: data.id,
+                    },
+                    {
+                      onSuccess: () => {
+                        setSearchValue("");
+                        setOpen(false);
+                        mutateResponses();
+
+                        refetchEnvironmentTags();
+                      },
+                    }
+                  );
+                },
+                onError: (err) => {
+                  toast.error(err?.message ?? "Something went wrong", {
+                    duration: 2000,
+                  });
+
+                  setSearchValue("");
+                  setOpen(false);
+                  mutateResponses();
+
+                  const tag = tags.find((tag) => tag.tagName === tagName?.trim() ?? "");
+                  setTagIdToHighlight(tag?.tagId ?? "");
+
+                  refetchEnvironmentTags();
+                },
+              }
+            );
+          }}
+          addTag={(tagId) => {
+            setTagsState((prevTags) => [
+              ...prevTags,
+              {
+                tagId,
+                tagName: environmentTags?.find((tag) => tag.id === tagId)?.name ?? "",
+              },
+            ]);
+
+            addTagToRespone(
+              {
+                tagIdToAdd: tagId,
+              },
+              {
+                onSuccess: () => {
+                  setSearchValue("");
+                  setOpen(false);
+                  mutateResponses();
+
+                  refetchEnvironmentTags();
+                },
+              }
+            );
+          }}
+        />
       </div>
     </div>
   );

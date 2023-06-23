@@ -19,8 +19,6 @@ interface ITagsComboboxProps {
   currentTags: Tag[];
   addTag: (tagId: string) => void;
   createTag?: (tagName: string) => void;
-  value: string;
-  setValue: React.Dispatch<React.SetStateAction<string>>;
   searchValue: string;
   setSearchValue: React.Dispatch<React.SetStateAction<string>>;
   open: boolean;
@@ -37,8 +35,6 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
   currentTags,
   addTag,
   createTag,
-  setValue,
-  value,
   searchValue,
   setSearchValue,
   open,
@@ -58,9 +54,8 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
     // reset search value and value when closing the combobox
     if (!open) {
       setSearchValue("");
-      setValue("");
     }
-  }, [open, setSearchValue, setValue]);
+  }, [open, setSearchValue]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -70,7 +65,16 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="max-h-60 w-[200px] overflow-y-auto p-0">
-        <Command>
+        <Command
+          filter={(value, search) => {
+            const foundLabel = tagsToSearch.find((tag) => tag.value === value)?.label ?? "";
+
+            if (foundLabel.includes(search)) {
+              return 1;
+            }
+
+            return 0;
+          }}>
           <div className="p-1">
             <CommandInput
               placeholder={tagsToSearch?.length === 0 ? "Add tag..." : "Search tags..."}
@@ -98,19 +102,14 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
             </a>
           </CommandEmpty>
           <CommandGroup>
-            {tagsToSearch?.length === 0 ? <CommandItem>No tags found</CommandItem> : null}
-
             {tagsToSearch?.map((tag) => {
               return (
                 <CommandItem
+                  key={tag.value}
+                  value={tag.value}
                   onSelect={(currentValue) => {
-                    const currentId =
-                      tags.find((t) => t.label.toLowerCase() === currentValue.toLowerCase())?.value ?? "";
-
-                    setValue(currentValue === value ? "" : currentValue);
                     setOpen(false);
-
-                    addTag(currentId);
+                    addTag(currentValue);
                   }}
                   className="hover:cursor-pointer hover:bg-slate-50">
                   {tag.label}
