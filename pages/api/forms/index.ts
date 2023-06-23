@@ -30,17 +30,21 @@ export default async function handle(
 
     const formData = await prisma.form.findMany({
       where: whereClause,
-      include: {
-        owner: {
-          select: { firstname: true, lastname: true },
-        },
-        noCodeForm: {
-          select: { published: true, blocks: true, blocksDraft: true },
-        },
-        _count: {
-          select: { submissionSessions: true },
-        },
+      // include: {
+      //   owner: {
+      //     select: { firstname: true, lastname: true }
+      //   }
+      // },
+      select: {
+        id: true,
+        dueDate: true,
+        formation: true,
+        name: true,
+        place: true
       },
+      orderBy:{
+        dueDate: 'asc'
+      }
     });
 
     if (!formData.length) return res.status(204);

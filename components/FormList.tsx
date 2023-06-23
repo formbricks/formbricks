@@ -4,7 +4,7 @@ import {
   CalendarDaysIcon,
   FolderOpenIcon,
   DocumentPlusIcon,
-  UserCircleIcon,
+  // UserCircleIcon,
   EyeIcon,
 } from "@heroicons/react/24/outline";
 import { HiLocationMarker, HiDocumentDuplicate } from "react-icons/hi";
@@ -18,7 +18,7 @@ import { classNames, timeSince } from "../lib/utils";
 import NewFormModal from "./form/NewFormModal";
 import EmptyPageFiller from "./layout/EmptyPageFiller";
 import { format } from "date-fns";
-import CandidateProgress from "./form/CandidateProgress";
+// import CandidateProgress from "./form/CandidateProgress";
 import SearchBar from "./form/SearchBar";
 
 import { fr } from "date-fns/locale";
@@ -273,14 +273,14 @@ export default function FormList() {
                             </span>
                           )}
                         </span>
-                        {session.user.role === UserRole.ADMIN ? (
+                        {/* {session.user.role === UserRole.ADMIN ? (
                           <span className='flex items-center px-6 py-1 text-base font-normal text-black-title'>
                             <UserCircleIcon className='w-5 h-5 text-rose-500 mr-1 text-2xl' />
                             {form.owner.firstname + " " + form.owner.lastname}
                           </span>
                         ) : (
                           <CandidateProgress form={form} />
-                        )}
+                        )} */}
                       </div>
 
                       <Link

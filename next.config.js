@@ -52,7 +52,7 @@ const nextConfig = {
     return config;
   },
   api: {
-    responseLimit: process.env.NEXTAPI_SIZE_LIMIT,
+    responseLimit: process.env.NEXT_PUBLIC_API_SIZE_LIMIT,
   },
 };
 
