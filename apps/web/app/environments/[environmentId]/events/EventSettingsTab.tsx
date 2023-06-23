@@ -283,7 +283,7 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
           </div>
           {eventClass.type !== "automatic" && (
             <div className="flex space-x-2">
-              <Button type="submit" variant="primary" loading={isMutatingEventClass}>
+              <Button type="submit" variant="darkCTA" loading={isMutatingEventClass}>
                 Save changes
               </Button>
             </div>

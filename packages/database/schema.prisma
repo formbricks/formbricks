@@ -87,21 +87,24 @@ model Person {
 }
 
 model Response {
-  id            String   @id @default(cuid())
-  createdAt     DateTime @default(now()) @map(name: "created_at")
-  updatedAt     DateTime @updatedAt @map(name: "updated_at")
-  finished      Boolean  @default(false)
-  survey        Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId      String
-  person        Person?  @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId      String?
-  responseNotes  ResponseNote[]
-    /// @zod.custom(imports.ZResponseData)
+  id               String         @id @default(cuid())
+  createdAt        DateTime       @default(now()) @map(name: "created_at")
+  updatedAt        DateTime       @updatedAt @map(name: "updated_at")
+  finished         Boolean        @default(false)
+  survey           Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId         String
+  person           Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId         String?
+  responseNotes    ResponseNote[]
+  /// @zod.custom(imports.ZResponsePersonAttributes)
+  /// [ResponsePersonAttributes]
+  personAttributes Json?
+  /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
-  data      Json     @default("{}")
+  data             Json           @default("{}")
   /// @zod.custom(imports.ZResponseMeta)
   /// [ResponseMeta]
-  meta      Json     @default("{}")
+  meta             Json           @default("{}")
 }
 
 model ResponseNote {
