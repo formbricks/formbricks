@@ -1,10 +1,6 @@
-/*
-THIS FILE IS WORK IN PROGRESS
-PLEASE DO NOT USE IT YET
-*/
-
 import { responses } from "@/lib/api/response";
-import { prisma } from "@formbricks/database";
+import { updateDisplay } from "@formbricks/lib/services/displays";
+import { TDisplay } from "@formbricks/types/v1/displays";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -14,14 +10,17 @@ export async function OPTIONS(): Promise<NextResponse> {
 export async function POST(_: Request, { params }: { params: { displayId: string } }): Promise<NextResponse> {
   const { displayId } = params;
 
-  const display = await prisma.display.update({
-    where: {
-      id: displayId,
-    },
-    data: {
-      status: "responded",
-    },
-  });
+  if (!displayId) {
+    return responses.badRequestResponse("Missing displayId");
+  }
+
+  let display: TDisplay;
+
+  try {
+    display = await updateDisplay(displayId);
+  } catch (error) {
+    return responses.internalServerErrorResponse(error.message);
+  }
 
   return responses.successResponse(
     {
