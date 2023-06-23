@@ -14,7 +14,6 @@ import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { useEnvironment } from "@/lib/environments/environments";
 import { createSurvey, deleteSurvey, duplicateSurvey, useSurveys } from "@/lib/surveys/surveys";
 import { Badge, ErrorComponent } from "@formbricks/ui";
-import { PlusIcon } from "@heroicons/react/24/outline";
 import {
   ComputerDesktopIcon,
   DocumentDuplicateIcon,
@@ -23,23 +22,34 @@ import {
   PencilSquareIcon,
   EyeIcon,
   TrashIcon,
+  PlusIcon,
+  ArrowUpOnSquareStackIcon,
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import TemplateList from "./templates/TemplateList";
+import { useEffect } from "react";
+import { changeEnvironment } from "@/lib/environments/changeEnvironments";
 
 export default function SurveysList({ environmentId }) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
-  const { environment } = useEnvironment(environmentId);
+  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
 
   const [activeSurvey, setActiveSurvey] = useState("" as any);
   const [activeSurveyIdx, setActiveSurveyIdx] = useState("" as any);
+  const [otherEnvironment, setOtherEnvironment] = useState("" as any);
+
+  useEffect(() => {
+    if (environment) {
+      setOtherEnvironment(environment.product.environments.find((e) => e.type !== environment.type));
+    }
+  }, [environment]);
 
   const newSurvey = async () => {
     router.push(`/environments/${environmentId}/surveys/templates`);
@@ -84,11 +94,25 @@ export default function SurveysList({ environmentId }) {
     }
   };
 
-  if (isLoadingSurveys) {
+  const copyToOtherEnvironment = async (surveyId) => {
+    try {
+      await duplicateSurvey(environmentId, surveyId, otherEnvironment.id);
+      if (otherEnvironment.type === "production") {
+        toast.success("Survey copied to production env.");
+      } else if (otherEnvironment.type === "development") {
+        toast.success("Survey copied to development env.");
+      }
+      changeEnvironment(otherEnvironment.type, environment, router);
+    } catch (error) {
+      toast.error(`Failed to copy to ${otherEnvironment.type}`);
+    }
+  };
+
+  if (isLoadingSurveys || isLoadingEnvironment) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorSurveys) {
+  if (isErrorSurveys || isErrorEnvironment) {
     return <ErrorComponent />;
   }
 
@@ -202,26 +226,29 @@ export default function SurveysList({ environmentId }) {
                               Duplicate
                             </button>
                           </DropdownMenuItem>
-                          {/* <DropdownMenuItem>
-                            <Link
-                              className="flex w-full items-center"
-                              href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                              <ArrowUturnUpIcon className="mr-2 h-4 w-4" />
-                              Copy to Production
-                            </Link>
-                          </DropdownMenuItem> */}
-                          <DropdownMenuItem>
-                            <button
-                              className="flex w-full  items-center"
-                              onClick={() => {
-                                setActiveSurvey(survey);
-                                setActiveSurveyIdx(surveyIdx);
-                                setDeleteDialogOpen(true);
-                              }}>
-                              <TrashIcon className="mr-2 h-4 w-4" />
-                              Delete
-                            </button>
-                          </DropdownMenuItem>
+                          {environment.type === "development" ? (
+                            <DropdownMenuItem>
+                              <button
+                                className="flex w-full items-center"
+                                onClick={() => {
+                                  copyToOtherEnvironment(survey.id);
+                                }}>
+                                <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                                Copy to Prod
+                              </button>
+                            </DropdownMenuItem>
+                          ) : environment.type === "production" ? (
+                            <DropdownMenuItem>
+                              <button
+                                className="flex w-full items-center"
+                                onClick={() => {
+                                  copyToOtherEnvironment(survey.id);
+                                }}>
+                                <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                                Copy to Dev
+                              </button>
+                            </DropdownMenuItem>
+                          ) : null}
                           {survey.type === "link" && survey.status !== "draft" && (
                             <>
                               <DropdownMenuItem>
@@ -248,6 +275,18 @@ export default function SurveysList({ environmentId }) {
                               </DropdownMenuItem>
                             </>
                           )}
+                          <DropdownMenuItem>
+                            <button
+                              className="flex w-full  items-center"
+                              onClick={() => {
+                                setActiveSurvey(survey);
+                                setActiveSurveyIdx(surveyIdx);
+                                setDeleteDialogOpen(true);
+                              }}>
+                              <TrashIcon className="mr-2 h-4 w-4" />
+                              Delete
+                            </button>
+                          </DropdownMenuItem>
                         </DropdownMenuGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
