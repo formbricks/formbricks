@@ -90,10 +90,16 @@ export default function EditAlerts({ memberships, user, environmentId }: EditAle
                               surveyId={survey.id}
                               userId={user.id}
                               notificationSettings={user.notificationSettings}
+                              notificationType={"responseFinished"}
                             />
                           </div>
                           <div className="col-span-1 text-center">
-                            <Switch disabled id="weekly-summary" aria-label="toggle weekly summary" />
+                            <AlertSwitch
+                              surveyId={survey.id}
+                              userId={user.id}
+                              notificationSettings={user.notificationSettings}
+                              notificationType={"weeklySummary"}
+                            />
                           </div>
                         </div>
                       ))}
