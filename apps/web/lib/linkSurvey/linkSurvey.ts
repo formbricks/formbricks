@@ -44,7 +44,6 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       createDisplay(
         { surveyId: survey.id },
         `${window.location.protocol}//${window.location.host}`,
-        survey.environmentId
       ).then((display) => {
         setDisplayId(display.id);
       });
@@ -111,8 +110,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         markDisplayResponded(
           displayId,
           `${window.location.protocol}//${window.location.host}`,
-          survey.environmentId
-        );
+        )
       }
       setResponseId(response.id);
     } else if (responseId && !isPreview) {
