@@ -154,17 +154,15 @@ const EditTagsWrapper: React.FC<IEditTagsWrapperProps> = (props) => {
 
   return (
     <div className="flex w-full flex-col gap-4">
-      {environmentTags?.length === 0 ? (
-        <EmptySpaceFiller type="response" environmentId={environmentId} />
-      ) : null}
-
       <div className="rounded-lg border border-slate-200">
-        {!!environmentTags?.length ? (
-          <div className="grid h-12 grid-cols-4 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-            <div className="col-span-2 pl-6">Name</div>
-            <div className="col-span-1 text-center">Count</div>
-            <div className="col-span-1 mr-4 flex justify-center text-center">Actions</div>
-          </div>
+        <div className="grid h-12 grid-cols-4 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+          <div className="col-span-2 pl-6">Name</div>
+          <div className="col-span-1 text-center">Count</div>
+          <div className="col-span-1 mr-4 flex justify-center text-center">Actions</div>
+        </div>
+
+        {!environmentTags?.length ? (
+          <EmptySpaceFiller environmentId={environmentId} type="tag" noWidgetRequired />
         ) : null}
 
         {environmentTags?.map((tag) => (
