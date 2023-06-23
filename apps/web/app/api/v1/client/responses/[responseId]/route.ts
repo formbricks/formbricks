@@ -16,6 +16,11 @@ export async function PUT(
   { params }: { params: { responseId: string } }
 ): Promise<NextResponse> {
   const { responseId } = params;
+
+  if (!responseId) {
+    return responses.badRequestResponse("Response ID is missing", undefined, true);
+  }
+
   const responseUpdate = await request.json();
 
   const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
