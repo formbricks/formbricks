@@ -43,29 +43,32 @@ export default function SettingsModal({ open, setOpen, formId }) {
 
   const handleBlurInputs = async (inputName: any) => {
     const newForm = JSON.parse(JSON.stringify(form));
+    let changes = {};
+
     switch (inputName) {
       case "dueDate":
-        newForm.dueDate = new Date(dueDate);
+        changes[inputName] = new Date(dueDate);
         break;
       case "name":
-        newForm.name = name;
+        changes[inputName] = name;
         break;
       case "answeringOrder":
-        newForm.answeringOrder = answeringOrder;
+        changes[inputName] = answeringOrder;
         break;
       case "description":
-        newForm.description = description;
+        changes[inputName] = description;
         break;
       case "place":
-        newForm.place = location;
+        changes[inputName] = location;
         break;
       case "formation":
-        newForm.formation = formation;
+        changes[inputName] = formation;
         break;
       default:
         break;
     }
-    await persistForm(newForm);
+
+    await persistForm({ id: newForm.id, ...changes });
     mutateForm(newForm);
     toast(`Your sourcing has been updated successfully 🎉`);
   };
