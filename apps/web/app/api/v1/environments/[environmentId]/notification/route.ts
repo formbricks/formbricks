@@ -80,7 +80,7 @@ const getNotificationData = async (surveys: any, currentDate: Date, lastWeekDate
 
     for await (const survey of surveys) {
         const surveyId = survey.id;
-        if (!notificationSetting[surveyId]["weeklySummary"]) {
+        if (notificationSetting == undefined || notificationSetting[surveyId] == undefined || !notificationSetting[surveyId]["weeklySummary"]) {
           continue;
         }
         const latestResponseData = await prisma.response.findFirst({
