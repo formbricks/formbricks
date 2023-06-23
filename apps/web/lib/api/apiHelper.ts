@@ -126,3 +126,18 @@ export const getSessionUser = async (req?: NextApiRequest, res?: NextApiResponse
   }
   if (session && "user" in session) return session.user;
 };
+
+export const isAdminOrOwner = async (user, teamId) => {
+  const membership = await prisma.membership.findUnique({
+    where: {
+      userId_teamId: {
+        userId: user.id,
+        teamId: teamId,
+      },
+    },
+  });
+  if (membership && (membership.role === "admin" || membership.role === "owner")) {
+    return true;
+  }
+  return false;
+};

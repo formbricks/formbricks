@@ -2,7 +2,7 @@
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import { timeSince } from "@formbricks/lib/time";
-import { PersonAvatar, TooltipContent } from "@formbricks/ui";
+import { PersonAvatar, TooltipContent, TooltipProvider, TooltipTrigger, Tooltip } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -12,8 +12,8 @@ import { RatingResponse } from "../RatingResponse";
 import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
-import { TooltipProvider, TooltipTrigger, Tooltip } from "@formbricks/ui";
 import { ReactNode } from "react";
+import { QuestionType } from "@formbricks/types/questions";
 
 export interface OpenTextSummaryProps {
   data: {
@@ -26,6 +26,9 @@ export interface OpenTextSummaryProps {
       updatedAt: string;
       environmentId: string;
       attributes: [];
+    };
+    personAttributes: {
+      [key: string]: string;
     };
     responseNotes: {
       updatedAt: string;
@@ -72,16 +75,18 @@ interface TooltipRendererProps {
 
 function TooltipRenderer(props: TooltipRendererProps) {
   const { children, shouldRender, tooltipContent } = props;
-  return shouldRender ? (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger>{children}</TooltipTrigger>
-        <TooltipContent>{tooltipContent}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  ) : (
-    <>{children}</>
-  );
+  if (shouldRender) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>{children}</TooltipTrigger>
+          <TooltipContent>{tooltipContent}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return <>{children}</>;
 }
 
 export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
@@ -101,19 +106,35 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
     setDeleteDialogOpen(false);
     setIsDeleting(false);
   };
+
+  const hasPersonAttribute = Boolean(data.personAttributes && Object.keys(data.personAttributes).length);
+
+  const hasUserAgentData = Boolean(data.meta?.userAgent && Object.keys(data.meta.userAgent).length);
+
   const tooltipContent = (
-    <div className="text-slate-600">
-      <b>Device info</b>
-      {data.meta?.userAgent?.browser && <p>Browser: {data.meta?.userAgent?.browser}</p>}
-      {data.meta?.userAgent?.os && <p>OS: {data.meta?.userAgent?.os}</p>}
-      {data.meta?.userAgent?.device && <p>Device: {data.meta?.userAgent?.device}</p>}
-      {data.meta?.userAgent && (
-        <p>Device: {data.meta?.userAgent?.device ? data.meta?.userAgent?.device : "PC / Generic device"}</p>
+    <>
+      {hasPersonAttribute &&
+        Object.keys(data.personAttributes).map((key) => (
+          <p key={key}>
+            {key}: <span className="font-bold">{data.personAttributes[key]}</span>
+          </p>
+        ))}
+
+      {hasUserAgentData && (
+        <div className="text-slate-600">
+          <b>Device info</b>
+          {data.meta?.userAgent?.browser && <p>Browser: {data.meta.userAgent.browser}</p>}
+          {data.meta?.userAgent?.os && <p>OS: {data.meta.userAgent.os}</p>}
+          {data.meta?.userAgent?.device && <p>Device: {data.meta.userAgent.device}</p>}
+          {data.meta?.userAgent && (
+            <p>Device: {data.meta.userAgent.device ? data.meta.userAgent.device : "PC / Generic device"}</p>
+          )}
+        </div>
       )}
-    </div>
+    </>
   );
 
-  const shouldRenderTooltip = !!(data.meta?.userAgent?.browser || data.meta?.userAgent?.os);
+  const shouldRenderTooltip = hasPersonAttribute || hasUserAgentData;
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
       <div
@@ -130,7 +151,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
                 <TooltipRenderer shouldRender={shouldRenderTooltip} tooltipContent={tooltipContent}>
                   <PersonAvatar personId={data.personId} />
                 </TooltipRenderer>
-                <h3 className=" ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
+                <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                   {displayIdentifier}
                 </h3>
               </Link>
@@ -166,7 +187,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
             <div key={`${response.id}-${idx}`}>
               <p className="text-sm text-slate-500">{response.question}</p>
               {typeof response.answer !== "object" ? (
-                response.type === "rating" ? (
+                response.type === QuestionType.Rating ? (
                   <div className="h-8">
                     <RatingResponse scale={response.scale} answer={response.answer} range={response.range} />
                   </div>

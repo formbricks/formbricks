@@ -31,7 +31,7 @@ export default function AppPage({}) {
           </div>
         </div>
 
-        <div className="grid grid-cols-3">
+        <div className="md:grid md:grid-cols-3">
           <div className="col-span-3 rounded-lg border border-slate-300 bg-slate-100 p-6">
             <h3 className="text-lg font-semibold">Reset person / pull data from Formbricks app</h3>
             <p className="text-slate-700">

@@ -62,7 +62,7 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
                 }}>
                 Cancel
               </Button>
-              <Button variant="primary" type="submit" loading={loading}>
+              <Button variant="darkCTA" type="submit" loading={loading}>
                 Add product
               </Button>
             </div>
