@@ -84,6 +84,20 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
             },
           },
         },
+        notes: {
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            text: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -132,6 +146,20 @@ export const getSurveyResponses = async (surveyId: string): Promise<TResponse[]>
                     name: true,
                   },
                 },
+              },
+            },
+          },
+        },
+        notes: {
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            text: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
               },
             },
           },

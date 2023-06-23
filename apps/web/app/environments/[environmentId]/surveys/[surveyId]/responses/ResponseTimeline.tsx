@@ -30,6 +30,8 @@ export default function ResponseTimeline({
 
   const [isDownloadCSVLoading, setIsDownloadCSVLoading] = useState(false);
 
+  console.log(JSON.stringify(responses, null, 2));
+
   const matchQandA = useMemo(() => {
     if (survey && responses) {
       // Create a mapping of question IDs to their headlines

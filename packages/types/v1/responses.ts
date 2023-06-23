@@ -9,6 +9,23 @@ export const ZResponsePersonAttributes = ZPersonAttributes.optional();
 
 export type TResponsePersonAttributes = z.infer<typeof ZResponsePersonAttributes>;
 
+export const ZResponseNoteUser = z.object({
+  id: z.string().cuid2(),
+  name: z.string(),
+});
+
+export type TResponseNoteUser = z.infer<typeof ZResponseNoteUser>;
+
+const ZResponseNote = z.object({
+  updatedAt: z.date(),
+  createdAt: z.date(),
+  id: z.string(),
+  text: z.string(),
+  user: ZResponseNoteUser,
+});
+
+export type TResponseNote = z.infer<typeof ZResponseNote>;
+
 const ZResponse = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -23,6 +40,7 @@ const ZResponse = z.object({
   personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
   data: ZResponseData,
+  notes: z.array(ZResponseNote),
 });
 
 export type TResponse = z.infer<typeof ZResponse>;
