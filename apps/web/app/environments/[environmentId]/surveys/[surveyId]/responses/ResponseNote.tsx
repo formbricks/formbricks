@@ -1,8 +1,6 @@
 "use client";
 
-import { OpenTextSummaryProps } from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/SingleResponse";
 import { addResponseNote } from "@/lib/responseNotes/responsesNotes";
-import { useResponses } from "@/lib/responses/responses";
 import { timeSince } from "@formbricks/lib/time";
 import { TResponseNote } from "@formbricks/types/v1/responses";
 import { Button } from "@formbricks/ui";

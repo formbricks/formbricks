@@ -4,6 +4,45 @@ import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { getPerson, TransformPersonOutput, transformPrismaPerson } from "./person";
 
+const responseSelection = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  surveyId: true,
+  finished: true,
+  data: true,
+  personAttributes: true,
+  person: {
+    select: {
+      id: true,
+      attributes: {
+        select: {
+          value: true,
+          attributeClass: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  },
+  notes: {
+    select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      text: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  },
+};
+
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
   try {
     let person: TransformPersonOutput | null = null;
@@ -30,14 +69,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
           personAttributes: person?.attributes,
         }),
       },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        finished: true,
-        data: true,
-      },
+      select: responseSelection,
     });
 
     const response: TResponse = {
@@ -61,44 +93,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
       where: {
         id: responseId,
       },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        finished: true,
-        data: true,
-        personAttributes: true,
-        person: {
-          select: {
-            id: true,
-            attributes: {
-              select: {
-                value: true,
-                attributeClass: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        notes: {
-          select: {
-            id: true,
-            createdAt: true,
-            updatedAt: true,
-            text: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
+      select: responseSelection,
     });
 
     if (!responsePrisma) {
@@ -127,44 +122,7 @@ export const getSurveyResponses = async (surveyId: string): Promise<TResponse[]>
       where: {
         surveyId,
       },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        finished: true,
-        data: true,
-        personAttributes: true,
-        person: {
-          select: {
-            id: true,
-            attributes: {
-              select: {
-                value: true,
-                attributeClass: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        notes: {
-          select: {
-            id: true,
-            createdAt: true,
-            updatedAt: true,
-            text: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
+      select: responseSelection,
       orderBy: [
         {
           createdAt: "desc",
@@ -213,29 +171,7 @@ export const updateResponse = async (
         finished: responseInput.finished,
         data,
       },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        finished: true,
-        data: true,
-        person: {
-          select: {
-            id: true,
-            attributes: {
-              select: {
-                value: true,
-                attributeClass: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      select: responseSelection,
     });
 
     const response: TResponse = {

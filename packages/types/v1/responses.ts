@@ -5,13 +5,13 @@ export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
-export const ZResponsePersonAttributes = ZPersonAttributes.optional();
+export const ZResponsePersonAttributes = ZPersonAttributes.nullable();
 
 export type TResponsePersonAttributes = z.infer<typeof ZResponsePersonAttributes>;
 
 export const ZResponseNoteUser = z.object({
   id: z.string().cuid2(),
-  name: z.string(),
+  name: z.string().nullable(),
 });
 
 export type TResponseNoteUser = z.infer<typeof ZResponseNoteUser>;
