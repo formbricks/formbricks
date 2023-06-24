@@ -1,7 +1,4 @@
 -- CreateEnum
-CREATE TYPE "PipelineTriggers" AS ENUM ('responseCreated', 'responseUpdated', 'responseFinished');
-
--- CreateEnum
 CREATE TYPE "AttributeType" AS ENUM ('code', 'noCode', 'automatic');
 
 -- CreateEnum
@@ -9,9 +6,6 @@ CREATE TYPE "SurveyStatus" AS ENUM ('draft', 'inProgress', 'paused', 'completed'
 
 -- CreateEnum
 CREATE TYPE "DisplayStatus" AS ENUM ('seen', 'responded');
-
--- CreateEnum
-CREATE TYPE "SurveyAttributeFilterCondition" AS ENUM ('equals', 'notEquals');
 
 -- CreateEnum
 CREATE TYPE "SurveyType" AS ENUM ('email', 'link', 'mobile', 'web');
@@ -32,28 +26,7 @@ CREATE TYPE "Plan" AS ENUM ('free', 'pro');
 CREATE TYPE "MembershipRole" AS ENUM ('owner', 'admin', 'editor', 'developer', 'viewer');
 
 -- CreateEnum
-CREATE TYPE "IdentityProvider" AS ENUM ('email', 'github', 'google');
-
--- CreateEnum
-CREATE TYPE "Role" AS ENUM ('project_manager', 'engineer', 'founder', 'marketing_specialist', 'other');
-
--- CreateEnum
-CREATE TYPE "Objective" AS ENUM ('increase_conversion', 'improve_user_retention', 'increase_user_adoption', 'sharpen_marketing_messaging', 'support_sales', 'other');
-
--- CreateEnum
-CREATE TYPE "Intention" AS ENUM ('survey_user_segments', 'survey_at_specific_point_in_user_journey', 'enrich_customer_profiles', 'collect_all_user_feedback_on_one_platform', 'other');
-
--- CreateTable
-CREATE TABLE "Webhook" (
-    "id" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-    "url" TEXT NOT NULL,
-    "environmentId" TEXT NOT NULL,
-    "triggers" "PipelineTriggers"[],
-
-    CONSTRAINT "Webhook_pkey" PRIMARY KEY ("id")
-);
+CREATE TYPE "IdentityProvider" AS ENUM ('email', 'github');
 
 -- CreateTable
 CREATE TABLE "Attribute" (
@@ -74,7 +47,6 @@ CREATE TABLE "AttributeClass" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
-    "archived" BOOLEAN NOT NULL DEFAULT false,
     "type" "AttributeType" NOT NULL,
     "environmentId" TEXT NOT NULL,
 
@@ -98,43 +70,13 @@ CREATE TABLE "Response" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "finished" BOOLEAN NOT NULL DEFAULT false,
     "surveyId" TEXT NOT NULL,
-    "personId" TEXT,
+    "personId" TEXT NOT NULL,
     "data" JSONB NOT NULL DEFAULT '{}',
     "meta" JSONB NOT NULL DEFAULT '{}',
-    "personAttributes" JSONB,
+    "userAttributes" JSONB NOT NULL DEFAULT '[]',
+    "tags" TEXT[],
 
     CONSTRAINT "Response_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "ResponseNote" (
-    "id" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-    "responseId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "text" TEXT NOT NULL,
-
-    CONSTRAINT "ResponseNote_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Tag" (
-    "id" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-    "name" TEXT NOT NULL,
-    "environmentId" TEXT NOT NULL,
-
-    CONSTRAINT "Tag_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "TagsOnResponses" (
-    "responseId" TEXT NOT NULL,
-    "tagId" TEXT NOT NULL,
-
-    CONSTRAINT "TagsOnResponses_pkey" PRIMARY KEY ("responseId","tagId")
 );
 
 -- CreateTable
@@ -143,7 +85,7 @@ CREATE TABLE "Display" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "surveyId" TEXT NOT NULL,
-    "personId" TEXT,
+    "personId" TEXT NOT NULL,
     "status" "DisplayStatus" NOT NULL DEFAULT 'seen',
 
     CONSTRAINT "Display_pkey" PRIMARY KEY ("id")
@@ -161,34 +103,17 @@ CREATE TABLE "SurveyTrigger" (
 );
 
 -- CreateTable
-CREATE TABLE "SurveyAttributeFilter" (
-    "id" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-    "attributeClassId" TEXT NOT NULL,
-    "surveyId" TEXT NOT NULL,
-    "condition" "SurveyAttributeFilterCondition" NOT NULL,
-    "value" TEXT NOT NULL,
-
-    CONSTRAINT "SurveyAttributeFilter_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "Survey" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
-    "type" "SurveyType" NOT NULL DEFAULT 'web',
+    "type" TEXT NOT NULL DEFAULT 'web',
     "environmentId" TEXT NOT NULL,
     "status" "SurveyStatus" NOT NULL DEFAULT 'draft',
     "questions" JSONB NOT NULL DEFAULT '[]',
-    "thankYouCard" JSONB NOT NULL DEFAULT '{"enabled": false}',
     "displayOption" "displayOptions" NOT NULL DEFAULT 'displayOnce',
     "recontactDays" INTEGER,
-    "autoClose" INTEGER,
-    "delay" INTEGER NOT NULL DEFAULT 0,
-    "autoComplete" INTEGER,
 
     CONSTRAINT "Survey_pkey" PRIMARY KEY ("id")
 );
@@ -247,9 +172,8 @@ CREATE TABLE "Product" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "teamId" TEXT NOT NULL,
-    "brandColor" TEXT NOT NULL DEFAULT '#64748b',
+    "brandColor" TEXT NOT NULL DEFAULT '#334155',
     "recontactDays" INTEGER NOT NULL DEFAULT 7,
-    "formbricksSignature" BOOLEAN NOT NULL DEFAULT true,
 
     CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
 );
@@ -299,7 +223,7 @@ CREATE TABLE "ApiKey" (
     "lastUsedAt" TIMESTAMP(3),
     "label" TEXT,
     "hashedKey" TEXT NOT NULL,
-    "environmentId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
 
     CONSTRAINT "ApiKey_pkey" PRIMARY KEY ("id")
 );
@@ -333,13 +257,9 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "email_verified" TIMESTAMP(3),
     "password" TEXT,
-    "onboardingCompleted" BOOLEAN NOT NULL DEFAULT false,
     "identityProvider" "IdentityProvider" NOT NULL DEFAULT 'email',
     "identityProviderAccountId" TEXT,
     "groupId" TEXT,
-    "role" "Role",
-    "objective" "Objective",
-    "notificationSettings" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -351,13 +271,7 @@ CREATE UNIQUE INDEX "Attribute_attributeClassId_personId_key" ON "Attribute"("at
 CREATE UNIQUE INDEX "AttributeClass_name_environmentId_key" ON "AttributeClass"("name", "environmentId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Tag_environmentId_name_key" ON "Tag"("environmentId", "name");
-
--- CreateIndex
 CREATE UNIQUE INDEX "SurveyTrigger_surveyId_eventClassId_key" ON "SurveyTrigger"("surveyId", "eventClassId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "SurveyAttributeFilter_surveyId_attributeClassId_key" ON "SurveyAttributeFilter"("surveyId", "attributeClassId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "EventClass_name_environmentId_key" ON "EventClass"("name", "environmentId");
@@ -378,9 +292,6 @@ CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provi
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- AddForeignKey
-ALTER TABLE "Webhook" ADD CONSTRAINT "Webhook_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Attribute" ADD CONSTRAINT "Attribute_attributeClassId_fkey" FOREIGN KEY ("attributeClassId") REFERENCES "AttributeClass"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -399,21 +310,6 @@ ALTER TABLE "Response" ADD CONSTRAINT "Response_surveyId_fkey" FOREIGN KEY ("sur
 ALTER TABLE "Response" ADD CONSTRAINT "Response_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ResponseNote" ADD CONSTRAINT "ResponseNote_responseId_fkey" FOREIGN KEY ("responseId") REFERENCES "Response"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "ResponseNote" ADD CONSTRAINT "ResponseNote_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Tag" ADD CONSTRAINT "Tag_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "TagsOnResponses" ADD CONSTRAINT "TagsOnResponses_responseId_fkey" FOREIGN KEY ("responseId") REFERENCES "Response"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "TagsOnResponses" ADD CONSTRAINT "TagsOnResponses_tagId_fkey" FOREIGN KEY ("tagId") REFERENCES "Tag"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Display" ADD CONSTRAINT "Display_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -424,12 +320,6 @@ ALTER TABLE "SurveyTrigger" ADD CONSTRAINT "SurveyTrigger_surveyId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "SurveyTrigger" ADD CONSTRAINT "SurveyTrigger_eventClassId_fkey" FOREIGN KEY ("eventClassId") REFERENCES "EventClass"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "SurveyAttributeFilter" ADD CONSTRAINT "SurveyAttributeFilter_attributeClassId_fkey" FOREIGN KEY ("attributeClassId") REFERENCES "AttributeClass"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "SurveyAttributeFilter" ADD CONSTRAINT "SurveyAttributeFilter_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Survey" ADD CONSTRAINT "Survey_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -468,7 +358,7 @@ ALTER TABLE "Invite" ADD CONSTRAINT "Invite_creatorId_fkey" FOREIGN KEY ("creato
 ALTER TABLE "Invite" ADD CONSTRAINT "Invite_acceptorId_fkey" FOREIGN KEY ("acceptorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ApiKey" ADD CONSTRAINT "ApiKey_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ApiKey" ADD CONSTRAINT "ApiKey_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
