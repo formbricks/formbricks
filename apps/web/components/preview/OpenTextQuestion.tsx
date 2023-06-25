@@ -35,7 +35,7 @@ export default function OpenTextQuestion({
       <div className="mt-4">
         <textarea
           autoFocus
-          rows={3}
+          rows={question.shortAnswer ? 1 : 3}
           name={question.id}
           id={question.id}
           value={value}

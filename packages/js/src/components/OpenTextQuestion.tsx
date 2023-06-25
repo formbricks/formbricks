@@ -32,7 +32,7 @@ export default function OpenTextQuestion({
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="fb-mt-4">
         <textarea
-          rows={3}
+          rows={question.shortAnswer ? 1 : 3}
           name={question.id}
           id={question.id}
           placeholder={question.placeholder}
