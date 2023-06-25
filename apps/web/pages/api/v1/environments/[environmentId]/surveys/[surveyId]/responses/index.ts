@@ -55,6 +55,19 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             user: true,
           },
         },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                name: true,
+                createdAt: true,
+                environmentId: true,
+                id: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
       },
     });
 

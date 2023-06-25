@@ -15,6 +15,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { RatingResponse } from "../RatingResponse";
 import ResponseNote from "./ResponseNote";
+import ResponseTagsWrapper from "./ResponseTagsWrapper";
 
 export interface OpenTextSummaryProps {
   environmentId: string;
@@ -135,6 +136,15 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
             </div>
           ))}
         </div>
+
+        <ResponseTagsWrapper
+          environmentId={environmentId}
+          surveyId={surveyId}
+          responseId={data.id}
+          tags={data.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+          key={data.tags.map((tag) => tag.id).join("-")}
+        />
+
         <DeleteDialog
           open={deleteDialogOpen}
           setOpen={setDeleteDialogOpen}

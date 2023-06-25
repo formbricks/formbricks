@@ -5,6 +5,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query?.environmentId?.toString();
 
+  if (!environmentId) {
+    return res.status(400).json({ message: "Missing environmentId" });
+  }
+
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
   if (!hasAccess) {
     return res.status(403).json({ message: "Not authorized" });

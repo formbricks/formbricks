@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZPersonAttributes } from "./people";
+import { ZTag } from "./tags";
 
 export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
 
@@ -41,6 +42,7 @@ const ZResponse = z.object({
   finished: z.boolean(),
   data: ZResponseData,
   notes: z.array(ZResponseNote),
+  tags: z.array(ZTag),
 });
 
 export type TResponse = z.infer<typeof ZResponse>;

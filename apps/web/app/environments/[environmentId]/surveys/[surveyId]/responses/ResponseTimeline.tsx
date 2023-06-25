@@ -63,7 +63,13 @@ export default function ResponseTimeline({
         }
         return { ...response, responses: updatedResponse };
       });
-      return updatedResponses;
+
+      const updatedResponsesWithTags = updatedResponses.map((response) => ({
+        ...response,
+        tags: response.tags?.map((tag) => tag),
+      }));
+
+      return updatedResponsesWithTags;
     }
     return [];
   }, [survey, responses]);

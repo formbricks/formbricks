@@ -1,4 +1,5 @@
 import type { InitConfig } from "../../../types/js";
+import { addExitIntentListener, addScrollDepthListener } from "./automaticEvents";
 import { Config } from "./config";
 import {
   ErrorHandler,
@@ -127,11 +128,16 @@ export const initialize = async (
   logger.debug("Add click event listeners");
   addClickEventListener();
 
+  logger.debug("Add exit intent (Desktop) listener");
+  addExitIntentListener();
+
+  logger.debug("Add scroll depth 50% listener");
+  addScrollDepthListener();
+
   logger.debug("Initialized");
 
   // check page url if initialized after page load
   checkPageUrl();
-
   return okVoid();
 };
 

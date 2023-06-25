@@ -41,6 +41,19 @@ const responseSelection = {
       },
     },
   },
+  tags: {
+    select: {
+      tags: {
+        select: {
+          id: true,
+          createdAt: true,
+          updatedAt: true,
+          name: true,
+          environmentId: true,
+        },
+      },
+    },
+  },
 };
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
