@@ -7,8 +7,11 @@ interface ResponsesLimitReachedBannerProps {
   responsesCount: number;
 }
 
-export default function ResponsesLimitReachedBanner({ environmentId, limitReached, responsesCount }: ResponsesLimitReachedBannerProps) {
-
+export default function ResponsesLimitReachedBanner({
+  environmentId,
+  limitReached,
+  responsesCount,
+}: ResponsesLimitReachedBannerProps) {
   return (
     <>
       {limitReached && (

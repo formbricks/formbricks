@@ -27,7 +27,7 @@ export default function CareersPage() {
         headingPt2="decisions."
         subheading="We are currently not hiring. Contributions are always welcome!"
       />
-       {/*
+      {/*
       <div className="mx-auto w-3/4">
  
          {Roles.map((role) => (
