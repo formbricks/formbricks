@@ -7,6 +7,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   const surveyId = req.query.surveyId?.toString();
   const responseId = req.query.submissionId?.toString();
 
+  if (!environmentId) {
+    return res.status(400).json({ message: "Missing environmentId" });
+  }
+  if (!surveyId) {
+    return res.status(400).json({ message: "Missing surveyId" });
+  }
+  if (!responseId) {
+    return res.status(400).json({ message: "Missing responseId" });
+  }
+
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
   if (!hasAccess) {
     return res.status(403).json({ message: "Not authorized" });

@@ -114,7 +114,9 @@ const CommandItem = React.forwardRef<
 
 CommandItem.displayName = CommandPrimitive.Item.displayName;
 
-const CommandShortcut = ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) => {
+type SafeHTMLAttributes<T> = Omit<React.HTMLAttributes<T>, "dangerouslySetInnerHTML">;
+
+const CommandShortcut = ({ className, ...props }: SafeHTMLAttributes<HTMLSpanElement>) => {
   return (
     <span className={cn("text-muted-foreground ml-auto text-xs tracking-widest", className)} {...props} />
   );
