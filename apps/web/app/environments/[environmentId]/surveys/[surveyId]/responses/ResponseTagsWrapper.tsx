@@ -1,64 +1,19 @@
-import { useResponses } from "@/lib/responses/responses";
-import { removeTagFromResponse, useAddTagToResponse } from "@/lib/tags/mutateTags";
-import { useCreateTag } from "@/lib/tags/mutateTags";
-import { useTagsForEnvironment } from "@/lib/tags/tags";
-import React from "react";
-import { useState } from "react";
-import { XCircleIcon } from "@heroicons/react/24/solid";
 import TagsCombobox from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/TagsCombobox";
+import { useResponses } from "@/lib/responses/responses";
+import { removeTagFromResponse, useAddTagToResponse, useCreateTag } from "@/lib/tags/mutateTags";
+import { useTagsForEnvironment } from "@/lib/tags/tags";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
-import { useEffect } from "react";
+import { Tag } from "./Tag";
 
 interface ResponseTagsWrapperProps {
   tags: {
     tagId: string;
     tagName: string;
   }[];
-
   environmentId: string;
   surveyId: string;
-  productId: string;
   responseId: string;
-}
-
-export function Tag({
-  tagId,
-  tagName,
-  onDelete,
-  tags,
-  setTagsState,
-  highlight,
-}: {
-  tagId: string;
-  tagName: string;
-  onDelete: (tagId: string) => void;
-  tags: ResponseTagsWrapperProps["tags"];
-  setTagsState: (tags: ResponseTagsWrapperProps["tags"]) => void;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      key={tagId}
-      className={cn(
-        "relative flex items-center justify-between gap-2 rounded-full border bg-slate-600 px-2 py-1 text-slate-100",
-        highlight && "border-2 border-green-600"
-      )}>
-      <div className="flex items-center gap-2">
-        <span className="text-sm">{tagName}</span>
-      </div>
-
-      <span
-        className="cursor-pointer text-sm"
-        onClick={() => {
-          setTagsState(tags.filter((tag) => tag.tagId !== tagId));
-
-          onDelete(tagId);
-        }}>
-        <XCircleIcon fontSize={24} className="h-4 w-4 text-slate-100 hover:text-slate-200" />
-      </span>
-    </div>
-  );
 }
 
 const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
@@ -73,11 +28,8 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   const [tagIdToHighlight, setTagIdToHighlight] = useState("");
 
   const { createTag } = useCreateTag(environmentId);
-
   const { mutateResponses } = useResponses(environmentId, surveyId);
-
   const { data: environmentTags, mutate: refetchEnvironmentTags } = useTagsForEnvironment(environmentId);
-
   const { addTagToRespone } = useAddTagToResponse(environmentId, surveyId, responseId);
 
   const onDelete = async (tagId: string) => {
@@ -121,7 +73,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
           searchValue={searchValue}
           setSearchValue={setSearchValue}
           tags={environmentTags?.map((tag) => ({ value: tag.id, label: tag.name })) ?? []}
-          currentTags={tags.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
+          currentTags={tagsState.map((tag) => ({ value: tag.tagId, label: tag.tagName }))}
           createTag={(tagName) => {
             createTag(
               {

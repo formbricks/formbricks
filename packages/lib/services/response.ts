@@ -3,6 +3,59 @@ import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/typ
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { getPerson, TransformPersonOutput, transformPrismaPerson } from "./person";
+import { TTag } from "@formbricks/types/v1/tags";
+
+const responseSelection = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  surveyId: true,
+  finished: true,
+  data: true,
+  personAttributes: true,
+  person: {
+    select: {
+      id: true,
+      attributes: {
+        select: {
+          value: true,
+          attributeClass: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  },
+  notes: {
+    select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      text: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  },
+  tags: {
+    select: {
+      tag: {
+        select: {
+          id: true,
+          createdAt: true,
+          updatedAt: true,
+          name: true,
+          environmentId: true,
+        },
+      },
+    },
+  },
+};
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
   try {
@@ -30,19 +83,13 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
           personAttributes: person?.attributes,
         }),
       },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        finished: true,
-        data: true,
-      },
+      select: responseSelection,
     });
 
     const response: TResponse = {
       ...responsePrisma,
-      person,
+      person: transformPrismaPerson(responsePrisma.person),
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     return response;
@@ -61,30 +108,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
       where: {
         id: responseId,
       },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        finished: true,
-        data: true,
-        personAttributes: true,
-        person: {
-          select: {
-            id: true,
-            attributes: {
-              select: {
-                value: true,
-                attributeClass: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      select: responseSelection,
     });
 
     if (!responsePrisma) {
@@ -93,11 +117,41 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
 
     const response: TResponse = {
       ...responsePrisma,
-      personAttributes: responsePrisma.personAttributes as Record<string, string | number>,
       person: transformPrismaPerson(responsePrisma.person),
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     return response;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
+export const getSurveyResponses = async (surveyId: string): Promise<TResponse[]> => {
+  try {
+    const responsesPrisma = await prisma.response.findMany({
+      where: {
+        surveyId,
+      },
+      select: responseSelection,
+      orderBy: [
+        {
+          createdAt: "desc",
+        },
+      ],
+    });
+
+    const responses: TResponse[] = responsesPrisma.map((responsePrisma) => ({
+      ...responsePrisma,
+      person: transformPrismaPerson(responsePrisma.person),
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    }));
+
+    return responses;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
@@ -132,34 +186,13 @@ export const updateResponse = async (
         finished: responseInput.finished,
         data,
       },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        finished: true,
-        data: true,
-        person: {
-          select: {
-            id: true,
-            attributes: {
-              select: {
-                value: true,
-                attributeClass: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      select: responseSelection,
     });
 
     const response: TResponse = {
       ...responsePrisma,
       person: transformPrismaPerson(responsePrisma.person),
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     return response;

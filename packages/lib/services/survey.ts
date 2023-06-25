@@ -76,7 +76,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
   });
 
   // responseRate, rounded to 2 decimal places
-  const responseRate = Math.round((numDisplaysResponded / numDisplays) * 100) / 100;
+  const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
 
   const transformedSurvey = {
     ...surveyPrisma,

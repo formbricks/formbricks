@@ -16,7 +16,7 @@ export const populateEnvironment = {
         name: "50% Scroll",
         description: "A user scrolled 50% of the current page",
         type: EventType.automatic,
-      }
+      },
     ],
   },
   attributeClasses: {

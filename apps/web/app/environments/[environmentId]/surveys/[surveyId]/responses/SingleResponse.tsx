@@ -1,49 +1,26 @@
 "use client";
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
+import { deleteSubmission, useResponses } from "@/lib/responses/responses";
+import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
-import { PersonAvatar, TooltipContent, TooltipProvider, TooltipTrigger, Tooltip } from "@formbricks/ui";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { QuestionType } from "@formbricks/types/questions";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { PersonAvatar, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import clsx from "clsx";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { RatingResponse } from "../RatingResponse";
-import { deleteSubmission, useResponses } from "@/lib/responses/responses";
-import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
-import ResponseTagsWrapper from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/ResponseTagsWrapper";
-import { TTag } from "@formbricks/types/v1/tags";
-import { QuestionType } from "@formbricks/types/questions";
+import ResponseTagsWrapper from "./ResponseTagsWrapper";
 
 export interface OpenTextSummaryProps {
-  data: {
-    id: string;
-    personId: string;
-    surveyId: string;
-    person: {
-      id: string;
-      createdAt: string;
-      updatedAt: string;
-      environmentId: string;
-      attributes: [];
-    };
-    personAttributes: {
-      [key: string]: string;
-    };
-    responseNotes: {
-      updatedAt: string;
-      createdAt: string;
-      id: string;
-      text: string;
-      user: {
-        name: string;
-      };
-    }[];
-    tags: TTag[];
-    value: string;
-    updatedAt: string;
-    finished: boolean;
+  environmentId: string;
+  surveyId: string;
+  data: TResponse & {
     responses: {
       id: string;
       question: string;
@@ -53,20 +30,16 @@ export interface OpenTextSummaryProps {
       range?: number;
     }[];
   };
-  environmentId: string;
-  surveyId: string;
-  productId: string;
 }
 
 function findEmail(person) {
-  const emailAttribute = person.attributes.find((attr) => attr.attributeClass.name === "email");
+  const emailAttribute = person.attributes.email;
   return emailAttribute ? emailAttribute.value : null;
 }
 
-export default function SingleResponse({ data, environmentId, surveyId, productId }: OpenTextSummaryProps) {
+export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
   const email = data.person && findEmail(data.person);
-  const displayIdentifier = email || data.personId;
-  const responseNotes = data?.responseNotes;
+  const displayIdentifier = email || (data.person && truncate(data.person.id, 16)) || null;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { mutateResponses } = useResponses(environmentId, surveyId);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -86,7 +59,7 @@ export default function SingleResponse({ data, environmentId, surveyId, productI
       {Object.keys(data.personAttributes).map((key) => {
         return (
           <p>
-            {key}: <span className="font-bold">{data.personAttributes[key]}</span>
+            {key}: <span className="font-bold">{data.personAttributes && data.personAttributes[key]}</span>
           </p>
         );
       })}
@@ -98,18 +71,18 @@ export default function SingleResponse({ data, environmentId, surveyId, productI
       <div
         className={clsx(
           "relative z-10 my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm transition-all",
-          isOpen ? "w-3/4" : responseNotes.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]"
+          isOpen ? "w-3/4" : data.notes.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]"
         )}>
         <div className="space-y-2 px-6 pb-5 pt-6">
           <div className="flex items-center justify-between">
-            {data.personId ? (
+            {data.person?.id ? (
               <Link
                 className="group flex items-center"
-                href={`/environments/${environmentId}/people/${data.personId}`}>
+                href={`/environments/${environmentId}/people/${data.person.id}`}>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <PersonAvatar personId={data.personId} />
+                      <PersonAvatar personId={data.person.id} />
                     </TooltipTrigger>
                     {tooltipContent}
                   </Tooltip>
@@ -131,8 +104,8 @@ export default function SingleResponse({ data, environmentId, surveyId, productI
                   Completed <CheckCircleIcon className="ml-1 h-5 w-5 text-green-400" />
                 </span>
               )}
-              <time className="text-slate-500" dateTime={timeSince(data.updatedAt)}>
-                {timeSince(data.updatedAt)}
+              <time className="text-slate-500" dateTime={timeSince(data.updatedAt.toISOString())}>
+                {timeSince(data.updatedAt.toISOString())}
               </time>
               <button
                 onClick={() => {
@@ -167,7 +140,6 @@ export default function SingleResponse({ data, environmentId, surveyId, productI
         <ResponseTagsWrapper
           environmentId={environmentId}
           surveyId={surveyId}
-          productId={productId}
           responseId={data.id}
           tags={data.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
           key={data.tags.map((tag) => tag.id).join("-")}
@@ -182,12 +154,12 @@ export default function SingleResponse({ data, environmentId, surveyId, productI
         />
       </div>
       <ResponseNote
-        data={data}
+        responseId={data.id}
+        notes={data.notes}
         environmentId={environmentId}
         surveyId={surveyId}
         isOpen={isOpen}
         setIsOpen={setIsOpen}
-        productId={productId}
       />
     </div>
   );

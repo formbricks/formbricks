@@ -95,7 +95,7 @@ model Response {
   surveyId         String
   person           Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId         String?
-  responseNotes    ResponseNote[]
+  notes            ResponseNote[]
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
   data             Json              @default("{}")
@@ -444,7 +444,7 @@ model User {
   identityProviderAccountId String?
   memberships               Membership[]
   accounts                  Account[]
-  responseNote              ResponseNote[]
+  responseNotes             ResponseNote[]
   groupId                   String?
   invitesCreated            Invite[]         @relation("inviteCreatedBy")
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")

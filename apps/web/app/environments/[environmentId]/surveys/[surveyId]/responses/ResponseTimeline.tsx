@@ -1,29 +1,32 @@
 "use client";
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useResponses } from "@/lib/responses/responses";
-import { generateQuestionsAndAttributes, useSurvey } from "@/lib/surveys/surveys";
-import { Button, ErrorComponent } from "@formbricks/ui";
-import { useMemo } from "react";
-import SingleResponse from "./SingleResponse";
 import { convertToCSV } from "@/lib/csvConversion";
-import { useCallback } from "react";
-import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
-import { toast } from "react-hot-toast";
+import { generateQuestionsAndAttributes } from "@/lib/surveys/surveys";
 import { getTodaysDateFormatted } from "@formbricks/lib/time";
-import { useProduct } from "@/lib/products/products";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { Button } from "@formbricks/ui";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { createId } from "@paralleldrive/cuid2";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+import SingleResponse from "./SingleResponse";
 
-export default function ResponseTimeline({ environmentId, surveyId }) {
-  const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
-  const { product } = useProduct(environmentId);
+interface ResponseTimelineProps {
+  environmentId: string;
+  surveyId: string;
+  responses: TResponse[];
+  survey: TSurvey;
+}
 
-  const responses = responsesData?.responses;
-
+export default function ResponseTimeline({
+  environmentId,
+  surveyId,
+  responses,
+  survey,
+}: ResponseTimelineProps) {
   const { attributeMap, questionNames } = generateQuestionsAndAttributes(survey, responses);
-
   const [isDownloadCSVLoading, setIsDownloadCSVLoading] = useState(false);
 
   const matchQandA = useMemo(() => {
@@ -37,6 +40,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
       // Replace question IDs with question headlines in response data
       const updatedResponses = responses.map((response) => {
         const updatedResponse: Array<{
+          id: string;
           question: string;
           answer: string;
           type: string;
@@ -48,6 +52,7 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
           const answer = response.data[question.id];
           if (answer) {
             updatedResponse.push({
+              id: createId(),
               question: question.headline,
               type: question.type,
               scale: question.scale,
@@ -56,12 +61,12 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
             });
           }
         }
-        return { ...response, responses: updatedResponse, person: response.person };
+        return { ...response, responses: updatedResponse };
       });
 
       const updatedResponsesWithTags = updatedResponses.map((response) => ({
         ...response,
-        tags: response.tags?.map((tag) => tag.tag),
+        tags: response.tags?.map((tag) => tag),
       }));
 
       return updatedResponsesWithTags;
@@ -164,14 +169,6 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
     URL.revokeObjectURL(downloadUrl);
   }, [attributeMap, csvFileName, matchQandA, questionNames]);
 
-  if (isLoadingResponses || isLoadingSurvey) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorResponses || isErrorSurvey) {
-    return <ErrorComponent />;
-  }
-
   return (
     <div className="space-y-4">
       {responses.length === 0 ? (
@@ -191,7 +188,6 @@ export default function ResponseTimeline({ environmentId, surveyId }) {
                 data={updatedResponse}
                 surveyId={surveyId}
                 environmentId={environmentId}
-                productId={product?.id ?? ""}
               />
             );
           })}
