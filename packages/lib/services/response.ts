@@ -3,6 +3,7 @@ import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/typ
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { getPerson, TransformPersonOutput, transformPrismaPerson } from "./person";
+import { TTag } from "@formbricks/types/v1/tags";
 
 const responseSelection = {
   id: true,
@@ -43,7 +44,7 @@ const responseSelection = {
   },
   tags: {
     select: {
-      tags: {
+      tag: {
         select: {
           id: true,
           createdAt: true,
@@ -87,7 +88,8 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const response: TResponse = {
       ...responsePrisma,
-      person,
+      person: transformPrismaPerson(responsePrisma.person),
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     return response;
@@ -115,8 +117,8 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
 
     const response: TResponse = {
       ...responsePrisma,
-      personAttributes: responsePrisma.personAttributes as Record<string, string | number>,
       person: transformPrismaPerson(responsePrisma.person),
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     return response;
@@ -145,8 +147,8 @@ export const getSurveyResponses = async (surveyId: string): Promise<TResponse[]>
 
     const responses: TResponse[] = responsesPrisma.map((responsePrisma) => ({
       ...responsePrisma,
-      personAttributes: responsePrisma.personAttributes as Record<string, string | number>,
       person: transformPrismaPerson(responsePrisma.person),
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     }));
 
     return responses;
@@ -190,6 +192,7 @@ export const updateResponse = async (
     const response: TResponse = {
       ...responsePrisma,
       person: transformPrismaPerson(responsePrisma.person),
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
     return response;

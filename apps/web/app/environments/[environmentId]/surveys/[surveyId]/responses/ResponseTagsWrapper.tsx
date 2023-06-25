@@ -1,17 +1,11 @@
-import { useResponses } from "@/lib/responses/responses";
-import { removeTagFromResponse, useAddTagToResponse } from "@/lib/tags/mutateTags";
-import { useCreateTag } from "@/lib/tags/mutateTags";
-import { useTagsForEnvironment } from "@/lib/tags/tags";
-import React from "react";
-import { useState } from "react";
-import { XCircleIcon } from "@heroicons/react/24/solid";
 import TagsCombobox from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/TagsCombobox";
-import { toast } from "react-hot-toast";
+import { useResponses } from "@/lib/responses/responses";
+import { removeTagFromResponse, useAddTagToResponse, useCreateTag } from "@/lib/tags/mutateTags";
+import { useTagsForEnvironment } from "@/lib/tags/tags";
 import { cn } from "@formbricks/lib/cn";
-import { useEffect } from "react";
-import { useProduct } from "@/lib/products/products";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { ErrorComponent } from "@formbricks/ui";
+import { XCircleIcon } from "@heroicons/react/24/solid";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 interface ResponseTagsWrapperProps {
   tags: {
@@ -78,7 +72,6 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   const { mutateResponses } = useResponses(environmentId, surveyId);
   const { data: environmentTags, mutate: refetchEnvironmentTags } = useTagsForEnvironment(environmentId);
   const { addTagToRespone } = useAddTagToResponse(environmentId, surveyId, responseId);
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
 
   const onDelete = async (tagId: string) => {
     try {
@@ -99,14 +92,6 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
     return () => clearTimeout(timeoutId);
   }, [tagIdToHighlight]);
-
-  if (isLoadingProduct) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorProduct) {
-    return <ErrorComponent />;
-  }
 
   return (
     <div className="flex items-start gap-3 p-6">
