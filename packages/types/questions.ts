@@ -33,6 +33,7 @@ export interface IQuestion<T extends Logic> {
 
 export interface OpenTextQuestion extends IQuestion<OpenTextLogic> {
   type: QuestionType.OpenText;
+  shortAnswer: boolean;
   placeholder?: string;
 }
 
