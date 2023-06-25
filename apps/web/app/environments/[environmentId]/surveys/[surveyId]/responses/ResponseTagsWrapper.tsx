@@ -10,7 +10,7 @@ import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { useEffect } from "react";
 
-interface IResponseTagsWrapperProps {
+interface ResponseTagsWrapperProps {
   tags: {
     tagId: string;
     tagName: string;
@@ -33,8 +33,8 @@ export function Tag({
   tagId: string;
   tagName: string;
   onDelete: (tagId: string) => void;
-  tags: IResponseTagsWrapperProps["tags"];
-  setTagsState: (tags: IResponseTagsWrapperProps["tags"]) => void;
+  tags: ResponseTagsWrapperProps["tags"];
+  setTagsState: (tags: ResponseTagsWrapperProps["tags"]) => void;
   highlight?: boolean;
 }) {
   return (
@@ -61,7 +61,7 @@ export function Tag({
   );
 }
 
-const ResponseTagsWrapper: React.FC<IResponseTagsWrapperProps> = ({
+const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   tags,
   environmentId,
   responseId,

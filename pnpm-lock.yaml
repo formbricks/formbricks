@@ -370,10 +370,11 @@ importers:
         version: 1.0.5(tailwindcss@3.3.2)
 
   packages/api:
-    devDependencies:
+    dependencies:
       '@formbricks/errors':
         specifier: workspace:*
         version: link:../errors
+    devDependencies:
       '@formbricks/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

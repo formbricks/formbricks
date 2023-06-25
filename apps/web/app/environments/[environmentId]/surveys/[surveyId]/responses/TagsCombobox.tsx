@@ -3,7 +3,6 @@
 import {
   Button,
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -11,8 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@formbricks/ui";
-import { useEffect } from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 interface ITagsComboboxProps {
   tags: Tag[];
@@ -43,7 +41,9 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
   const tagsToSearch = useMemo(
     () =>
       tags.filter((tag) => {
-        const found = currentTags.findIndex((currentTag) => currentTag.value === tag.value);
+        const found = currentTags.findIndex(
+          (currentTag) => currentTag.value.toLowerCase() === tag.value.toLowerCase()
+        );
 
         return found === -1;
       }),
@@ -67,9 +67,12 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
       <PopoverContent className="max-h-60 w-[200px] overflow-y-auto p-0">
         <Command
           filter={(value, search) => {
-            const foundLabel = tagsToSearch.find((tag) => tag.value === value)?.label ?? "";
+            if (value === "_create") {
+              return 1;
+            }
+            const foundLabel = tagsToSearch.find((tag) => tag.value.toLowerCase() === value)?.label ?? "";
 
-            if (foundLabel.includes(search)) {
+            if (foundLabel.toLowerCase().includes(search.toLowerCase())) {
               return 1;
             }
 
@@ -94,13 +97,6 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
               }}
             />
           </div>
-          <CommandEmpty className="p-3">
-            <a
-              onClick={() => createTag?.(searchValue)}
-              className="text-muted-foreground flex h-6 cursor-pointer items-center justify-center hover:bg-slate-50 focus:!shadow-none focus:outline-none">
-              + Add {searchValue}
-            </a>
-          </CommandEmpty>
           <CommandGroup>
             {tagsToSearch?.map((tag) => {
               return (
@@ -116,6 +112,18 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
                 </CommandItem>
               );
             })}
+            {searchValue !== "" &&
+              !currentTags.find((tag) => tag.label === searchValue) &&
+              !tagsToSearch.find((tag) => tag.label === searchValue) && (
+                <CommandItem value="_create">
+                  <button
+                    onClick={() => createTag?.(searchValue)}
+                    className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!!currentTags.find((tag) => tag.label === searchValue)}>
+                    + Add {searchValue}
+                  </button>
+                </CommandItem>
+              )}
           </CommandGroup>
         </Command>
       </PopoverContent>

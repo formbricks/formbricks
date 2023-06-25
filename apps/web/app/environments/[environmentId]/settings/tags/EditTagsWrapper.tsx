@@ -1,16 +1,14 @@
 "use client";
 
+import MergeTagsCombobox from "@/app/environments/[environmentId]/settings/tags/MergeTagsCombobox";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useDeleteTag, useMergeTags, useUpdateTag } from "@/lib/tags/mutateTags";
 import { useTagsCountForEnvironment, useTagsForEnvironment } from "@/lib/tags/tags";
+import { cn } from "@formbricks/lib/cn";
 import { Button, Input } from "@formbricks/ui";
 import React from "react";
-import debounce from "lodash/debounce";
-import { useMemo } from "react";
 import { toast } from "react-hot-toast";
-import MergeTagsCombobox from "@/app/environments/[environmentId]/settings/tags/MergeTagsCombobox";
-import { cn } from "@formbricks/lib/cn";
 
 interface IEditTagsWrapperProps {
   environmentId: string;
@@ -37,27 +35,6 @@ const SingleTag: React.FC<{
   const { updateTag, updateTagError } = useUpdateTag(environmentId, tagId);
   const { mergeTags, isMergingTags } = useMergeTags(environmentId);
 
-  const debouncedChangeHandler = useMemo(
-    () =>
-      debounce(
-        (name: string) =>
-          updateTag(
-            { name },
-            {
-              onSuccess: () => {
-                toast.success("Tag updated");
-                refetchEnvironmentTags();
-              },
-              onError: (error) => {
-                toast.error(error?.message ?? "Failed to update tag");
-              },
-            }
-          ),
-        1000
-      ),
-    [refetchEnvironmentTags, updateTag]
-  );
-
   return (
     <div className="w-full" key={tagId}>
       <div className="m-2 grid h-16 grid-cols-4 content-center rounded-lg">
@@ -71,8 +48,19 @@ const SingleTag: React.FC<{
                   : "border-slate-200 focus:border-slate-500"
               )}
               defaultValue={tagName}
-              onChange={(e) => {
-                debouncedChangeHandler(e.target.value.trim());
+              onBlur={(e) => {
+                updateTag(
+                  { name: e.target.value.trim() },
+                  {
+                    onSuccess: () => {
+                      toast.success("Tag updated");
+                      refetchEnvironmentTags();
+                    },
+                    onError: (error) => {
+                      toast.error(error?.message ?? "Failed to update tag");
+                    },
+                  }
+                );
               }}
             />
           </div>
@@ -121,13 +109,15 @@ const SingleTag: React.FC<{
               loading={isDeletingTag}
               className="font-medium text-slate-50 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent"
               onClick={() => {
-                deleteTag(null, {
-                  onSuccess: () => {
-                    toast.success("Tag deleted");
-                    refetchEnvironmentTags();
-                    updateTagsCount();
-                  },
-                });
+                if (confirm("Are you sure you want to delete this tag?")) {
+                  deleteTag(null, {
+                    onSuccess: () => {
+                      toast.success("Tag deleted");
+                      refetchEnvironmentTags();
+                      updateTagsCount();
+                    },
+                  });
+                }
               }}>
               Delete
             </Button>
