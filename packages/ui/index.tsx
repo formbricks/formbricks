@@ -46,6 +46,17 @@ export {
 export { Switch } from "./components/Switch";
 export { TabBar } from "./components/TabBar";
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./components/Tooltip";
+export {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "./components/Command";
 
 /* Icons */
 export { AngryBirdRageIcon } from "./components/icons/AngryBirdRageIcon";

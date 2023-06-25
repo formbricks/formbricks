@@ -12,6 +12,8 @@ import { RatingResponse } from "../RatingResponse";
 import { deleteSubmission, useResponses } from "@/lib/responses/responses";
 import clsx from "clsx";
 import ResponseNote from "./ResponseNote";
+import ResponseTagsWrapper from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/ResponseTagsWrapper";
+import { TTag } from "@formbricks/types/v1/tags";
 import { QuestionType } from "@formbricks/types/questions";
 
 export interface OpenTextSummaryProps {
@@ -38,6 +40,7 @@ export interface OpenTextSummaryProps {
         name: string;
       };
     }[];
+    tags: TTag[];
     value: string;
     updatedAt: string;
     finished: boolean;
@@ -52,6 +55,7 @@ export interface OpenTextSummaryProps {
   };
   environmentId: string;
   surveyId: string;
+  productId: string;
 }
 
 function findEmail(person) {
@@ -59,7 +63,7 @@ function findEmail(person) {
   return emailAttribute ? emailAttribute.value : null;
 }
 
-export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
+export default function SingleResponse({ data, environmentId, surveyId, productId }: OpenTextSummaryProps) {
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || data.personId;
   const responseNotes = data?.responseNotes;
@@ -159,6 +163,16 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
             </div>
           ))}
         </div>
+
+        <ResponseTagsWrapper
+          environmentId={environmentId}
+          surveyId={surveyId}
+          productId={productId}
+          responseId={data.id}
+          tags={data.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+          key={data.tags.map((tag) => tag.id).join("-")}
+        />
+
         <DeleteDialog
           open={deleteDialogOpen}
           setOpen={setDeleteDialogOpen}
@@ -173,6 +187,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
         surveyId={surveyId}
         isOpen={isOpen}
         setIsOpen={setIsOpen}
+        productId={productId}
       />
     </div>
   );

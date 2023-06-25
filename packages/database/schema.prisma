@@ -87,24 +87,25 @@ model Person {
 }
 
 model Response {
-  id               String         @id @default(cuid())
-  createdAt        DateTime       @default(now()) @map(name: "created_at")
-  updatedAt        DateTime       @updatedAt @map(name: "updated_at")
-  finished         Boolean        @default(false)
-  survey           Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  id               String            @id @default(cuid())
+  createdAt        DateTime          @default(now()) @map(name: "created_at")
+  updatedAt        DateTime          @updatedAt @map(name: "updated_at")
+  finished         Boolean           @default(false)
+  survey           Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId         String
-  person           Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  person           Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId         String?
   responseNotes    ResponseNote[]
+  /// @zod.custom(imports.ZResponseData)
+  /// [ResponseData]
+  data             Json              @default("{}")
+  /// @zod.custom(imports.ZResponseMeta)
+  /// [ResponseMeta]
+  meta             Json              @default("{}")
+  tags             TagsOnResponses[]
   /// @zod.custom(imports.ZResponsePersonAttributes)
   /// [ResponsePersonAttributes]
   personAttributes Json?
-  /// @zod.custom(imports.ZResponseData)
-  /// [ResponseData]
-  data             Json           @default("{}")
-  /// @zod.custom(imports.ZResponseMeta)
-  /// [ResponseMeta]
-  meta             Json           @default("{}")
 }
 
 model ResponseNote {
@@ -116,6 +117,27 @@ model ResponseNote {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String
   text       String
+}
+
+model Tag {
+  id            String            @id @default(cuid())
+  createdAt     DateTime          @default(now()) @map(name: "created_at")
+  updatedAt     DateTime          @updatedAt @map(name: "updated_at")
+  name          String
+  responses     TagsOnResponses[]
+  environmentId String
+  environment   Environment       @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@unique([environmentId, name])
+}
+
+model TagsOnResponses {
+  responseId String
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  tagId      String
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([responseId, tagId])
 }
 
 enum SurveyStatus {
@@ -278,6 +300,7 @@ model Environment {
   attributeClasses     AttributeClass[]
   apiKeys              ApiKey[]
   webhooks             Webhook[]
+  tags                 Tag[]
 }
 
 model Product {
