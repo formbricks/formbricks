@@ -1,6 +1,6 @@
 import type { OpenTextQuestion } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { Button, Input, Label } from "@formbricks/ui";
+import { Button, Input, Label, Switch } from "@formbricks/ui";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
@@ -61,6 +61,20 @@ export default function OpenQuestionForm({
             Add Description
           </Button>
         )}
+      </div>
+
+      <div className="mt-3">
+        <Label htmlFor="longAnswer">Long Answer</Label>
+        <div className="mt-2">
+          <Switch
+            id="longAnswer"
+            checked={!question.shortAnswer}
+            onClick={(e) => {
+              e.stopPropagation();
+              updateQuestion(questionIdx, { shortAnswer: !question.shortAnswer });
+            }}
+          />
+        </div>
       </div>
 
       <div className="mt-3">
