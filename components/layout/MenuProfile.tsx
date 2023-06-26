@@ -5,7 +5,7 @@ import {
   CogIcon,
 } from "@heroicons/react/24/solid";
 import { signOut, useSession } from "next-auth/react";
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import { classNames } from "../../lib/utils";
 import { useRouter } from "next/router";
 
