@@ -15,30 +15,30 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
-  const [redirectLink, setRedirectLink] = useState<string | null>("");
+  const [redirectUrl, setRedirectUrl] = useState<string | null>("");
 
   const handleRedirectCheckMark = () => {
-    if (redirectToggle && localSurvey.redirectLink) {
+    if (redirectToggle && localSurvey.redirectUrl) {
       setRedirectToggle(false);
-      setRedirectLink(null);
-      setLocalSurvey({ ...localSurvey, redirectLink: null });
+      setRedirectUrl(null);
+      setLocalSurvey({ ...localSurvey, redirectUrl: null });
       return;
     }
     if (redirectToggle) {
       setRedirectToggle(false);
-      return
+      return;
     }
     setRedirectToggle(true);
   };
 
-  const handleRedirectLinkChange = (link: string) => {
-    setRedirectLink(link);
-    setLocalSurvey({ ...localSurvey, redirectLink: link });
+  const handleRedirectUrlChange = (link: string) => {
+    setRedirectUrl(link);
+    setLocalSurvey({ ...localSurvey, redirectUrl: link });
   };
 
   useEffect(() => {
-    if (localSurvey.redirectLink) {
-      setRedirectLink(localSurvey.redirectLink);
+    if (localSurvey.redirectUrl) {
+      setRedirectUrl(localSurvey.redirectUrl);
       setRedirectToggle(true);
     }
   }, []);
@@ -114,8 +114,8 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
           )}
           <div className="p-3 ">
             <div className="ml-2 flex items-center space-x-1">
-              <Switch id="redirectLink" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
-              <Label htmlFor="redirectLink" className="cursor-pointer">
+              <Switch id="redirectUrl" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
+              <Label htmlFor="redirectUrl" className="cursor-pointer">
                 <div className="ml-2">
                   <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
                   <p className="text-xs font-normal text-slate-500">
@@ -129,8 +129,8 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                 <Input
                   type="url"
                   placeholder="https://www.example.com"
-                  value={redirectLink ? redirectLink : ""}
-                  onChange={(e) => handleRedirectLinkChange(e.target.value)}
+                  value={redirectUrl ? redirectUrl : ""}
+                  onChange={(e) => handleRedirectUrlChange(e.target.value)}
                 />
               )}
             </div>

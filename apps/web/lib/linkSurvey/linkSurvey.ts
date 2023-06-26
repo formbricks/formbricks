@@ -27,8 +27,8 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   const [loadingElement, setLoadingElement] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
-  const [initiateCountdown, setinitiateCountdown] = useState<boolean>(false)
-  const router = useRouter()
+  const [initiateCountdown, setinitiateCountdown] = useState<boolean>(false);
+  const router = useRouter();
   const URLParams = new URLSearchParams(window.location.search);
   const isPreview = URLParams.get("preview") === "true";
   const hasFirstQuestionPrefill = URLParams.has(survey.questions[0].id);
@@ -137,21 +137,21 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     } else {
       setProgress(1);
       setFinished(true);
-      if(survey.redirectLink && Object.values(data)[0]!=="dismissed"){
-        handleRedirect(survey.redirectLink);
+      if (survey.redirectUrl && Object.values(data)[0] !== "dismissed") {
+        handleRedirect(survey.redirectUrl);
       }
     }
   };
 
-  const handleRedirect=(url)=>{
-    if (!url.startsWith('https://') && !url.startsWith('http://')) {
+  const handleRedirect = (url) => {
+    if (!url.startsWith("https://") && !url.startsWith("http://")) {
       url = `https://${url}`;
     }
-    setinitiateCountdown(true)
-    setTimeout(() =>{
-      router.push(url)
+    setinitiateCountdown(true);
+    setTimeout(() => {
+      router.push(url);
     }, 3000);
-  }
+  };
 
   const handlePrefilling = useCallback(async () => {
     try {
