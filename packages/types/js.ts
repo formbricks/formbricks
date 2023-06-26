@@ -53,6 +53,7 @@ export interface Settings {
   noCodeEvents?: any[];
   brandColor?: string;
   formbricksSignature?: boolean;
+  placement?: PlacementType;
 }
 
 export interface JsConfig {
@@ -92,3 +93,4 @@ export interface Trigger {
 }
 
 export type MatchType = "exactMatch" | "contains" | "startsWith" | "endsWith" | "notMatch" | "notContains";
+export type PlacementType = "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";

@@ -207,6 +207,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
         select: {
           brandColor: true,
           formbricksSignature: true,
+          placement: true,
         },
       },
     },
@@ -214,6 +215,7 @@ export const getSettings = async (environmentId: string, personId: string): Prom
 
   const formbricksSignature = environmentProdut?.product.formbricksSignature;
   const brandColor = environmentProdut?.product.brandColor;
+  const placement = environmentProdut?.product.placement;
 
-  return { surveys, noCodeEvents, brandColor, formbricksSignature };
+  return { surveys, noCodeEvents, brandColor, formbricksSignature, placement };
 };
