@@ -12,7 +12,6 @@ import Loading from "../../components/Loading";
 
 export default function UpdateProfile() {
   const router = useRouter();
-  const { next } = router.query;
   const session = useSession();
   const [profilePictureFileName, setProfilePictureFileName] = useState("");
   const inputFileRef = useRef(null);
@@ -23,29 +22,31 @@ export default function UpdateProfile() {
     if (session.data) {
       setUser(session.data.user);
       if (session.data.user.address) {
-        let add = session.data.user.address;
-        delete add.userId;
-        setAddress(add);
+        let newAddress = session.data.user.address;
+        delete newAddress.userId;
+        setAddress(newAddress);
       }
     }
   }, [session]);
 
-  const handleBlur = (e, source) => {
-    if(e.target.value === "") toast.error("Renseignez votre " +`'${source}'`);
+  const handleBlur = (e, fieldLabel) => {
+    if (e.target.value === "")
+      toast.error("Renseignez votre " + `'${fieldLabel}'`);
   };
 
   const handleInputChange = (e) => {
-    const value = e.target.value;
-    const name = e.target.name;
-    if (["line1", "line2", "commune", "ville", "province"].includes(name)) {
+    let value = e.target.value;
+    const field = e.target.name;
+    if (["line1", "line2", "commune", "ville", "province"].includes(field)) {
       setAddress({
         ...address,
-        [name]: value,
+        [field]: value,
       });
     } else {
+      if (field === "dob") value = new Date(value);
       setUser({
         ...user,
-        [e.target.name]: value,
+        [field]: value,
       });
     }
   };
@@ -69,29 +70,25 @@ export default function UpdateProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const file = e.target.elements.profilPic.files[0];
-    let photo;
-    file ? (photo = (await upload(file)).Location) : "";
 
-    if (e.target.elements.province.value != "Votre province"){
-      try {
-        let userUpdateData = user;
-          userUpdateData.dob = new Date(userUpdateData.dob);
-          delete userUpdateData.address;
-          const res = await updateUser(userUpdateData, address);
+    try {
+      const photo = file && (await upload(file)).Location;
+      let updatedUser = { ...user, photo };
+      delete updatedUser.address;
 
-          if (res.status != 200) {
-            toast.error("Erreur, veuillez ressayer");
-          } else {
-            session.data.user = userUpdateData
-            session.data.user.address = address
-            toast.success("Votre profil a bien été mis à jour");
-            router.push(`/`);
-          }
-      } catch (e) {
-        toast(e.message);
+      const res = await updateUser(updatedUser, address);
+
+      if (res.status != 200) {
+        toast.error("Erreur, veuillez ressayer");
+      } else {
+        session.data.user = updatedUser;
+        session.data.user.address = address;
+        toast.success("Votre profil a bien été mis à jour");
+        router.push(router.query.next?.toString() || "/");
       }
+    } catch (e) {
+      toast(e.message);
     }
-    else toast.warning("Indiquez votre province")
   };
 
   if (!user) return <Loading />;
@@ -126,7 +123,9 @@ export default function UpdateProfile() {
               <div className="text-2xl font-bold text-center mb-2 mt-3 text-ui-gray-dark">
                 {user.firstname} {user.lastname}
               </div>
-              <p className="font-medium text-sm text-center mb-2 mt-3 text-red">{user.email}</p>
+              <p className="font-medium text-sm text-center mb-2 mt-3 text-red">
+                {user.email}
+              </p>
             </div>
 
             <div className="mt-4">
@@ -187,7 +186,7 @@ export default function UpdateProfile() {
 
                     <div>
                       <label
-                        htmlFor="dateOfBirth"
+                        htmlFor="dob"
                         className="block text-sm font-medium text-ui-gray-dark"
                       >
                         Date de naissance
@@ -196,9 +195,11 @@ export default function UpdateProfile() {
                         <input
                           id="dob"
                           name="dob"
-                          value={user.dob ? user.dob.toString().substring(0, 10) : new Date().toISOString().substring(0, 10)}
+                          value={new Date(user.dob)
+                            .toISOString()
+                            .substring(0, 10)}
                           onChange={handleInputChange}
-                          onBlur={(e) => handleBlur(e, "Date de naissance")}
+                          onBlur={(e) => handleBlur(e, "date de naissance")}
                           type="date"
                           required
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
@@ -218,7 +219,7 @@ export default function UpdateProfile() {
                         required
                         placeholder="+243 820 000 000"
                         onChange={handleInputChange}
-                        onBlur={(e) => handleBlur(e, "Téléphone")}
+                        onBlur={(e) => handleBlur(e, "numéro de téléphone")}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>
@@ -234,7 +235,6 @@ export default function UpdateProfile() {
                         value={user.whatsapp}
                         placeholder="+243 810 000 000"
                         onChange={handleInputChange}
-                        onBlur={(e) => handleBlur(e, "Whatsapp")}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                       />
                     </div>
@@ -255,7 +255,7 @@ export default function UpdateProfile() {
                           value={address ? address.line1 : ""}
                           placeholder="N° 63, Ave Colonel Mondjiba, Q. Basoko"
                           onChange={handleInputChange}
-                          onBlur={(e) => handleBlur(e, "Adresse")}
+                          onBlur={(e) => handleBlur(e, "adresse")}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
                       </div>
@@ -267,7 +267,6 @@ export default function UpdateProfile() {
                           type="text"
                           value={address ? address.line2 : ""}
                           onChange={handleInputChange}
-                          onBlur={(e) => handleBlur(e, "une référence d'adresse")}
                           placeholder="Réf. Silikin Village, Concession COTEX"
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
@@ -282,7 +281,7 @@ export default function UpdateProfile() {
                           required
                           placeholder="Commune ou Territoire"
                           onChange={handleInputChange}
-                          onBlur={(e) => handleBlur(e, "Commune")}
+                          onBlur={(e) => handleBlur(e, "commune")}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
                       </div>
@@ -296,7 +295,7 @@ export default function UpdateProfile() {
                           required
                           placeholder="Ville"
                           onChange={handleInputChange}
-                          onBlur={(e) => handleBlur(e, "Ville")}
+                          onBlur={(e) => handleBlur(e, "ville")}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         />
                       </div>
@@ -305,12 +304,17 @@ export default function UpdateProfile() {
                         <select
                           name="province"
                           id="province"
-                          value={address ? address.province : "Votre province"}
+                          required
                           onChange={handleInputChange}
-                          onBlur={(e) => handleBlur(e, "Province")}
+                          onBlur={(e) => handleBlur(e, "province")}
                           className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
                         >
-                          <option disabled selected hidden>
+                          <option
+                            value={""}
+                            disabled
+                            selected={!address?.province}
+                            hidden
+                          >
                             Votre province
                           </option>
                           {Object.keys(DRCProvinces).map((province, key) => (
@@ -337,7 +341,6 @@ export default function UpdateProfile() {
           </div>
         </div>
       </div>
-
     </BaseLayoutUnauthorized>
   );
 }
