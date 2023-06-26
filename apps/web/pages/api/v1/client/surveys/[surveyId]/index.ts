@@ -27,6 +27,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         thankYouCard: true,
         environmentId: true,
         status: true,
+        redirectUrl: true,
       },
     });
 

@@ -197,6 +197,7 @@ export const ZSurvey = z.object({
   displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
   autoClose: z.union([z.number(), z.null()]),
   triggers: z.array(ZEventClass),
+  redirectUrl: z.union([z.string(), z.null()]),
   recontactDays: z.union([z.number(), z.null()]),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
