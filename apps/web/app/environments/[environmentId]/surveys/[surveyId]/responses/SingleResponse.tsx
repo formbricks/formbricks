@@ -1,7 +1,7 @@
 "use client";
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
-import { deleteSubmission, useResponses } from "@/lib/responses/responses";
+import { deleteSubmission } from "@/lib/responses/responses";
 import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { QuestionType } from "@formbricks/types/questions";
@@ -11,6 +11,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { RatingResponse } from "../RatingResponse";
@@ -38,17 +39,17 @@ function findEmail(person) {
 }
 
 export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
+  const router = useRouter();
   const email = data.person && findEmail(data.person);
   const displayIdentifier = email || (data.person && truncate(data.person.id, 16)) || null;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { mutateResponses } = useResponses(environmentId, surveyId);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
     const deleteResponse = await deleteSubmission(environmentId, data?.surveyId, data?.id);
-    mutateResponses();
+    router.refresh();
     if (deleteResponse?.id?.length > 0) toast.success("Submission deleted successfully.");
     setDeleteDialogOpen(false);
     setIsDeleting(false);
