@@ -65,10 +65,7 @@ export function EditPlacement({ environmentId }) {
   const [currentPlacement, setCurrentPlacement] = useState("");
 
   useEffect(() => {
-    if (product) {
-      console.log(product.placement);
-      setCurrentPlacement(product.placement);
-    }
+    if (product) setCurrentPlacement(product.placement);
   }, [product]);
 
   if (isLoadingProduct) {
@@ -86,6 +83,23 @@ export function EditPlacement({ environmentId }) {
     { name: "Centered Modal", value: "center", disabled: false },
   ];
 
+  const getPlacementClasses = (placement) => {
+    switch (placement) {
+      case "bottomRight":
+        return "bottom-3 right-3";
+      case "topRight":
+        return "top-3 right-3";
+      case "topLeft":
+        return "top-3 left-3";
+      case "bottomLeft":
+        return "bottom-3 left-3";
+      case "center":
+        return "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+      default:
+        return "bottom-3 right-3";
+    }
+  };
+
   return (
     <div className="w-full items-center">
       <div className="flex">
@@ -102,7 +116,11 @@ export function EditPlacement({ environmentId }) {
           ))}
         </RadioGroup>
         <div className="relative ml-8 h-40 w-full rounded bg-slate-200">
-          <div className="absolute bottom-3 right-3 h-16 w-16 rounded bg-slate-700"></div>
+          <div
+            className={cn(
+              "absolute h-16 w-16 rounded bg-slate-700",
+              getPlacementClasses(currentPlacement)
+            )}></div>
         </div>
       </div>
       <Button
