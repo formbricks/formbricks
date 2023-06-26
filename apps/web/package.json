@@ -51,6 +51,7 @@
     "stripe": "^12.6.0",
     "swr": "^2.1.5",
     "typescript": "5.0.4",
+    "ua-parser-js": "^1.0.35",
     "zod": "^3.21.4"
   },
   "devDependencies": {
