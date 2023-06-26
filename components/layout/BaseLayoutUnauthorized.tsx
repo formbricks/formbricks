@@ -1,4 +1,5 @@
 import Head from "next/head";
+import BaseLayoutManagement from "./BaseLayoutManagement";
 
 export default function BaseLayoutUnauthorized({ title, children }) {
   return (

@@ -6,10 +6,9 @@ import { PencilIcon } from "@heroicons/react/24/solid";
 import { useSession } from "next-auth/react";
 import { upload } from "../../lib/utils";
 import { DRCProvinces } from "../../lib/enums";
-import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { Address } from "@prisma/client";
 import Loading from "../../components/Loading";
-import { SnoopElement, SnoopForm, SnoopPage } from "../../kda-snoopforms-react/src";
+import BaseLayoutManagement from "../../components/layout/BaseLayoutManagement";
 
 export default function UpdateProfile() {
   const router = useRouter();
@@ -95,8 +94,8 @@ export default function UpdateProfile() {
   if (!user) return <Loading />;
 
   return (
-    <BaseLayoutUnauthorized title="Mise à jour profil">
-      <div className="flex min-h-screen bg-ui-gray-light">
+    <BaseLayoutManagement title="Mise à jour profil">
+      <div className="flex min-h-screen bg-ui-gray-light w-full">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
             <div
@@ -336,6 +335,6 @@ export default function UpdateProfile() {
         </div>
       </div>
 
-    </BaseLayoutUnauthorized>
+    </BaseLayoutManagement>
   );
 }
