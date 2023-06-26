@@ -1,5 +1,6 @@
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { EventType } from "@prisma/client";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -23,6 +24,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(400).json({ message: "Missing eventName" });
     }
 
+    let eventType: EventType = EventType.code;
+    if (eventName === "Exit Intent (Desktop)" || eventName === "50% Scroll") {
+      eventType = EventType.automatic;
+    }
+
     const eventData = await prisma.event.create({
       data: {
         properties,
@@ -41,7 +47,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             },
             create: {
               name: eventName,
-              type: "code",
+              type: eventType,
               environment: {
                 connect: {
                   id: environmentId,

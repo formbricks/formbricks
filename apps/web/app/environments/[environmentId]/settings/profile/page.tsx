@@ -1,7 +1,7 @@
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 import { getServerSession } from "next-auth";
-import { EditName, EditAvatar } from "./editProfile";
+import { EditName, EditAvatar, DeleteAccount } from "./editProfile";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 
 export default async function ProfileSettingsPage() {
@@ -14,6 +14,12 @@ export default async function ProfileSettingsPage() {
       </SettingsCard>
       <SettingsCard title="Avatar" description="Assist your team in identifying you on Formbricks.">
         <EditAvatar session={session} />
+      </SettingsCard>
+      <SettingsCard
+        title="Delete account"
+        description="Delete your account, your personal information, your preferences and access to your data"
+        dangerZone>
+        <DeleteAccount session={session} />
       </SettingsCard>
     </div>
   );

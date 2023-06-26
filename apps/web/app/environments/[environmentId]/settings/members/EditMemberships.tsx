@@ -2,10 +2,25 @@
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { addMember, deleteInvite, removeMember, resendInvite, useMembers } from "@/lib/members";
+import {
+  addMember,
+  deleteInvite,
+  removeMember,
+  resendInvite,
+  updateInviteeRole,
+  updateMemberRole,
+  useMembers,
+} from "@/lib/members";
 import {
   Badge,
   Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   ProfileAvatar,
   Tooltip,
   TooltipContent,
@@ -18,10 +33,94 @@ import toast from "react-hot-toast";
 import AddMemberModal from "./AddMemberModal";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import { useProfile } from "@/lib/profile";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 
 type EditMembershipsProps = {
   environmentId: string;
 };
+
+interface Role {
+  isAdminOrOwner: boolean;
+  memberRole: MembershipRole;
+  teamId: string;
+  memberId: string;
+  environmentId: string;
+  userId: string;
+  memberAccepted: boolean;
+  inviteId: string;
+}
+
+enum MembershipRole {
+  Admin = "admin",
+  Editor = "editor",
+  Developer = "developer",
+  Viewer = "viewer",
+}
+
+function RoleElement({
+  isAdminOrOwner,
+  memberRole,
+  teamId,
+  memberId,
+  environmentId,
+  userId,
+  memberAccepted,
+  inviteId,
+}: Role) {
+  const { mutateTeam } = useMembers(environmentId);
+  const [loading, setLoading] = useState(false);
+  const disableRole =
+    memberRole && memberId && userId
+      ? memberRole === ("owner" as MembershipRole) || memberId === userId
+      : false;
+
+  const handleMemberRoleUpdate = async (role: string) => {
+    setLoading(true);
+    if (memberAccepted) {
+      await updateMemberRole(teamId, memberId, role);
+    } else {
+      await updateInviteeRole(teamId, inviteId, role);
+    }
+    setLoading(false);
+    mutateTeam();
+  };
+
+  if (isAdminOrOwner) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            disabled={disableRole}
+            variant="secondary"
+            className="flex items-center gap-1 p-1.5 text-xs"
+            loading={loading}
+            size="sm">
+            <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
+            <ChevronDownIcon className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        {!disableRole && (
+          <DropdownMenuContent>
+            <DropdownMenuLabel className="text-center">Select Role</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup
+              value={capitalizeFirstLetter(memberRole)}
+              onValueChange={(value) => handleMemberRoleUpdate(value.toLowerCase())}>
+              {Object.keys(MembershipRole).map((role) => (
+                <DropdownMenuRadioItem key={role} value={role}>
+                  {capitalizeFirstLetter(role)}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        )}
+      </DropdownMenu>
+    );
+  }
+
+  return <Badge text={capitalizeFirstLetter(memberRole)} type="gray" size="tiny" />;
+}
 
 export function EditMemberships({ environmentId }: EditMembershipsProps) {
   const { team, isErrorTeam, isLoadingTeam, mutateTeam } = useMembers(environmentId);
@@ -31,6 +130,10 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
   const [isCreateTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
   const [activeMember, setActiveMember] = useState({} as any);
+  const { profile } = useProfile();
+
+  const role = team?.members?.filter((member) => member?.userId === profile?.id)[0]?.role;
+  const isAdminOrOwner = role === "admin" || role === "owner";
 
   const handleOpenDeleteMemberModal = (e, member) => {
     e.preventDefault();
@@ -78,13 +181,15 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
           }}>
           Create New Team
         </Button>
-        <Button
-          variant="primary"
-          onClick={() => {
-            setAddMemberModalOpen(true);
-          }}>
-          Add Member
-        </Button>
+        {process.env.NEXT_PUBLIC_INVITE_DISABLED !== "1" && isAdminOrOwner && (
+          <Button
+            variant="darkCTA"
+            onClick={() => {
+              setAddMemberModalOpen(true);
+            }}>
+            Add Member
+          </Button>
+        )}
       </div>
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-8 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
@@ -108,8 +213,17 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
               <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
                 {member.email}
               </div>
-              <div className="ph-no-capture col-span-1 flex flex-col justify-center items-start break-all">
-                <Badge text={capitalizeFirstLetter(member.role)} type="gray" size="tiny" />
+              <div className="ph-no-capture col-span-1 flex flex-col items-start justify-center break-all">
+                <RoleElement
+                  isAdminOrOwner={isAdminOrOwner}
+                  memberRole={member.role}
+                  memberId={member.userId}
+                  teamId={team.teamId}
+                  environmentId={environmentId}
+                  userId={profile?.id}
+                  memberAccepted={member.accepted}
+                  inviteId={member?.inviteId}
+                />
               </div>
               <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
                 {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}

@@ -3,8 +3,9 @@
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 import { useEnvironment } from "@/lib/environments/environments";
-import { useResponses } from "@/lib/responses/responses";
-import { useSurvey } from "@/lib/surveys/surveys";
+import { timeSinceConditionally } from "@formbricks/lib/time";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import {
   Button,
   Confetti,
@@ -20,48 +21,57 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import LinkSurveyModal from "./LinkSurveyModal";
-import { timeSinceConditionally } from "@formbricks/lib/time";
 
-export default function SummaryMetadata({ surveyId, environmentId }) {
-  const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
+interface SummaryMetadataProps {
+  surveyId: string;
+  environmentId: string;
+  responses: TResponse[];
+  survey: TSurvey;
+}
+
+export default function SummaryMetadata({
+  surveyId,
+  environmentId,
+  responses,
+  survey,
+}: SummaryMetadataProps) {
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
   const [confetti, setConfetti] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const newSurveyParam = searchParams?.get("success");
-    if (newSurveyParam && survey && environment) {
-      setConfetti(true);
-      toast.success(
-        survey.type === "web" && !environment.widgetSetupCompleted
-          ? "Almost there! Install widget to start receiving responses."
-          : "Congrats! Your survey is live.",
-        {
-          icon: survey.type === "web" && !environment.widgetSetupCompleted ? "🤏" : "🎉",
-          duration: 5000,
-          position: "bottom-right",
+    if (environment) {
+      const newSurveyParam = searchParams?.get("success");
+      if (newSurveyParam && survey && environment) {
+        setConfetti(true);
+        toast.success(
+          survey.type === "web" && !environment.widgetSetupCompleted
+            ? "Almost there! Install widget to start receiving responses."
+            : "Congrats! Your survey is live.",
+          {
+            icon: survey.type === "web" && !environment.widgetSetupCompleted ? "🤏" : "🎉",
+            duration: 5000,
+            position: "bottom-right",
+          }
+        );
+        if (survey.type === "link") {
+          setShowLinkModal(true);
         }
-      );
-      if (survey.type === "link") {
-        setShowLinkModal(true);
       }
     }
   }, [environment, searchParams, survey]);
-
-  const responses = responsesData?.responses;
 
   const completionRate = useMemo(() => {
     if (!responses) return 0;
     return (responses.filter((r) => r.finished).length / responses.length) * 100;
   }, [responses]);
 
-  if (isLoadingResponses || isLoadingSurvey || isLoadingEnvironment) {
+  if (isLoadingEnvironment) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorResponses || isErrorSurvey || isErrorEnvironment) {
+  if (isErrorEnvironment) {
     return <ErrorComponent />;
   }
 
@@ -72,7 +82,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
           <div className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm text-slate-600">Survey displays</p>
             <p className="text-2xl font-bold text-slate-800">
-              {survey.numDisplays === 0 ? <span>-</span> : survey.numDisplays}
+              {survey.analytics.numDisplays === 0 ? <span>-</span> : survey.analytics.numDisplays}
             </p>
           </div>
           <div className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -90,10 +100,10 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
                     <QuestionMarkCircleIcon className="mb-1 ml-2 inline h-4 w-4 text-slate-500" />
                   </p>
                   <p className="text-2xl font-bold text-slate-800">
-                    {survey.responseRate === null || survey.responseRate === 0 ? (
+                    {survey.analytics.responseRate === null || survey.analytics.responseRate === 0 ? (
                       <span>-</span>
                     ) : (
-                      <span>{Math.round(survey.responseRate * 100)} %</span>
+                      <span>{Math.round(survey.analytics.responseRate * 100)} %</span>
                     )}
                   </p>
                 </div>
@@ -130,7 +140,7 @@ export default function SummaryMetadata({ surveyId, environmentId }) {
         </div>
         <div className="flex flex-col justify-between lg:col-span-1">
           <div className="text-right text-xs text-slate-400">
-            Last updated: {timeSinceConditionally(survey.updatedAt)}
+            Last updated: {timeSinceConditionally(survey.updatedAt.toISOString())}
           </div>
           <div className="flex justify-end gap-x-1.5">
             {survey.type === "link" && (

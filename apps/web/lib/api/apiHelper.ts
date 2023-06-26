@@ -7,7 +7,11 @@ import { getServerSession } from "next-auth";
 
 export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 
-export const hasEnvironmentAccess = async (req, res, environmentId) => {
+export const hasEnvironmentAccess = async (
+  req: NextApiRequest,
+  res: NextApiResponse,
+  environmentId: string
+) => {
   if (req.headers["x-api-key"]) {
     const ownership = await hasApiEnvironmentAccess(req.headers["x-api-key"].toString(), environmentId);
     if (!ownership) {
@@ -125,4 +129,19 @@ export const getSessionUser = async (req?: NextApiRequest, res?: NextApiResponse
     session = await getServerSession(authOptions);
   }
   if (session && "user" in session) return session.user;
+};
+
+export const isAdminOrOwner = async (user, teamId) => {
+  const membership = await prisma.membership.findUnique({
+    where: {
+      userId_teamId: {
+        userId: user.id,
+        teamId: teamId,
+      },
+    },
+  });
+  if (membership && (membership.role === "admin" || membership.role === "owner")) {
+    return true;
+  }
+  return false;
 };

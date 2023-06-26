@@ -49,16 +49,18 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
   const freeFeatures = [
     "Unlimited surveys",
     "Unlimited team members",
+    "Remove branding",
     "100 responses per survey",
     "Granular targeting",
     "In-product surveys",
     "Link surveys",
     "30+ templates",
     "API access",
-    "Integrations (Slack, PostHog, Zapier)",
+    "Webhooks",
+    "Integrations (Zapier)",
   ];
 
-  const proFeatures = ["All features of Free plan", "Unlimited responses", "Remove branding"];
+  const proFeatures = ["All features of Free plan", "Unlimited responses"];
 
   return (
     <div className="relative">
@@ -105,9 +107,6 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
           </div>
         </div>
         <div className="">
-          <div className="float-right -mt-2 mr-6 rounded-full bg-slate-700 px-3 py-1 text-xs font-semibold text-slate-50">
-            Limited Early Bird Deal
-          </div>
           <div className="rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
             <div className="p-8">
               <h2 className="inline-flex text-3xl font-bold text-slate-700">Pro</h2>
@@ -126,9 +125,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
                 ))}
               </ul>
               <p className="mt-6">
-                <span className="text-3xl font-bold text-slate-800">
-                  <span className="mr-2 font-light line-through">$99</span>49$
-                </span>
+                <span className="text-3xl font-bold text-slate-800">$99</span>
 
                 <span className="text-base font-medium text-slate-400">/ month</span>
               </p>
