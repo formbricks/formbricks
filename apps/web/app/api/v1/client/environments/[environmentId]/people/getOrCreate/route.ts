@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@formbricks/database";
 import { responses } from "@/lib/api/response";
-import { createPerson } from "@/lib/api/clientPerson";
+import { createPersonWithUser } from "@/lib/api/clientPerson";
 
 export async function GET(req: Request): Promise<NextResponse> {
   const { searchParams, pathname } = new URL(req.url);
@@ -28,7 +28,7 @@ export async function GET(req: Request): Promise<NextResponse> {
   const environmentId = getEnvironmentIdFromPath(pathname);
 
   if (!person && environmentId) {
-    const newPerson = await createPerson(environmentId);
+    const newPerson = await createPersonWithUser(environmentId, userId);
     return responses.successResponse({ person: newPerson }, true);
   }
   return responses.successResponse({ person }, true);
