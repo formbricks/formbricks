@@ -59,35 +59,40 @@ export function EditBrandColor({ environmentId }) {
 }
 
 export function EditPlacement({ environmentId }) {
-  const { isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+  const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
 
-  if (isLoadingEnvironment) {
+  const [currentPlacement, setCurrentPlacement] = useState("");
+
+  useEffect(() => {
+    if (product) {
+      console.log(product.placement);
+      setCurrentPlacement(product.placement);
+    }
+  }, [product]);
+
+  if (isLoadingProduct) {
     return <LoadingSpinner />;
   }
-  if (isErrorEnvironment) {
+  if (isErrorProduct) {
     return <ErrorComponent />;
   }
 
   const placements = [
-    { name: "Bottom Right", value: "bottomRight", default: true, disabled: false },
-    { name: "Top Right", value: "topRight", default: false, disabled: true },
-    { name: "Top Left", value: "topLeft", default: false, disabled: true },
-    { name: "Bottom Left", value: "bottomLeft", default: false, disabled: true },
-    { name: "Centered Modal", value: "centered", default: false, disabled: true },
+    { name: "Bottom Right", value: "bottomRight", disabled: false },
+    { name: "Top Right", value: "topRight", disabled: false },
+    { name: "Top Left", value: "topLeft", disabled: false },
+    { name: "Bottom Left", value: "bottomLeft", disabled: false },
+    { name: "Centered Modal", value: "center", disabled: false },
   ];
 
   return (
     <div className="w-full items-center">
       <div className="flex">
-        <RadioGroup>
+        <RadioGroup onValueChange={(e) => setCurrentPlacement(e)} value={currentPlacement}>
           {placements.map((placement) => (
             <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
-              <RadioGroupItem
-                id={placement.value}
-                value={placement.value}
-                checked={placement.default}
-                disabled={placement.disabled}
-              />
+              <RadioGroupItem id={placement.value} value={placement.value} disabled={placement.disabled} />
               <Label
                 htmlFor={placement.value}
                 className={cn(placement.disabled ? "cursor-not-allowed text-slate-500" : "text-slate-900")}>
@@ -100,7 +105,20 @@ export function EditPlacement({ environmentId }) {
           <div className="absolute bottom-3 right-3 h-16 w-16 rounded bg-slate-700"></div>
         </div>
       </div>
-      <Button type="submit" variant="darkCTA" className="mt-4" disabled>
+      <Button
+        type="submit"
+        variant="darkCTA"
+        className="mt-4"
+        loading={isMutatingProduct}
+        onClick={() => {
+          triggerProductMutate({ placement: currentPlacement })
+            .then(() => {
+              toast.success("Placement updated successfully.");
+            })
+            .catch((error) => {
+              toast.error(`Error: ${error.message}`);
+            });
+        }}>
         Save
       </Button>
     </div>
