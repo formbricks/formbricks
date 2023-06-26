@@ -1,7 +1,7 @@
 "use client";
 
 import { GoogleButton } from "@/components/auth/GoogleButton";
-import { Button } from "@formbricks/ui";
+import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
@@ -64,10 +64,9 @@ export const SigninForm = () => {
                   <label htmlFor="password" className="sr-only">
                     Password
                   </label>
-                  <input
+                  <PasswordInput
                     id="password"
                     name="password"
-                    type="password"
                     autoComplete="current-password"
                     placeholder="*******"
                     aria-placeholder="password"
