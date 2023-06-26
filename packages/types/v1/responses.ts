@@ -1,13 +1,31 @@
 import { z } from "zod";
 import { ZPersonAttributes } from "./people";
+import { ZTag } from "./tags";
 
 export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
-export const ZResponsePersonAttributes = ZPersonAttributes.optional();
+export const ZResponsePersonAttributes = ZPersonAttributes.nullable();
 
 export type TResponsePersonAttributes = z.infer<typeof ZResponsePersonAttributes>;
+
+export const ZResponseNoteUser = z.object({
+  id: z.string().cuid2(),
+  name: z.string().nullable(),
+});
+
+export type TResponseNoteUser = z.infer<typeof ZResponseNoteUser>;
+
+const ZResponseNote = z.object({
+  updatedAt: z.date(),
+  createdAt: z.date(),
+  id: z.string(),
+  text: z.string(),
+  user: ZResponseNoteUser,
+});
+
+export type TResponseNote = z.infer<typeof ZResponseNote>;
 
 const ZResponse = z.object({
   id: z.string().cuid2(),
@@ -23,6 +41,8 @@ const ZResponse = z.object({
   personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
   data: ZResponseData,
+  notes: z.array(ZResponseNote),
+  tags: z.array(ZTag),
 });
 
 export type TResponse = z.infer<typeof ZResponse>;

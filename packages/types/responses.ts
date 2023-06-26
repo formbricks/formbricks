@@ -1,4 +1,4 @@
-import type { Question } from "./questions";
+import { TPerson } from "./v1/people";
 
 export interface Response {
   id: string;
@@ -15,20 +15,12 @@ export interface Response {
   };
 }
 
-export interface QuestionSummary<T extends Question> {
+export interface QuestionSummary<T> {
   question: T;
   responses: {
     id: string;
-    personId: string;
-    value: string;
-    updatedAt: string;
-    person?: {
-      attributes: {
-        attributeClass: {
-          name: string;
-        };
-        value: string;
-      };
-    };
+    value: string | number | string[];
+    updatedAt: Date;
+    person: TPerson | null;
   }[];
 }

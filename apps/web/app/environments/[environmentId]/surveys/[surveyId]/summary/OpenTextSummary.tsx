@@ -12,7 +12,7 @@ interface OpenTextSummaryProps {
 }
 
 function findEmail(person) {
-  const emailAttribute = person.attributes.find((attr) => attr.attributeClass.name === "email");
+  const emailAttribute = person.attributes.email;
   return emailAttribute ? emailAttribute.value : null;
 }
 
@@ -39,17 +39,17 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
         </div>
         {questionSummary.responses.map((response) => {
           const email = response.person && findEmail(response.person);
-          const displayIdentifier = email || truncate(response.personId, 16);
+          const displayIdentifier = email || (response.person && truncate(response.person.id, 16)) || null;
           return (
             <div
               key={response.id}
               className="grid  grid-cols-4 items-center border-b border-slate-100 py-2 text-slate-800">
               <div className="pl-6">
-                {response.personId ? (
+                {response.person ? (
                   <Link
                     className="ph-no-capture group flex items-center"
-                    href={`/environments/${environmentId}/people/${response.personId}`}>
-                    <PersonAvatar personId={response.personId} />
+                    href={`/environments/${environmentId}/people/${response.person.id}`}>
+                    <PersonAvatar personId={response.person.id} />
 
                     <p className="ph-no-capture ml-2 text-slate-600 group-hover:underline">
                       {displayIdentifier}
@@ -65,7 +65,7 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
               <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
                 {response.value}
               </div>
-              <div className="px-6 text-slate-500">{timeSince(response.updatedAt)}</div>
+              <div className="px-6 text-slate-500">{timeSince(response.updatedAt.toISOString())}</div>
             </div>
           );
         })}
