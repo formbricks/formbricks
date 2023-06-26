@@ -1,6 +1,7 @@
 import SettingsCard from "@/app/environments/[environmentId]/settings/SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 import EditAlerts from "./EditAlerts";
+import EditWeeklySummary from "./EditWeeklySummary";
 import { prisma } from "@formbricks/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
@@ -78,6 +79,9 @@ export default async function ProfileSettingsPage({ params }) {
       <SettingsTitle title="Notifications" />
       <SettingsCard title="Email alerts" description="Set up an alert to get an email on new responses.">
         <EditAlerts memberships={memberships} user={user} environmentId={params.environmentId} />
+      </SettingsCard>
+      <SettingsCard title="Weekly summary" description="Stay up-to-date with a Weekly every Monday.">
+        <EditWeeklySummary memberships={memberships} user={user} environmentId={params.environmentId} />
       </SettingsCard>
     </div>
   );
