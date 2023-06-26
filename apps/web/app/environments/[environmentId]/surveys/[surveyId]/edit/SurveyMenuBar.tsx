@@ -12,7 +12,7 @@ import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicon
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { isEqual } from 'lodash';
+import { isEqual } from "lodash";
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
@@ -46,10 +46,10 @@ export default function SurveyMenuBar({
 
   useEffect(() => {
     const warningText = "You have unsaved changes - are you sure you wish to leave this page?";
-    const handleWindowClose = (e: BeforeUnloadEvent) => {      
-      if(!isEqual(localSurvey, survey)){
+    const handleWindowClose = (e: BeforeUnloadEvent) => {
+      if (!isEqual(localSurvey, survey)) {
         e.preventDefault();
-        return e.returnValue = warningText
+        return (e.returnValue = warningText);
       }
     };
 

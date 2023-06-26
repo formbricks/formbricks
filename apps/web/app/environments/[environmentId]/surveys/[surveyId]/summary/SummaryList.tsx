@@ -1,17 +1,4 @@
-"use client";
-
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useResponses } from "@/lib/responses/responses";
-import { useSurvey } from "@/lib/surveys/surveys";
-import type { QuestionSummary } from "@formbricks/types/responses";
-import { ErrorComponent } from "@formbricks/ui";
-import { useMemo } from "react";
-import CTASummary from "./CTASummary";
-import MultipleChoiceSummary from "./MultipleChoiceSummary";
-import NPSSummary from "./NPSSummary";
-import OpenTextSummary from "./OpenTextSummary";
-import RatingSummary from "./RatingSummary";
 import {
   QuestionType,
   type CTAQuestion,
@@ -19,43 +6,40 @@ import {
   type MultipleChoiceSingleQuestion,
   type NPSQuestion,
   type OpenTextQuestion,
-  type Question,
   type RatingQuestion,
 } from "@formbricks/types/questions";
+import type { QuestionSummary } from "@formbricks/types/responses";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import CTASummary from "./CTASummary";
+import MultipleChoiceSummary from "./MultipleChoiceSummary";
+import NPSSummary from "./NPSSummary";
+import OpenTextSummary from "./OpenTextSummary";
+import RatingSummary from "./RatingSummary";
 
-export default function SummaryList({ environmentId, surveyId }) {
-  const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
+interface SummaryListProps {
+  environmentId: string;
+  responses: TResponse[];
+  survey: TSurvey;
+}
 
-  const responses = responsesData?.responses;
-
-  const summaryData: QuestionSummary<Question>[] = useMemo(() => {
-    if (survey && responses) {
-      return survey.questions.map((question) => {
-        const questionResponses = responses
-          .filter((response) => question.id in response.data)
-          .map((r) => ({
-            id: r.id,
-            value: r.data[question.id],
-            updatedAt: r.updatedAt,
-            personId: r.personId,
-            person: r.person,
-          }));
-        return {
-          question,
-          responses: questionResponses,
-        };
-      });
-    }
-    return [];
-  }, [survey, responses]);
-
-  if (isLoadingResponses || isLoadingSurvey) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorResponses || isErrorSurvey) {
-    return <ErrorComponent />;
+export default function SummaryList({ environmentId, responses, survey }: SummaryListProps) {
+  let summaryData: QuestionSummary<TSurveyQuestion>[] = [];
+  if (survey && responses) {
+    summaryData = survey.questions.map((question) => {
+      const questionResponses = responses
+        .filter((response) => question.id in response.data)
+        .map((r) => ({
+          id: r.id,
+          value: r.data[question.id],
+          updatedAt: r.updatedAt,
+          person: r.person,
+        }));
+      return {
+        question,
+        responses: questionResponses,
+      };
+    });
   }
 
   return (

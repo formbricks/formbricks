@@ -29,6 +29,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
       include: {
         triggers: true,
+        attributeFilters: true,
       },
     });
 
@@ -43,14 +44,19 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: undefined, // id is auto-generated
         environmentId: undefined, // environmentId is set below
         name: `${existingSurvey.name} (copy)`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
         status: "draft",
         questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
         thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
         triggers: {
           create: existingSurvey.triggers.map((trigger) => ({
             eventClassId: trigger.eventClassId,
+          })),
+        },
+        attributeFilters: {
+          create: existingSurvey.attributeFilters.map((attributeFilter) => ({
+            attributeClassId: attributeFilter.attributeClassId,
+            condition: attributeFilter.condition,
+            value: attributeFilter.value,
           })),
         },
         environment: {

@@ -37,7 +37,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     }
   }, [survey]);
 
-
   if (isLoadingSurvey || isLoadingProduct || !localSurvey) {
     return <LoadingSpinner />;
   }

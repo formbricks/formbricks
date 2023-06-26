@@ -30,7 +30,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
     // count the responses
     for (const response of questionSummary.responses) {
       // if single choice, only add responses that are in the choices
-      if (response.value in resultsDict) {
+      if (!Array.isArray(response.value) && response.value in resultsDict) {
         resultsDict[response.value].count += 1;
       }
     }

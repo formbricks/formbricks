@@ -4,7 +4,7 @@ import type { Survey } from "@formbricks/types/surveys";
 import { Input, Label, Switch } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ResponseOptionsCardProps {
   localSurvey: Survey;
@@ -14,6 +14,34 @@ interface ResponseOptionsCardProps {
 export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
+  const [redirectToggle, setRedirectToggle] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>("");
+
+  const handleRedirectCheckMark = () => {
+    if (redirectToggle && localSurvey.redirectUrl) {
+      setRedirectToggle(false);
+      setRedirectUrl(null);
+      setLocalSurvey({ ...localSurvey, redirectUrl: null });
+      return;
+    }
+    if (redirectToggle) {
+      setRedirectToggle(false);
+      return;
+    }
+    setRedirectToggle(true);
+  };
+
+  const handleRedirectUrlChange = (link: string) => {
+    setRedirectUrl(link);
+    setLocalSurvey({ ...localSurvey, redirectUrl: link });
+  };
+
+  useEffect(() => {
+    if (localSurvey.redirectUrl) {
+      setRedirectUrl(localSurvey.redirectUrl);
+      setRedirectToggle(true);
+    }
+  }, []);
   const handleCheckMark = () => {
     if (autoComplete) {
       const updatedSurvey: Survey = { ...localSurvey, autoComplete: null };
@@ -84,6 +112,29 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
               </label>
             </div>
           )}
+          <div className="p-3 ">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch id="redirectUrl" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
+              <Label htmlFor="redirectUrl" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
+                  <p className="text-xs font-normal text-slate-500">
+                    Redirect user to specified link on survey completion
+                  </p>
+                </div>
+              </Label>
+            </div>
+            <div className="mt-4">
+              {redirectToggle && (
+                <Input
+                  type="url"
+                  placeholder="https://www.example.com"
+                  value={redirectUrl ? redirectUrl : ""}
+                  onChange={(e) => handleRedirectUrlChange(e.target.value)}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
