@@ -33,7 +33,7 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
         />
         {localSurvey.status === "draft" && (
           <Button
-            variant="primary"
+            variant="darkCTA"
             className="ml-2 bg-slate-600 text-white hover:bg-slate-700 disabled:bg-slate-400"
             onClick={saveAction}
             disabled={currentValue === question.id}>

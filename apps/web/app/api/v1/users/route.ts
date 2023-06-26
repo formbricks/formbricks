@@ -5,10 +5,14 @@ import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  if (process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1") {
+  let { inviteToken, ...user } = await request.json();
+  if (
+    inviteToken
+      ? process.env.NEXT_PUBLIC_INVITE_DISABLED === "1"
+      : process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1"
+  ) {
     return NextResponse.json({ error: "Signup disabled" }, { status: 403 });
   }
-  let { inviteToken, ...user } = await request.json();
   user = { ...user, ...{ email: user.email.toLowerCase() } };
 
   let inviteId;

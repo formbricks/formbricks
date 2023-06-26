@@ -1,36 +1,45 @@
 "use client";
 
-import { OpenTextSummaryProps } from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/SingleResponse";
 import { addResponseNote } from "@/lib/responseNotes/responsesNotes";
-import { useResponses } from "@/lib/responses/responses";
 import { timeSince } from "@formbricks/lib/time";
+import { TResponseNote } from "@formbricks/types/v1/responses";
 import { Button } from "@formbricks/ui";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { MinusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { Maximize2Icon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-export default function ResponseNote({
-  data,
+interface ResponseNotesProps {
+  responseId: string;
+  notes: TResponseNote[];
+  environmentId: string;
+  surveyId: string;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}
+
+export default function ResponseNotes({
+  responseId,
+  notes,
   environmentId,
   surveyId,
   isOpen,
   setIsOpen,
-}: OpenTextSummaryProps & { isOpen: boolean; setIsOpen: (isOpen: boolean) => void }) {
+}: ResponseNotesProps) {
+  const router = useRouter();
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
-  const { mutateResponses } = useResponses(environmentId, surveyId);
-  const responseNotes = data?.responseNotes;
   const divRef = useRef<HTMLDivElement>(null);
 
   const handleNoteSubmission = async (e: FormEvent) => {
     e.preventDefault();
     setIsCreatingNote(true);
     try {
-      await addResponseNote(environmentId, surveyId, data?.id, noteText);
-      mutateResponses();
+      await addResponseNote(environmentId, surveyId, responseId, noteText);
+      router.refresh();
       setIsCreatingNote(false);
       setNoteText("");
     } catch (e) {
@@ -43,17 +52,17 @@ export default function ResponseNote({
     if (divRef.current) {
       divRef.current.scrollTop = divRef.current.scrollHeight;
     }
-  }, [responseNotes]);
+  }, [notes]);
 
   return (
     <div
       className={clsx(
         "absolute w-1/4 rounded-lg border border-slate-200 shadow-sm transition-all",
-        !isOpen && responseNotes.length && "group/hint cursor-pointer bg-white hover:-right-3",
-        !isOpen && !responseNotes.length && "cursor-pointer bg-slate-50",
+        !isOpen && notes.length && "group/hint cursor-pointer bg-white hover:-right-3",
+        !isOpen && !notes.length && "cursor-pointer bg-slate-50",
         isOpen
           ? "-right-5 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
-          : responseNotes.length
+          : notes.length
           ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
           : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
       )}
@@ -65,9 +74,9 @@ export default function ResponseNote({
           <div
             className={clsx(
               "space-y-2 rounded-t-lg px-2 pb-2 pt-2",
-              responseNotes.length ? "flex h-12 items-center justify-end bg-amber-50" : "bg-slate-200"
+              notes.length ? "flex h-12 items-center justify-end bg-amber-50" : "bg-slate-200"
             )}>
-            {!responseNotes.length ? (
+            {!notes.length ? (
               <div className="flex items-center justify-end">
                 <div className="group flex items-center">
                   <h3 className="float-left ml-4 pb-1 text-sm text-slate-600">Note</h3>
@@ -79,7 +88,7 @@ export default function ResponseNote({
               </div>
             )}
           </div>
-          {!responseNotes.length ? (
+          {!notes.length ? (
             <div className="flex  flex-1 items-center justify-end pr-3">
               <span>
                 <PlusIcon className=" h-5 w-5 text-slate-400" />
@@ -104,14 +113,14 @@ export default function ResponseNote({
             </div>
           </div>
           <div className="flex-1 overflow-auto px-4 pt-2" ref={divRef}>
-            {responseNotes.map((note) => (
+            {notes.map((note) => (
               <div className="mb-3" key={note.id}>
                 <span className="block font-semibold text-slate-700">
                   {note.user.name}
                   <time
                     className="ml-2 text-xs font-normal text-slate-500"
-                    dateTime={timeSince(data.updatedAt)}>
-                    {timeSince(note.updatedAt)}
+                    dateTime={timeSince(note.updatedAt.toISOString())}>
+                    {timeSince(note.updatedAt.toISOString())}
                   </time>
                 </span>
                 <span className="block text-slate-700">{note.text}</span>
@@ -119,11 +128,7 @@ export default function ResponseNote({
             ))}
           </div>
           <div className="h-[120px]">
-            <div
-              className={clsx(
-                "absolute bottom-0 w-full px-3 pb-3",
-                !responseNotes.length && "absolute bottom-0"
-              )}>
+            <div className={clsx("absolute bottom-0 w-full px-3 pb-3", !notes.length && "absolute bottom-0")}>
               <form onSubmit={handleNoteSubmission}>
                 <div className="mt-4">
                   <textarea

@@ -1,17 +1,37 @@
 "use client";
 
 import Modal from "@/components/shared/Modal";
-import { Button, Input, Label } from "@formbricks/ui";
-import { useForm } from "react-hook-form";
+import {
+  Button,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui";
+import { useForm, Controller } from "react-hook-form";
 
+enum MembershipRole {
+  Admin = "admin",
+  Editor = "editor",
+  Developer = "developer",
+  Viewer = "viewer",
+}
 interface MemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string }) => void;
+  onSubmit: (data: { name: string; email: string; role: MembershipRole }) => void;
 }
 
 export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalProps) {
-  const { register, getValues, handleSubmit, reset } = useForm<{ name: string; email: string }>();
+  const { register, getValues, handleSubmit, reset, control } = useForm<{
+    name: string;
+    email: string;
+    role: MembershipRole;
+  }>();
 
   const submitEventClass = async () => {
     const data = getValues();
@@ -41,6 +61,29 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
                 <Label>Email Adress</Label>
                 <Input type="email" placeholder="hans@wurst.com" {...register("email", { required: true })} />
               </div>
+              <Controller
+                name="role"
+                control={control}
+                render={({ field: { onChange, value } }) => (
+                  <div>
+                    <Label>Role</Label>
+                    <Select value={value} onValueChange={onChange}>
+                      <SelectTrigger className="capitalize">
+                        <SelectValue placeholder={<span className="text-slate-400">Select role</span>} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {Object.values(MembershipRole).map((role) => (
+                            <SelectItem className="capitalize" key={role} value={role}>
+                              {role}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              />
             </div>
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">

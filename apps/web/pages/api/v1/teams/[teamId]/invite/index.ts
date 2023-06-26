@@ -1,4 +1,4 @@
-import { getSessionUser, hasTeamAccess } from "@/lib/api/apiHelper";
+import { getSessionUser, hasTeamAccess, isAdminOrOwner } from "@/lib/api/apiHelper";
 import { sendInviteMemberEmail } from "@/lib/email";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -19,11 +19,19 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   if (!hasAccess) {
     return res.status(403).json({ message: "Not authorized" });
   }
-  // TODO check if User is ADMIN or OWNER
+
+  if (process.env.NEXT_PUBLIC_INVITE_DISABLED === "1") {
+    return res.status(403).json({ message: "Invite Disabled" });
+  }
+
+  const hasOwnerOrAdminAccess = await isAdminOrOwner(currentUser, teamId);
+  if (!hasOwnerOrAdminAccess) {
+    return res.status(403).json({ message: "Not authorized" });
+  }
 
   // POST /api/v1/teams/[teamId]/invite
   if (req.method === "POST") {
-    let { email, name } = req.body;
+    let { email, name, role } = req.body;
     email = email.toLowerCase();
 
     const user = await prisma.user.findUnique({ where: { email } });
@@ -49,6 +57,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         team: { connect: { id: teamId } },
         creator: { connect: { id: currentUser.id } },
         acceptor: user ? { connect: { id: user.id } } : undefined,
+        role,
         expiresAt,
       },
     });

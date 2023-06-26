@@ -6,6 +6,11 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query?.environmentId?.toString();
+
+  if (!environmentId) {
+    return res.status(400).json({ message: "Missing environmentId" });
+  }
+
   const currentUser: any = await getSessionUser(req, res);
 
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);

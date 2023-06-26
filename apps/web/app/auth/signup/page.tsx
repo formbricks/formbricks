@@ -1,9 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { SignupForm } from "@/components/auth/SignupForm";
 import FormWrapper from "@/components/auth/FormWrapper";
 import Testimonial from "@/components/auth/Testimonial";
 
 export default function SignUpPage() {
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams?.get("inviteToken");
+
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
@@ -11,7 +17,11 @@ export default function SignUpPage() {
       </div>
       <div className="col-span-3 flex flex-col items-center justify-center">
         <FormWrapper>
-          {process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1" ? (
+          {(
+            inviteToken
+              ? process.env.NEXT_PUBLIC_INVITE_DISABLED === "1"
+              : process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1"
+          ) ? (
             <>
               <h1 className="leading-2 mb-4 text-center font-bold">Sign up disabled</h1>
               <p className="text-center">
