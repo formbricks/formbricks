@@ -10,11 +10,11 @@ import Loading from "../Loading";
 
 interface BaseLayoutManagementProps {
   title: string;
-  breadcrumbs: any;
+  children: React.ReactNode;
+  breadcrumbs?: any;
   steps?: any;
   currentStep?: string;
   activeMenu?: string;
-  children: React.ReactNode;
   bgClass?: string;
   limitHeightScreen?: boolean;
 }
