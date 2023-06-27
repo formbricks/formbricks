@@ -26,17 +26,17 @@
 }
 
 .bottomRight {
-  @apply bottom-3 right-3;
+  @apply fb-bottom-3 fb-right-3;
 }
 .topRight {
-  @apply top-3 right-3;
+  @apply fb-top-3 fb-right-3;
 }
 .topLeft {
-  @apply top-3 left-3;
+  @apply fb-top-3 fb-left-3;
 }
 .bottomLeft {
-  @apply bottom-3 left-3;
+  @apply fb-bottom-3 fb-left-3;
 }
 .center {
-  @apply top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+  @apply fb-top-1/2 fb-left-1/2 fb-transform -fb-translate-x-1/2 -fb-translate-y-1/2;
 }
