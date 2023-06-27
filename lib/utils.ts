@@ -4,7 +4,7 @@ import { fr } from "date-fns/locale";
 import crypto from "crypto";
 import { UserRole } from "@prisma/client";
 import AWS from "aws-sdk";
-import { toast } from "react-toastify";
+import { prisma } from "../lib/prisma";
 
 export const fetcher = async (url) => {
   const res = await fetch(url);
