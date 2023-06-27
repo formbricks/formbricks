@@ -229,7 +229,7 @@ export default function LogicEditor({
                 <SelectContent>
                   {conditions[question.type].map(
                     (condition) =>
-                      !(question.required && condition === "skipped") && (
+                      !(question.required && (condition === "skipped" || condition === "accepted")) && (
                         <SelectItem key={condition} value={condition}>
                           {logicConditions[condition].label}
                         </SelectItem>
