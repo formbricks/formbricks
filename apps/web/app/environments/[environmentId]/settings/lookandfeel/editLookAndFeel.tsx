@@ -63,9 +63,15 @@ export function EditPlacement({ environmentId }) {
   const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
 
   const [currentPlacement, setCurrentPlacement] = useState("");
+  const [overlay, setOverlay] = useState("");
+  const [clickOutside, setClickOutside] = useState("");
 
   useEffect(() => {
-    if (product) setCurrentPlacement(product.placement);
+    if (product) {
+      setCurrentPlacement(product.placement);
+      setOverlay(product.darkOverlay ? "darkOverlay" : "lightOverlay");
+      setClickOutside(product.clickOutsideClose ? "allow" : "disallow");
+    }
   }, [product]);
 
   if (isLoadingProduct) {
@@ -102,13 +108,59 @@ export function EditPlacement({ environmentId }) {
           <div className={cn("absolute h-16 w-16 rounded bg-slate-700", currentPlacement)}></div>
         </div>
       </div>
+
+      {currentPlacement === "center" && (
+        <>
+          <div className="mt-6 space-y-2">
+            <Label className="font-semibold">Centered modal overlay color</Label>
+            <RadioGroup onValueChange={(e) => setOverlay(e)} value={overlay} className="flex space-x-4">
+              <div className="flex items-center space-x-2 whitespace-nowrap">
+                <RadioGroupItem id="lightOverlay" value="lightOverlay" />
+                <Label htmlFor="lightOverlay" className="text-slate-900">
+                  Light Overlay
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 whitespace-nowrap">
+                <RadioGroupItem id="darkOverlay" value="darkOverlay" />
+                <Label htmlFor="darkOverlay" className="text-slate-900">
+                  Dark Overlay
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+          <div className="mt-6 space-y-2">
+            <Label className="font-semibold">Allow users to exit by clicking outside the study</Label>
+            <RadioGroup
+              onValueChange={(e) => setClickOutside(e)}
+              value={clickOutside}
+              className="flex space-x-4">
+              <div className="flex items-center space-x-2 whitespace-nowrap">
+                <RadioGroupItem id="disallow" value="disallow" />
+                <Label htmlFor="disallow" className="text-slate-900">
+                  Don&apos;t Allow
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 whitespace-nowrap">
+                <RadioGroupItem id="allow" value="allow" />
+                <Label htmlFor="allow" className="text-slate-900">
+                  Allow
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+        </>
+      )}
       <Button
         type="submit"
         variant="darkCTA"
         className="mt-4"
         loading={isMutatingProduct}
         onClick={() => {
-          triggerProductMutate({ placement: currentPlacement })
+          triggerProductMutate({
+            placement: currentPlacement,
+            darkOverlay: overlay === "darkOverlay",
+            clickOutsideClose: clickOutside === "allow",
+          })
             .then(() => {
               toast.success("Placement updated successfully.");
             })
