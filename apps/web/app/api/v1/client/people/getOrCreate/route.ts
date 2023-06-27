@@ -4,11 +4,20 @@ import { responses } from "@/lib/api/response";
 import { createPersonWithUser } from "@/lib/api/clientPerson";
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const { searchParams, pathname } = new URL(req.url);
+  const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId");
   if (!userId) {
     return responses.badRequestResponse("Fields are missing or incorrectly formatted", { userId: "" }, true);
   }
+  const environmentId = searchParams.get("environmentId");
+  if (!environmentId) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      { environmentId: "" },
+      true
+    );
+  }
+
   const person = await prisma.person.findFirst({
     where: {
       attributes: {
@@ -25,17 +34,10 @@ export async function GET(req: Request): Promise<NextResponse> {
       environmentId: true,
     },
   });
-  const environmentId = getEnvironmentIdFromPath(pathname);
 
-  if (!person && environmentId) {
+  if (!person) {
     const newPerson = await createPersonWithUser(environmentId, userId);
     return responses.successResponse({ person: newPerson }, true);
   }
   return responses.successResponse({ person }, true);
-}
-
-function getEnvironmentIdFromPath(path: string): string | null {
-  const environmentIdRegex = /\/environments\/([^/]+)/;
-  const match = path.match(environmentIdRegex);
-  return (match && match[1]) || null;
 }

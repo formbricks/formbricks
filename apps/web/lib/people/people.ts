@@ -44,7 +44,7 @@ export const deletePerson = async (environmentId: string, personId: string) => {
 
 export const useGetOrCreatePerson = (environmentId: string, personId?: string | null) => {
   const { data, isLoading } = useSWR(
-    personId ? `/api/v1/client/environments/${environmentId}/people/getOrCreate?userId=${personId}` : null,
+    personId ? `/api/v1/client/people/getOrCreate?userId=${personId}&environmentId=${environmentId}` : null,
     fetcher
   );
 

@@ -38,7 +38,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   const lastQuestion = currentQuestion?.id === survey.questions[survey.questions.length - 1].id;
 
   const userId = URLParams.get("userId");
-  const { person, isLoadingPerson } = useGetOrCreatePerson(survey.environmentId, userId);
+  const { person, isLoadingPerson } = useGetOrCreatePerson(survey.environmentId, isPreview ? null : userId);
   const personId = person?.data.person.id ?? null;
 
   useEffect(() => {
