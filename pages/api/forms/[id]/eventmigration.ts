@@ -136,10 +136,16 @@ export default async function handle(
         Object.values(pagesFormated).map(({ title }) => {
           if (
             title &&
-            !submissions[title] &&
+            submissions[title] === 0 &&
             title.toLowerCase().includes("test")
           ) {
             submissions[title] = 0;
+          } else if (
+            title &&
+            isNaN(parseInt(submissions[title])) &&
+            title.toLowerCase().includes("test")
+          ) {
+            submissions[title] = "";
           } else if (
             title &&
             !submissions[title] &&
