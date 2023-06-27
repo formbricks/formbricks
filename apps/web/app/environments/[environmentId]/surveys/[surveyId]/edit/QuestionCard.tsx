@@ -216,7 +216,20 @@ export default function QuestionCard({
             </Collapsible.CollapsibleContent>
 
             {open && (
-              <div className="m-4 mt-0  border-t border-slate-200">
+              <div className="mx-4 flex justify-end border-t border-slate-200">
+                {question.type === "openText" && (
+                  <div className="m-4 mr-0 flex items-center justify-end space-x-2">
+                    <Label htmlFor="longAnswer">Long Answer</Label>
+                    <Switch
+                      id="longAnswer"
+                      checked={!question.shortAnswer}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateQuestion(questionIdx, { shortAnswer: !question.shortAnswer });
+                      }}
+                    />
+                  </div>
+                )}
                 <div className="m-4 mr-0 flex items-center justify-end space-x-2">
                   <Label htmlFor="required-toggle">Required</Label>
                   <Switch
