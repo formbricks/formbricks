@@ -27,6 +27,7 @@ export {
 export { Editor, AddVariablesDropdown } from "./components/editor";
 export { ErrorComponent } from "./components/ErrorComponent";
 export { Input } from "./components/Input";
+export { PasswordInput } from "./components/PasswordInput";
 export { Label } from "./components/Label";
 export { PageTitle } from "./components/PageTitle";
 export { Popover, PopoverTrigger, PopoverContent } from "./components/Popover";
