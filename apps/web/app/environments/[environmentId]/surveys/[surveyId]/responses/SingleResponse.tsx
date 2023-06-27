@@ -12,7 +12,7 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import { RatingResponse } from "../RatingResponse";
 import ResponseNote from "./ResponseNote";
@@ -30,12 +30,41 @@ export interface OpenTextSummaryProps {
       scale?: "number" | "star" | "smiley";
       range?: number;
     }[];
+    meta?: {
+      userAgent?: {
+        browser?: string;
+        os?: string;
+        device?: string;
+      };
+    };
   };
 }
 
 function findEmail(person) {
   const emailAttribute = person.attributes.email;
   return emailAttribute ? emailAttribute.value : null;
+}
+
+interface TooltipRendererProps {
+  shouldRender: boolean;
+  tooltipContent: ReactNode;
+  children: ReactNode;
+}
+
+function TooltipRenderer(props: TooltipRendererProps) {
+  const { children, shouldRender, tooltipContent } = props;
+  if (shouldRender) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>{children}</TooltipTrigger>
+          <TooltipContent>{tooltipContent}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return <>{children}</>;
 }
 
 export default function SingleResponse({ data, environmentId, surveyId }: OpenTextSummaryProps) {
@@ -55,16 +84,38 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
     setIsDeleting(false);
   };
 
-  const tooltipContent = data.personAttributes && Object.keys(data.personAttributes).length > 0 && (
-    <TooltipContent>
-      {Object.keys(data.personAttributes).map((key) => {
-        return (
-          <p>
-            {key}: <span className="font-bold">{data.personAttributes && data.personAttributes[key]}</span>
-          </p>
-        );
-      })}
-    </TooltipContent>
+  const renderTooltip = Boolean(
+    (data.personAttributes && Object.keys(data.personAttributes).length > 0) ||
+      (data.meta?.userAgent && Object.keys(data.meta.userAgent).length > 0)
+  );
+
+  const tooltipContent = (
+    <>
+      {data.personAttributes && Object.keys(data.personAttributes).length > 0 && (
+        <div>
+          <p className="py-1 font-bold text-slate-700">Person attributes:</p>
+          {Object.keys(data.personAttributes).map((key) => (
+            <p key={key}>
+              {key}: <span className="font-bold">{data.personAttributes && data.personAttributes[key]}</span>
+            </p>
+          ))}
+        </div>
+      )}
+
+      {data.meta?.userAgent && Object.keys(data.meta.userAgent).length > 0 && (
+        <div className="text-slate-600">
+          {data.personAttributes && Object.keys(data.personAttributes).length > 0 && (
+            <hr className="my-2 border-slate-200" />
+          )}
+          <p className="py-1 font-bold text-slate-700">Device info:</p>
+          {data.meta?.userAgent?.browser && <p>Browser: {data.meta.userAgent.browser}</p>}
+          {data.meta?.userAgent?.os && <p>OS: {data.meta.userAgent.os}</p>}
+          {data.meta?.userAgent && (
+            <p>Device: {data.meta.userAgent.device ? data.meta.userAgent.device : "PC / Generic device"}</p>
+          )}
+        </div>
+      )}
+    </>
   );
 
   return (
@@ -80,21 +131,18 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
               <Link
                 className="group flex items-center"
                 href={`/environments/${environmentId}/people/${data.person.id}`}>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <PersonAvatar personId={data.person.id} />
-                    </TooltipTrigger>
-                    {tooltipContent}
-                  </Tooltip>
-                </TooltipProvider>
+                <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                  <PersonAvatar personId={data.person.id} />
+                </TooltipRenderer>
                 <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                   {displayIdentifier}
                 </h3>
               </Link>
             ) : (
               <div className="group flex items-center">
-                <PersonAvatar personId="anonymous" />
+                <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                  <PersonAvatar personId="anonymous" />
+                </TooltipRenderer>
                 <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
               </div>
             )}

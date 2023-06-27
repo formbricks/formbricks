@@ -12,6 +12,7 @@ const responseSelection = {
   surveyId: true,
   finished: true,
   data: true,
+  meta: true,
   personAttributes: true,
   person: {
     select: {
@@ -82,6 +83,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
           },
           personAttributes: person?.attributes,
         }),
+        ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
       },
       select: responseSelection,
     });
