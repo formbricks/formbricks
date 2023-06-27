@@ -41,19 +41,19 @@ export default function Modal({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, clickOutside, close]);
+  }, [show, clickOutside, close, isCenter]);
 
   return (
     <div
       aria-live="assertive"
       className={cn(
-        isCenter && clickOutside ? "fb-pointer-events-auto" : "fb-pointer-events-none",
+        isCenter ? "fb-pointer-events-auto" : "fb-pointer-events-none",
         "fb-fixed fb-inset-0 fb-flex fb-items-end fb-z-40 fb-p-3 sm:fb-p-0"
       )}>
       <div
         className={cn(
           "fb-w-full fb-h-full fb-relative",
-          darkOverlay ? "fb-bg-gray-700/80" : "fb-bg-gray-700/20"
+          isCenter ? (darkOverlay ? "fb-bg-gray-700/80" : "fb-bg-gray-700/20") : "fb-bg-none"
         )}>
         <div
           ref={modalRef}
