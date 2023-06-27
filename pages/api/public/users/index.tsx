@@ -35,7 +35,7 @@ export default async function handle(
     } catch (e) {
       if (e.code === "P2002") {
         return res.status(409).json({
-          error: "un utilisateur avec cette adresse e-mail ou numéro de téléphone existe déjà",
+          error: `un utilisateur avec ${e.meta.target[0]==="email"? "cette adresse e-mail": "ce numéro de téléphone"} existe déjà`,
           errorCode: e.code,
         });
       } else {
