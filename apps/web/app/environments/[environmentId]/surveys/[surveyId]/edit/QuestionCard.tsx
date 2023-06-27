@@ -26,7 +26,6 @@ import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
-import UpdateQuestionId from "./UpdateQuestionId";
 import ConsentQuestionForm from "./ConsentQuestionForm";
 import AdvancedSettings from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/AdvancedSettings";
 
@@ -185,7 +184,6 @@ export default function QuestionCard({
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
-                  lastQuestion={lastQuestion}
                 />
               ) : null}
               <div className="mt-4">

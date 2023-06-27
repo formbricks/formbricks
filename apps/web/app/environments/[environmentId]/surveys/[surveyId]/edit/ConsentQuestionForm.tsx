@@ -11,14 +11,12 @@ interface ConsentQuestionFormProps {
   question: ConsentQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  lastQuestion: boolean;
 }
 
 export default function ConsentQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  lastQuestion,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
   return (
