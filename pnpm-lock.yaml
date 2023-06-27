@@ -208,6 +208,9 @@ importers:
       '@formbricks/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@headlessui/react':
+        specifier: ^1.7.15
+        version: 1.7.15(react-dom@18.2.0)(react@18.2.0)
       '@heroicons/react':
         specifier: ^2.0.18
         version: 2.0.18(react@18.2.0)
@@ -223,30 +226,12 @@ importers:
       '@radix-ui/react-dropdown-menu':
         specifier: ^2.0.4
         version: 2.0.4(@types/react@18.2.7)(react-dom@18.2.0)(react@18.2.0)
-      '@types/node':
-        specifier: 20.2.3
-        version: 20.2.3
-      '@types/react':
-        specifier: 18.2.7
-        version: 18.2.7
-      '@types/react-dom':
-        specifier: 18.2.4
-        version: 18.2.4
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
-      class-variance-authority:
-        specifier: ^0.6.0
-        version: 0.6.0(typescript@5.0.4)
-      date-fns:
-        specifier: ^2.30.0
-        version: 2.30.0
       dotenv-webpack:
         specifier: ^8.0.1
         version: 8.0.1(webpack@5.75.0)
-      eslint:
-        specifier: 8.41.0
-        version: 8.41.0
       eslint-config-next:
         specifier: ^13.4.3
         version: 13.4.3(eslint@8.41.0)(typescript@5.0.4)
@@ -259,9 +244,6 @@ importers:
       lucide-react:
         specifier: ^0.221.0
         version: 0.221.0(react@18.2.0)
-      markdown-it:
-        specifier: ^13.0.1
-        version: 13.0.1
       next:
         specifier: 13.4.3
         version: 13.4.3(react-dom@18.2.0)(react@18.2.0)
@@ -277,9 +259,6 @@ importers:
       posthog-js:
         specifier: ^1.57.3
         version: 1.57.3
-      posthog-node:
-        specifier: ^3.1.1
-        version: 3.1.1
       prismjs:
         specifier: ^1.29.0
         version: 1.29.0
@@ -301,18 +280,9 @@ importers:
       react-icons:
         specifier: ^4.8.0
         version: 4.8.0(react@18.2.0)
-      react-use:
-        specifier: ^17.4.0
-        version: 17.4.0(react-dom@18.2.0)(react@18.2.0)
-      stripe:
-        specifier: ^12.6.0
-        version: 12.6.0
       swr:
         specifier: ^2.1.5
         version: 2.1.5(react@18.2.0)
-      typescript:
-        specifier: 5.0.4
-        version: 5.0.4
       ua-parser-js:
         specifier: ^1.0.35
         version: 1.0.35
@@ -344,6 +314,15 @@ importers:
       '@types/markdown-it':
         specifier: ^12.2.3
         version: 12.2.3
+      '@types/node':
+        specifier: 20.2.3
+        version: 20.2.3
+      '@types/react':
+        specifier: 18.2.7
+        version: 18.2.7
+      '@types/react-dom':
+        specifier: 18.2.4
+        version: 18.2.4
       autoprefixer:
         specifier: ^10.4.14
         version: 10.4.14(postcss@8.4.23)
@@ -356,15 +335,12 @@ importers:
       rimraf:
         specifier: ^5.0.1
         version: 5.0.1
-      tailwind-merge:
-        specifier: ^1.12.0
-        version: 1.12.0
       tailwindcss:
         specifier: ^3.3.2
         version: 3.3.2
-      tailwindcss-animate:
-        specifier: ^1.0.5
-        version: 1.0.5(tailwindcss@3.3.2)
+      typescript:
+        specifier: 5.0.4
+        version: 5.0.4
 
   packages/api:
     dependencies:
@@ -445,6 +421,9 @@ importers:
       next:
         specifier: ^13.4.4
         version: 13.4.4(react-dom@18.2.0)(react@18.2.0)
+      stripe:
+        specifier: ^12.6.0
+        version: 12.6.0
     devDependencies:
       '@formbricks/tsconfig':
         specifier: '*'
@@ -588,6 +567,18 @@ importers:
       '@formbricks/types':
         specifier: '*'
         version: link:../types
+      date-fns:
+        specifier: ^2.30.0
+        version: 2.30.0
+      markdown-it:
+        specifier: ^13.0.1
+        version: 13.0.1
+      posthog-node:
+        specifier: ^3.1.1
+        version: 3.1.1
+      tailwind-merge:
+        specifier: ^1.12.0
+        version: 1.12.0
     devDependencies:
       '@formbricks/tsconfig':
         specifier: '*'
@@ -690,6 +681,9 @@ importers:
       boring-avatars:
         specifier: ^1.7.0
         version: 1.7.0
+      class-variance-authority:
+        specifier: ^0.6.0
+        version: 0.6.0(typescript@5.0.4)
       clsx:
         specifier: ^1.2.1
         version: 1.2.1
@@ -6264,7 +6258,7 @@ packages:
 
   /@types/node@20.2.3:
     resolution: {integrity: sha512-pg9d0yC4rVNWQzX8U7xb4olIOFuuVL9za3bzMT2pu2SU0SNEi66i2qrvhE2qt0HvkhuCaWJu7pLNOt/Pj8BIrw==}
-    dev: false
+    dev: true
 
   /@types/node@20.3.2:
     resolution: {integrity: sha512-vOBLVQeCQfIcF/2Y7eKFTqrMnizK5lRNQ7ykML/5RuwVXVWxYkgwS7xbt4B6fKCUPgbSL5FSsjHQpaGQP/dQmw==}
@@ -19871,15 +19865,7 @@ packages:
 
   /tailwind-merge@1.12.0:
     resolution: {integrity: sha512-Y17eDp7FtN1+JJ4OY0Bqv9OA41O+MS8c1Iyr3T6JFLnOgLg3EvcyMKZAnQ8AGyvB5Nxm3t9Xb5Mhe139m8QT/g==}
-    dev: true
-
-  /tailwindcss-animate@1.0.5(tailwindcss@3.3.2):
-    resolution: {integrity: sha512-UU3qrOJ4lFQABY+MVADmBm+0KW3xZyhMdRvejwtXqYOL7YjHYxmuREFAZdmVG5LPe5E9CAst846SLC4j5I3dcw==}
-    peerDependencies:
-      tailwindcss: '>=3.0.0 || insiders'
-    dependencies:
-      tailwindcss: 3.3.2
-    dev: true
+    dev: false
 
   /tailwindcss@3.3.2:
     resolution: {integrity: sha512-9jPkMiIBXvPc2KywkraqsUfbfj+dHDb+JPWtSJa9MLFdrPyazI7q6WX2sUrm7R9eVR7qqv3Pas7EvQFzxKnI6w==}
