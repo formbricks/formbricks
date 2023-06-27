@@ -18,22 +18,6 @@ export default function Modal({
   /* useEffect(() => {
     setLoaded(true);
   }, []); */
-  const getPlacementClasses = (placement) => {
-    switch (placement) {
-      case "bottomRight":
-        return "fb-bottom-3 fb-right-3";
-      case "topRight":
-        return "fb-top-3 fb-right-3";
-      case "topLeft":
-        return "fb-top-3 fb-left-3";
-      case "bottomLeft":
-        return "fb-bottom-3 fb-left-3";
-      case "center":
-        return "fb-top-1/2 fb-left-1/2 fb-transform -fb-translate-x-1/2 -fb-translate-y-1/2";
-      default:
-        return "fb-bottom-3 fb-right-3";
-    }
-  };
 
   useEffect(() => {
     setShow(isOpen);
@@ -46,7 +30,7 @@ export default function Modal({
       <div className="fb-w-full fb-h-full fb-relative">
         <div
           className={cn(
-            getPlacementClasses(placement),
+            placement,
             show ? "fb-opacity-100" : "fb-opacity-0",
             "fb-pointer-events-auto fb-absolute fb-w-full fb-max-w-sm fb-overflow-hidden fb-rounded-lg fb-bg-white fb-shadow-lg fb-ring-1 fb-ring-black fb-ring-opacity-5 fb-transition-all fb-duration-500 fb-ease-in-out sm:fb-m-4"
           )}>

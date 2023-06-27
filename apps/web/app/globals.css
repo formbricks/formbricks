@@ -34,3 +34,19 @@ input:focus {
   --tw-ring-shadow: 0 0 #000 !important;
   box-shadow: none;
 }
+
+.bottomRight {
+  @apply bottom-3 right-3;
+}
+.topRight {
+  @apply top-3 right-3;
+}
+.topLeft {
+  @apply top-3 left-3;
+}
+.bottomLeft {
+  @apply bottom-3 left-3;
+}
+.center {
+  @apply top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+}

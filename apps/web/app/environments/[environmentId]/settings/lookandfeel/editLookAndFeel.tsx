@@ -5,7 +5,6 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
-import { getPlacementClasses } from "@/lib/placement";
 import {
   Button,
   ColorPicker,
@@ -100,11 +99,7 @@ export function EditPlacement({ environmentId }) {
           ))}
         </RadioGroup>
         <div className="relative ml-8 h-40 w-full rounded bg-slate-200">
-          <div
-            className={cn(
-              "absolute h-16 w-16 rounded bg-slate-700",
-              getPlacementClasses(currentPlacement)
-            )}></div>
+          <div className={cn("absolute h-16 w-16 rounded bg-slate-700", currentPlacement)}></div>
         </div>
       </div>
       <Button
