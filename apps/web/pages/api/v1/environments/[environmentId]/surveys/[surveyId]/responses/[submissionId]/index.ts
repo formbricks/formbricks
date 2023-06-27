@@ -1,11 +1,21 @@
 import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
-import { prisma } from "@formbricks/database";
+import { prisma } from "@formbricks/database/src/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
   const surveyId = req.query.surveyId?.toString();
-  const responseId = req.query.responseId?.toString();
+  const responseId = req.query.submissionId?.toString();
+
+  if (!environmentId) {
+    return res.status(400).json({ message: "Missing environmentId" });
+  }
+  if (!surveyId) {
+    return res.status(400).json({ message: "Missing surveyId" });
+  }
+  if (!responseId) {
+    return res.status(400).json({ message: "Missing responseId" });
+  }
 
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
   if (!hasAccess) {

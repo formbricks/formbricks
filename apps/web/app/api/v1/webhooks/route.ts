@@ -1,82 +1,65 @@
+import { responses } from "@/lib/api/response";
+import { transformErrorToDetails } from "@/lib/api/validator";
+import { DatabaseError, InvalidInputError } from "@formbricks/errors";
+import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
+import { createWebhook, getWebhooks } from "@formbricks/lib/services/webhook";
+import { ZWebhookInput } from "@formbricks/types/v1/webhooks";
 import { headers } from "next/headers";
-import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
-import { hashApiKey } from "@/lib/api/apiHelper";
 
 export async function GET() {
   const apiKey = headers().get("x-api-key");
   if (!apiKey) {
-    return new Response("Not authenticated. This route is only available via API-Key authorization", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
-  const apiKeyData = await prisma.apiKey.findUnique({
-    where: {
-      hashedKey: hashApiKey(apiKey),
-    },
-    select: {
-      environmentId: true,
-    },
-  });
+  const apiKeyData = await getApiKeyFromKey(apiKey);
   if (!apiKeyData) {
-    return new Response("Not authenticated", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
 
-  // add webhook to database
-  const webhooks = await prisma.webhook.findMany({
-    where: {
-      environmentId: apiKeyData.environmentId,
-    },
-  });
-  return NextResponse.json({ data: webhooks });
+  // get webhooks from database
+  try {
+    const webhooks = await getWebhooks(apiKeyData.environmentId);
+    return NextResponse.json({ data: webhooks });
+  } catch (error) {
+    if (error instanceof DatabaseError) {
+      return responses.badRequestResponse(error.message);
+    }
+    throw error;
+  }
 }
 
 export async function POST(request: Request) {
   const apiKey = headers().get("x-api-key");
   if (!apiKey) {
-    return new Response("Not authenticated. This route is only available via API-Key authorization", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
-  const apiKeyData = await prisma.apiKey.findUnique({
-    where: {
-      hashedKey: hashApiKey(apiKey),
-    },
-    select: {
-      environmentId: true,
-    },
-  });
+  const apiKeyData = await getApiKeyFromKey(apiKey);
   if (!apiKeyData) {
-    return new Response("Not authenticated", {
-      status: 401,
-    });
+    return responses.notAuthenticatedResponse();
   }
-  const { url, trigger } = await request.json();
-  if (!url) {
-    return new Response("Missing url", {
-      status: 400,
-    });
-  }
+  const webhookInput = await request.json();
+  const inputValidation = ZWebhookInput.safeParse(webhookInput);
 
-  if (!trigger) {
-    return new Response("Missing trigger", {
-      status: 400,
-    });
+  if (!inputValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(inputValidation.error),
+      true
+    );
   }
 
   // add webhook to database
-  const webhook = await prisma.webhook.create({
-    data: {
-      url,
-      triggers: [trigger],
-      environment: {
-        connect: {
-          id: apiKeyData.environmentId,
-        },
-      },
-    },
-  });
-  return NextResponse.json({ data: webhook });
+  try {
+    const webhook = await createWebhook(apiKeyData.environmentId, inputValidation.data);
+    return responses.successResponse(webhook);
+  } catch (error) {
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    }
+    if (error instanceof DatabaseError) {
+      return responses.internalServerErrorResponse(error.message);
+    }
+    throw error;
+  }
 }

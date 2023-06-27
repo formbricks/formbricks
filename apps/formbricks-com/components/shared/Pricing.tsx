@@ -1,6 +1,5 @@
 import { Button } from "@formbricks/ui";
 import clsx from "clsx";
-import EarlyBirdDeal from "./EarlyBirdDeal";
 import HeadingCentered from "./HeadingCentered";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { usePlausible } from "next-plausible";
@@ -55,7 +54,7 @@ const tiers = [
     priceMonthly: "$99",
     paymentRythm: "/month",
     button: "secondary",
-    discounted: true,
+    discounted: false,
     highlight: false,
     description: "All features included. Unlimited usage.",
     features: ["All features of Free plan", "Unlimited responses", "Remove branding"],
@@ -153,9 +152,6 @@ export default function Pricing() {
             </div>
           ))}
         </div>
-      </div>
-      <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <EarlyBirdDeal />
       </div>
     </div>
   );

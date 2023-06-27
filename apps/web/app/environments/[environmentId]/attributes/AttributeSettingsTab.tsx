@@ -3,6 +3,7 @@ import { useAttributeClassMutation } from "@/lib/attributeClasses/mutateAttribut
 import { Button, Input, Label } from "@formbricks/ui";
 import type { AttributeClass } from "@prisma/client";
 import { useForm } from "react-hook-form";
+import { ArchiveBoxArrowDownIcon, ArchiveBoxXMarkIcon } from "@heroicons/react/24/solid";
 
 interface AttributeSettingsTabProps {
   environmentId: string;
@@ -29,6 +30,12 @@ export default function AttributeSettingsTab({
     await triggerAttributeClassMutate(data);
     mutateAttributeClasses();
     setOpen(false);
+  };
+
+  const handleArchiveToggle = async () => {
+    const data = { archived: !attributeClass.archived };
+    await triggerAttributeClassMutate(data);
+    mutateAttributeClasses();
   };
 
   return (
@@ -67,17 +74,34 @@ export default function AttributeSettingsTab({
           ) : null}
         </div>
         <div className="flex justify-between border-t border-slate-200 pt-6">
-          <div>
+          <div className="flex items-center">
             <Button
               variant="secondary"
               href="https://formbricks.com/docs/getting-started/identify-users"
               target="_blank">
               Read Docs
             </Button>
+            {attributeClass.type !== "automatic" && (
+              <Button className="ml-3" variant="secondary" onClick={handleArchiveToggle}>
+                {attributeClass.archived ? (
+                  <>
+                    {" "}
+                    <ArchiveBoxXMarkIcon className="mr-2 h-4 text-slate-600" />
+                    <span>Unarchive</span>
+                  </>
+                ) : (
+                  <>
+                    {" "}
+                    <ArchiveBoxArrowDownIcon className="mr-2 h-4  text-slate-600" />
+                    <span>Archive</span>
+                  </>
+                )}
+              </Button>
+            )}
           </div>
           {attributeClass.type !== "automatic" && (
             <div className="flex space-x-2">
-              <Button type="submit" variant="primary" loading={isMutatingAttributeClass}>
+              <Button type="submit" variant="darkCTA" loading={isMutatingAttributeClass}>
                 Save changes
               </Button>
             </div>

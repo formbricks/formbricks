@@ -1,136 +1,126 @@
-/*
-THIS FILE IS WORK IN PROGRESS
-PLEASE DO NOT USE IT YET
-*/
-
 import { responses } from "@/lib/api/response";
+import { transformErrorToDetails } from "@/lib/api/validator";
+import { sendToPipeline } from "@/lib/pipelines";
 import { prisma } from "@formbricks/database";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { NextResponse } from "next/server";
+import { InvalidInputError } from "@formbricks/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { createResponse } from "@formbricks/lib/services/response";
+import { getSurvey } from "@formbricks/lib/services/survey";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
+import { TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
+import { NextResponse } from "next/server";
+import { UAParser } from "ua-parser-js";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const { surveyId, userCuid, response } = await request.json();
+  const responseInput: TResponseInput = await request.json();
+  const agent = UAParser(request.headers.get("user-agent"));
+  const inputValidation = ZResponseInput.safeParse(responseInput);
 
-  if (!surveyId) {
-    return responses.missingFieldResponse("surveyId", true);
+  if (!inputValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(inputValidation.error),
+      true
+    );
   }
 
-  if (!response) {
-    return responses.missingFieldResponse("response", true);
+  let survey;
+
+  try {
+    survey = await getSurvey(responseInput.surveyId);
+  } catch (error) {
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    } else {
+      return responses.internalServerErrorResponse(error.message);
+    }
   }
 
-  // userCuid can be null, e.g. for link surveys
-
-  // check if survey exists
-  const survey = await prisma.survey.findUnique({
-    where: {
-      id: surveyId,
-    },
-    select: {
-      id: true,
-      environment: {
+  // prisma call to get the teamId
+  // TODO use services
+  const environment = await prisma.environment.findUnique({
+    where: { id: survey.environmentId },
+    include: {
+      product: {
         select: {
-          id: true,
-          product: {
+          team: {
             select: {
-              team: {
-                select: {
-                  id: true,
-                  memberships: {
-                    select: {
-                      userId: true,
-                      role: true,
-                    },
-                  },
-                },
+              id: true,
+              memberships: {
+                where: { role: "owner" },
+                select: { userId: true },
+                take: 1,
               },
             },
           },
         },
       },
-      type: true,
     },
   });
 
-  if (!survey) {
-    return responses.notFoundResponse("Survey", surveyId, true);
+  if (!environment) {
+    return responses.internalServerErrorResponse("Environment not found");
   }
-
-  const environmentId = survey.environment.id;
-
-  const teamId = survey.environment.product.team.id;
-  // find team owner
-  const teamOwnerId = survey.environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
-
-  const createBody = {
-    data: {
-      survey: {
-        connect: {
-          id: surveyId,
-        },
-      },
-      ...response,
+  const {
+    product: {
+      team: { id: teamId, memberships },
     },
-  };
+  } = environment;
 
-  if (userCuid) {
-    createBody.data.person = {
-      connect: {
-        id: userCuid,
+  const teamOwnerId = memberships[0]?.userId;
+
+  let response;
+
+  try {
+    const meta = {
+      userAgent: {
+        browser: agent?.browser.name,
+        device: agent?.device.type,
+        os: agent?.os.name,
       },
     };
+
+    response = await createResponse({
+      ...responseInput,
+      meta,
+    });
+  } catch (error) {
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    } else {
+      return responses.internalServerErrorResponse(error.message);
+    }
   }
 
-  // create new response
-  const responseData = await prisma.response.create(createBody);
-
-  // send response to pipeline
-  // don't await to not block the response
-  fetch(`${WEBAPP_URL}/api/pipeline`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      internalSecret: INTERNAL_SECRET,
-      environmentId,
-      event: "responseCreated",
-      data: responseData,
-    }),
+  sendToPipeline({
+    event: "responseCreated",
+    environmentId: survey.environmentId,
+    surveyId: response.surveyId,
+    data: response,
   });
 
-  if (response.finished) {
-    // send response to pipeline
-    // don't await to not block the response
-    fetch(`${WEBAPP_URL}/api/pipeline`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        internalSecret: INTERNAL_SECRET,
-        environmentId,
-        event: "responseFinished",
-        data: responseData,
-      }),
+  if (responseInput.finished) {
+    sendToPipeline({
+      event: "responseFinished",
+      environmentId: survey.environmentId,
+      surveyId: response.surveyId,
+      data: response,
     });
   }
 
   captureTelemetry("response created");
   if (teamOwnerId) {
     await capturePosthogEvent(teamOwnerId, "response created", teamId, {
-      surveyId,
+      surveyId: response.surveyId,
       surveyType: survey.type,
     });
   } else {
     console.warn("Posthog capture not possible. No team owner found");
   }
 
-  return responses.successResponse({ id: responseData.id }, true);
+  return responses.successResponse(response, true);
 }

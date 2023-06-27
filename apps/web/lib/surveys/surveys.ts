@@ -1,5 +1,7 @@
 import useSWR from "swr";
 import { fetcher } from "@formbricks/lib/fetcher";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TResponse } from "@formbricks/types/v1/responses";
 
 export const useSurveys = (environmentId: string) => {
   const { data, error, mutate, isLoading } = useSWR(`/api/v1/environments/${environmentId}/surveys`, fetcher);
@@ -104,15 +106,61 @@ export const getSurveyPage = (survey, pageId) => {
   return page;
 };
 
-export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
+// used to duplicate the survey in the same environment when targetEnvironment is null and
+// used to duplicate the survey in a different environment when targetEnvironment is not null
+export const duplicateSurvey = async (
+  environmentId: string,
+  surveyId: string,
+  targetEnvironmentId: string | undefined = undefined
+) => {
   try {
-    const res = await fetch(`/api/v1/environments/${environmentId}/surveys/${surveyId}/duplicate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    });
-    return await res.json();
+    if (targetEnvironmentId === undefined) {
+      const res = await fetch(`/api/v1/environments/${environmentId}/surveys/${surveyId}/duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      return await res.json();
+    } else {
+      const res = await fetch(
+        `/api/v1/environments/${environmentId}/surveys/${surveyId}/duplicate/${targetEnvironmentId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      return await res.json();
+    }
   } catch (error) {
     console.error(error);
     throw Error(`duplicateSurvey: unable to duplicate survey: ${error.message}`);
   }
+};
+
+export const generateQuestionsAndAttributes = (survey: TSurvey, responses: TResponse[]) => {
+  let questionNames: string[] = [];
+
+  if (survey?.questions) {
+    questionNames = survey.questions.map((question) => question.headline);
+  }
+
+  const attributeMap: Record<string, Record<string, string | number>> = {};
+
+  if (responses) {
+    responses.forEach((response) => {
+      const { person } = response;
+      if (person !== null) {
+        const { id, attributes } = person;
+        Object.keys(attributes).forEach((attributeName) => {
+          if (!attributeMap.hasOwnProperty(attributeName)) {
+            attributeMap[attributeName] = {};
+          }
+          attributeMap[attributeName][id] = attributes[attributeName];
+        });
+      }
+    });
+  }
+  return {
+    questionNames,
+    attributeMap,
+  };
 };

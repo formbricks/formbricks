@@ -1,0 +1,90 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { APILayout } from "@/components/shared/APILayout.tsx";
+
+export const meta = {
+  title: "API: Create webhook",
+  description: "Learn how to create a new webhook via API.",
+};
+
+<APILayout
+  method="POST"
+  url="/api/v1/webhooks"
+  description="Add a new webhook."
+  headers={[
+    {
+      label: "X-Api-Key",
+      type: "string",
+      description: "Your Formbricks API key.",
+      required: true,
+    },
+  ]}
+  bodies={[
+    {
+      label: "url",
+      type: "string",
+      description: "The URL where the webhook will send data to.",
+      required: true,
+    },
+    {
+      label: "trigger",
+      type: "string",
+      description: "The event that will trigger the webhook.",
+      required: true,
+    },
+  ]}
+  example={`{
+  "url": "https://mysystem.com/myendpoint",
+  "trigger": "responseFinished"
+}`}
+  responses={[
+    {
+      color: "green",
+      statusCode: "200",
+      description: "Success. Returns a webhook object as JSON.",
+      example: `{
+  "data": {
+    "id": "cliu1kdza000219zftad4ip6c",
+    "createdAt": "2023-06-13T08:49:04.198Z",
+    "updatedAt": "2023-06-13T08:49:04.198Z",
+    "url": "https://mysystem.com/myendpoint",
+    "environmentId": "clisypjy4000319t4imm289uo",
+    "triggers": [
+        "responseFinished"
+    ]
+  }
+}`,
+    },
+    {
+      color: "brown",
+      statusCode: "400",
+      description: "Error. Bad request.",
+      example: `{
+  "code": "bad_request",
+  "message": "Missing trigger",
+  "details": {
+    "missing_field": "trigger"
+  }
+}`,
+    },
+    {
+      color: "brown",
+      statusCode: "401",
+      description: "Error. Not authenticated.",
+      example: `{
+  "code": "not_authenticated",
+  "message": "Not authenticated",
+  "details": {
+    "X-Api-Key": "Header not provided or API Key invalid"
+  }
+}`,
+    },
+  ]}
+/>
+
+| field name | required | default | description                                                                                            |
+| ---------- | -------- | ------- | ------------------------------------------------------------------------------------------------------ |
+| url        | yes      | -       | The endpoint that the webhook will send data to                                                        |
+| trigger    | yes      | -       | The event that will trigger the webhook ("responseCreated" or "responseUpdated" or "responseFinished") |
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

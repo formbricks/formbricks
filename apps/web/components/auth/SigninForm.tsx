@@ -1,7 +1,7 @@
 "use client";
 
 import { GoogleButton } from "@/components/auth/GoogleButton";
-import { Button } from "@formbricks/ui";
+import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
@@ -11,6 +11,7 @@ import { GithubButton } from "./GithubButton";
 
 export const SigninForm = () => {
   const searchParams = useSearchParams();
+  const emailRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e) => {
     setLoggingIn(true);
@@ -48,6 +49,7 @@ export const SigninForm = () => {
                     Email address
                   </label>
                   <input
+                    ref={emailRef}
                     id="email"
                     name="email"
                     type="email"
@@ -62,10 +64,9 @@ export const SigninForm = () => {
                   <label htmlFor="password" className="sr-only">
                     Password
                   </label>
-                  <input
+                  <PasswordInput
                     id="password"
                     name="password"
-                    type="password"
                     autoComplete="current-password"
                     placeholder="*******"
                     aria-placeholder="password"
@@ -90,6 +91,8 @@ export const SigninForm = () => {
                 if (!showLogin) {
                   setShowLogin(true);
                   setButtonEnabled(false);
+                  // Add a slight delay before focusing the input field to ensure it's visible
+                  setTimeout(() => emailRef.current?.focus(), 100);
                 } else if (formRef.current) {
                   formRef.current.requestSubmit();
                 }

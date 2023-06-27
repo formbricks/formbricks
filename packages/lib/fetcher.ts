@@ -1,4 +1,4 @@
-export const fetchRessource = async (url) => {
+export const fetchRessource = async (url: string) => {
   const res = await fetch(url);
 
   // If the status code is not in the range 200-299,
@@ -14,7 +14,7 @@ export const fetchRessource = async (url) => {
   return res.json();
 };
 
-export const fetcher = async (url) => {
+export const fetcher = async (url: string) => {
   const res = await fetch(url);
 
   // If the status code is not in the range 200-299,
@@ -30,7 +30,7 @@ export const fetcher = async (url) => {
   return res.json();
 };
 
-export const updateRessource = async (url, { arg }) => {
+export const updateRessource = async (url: string, { arg }: { arg: any }) => {
   return fetch(url, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

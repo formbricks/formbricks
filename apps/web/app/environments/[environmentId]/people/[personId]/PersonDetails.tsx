@@ -38,7 +38,10 @@ export default function PersonDetails({ environmentId, personId }: PersonDetails
   const otherAttributes = useMemo(
     () =>
       person?.attributes?.filter(
-        (attribute) => attribute.attributeClass.name !== "email" && attribute.attributeClass.name !== "userId"
+        (attribute) =>
+          attribute.attributeClass.name !== "email" &&
+          attribute.attributeClass.name !== "userId" &&
+          !attribute.attributeClass.archived
       ) as any[],
     [person]
   );

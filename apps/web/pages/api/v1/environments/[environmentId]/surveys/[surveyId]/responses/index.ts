@@ -49,6 +49,25 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             },
           },
         },
+        notes: {
+          include: {
+            response: true,
+            user: true,
+          },
+        },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                name: true,
+                createdAt: true,
+                environmentId: true,
+                id: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
       },
     });
 

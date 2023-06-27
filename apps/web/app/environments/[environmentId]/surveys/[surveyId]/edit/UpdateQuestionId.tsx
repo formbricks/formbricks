@@ -22,9 +22,7 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
 
   return (
     <div>
-      <Label className="block" htmlFor="questionId">
-        Question ID
-      </Label>
+      <Label htmlFor="questionId">Question ID</Label>
       <div className="mt-2 inline-flex w-full">
         <Input
           id="questionId"
@@ -35,7 +33,7 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
         />
         {localSurvey.status === "draft" && (
           <Button
-            variant="primary"
+            variant="darkCTA"
             className="ml-2 bg-slate-600 text-white hover:bg-slate-700 disabled:bg-slate-400"
             onClick={saveAction}
             disabled={currentValue === question.id}>

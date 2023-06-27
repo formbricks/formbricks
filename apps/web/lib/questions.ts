@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
+import { QuestionType as QuestionId } from "@formbricks/types/questions";
 
 export type QuestionType = {
   id: string;
@@ -20,16 +21,18 @@ export type QuestionType = {
 
 export const questionTypes: QuestionType[] = [
   {
-    id: "openText",
+    id: QuestionId.OpenText,
     label: "Free text",
     description: "A single line of text",
     icon: ChatBubbleBottomCenterTextIcon,
     preset: {
+      headline: "Who let the dogs out?",
+      subheader: "Who? Who? Who?",
       placeholder: "Type your answer here...",
     },
   },
   {
-    id: "multipleChoiceSingle",
+    id: QuestionId.MultipleChoiceSingle,
     label: "Single-Select",
     description: "A single choice from a list of options (radio buttons)",
     icon: QueueListIcon,
@@ -43,7 +46,7 @@ export const questionTypes: QuestionType[] = [
     },
   },
   {
-    id: "multipleChoiceMulti",
+    id: QuestionId.MultipleChoiceMulti,
     label: "Multi-Select",
     description: "Number of choices from a list of options (checkboxes)",
     icon: ListBulletIcon,
@@ -57,7 +60,7 @@ export const questionTypes: QuestionType[] = [
     },
   },
   {
-    id: "nps",
+    id: QuestionId.NPS,
     label: "Net Promoter Score® (NPS)",
     description: "Rate satisfaction on a 0-10 scale",
     icon: PresentationChartBarIcon,
@@ -68,7 +71,7 @@ export const questionTypes: QuestionType[] = [
     },
   },
   {
-    id: "cta",
+    id: QuestionId.CTA,
     label: "Call-to-Action",
     description: "Ask your users to perform an action",
     icon: CursorArrowRippleIcon,
@@ -80,7 +83,7 @@ export const questionTypes: QuestionType[] = [
     },
   },
   {
-    id: "rating",
+    id: QuestionId.Rating,
     label: "Rating",
     description: "Ask your users to rate something",
     icon: StarIcon,

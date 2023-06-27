@@ -10,6 +10,10 @@ interface DeleteDialogProps {
   onDelete: () => void;
   text?: string;
   isDeleting?: boolean;
+  useSaveInsteadOfCancel?: boolean;
+  onSave?: () => void;
+  children?: React.ReactNode;
+  disabled?: boolean;
 }
 
 export default function DeleteDialog({
@@ -19,19 +23,27 @@ export default function DeleteDialog({
   onDelete,
   text,
   isDeleting,
+  useSaveInsteadOfCancel = false,
+  onSave,
+  children,
+  disabled,
 }: DeleteDialogProps) {
   return (
     <Modal open={open} setOpen={setOpen} title={`Delete ${deleteWhat}`}>
       <p>{text || "Are you sure? This action cannot be undone."}</p>
+      <div>{children}</div>
       <div className="my-4 space-x-2 text-right">
         <Button
           variant="secondary"
           onClick={() => {
+            if (useSaveInsteadOfCancel && onSave) {
+              onSave();
+            }
             setOpen(false);
           }}>
-          Cancel
+          {useSaveInsteadOfCancel ? "Save" : "Cancel"}
         </Button>
-        <Button variant="warn" onClick={onDelete} loading={isDeleting}>
+        <Button variant="warn" onClick={onDelete} loading={isDeleting} disabled={disabled}>
           Delete
         </Button>
       </div>

@@ -1,62 +1,45 @@
-"use client";
-
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useResponses } from "@/lib/responses/responses";
-import { useSurvey } from "@/lib/surveys/surveys";
+import {
+  QuestionType,
+  type CTAQuestion,
+  type MultipleChoiceMultiQuestion,
+  type MultipleChoiceSingleQuestion,
+  type NPSQuestion,
+  type OpenTextQuestion,
+  type RatingQuestion,
+} from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { ErrorComponent } from "@formbricks/ui";
-import { useMemo } from "react";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import CTASummary from "./CTASummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
-import type {
-  CTAQuestion,
-  ConsentQuestion,
-  MultipleChoiceMultiQuestion,
-  MultipleChoiceSingleQuestion,
-  NPSQuestion,
-  OpenTextQuestion,
-  Question,
-  RatingQuestion,
-} from "@formbricks/types/questions";
-import ConsentSummary from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/ConsentSummary";
 
-export default function SummaryList({ environmentId, surveyId }) {
-  const { responsesData, isLoadingResponses, isErrorResponses } = useResponses(environmentId, surveyId);
-  const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
+interface SummaryListProps {
+  environmentId: string;
+  responses: TResponse[];
+  survey: TSurvey;
+}
 
-  const responses = responsesData?.responses;
-
-  const summaryData: QuestionSummary<Question>[] = useMemo(() => {
-    if (survey && responses) {
-      return survey.questions.map((question) => {
-        const questionResponses = responses
-          .filter((response) => question.id in response.data)
-          .map((r) => ({
-            id: r.id,
-            value: r.data[question.id],
-            updatedAt: r.updatedAt,
-            personId: r.personId,
-            person: r.person,
-          }));
-        return {
-          question,
-          responses: questionResponses,
-        };
-      });
-    }
-    return [];
-  }, [survey, responses]);
-
-  if (isLoadingResponses || isLoadingSurvey) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorResponses || isErrorSurvey) {
-    return <ErrorComponent />;
+export default function SummaryList({ environmentId, responses, survey }: SummaryListProps) {
+  let summaryData: QuestionSummary<TSurveyQuestion>[] = [];
+  if (survey && responses) {
+    summaryData = survey.questions.map((question) => {
+      const questionResponses = responses
+        .filter((response) => question.id in response.data)
+        .map((r) => ({
+          id: r.id,
+          value: r.data[question.id],
+          updatedAt: r.updatedAt,
+          person: r.person,
+        }));
+      return {
+        question,
+        responses: questionResponses,
+      };
+    });
   }
 
   return (
@@ -71,7 +54,7 @@ export default function SummaryList({ environmentId, surveyId }) {
         ) : (
           <>
             {summaryData.map((questionSummary) => {
-              if (questionSummary.question.type === "openText") {
+              if (questionSummary.question.type === QuestionType.OpenText) {
                 return (
                   <OpenTextSummary
                     key={questionSummary.question.id}
@@ -81,8 +64,8 @@ export default function SummaryList({ environmentId, surveyId }) {
                 );
               }
               if (
-                questionSummary.question.type === "multipleChoiceSingle" ||
-                questionSummary.question.type === "multipleChoiceMulti"
+                questionSummary.question.type === QuestionType.MultipleChoiceSingle ||
+                questionSummary.question.type === QuestionType.MultipleChoiceMulti
               ) {
                 return (
                   <MultipleChoiceSummary
@@ -97,7 +80,7 @@ export default function SummaryList({ environmentId, surveyId }) {
                   />
                 );
               }
-              if (questionSummary.question.type === "nps") {
+              if (questionSummary.question.type === QuestionType.NPS) {
                 return (
                   <NPSSummary
                     key={questionSummary.question.id}
@@ -105,7 +88,7 @@ export default function SummaryList({ environmentId, surveyId }) {
                   />
                 );
               }
-              if (questionSummary.question.type === "cta") {
+              if (questionSummary.question.type === QuestionType.CTA) {
                 return (
                   <CTASummary
                     key={questionSummary.question.id}
@@ -113,19 +96,11 @@ export default function SummaryList({ environmentId, surveyId }) {
                   />
                 );
               }
-              if (questionSummary.question.type === "rating") {
+              if (questionSummary.question.type === QuestionType.Rating) {
                 return (
                   <RatingSummary
                     key={questionSummary.question.id}
                     questionSummary={questionSummary as QuestionSummary<RatingQuestion>}
-                  />
-                );
-              }
-              if (questionSummary.question.type === "consent") {
-                return (
-                  <ConsentSummary
-                    key={questionSummary.question.id}
-                    questionSummary={questionSummary as QuestionSummary<ConsentQuestion>}
                   />
                 );
               }

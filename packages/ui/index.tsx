@@ -27,6 +27,7 @@ export {
 export { Editor, AddVariablesDropdown } from "./components/editor";
 export { ErrorComponent } from "./components/ErrorComponent";
 export { Input } from "./components/Input";
+export { PasswordInput } from "./components/PasswordInput";
 export { Label } from "./components/Label";
 export { PageTitle } from "./components/PageTitle";
 export { Popover, PopoverTrigger, PopoverContent } from "./components/Popover";
@@ -46,6 +47,17 @@ export {
 export { Switch } from "./components/Switch";
 export { TabBar } from "./components/TabBar";
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./components/Tooltip";
+export {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "./components/Command";
 
 /* Icons */
 export { AngryBirdRageIcon } from "./components/icons/AngryBirdRageIcon";

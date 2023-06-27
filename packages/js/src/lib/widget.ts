@@ -19,10 +19,16 @@ export const renderWidget = (survey: Survey) => {
   }
   surveyRunning = true;
 
-  render(
-    h(App, { config: config.get(), survey, closeSurvey, errorHandler: errorHandler.handle }),
-    document.getElementById(containerId)
-  );
+  if (survey.delay) {
+    logger.debug(`Delaying survey by ${survey.delay} seconds.`);
+  }
+
+  setTimeout(() => {
+    render(
+      h(App, { config: config.get(), survey, closeSurvey, errorHandler: errorHandler.handle }),
+      document.getElementById(containerId)
+    );
+  }, survey.delay * 1000);
 };
 
 export const closeSurvey = async (): Promise<void> => {
