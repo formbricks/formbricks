@@ -2,12 +2,13 @@ import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
 import Cal, { getCalApi } from "@calcom/embed-react";
 import { useEffect } from "react";
+import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 
 const XMOffer = [
   {
     step: "1",
     header: "Kick-off call",
-    description: "You share with our experienced PMs which areas of your experience need improvement.",
+    description: "You share with our seasoned PMs which areas of your customer experience need improvement.",
   },
   {
     step: "2",
@@ -40,7 +41,6 @@ const ConciergePage = () => {
         theme: "light",
         styles: { branding: { brandColor: "#000000" } },
         hideEventTypeDetails: false,
-        layout: "month_view",
       });
     })();
   }, []);
@@ -55,12 +55,11 @@ const ConciergePage = () => {
         headingPt2="Service"
         subheading="Let's set up your system for continuous user discovery together."
       />
-      <div className="grid grid-cols-1 px-4 md:grid-cols-2 md:gap-8 md:px-16">
+      <div className="-mt-16 grid grid-cols-1 space-y-4 px-4 md:grid-cols-2 md:gap-8 md:px-16">
         <div className="rounded-xl bg-slate-100 p-12">
-          <h3 className="mb-8 text-2xl font-semibold text-slate-400">What you get:</h3>
           {XMOffer.map((offer) => (
             <div key={offer.step} className="mb-8 flex items-center gap-x-4">
-              <div className=" flex items-center justify-center rounded-full bg-emerald-50 p-4 text-2xl font-bold text-emerald-900">
+              <div className=" flex items-center justify-center rounded-full bg-emerald-50 p-4 text-2xl font-bold text-emerald-700">
                 {offer.step}
               </div>
               <div>
@@ -69,6 +68,25 @@ const ConciergePage = () => {
               </div>
             </div>
           ))}
+          <div className="border-b border-t border-slate-300 p-6  text-4xl font-semibold text-slate-800">
+            <p className="mr-2 font-light line-through">$2.990</p>
+            <div className="xs:flex items-center gap-x-2">
+              <p>$990</p>
+              <p className="whitespace-nowrap rounded-full bg-indigo-200 px-4 text-base font-normal text-indigo-800">
+                24h GitHub Demo Offer 🔥
+              </p>
+            </div>
+          </div>
+          <div className="p-6 text-sm text-slate-800">
+            <p>
+              <CheckBadgeIcon className="mr-1 inline h-5 w-5 text-slate-800" />
+              100% Risk-free: Pay after the kick-off call.
+            </p>
+            <p>
+              <CheckBadgeIcon className="mr-1 inline h-5 w-5 text-slate-800" />
+              Money-back: If you&apos;re not happy, get a full refund.
+            </p>
+          </div>
         </div>
         <div className="rounded-xl">
           <Cal
