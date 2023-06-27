@@ -323,6 +323,8 @@ model Product {
   recontactDays       Int                   @default(7)
   formbricksSignature Boolean               @default(true)
   placement           WidgetPlacement       @default(bottomRight)
+  clickOutsideClose   Boolean               @default(true)
+  darkOverlay         Boolean               @default(false)
 }
 
 enum Plan {

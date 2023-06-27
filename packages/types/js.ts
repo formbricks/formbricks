@@ -54,6 +54,8 @@ export interface Settings {
   brandColor?: string;
   formbricksSignature?: boolean;
   placement?: PlacementType;
+  clickOutsideClose?: boolean;
+  darkOverlay?: boolean;
 }
 
 export interface JsConfig {

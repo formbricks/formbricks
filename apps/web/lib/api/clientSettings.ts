@@ -208,6 +208,8 @@ export const getSettings = async (environmentId: string, personId: string): Prom
           brandColor: true,
           formbricksSignature: true,
           placement: true,
+          darkOverlay: true,
+          clickOutsideClose: true,
         },
       },
     },
@@ -216,6 +218,16 @@ export const getSettings = async (environmentId: string, personId: string): Prom
   const formbricksSignature = environmentProdut?.product.formbricksSignature;
   const brandColor = environmentProdut?.product.brandColor;
   const placement = environmentProdut?.product.placement;
+  const darkOverlay = environmentProdut?.product.darkOverlay;
+  const clickOutsideClose = environmentProdut?.product.clickOutsideClose;
 
-  return { surveys, noCodeEvents, brandColor, formbricksSignature, placement };
+  return {
+    surveys,
+    noCodeEvents,
+    brandColor,
+    formbricksSignature,
+    placement,
+    darkOverlay,
+    clickOutsideClose,
+  };
 };
