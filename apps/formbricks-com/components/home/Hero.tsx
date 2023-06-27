@@ -21,20 +21,15 @@ export const Hero: React.FC = ({}) => {
     <div className="relative">
       <div className="px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
         <h1 className="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
-          <span className="xl:inline">Survey any segment.</span>{" "}
-          <span
-            className="font-extralight" /* className="from-brand-light to-brand-dark bg-gradient-to-b bg-clip-text text-transparent xl:inline" */
-          >
-            No coding required.
-          </span>
+          <span className="xl:inline">Create Products People Remember</span>
         </h1>
 
         <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-500 dark:text-slate-400 sm:text-lg md:mt-5 md:text-xl">
-          Survey granular user segments at any point in the user journey.
+          Understand what customers think & feel about your product.
           <br />
           <span className="hidden md:block">
-            Gather up to 6x more insights with targeted micro-surveys.{" "}
-            <span className="decoration-brand-dark underline underline-offset-4">All open-source.</span>
+            Continuously gather deep user insights,{" "}
+            <span className="decoration-brand-dark underline underline-offset-4">all privacy-first.</span>
           </span>
         </p>
 
