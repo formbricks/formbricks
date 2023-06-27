@@ -6,7 +6,6 @@ export const createDisplay = async (
   displayCreateRequest: TDisplayInput,
   config: JsConfig
 ): Promise<Result<TDisplay, NetworkError>> => {
-  // const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays`;
   const url = `${config.apiHost}/api/v1/client/displays`;
 
   const res = await fetch(url, {
@@ -34,7 +33,6 @@ export const markDisplayResponded = async (
   displayId: string,
   config: JsConfig
 ): Promise<Result<void, NetworkError>> => {
-  // const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays/${displayId}/responded`;
   const url = `${config.apiHost}/api/v1/client/displays/${displayId}/responded`;
 
   const res = await fetch(url, {
