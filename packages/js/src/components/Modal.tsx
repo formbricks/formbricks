@@ -53,7 +53,7 @@ export default function Modal({
       <div
         className={cn(
           "fb-w-full fb-h-full fb-relative",
-          isCenter ? (darkOverlay ? "fb-bg-gray-700/80" : "fb-bg-gray-700/20") : "fb-bg-none"
+          isCenter ? (darkOverlay ? "sm:fb-bg-gray-700/80" : "sm:fb-bg-gray-700/20") : "fb-bg-none"
         )}>
         <div
           ref={modalRef}
