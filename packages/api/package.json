@@ -16,10 +16,9 @@
     "lint": "eslint ./src --fix",
     "clean": "rimraf .turbo node_modules dist"
   },
-  "dependencies": {
-    "@formbricks/errors": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "@formbricks/errors": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "eslint": "^8.41.0",
