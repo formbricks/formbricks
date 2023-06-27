@@ -109,9 +109,10 @@ export default async function handle(
             ? Object.keys(event.data["submission"]).length
             : 0;
           const isFinanceStep = pageTitle?.toLowerCase().includes("finance");
-          const isAdminiInfos = pageTitle?.toLowerCase().includes("administratif") || pageTitle?.toLowerCase().includes("administratif");
+          const isAdminiInfos =
+            pageTitle?.toLowerCase().includes("administratif") ||
+            pageTitle?.toLowerCase().includes("administratif");
           let candidateResponse = {};
-        
 
           const ispageExistInPagesSubmited = pagesSubmited.findIndex(
             (title) => title === pageTitle
@@ -119,30 +120,43 @@ export default async function handle(
           if (ispageExistInPagesSubmited < 0 && pageTitle)
             pagesSubmited.push(pageTitle);
 
-          computeStepScore(pageTitle, isFinanceStep, event, goodAnswer, pagesFormated, candidateResponse, submissions, length, isAdminiInfos);
+          computeStepScore(
+            pageTitle,
+            isFinanceStep,
+            event,
+            goodAnswer,
+            pagesFormated,
+            candidateResponse,
+            submissions,
+            length,
+            isAdminiInfos
+          );
         });
 
-          console.log({submissions})
-          Object.values(pagesFormated).map(({ title }) => {
+        Object.values(pagesFormated).map(({ title }) => {
           if (
             title &&
             !submissions[title] &&
             title.toLowerCase().includes("test")
           ) {
             submissions[title] = 0;
-          } else if (title && !submissions[title] && (!title?.toLowerCase().includes("administratif") || !title?.toLowerCase().includes("administratif"))) {
+          } else if (
+            title &&
+            !submissions[title] &&
+            (!title?.toLowerCase().includes("administratif") ||
+              !title?.toLowerCase().includes("administratif"))
+          ) {
             submissions[title] = "";
           }
         });
 
-          await setCandidateSubmissionCompletedEvent(
+        await setCandidateSubmissionCompletedEvent(
           candidate.id,
           formId,
           pagesSubmited,
           formTotalPages,
           events
         );
-
 
         const error = validateEvents(events);
         if (error) {
@@ -151,16 +165,16 @@ export default async function handle(
           return res.status(status).json({ error: message });
         }
 
-          formatScoreSummary(events, formId, form, submissions);
-          events[0].type = "scoreSummary";
-          const candidateEvent = { user: candidate, ...events[0] };
+        formatScoreSummary(events, formId, form, submissions);
+        events[0].type = "scoreSummary";
+        const candidateEvent = { user: candidate, ...events[0] };
 
-          updateCandidatesEvents.push({
-            candidateEvent,
-            formId,
-            candidateId: candidate.id,
-            candidateName: `${candidate.firstname} - ${candidate.lastname}`,
-          });
+        updateCandidatesEvents.push({
+          candidateEvent,
+          formId,
+          candidateId: candidate.id,
+          candidateName: `${candidate.firstname} - ${candidate.lastname}`,
+        });
       } else {
         throw new Error(
           `The HTTP ${req.method} method is not supported by this route.`
@@ -168,11 +182,12 @@ export default async function handle(
       }
     })
   ).then(() => {
-    syncCandidatesEvents(updateCandidatesEvents, flag, NB_QUERIES, processApiEvent);
+    syncCandidatesEvents(
+      updateCandidatesEvents,
+      flag,
+      NB_QUERIES,
+      processApiEvent
+    );
   });
   res.json({ success: true });
 }
-
-
-
-

@@ -35,7 +35,7 @@ export default function UpdateProfile() {
   };
 
   const handleInputChange = (e) => {
-    let value = e.target.value.trim();
+    let value = e.target.value;
     const field = e.target.name;
     if (["line1", "line2", "commune", "ville", "province"].includes(field)) {
       setAddress({
@@ -77,12 +77,14 @@ export default function UpdateProfile() {
       delete updatedUser.address;
 
       const res = await updateUser(updatedUser, address);
+      updatedUser = await res.json();
+      setUser(updatedUser);
+      setAddress(updatedUser.address);
 
       if (res.status != 200) {
         toast.error("Erreur, veuillez ressayer");
       } else {
         session.data.user = updatedUser;
-        session.data.user.address = address;
         toast.success("Votre profil a bien été mis à jour");
         router.push(router.query.next?.toString() || "/");
       }
