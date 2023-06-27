@@ -314,6 +314,8 @@ const evaluateCondition = (logic: Logic, answerValue: any): boolean => {
         Array.isArray(logic.value) &&
         logic.value.some((v) => answerValue.includes(v))
       );
+    case "accepted":
+      return answerValue === "accepted";
     case "submitted":
       if (typeof answerValue === "string") {
         return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;

@@ -121,6 +121,8 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
           Array.isArray(logic.value) &&
           logic.value.some((v) => answerValue.includes(v))
         );
+      case "accepted":
+        return answerValue === "accepted";
       case "submitted":
         if (typeof answerValue === "string") {
           return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
@@ -155,7 +157,9 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
       for (let logic of currentQuestion.logic) {
         if (!logic.destination) continue;
 
+        console.log("answer", answerValue);
         if (evaluateCondition(logic, answerValue)) {
+          console.log(logic.condition);
           return logic.destination;
         }
       }
