@@ -68,7 +68,7 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
 
 
 
-export const updateDisplay = async (displayId: string): Promise<TDisplay> => {
+export const markDisplayResponded = async (displayId: string): Promise<TDisplay> => {
   try {
 
     if(!displayId) throw new Error("Display ID is required");
