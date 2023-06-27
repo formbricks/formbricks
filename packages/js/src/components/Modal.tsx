@@ -42,13 +42,13 @@ export default function Modal({
   return (
     <div
       aria-live="assertive"
-      className="fb-pointer-events-none fb-fixed fb-inset-0 fb-flex fb-items-end fb-z-40">
+      className="fb-pointer-events-none fb-fixed fb-inset-0 fb-flex fb-items-end fb-z-40 fb-p-3 sm:fb-p-0">
       <div className="fb-w-full fb-h-full fb-relative">
         <div
           className={cn(
             getPlacementClasses(placement),
             show ? "fb-opacity-100" : "fb-opacity-0",
-            "fb-pointer-events-auto fb-absolute fb-w-full fb-max-w-sm fb-overflow-hidden fb-rounded-lg fb-bg-white fb-shadow-lg fb-ring-1 fb-ring-black fb-ring-opacity-5 fb-transition-all fb-duration-500 fb-ease-in-out fb-m-4"
+            "fb-pointer-events-auto fb-absolute fb-w-full fb-max-w-sm fb-overflow-hidden fb-rounded-lg fb-bg-white fb-shadow-lg fb-ring-1 fb-ring-black fb-ring-opacity-5 fb-transition-all fb-duration-500 fb-ease-in-out sm:fb-m-4"
           )}>
           <div class="fb-absolute fb-top-0 fb-right-0 fb-pt-4 fb-pr-4 fb-block">
             <button
