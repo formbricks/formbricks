@@ -19,6 +19,7 @@ export default function Modal({
   close: () => void;
 }) {
   const [show, setShow] = useState(false);
+  const isCenter = placement === "center";
   const modalRef = useRef(null);
   /* useEffect(() => {
     setLoaded(true);
@@ -29,6 +30,8 @@ export default function Modal({
   }, [isOpen]);
 
   useEffect(() => {
+    if (!isCenter) return;
+
     function handleClickOutside(event) {
       if (clickOutside && show && modalRef.current && !modalRef.current.contains(event.target)) {
         close();
@@ -44,7 +47,7 @@ export default function Modal({
     <div
       aria-live="assertive"
       className={cn(
-        clickOutside ? "fb-pointer-events-auto" : "fb-pointer-events-none",
+        isCenter && clickOutside ? "fb-pointer-events-auto" : "fb-pointer-events-none",
         "fb-fixed fb-inset-0 fb-flex fb-items-end fb-z-40 fb-p-3 sm:fb-p-0"
       )}>
       <div
