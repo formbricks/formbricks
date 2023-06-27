@@ -196,7 +196,6 @@ export default function PreviewSurvey({
         if (!logic.destination) continue;
 
         if (evaluateCondition(logic, answerValue)) {
-          console.log(answerValue, logic.condition);
           return logic.destination;
         }
       }
