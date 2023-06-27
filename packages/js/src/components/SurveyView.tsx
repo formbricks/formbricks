@@ -157,9 +157,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
       for (let logic of currentQuestion.logic) {
         if (!logic.destination) continue;
 
-        console.log("answer", answerValue);
         if (evaluateCondition(logic, answerValue)) {
-          console.log(logic.condition);
           return logic.destination;
         }
       }
