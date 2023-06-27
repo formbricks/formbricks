@@ -1,20 +1,25 @@
 import type { PlacementType } from "@formbricks/types/js";
 import { h, VNode } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 
 export default function Modal({
   children,
   isOpen,
   placement,
+  clickOutside,
+  darkOverlay,
   close,
 }: {
   children: VNode;
   isOpen: boolean;
   placement: PlacementType;
+  clickOutside: boolean;
+  darkOverlay: boolean;
   close: () => void;
 }) {
   const [show, setShow] = useState(false);
+  const modalRef = useRef(null);
   /* useEffect(() => {
     setLoaded(true);
   }, []); */
@@ -23,12 +28,32 @@ export default function Modal({
     setShow(isOpen);
   }, [isOpen]);
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (clickOutside && show && modalRef.current && !modalRef.current.contains(event.target)) {
+        close();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [show, clickOutside, close]);
+
   return (
     <div
       aria-live="assertive"
-      className="fb-pointer-events-none fb-fixed fb-inset-0 fb-flex fb-items-end fb-z-40 fb-p-3 sm:fb-p-0">
-      <div className="fb-w-full fb-h-full fb-relative">
+      className={cn(
+        clickOutside ? "fb-pointer-events-auto" : "fb-pointer-events-none",
+        "fb-fixed fb-inset-0 fb-flex fb-items-end fb-z-40 fb-p-3 sm:fb-p-0"
+      )}>
+      <div
+        className={cn(
+          "fb-w-full fb-h-full fb-relative",
+          darkOverlay ? "fb-bg-gray-700/80" : "fb-bg-gray-700/20"
+        )}>
         <div
+          ref={modalRef}
           className={cn(
             placement,
             show ? "fb-opacity-100" : "fb-opacity-0",
