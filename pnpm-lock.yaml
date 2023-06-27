@@ -395,7 +395,7 @@ importers:
         version: 5.0.1
       tsup:
         specifier: ^6.7.0
-        version: 6.7.0(postcss@8.4.24)(typescript@5.0.4)
+        version: 6.7.0
 
   packages/database:
     dependencies:
@@ -487,7 +487,7 @@ importers:
         version: 5.0.1
       tsup:
         specifier: ^6.7.0
-        version: 6.7.0(postcss@8.4.24)(typescript@5.0.4)
+        version: 6.7.0
 
   packages/eslint-config-formbricks:
     dependencies:
@@ -751,9 +751,6 @@ importers:
       rimraf:
         specifier: ^5.0.1
         version: 5.0.1
-      tsup:
-        specifier: ^6.7.0
-        version: 6.7.0(postcss@8.4.24)(typescript@5.0.4)
       typescript:
         specifier: ^5.0.4
         version: 5.0.4
@@ -5993,7 +5990,7 @@ packages:
       tailwindcss: '>=3.0.0 || >= 3.0.0-alpha.1'
     dependencies:
       mini-svg-data-uri: 1.4.4
-      tailwindcss: 3.3.1(postcss@8.4.22)
+      tailwindcss: 3.3.1(postcss@8.4.21)
     dev: true
 
   /@tailwindcss/forms@0.5.3(tailwindcss@3.3.2):
@@ -20703,7 +20700,7 @@ packages:
     resolution: {integrity: sha512-mSxlJJwl3BMEQCUNnxXBU9jP4JBktcEGhURcPR6VQVlnP0FdDEsIaz0C35dXNGLyRfrATNofF0F5p2KPxQgB+w==}
     dev: false
 
-  /tsup@6.7.0(postcss@8.4.24)(typescript@5.0.4):
+  /tsup@6.7.0:
     resolution: {integrity: sha512-L3o8hGkaHnu5TdJns+mCqFsDBo83bJ44rlK7e6VdanIvpea4ArPcU3swWGsLVbXak1PqQx/V+SSmFPujBK+zEQ==}
     engines: {node: '>=14.18'}
     hasBin: true
@@ -20727,14 +20724,12 @@ packages:
       execa: 5.1.1
       globby: 11.1.0
       joycon: 3.1.1
-      postcss: 8.4.24
       postcss-load-config: 3.1.4(postcss@8.4.24)
       resolve-from: 5.0.0
       rollup: 3.5.1
       source-map: 0.8.0-beta.0
       sucrase: 3.29.0
       tree-kill: 1.2.2
-      typescript: 5.0.4
     transitivePeerDependencies:
       - supports-color
       - ts-node
