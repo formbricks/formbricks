@@ -86,7 +86,8 @@ export default function UpdateProfile() {
       } else {
         session.data.user = updatedUser;
         toast.success("Votre profil a bien été mis à jour");
-        router.push(router.query.next?.toString() || "/");
+        // TODO: line below introduces an infinite callback url
+        // router.push(router.query.next?.toString() || "/");
       }
     } catch (e) {
       toast(e.message);
