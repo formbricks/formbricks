@@ -21,8 +21,8 @@ export const SignupForm = () => {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    if(!isValid){
-      return
+    if (!isValid) {
+      return;
     }
     setSigningUp(true);
     try {
@@ -48,8 +48,8 @@ export const SignupForm = () => {
   const [isButtonEnabled, setButtonEnabled] = useState(true);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const [password, setPassword] = useState<string|null>(null)
-  const [isValid, setIsValid] = useState(false)
+  const [password, setPassword] = useState<string | null>(null);
+  const [isValid, setIsValid] = useState(false);
 
   const checkFormValidity = () => {
     // If all fields are filled, enable the button
@@ -145,7 +145,7 @@ export const SignupForm = () => {
             )}
             <Button
               onClick={(e: any) => {
-                e.preventDefault()
+                e.preventDefault();
                 if (!showLogin) {
                   setShowLogin(true);
                   setButtonEnabled(false);
@@ -158,7 +158,7 @@ export const SignupForm = () => {
               variant="darkCTA"
               className="w-full justify-center"
               loading={signingUp}
-              disabled={formRef.current ? (!isButtonEnabled || !isValid): !isButtonEnabled}>
+              disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
               Continue with Email
             </Button>
           </form>
