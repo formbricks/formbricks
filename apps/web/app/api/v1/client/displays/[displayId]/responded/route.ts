@@ -1,5 +1,5 @@
 import { responses } from "@/lib/api/response";
-import { updateDisplay } from "@formbricks/lib/services/displays";
+import { markDisplayResponded } from "@formbricks/lib/services/displays";
 import { TDisplay } from "@formbricks/types/v1/displays";
 import { NextResponse } from "next/server";
 
@@ -17,7 +17,7 @@ export async function POST(_: Request, { params }: { params: { displayId: string
   let display: TDisplay;
 
   try {
-    display = await updateDisplay(displayId);
+    display = await markDisplayResponded(displayId);
     return responses.successResponse(
     {
       ...display,
