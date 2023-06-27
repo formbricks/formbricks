@@ -1,66 +1,45 @@
 
-import { SurveyNotificationData } from "@/../../packages/types/surveys";
 import { prisma } from "@formbricks/database";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/api/apiHelper";
-import { hasApiEnvironmentAccess, hasUserEnvironmentAccess } from "@/lib/api/apiHelper"; 
+import { responses } from "@/lib/api/response";
+import { hasApiEnvironmentAccess, hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
 import { sendWeeklySummaryNotificationEmail, sendNoLiveSurveyNotificationEmail } from "@/lib/email";
 
-export async function GET(_: Request, { params }: { params: { environmentId: string } }) {
+export async function POST(_: Request, { params }: { params: { environmentId: string } }): Promise<NextResponse> {
 
     const headersList = headers();
     const environmentId = params.environmentId;
     if (!environmentId) {
-        return new Response("Missing environmentId", {
-            status: 400,
-          });
+        return responses.badRequestResponse("Missing environmentId");
     }
 
     const hasAccess = await hasEnvironmentAccess(headersList, environmentId);
     if (!hasAccess) {
-        return new Response("Not authorized", {
-            status: 403,
-        });
+        return responses.notAuthenticatedResponse();
     }
 
     const email = await getEmailForNotification(headersList);
     if (email == undefined) {
-        return new Response("No email found. If you are using x-api-key header then pass email via x-api-email header field", {
-            status: 404,
-        });
+        return responses.notFoundResponse("header", "x-api-key", true);
     }
 
-    const notificationSetting = await getUserNotificationSetting(email);
+    const notificationSettings = await getUserNotificationSetting(email);
+    const surveyIds = Object.keys(notificationSettings).filter(
+        (surveryId: string) => notificationSettings[surveryId]["weeklySummary"]);
 
     const productName = await getProductName(environmentId);
     if(productName == null) {
-        return new Response("No product found for the given environmentId", {
-                    status: 404,
-                });
+        return responses.notFoundResponse("product", "environmentId", true);
     }
 
     const currentDate = new Date();
     const lastWeekDate = new Date();
     lastWeekDate.setDate(currentDate.getDate() - 7);
 
-    const surveys = await prisma.survey.findMany({
-        where: {
-        environment: {
-            id: environmentId,
-        },
-        },
-        select: {
-            id: true,
-            questions: true,
-            status: true,
-            name: true,
-        }
-    });
-
-    const rawNotificationData = await getNotificationData(surveys, currentDate, lastWeekDate, notificationSetting);
-    const insights = await getSurveyInsights(rawNotificationData);
-    const surveyData = await getLatestSuveryResponses(rawNotificationData);
+    const rawWeeklySummaryData = await getNotificationData(surveyIds, currentDate, lastWeekDate);
+    const surveyData = await getLatestSuveryResponses(rawWeeklySummaryData.rawResponseData);
 
     const notificationResponse = {
         environmentId: environmentId,
@@ -68,127 +47,100 @@ export async function GET(_: Request, { params }: { params: { environmentId: str
         lastWeekDate: lastWeekDate,
         productName: productName,
         surveyData: surveyData,
-        insights: insights,
+        insights: rawWeeklySummaryData.insights
     };
-    await sendEmailNotification(email, notificationResponse);
-    return NextResponse.json(notificationResponse);
+
+    sendEmailNotification(email, notificationResponse);
+    return responses.successResponse(notificationResponse, true);
 }
 
-const getNotificationData = async (surveys: any, currentDate: Date, lastWeekDate: Date, notificationSetting) => {
+const getNotificationData = async (surveyIds: any, currentDate: Date, lastWeekDate: Date) => {
 
-    const surveyNotificationData: SurveyNotificationData[] = [];
-
-    for await (const survey of surveys) {
-        const surveyId = survey.id;
-        if (notificationSetting == undefined || notificationSetting[surveyId] == undefined || !notificationSetting[surveyId]["weeklySummary"]) {
-          continue;
-        }
-        const latestResponseData = await prisma.response.findFirst({
-            where: {
-              survey: {
-                id: surveyId,
-              },
-              finished: true,
-              createdAt: {
+    const latestResponseData = await prisma.response.findMany({
+        where: {
+          finished: true,
+          createdAt: {
+            gte: lastWeekDate.toISOString(),
+            lte: currentDate.toISOString(),
+          },
+          survey: {
+                id: {
+                    in: surveyIds,
+                },
+          },
+        },
+        distinct: ['surveyId'],
+        include: {
+            survey: {
+                select: {
+                    id: true,
+                    questions: true,
+                    status: true,
+                    name: true,
+                }
+            },
+          },
+        orderBy: [
+          {
+            createdAt: "desc",
+          },
+        ],
+      });
+    
+      const totalResponseCompleted = await prisma.response.count({
+        where: {
+            survey: {
+                id: {
+                    in: surveyIds,
+                },
+            },
+            finished: true,
+            createdAt: {
                 gte: lastWeekDate.toISOString(),
                 lte: currentDate.toISOString(),
-              }
-            },
-            orderBy: [
-              {
-                createdAt: "desc",
-              },
-            ],
-          });
-        
-        const responseLenth = await prisma.response.count({
-            where: {
-                survey: {
-                id: surveyId,
+            }
+        }
+    });
+
+    const totalDisplays = await prisma.display.count({
+        where: {
+            survey: {
+                id: {
+                    in: surveyIds,
                 },
-                createdAt: {
-                    gte: lastWeekDate.toISOString(),
-                    lte: currentDate.toISOString(),
-                }
             },
-            orderBy: [
-                {
-                createdAt: "desc",
+            createdAt: {
+                gte: lastWeekDate.toISOString(),
+                lte: currentDate.toISOString(),
+            }
+        },
+    });
+
+    const totalDisplaysResponded = await prisma.display.count({
+        where: {
+            survey: {
+                id: {
+                    in: surveyIds,
                 },
-            ],
-        });
+            },
+            status: "responded",
+            createdAt: {
+                gte: lastWeekDate.toISOString(),
+                lte: currentDate.toISOString(),
+            }
+        },
+    });
+
     
-        const responseFinishedLenth = await prisma.response.count({
-            where: {
-                survey: {
-                id: surveyId,
-                },
-                finished: true,
-                createdAt: {
-                    gte: lastWeekDate.toISOString(),
-                    lte: currentDate.toISOString(),
-                }
-            },
-            orderBy: [
-                {
-                createdAt: "desc",
-                },
-            ],
-        });
-
-        const numDisplays = await prisma.display.count({
-            where: {
-                surveyId,
-                createdAt: {
-                    gte: lastWeekDate.toISOString(),
-                    lte: currentDate.toISOString(),
-                }
-            },
-        });
-
-        const numDisplaysResponded = await prisma.display.count({
-            where: {
-                surveyId,
-                status: "responded",
-                createdAt: {
-                    gte: lastWeekDate.toISOString(),
-                    lte: currentDate.toISOString(),
-                }
-            },
-        });
-
-        surveyNotificationData.push({
-            id: surveyId,
-            numDisplays: numDisplays,
-            numDisplaysResponded: numDisplaysResponded,
-            responseLenght: responseLenth,
-            latestResponse: latestResponseData,
-            responseCompletedLength: responseFinishedLenth,
-            questions: survey.questions,
-            status: survey.status,
-            name: survey.name,
-        });
-    }
-
-    return surveyNotificationData;
-};
-
-const getSurveyInsights = async (notificationDatas) => {
-    let totalDisplays = 0;
-    let totalResponses = 0;
-    let totalCompletedResponses = 0;
-    for await (const notificationData of notificationDatas) {
-        totalDisplays += notificationData.numDisplays;
-        totalResponses += notificationData.numDisplaysResponded;
-        totalCompletedResponses += notificationData.responseCompletedLength;
-    }
-
     return {
-        totalDisplays: totalDisplays,
-        totalResponses: totalResponses,
-        totalCompletedResponses: totalCompletedResponses,
-        completionRate: (totalCompletedResponses/totalResponses) * 100,
-        numLiveSurvey: (notificationDatas.filter((nd) => nd.status == "inProgress").length)
+        rawResponseData: latestResponseData,
+        insights: {
+            totalCompletedResponses: totalResponseCompleted,
+            totalDisplays: totalDisplays,
+            totalResponses: totalDisplaysResponded,
+            completionRate: (totalResponseCompleted/totalDisplaysResponded) * 100,
+            numLiveSurvey: (latestResponseData.filter((response) => response.survey.status == "inProgress").length),
+        }
     };
 };
 
@@ -199,19 +151,19 @@ const getLatestSuveryResponses = async (notificationDatas) => {
     for await (const notificationData of notificationDatas) {
         const responses: any[] = [];
 
-        if (!liveSurveyStatus.includes(notificationData.status) || notificationData.latestResponse == null) {
+        if (!liveSurveyStatus.includes(notificationData.survey.status)) {
             continue;
-        } else if (notificationData.questions && notificationData.latestResponse) {
-            for await (const question of notificationData.questions) {
+        } else if (notificationData.survey.questions) {
+            for await (const question of notificationData.survey.questions) {
                 const title = question.headline;
-                const answer = notificationData.latestResponse.data[question.id];
+                const answer = notificationData.data[question.id];
                 responses.push({title: title, answer: answer});
             }
         }
 
         surveyResponses.push({
-            id: notificationData.id,
-            surveyName: notificationData.name,
+            id: notificationData.survey.id,
+            surveyName: notificationData.survey.name,
             responses: responses
         });
     }
@@ -238,12 +190,13 @@ const getUserNotificationSetting = async (emailId) => {
 };
 
 const sendEmailNotification = async (email, notificationResponse) => {
-  if (notificationResponse.surveyData.length > 0) {
-    await sendWeeklySummaryNotificationEmail(email, notificationResponse);
-  } else {
-    await sendNoLiveSurveyNotificationEmail(email, notificationResponse);
-  }
-};
+    if (notificationResponse.surveyData.length > 0) {
+      await sendWeeklySummaryNotificationEmail(email, notificationResponse);
+    } else {
+      await sendNoLiveSurveyNotificationEmail(email, notificationResponse);
+    }
+  };
+  
 
 const hasEnvironmentAccess = async (headersList, environmentId) => {
     if (headersList.get("x-api-key")) {
@@ -264,7 +217,7 @@ const hasEnvironmentAccess = async (headersList, environmentId) => {
     return true;
   };
 
-const getProductName = async (environmentId) => {
+  const getProductName = async (environmentId) => {
     const environment = await prisma.environment.findUnique({
         where: {
           id: environmentId,
