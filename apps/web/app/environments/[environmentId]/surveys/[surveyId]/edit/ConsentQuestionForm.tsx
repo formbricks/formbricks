@@ -66,7 +66,7 @@ export default function ConsentQuestionForm({
           onChange={(e) => updateQuestion(questionIdx, { label: e.target.value })}
         />
       </div>
-      <div className="mt-3">
+      {/* <div className="mt-3">
         <Label htmlFor="buttonLabel">Button Label</Label>
         <Input
           id="buttonLabel"
@@ -76,7 +76,7 @@ export default function ConsentQuestionForm({
           placeholder={lastQuestion ? "Finish" : "Next"}
           onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
         />
-      </div>
+      </div> */}
     </form>
   );
 }
