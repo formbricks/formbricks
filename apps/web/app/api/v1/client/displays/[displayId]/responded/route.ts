@@ -18,11 +18,7 @@ export async function POST(_: Request, { params }: { params: { displayId: string
 
   try {
     display = await updateDisplay(displayId);
-  } catch (error) {
-    return responses.internalServerErrorResponse(error.message);
-  }
-
-  return responses.successResponse(
+    return responses.successResponse(
     {
       ...display,
       createdAt: display.createdAt.toISOString(),
@@ -30,4 +26,7 @@ export async function POST(_: Request, { params }: { params: { displayId: string
     },
     true
   );
+  } catch (error) {
+    return responses.internalServerErrorResponse(error.message);
+  }
 }
