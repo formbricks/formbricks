@@ -6,10 +6,10 @@ import {
   formatPages,
   formatScoreSummary,
   getFormPages,
-  setCandidateSubmissionCompletedEvent,
   syncCandidatesEvents,
 } from "../../../../lib/utils";
 import { prisma } from "../../../../lib/prisma";
+import { setCandidateSubmissionCompletedEvent } from "./event";
 
 ///api/submissionsession
 export default async function handle(

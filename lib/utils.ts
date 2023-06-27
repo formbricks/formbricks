@@ -4,7 +4,6 @@ import { fr } from "date-fns/locale";
 import crypto from "crypto";
 import { UserRole } from "@prisma/client";
 import AWS from "aws-sdk";
-import { prisma } from "../lib/prisma";
 
 export const fetcher = async (url) => {
   const res = await fetch(url);
@@ -75,12 +74,6 @@ export const slugify = (...args: (string | number)[]): string => {
     .replace(/\s+/g, "-"); // separator
 };
 
-// export const handlePhoneNumberValidity = (phone) => {
-//   const validity = /^(\+243|243)[0-9]{9}$/.test(phone);
-//   if (validity === false)
-//     throw new Error("Entrez le numéro au format +243 xxx xxx xxx");
-//   return phone;
-// };
 export const handlePhoneNumberValidity = (phone, name) => {
   const phoneReg1 = /^(243|\+243|0|00243)([0-9]{9})$/;
   const phoneReg2 = /^([0-9]{9})$/;
@@ -372,7 +365,6 @@ submissions[pageTitle] = submission;
 }
 };
 
-
 export const computeStepScore = (
   pageTitle: any,
   isFinanceStep: any,
@@ -408,8 +400,7 @@ export const computeStepScore = (
         pageTitle,
         goodAnswer,
         length,
-        submission,
-        
+        submission
       );
     }
   }
@@ -438,57 +429,6 @@ export const formatScoreSummary = (
   delete events[0].data.dueDate;
   delete events[0].data.schema;
 };
-
-export async function setCandidateSubmissionCompletedEvent(
-  id,
-  formId: string,
-  pagesSubmited: any[],
-  formTotalPages: number,
-  events: any
-) {
-  const candidateSubmissionCompleted = await prisma.sessionEvent.findFirst({
-    where: {
-      AND: [
-        { type: "submissionCompletedEvent" },
-        {
-          data: {
-            path: ["candidateId"],
-            equals: id,
-          },
-        },
-        {
-          data: {
-            path: ["formId"],
-            equals: formId,
-          },
-        },
-      ],
-    },
-  });
-
-  if (
-    !candidateSubmissionCompleted &&
-    pagesSubmited.length === formTotalPages
-  ) {
-    events[0].data.type = "submissionCompletedEvent";
-    await prisma.sessionEvent.create({
-      data: {
-        type: "submissionCompletedEvent",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        data: {
-          user: id,
-          formId,
-          candidateId: id,
-        },
-        submissionSession: {
-          connect: { id: events[0].data.submissionSessionId },
-        },
-      },
-    });
-    events[0].type = "pageSubmissionevents";
-  }
-}
 
 export const syncCandidatesEvents = (updateCandidatesEvents, flag, NB_QUERIES, processApiEvent) => {
   Promise.all(
