@@ -23,7 +23,7 @@
   },
   "scripts": {
     "clean": "rimraf .turbo node_modules dist",
-    "dev": "microbundle --css inline",
+    "dev": "microbundle --css inline --watch",
     "lint": "eslint '{src,tests}/**/*.{ts,tsx}'",
     "test": "jest",
     "build": "microbundle --css inline"

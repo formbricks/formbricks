@@ -3,7 +3,7 @@ Copyright (c) 2023 Matthias Nannt, Johannes Dancker
 Portions of this software are licensed as follows:
 
 - All content that resides under the "packages/ee/" directory of this repository, if that directory exists, is licensed under the license defined in "packages/ee/LICENSE".
-- All content that resides under the "packages/js/" directory of this repository, if that directory exists, is licensed under the "MIT" license as defined in "packages/js/LICENSE".
+- All content that resides under the "packages/js/", "packages/errors/" and "packages/api/" directories of this repository, if that directories exist, is licensed under the "MIT" license as defined in the "LICENSE" files of these packages.
 - All third party components incorporated into the Formbricks Software are licensed under the original license provided by the owner of the applicable component.
 - Content outside of the above mentioned directories or restrictions above is available under the "AGPLv3" license as defined below.
 
@@ -67,7 +67,7 @@ modification follow.
 
                        TERMS AND CONDITIONS
 
-0. Definitions.
+1. Definitions.
 
 "This License" refers to version 3 of the GNU Affero General Public License.
 

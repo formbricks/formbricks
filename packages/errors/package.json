@@ -1,8 +1,8 @@
 {
   "name": "@formbricks/errors",
+  "license": "MIT",
   "description": "A helper package containing general error classes for Formbricks",
-  "private": true,
-  "version": "1.0.0",
+  "version": "0.1.0",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
