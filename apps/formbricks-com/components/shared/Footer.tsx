@@ -48,9 +48,7 @@ export default function Footer() {
           <span className="sr-only">Formbricks</span>
           <FooterLogo className="mx-auto h-8 w-auto sm:h-10" />
         </Link>
-        <p className="text-base text-slate-500 dark:text-slate-400">
-          Make customer-centric decisions based on data.
-        </p>
+        <p className="text-base text-slate-500 dark:text-slate-400">Privacy-first Experience Management</p>
         <div className="border-slate-500">
           <p className="text-sm text-slate-400 dark:text-slate-500">
             &copy; 2022. All rights reserved.

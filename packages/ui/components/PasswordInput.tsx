@@ -25,9 +25,8 @@ const PasswordInput = ({ className, ...rest }: PasswordInputProps) => {
       />
       <button
         type="button"
-        className={cn("absolute top-1/2 right-3 transform -translate-y-1/2")}
-        onClick={togglePasswordVisibility}
-      >
+        className={cn("absolute right-3 top-1/2 -translate-y-1/2 transform")}
+        onClick={togglePasswordVisibility}>
         {showPassword ? (
           <EyeSlashIcon className="h-5 w-5 text-slate-400 " />
         ) : (
@@ -39,4 +38,3 @@ const PasswordInput = ({ className, ...rest }: PasswordInputProps) => {
 };
 
 export { PasswordInput };
-
