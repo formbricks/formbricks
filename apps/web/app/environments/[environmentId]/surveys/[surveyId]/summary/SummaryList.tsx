@@ -1,3 +1,4 @@
+import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/data";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import {
   QuestionType,
@@ -9,8 +10,8 @@ import {
   type RatingQuestion,
 } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import { Session } from "next-auth";
 import CTASummary from "./CTASummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
@@ -19,14 +20,16 @@ import RatingSummary from "./RatingSummary";
 
 interface SummaryListProps {
   environmentId: string;
-  responses: TResponse[];
+  surveyId: string;
+  session: Session;
   survey: TSurvey;
 }
 
-export default function SummaryList({ environmentId, responses, survey }: SummaryListProps) {
-  let summaryData: QuestionSummary<TSurveyQuestion>[] = [];
-  if (survey && responses) {
-    summaryData = survey.questions.map((question) => {
+export default async function SummaryList({ environmentId, surveyId, session }: SummaryListProps) {
+  const { survey, responses } = await getAnalysisData(session, surveyId);
+
+  const getSummaryData = (): QuestionSummary<TSurveyQuestion>[] =>
+    survey.questions.map((question) => {
       const questionResponses = responses
         .filter((response) => question.id in response.data)
         .map((r) => ({
@@ -40,7 +43,6 @@ export default function SummaryList({ environmentId, responses, survey }: Summar
         responses: questionResponses,
       };
     });
-  }
 
   return (
     <>
@@ -53,7 +55,7 @@ export default function SummaryList({ environmentId, responses, survey }: Summar
           />
         ) : (
           <>
-            {summaryData.map((questionSummary) => {
+            {getSummaryData().map((questionSummary) => {
               if (questionSummary.question.type === QuestionType.OpenText) {
                 return (
                   <OpenTextSummary
