@@ -90,7 +90,7 @@ const ConciergePage = () => {
         </div>
         <div className="rounded-xl">
           <Cal
-            calLink="johannes/concierge-kick-off"
+            calLink="johannes/kick-off"
             style={{
               width: "100%",
               height: "100%",
