@@ -37,7 +37,7 @@ Formbricks is your go-to solution for in-product micro-surveys that will superch
 
 **Try it out in the cloud at [formbricks.com](https://formbricks.com)**
 
-### Mission: Base your decisions on qualitative data.
+## 💪 Mission: Base your decisions on qualitative data.
 
 Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Ask users as they experience your product - and leverage a significantly higher conversion rate. Gather all insights you can - including partial submissions and build conviction for the next product decision. Better data, better business.
 
