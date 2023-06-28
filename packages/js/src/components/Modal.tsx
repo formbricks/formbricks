@@ -43,6 +43,23 @@ export default function Modal({
     };
   }, [show, clickOutside, close, isCenter]);
 
+  const getPlacementStyle = (placement: PlacementType) => {
+    switch (placement) {
+      case "bottomRight":
+        return "fb-bottom-3 sm:fb-right-3";
+      case "topRight":
+        return "sm:fb-top-3 sm:fb-right-3 fb-bottom-3";
+      case "topLeft":
+        return "sm:fb-top-3 sm:fb-left-3 fb-bottom-3";
+      case "bottomLeft":
+        return "fb-bottom-3 sm:fb-left-3";
+      case "center":
+        return "fb-top-1/2 fb-left-1/2 fb-transform -fb-translate-x-1/2 -fb-translate-y-1/2";
+      default:
+        return "fb-bottom-3 sm:fb-right-3";
+    }
+  };
+
   return (
     <div
       aria-live="assertive"
@@ -53,14 +70,18 @@ export default function Modal({
       <div
         className={cn(
           "fb-w-full fb-h-full fb-relative",
-          isCenter ? (darkOverlay ? "sm:fb-bg-gray-700/80" : "sm:fb-bg-gray-700/20") : "fb-bg-none"
+          show && isCenter
+            ? darkOverlay
+              ? "sm:fb-bg-gray-700/80"
+              : "sm:fb-bg-white/50"
+            : "fb-bg-none fb-transition-all fb-duration-500 fb-ease-in-out"
         )}>
         <div
           ref={modalRef}
           className={cn(
-            placement,
+            getPlacementStyle(placement),
             show ? "fb-opacity-100" : "fb-opacity-0",
-            "fb-pointer-events-auto fb-absolute fb-w-full fb-max-w-sm fb-overflow-hidden fb-rounded-lg fb-bg-white fb-shadow-lg fb-ring-1 fb-ring-black fb-ring-opacity-5 fb-transition-all fb-duration-500 fb-ease-in-out sm:fb-m-4"
+            "fb-h-fit fb-pointer-events-auto fb-absolute fb-w-full fb-max-w-sm fb-overflow-hidden fb-rounded-lg fb-bg-white fb-shadow-lg fb-ring-1 fb-ring-black fb-ring-opacity-5 fb-transition-all fb-duration-500 fb-ease-in-out sm:fb-m-4"
           )}>
           <div class="fb-absolute fb-top-0 fb-right-0 fb-pt-4 fb-pr-4 fb-block">
             <button

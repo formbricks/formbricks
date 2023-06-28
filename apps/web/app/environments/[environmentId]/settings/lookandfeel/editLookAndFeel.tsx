@@ -16,6 +16,8 @@ import {
 } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { getPlacementStyle } from "@/lib/preview";
+import { PlacementType } from "@formbricks/types/js";
 
 export function EditBrandColor({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
@@ -62,7 +64,7 @@ export function EditPlacement({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
 
-  const [currentPlacement, setCurrentPlacement] = useState("");
+  const [currentPlacement, setCurrentPlacement] = useState<PlacementType>("bottomRight");
   const [overlay, setOverlay] = useState("");
   const [clickOutside, setClickOutside] = useState("");
 
@@ -92,7 +94,7 @@ export function EditPlacement({ environmentId }) {
   return (
     <div className="w-full items-center">
       <div className="flex">
-        <RadioGroup onValueChange={(e) => setCurrentPlacement(e)} value={currentPlacement}>
+        <RadioGroup onValueChange={(e) => setCurrentPlacement(e as PlacementType)} value={currentPlacement}>
           {placements.map((placement) => (
             <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
               <RadioGroupItem id={placement.value} value={placement.value} disabled={placement.disabled} />
@@ -105,7 +107,11 @@ export function EditPlacement({ environmentId }) {
           ))}
         </RadioGroup>
         <div className="relative ml-8 h-40 w-full rounded bg-slate-200">
-          <div className={cn("absolute h-16 w-16 rounded bg-slate-700", currentPlacement)}></div>
+          <div
+            className={cn(
+              "absolute h-16 w-16 rounded bg-slate-700",
+              getPlacementStyle(currentPlacement)
+            )}></div>
         </div>
       </div>
 
