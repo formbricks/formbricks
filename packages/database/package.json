@@ -24,21 +24,21 @@
     "studio": "prisma studio"
   },
   "dependencies": {
-    "@formbricks/types": "workspace:*",
-    "@prisma/client": "^4.15.0",
-    "prisma-json-types-generator": "^2.4.0",
+    "@prisma/client": "^4.16.1",
+    "prisma-json-types-generator": "^2.5.0",
     "zod": "^3.21.4",
     "zod-prisma": "^0.5.4"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "eslint": "^8.41.0",
+    "@formbricks/types": "workspace:*",
+    "eslint": "^8.43.0",
     "eslint-config-formbricks": "workspace:*",
-    "prisma": "^4.15.0",
+    "prisma": "^4.16.1",
     "prisma-dbml-generator": "^0.10.0",
     "rimraf": "^5.0.1",
-    "tsup": "^6.7.0",
+    "tsup": "^7.1.0",
     "tsx": "^3.12.7",
-    "typescript": "^5.0.4"
+    "typescript": "^5.1.3"
   }
 }

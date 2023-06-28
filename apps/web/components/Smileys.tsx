@@ -460,5 +460,3 @@ export const GrinningSquintingFace: React.FC<React.SVGProps<SVGCircleElement>> =
     </svg>
   );
 };
-
-export let icons = [<svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg"></svg>];
