@@ -269,9 +269,9 @@ export default function Header() {
           </Link> */}
 
           <Link
-            href="/community"
+            href="/concierge"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Community
+            Concierge
           </Link>
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
@@ -363,7 +363,7 @@ export default function Header() {
                     <hr className="mx-20 my-6 opacity-25" />
                   </div>
                 )}
-                <Link href="/community">Community</Link>
+                <Link href="/concierge">Concierge</Link>
                 <Link href="#pricing">Pricing</Link>
                 <Link href="/docs">Docs</Link>
                 <Link href="/blog">Blog</Link>
