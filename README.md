@@ -34,13 +34,13 @@
 
 <img width="1527" alt="formbricks-sneak" src="https://user-images.githubusercontent.com/675065/227726212-6ebf930e-6a20-4ffa-b966-56cd41bdf363.png">
 
-Formbricks productizes best practices for qualitative in-app user discovery. Use micro-surveys to target the right users at the right time without making surveys annoying.
+Formbricks is your go-to solution for in-product micro-surveys that will supercharge your product experience. Use micro-surveys to target the right users at the right time without making surveys annoying.
 
 **Try it out in the cloud at [formbricks.com](https://formbricks.com)**
 
 ### Mission: Base your decisions on qualitative data.
 
-Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Use Formbricks to collect and manage insights from your users; run a product market fit survey to know which audience to focus on and whether your value proposition is being recognized.
+Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Ask users as they experience your product - and leverage a significantly higher conversion rate. Gather all insights you can - including partial submissions and build conviction for the next product decision. Better data, better business.
 
 ### Features
 
