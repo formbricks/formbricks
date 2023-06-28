@@ -11,6 +11,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@calcom/embed-react": "^1.1.1",
     "@docsearch/react": "^3.5.1",
     "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
