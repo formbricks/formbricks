@@ -19,6 +19,9 @@ import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
+import GitHubMarkWhite from "@/images/github-mark-white.svg";
+import GitHubMarkDark from "@/images/github-mark.svg";
+import Image from "next/image";
 
 function GitHubIcon(props: any) {
   return (
@@ -281,21 +284,24 @@ export default function Header() {
             className="group px-2"
             href="https://formbricks.com/github"
             target="_blank">
-            <StarIcon className="h-6 w-6 text-amber-500 group-hover:text-amber-400" />
+            <Image
+              src={GitHubMarkDark}
+              alt="GitHub Sponsors Formbricks badge"
+              width={24}
+              className="block dark:hidden"
+            />
+            <Image
+              src={GitHubMarkWhite}
+              alt="GitHub Sponsors Formbricks badge"
+              width={24}
+              className="hidden dark:block"
+            />
           </Button>
           {/*           <Button variant="secondary" className="ml-2 px-2" onClick={() => setVideoModal(true)}>
             <VideoWalkThrough open={videoModal} setOpen={() => setVideoModal(false)} />
             <PlayCircleIcon className="h-6 w-6" />
           </Button> */}
 
-          {/*           <Button
-            variant="secondary"
-            EndIcon={GitHubIcon}
-            endIconClassName="fill-slate-800 ml-2 dark:fill-slate-200"
-            href="https://github.com/formbricks/formbricks"
-            target="_blank">
-            View on Github
-          </Button> */}
           <Button
             variant="highlight"
             className="ml-2"
