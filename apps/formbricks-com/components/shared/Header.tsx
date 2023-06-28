@@ -1,3 +1,5 @@
+import GitHubMarkWhite from "@/images/github-mark-white.svg";
+import GitHubMarkDark from "@/images/github-mark.svg";
 import {
   BaseballIcon,
   Button,
@@ -11,17 +13,14 @@ import {
 } from "@formbricks/ui";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { StarIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { usePlausible } from "next-plausible";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
 import { FooterLogo } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
-import GitHubMarkWhite from "@/images/github-mark-white.svg";
-import GitHubMarkDark from "@/images/github-mark.svg";
-import Image from "next/image";
 
 function GitHubIcon(props: any) {
   return (
