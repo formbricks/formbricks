@@ -41,3 +41,15 @@ export const deletePerson = async (environmentId: string, personId: string) => {
     throw Error(`deletePerson: unable to delete person: ${error.message}`);
   }
 };
+
+export const useGetOrCreatePerson = (environmentId: string, personId?: string | null) => {
+  const { data, isLoading } = useSWR(
+    personId ? `/api/v1/client/people/getOrCreate?userId=${personId}&environmentId=${environmentId}` : null,
+    fetcher
+  );
+
+  return {
+    person: data,
+    isLoadingPerson: isLoading,
+  };
+};
