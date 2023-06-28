@@ -31,13 +31,13 @@
 
 ## ✨ About Formbricks
 
-<img width="1527" alt="formbricks-sneak" src="https://user-images.githubusercontent.com/675065/227726212-6ebf930e-6a20-4ffa-b966-56cd41bdf363.png">
+<img width="1527" alt="formbricks-sneak" src="https://github-production-user-asset-6210df.s3.amazonaws.com/675065/249441967-ccb89ea3-82b4-4bf2-8d2c-528721ec313b.png">
 
 Formbricks is your go-to solution for in-product micro-surveys that will supercharge your product experience. Use micro-surveys to target the right users at the right time without making surveys annoying.
 
 **Try it out in the cloud at [formbricks.com](https://formbricks.com)**
 
-## 💪 Mission: Base your decisions on qualitative data.
+## 💪 Mission: Make customer-centric decisions based on data.
 
 Formbricks helps you apply best practices from data-driven work and experience management to make better business decisions. Ask users as they experience your product - and leverage a significantly higher conversion rate. Gather all insights you can - including partial submissions and build conviction for the next product decision. Better data, better business.
 
@@ -63,11 +63,11 @@ Formbricks helps you apply best practices from data-driven work and experience m
 
 ## 🚀 Getting started
 
-### Cloud Version
+### ☁️ Cloud Version
 
 Formbricks has a hosted cloud offering with a generous free plan to get you up and running as quickly as possible. To get started, please visit [formbricks.com](https://formbricks.com)
 
-### Self-hosted version
+### 🐳 Self-hosted version
 
 Formbricks is available Open-Source under AGPLv3 license. You can host Formbricks on your own servers using Docker without a subscription. To get started with self-hosting, take a look at our [self-hosting docs](https://formbricks.com/docs/self-hosting/deployment).
 
