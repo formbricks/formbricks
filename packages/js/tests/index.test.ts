@@ -37,7 +37,7 @@ test("Formbricks should Initialise", async () => {
     }
 });
 
-test("Formbricks should get no current person", () => {
+test("Formbricks should get the current person with no attributes", () => {
     const currentState = formbricks.getPerson()
 
     const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
