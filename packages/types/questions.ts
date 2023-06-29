@@ -80,6 +80,7 @@ export type LogicCondition =
   | "submitted"
   | "skipped"
   | "accepted"
+  | "clicked"
   | "equals"
   | "notEquals"
   | "lessThan"
@@ -121,7 +122,7 @@ export interface NPSLogic extends LogicBase {
   value?: number;
 }
 export interface CTALogic extends LogicBase {
-  condition: "submitted" | "skipped" | undefined;
+  condition: "clicked" | "skipped" | undefined;
   value?: undefined;
 }
 export interface RatingLogic extends LogicBase {

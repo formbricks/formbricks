@@ -79,8 +79,8 @@ export default function LogicEditor({
       "submitted",
       "skipped",
     ],
-    cta: ["submitted", "skipped"],
-    consent: ["submitted", "skipped", "accepted"],
+    cta: ["clicked", "skipped"],
+    consent: ["skipped", "accepted"],
   };
   const logicConditions: LogicConditions = {
     submitted: {
@@ -95,6 +95,11 @@ export default function LogicEditor({
     },
     accepted: {
       label: "is accepted",
+      values: null,
+      unique: true,
+    },
+    clicked: {
+      label: "is clicked",
       values: null,
       unique: true,
     },
@@ -229,7 +234,7 @@ export default function LogicEditor({
                 <SelectContent>
                   {conditions[question.type].map(
                     (condition) =>
-                      !(question.required && (condition === "skipped" || condition === "accepted")) && (
+                      !(question.required && condition === "skipped") && (
                         <SelectItem key={condition} value={condition}>
                           {logicConditions[condition].label}
                         </SelectItem>
