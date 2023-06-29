@@ -110,6 +110,9 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                       duration: 2000,
                       icon: <LucideAlertCircle size={16} className="text-orange-500" />,
                     });
+
+                    const tag = tags.find((tag) => tag.tagName === tagName?.trim() ?? "");
+                    setTagIdToHighlight(tag?.tagId ?? "");
                   } else {
                     toast.error(err?.message ?? "Something went wrong", {
                       duration: 2000,
@@ -119,9 +122,6 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                   setSearchValue("");
                   setOpen(false);
                   mutateResponses();
-
-                  const tag = tags.find((tag) => tag.tagName === tagName?.trim() ?? "");
-                  setTagIdToHighlight(tag?.tagId ?? "");
 
                   refetchEnvironmentTags();
                 },
