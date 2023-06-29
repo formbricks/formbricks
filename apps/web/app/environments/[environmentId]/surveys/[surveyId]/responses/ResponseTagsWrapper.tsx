@@ -125,6 +125,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
                   refetchEnvironmentTags();
                 },
+                throwOnError: false,
               }
             );
           }}
