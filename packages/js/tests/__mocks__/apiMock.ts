@@ -222,16 +222,19 @@ export const mockEventTrackResponse = () => {
     fetchMock.mockResponseOnce(JSON.stringify({
         id: eventIdForEventTracking,
     }));
+    console.log('Formbricks: Event "Button Clicked" tracked')
 }
 
 export const mockRefreshResponse = () => {
     fetchMock.mockResponseOnce(JSON.stringify({}));
+    console.log('Settings refreshed')
 }
 
 export const mockRegisterRouteChangeResponse = () => {
     fetchMock.mockResponseOnce(JSON.stringify({
         id: eventIdForRouteChange,
     }));
+    console.log('Checking page url: http://localhost/');
 }
 
 export const mockLogoutResponse = () => {
@@ -247,4 +250,5 @@ export const mockLogoutResponse = () => {
         },
         session: {},
     }));
+    console.log('Resetting person. Getting new person, session and settings from backend');
 }

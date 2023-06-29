@@ -6,7 +6,7 @@ import { constants } from "./constants"
 import { Attribute } from "./types";
 import { mockEventTrackResponse, mockInitResponse, mockLogoutResponse, mockRefreshResponse, mockRegisterRouteChangeResponse, mockSetCustomAttributeResponse, mockSetEmailIdResponse, mockSetUserIdResponse, mockUpdateEmailResponse } from "./__mocks__/apiMock";
 
-const logSpy = jest.spyOn(global.console, "log");
+const consoleLogMock = jest.spyOn(console, 'log').mockImplementation();
 
 test("Test Jest", () => {
     expect(1 + 9).toBe(10);
@@ -24,7 +24,6 @@ test("Formbricks should Initialise", async () => {
     await formbricks.init({
         environmentId,
         apiHost,
-        logLevel: "debug",
     });
 
     const configFromBrowser = localStorage.getItem("formbricksConfig");
@@ -155,19 +154,19 @@ test("Formbricks should track event", async () => {
         await formbricks.track("Button Clicked");
     });
     await mockButton.click();
-    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/Formbricks: Event "Button Clicked" tracked/));
+    expect(consoleLogMock).toHaveBeenCalledWith(expect.stringMatching(/Formbricks: Event "Button Clicked" tracked/));
 });
 
 test("Formbricks should refresh", async () => {
     mockRefreshResponse()
     await formbricks.refresh()
-    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/Settings refreshed/));
+    expect(consoleLogMock).toHaveBeenCalledWith(expect.stringMatching(/Settings refreshed/));
 })
 
 test("Formbricks should register for route change", async () => {
     mockRegisterRouteChangeResponse()
     await formbricks.registerRouteChange()
-    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/Checking page url/));
+    expect(consoleLogMock).toHaveBeenCalledWith(expect.stringMatching(/Checking page url/));
 })
 
 test("Formbricks should logout", async () => {
