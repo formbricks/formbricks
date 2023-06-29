@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@formbricks/database": "workspace:*",
-    "next": "^13.4.4"
+    "next": "^13.4.4",
+    "stripe": "^12.6.0"
   }
 }

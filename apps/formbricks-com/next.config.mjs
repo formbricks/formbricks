@@ -27,6 +27,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/deal",
+        destination: "/concierge",
+        permanent: false,
+      },
+      {
         source: "/privacy",
         destination: "/privacy-policy",
         permanent: true,

@@ -252,7 +252,7 @@ export default function PreviewSurvey({
       </div>
 
       {previewType === "modal" ? (
-        <Modal isOpen={isModalOpen}>
+        <Modal isOpen={isModalOpen} placement={product.placement}>
           {!countdownStop && autoClose !== null && autoClose > 0 && (
             <Progress progress={countdownProgress} brandColor={brandColor} />
           )}

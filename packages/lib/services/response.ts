@@ -1,9 +1,11 @@
 import { prisma } from "@formbricks/database";
-import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
-import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
-import { getPerson, TransformPersonOutput, transformPrismaPerson } from "./person";
+import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { TTag } from "@formbricks/types/v1/tags";
+import { Prisma } from "@prisma/client";
+import "server-only";
+import { TransformPersonOutput, getPerson, transformPrismaPerson } from "./person";
+import { cache } from "react";
 
 const responseSelection = {
   id: true,
@@ -133,7 +135,11 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
   }
 };
 
-export const getSurveyResponses = async (surveyId: string): Promise<TResponse[]> => {
+export const preloadSurveyResponses = (surveyId: string) => {
+  void getSurveyResponses(surveyId);
+};
+
+export const getSurveyResponses = cache(async (surveyId: string): Promise<TResponse[]> => {
   try {
     const responsesPrisma = await prisma.response.findMany({
       where: {
@@ -161,7 +167,7 @@ export const getSurveyResponses = async (surveyId: string): Promise<TResponse[]>
 
     throw error;
   }
-};
+});
 
 export const updateResponse = async (
   responseId: string,
