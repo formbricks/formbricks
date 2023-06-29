@@ -1,7 +1,7 @@
 import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
-import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
+import type { Choice, MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import { useState, useEffect } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
@@ -21,8 +21,12 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
-  const [questionChoices, setQuestionChoices] = useState<any[]>(question.choices
-    ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
+  const [questionChoices, setQuestionChoices] = useState<Choice[]>(question.choices
+    ? question.shuffleOption === 'all'
+      ? shuffleArray(question.choices, true)
+      : question.shuffleOption === 'exceptLast'
+        ? shuffleArray(question.choices)
+        : question.choices
     : []);
   /*   const [isIphone, setIsIphone] = useState(false);
 
@@ -34,9 +38,13 @@ export default function MultipleChoiceSingleQuestion({
   
   useEffect(() => {
     setQuestionChoices(question.choices
-      ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
+      ? question.shuffleOption === 'all'
+        ? shuffleArray(question.choices, true)
+        : question.shuffleOption === 'exceptLast'
+          ? shuffleArray(question.choices)
+          : question.choices
       : [])
-  }, [question.choices, question.randomOrdering])
+  }, [question.choices, question.shuffleOption])
   
   return (
     <form

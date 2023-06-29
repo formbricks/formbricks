@@ -42,7 +42,7 @@ export const questionTypes: QuestionType[] = [
         { id: createId(), label: "Eat the cake 🍰" },
         { id: createId(), label: "Have the cake 🎂" },
       ],
-      randomOrdering: false
+      shuffleOption: 'none',
     },
   },
   {
@@ -57,7 +57,7 @@ export const questionTypes: QuestionType[] = [
         { id: createId(), label: "Ocean 🌊" },
         { id: createId(), label: "Palms 🌴" },
       ],
-      randomOrdering: false
+      shuffleOption: 'none',
     },
   },
   {

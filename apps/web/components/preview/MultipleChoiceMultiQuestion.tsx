@@ -1,7 +1,7 @@
 import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
-import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import type { Choice, MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
@@ -24,8 +24,12 @@ export default function MultipleChoiceMultiQuestion({
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
-  const [questionChoices, setQuestionChoices] = useState<any[]>(question.choices
-    ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
+  const [questionChoices, setQuestionChoices] = useState<Choice[]>(question.choices
+    ? question.shuffleOption === 'all'
+      ? shuffleArray(question.choices, true)
+      : question.shuffleOption === 'exceptLast'
+        ? shuffleArray(question.choices)
+        : question.choices
     : []);
   /*   const [isIphone, setIsIphone] = useState(false);
    */
@@ -39,9 +43,13 @@ export default function MultipleChoiceMultiQuestion({
 
   useEffect(() => {
     setQuestionChoices(question.choices
-      ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
+      ? question.shuffleOption === 'all'
+        ? shuffleArray(question.choices, true)
+        : question.shuffleOption === 'exceptLast'
+          ? shuffleArray(question.choices)
+          : question.choices
       : [])
-  }, [question.choices, question.randomOrdering])
+  }, [question.choices, question.shuffleOption])
   
   return (
     <form

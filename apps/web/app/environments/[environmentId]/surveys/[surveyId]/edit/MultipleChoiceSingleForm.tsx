@@ -1,6 +1,6 @@
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { Button, Input, Label, Switch } from "@formbricks/ui";
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";
@@ -23,6 +23,21 @@ export default function MultipleChoiceSingleForm({
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const questionRef = useRef<HTMLInputElement>(null);
+
+  const shuffleOptionsTypes = {
+    none: {
+    id: 'none',
+      label: 'Keep choices in current order (Default).'
+    },
+    all: {
+      id: 'all',
+        label: 'Randomize all choices.'
+    },
+    exceptLast: {
+      id: 'exceptLast',
+        label: 'Keep last choice and randomize other choices.'
+    },
+  }
 
   const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
     const newChoices = !question.choices
@@ -177,12 +192,25 @@ export default function MultipleChoiceSingleForm({
             )}
 
             <div className="flex flex-1 justify-end items-center gap-2">
-            <p className="text-slate-700 text-sm">Randomize order</p>
-              <Switch
-                className="mx-3"
-                checked={question.randomOrdering}
-                onCheckedChange={() => updateQuestion(questionIdx, { randomOrdering: !question.randomOrdering })}
-              />
+
+              <p className="text-slate-700 text-sm">Ordering</p>
+
+              <Select
+                defaultValue={question.shuffleOption}
+                onValueChange={(e) => { updateQuestion(questionIdx, { shuffleOption: e });}}>
+                <SelectTrigger className="w-fit overflow-hidden ">
+                  <SelectValue placeholder="Select ordering" />
+                </SelectTrigger>
+                <SelectContent>
+                {Object.values(shuffleOptionsTypes).map((shuffleOptionsType) =>
+                  (
+                    <SelectItem key={shuffleOptionsType.id} value={shuffleOptionsType.id} title={shuffleOptionsType.label}>
+                      {shuffleOptionsType.label}
+                    </SelectItem>
+                  )
+                )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>

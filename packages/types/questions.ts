@@ -39,13 +39,13 @@ export interface OpenTextQuestion extends IQuestion<OpenTextLogic> {
 export interface MultipleChoiceSingleQuestion extends IQuestion<MultipleChoiceSingleLogic> {
   type: QuestionType.MultipleChoiceSingle;
   choices: Choice[];
-  randomOrdering: boolean
+  shuffleOption: string
 }
 
 export interface MultipleChoiceMultiQuestion extends IQuestion<MultipleChoiceMultiLogic> {
   type: QuestionType.MultipleChoiceMulti;
   choices: Choice[];
-  randomOrdering: boolean
+  shuffleOption: string
 }
 
 export interface NPSQuestion extends IQuestion<NPSLogic> {

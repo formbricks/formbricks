@@ -1,4 +1,4 @@
-import type { MultipleChoiceMultiQuestion } from "../../../types/questions";
+import type { Choice, MultipleChoiceMultiQuestion } from "../../../types/questions";
 import { h } from "preact";
 import { useState, useRef, useEffect } from "preact/hooks";
 import { cn, shuffleArray } from "../lib/utils";
@@ -22,8 +22,12 @@ export default function MultipleChoiceMultiQuestion({
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
-  const [questionChoices, setQuestionChoices] = useState<any[]>(question.choices
-    ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
+  const [questionChoices, setQuestionChoices] = useState<Choice[]>(question.choices
+    ? question.shuffleOption === 'all'
+      ? shuffleArray(question.choices, true)
+      : question.shuffleOption === 'exceptLast'
+        ? shuffleArray(question.choices)
+        : question.choices
     : []);
   const otherInputRef = useRef(null);
 
@@ -39,9 +43,13 @@ export default function MultipleChoiceMultiQuestion({
 
   useEffect(() => {
     setQuestionChoices(question.choices
-      ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
+      ? question.shuffleOption === 'all'
+        ? shuffleArray(question.choices, true)
+        : question.shuffleOption === 'exceptLast'
+          ? shuffleArray(question.choices)
+          : question.choices
       : [])
-  }, [question.choices, question.randomOrdering])
+  }, [question.choices, question.shuffleOption])
 
   return (
     <form

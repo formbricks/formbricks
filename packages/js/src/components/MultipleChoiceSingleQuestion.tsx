@@ -1,7 +1,7 @@
 import { h } from "preact";
 import { useRef, useState, useEffect } from "preact/hooks";
 import { cn, shuffleArray } from "../lib/utils";
-import type { MultipleChoiceSingleQuestion } from "../../../types/questions";
+import type { Choice, MultipleChoiceSingleQuestion } from "../../../types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
@@ -20,8 +20,12 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
-  const [questionChoices, setQuestionChoices] = useState<any[]>(question.choices
-    ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
+  const [questionChoices, setQuestionChoices] = useState<Choice[]>(question.choices
+    ? question.shuffleOption === 'all'
+      ? shuffleArray(question.choices, true)
+      : question.shuffleOption === 'exceptLast'
+        ? shuffleArray(question.choices)
+        : question.choices
     : []);
   const otherSpecify = useRef<HTMLInputElement>(null);
 
@@ -33,9 +37,13 @@ export default function MultipleChoiceSingleQuestion({
 
   useEffect(() => {
     setQuestionChoices(question.choices
-      ? question.randomOrdering ? shuffleArray(question.choices) : question.choices
+      ? question.shuffleOption === 'all'
+        ? shuffleArray(question.choices, true)
+        : question.shuffleOption === 'exceptLast'
+          ? shuffleArray(question.choices)
+          : question.choices
       : [])
-  }, [question.choices, question.randomOrdering])
+  }, [question.choices, question.shuffleOption])
 
   return (
     <form
