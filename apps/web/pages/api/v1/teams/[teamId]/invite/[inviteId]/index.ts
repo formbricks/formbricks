@@ -1,5 +1,6 @@
 import { getSessionUser, isAdminOrOwner } from "@/lib/api/apiHelper";
 import { sendInviteMemberEmail } from "@/lib/email";
+import { createInviteToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -111,6 +112,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
 
     return res.status(200).json(updatedInvite);
+  }
+  // GET /api/v1/teams/[teamId]/invite/[inviteId]?email=[email]
+  // Retrieve an invite token
+  else if (req.method === "GET") {
+    const email = req.query.email?.toString();
+
+    if (email === undefined) {
+      return res.status(400).json({ message: "Missing email" });
+    }
+
+    const inviteToken = createInviteToken(inviteId, email, {
+      expiresIn: "7d",
+    });
+    return res.status(200).json({ inviteToken: encodeURIComponent(inviteToken) });
   }
 
   // Unknown HTTP Method

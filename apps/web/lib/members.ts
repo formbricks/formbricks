@@ -97,3 +97,21 @@ export const resendInvite = async (teamId: string, inviteId: string) => {
     return false;
   }
 };
+
+export const shareInvite = async (teamId: string, inviteId: string, email: string) => {
+  try {
+    const res = await fetch(`/api/v1/teams/${teamId}/invite/${inviteId}?email=${email}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (res.status !== 200) {
+      const json = await res.json();
+      throw Error(json.message);
+    }
+    return res.json();
+  } catch (error) {
+    console.error(error);
+    throw Error(`shareInvite: unable to get invite link: ${error.message}`);
+  }
+};

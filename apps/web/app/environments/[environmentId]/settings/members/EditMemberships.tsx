@@ -7,6 +7,7 @@ import {
   deleteInvite,
   removeMember,
   resendInvite,
+  shareInvite,
   updateInviteeRole,
   updateMemberRole,
   useMembers,
@@ -27,7 +28,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@formbricks/ui";
-import { PaperAirplaneIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { PaperAirplaneIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import AddMemberModal from "./AddMemberModal";
@@ -35,6 +36,7 @@ import CreateTeamModal from "@/components/team/CreateTeamModal";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { useProfile } from "@/lib/profile";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import ShareInviteModal from "@/app/environments/[environmentId]/settings/members/ShareInviteModal";
 
 type EditMembershipsProps = {
   environmentId: string;
@@ -128,6 +130,8 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
   const [isCreateTeamModalOpen, setCreateTeamModalOpen] = useState(false);
+  const [showShareInviteModal, setShowShareInviteModal] = useState(false);
+  const [shareInviteToken, setShareInviteToken] = useState<string>("");
 
   const [activeMember, setActiveMember] = useState({} as any);
   const { profile } = useProfile();
@@ -158,6 +162,12 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
     }
     setDeleteMemberModalOpen(false);
     mutateTeam();
+  };
+
+  const handleShareInvite = async (member) => {
+    const { inviteToken } = await shareInvite(team.teamId, member.inviteId, member.email);
+    setShareInviteToken(inviteToken);
+    setShowShareInviteModal(true);
   };
 
   const handleResendInvite = async (inviteId) => {
@@ -195,8 +205,8 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
         <div className="grid h-12 grid-cols-8 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="px-6"></div>
           <div className="col-span-2">Fullname</div>
-          <div className="col-span-2">Email</div>
-          <div className="">Role</div>
+          <div className="col-span-2 -ml-4">Email</div>
+          <div className="-ml-4">Role</div>
           <div className=""></div>
         </div>
         <div className="grid-cols-8">
@@ -210,10 +220,10 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
               <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
                 <p>{member.name}</p>
               </div>
-              <div className="ph-no-capture col-span-2 flex flex-col justify-center break-all">
+              <div className="ph-no-capture col-span-2 -ml-4 flex flex-col justify-center break-all">
                 {member.email}
               </div>
-              <div className="ph-no-capture col-span-1 flex flex-col items-start justify-center break-all">
+              <div className="ph-no-capture col-span-1 -ml-4 flex flex-col items-start justify-center break-all">
                 <RoleElement
                   isAdminOrOwner={isAdminOrOwner}
                   memberRole={member.role}
@@ -225,8 +235,8 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                   inviteId={member?.inviteId}
                 />
               </div>
-              <div className="col-span-2 flex items-center justify-end gap-x-6 pr-6">
-                {!member.accepted && <Badge type="warning" text="Pending" size="tiny" />}
+              <div className="col-span-2 flex items-center justify-end gap-x-4 pr-6">
+                {!member.accepted && <Badge className="mr-1" type="warning" text="Pending" size="tiny" />}
                 {member.role !== "owner" && (
                   <button onClick={(e) => handleOpenDeleteMemberModal(e, member)}>
                     <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
@@ -234,6 +244,19 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                 )}
                 {!member.accepted && (
                   <TooltipProvider delayDuration={50}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => {
+                            handleShareInvite(member);
+                          }}>
+                          <ShareIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="TooltipContent" sideOffset={5}>
+                        Share Invite Link
+                      </TooltipContent>
+                    </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
@@ -267,6 +290,13 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
         deleteWhat={activeMember.name + " from your team"}
         onDelete={handleDeleteMember}
       />
+      {showShareInviteModal && (
+        <ShareInviteModal
+          inviteToken={shareInviteToken}
+          open={showShareInviteModal}
+          setOpen={setShowShareInviteModal}
+        />
+      )}
     </>
   );
 }
