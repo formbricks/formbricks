@@ -44,13 +44,54 @@ test("Formbricks should get the current person with no attributes", () => {
     expect(currentStateAttributes).toHaveLength(0)
 })
 
-test("Formbricks should set attributes", async () => {
+test("Formbricks should set userId", async () => {
     mockSetUserIdResponse()
     await formbricks.setUserId(initialUserId)
 
+    const currentState = formbricks.getPerson()
+    expect(currentState.environmentId).toStrictEqual(environmentId)
+
+    const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
+    const numberOfUserAttributes = currentStateAttributes.length
+    expect(numberOfUserAttributes).toStrictEqual(1)
+
+    currentStateAttributes.forEach((attribute) => {
+        switch (attribute.attributeClass.name) {
+            case "userId":
+                expect(attribute.value).toStrictEqual(initialUserId)
+                break;
+            default:
+                expect(0).toStrictEqual(1)
+        }
+    })
+})
+
+test("Formbricks should set email", async () => {
     mockSetEmailIdResponse()
     await formbricks.setEmail(initialUserEmail)
 
+    const currentState = formbricks.getPerson()
+    expect(currentState.environmentId).toStrictEqual(environmentId)
+
+    const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
+    const numberOfUserAttributes = currentStateAttributes.length
+    expect(numberOfUserAttributes).toStrictEqual(2)
+
+    currentStateAttributes.forEach((attribute) => {
+        switch (attribute.attributeClass.name) {
+            case "userId":
+                expect(attribute.value).toStrictEqual(initialUserId)
+                break;
+            case "email":
+                expect(attribute.value).toStrictEqual(initialUserEmail)
+                break;
+            default:
+                expect(0).toStrictEqual(1)
+        }
+    })
+})
+
+test("Formbricks should set custom attribute", async () => {
     mockSetCustomAttributeResponse()
     await formbricks.setAttribute(customAttributeKey, customAttributeValue)
 
@@ -58,7 +99,6 @@ test("Formbricks should set attributes", async () => {
     expect(currentState.environmentId).toStrictEqual(environmentId)
 
     const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
-
     const numberOfUserAttributes = currentStateAttributes.length
     expect(numberOfUserAttributes).toStrictEqual(3)
 
