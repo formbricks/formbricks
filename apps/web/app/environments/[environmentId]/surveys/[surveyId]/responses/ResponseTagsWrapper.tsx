@@ -105,18 +105,16 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                   );
                 },
                 onError: (err) => {
-                  if (err.cause === "DUPLICATE_RECORD") {
+                  if (err?.cause === "DUPLICATE_RECORD") {
                     toast.error(err?.message ?? "Something went wrong", {
                       duration: 2000,
                       icon: <LucideAlertCircle size={16} className="text-orange-500" />,
                     });
-
-                    return;
+                  } else {
+                    toast.error(err?.message ?? "Something went wrong", {
+                      duration: 2000,
+                    });
                   }
-
-                  toast.error(err?.message ?? "Something went wrong", {
-                    duration: 2000,
-                  });
 
                   setSearchValue("");
                   setOpen(false);
