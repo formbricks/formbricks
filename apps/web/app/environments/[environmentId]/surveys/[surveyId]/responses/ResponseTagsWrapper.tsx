@@ -5,6 +5,7 @@ import { useTagsForEnvironment } from "@/lib/tags/tags";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Tag } from "./Tag";
+import { LucideAlertCircle } from "lucide-react";
 
 interface ResponseTagsWrapperProps {
   tags: {
@@ -104,6 +105,15 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                   );
                 },
                 onError: (err) => {
+                  if (err.cause === "DUPLICATE_RECORD") {
+                    toast.error(err?.message ?? "Something went wrong", {
+                      duration: 2000,
+                      icon: <LucideAlertCircle size={16} className="text-orange-500" />,
+                    });
+
+                    return;
+                  }
+
                   toast.error(err?.message ?? "Something went wrong", {
                     duration: 2000,
                   });
