@@ -20,6 +20,7 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   const person = await prisma.person.findFirst({
     where: {
+      environmentId,
       attributes: {
         some: {
           attributeClass: {

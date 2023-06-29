@@ -1,5 +1,6 @@
+export const revalidate = 0;
+
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/data";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import { getServerSession } from "next-auth";
 import ResponsesLimitReachedBanner from "../ResponsesLimitReachedBanner";
@@ -12,24 +13,21 @@ export default async function SummaryPage({ params }) {
   if (!session) {
     throw new Error("Unauthorized");
   }
-  const { responses, responsesCount, limitReached, survey } = await getAnalysisData(session, params.surveyId);
 
   return (
     <>
       <SurveyResultsTabs activeId="summary" environmentId={params.environmentId} surveyId={params.surveyId} />
+      {/* @ts-expect-error Server Component */}
       <ResponsesLimitReachedBanner
         environmentId={params.environmentId}
-        limitReached={limitReached}
-        responsesCount={responsesCount}
+        session={session}
+        surveyId={params.surveyId}
       />
       <ContentWrapper>
-        <SummaryMetadata
-          surveyId={params.surveyId}
-          environmentId={params.environmentId}
-          responses={responses}
-          survey={survey}
-        />
-        <SummaryList environmentId={params.environmentId} survey={survey} responses={responses} />
+        {/* @ts-expect-error Server Component */}
+        <SummaryMetadata surveyId={params.surveyId} environmentId={params.environmentId} session={session} />
+        {/* @ts-expect-error Server Component */}
+        <SummaryList environmentId={params.environmentId} session={session} surveyId={params.surveyId} />
       </ContentWrapper>
     </>
   );
