@@ -32,9 +32,9 @@ importers:
       '@heroicons/react':
         specifier: ^2.0.17
         version: 2.0.18(react@18.2.0)
-      console-feed:
-        specifier: ^3.5.0
-        version: 3.5.0(jquery@3.7.0)(react-dom@18.2.0)(react@18.2.0)
+      console-feed-modern:
+        specifier: ^3.0.5
+        version: 3.0.5(jquery@3.7.0)(react-dom@18.2.0)(react@18.2.0)
       eslint-config-formbricks:
         specifier: workspace:*
         version: link:../../packages/eslint-config-formbricks
@@ -8970,10 +8970,10 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /console-feed@3.5.0(jquery@3.7.0)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-2N5b37yH0HeaqbBDsHBx0jEy3qvhTGA1dVdGyEM6C1NQhVmIX+ToU6Rt/uo86K0lLs4Lg1orC940YSn+Z3kk5g==}
+  /console-feed-modern@3.0.5(jquery@3.7.0)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-OGZ6uuLpF+J+HHHiZKDY+KIaiuohrZCggadqXVaOLrN8HoXADgw2hzbYbNbGkzaFSzg4wysWRRODcr3OjXqIpQ==}
     peerDependencies:
-      react: ^15.x || ^16.x || ^17.x || ^18.x
+      react: ^15.x || ^16.x
     dependencies:
       '@emotion/core': 10.3.1(react@18.2.0)
       '@emotion/styled': 10.3.0(@emotion/core@10.3.1)(react@18.2.0)
