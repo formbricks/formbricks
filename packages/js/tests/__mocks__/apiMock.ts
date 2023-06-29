@@ -1,7 +1,14 @@
 import fetchMock from "jest-fetch-mock";
 import { constants } from "../constants"
 
-const { environmentId, apiHost, initialPersonUid, initialUserId, initialUserEmail, newPersonUid, eventIdForRouteChange, updatedUserEmail, customAttributeKey, customAttributeValue, eventIdForEventTracking, userIdAttributeId, userInitialEmailAttributeId, userCustomAttrAttributeId, userUpdatedEmailAttributeId } = constants
+const { environmentId, apiHost, sessionId, expiryTime,
+    surveyId, questionOneId, questionTwoId,
+    choiceOneId, choiceTwoId, choiceThreeId,
+    initialPersonUid, initialUserId, initialUserEmail, newPersonUid,
+    eventIdForRouteChange, updatedUserEmail, customAttributeKey,
+    customAttributeValue, eventIdForEventTracking, userIdAttributeId,
+    userInitialEmailAttributeId, userCustomAttrAttributeId,
+    userUpdatedEmailAttributeId } = constants
 
 export const mockInitResponse = () => {
     fetchMock.mockResponseOnce(JSON.stringify({
@@ -12,10 +19,59 @@ export const mockInitResponse = () => {
             environmentId,
             attributes: []
         },
-        session: {},
+        session: {
+            "id": sessionId,
+            expiresAt: expiryTime
+        },
         settings: {
-            surveys: [],
+            surveys: [
+                {
+                    id: surveyId,
+                    questions: [
+                        {
+                            id: questionOneId,
+                            type: "multipleChoiceSingle",
+                            choices: [
+                                {
+                                    id: choiceOneId,
+                                    label: "Not at all disappointed"
+                                },
+                                {
+                                    id: choiceTwoId,
+                                    label: "Somewhat disappointed"
+                                },
+                                {
+                                    id: choiceThreeId,
+                                    label: "Very disappointed"
+                                }
+                            ],
+                            headline: "How disappointed would you be if you could no longer use Test-Formbricks?",
+                            required: true,
+                            subheader: "Please select one of the following options:"
+                        },
+                        {
+                            id: questionTwoId,
+                            type: "openText",
+                            headline: "How can we improve Test-Formbricks for you?",
+                            required: true,
+                            subheader: "Please be as specific as possible."
+                        }
+                    ],
+                    triggers: [],
+                    thankYouCard: {
+                        enabled: true,
+                        headline: "Thank you!",
+                        subheader: "We appreciate your feedback."
+                    },
+                    autoClose: null,
+                    delay: 0
+                }],
             noCodeEvents: [],
+            brandColor: "#20b398",
+            formbricksSignature: true,
+            placement: "bottomRight",
+            darkOverlay: false,
+            clickOutsideClose: true
         }
     }));
 }
