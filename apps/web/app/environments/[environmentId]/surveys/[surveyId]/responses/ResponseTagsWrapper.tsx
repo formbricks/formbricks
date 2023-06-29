@@ -5,7 +5,7 @@ import { useTagsForEnvironment } from "@/lib/tags/tags";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Tag } from "./Tag";
-import { LucideAlertCircle } from "lucide-react";
+import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 
 interface ResponseTagsWrapperProps {
   tags: {
@@ -108,7 +108,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                   if (err?.cause === "DUPLICATE_RECORD") {
                     toast.error(err?.message ?? "Something went wrong", {
                       duration: 2000,
-                      icon: <LucideAlertCircle size={16} className="text-orange-500" />,
+                      icon: <ExclamationCircleIcon className="h-5 w-5 text-orange-500" />,
                     });
 
                     const tag = tags.find((tag) => tag.tagName === tagName?.trim() ?? "");
