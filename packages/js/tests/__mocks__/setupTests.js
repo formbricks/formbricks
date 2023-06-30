@@ -1,6 +1,10 @@
-import { configure } from "enzyme";
-import Adapter from "enzyme-adapter-preact-pure";
+/** @type {import('jest').Config} */
+const config = {
+    verbose: true,
+    testEnvironment: "jsdom"
+};
 
-configure({
-    adapter: new Adapter()
-});
+import fetchMock from "jest-fetch-mock";
+fetchMock.enableMocks();
+
+module.exports = config;
