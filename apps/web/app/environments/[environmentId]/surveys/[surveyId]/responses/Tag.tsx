@@ -35,7 +35,7 @@ export function Tag({
       key={tagId}
       className={cn(
         "relative flex items-center justify-between gap-2 rounded-full border bg-slate-600 px-2 py-1 text-slate-100",
-        highlight && "border-2 border-green-600"
+        highlight && "animate-shake"
       )}>
       <div className="flex items-center gap-2">
         <span className="text-sm">{tagName}</span>
