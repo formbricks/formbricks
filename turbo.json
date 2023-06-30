@@ -5,7 +5,6 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
       "env": [
-        "FORMBRICKS_LEGACY_HOST",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
@@ -21,6 +20,7 @@
         "NEXT_PUBLIC_PASSWORD_RESET_DISABLED",
         "NEXT_PUBLIC_PRIVACY_URL",
         "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_INVITE_DISABLED",
         "NEXT_PUBLIC_SIGNUP_DISABLED",
         "NEXT_PUBLIC_STRIPE_PRICING_TABLE_ID",
         "NEXT_PUBLIC_STRIPE_PUBLIC_KEY",
@@ -79,7 +79,8 @@
       "outputs": []
     },
     "dev": {
-      "cache": false
+      "cache": false,
+      "persistent": true
     },
     "start": {
       "outputs": []

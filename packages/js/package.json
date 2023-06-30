@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/js",
   "license": "MIT",
-  "version": "0.1.20",
+  "version": "0.1.22",
   "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
   "keywords": [
     "Formbricks",
@@ -23,7 +23,7 @@
   },
   "scripts": {
     "clean": "rimraf .turbo node_modules dist",
-    "dev": "microbundle --css inline",
+    "dev": "microbundle --css inline --watch",
     "lint": "eslint '{src,tests}/**/*.{ts,tsx}'",
     "test": "jest",
     "build": "microbundle --css inline"

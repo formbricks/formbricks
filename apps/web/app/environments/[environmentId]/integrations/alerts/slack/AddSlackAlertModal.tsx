@@ -69,7 +69,7 @@ const AddEmailAlertModal: React.FC<AddEmailAlertModalProps> = ({ open, setOpen }
             <Button variant="secondary" onClick={onTest}>
               Send Test
             </Button>
-            <Button variant="primary" onClick={onSave}>
+            <Button variant="darkCTA" onClick={onSave}>
               Save
             </Button>
           </div>

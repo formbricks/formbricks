@@ -1,17 +1,23 @@
-"use client";
-
+import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/data";
 import { RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
-import { useResponses } from "@/lib/responses/responses";
+import { Session } from "next-auth";
 import Link from "next/link";
 
-export default function ResponsesLimitReachedBanner({ environmentId, surveyId }) {
-  const { responsesData } = useResponses(environmentId, surveyId);
-  const reachedLimit = responsesData?.reachedLimit;
-  const count = responsesData?.count;
+interface ResponsesLimitReachedBannerProps {
+  environmentId: string;
+  session: Session;
+  surveyId: string;
+}
 
+export default async function ResponsesLimitReachedBanner({
+  surveyId,
+  environmentId,
+  session,
+}: ResponsesLimitReachedBannerProps) {
+  const { responsesCount, limitReached } = await getAnalysisData(session, surveyId);
   return (
     <>
-      {reachedLimit && (
+      {limitReached && (
         <div className="bg-brand-light relative isolate flex items-center gap-x-6 overflow-hidden px-6 py-2.5 sm:px-3.5 sm:before:flex-1">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <p className="text-sm leading-6 text-gray-900">
@@ -19,7 +25,7 @@ export default function ResponsesLimitReachedBanner({ environmentId, surveyId })
               <svg viewBox="0 0 2 2" className="mx-2 inline h-0.5 w-0.5 fill-current" aria-hidden="true">
                 <circle cx={1} cy={1} r={1} />
               </svg>
-              You can only see {RESPONSES_LIMIT_FREE} of the {count} responses you received.
+              You can only see {RESPONSES_LIMIT_FREE} of the {responsesCount} responses you received.
             </p>
             <Link
               href={`/environments/${environmentId}/settings/billing`}

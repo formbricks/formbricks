@@ -1,3 +1,5 @@
+import GitHubMarkWhite from "@/images/github-mark-white.svg";
+import GitHubMarkDark from "@/images/github-mark.svg";
 import {
   BaseballIcon,
   Button,
@@ -11,9 +13,9 @@ import {
 } from "@formbricks/ui";
 import { Popover, Transition } from "@headlessui/react";
 import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { StarIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { usePlausible } from "next-plausible";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
@@ -262,18 +264,17 @@ export default function Header() {
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Blog {/* <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p> */}
           </Link>
-          <Link
+          {/*           <Link
             href="/careers"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Careers <p className="bg-brand inline rounded-full px-2 text-xs text-white">2</p>
-          </Link>
+          </Link> */}
 
-          {/*           <Link
-            href="/community"
+          <Link
+            href="/concierge"
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Community
+            Concierge
           </Link>
- */}
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <ThemeSelector className="relative z-10 mr-5" />
@@ -282,21 +283,24 @@ export default function Header() {
             className="group px-2"
             href="https://formbricks.com/github"
             target="_blank">
-            <StarIcon className="h-6 w-6 text-amber-500 group-hover:text-amber-400" />
+            <Image
+              src={GitHubMarkDark}
+              alt="GitHub Sponsors Formbricks badge"
+              width={24}
+              className="block dark:hidden"
+            />
+            <Image
+              src={GitHubMarkWhite}
+              alt="GitHub Sponsors Formbricks badge"
+              width={24}
+              className="hidden dark:block"
+            />
           </Button>
           {/*           <Button variant="secondary" className="ml-2 px-2" onClick={() => setVideoModal(true)}>
             <VideoWalkThrough open={videoModal} setOpen={() => setVideoModal(false)} />
             <PlayCircleIcon className="h-6 w-6" />
           </Button> */}
 
-          {/*           <Button
-            variant="secondary"
-            EndIcon={GitHubIcon}
-            endIconClassName="fill-slate-800 ml-2 dark:fill-slate-200"
-            href="https://github.com/formbricks/formbricks"
-            target="_blank">
-            View on Github
-          </Button> */}
           <Button
             variant="highlight"
             className="ml-2"
@@ -364,11 +368,11 @@ export default function Header() {
                     <hr className="mx-20 my-6 opacity-25" />
                   </div>
                 )}
-                <Link href="/community">Community</Link>
+                <Link href="/concierge">Concierge</Link>
                 <Link href="#pricing">Pricing</Link>
                 <Link href="/docs">Docs</Link>
                 <Link href="/blog">Blog</Link>
-                <Link href="/careers">Careers</Link>
+                {/*   <Link href="/careers">Careers</Link> */}
                 <Button
                   variant="secondary"
                   EndIcon={GitHubIcon}

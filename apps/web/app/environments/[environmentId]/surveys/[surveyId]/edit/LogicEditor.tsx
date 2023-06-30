@@ -1,4 +1,4 @@
-import { Logic, LogicCondition, Question } from "@formbricks/types/questions";
+import { Logic, LogicCondition, Question, QuestionType } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import {
   Button,
@@ -49,7 +49,7 @@ export default function LogicEditor({
       return question.choices.map((choice) => choice.label);
     } else if ("range" in question) {
       return Array.from({ length: question.range }, (_, i) => (i + 1).toString());
-    } else if (question.type === "nps") {
+    } else if (question.type === QuestionType.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
     return [];
@@ -79,7 +79,8 @@ export default function LogicEditor({
       "submitted",
       "skipped",
     ],
-    cta: ["submitted", "skipped"],
+    cta: ["clicked", "skipped"],
+    consent: ["skipped", "accepted"],
   };
   const logicConditions: LogicConditions = {
     submitted: {
@@ -89,6 +90,16 @@ export default function LogicEditor({
     },
     skipped: {
       label: "is skipped",
+      values: null,
+      unique: true,
+    },
+    accepted: {
+      label: "is accepted",
+      values: null,
+      unique: true,
+    },
+    clicked: {
+      label: "is clicked",
       values: null,
       unique: true,
     },

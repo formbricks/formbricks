@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@formbricks/ui";
+import { PasswordInput } from "@formbricks/ui";
 import { createUser } from "@/lib/users/users";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -8,6 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
 import { GoogleButton } from "@/components/auth/GoogleButton";
+import IsPasswordValid from "@/components/auth/IsPasswordValid";
 
 export const SignupForm = () => {
   const searchParams = useSearchParams();
@@ -17,8 +19,12 @@ export const SignupForm = () => {
   const nameRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: any) => {
-    setSigningUp(true);
     e.preventDefault();
+
+    if (!isValid) {
+      return;
+    }
+    setSigningUp(true);
     try {
       await createUser(
         e.target.elements.name.value,
@@ -42,6 +48,8 @@ export const SignupForm = () => {
   const [isButtonEnabled, setButtonEnabled] = useState(true);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const [password, setPassword] = useState<string | null>(null);
+  const [isValid, setIsValid] = useState(false);
 
   const checkFormValidity = () => {
     // If all fields are filled, enable the button
@@ -110,16 +118,17 @@ export const SignupForm = () => {
                   <label htmlFor="password" className="sr-only">
                     Password
                   </label>
-                  <input
+                  <PasswordInput
                     id="password"
                     name="password"
-                    type="password"
+                    value={password ? password : ""}
+                    onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                     placeholder="*******"
                     aria-placeholder="password"
                     onFocus={() => setIsPasswordFocused(true)}
                     required
-                    className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                    className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
                   />
                 </div>
                 {process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && isPasswordFocused && (
@@ -131,10 +140,12 @@ export const SignupForm = () => {
                     </Link>
                   </div>
                 )}
+                <IsPasswordValid password={password} setIsValid={setIsValid} />
               </div>
             )}
             <Button
-              onClick={() => {
+              onClick={(e: any) => {
+                e.preventDefault();
                 if (!showLogin) {
                   setShowLogin(true);
                   setButtonEnabled(false);
@@ -147,7 +158,7 @@ export const SignupForm = () => {
               variant="darkCTA"
               className="w-full justify-center"
               loading={signingUp}
-              disabled={!isButtonEnabled}>
+              disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
               Continue with Email
             </Button>
           </form>

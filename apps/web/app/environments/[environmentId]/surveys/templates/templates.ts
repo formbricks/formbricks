@@ -1,3 +1,4 @@
+import { QuestionType } from "@formbricks/types/questions";
 import type { Template } from "@formbricks/types/templates";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -19,7 +20,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot!</span></p>',
-          type: "cta",
+          type: QuestionType.CTA,
           logic: [{ condition: "skipped", destination: "end" }],
           headline: "You are one of our power users! Do you have 5 minutes?",
           required: false,
@@ -29,7 +30,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How disappointed would you be if you could no longer use {{productName}}?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -50,7 +51,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -79,19 +80,19 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What type of people do you think would most benefit from {{productName}}?",
           required: true,
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What is the main benefit your receive from {{productName}}?",
           required: true,
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "How can we improve {{productName}} for you?",
           subheader: "Please be as specific as possible.",
           required: true,
@@ -110,7 +111,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -139,7 +140,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "What's your company size?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -168,7 +169,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -210,7 +211,8 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
+
           logic: [
             { value: "Difficult to use", condition: "equals", destination: "sxwpskjgzzpmkgfxzi15inif" },
             { value: "It's too expensive", condition: "equals", destination: "mao94214zoo6c1at5rpuz7io" },
@@ -239,7 +241,7 @@ export const templates: Template[] = [
         },
         {
           id: "sxwpskjgzzpmkgfxzi15inif",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What would have made {{productName}} easier to use?",
           required: true,
@@ -249,8 +251,8 @@ export const templates: Template[] = [
         {
           id: "mao94214zoo6c1at5rpuz7io",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We\'d love to keep you as a customer. Happy to offer a 30% discount for the next year.</span></p>',
-          type: "cta",
-          logic: [{ condition: "submitted", destination: "end" }],
+          type: QuestionType.CTA,
+          logic: [{ condition: "clicked", destination: "end" }],
           headline: "Get 30% off for the next year!",
           required: true,
           buttonUrl: "https://formbricks.com",
@@ -260,7 +262,8 @@ export const templates: Template[] = [
         },
         {
           id: "l054desub14syoie7n202vq4",
-          type: "openText",
+          type: QuestionType.OpenText,
+
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What features are you missing?",
           required: true,
@@ -269,8 +272,8 @@ export const templates: Template[] = [
         {
           id: "hdftsos1odzjllr7flj4m3j9",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We aim to provide the best possible customer service. Please email our CEO and she will personally handle your issue.</span></p>',
-          type: "cta",
-          logic: [{ condition: "submitted", destination: "end" }],
+          type: QuestionType.CTA,
+          logic: [{ condition: "clicked", destination: "end" }],
           headline: "So sorry to hear 😔 Talk to our CEO directly!",
           required: true,
           buttonUrl: "mailto:ceo@company.com",
@@ -293,7 +296,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           logic: [{ value: "No", condition: "equals", destination: "duz2qp8eftix9wty1l221x1h" }],
           choices: [
             { id: createId(), label: "Yes" },
@@ -305,7 +308,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "yhfew1j3ng6luy7t7qynwj79" }],
           headline: "Great to hear! Why did you recommend us?",
           required: true,
@@ -313,14 +316,14 @@ export const templates: Template[] = [
         },
         {
           id: "duz2qp8eftix9wty1l221x1h",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "So sad. Why not?",
           required: true,
           placeholder: "Type your answer here...",
         },
         {
           id: "yhfew1j3ng6luy7t7qynwj79",
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           logic: [{ value: "No", condition: "equals", destination: "end" }],
           choices: [
             { id: createId(), label: "Yes" },
@@ -332,7 +335,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What made you discourage them?",
           required: true,
           placeholder: "Type your answer here...",
@@ -351,7 +354,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           logic: [
             {
               value: "I didn't get much value out of it",
@@ -388,7 +391,7 @@ export const templates: Template[] = [
         },
         {
           id: "aew2ymg51mffnt9db7duz9t3",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "bqiyml1ym74ggx6htwdo7rlu" }],
           headline: "Sorry to hear. What was the biggest problem using {{productName}}?",
           required: true,
@@ -396,7 +399,7 @@ export const templates: Template[] = [
         },
         {
           id: "rnrfydttavtsf2t2nfx1df7m",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "bqiyml1ym74ggx6htwdo7rlu" }],
           headline: "What did you expect {{productName}} would do for you?",
           required: true,
@@ -405,8 +408,8 @@ export const templates: Template[] = [
         {
           id: "x760wga1fhtr1i80cpssr7af",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We\'re happy to offer you a 20% discount on a yearly plan.</span></p>',
-          type: "cta",
-          logic: [{ condition: "submitted", destination: "end" }],
+          type: QuestionType.CTA,
+          logic: [{ condition: "clicked", destination: "end" }],
           headline: "Sorry to hear! Get 20% off the first year.",
           required: true,
           buttonUrl: "https://formbricks.com/github",
@@ -416,7 +419,7 @@ export const templates: Template[] = [
         },
         {
           id: "rbhww1pix03r6sl4xc511wqg",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "bqiyml1ym74ggx6htwdo7rlu" }],
           headline: "Which features are you missing?",
           required: true,
@@ -425,7 +428,7 @@ export const templates: Template[] = [
         },
         {
           id: "bqiyml1ym74ggx6htwdo7rlu",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -449,7 +452,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [{ value: 3, condition: "lessEqual", destination: "tk9wpw2gxgb8fa6pbpp3qq5l" }],
           range: 5,
           scale: "star",
@@ -462,8 +465,8 @@ export const templates: Template[] = [
         {
           id: createId(),
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>This helps us a lot.</span></p>',
-          type: "cta",
-          logic: [{ condition: "submitted", destination: "end" }],
+          type: QuestionType.CTA,
+          logic: [{ condition: "clicked", destination: "end" }],
           headline: "Happy to hear 🙏 Please write a review for us!",
           required: true,
           buttonUrl: "https://formbricks.com/github",
@@ -472,7 +475,7 @@ export const templates: Template[] = [
         },
         {
           id: "tk9wpw2gxgb8fa6pbpp3qq5l",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Sorry to hear! What is ONE thing we can do better?",
           required: true,
           subheader: "Help us improve your experience.",
@@ -494,7 +497,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "cta",
+          type: QuestionType.CTA,
           headline: "Do you have 15 min to talk to us? 🙏",
           html: "You're one of our power users. We would love to interview you briefly!",
           buttonLabel: "Book slot",
@@ -516,7 +519,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           logic: [
             {
               value: "Difficult to set up or use",
@@ -548,7 +551,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What made you think {{productName}} wouldn't be useful?",
           required: true,
@@ -557,7 +560,7 @@ export const templates: Template[] = [
         },
         {
           id: "r0zvi3vburf4hm7qewimzjux",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What was difficult about setting up or using {{productName}}?",
           required: true,
@@ -566,7 +569,7 @@ export const templates: Template[] = [
         },
         {
           id: "rbwz3y6y9avzqcfj30nu0qj4",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What features or functionality were missing?",
           required: true,
@@ -575,7 +578,7 @@ export const templates: Template[] = [
         },
         {
           id: "gn6298zogd2ipdz7js17qy5i",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "How could we make it easier for you to get started?",
           required: true,
@@ -584,7 +587,7 @@ export const templates: Template[] = [
         },
         {
           id: "c0exdyri3erugrv0ezkyseh6",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [],
           headline: "What was it? Please explain:",
           required: false,
@@ -605,7 +608,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           choices: [
             { id: createId(), label: "Ease of use" },
             { id: createId(), label: "Good value for money" },
@@ -619,7 +622,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           choices: [
             { id: createId(), label: "Documentation" },
             { id: createId(), label: "Customizability" },
@@ -632,7 +635,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Would you like to add something?",
           required: false,
           subheader: "Feel free to speak your mind, we do too.",
@@ -650,7 +653,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How disappointed would you be if you could no longer use {{productName}}?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -671,7 +674,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "How can we improve {{productName}} for you?",
           subheader: "Please be as specific as possible.",
           required: true,
@@ -691,7 +694,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -733,7 +736,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How easy was it to change your plan?",
           required: true,
           choices: [
@@ -761,7 +764,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "Is the pricing information easy to understand?",
           required: true,
           choices: [
@@ -796,7 +799,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "What's your primary goal for using {{productName}}?",
           required: true,
           choices: [
@@ -833,7 +836,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           range: 5,
           scale: "number",
           headline: "How important is [ADD FEATURE] for you?",
@@ -843,7 +846,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           choices: [
             { id: createId(), label: "Aspect 1" },
             { id: createId(), label: "Aspect 2" },
@@ -869,7 +872,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           headline: "How important is this feature for you?",
           required: true,
           lowerLabel: "Not important",
@@ -879,7 +882,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceMulti",
+          type: QuestionType.MultipleChoiceMulti,
           headline: "What should be definitely include building this?",
           required: false,
           choices: [
@@ -916,7 +919,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           logic: [
             { value: "Bug report 🐞", condition: "equals", destination: "dnbiuq4l33l7jypcf2cg6vhh" },
             { value: "Feature Request 💡", condition: "equals", destination: "en9nuuevbf7g9oa9rzcs1l50" },
@@ -931,7 +934,7 @@ export const templates: Template[] = [
         },
         {
           id: "dnbiuq4l33l7jypcf2cg6vhh",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "a6c76m5oocw6xp9agf3d2tam" }],
           headline: "What's broken?",
           required: true,
@@ -940,9 +943,9 @@ export const templates: Template[] = [
         {
           id: "a6c76m5oocw6xp9agf3d2tam",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We will fix this as soon as possible. Do you want to be notified when we did?</span></p>',
-          type: "cta",
+          type: QuestionType.CTA,
           logic: [
-            { condition: "submitted", destination: "end" },
+            { condition: "clicked", destination: "end" },
             { condition: "skipped", destination: "end" },
           ],
           headline: "Want to stay in the loop?",
@@ -953,7 +956,7 @@ export const templates: Template[] = [
         },
         {
           id: "en9nuuevbf7g9oa9rzcs1l50",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Lovely, tell us more!",
           required: true,
           subheader: "What problem do you want us to solve?",
@@ -975,7 +978,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: "s6ss6znzxdwjod1hv16fow4w",
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "ef0qo3l8iisd517ikp078u1p" }],
           range: 5,
           scale: "number",
@@ -987,14 +990,14 @@ export const templates: Template[] = [
         },
         {
           id: "mko13ptjj6tpi5u2pl7a5drz",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Why was it hard?",
           required: false,
           placeholder: "Type your answer here...",
         },
         {
           id: "ef0qo3l8iisd517ikp078u1p",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What other tools would you like to use with {{productName}}?",
           required: false,
           subheader: "We keep building integrations, yours can be next:",
@@ -1014,7 +1017,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "Which other tools are you using?",
           required: true,
           choices: [
@@ -1052,7 +1055,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "Was this page helpful?",
           required: true,
           choices: [
@@ -1068,13 +1071,13 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Please elaborate:",
           required: false,
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Page URL",
           required: false,
         },
@@ -1093,7 +1096,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "nps",
+          type: QuestionType.NPS,
           headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
           required: false,
           lowerLabel: "Not likely",
@@ -1101,7 +1104,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What made you give that rating?",
           required: false,
         },
@@ -1120,7 +1123,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [{ value: 3, condition: "lessEqual", destination: "vyo4mkw4ln95ts4ya7qp2tth" }],
           range: 5,
           scale: "smiley",
@@ -1132,7 +1135,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Lovely! Is there anything we can do to improve your experience?",
           required: false,
@@ -1140,7 +1143,7 @@ export const templates: Template[] = [
         },
         {
           id: "vyo4mkw4ln95ts4ya7qp2tth",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Ugh, sorry! Is there anything we can do to improve your experience?",
           required: false,
           placeholder: "Type your answer here...",
@@ -1160,7 +1163,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How many hours does your team save per week by using {{productName}}?",
           required: true,
           choices: [
@@ -1198,7 +1201,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           logic: [],
           choices: [
             { id: createId(), label: "Feature 1" },
@@ -1212,7 +1215,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           logic: [],
           choices: [
             { id: createId(), label: "Feature 1" },
@@ -1225,7 +1228,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "How else could we improve you experience with {{productName}}?",
           required: true,
           placeholder: "Type your answer here...",
@@ -1245,7 +1248,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           headline: "How easy was it to achieve ... ?",
           required: true,
           lowerLabel: "Not easy",
@@ -1255,7 +1258,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What is one thing we could do better?",
           required: false,
         },
@@ -1274,7 +1277,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "Do you have all the info you need to give {{productName}} a try?",
           required: true,
           choices: [
@@ -1294,13 +1297,13 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What’s missing or unclear to you about {{productName}}?",
           required: false,
         },
         {
           id: createId(),
-          type: "cta",
+          type: QuestionType.CTA,
           headline: "Thanks for your answer! Get 25% off your first 6 months:",
           required: false,
           buttonLabel: "Get discount",
@@ -1322,7 +1325,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           range: 5,
           scale: "number",
           headline: "{{productName}} makes it easy for me to [ADD GOAL]",
@@ -1333,7 +1336,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Thanks! How could we make it easier for you to [ADD GOAL]?",
           required: true,
           placeholder: "Type your answer here...",
@@ -1354,7 +1357,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "lpof3d9t9hmnqvyjlpksmxd7" }],
           range: 5,
           scale: "number",
@@ -1366,7 +1369,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Sorry about that! What would have made it easier for you?",
           required: true,
@@ -1374,7 +1377,7 @@ export const templates: Template[] = [
         },
         {
           id: "lpof3d9t9hmnqvyjlpksmxd7",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Lovely! Is there anything we can do to improve your experience?",
           required: true,
           placeholder: "Type your answer here...",
@@ -1394,7 +1397,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "adcs3d9t9hmnqvyjlpksmxd7" }],
           range: 5,
           scale: "number",
@@ -1406,7 +1409,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Ugh! What makes the results irrelevant for you?",
           required: true,
@@ -1414,7 +1417,7 @@ export const templates: Template[] = [
         },
         {
           id: "adcs3d9t9hmnqvyjlpksmxd7",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Lovely! Is there anything we can do to improve your experience?",
           required: true,
           placeholder: "Type your answer here...",
@@ -1434,7 +1437,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "adcs3d9t9hmnqvyjlpkswi38" }],
           range: 5,
           scale: "number",
@@ -1446,7 +1449,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Hmpft! What were you hoping for?",
           required: true,
@@ -1454,7 +1457,7 @@ export const templates: Template[] = [
         },
         {
           id: "adcs3d9t9hmnqvyjlpkswi38",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Lovely! Is there anything else you would like us to cover?",
           required: true,
           placeholder: "Topics, trends, tutorials...",
@@ -1474,7 +1477,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           logic: [
             { value: "Working on it, boss", condition: "equals", destination: "nq88udm0jjtylr16ax87xlyc" },
             { value: "Yes", condition: "equals", destination: "rjeac33gd13h3nnbrbid1fb2" },
@@ -1490,7 +1493,7 @@ export const templates: Template[] = [
         },
         {
           id: "rjeac33gd13h3nnbrbid1fb2",
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [{ value: 4, condition: "greaterEqual", destination: "nq88udm0jjtylr16ax87xlyc" }],
           range: 5,
           scale: "number",
@@ -1501,7 +1504,7 @@ export const templates: Template[] = [
         },
         {
           id: "s0999bhpaz8vgf7ps264piek",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -1512,7 +1515,7 @@ export const templates: Template[] = [
         },
         {
           id: "nq88udm0jjtylr16ax87xlyc",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [
             { condition: "skipped", destination: "end" },
             { condition: "submitted", destination: "end" },
@@ -1523,7 +1526,7 @@ export const templates: Template[] = [
         },
         {
           id: "u83zhr66knyfozccoqojx7bc",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What stopped you?",
           required: true,
           buttonLabel: "Send",
@@ -1545,7 +1548,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>You seem to be considering signing up. Answer four questions and get 10% on any plan.</span></p>',
-          type: "cta",
+          type: QuestionType.CTA,
           logic: [{ condition: "skipped", destination: "end" }],
           headline: "Answer this short survey, get 10% off!",
           required: false,
@@ -1555,7 +1558,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [{ value: "5", condition: "equals", destination: "end" }],
           range: 5,
           scale: "number",
@@ -1567,7 +1570,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           logic: [
             {
               value: "May not have what I'm looking for",
@@ -1596,7 +1599,7 @@ export const templates: Template[] = [
         },
         {
           id: "atiw0j1oykb77zr0b7q4tixu",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: "What do you need but {{productName}} does not offer?",
           required: true,
@@ -1604,7 +1607,7 @@ export const templates: Template[] = [
         },
         {
           id: "j7jkpolm5xl7u0zt3g0e4z7d",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: "What options are you looking at?",
           required: true,
@@ -1612,7 +1615,7 @@ export const templates: Template[] = [
         },
         {
           id: "t5gvag2d7kq311szz5iyiy79",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: "What seems complicated to you?",
           required: true,
@@ -1620,7 +1623,7 @@ export const templates: Template[] = [
         },
         {
           id: "or0yhhrof753sq9ug4mdavgz",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "k3q0vt1ko0bzbsq076p7lnys" }],
           headline: "What are you concerned about regarding pricing?",
           required: true,
@@ -1628,7 +1631,7 @@ export const templates: Template[] = [
         },
         {
           id: "v0pq1qcnm6ohiry5ywcd91qq",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Please explain:",
           required: true,
           placeholder: "Type your answer here...",
@@ -1636,7 +1639,7 @@ export const templates: Template[] = [
         {
           id: "k3q0vt1ko0bzbsq076p7lnys",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>Thanks a lot for taking the time to share feedback 🙏</span></p>',
-          type: "cta",
+          type: QuestionType.CTA,
           headline: "Thanks! Here is your code: SIGNUPNOW10",
           required: false,
           buttonUrl: "https://app.formbricks.com/auth/signup",
@@ -1659,7 +1662,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           range: 5,
           scale: "number",
           headline: "How satisfied are you with the features and functionality of {{productName}}?",
@@ -1670,7 +1673,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What's ONE change we could make to improve your {{productName}} experience most?",
           required: true,
           subheader: "",
@@ -1691,7 +1694,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [
             { value: "2", condition: "lessEqual", destination: "y19mwcmstlc7pi7s4izxk1ll" },
             { value: "3", condition: "equals", destination: "zm1hs8qkeuidh3qm0hx8pnw7" },
@@ -1708,7 +1711,7 @@ export const templates: Template[] = [
         },
         {
           id: "y19mwcmstlc7pi7s4izxk1ll",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -1719,7 +1722,7 @@ export const templates: Template[] = [
         },
         {
           id: "zm1hs8qkeuidh3qm0hx8pnw7",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What, if anything, is holding you back from making a purchase today?",
           required: true,
           placeholder: "Type your answer here...",
@@ -1739,7 +1742,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [
             { value: "5", condition: "equals", destination: "l2q1chqssong8n0xwaagyl8g" },
             { value: "5", condition: "lessThan", destination: "k3s6gm5ivkc5crpycdbpzkpa" },
@@ -1754,7 +1757,7 @@ export const templates: Template[] = [
         },
         {
           id: "k3s6gm5ivkc5crpycdbpzkpa",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [
             { condition: "submitted", destination: "end" },
             { condition: "skipped", destination: "end" },
@@ -1766,7 +1769,7 @@ export const templates: Template[] = [
         {
           id: "l2q1chqssong8n0xwaagyl8g",
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>Who thinks like you? You\'d do us a huge favor if you\'d share this weeks episode with your brain friend!</span></p>',
-          type: "cta",
+          type: QuestionType.CTA,
           headline: "Thanks! ❤️ Spread the love with ONE friend.",
           required: false,
           buttonUrl: "https://formbricks.com",
@@ -1790,7 +1793,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           html: '<p class="fb-editor-paragraph" dir="ltr"><span>We respect your time and kept it short 🤸</span></p>',
-          type: "cta",
+          type: QuestionType.CTA,
           headline:
             "We love how you use {{productName}}! We'd love to pick your brain on a feature idea. Got a minute?",
           required: true,
@@ -1800,7 +1803,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [
             { value: "3", condition: "lessEqual", destination: "ndacjg9lqf5jcpq9w8ote666" },
             { value: "4", condition: "greaterEqual", destination: "jmzgbo73cfjswlvhoynn7o0q" },
@@ -1815,7 +1818,7 @@ export const templates: Template[] = [
         },
         {
           id: "ndacjg9lqf5jcpq9w8ote666",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What's most difficult for you when it comes to [PROBLEM AREA]?",
           required: true,
           subheader: "",
@@ -1824,7 +1827,7 @@ export const templates: Template[] = [
         {
           id: "jmzgbo73cfjswlvhoynn7o0q",
           html: '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><b><strong class="fb-editor-text-bold">Read the text below, then answer 2 questions:</strong></b></p><p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span>Insert concept brief here. Add neccessary details but keep it concise and easy to understand.</span></p>',
-          type: "cta",
+          type: QuestionType.CTA,
           headline: "We're working on an idea to help with [PROBLEM AREA].",
           required: true,
           buttonLabel: "Next",
@@ -1833,7 +1836,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           logic: [
             { value: "3", condition: "lessEqual", destination: "mmiuun3z4e7gk4ufuwh8lq8q" },
             { value: "4", condition: "greaterEqual", destination: "gvzevzw4hkqd6dmlkcly6kd1" },
@@ -1848,7 +1851,7 @@ export const templates: Template[] = [
         },
         {
           id: "mmiuun3z4e7gk4ufuwh8lq8q",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "bqmnpyku9etsgbtb322luzb2" }],
           headline: "Got it. Why wouldn't this feature be valuable to you?",
           required: true,
@@ -1856,14 +1859,14 @@ export const templates: Template[] = [
         },
         {
           id: "gvzevzw4hkqd6dmlkcly6kd1",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Got it. What would be most valuable to you in this feature?",
           required: true,
           placeholder: "Type your answer here...",
         },
         {
           id: "bqmnpyku9etsgbtb322luzb2",
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Anything else we should keep in mind?",
           required: false,
           placeholder: "Type your answer here...",
@@ -1883,7 +1886,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: "aq9dafe9nxe0kpm67b1os2z9",
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           logic: [
             { value: "Difficult to use", condition: "equals", destination: "r0zvi3vburf4hm7qewimzjux" },
             {
@@ -1916,7 +1919,7 @@ export const templates: Template[] = [
         },
         {
           id: "r0zvi3vburf4hm7qewimzjux",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "What's difficult about using {{productName}}?",
           required: true,
@@ -1925,7 +1928,7 @@ export const templates: Template[] = [
         },
         {
           id: "g92s5wetp51ps6afmc6y7609",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Got it. Which alternative are you using instead?",
           required: true,
@@ -1934,7 +1937,7 @@ export const templates: Template[] = [
         },
         {
           id: "gn6298zogd2ipdz7js17qy5i",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Got it. How could we make it easier for you to get started?",
           required: true,
@@ -1943,7 +1946,7 @@ export const templates: Template[] = [
         },
         {
           id: "rbwz3y6y9avzqcfj30nu0qj4",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [{ condition: "submitted", destination: "end" }],
           headline: "Got it. What features or functionality were missing?",
           required: true,
@@ -1952,7 +1955,7 @@ export const templates: Template[] = [
         },
         {
           id: "c0exdyri3erugrv0ezkyseh6",
-          type: "openText",
+          type: QuestionType.OpenText,
           logic: [],
           headline: "Please add more details:",
           required: false,
@@ -1995,7 +1998,7 @@ export const customSurvey: Template = {
     questions: [
       {
         id: createId(),
-        type: "openText",
+        type: QuestionType.OpenText,
         headline: "Custom Survey",
         subheader: "This is an example survey.",
         placeholder: "Type your answer here...",

@@ -1,17 +1,6 @@
-import platform from "platform";
-
 export function capitalizeFirstLetter(string = "") {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
-
-export const onlyUnique = (value, index, self) => {
-  return self.indexOf(value) === index;
-};
-
-export const parseUserAgent = (userAgent: string) => {
-  const info = platform.parse(userAgent);
-  return info.description;
-};
 
 // write a function that takes a string and truncates it to the specified length
 export const truncate = (str: string, length: number) => {
@@ -53,12 +42,3 @@ export function isLight(color) {
   }
   return r * 0.299 + g * 0.587 + b * 0.114 > 128;
 }
-
-export const toJson = (obj: any): Object | null => {
-  try {
-    return JSON.parse(JSON.stringify(obj));
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};

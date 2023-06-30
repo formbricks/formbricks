@@ -286,6 +286,16 @@ export const authOptions: NextAuthOptions = {
                                         description: "Gets fired when a new session is created",
                                         type: "automatic",
                                       },
+                                      {
+                                        name: "Exit Intent (Desktop)",
+                                        description: "A user on Desktop leaves the website with the cursor.",
+                                        type: "automatic",
+                                      },
+                                      {
+                                        name: "50% Scroll",
+                                        description: "A user scrolled 50% of the current page",
+                                        type: "automatic",
+                                      },
                                     ],
                                   },
                                   attributeClasses: {
@@ -310,6 +320,16 @@ export const authOptions: NextAuthOptions = {
                                       {
                                         name: "New Session",
                                         description: "Gets fired when a new session is created",
+                                        type: "automatic",
+                                      },
+                                      {
+                                        name: "Exit Intent (Desktop)",
+                                        description: "A user on Desktop leaves the website with the cursor.",
+                                        type: "automatic",
+                                      },
+                                      {
+                                        name: "50% Scroll",
+                                        description: "A user scrolled 50% of the current page",
                                         type: "automatic",
                                       },
                                     ],

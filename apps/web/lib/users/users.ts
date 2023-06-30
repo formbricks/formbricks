@@ -87,3 +87,19 @@ export const resetPassword = async (token: string, password: string): Promise<an
     throw Error(`${error.message}`);
   }
 };
+
+export const deleteProfile = async (): Promise<any> => {
+  try {
+    const res = await fetch("/api/v1/users/me/", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (res.status !== 200) {
+      const json = await res.json();
+      throw Error(json.error);
+    }
+    return await res.json();
+  } catch (error) {
+    throw Error(`${error.message}`);
+  }
+};

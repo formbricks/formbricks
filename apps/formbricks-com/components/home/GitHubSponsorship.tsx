@@ -23,10 +23,10 @@ export const GitHubSponsorship: React.FC = () => {
         />
       </div>
       <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 lg:text-2xl">
-        Sponsored by GitHub
+        Proudly Open-Source 🤍
       </h2>
       <p className="lg:text-md mt-4 max-w-3xl  text-slate-500 dark:text-slate-400">
-        We&apos;re proud to join the first accelerator program by GitHub!{" "}
+        We&apos;re proud to to be supported by GitHubs Open-Source Program!{" "}
         <span>
           <Link
             href="/blog/inaugural-batch-github-accelerator"

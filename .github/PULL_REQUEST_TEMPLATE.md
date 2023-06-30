@@ -31,6 +31,8 @@ Fixes # (issue)
 
 <!-- We're starting to get more and more contributions. Please help us making this efficient for all of us and go through this checklist. Please tick off what you did  -->
 
+- [ ] Added a screen recording or screenshots to this PR
+- [ ] Filled out the "How to test" section in this PR
 - [ ] Read the [contributing guide](https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md)
 - [ ] Self-reviewed my own code
 - [ ] Commented on my code in hard-to-understand bits

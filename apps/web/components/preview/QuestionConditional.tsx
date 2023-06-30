@@ -1,10 +1,11 @@
-import type { Question } from "@formbricks/types/questions";
+import { QuestionType, type Question } from "@formbricks/types/questions";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
 import NPSQuestion from "./NPSQuestion";
 import CTAQuestion from "./CTAQuestion";
 import RatingQuestion from "./RatingQuestion";
+import ConsentQuestion from "./ConsentQuestion";
 
 interface QuestionConditionalProps {
   question: Question;
@@ -19,43 +20,50 @@ export default function QuestionConditional({
   lastQuestion,
   brandColor,
 }: QuestionConditionalProps) {
-  return question.type === "openText" ? (
+  return question.type === QuestionType.OpenText ? (
     <OpenTextQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === "multipleChoiceSingle" ? (
+  ) : question.type === QuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === "multipleChoiceMulti" ? (
+  ) : question.type === QuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === "nps" ? (
+  ) : question.type === QuestionType.NPS ? (
     <NPSQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === "cta" ? (
+  ) : question.type === QuestionType.CTA ? (
     <CTAQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
     />
-  ) : question.type === "rating" ? (
+  ) : question.type === QuestionType.Rating ? (
     <RatingQuestion
+      question={question}
+      onSubmit={onSubmit}
+      lastQuestion={lastQuestion}
+      brandColor={brandColor}
+    />
+  ) : question.type === "consent" ? (
+    <ConsentQuestion
       question={question}
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}

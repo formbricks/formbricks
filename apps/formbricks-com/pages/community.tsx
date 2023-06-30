@@ -7,24 +7,24 @@ import { ChatBubbleOvalLeftEllipsisIcon, EnvelopeIcon } from "@heroicons/react/2
 
 const topContributors = [
   {
-    name: "Midka (8 commits)",
+    name: "Midka",
     href: "https://github.com/kymppi",
   },
   {
-    name: "Timothy (6 commits)",
+    name: "Pandeyman",
+    href: "https://github.com/pandeymangg",
+  },
+  {
+    name: "Ashu",
+    href: "https://github.com/Ashutosh-Bhadauriya",
+  },
+  {
+    name: "Timothy",
     href: "https://github.com/timothyde",
   },
   {
-    name: "Kiran (3 commits)",
-    href: "https://github.com/devkiran",
-  },
-  {
-    name: "Francois (1 commit)",
-    href: "https://github.com/fdis111",
-  },
-  {
-    name: "Chetan (1 commit)",
-    href: "https://github.com/chetan",
+    name: "Shubhdeep",
+    href: "https://github.com/Shubhdeep12",
   },
 ];
 
@@ -34,14 +34,14 @@ const CommunityPage = () => {
     <Layout
       title="Community | Formbricks Open Source Forms & Surveys"
       description="You're building open source forms and surveys? So are we! Get support for anything your building - or just say hi!">
-      <HeroTitle headingPt1="Join the" headingTeal="Formbricks" headingPt2="Community" />
+      <HeroTitle headingPt1="Join the" headingTeal="Formbricks" headingPt2="Community 🤍" />
       <div className="mb-32 grid grid-cols-1 px-4 md:grid-cols-2 md:gap-8 md:px-16">
         <div className="mb-6 rounded-lg bg-gradient-to-b from-slate-200 to-slate-300 px-10 py-6 dark:from-slate-800 dark:to-slate-700 md:mb-0">
           <h2 className="mt-7 text-3xl font-bold text-slate-800 dark:text-slate-200 xl:text-4xl">
             Top Contributors
           </h2>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            The leader board of the Formbricks community contributors 🙌
+            Super thankful to have you guys contribute for Formbricks 🙌
           </p>
           <ol className="ml-4 mt-10 list-decimal">
             {topContributors.map((MVP) => (

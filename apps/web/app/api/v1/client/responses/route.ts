@@ -1,14 +1,15 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { sendToPipeline } from "@/lib/pipelines";
-import { DatabaseError, InvalidInputError } from "@formbricks/errors";
+import { prisma } from "@formbricks/database";
+import { InvalidInputError } from "@formbricks/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
-import { prisma } from "@formbricks/database";
+import { UAParser } from "ua-parser-js";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -16,6 +17,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 
 export async function POST(request: Request): Promise<NextResponse> {
   const responseInput: TResponseInput = await request.json();
+  const agent = UAParser(request.headers.get("user-agent"));
   const inputValidation = ZResponseInput.safeParse(responseInput);
 
   if (!inputValidation.success) {
@@ -72,8 +74,20 @@ export async function POST(request: Request): Promise<NextResponse> {
   const teamOwnerId = memberships[0]?.userId;
 
   let response;
+
   try {
-    response = await createResponse(responseInput);
+    const meta = {
+      userAgent: {
+        browser: agent?.browser.name,
+        device: agent?.device.type,
+        os: agent?.os.name,
+      },
+    };
+
+    response = await createResponse({
+      ...responseInput,
+      meta,
+    });
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
@@ -82,14 +96,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
   }
 
-  sendToPipeline("responseCreated", {
+  sendToPipeline({
+    event: "responseCreated",
     environmentId: survey.environmentId,
     surveyId: response.surveyId,
     data: response,
   });
 
   if (responseInput.finished) {
-    sendToPipeline("responseFinished", {
+    sendToPipeline({
+      event: "responseFinished",
       environmentId: survey.environmentId,
       surveyId: response.surveyId,
       data: response,

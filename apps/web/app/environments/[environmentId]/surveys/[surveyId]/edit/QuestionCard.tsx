@@ -2,11 +2,12 @@
 
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
-import type { Question } from "@formbricks/types/questions";
+import { QuestionType, type Question } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Input, Label, Switch } from "@formbricks/ui";
 import {
   ChatBubbleBottomCenterTextIcon,
+  CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   CursorArrowRippleIcon,
@@ -25,6 +26,7 @@ import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
+import ConsentQuestionForm from "./ConsentQuestionForm";
 import AdvancedSettings from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/AdvancedSettings";
 
 interface QuestionCardProps {
@@ -88,18 +90,20 @@ export default function QuestionCard({
               <div>
                 <div className="inline-flex">
                   <div className="-ml-0.5 mr-3 h-6 w-6 text-slate-400">
-                    {question.type === "openText" ? (
+                    {question.type === QuestionType.OpenText ? (
                       <ChatBubbleBottomCenterTextIcon />
-                    ) : question.type === "multipleChoiceSingle" ? (
+                    ) : question.type === QuestionType.MultipleChoiceSingle ? (
                       <QueueListIcon />
-                    ) : question.type === "multipleChoiceMulti" ? (
+                    ) : question.type === QuestionType.MultipleChoiceMulti ? (
                       <ListBulletIcon />
-                    ) : question.type === "nps" ? (
+                    ) : question.type === QuestionType.NPS ? (
                       <PresentationChartBarIcon />
-                    ) : question.type === "cta" ? (
+                    ) : question.type === QuestionType.CTA ? (
                       <CursorArrowRippleIcon />
-                    ) : question.type === "rating" ? (
+                    ) : question.type === QuestionType.Rating ? (
                       <StarIcon />
+                    ) : question.type === "consent" ? (
+                      <CheckIcon />
                     ) : null}
                   </div>
                   <div>
@@ -126,7 +130,7 @@ export default function QuestionCard({
               </div>
             </Collapsible.CollapsibleTrigger>
             <Collapsible.CollapsibleContent className="px-4 pb-4">
-              {question.type === "openText" ? (
+              {question.type === QuestionType.OpenText ? (
                 <OpenQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -134,7 +138,7 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                 />
-              ) : question.type === "multipleChoiceSingle" ? (
+              ) : question.type === QuestionType.MultipleChoiceSingle ? (
                 <MultipleChoiceSingleForm
                   localSurvey={localSurvey}
                   question={question}
@@ -142,7 +146,7 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                 />
-              ) : question.type === "multipleChoiceMulti" ? (
+              ) : question.type === QuestionType.MultipleChoiceMulti ? (
                 <MultipleChoiceMultiForm
                   localSurvey={localSurvey}
                   question={question}
@@ -150,7 +154,7 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                 />
-              ) : question.type === "nps" ? (
+              ) : question.type === QuestionType.NPS ? (
                 <NPSQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -158,7 +162,7 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                 />
-              ) : question.type === "cta" ? (
+              ) : question.type === QuestionType.CTA ? (
                 <CTAQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -166,13 +170,20 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                 />
-              ) : question.type === "rating" ? (
+              ) : question.type === QuestionType.Rating ? (
                 <RatingQuestionForm
                   localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                />
+              ) : question.type === "consent" ? (
+                <ConsentQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
                 />
               ) : null}
               <div className="mt-4">
@@ -187,7 +198,9 @@ export default function QuestionCard({
                   </Collapsible.CollapsibleTrigger>
 
                   <Collapsible.CollapsibleContent className="space-y-4">
-                    {question.type !== "nps" && question.type !== "rating" && question.type !== "cta" ? (
+                    {question.type !== QuestionType.NPS &&
+                    question.type !== QuestionType.Rating &&
+                    question.type !== QuestionType.CTA ? (
                       <div className="mt-4">
                         <Label htmlFor="buttonLabel">Button Label</Label>
                         <div className="mt-2">
@@ -214,8 +227,24 @@ export default function QuestionCard({
             </Collapsible.CollapsibleContent>
 
             {open && (
-              <div className="m-4 mt-0  border-t border-slate-200">
-                <div className="m-4 mr-0 flex items-center justify-end space-x-2">
+              <div className="mx-4 flex justify-end space-x-6 border-t border-slate-200">
+                {question.type === "openText" && (
+                  <div className="my-4 flex items-center justify-end space-x-2">
+                    <Label htmlFor="longAnswer">Long Answer</Label>
+                    <Switch
+                      id="longAnswer"
+                      checked={question.longAnswer !== false}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateQuestion(questionIdx, {
+                          longAnswer:
+                            typeof question.longAnswer === "undefined" ? false : !question.longAnswer,
+                        });
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="my-4 flex items-center justify-end space-x-2">
                   <Label htmlFor="required-toggle">Required</Label>
                   <Switch
                     id="required-toggle"

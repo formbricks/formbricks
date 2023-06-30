@@ -1,4 +1,8 @@
-import { MultipleChoiceMultiQuestion, MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
+import {
+  MultipleChoiceMultiQuestion,
+  MultipleChoiceSingleQuestion,
+  QuestionType,
+} from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { PersonAvatar, ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
@@ -32,7 +36,7 @@ export default function MultipleChoiceSummary({
   environmentId,
   surveyType,
 }: MultipleChoiceSummaryProps) {
-  const isSingleChoice = questionSummary.question.type === "multipleChoiceSingle";
+  const isSingleChoice = questionSummary.question.type === QuestionType.MultipleChoiceSingle;
 
   const results: ChoiceResult[] = useMemo(() => {
     if (!("choices" in questionSummary.question)) return [];
@@ -50,7 +54,7 @@ export default function MultipleChoiceSummary({
     }
 
     function findEmail(person) {
-      const emailAttribute = person.attributes.find((attr) => attr.attributeClass.name === "email");
+      const emailAttribute = person.attributes.email;
       return emailAttribute ? emailAttribute.value : null;
     }
 
@@ -75,12 +79,12 @@ export default function MultipleChoiceSummary({
     // count the responses
     for (const response of questionSummary.responses) {
       // if single choice, only add responses that are in the choices
-      if (isSingleChoice && response.value in resultsDict) {
-        resultsDict[response.value].count += 1;
+      if (isSingleChoice && response.value.toString() in resultsDict) {
+        resultsDict[response.value.toString()].count += 1;
       } else if (isSingleChoice) {
         // if single choice and not in choices, add to other
         addOtherChoice(response, response.value);
-      } else {
+      } else if (Array.isArray(response.value)) {
         // if multi choice add all responses
         for (const choice of response.value) {
           if (choice in resultsDict) {

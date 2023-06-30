@@ -10,7 +10,7 @@ import BestPractices from "@/components/shared/BestPractices";
 
 const IndexPage = () => (
   <Layout
-    title="Formbricks | Embedded User Research"
+    title="Formbricks | Privacy-first user research"
     description="Build qualitative user research into your product. Leverage Best practices to increase Product-Market Fit.">
     <Hero />
     <div className="hidden lg:block">

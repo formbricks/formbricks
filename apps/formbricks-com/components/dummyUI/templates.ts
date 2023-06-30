@@ -24,6 +24,7 @@ import {
 
 import { createId } from "@paralleldrive/cuid2";
 import type { Template } from "@formbricks/types/templates";
+import { QuestionType } from "@formbricks/types/questions";
 
 const thankYouCardDefault = {
   enabled: true,
@@ -40,10 +41,11 @@ export const customSurvey: Template = {
     questions: [
       {
         id: createId(),
-        type: "openText",
+        type: QuestionType.OpenText,
         headline: "Custom Survey",
         subheader: "This is an example survey.",
         placeholder: "Type your answer here...",
+        longAnswer: true,
         required: true,
       },
     ],
@@ -63,7 +65,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How disappointed would you be if you could no longer use Formbricks?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -84,7 +86,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -113,21 +115,24 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What type of people do you think would most benefit from Formbricks?",
+          longAnswer: true,
           required: true,
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What is the main benefit your receive from Formbricks?",
+          longAnswer: true,
           required: true,
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "How can we improve our service for you?",
           subheader: "Please be as specific as possible.",
+          longAnswer: true,
           required: true,
         },
       ],
@@ -145,7 +150,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -174,7 +179,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "What's your company size?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -203,7 +208,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -244,7 +249,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "What do you value most about our service?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -269,7 +274,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "What should we improve on?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -294,9 +299,10 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Would you like to add something?",
           subheader: "Feel free to speak your mind, we do too.",
+          longAnswer: true,
           required: false,
         },
       ],
@@ -313,7 +319,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -354,7 +360,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "Why did you cancel your subscription?",
           subheader: "We're sorry to see you leave. Please help us do better:",
           required: true,
@@ -383,9 +389,10 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "How can we win you back?",
           subheader: "Feel free to speak your mind, we do too.",
+          longAnswer: true,
           required: false,
         },
       ],
@@ -402,7 +409,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "Why did you stop your trial?",
           subheader: "Help us understand you better:",
           required: true,
@@ -431,15 +438,17 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Any details to share?",
+          longAnswer: true,
           required: false,
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "How are you solving your problem instead?",
           subheader: "Please name alternative tools:",
+          longAnswer: true,
           required: false,
         },
       ],
@@ -456,7 +465,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How easy was it to change your plan?",
           required: true,
           choices: [
@@ -484,7 +493,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "Is the pricing information easy to understand?",
           required: true,
           choices: [
@@ -516,7 +525,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "Were you able to accomplish what you came here to do today?",
           required: true,
           choices: [
@@ -536,7 +545,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           headline: "How easy was it to achieve your goal?",
           required: true,
           lowerLabel: "Very difficult",
@@ -546,8 +555,9 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What did you come here to do today?",
+          longAnswer: true,
           required: false,
         },
       ],
@@ -565,7 +575,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "What's your primary goal for using Formbricks?",
           required: true,
           choices: [
@@ -601,7 +611,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           headline: "How easy was it to achieve your goal?",
           required: true,
           lowerLabel: "Very difficult",
@@ -611,9 +621,10 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Wanna add something?",
           subheader: "This really helps us do better!",
+          longAnswer: true,
           required: false,
         },
       ],
@@ -630,7 +641,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           headline: "How important is this feature for you?",
           required: true,
           lowerLabel: "Not important",
@@ -653,7 +664,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How disappointed would you be if you could no longer use Formbricks?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -674,9 +685,10 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "How can we improve our service for you?",
           subheader: "Please be as specific as possible.",
+          longAnswer: true,
           required: true,
         },
       ],
@@ -693,7 +705,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "What's on your mind, boss?",
           subheader: "Thanks for sharing. We'll get back to you asap.",
           required: true,
@@ -710,8 +722,9 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Give us the juicy details:",
+          longAnswer: true,
           required: true,
         },
       ],
@@ -728,7 +741,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How easy was it to set this integration up?",
           required: true,
           choices: [
@@ -756,9 +769,10 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Which product would you like to integrate next?",
           subheader: "We keep building integrations. Yours can be next:",
+          longAnswer: true,
           required: false,
         },
       ],
@@ -775,7 +789,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "Which other tools are you using?",
           required: true,
           choices: [
@@ -803,8 +817,9 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "If you chose other, please clarify:",
+          longAnswer: true,
           required: false,
         },
       ],
@@ -821,7 +836,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "Was this page helpful?",
           required: true,
           choices: [
@@ -837,14 +852,16 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Please elaborate:",
+          longAnswer: true,
           required: false,
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "Page URL",
+          longAnswer: true,
           required: false,
         },
       ],
@@ -861,7 +878,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "cta",
+          type: QuestionType.CTA,
           headline: "Do you have 15 min to talk to us? 🙏",
           html: "You're one of our power users. We would love to interview you briefly!",
           buttonLabel: "Book interview",
@@ -884,7 +901,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "cta",
+          type: QuestionType.CTA,
           headline: "You're one of our most valued customers! Please write a review for us.",
           buttonLabel: "Write review",
           buttonUrl: "https://formbricks.com/github",
@@ -905,7 +922,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "nps",
+          type: QuestionType.NPS,
           headline: "How likely are you to recommend Formbricks to a friend or colleague?",
           required: false,
           lowerLabel: "Not likely",
@@ -925,7 +942,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "How many hours does your team save per week by using Formbricks?",
           required: true,
           choices: [
@@ -961,7 +978,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           headline: "How satisfied are you with the features of Formbricks?",
           required: true,
           lowerLabel: "Not satisfied",
@@ -971,8 +988,9 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What's the #1 thing you'd like to change in Formbricks?",
+          longAnswer: true,
           required: false,
         },
       ],
@@ -989,7 +1007,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "rating",
+          type: QuestionType.Rating,
           headline: "How easy was it to achieve ... ?",
           required: true,
           lowerLabel: "Not easy",
@@ -999,8 +1017,9 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What is one thing we could do better?",
+          longAnswer: true,
           required: false,
         },
       ],
@@ -1017,7 +1036,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: "multipleChoiceSingle",
+          type: QuestionType.MultipleChoiceSingle,
           headline: "Do you have all the info you need to give Formbricks a try?",
           required: true,
           choices: [
@@ -1037,13 +1056,14 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: "openText",
+          type: QuestionType.OpenText,
           headline: "What’s missing or unclear to you about Formbricks?",
+          longAnswer: true,
           required: false,
         },
         {
           id: createId(),
-          type: "cta",
+          type: QuestionType.CTA,
           headline: "Thanks for your answer! Get 25% off your first 6 months:",
           required: false,
           buttonLabel: "Get discount",
