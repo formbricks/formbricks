@@ -7,6 +7,7 @@ import type { Survey } from "@formbricks/types/surveys";
 import { Input, Label, Switch } from "@formbricks/ui";
 import {
   ChatBubbleBottomCenterTextIcon,
+  CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   CursorArrowRippleIcon,
@@ -25,6 +26,7 @@ import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
+import ConsentQuestionForm from "./ConsentQuestionForm";
 import AdvancedSettings from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/AdvancedSettings";
 
 interface QuestionCardProps {
@@ -100,6 +102,8 @@ export default function QuestionCard({
                       <CursorArrowRippleIcon />
                     ) : question.type === QuestionType.Rating ? (
                       <StarIcon />
+                    ) : question.type === "consent" ? (
+                      <CheckIcon />
                     ) : null}
                   </div>
                   <div>
@@ -174,6 +178,13 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                 />
+              ) : question.type === "consent" ? (
+                <ConsentQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                />
               ) : null}
               <div className="mt-4">
                 <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
@@ -216,8 +227,24 @@ export default function QuestionCard({
             </Collapsible.CollapsibleContent>
 
             {open && (
-              <div className="m-4 mt-0  border-t border-slate-200">
-                <div className="m-4 mr-0 flex items-center justify-end space-x-2">
+              <div className="mx-4 flex justify-end space-x-6 border-t border-slate-200">
+                {question.type === "openText" && (
+                  <div className="my-4 flex items-center justify-end space-x-2">
+                    <Label htmlFor="longAnswer">Long Answer</Label>
+                    <Switch
+                      id="longAnswer"
+                      checked={question.longAnswer !== false}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateQuestion(questionIdx, {
+                          longAnswer:
+                            typeof question.longAnswer === "undefined" ? false : !question.longAnswer,
+                        });
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="my-4 flex items-center justify-end space-x-2">
                   <Label htmlFor="required-toggle">Required</Label>
                   <Switch
                     id="required-toggle"
