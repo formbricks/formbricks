@@ -7,6 +7,7 @@ import type { Survey } from "@formbricks/types/surveys";
 import { Input, Label, Switch } from "@formbricks/ui";
 import {
   ChatBubbleBottomCenterTextIcon,
+  CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   CursorArrowRippleIcon,
@@ -25,6 +26,7 @@ import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
+import ConsentQuestionForm from "./ConsentQuestionForm";
 import AdvancedSettings from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/AdvancedSettings";
 
 interface QuestionCardProps {
@@ -100,6 +102,8 @@ export default function QuestionCard({
                       <CursorArrowRippleIcon />
                     ) : question.type === QuestionType.Rating ? (
                       <StarIcon />
+                    ) : question.type === "consent" ? (
+                      <CheckIcon />
                     ) : null}
                   </div>
                   <div>
@@ -173,6 +177,13 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
+                />
+              ) : question.type === "consent" ? (
+                <ConsentQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
                 />
               ) : null}
               <div className="mt-4">

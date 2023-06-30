@@ -157,6 +157,10 @@ export default function PreviewSurvey({
           Array.isArray(logic.value) &&
           logic.value.some((v) => answerValue.includes(v))
         );
+      case "accepted":
+        return answerValue === "accepted";
+      case "clicked":
+        return answerValue === "clicked";
       case "submitted":
         if (typeof answerValue === "string") {
           return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
@@ -252,7 +256,7 @@ export default function PreviewSurvey({
       </div>
 
       {previewType === "modal" ? (
-        <Modal isOpen={isModalOpen}>
+        <Modal isOpen={isModalOpen} placement={product.placement}>
           {!countdownStop && autoClose !== null && autoClose > 0 && (
             <Progress progress={countdownProgress} brandColor={brandColor} />
           )}

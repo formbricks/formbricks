@@ -79,7 +79,8 @@ export default function LogicEditor({
       "submitted",
       "skipped",
     ],
-    cta: ["submitted", "skipped"],
+    cta: ["clicked", "skipped"],
+    consent: ["skipped", "accepted"],
   };
   const logicConditions: LogicConditions = {
     submitted: {
@@ -89,6 +90,16 @@ export default function LogicEditor({
     },
     skipped: {
       label: "is skipped",
+      values: null,
+      unique: true,
+    },
+    accepted: {
+      label: "is accepted",
+      values: null,
+      unique: true,
+    },
+    clicked: {
+      label: "is clicked",
       values: null,
       unique: true,
     },
