@@ -165,7 +165,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
   };
 
   const handleShareInvite = async (member) => {
-    const { inviteToken } = await shareInvite(team.teamId, member.inviteId, member.email);
+    const { inviteToken } = await shareInvite(team.teamId, member.inviteId);
     setShareInviteToken(inviteToken);
     setShowShareInviteModal(true);
   };

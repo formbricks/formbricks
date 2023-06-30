@@ -98,9 +98,9 @@ export const resendInvite = async (teamId: string, inviteId: string) => {
   }
 };
 
-export const shareInvite = async (teamId: string, inviteId: string, email: string) => {
+export const shareInvite = async (teamId: string, inviteId: string) => {
   try {
-    const res = await fetch(`/api/v1/teams/${teamId}/invite/${inviteId}?email=${email}`, {
+    const res = await fetch(`/api/v1/teams/${teamId}/invite/${inviteId}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });

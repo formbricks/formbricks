@@ -113,18 +113,27 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     return res.status(200).json(updatedInvite);
   }
-  // GET /api/v1/teams/[teamId]/invite/[inviteId]?email=[email]
+  // GET /api/v1/teams/[teamId]/invite/[inviteId]
   // Retrieve an invite token
   else if (req.method === "GET") {
-    const email = req.query.email?.toString();
 
-    if (email === undefined) {
-      return res.status(400).json({ message: "Missing email" });
+    const invite = await prisma.invite.findUnique({
+      where: {
+        id: inviteId,
+      },
+      select: {
+        email: true,
+      },
+    });
+
+    if (!invite) {
+      return res.status(403).json({ message: "You are not allowed to share this invite link" });
     }
 
-    const inviteToken = createInviteToken(inviteId, email, {
+    const inviteToken = createInviteToken(inviteId, invite?.email, {
       expiresIn: "7d",
     });
+
     return res.status(200).json({ inviteToken: encodeURIComponent(inviteToken) });
   }
 
