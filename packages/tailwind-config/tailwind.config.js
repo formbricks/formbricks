@@ -4,6 +4,7 @@ module.exports = {
     "./app/**/*.{js,ts,jsx,tsx}", // Note the addition of the `app` directory.
     "./pages/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
+    "./lib/**/*.{js,ts,jsx,tsx}",
     // include packages if not transpiling
     "../../packages/ui/components/**/*.{js,ts,jsx,tsx}",
   ],
@@ -39,6 +40,9 @@ module.exports = {
       },
       scale: {
         97: "0.97",
+      },
+      gridTemplateColumns: {
+        20: "repeat(20, minmax(0, 1fr))",
       },
     },
   },

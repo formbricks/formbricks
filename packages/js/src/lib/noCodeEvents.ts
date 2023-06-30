@@ -12,6 +12,10 @@ const errorHandler = ErrorHandler.getInstance();
 export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError | NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
   const { settings } = config.get();
+  if (settings?.noCodeEvents === undefined) {
+    return okVoid();
+  }
+
   const pageUrlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
 
   if (pageUrlEvents.length === 0) {
@@ -105,7 +109,7 @@ export const checkClickMatch = (event: MouseEvent) => {
       trackEvent(e.name).then((res) => {
         match(
           res,
-          (_value) => {},
+          (_value) => { },
           (err) => {
             errorHandler.handle(err);
           }
@@ -120,7 +124,7 @@ export const checkClickMatch = (event: MouseEvent) => {
       trackEvent(e.name).then((res) => {
         match(
           res,
-          (_value) => {},
+          (_value) => { },
           (err) => {
             errorHandler.handle(err);
           }

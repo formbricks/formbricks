@@ -1,6 +1,5 @@
 "use client";
 
-import SurveyEditor from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/SurveyEditor";
 import type { Survey } from "@formbricks/types/surveys";
 import { Input, Label, Switch } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
