@@ -392,7 +392,7 @@ const CustomFilter = ({
         <div className="flex justify-end gap-x-1.5">
           {survey.type === "link" && <LinkSurveyShareButton survey={survey} />}
           {environment?.widgetSetupCompleted ||
-            (survey?.type === "link" && (
+            (survey?.status !== "draft" && (
               <Select
                 onOpenChange={(value) => value && handleDatePickerClose()}
                 disabled={isLoading}
@@ -419,7 +419,6 @@ const CustomFilter = ({
                     <div className="flex items-center">
                       <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
                       <span className="ml-2 text-sm text-slate-700">
-                        {survey.status === "draft" && "Draft"}
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}
                         {survey.status === "completed" && "Completed"}
