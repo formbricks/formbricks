@@ -85,6 +85,12 @@ Here are a few options:
 
 Please check out [our contribution guide](https://formbricks.com/docs/contributing/introduction) and our [list of open issues](https://github.com/formbricks/formbricks/issues) for more information.
 
+## 📆 Contact us
+
+Let's have a chat about your survey needs and get you started.
+
+<a href="https://cal.com/johannes/onboarding?utm_source=banner&utm_campaign=oss"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
+
 ## ⚖️ License
 
 Distributed under the AGPLv3 License. See `LICENSE` for more information.

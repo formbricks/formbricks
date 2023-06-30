@@ -12,7 +12,6 @@
   "dependencies": {
     "@formbricks/js": "workspace:*",
     "@heroicons/react": "^2.0.17",
-    "console-feed": "^3.5.0",
     "eslint-config-formbricks": "workspace:*",
     "next": "13.2.4",
     "react": "18.2.0",
@@ -21,8 +20,8 @@
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.3",
     "@types/node": "18.15.11",
-    "@types/react-dom": "18.0.11",
     "@types/react": "18.0.33",
+    "@types/react-dom": "18.0.11",
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.21",
     "rimraf": "^5.0.0",
