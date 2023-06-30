@@ -29,6 +29,7 @@ export const questionTypes: QuestionType[] = [
       headline: "Who let the dogs out?",
       subheader: "Who? Who? Who?",
       placeholder: "Type your answer here...",
+      longAnswer: true,
     },
   },
   {

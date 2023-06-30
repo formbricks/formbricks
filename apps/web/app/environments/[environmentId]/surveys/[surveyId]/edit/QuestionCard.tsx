@@ -233,10 +233,13 @@ export default function QuestionCard({
                     <Label htmlFor="longAnswer">Long Answer</Label>
                     <Switch
                       id="longAnswer"
-                      checked={!question.shortAnswer}
+                      checked={question.longAnswer !== false}
                       onClick={(e) => {
                         e.stopPropagation();
-                        updateQuestion(questionIdx, { shortAnswer: !question.shortAnswer });
+                        updateQuestion(questionIdx, {
+                          longAnswer:
+                            typeof question.longAnswer === "undefined" ? false : !question.longAnswer,
+                        });
                       }}
                     />
                   </div>
