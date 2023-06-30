@@ -41,6 +41,9 @@ module.exports = {
       scale: {
         97: "0.97",
       },
+      gridTemplateColumns: {
+        20: "repeat(20, minmax(0, 1fr))",
+      },
     },
   },
   plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],
