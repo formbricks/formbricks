@@ -27,15 +27,15 @@ export default function MultipleChoiceMultiForm({
   const shuffleOptionsTypes = {
     none: {
     id: 'none',
-      label: 'Keep choices in current order (Default).'
+      label: 'None (Keep choices in current order)'
     },
     all: {
       id: 'all',
-        label: 'Randomize all choices.'
+        label: 'All (Randomize all choices)'
     },
     exceptLast: {
       id: 'exceptLast',
-        label: 'Keep last choice and randomize other choices.'
+        label: 'Except Last (Keep last choice and randomize other choices)'
     },
   }
 
