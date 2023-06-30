@@ -227,8 +227,24 @@ export default function QuestionCard({
             </Collapsible.CollapsibleContent>
 
             {open && (
-              <div className="m-4 mt-0  border-t border-slate-200">
-                <div className="m-4 mr-0 flex items-center justify-end space-x-2">
+              <div className="mx-4 flex justify-end space-x-6 border-t border-slate-200">
+                {question.type === "openText" && (
+                  <div className="my-4 flex items-center justify-end space-x-2">
+                    <Label htmlFor="longAnswer">Long Answer</Label>
+                    <Switch
+                      id="longAnswer"
+                      checked={question.longAnswer !== false}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateQuestion(questionIdx, {
+                          longAnswer:
+                            typeof question.longAnswer === "undefined" ? false : !question.longAnswer,
+                        });
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="my-4 flex items-center justify-end space-x-2">
                   <Label htmlFor="required-toggle">Required</Label>
                   <Switch
                     id="required-toggle"
