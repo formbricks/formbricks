@@ -1,21 +1,17 @@
-import LinkSurveyShareButton from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/LinkModalButton";
-import StatusDropdown from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/StatusDropdown";
-import SuccessMessage from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/SuccessMessage";
 import { IS_FORMBRICKS_CLOUD, RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
 import { getSurveyResponses } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";
 import { timeSinceConditionally } from "@formbricks/lib/time";
-import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
-import { PencilSquareIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 import { Session } from "next-auth";
 
 interface SummaryMetadataProps {
   session: Session;
   surveyId: string;
-  environmentId: string;
 }
 
-export default async function SummaryMetadata({ session, surveyId, environmentId }: SummaryMetadataProps) {
+export default async function SummaryMetadata({ session, surveyId }: SummaryMetadataProps) {
   const survey = await getSurvey(surveyId);
   if (!survey) throw new Error(`Survey not found: ${surveyId}`);
   const allResponses = await getSurveyResponses(surveyId);
@@ -95,22 +91,9 @@ export default async function SummaryMetadata({ session, surveyId, environmentId
             <div className="text-right text-xs text-slate-400">
               Last updated: {timeSinceConditionally(survey.updatedAt.toISOString())}
             </div>
-            <div className="flex justify-end gap-x-1.5">
-              {survey.type === "link" && <LinkSurveyShareButton survey={survey} />}
-
-              <StatusDropdown survey={survey} environmentId={environmentId} />
-              <Button
-                variant="darkCTA"
-                className="h-full w-full px-3 lg:px-6"
-                href={`/environments/${environmentId}/surveys/${surveyId}/edit`}>
-                <PencilSquareIcon className="mr-2 h-5  w-5 text-white" />
-                Edit
-              </Button>
-            </div>
           </div>
         </div>
       </div>
-      <SuccessMessage environmentId={environmentId} survey={survey} />
     </>
   );
 }

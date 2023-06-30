@@ -135,16 +135,24 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
   }
 };
 
+
 export const preloadSurveyResponses = (surveyId: string) => {
   void getSurveyResponses(surveyId);
 };
 
-export const getSurveyResponses = cache(async (surveyId: string): Promise<TResponse[]> => {
+export const getSurveyResponses = cache(async (surveyId: string, from?: Date, to?: Date): Promise<TResponse[]> => {
+  const where: Prisma.ResponseWhereInput = {
+    surveyId,
+  };
+  if (from && to) {
+    where.createdAt = {
+      gte: from,
+      lte: to,
+    };
+  }
   try {
     const responsesPrisma = await prisma.response.findMany({
-      where: {
-        surveyId,
-      },
+      where,
       select: responseSelection,
       orderBy: [
         {

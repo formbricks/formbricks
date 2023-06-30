@@ -47,6 +47,7 @@ export {
 export { Switch } from "./components/Switch";
 export { TabBar } from "./components/TabBar";
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./components/Tooltip";
+export { Calender } from "./components/Calender";
 export {
   Command,
   CommandDialog,

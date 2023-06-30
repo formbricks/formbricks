@@ -1,0 +1,9 @@
+.cell-rounded:first-child [aria-selected="true"] {
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+}
+
+.cell-rounded:last-child [aria-selected="true"] {
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
