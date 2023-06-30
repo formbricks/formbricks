@@ -84,6 +84,9 @@
     "start": {
       "outputs": []
     },
+    "test": {
+      "outputs": []
+    },
     "generate": {
       "dependsOn": ["^generate"]
     },
