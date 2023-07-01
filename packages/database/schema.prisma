@@ -236,7 +236,6 @@ model Survey {
   delay            Int                     @default(0)
   autoComplete     Int?
   closeDate        DateTime?
-  closed           Boolean                 @default(false)
 }
 
 model Event {

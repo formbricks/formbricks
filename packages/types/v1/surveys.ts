@@ -204,7 +204,7 @@ export const ZSurvey = z.object({
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
   delay: z.number(),
-  autoComplete: z.union([z.boolean(), z.null()]),
+  autoComplete: z.union([z.boolean(), z.null(), z.number()]),
   analytics: z.object({
     numDisplays: z.number(),
     responseRate: z.number(),

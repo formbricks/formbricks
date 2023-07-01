@@ -31,6 +31,7 @@ export const getSurvey = cache(async (surveyId: string): Promise<TSurvey | null>
         displayOption: true,
         recontactDays: true,
         autoClose: true,
+        closeDate: true,
         delay: true,
         autoComplete: true,
         triggers: {

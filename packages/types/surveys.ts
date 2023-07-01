@@ -26,6 +26,7 @@ export interface Survey {
   autoClose: number | null;
   delay: number;
   autoComplete: number | null;
+  closeDate: Date | null;
 }
 
 export interface AttributeFilter {

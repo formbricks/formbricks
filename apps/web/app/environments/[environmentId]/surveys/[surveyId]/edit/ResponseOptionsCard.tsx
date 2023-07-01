@@ -24,13 +24,13 @@ interface ResponseOptionsCardProps {
 }
 
 export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
-  console.log(localSurvey);
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
-  const [surveyDeadlineToggle, setSurveyDeadlineToggle] = useState(false);
+  const [surveyCloseDateToggle, setSurveyCloseDateToggle] = useState(false);
 
   const [redirectUrl, setRedirectUrl] = useState<string | null>("");
+  const [closeDate, setCloseDate] = useState<Date>();
 
   const handleRedirectCheckMark = () => {
     if (redirectToggle && localSurvey.redirectUrl) {
@@ -46,12 +46,19 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setRedirectToggle(true);
   };
 
-  const handleSurveyDeadlineToggle = () => {
-    if (surveyDeadlineToggle) {
-      setSurveyDeadlineToggle(false);
+  const handleSurveyCloseDateToggle = () => {
+    if (surveyCloseDateToggle && localSurvey.closeDate) {
+      setSurveyCloseDateToggle(false);
+      setCloseDate(undefined);
+      setLocalSurvey({ ...localSurvey, closeDate: null });
       return;
     }
-    setSurveyDeadlineToggle(true);
+
+    if (surveyCloseDateToggle) {
+      setSurveyCloseDateToggle(false);
+      return;
+    }
+    setSurveyCloseDateToggle(true);
   };
 
   const handleRedirectUrlChange = (link: string) => {
@@ -59,12 +66,22 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setLocalSurvey({ ...localSurvey, redirectUrl: link });
   };
 
+  const handleCloseDateChange = (date: Date) => {
+    setCloseDate(date);
+    setLocalSurvey({ ...localSurvey, closeDate: date });
+  };
+
   useEffect(() => {
     if (localSurvey.redirectUrl) {
       setRedirectUrl(localSurvey.redirectUrl);
       setRedirectToggle(true);
     }
+    if (localSurvey.closeDate) {
+      setCloseDate(localSurvey.closeDate);
+      setSurveyCloseDateToggle(true);
+    }
   }, []);
+
   const handleCheckMark = () => {
     if (autoComplete) {
       const updatedSurvey: Survey = { ...localSurvey, autoComplete: null };
@@ -162,18 +179,24 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
             <div className="ml-2 flex items-center space-x-1">
               <Switch
                 id="surveyDeadline"
-                checked={surveyDeadlineToggle}
-                onCheckedChange={handleSurveyDeadlineToggle}
+                checked={surveyCloseDateToggle}
+                onCheckedChange={handleSurveyCloseDateToggle}
               />
               <Label htmlFor="surveyDeadline" className="cursor-pointer">
                 <div className="ml-2">
                   <h3 className="text-sm font-semibold text-slate-700">Close survey on date</h3>
+                  {localSurvey.status === "completed" && (
+                    <p className="text-xs font-normal text-slate-500">
+                      This form is already completed. You can change the status settings to make best use of
+                      this option.
+                    </p>
+                  )}
                 </div>
               </Label>
             </div>
-            {surveyDeadlineToggle && (
+            {surveyCloseDateToggle && (
               <div className="mt-4">
-                <DatePicker />
+                <DatePicker date={closeDate} handleDateChange={handleCloseDateChange} />
               </div>
             )}
           </div>
@@ -183,8 +206,8 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   );
 }
 
-export function DatePicker() {
-  const [date, setDate] = useState<Date>();
+export function DatePicker({ date, handleDateChange }) {
+  let formattedDate = date ? new Date(date) : undefined;
 
   return (
     <Popover>
@@ -193,14 +216,14 @@ export function DatePicker() {
           variant={"minimal"}
           className={cn(
             "w-[280px] justify-start border border-slate-300 text-left font-normal",
-            !date && "text-muted-foreground"
+            !formattedDate && "text-muted-foreground"
           )}>
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "PPP") : <span>Pick a date</span>}
+          {formattedDate ? format(formattedDate, "PPP") : <span>Pick a date</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
-        <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+        <Calendar mode="single" selected={formattedDate} onSelect={handleDateChange} initialFocus />
       </PopoverContent>
     </Popover>
   );
