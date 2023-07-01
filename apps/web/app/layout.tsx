@@ -1,9 +1,14 @@
 import "./globals.css";
 
-export const metadata = {
-  title: "Formbricks",
-  description: "Open-Source In-Product Survey Platform",
-};
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: {
+    template: '%s | Formbricks',
+    default: "Formbricks",
+  },
+  description: "Open-Source In-Product Survey Platform"
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
