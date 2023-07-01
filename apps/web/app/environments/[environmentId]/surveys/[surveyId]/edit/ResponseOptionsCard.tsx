@@ -1,10 +1,22 @@
 "use client";
 
 import type { Survey } from "@formbricks/types/surveys";
-import { Input, Label, Switch } from "@formbricks/ui";
+import {
+  Button,
+  Calendar,
+  Input,
+  Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Switch,
+} from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { CalendarIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
+import { cn } from "@formbricks/lib/cn";
 
 interface ResponseOptionsCardProps {
   localSurvey: Survey;
@@ -12,9 +24,12 @@ interface ResponseOptionsCardProps {
 }
 
 export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
+  console.log(localSurvey);
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
+  const [surveyDeadlineToggle, setSurveyDeadlineToggle] = useState(false);
+
   const [redirectUrl, setRedirectUrl] = useState<string | null>("");
 
   const handleRedirectCheckMark = () => {
@@ -29,6 +44,14 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       return;
     }
     setRedirectToggle(true);
+  };
+
+  const handleSurveyDeadlineToggle = () => {
+    if (surveyDeadlineToggle) {
+      setSurveyDeadlineToggle(false);
+      return;
+    }
+    setSurveyDeadlineToggle(true);
   };
 
   const handleRedirectUrlChange = (link: string) => {
@@ -112,33 +135,73 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
               </label>
             </div>
           )}
-          {localSurvey.type === "link" && (
-            <div className="p-3 ">
-              <div className="ml-2 flex items-center space-x-1">
-                <Switch id="redirectUrl" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
-                <Label htmlFor="redirectUrl" className="cursor-pointer">
-                  <div className="ml-2">
-                    <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
-                    <p className="text-xs font-normal text-slate-500">
-                      Redirect user to specified link on survey completion
-                    </p>
-                  </div>
-                </Label>
-              </div>
-              <div className="mt-4">
-                {redirectToggle && (
-                  <Input
-                    type="url"
-                    placeholder="https://www.example.com"
-                    value={redirectUrl ? redirectUrl : ""}
-                    onChange={(e) => handleRedirectUrlChange(e.target.value)}
-                  />
-                )}
-              </div>
+          <div className="p-3 ">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch id="redirectUrl" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
+              <Label htmlFor="redirectUrl" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
+                  <p className="text-xs font-normal text-slate-500">
+                    Redirect user to specified link on survey completion
+                  </p>
+                </div>
+              </Label>
             </div>
-          )}
+            {redirectToggle && (
+              <div className="mt-4">
+                <Input
+                  type="url"
+                  placeholder="https://www.example.com"
+                  value={redirectUrl ? redirectUrl : ""}
+                  onChange={(e) => handleRedirectUrlChange(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+          <div className="p-3 ">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch
+                id="surveyDeadline"
+                checked={surveyDeadlineToggle}
+                onCheckedChange={handleSurveyDeadlineToggle}
+              />
+              <Label htmlFor="surveyDeadline" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Close survey on date</h3>
+                </div>
+              </Label>
+            </div>
+            {surveyDeadlineToggle && (
+              <div className="mt-4">
+                <DatePicker />
+              </div>
+            )}
+          </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
+  );
+}
+
+export function DatePicker() {
+  const [date, setDate] = useState<Date>();
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant={"minimal"}
+          className={cn(
+            "w-[280px] justify-start border border-slate-300 text-left font-normal",
+            !date && "text-muted-foreground"
+          )}>
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {date ? format(date, "PPP") : <span>Pick a date</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0">
+        <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+      </PopoverContent>
+    </Popover>
   );
 }

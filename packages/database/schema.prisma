@@ -235,6 +235,8 @@ model Survey {
   autoClose        Int?
   delay            Int                     @default(0)
   autoComplete     Int?
+  closeDate        DateTime?
+  closed           Boolean                 @default(false)
 }
 
 model Event {
@@ -313,19 +315,19 @@ enum WidgetPlacement {
 }
 
 model Product {
-  id                  String                @id @default(cuid())
-  createdAt           DateTime              @default(now()) @map(name: "created_at")
-  updatedAt           DateTime              @updatedAt @map(name: "updated_at")
+  id                  String          @id @default(cuid())
+  createdAt           DateTime        @default(now()) @map(name: "created_at")
+  updatedAt           DateTime        @updatedAt @map(name: "updated_at")
   name                String
-  team                Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team                Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId              String
   environments        Environment[]
-  brandColor          String                @default("#64748b")
-  recontactDays       Int                   @default(7)
-  formbricksSignature Boolean               @default(true)
-  placement           WidgetPlacement       @default(bottomRight)
-  clickOutsideClose   Boolean               @default(true)
-  darkOverlay         Boolean               @default(false)
+  brandColor          String          @default("#64748b")
+  recontactDays       Int             @default(7)
+  formbricksSignature Boolean         @default(true)
+  placement           WidgetPlacement @default(bottomRight)
+  clickOutsideClose   Boolean         @default(true)
+  darkOverlay         Boolean         @default(false)
 }
 
 enum Plan {

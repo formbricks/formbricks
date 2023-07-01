@@ -58,6 +58,7 @@ export {
   CommandSeparator,
   CommandShortcut,
 } from "./components/Command";
+export { Calendar } from "./components/Calendar";
 
 /* Icons */
 export { AngryBirdRageIcon } from "./components/icons/AngryBirdRageIcon";
