@@ -27,10 +27,10 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
-  const [surveyCloseDateToggle, setSurveyCloseDateToggle] = useState(false);
+  const [surveyCloseOnDateToggle, setSurveyCloseOnDateToggle] = useState(false);
 
   const [redirectUrl, setRedirectUrl] = useState<string | null>("");
-  const [closeDate, setCloseDate] = useState<Date>();
+  const [closeOnDate, setCloseOnDate] = useState<Date>();
 
   const handleRedirectCheckMark = () => {
     if (redirectToggle && localSurvey.redirectUrl) {
@@ -46,19 +46,19 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setRedirectToggle(true);
   };
 
-  const handleSurveyCloseDateToggle = () => {
-    if (surveyCloseDateToggle && localSurvey.closeDate) {
-      setSurveyCloseDateToggle(false);
-      setCloseDate(undefined);
-      setLocalSurvey({ ...localSurvey, closeDate: null });
+  const handleSurveyCloseOnDateToggle = () => {
+    if (surveyCloseOnDateToggle && localSurvey.closeOnDate) {
+      setSurveyCloseOnDateToggle(false);
+      setCloseOnDate(undefined);
+      setLocalSurvey({ ...localSurvey, closeOnDate: null });
       return;
     }
 
-    if (surveyCloseDateToggle) {
-      setSurveyCloseDateToggle(false);
+    if (surveyCloseOnDateToggle) {
+      setSurveyCloseOnDateToggle(false);
       return;
     }
-    setSurveyCloseDateToggle(true);
+    setSurveyCloseOnDateToggle(true);
   };
 
   const handleRedirectUrlChange = (link: string) => {
@@ -66,9 +66,9 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setLocalSurvey({ ...localSurvey, redirectUrl: link });
   };
 
-  const handleCloseDateChange = (date: Date) => {
-    setCloseDate(date);
-    setLocalSurvey({ ...localSurvey, closeDate: date });
+  const handleCloseOnDateChange = (date: Date) => {
+    setCloseOnDate(date);
+    setLocalSurvey({ ...localSurvey, closeOnDate: date });
   };
 
   useEffect(() => {
@@ -76,9 +76,9 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       setRedirectUrl(localSurvey.redirectUrl);
       setRedirectToggle(true);
     }
-    if (localSurvey.closeDate) {
-      setCloseDate(localSurvey.closeDate);
-      setSurveyCloseDateToggle(true);
+    if (localSurvey.closeOnDate) {
+      setCloseOnDate(localSurvey.closeOnDate);
+      setSurveyCloseOnDateToggle(true);
     }
   }, []);
 
@@ -179,8 +179,8 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
             <div className="ml-2 flex items-center space-x-1">
               <Switch
                 id="surveyDeadline"
-                checked={surveyCloseDateToggle}
-                onCheckedChange={handleSurveyCloseDateToggle}
+                checked={surveyCloseOnDateToggle}
+                onCheckedChange={handleSurveyCloseOnDateToggle}
               />
               <Label htmlFor="surveyDeadline" className="cursor-pointer">
                 <div className="ml-2">
@@ -194,9 +194,9 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                 </div>
               </Label>
             </div>
-            {surveyCloseDateToggle && (
+            {surveyCloseOnDateToggle && (
               <div className="mt-4">
-                <DatePicker date={closeDate} handleDateChange={handleCloseDateChange} />
+                <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
               </div>
             )}
           </div>
