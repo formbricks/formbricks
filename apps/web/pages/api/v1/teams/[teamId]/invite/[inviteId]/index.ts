@@ -1,5 +1,6 @@
 import { getSessionUser, isAdminOrOwner } from "@/lib/api/apiHelper";
 import { sendInviteMemberEmail } from "@/lib/email";
+import { createInviteToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -111,6 +112,29 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
 
     return res.status(200).json(updatedInvite);
+  }
+  // GET /api/v1/teams/[teamId]/invite/[inviteId]
+  // Retrieve an invite token
+  else if (req.method === "GET") {
+
+    const invite = await prisma.invite.findUnique({
+      where: {
+        id: inviteId,
+      },
+      select: {
+        email: true,
+      },
+    });
+
+    if (!invite) {
+      return res.status(403).json({ message: "You are not allowed to share this invite link" });
+    }
+
+    const inviteToken = createInviteToken(inviteId, invite?.email, {
+      expiresIn: "7d",
+    });
+
+    return res.status(200).json({ inviteToken: encodeURIComponent(inviteToken) });
   }
 
   // Unknown HTTP Method

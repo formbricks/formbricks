@@ -70,7 +70,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         if (e.code === "P2002") {
-          return res.status(400).json({ message: "Tag already exists" });
+          return res.status(400).json({ duplicateRecord: true });
         }
       }
       return res.status(500).json({ message: "Internal Server Error" });

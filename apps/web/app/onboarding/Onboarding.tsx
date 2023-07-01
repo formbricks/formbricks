@@ -24,7 +24,11 @@ interface OnboardingProps {
 }
 
 export default function Onboarding({ session }: OnboardingProps) {
-  const { data: environment, error } = useSWR(`/api/v1/environments/find-first`, fetcher);
+  const {
+    data: environment,
+    error: isErrorEnvironment,
+    isLoading: isLoadingEnvironment,
+  } = useSWR(`/api/v1/environments/find-first`, fetcher);
   const { profile } = useProfile();
   const { triggerProfileMutate } = useProfileMutation();
   const [formbricksResponseId, setFormbricksResponseId] = useState<ResponseId | undefined>();
@@ -36,7 +40,7 @@ export default function Onboarding({ session }: OnboardingProps) {
     return currentStep / MAX_STEPS;
   }, [currentStep]);
 
-  if (!profile) {
+  if (!profile || isLoadingEnvironment) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <LoadingSpinner />
@@ -44,7 +48,7 @@ export default function Onboarding({ session }: OnboardingProps) {
     );
   }
 
-  if (error) {
+  if (isErrorEnvironment) {
     return <div className="flex h-full w-full items-center justify-center">An error occurred</div>;
   }
 

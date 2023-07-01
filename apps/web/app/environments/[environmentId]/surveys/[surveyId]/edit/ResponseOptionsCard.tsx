@@ -112,29 +112,31 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
               </label>
             </div>
           )}
-          <div className="p-3 ">
-            <div className="ml-2 flex items-center space-x-1">
-              <Switch id="redirectUrl" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
-              <Label htmlFor="redirectUrl" className="cursor-pointer">
-                <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
-                  <p className="text-xs font-normal text-slate-500">
-                    Redirect user to specified link on survey completion
-                  </p>
-                </div>
-              </Label>
+          {localSurvey.type === "link" && (
+            <div className="p-3 ">
+              <div className="ml-2 flex items-center space-x-1">
+                <Switch id="redirectUrl" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
+                <Label htmlFor="redirectUrl" className="cursor-pointer">
+                  <div className="ml-2">
+                    <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
+                    <p className="text-xs font-normal text-slate-500">
+                      Redirect user to specified link on survey completion
+                    </p>
+                  </div>
+                </Label>
+              </div>
+              <div className="mt-4">
+                {redirectToggle && (
+                  <Input
+                    type="url"
+                    placeholder="https://www.example.com"
+                    value={redirectUrl ? redirectUrl : ""}
+                    onChange={(e) => handleRedirectUrlChange(e.target.value)}
+                  />
+                )}
+              </div>
             </div>
-            <div className="mt-4">
-              {redirectToggle && (
-                <Input
-                  type="url"
-                  placeholder="https://www.example.com"
-                  value={redirectUrl ? redirectUrl : ""}
-                  onChange={(e) => handleRedirectUrlChange(e.target.value)}
-                />
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
