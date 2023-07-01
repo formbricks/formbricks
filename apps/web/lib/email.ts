@@ -187,7 +187,7 @@ export const sendNoLiveSurveyNotificationEmail = async (email, notificationData)
   const endYear = notificationData.currentDate.getFullYear();
   await sendEmail({
     to: email,
-    subject: `NO LIVE SURVEY`,
+    subject: `NO SURVEY LIVE`,
     html: withEmailTemplate(`
       ${notificationHeader(notificationData.productName, startDate, endDate, startYear, endYear)}
       ${createReminderNotificationBody(notificationData, WEBAPP_URL)}
