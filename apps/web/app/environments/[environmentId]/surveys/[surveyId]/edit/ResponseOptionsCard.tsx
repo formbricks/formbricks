@@ -67,6 +67,10 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   };
 
   const handleCloseOnDateChange = (date: Date) => {
+    const equivalentDate = date.getDate();
+    date.setUTCHours(0, 0, 0, 0);
+    date.setDate(equivalentDate);
+
     setCloseOnDate(date);
     setLocalSurvey({ ...localSurvey, closeOnDate: date });
   };
