@@ -8,7 +8,16 @@ export const ZSurveyThankYouCard = z.object({
   subheader: z.optional(z.string()),
 });
 
+export const ZSurveyClosedMessage = z
+  .object({
+    heading: z.optional(z.string()),
+    subheading: z.optional(z.string()),
+  })
+  .nullable();
+
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
+
+export type TSurveyClosedMessage = z.infer<typeof ZSurveyThankYouCard>;
 
 export const ZSurveyChoice = z.object({
   id: z.string(),
@@ -209,6 +218,7 @@ export const ZSurvey = z.object({
     numDisplays: z.number(),
     responseRate: z.number(),
   }),
+  surveyClosedMessage: ZSurveyClosedMessage,
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
