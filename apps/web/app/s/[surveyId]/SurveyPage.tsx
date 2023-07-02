@@ -26,7 +26,12 @@ export default function SurveyPage({ surveyId }: SurveyPageProps) {
   }
 
   if (isErrorSurvey && isErrorSurvey.status === 403) {
-    return <SurveyInactive status={isErrorSurvey.info.reason} />;
+    return (
+      <SurveyInactive
+        status={isErrorSurvey.info.reason}
+        surveyClosedMessage={isErrorSurvey.info?.surveyClosedMessage}
+      />
+    );
   }
 
   return (

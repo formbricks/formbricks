@@ -13,7 +13,7 @@ export const ZSurveyClosedMessage = z
     heading: z.optional(z.string()),
     subheading: z.optional(z.string()),
   })
-  .nullable();
+  .optional();
 
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
 
