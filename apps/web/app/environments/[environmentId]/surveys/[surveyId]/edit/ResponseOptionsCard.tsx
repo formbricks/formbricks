@@ -200,7 +200,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
               {surveyClosedMessageToggle && (
                 <div className="ml-2 space-x-1 px-4 pb-4">
                   <div>
-                    <Label htmlFor="headline">Headline</Label>
+                    <Label htmlFor="headline">Heading</Label>
                     <div className="mt-2">
                       <Input
                         autoFocus
@@ -215,7 +215,6 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                     <Label htmlFor="headline">Subheading</Label>
                     <div className="mt-2">
                       <Input
-                        autoFocus
                         id="subheading"
                         name="subheading"
                         defaultValue={surveyClosedMessage.subheading}
