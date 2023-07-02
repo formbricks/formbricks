@@ -9,8 +9,13 @@ export async function GET() {
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
   }
-  const apiKeyData = await getApiKeyFromKey(apiKey);
-  if (!apiKeyData) {
+  let apiKeyData;
+  try {
+    apiKeyData = await getApiKeyFromKey(apiKey);
+    if (!apiKeyData) {
+      return responses.notAuthenticatedResponse();
+    }
+  } catch (error) {
     return responses.notAuthenticatedResponse();
   }
 
