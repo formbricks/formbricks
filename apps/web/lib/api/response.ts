@@ -92,7 +92,7 @@ const notAuthenticatedResponse = (cors: boolean = false) =>
       code: "not_authenticated",
       message: "Not authenticated",
       details: {
-        "X-Api-Key": "Header not provided or API Key invalid",
+        "x-Api-Key": "Header not provided or API Key invalid",
       },
     } as ApiErrorResponse,
     {
