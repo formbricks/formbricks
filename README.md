@@ -23,10 +23,10 @@
 
 <p align="center">
 <i>Trusted by</i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://github.com/calcom/cal.com/"><img src="https://github.com/formbricks/formbricks/assets/675065/1a8763cf-f47e-4960-90f6-334f6dc12a17" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://github.com/CrowdDotDev/crowd.dev"><img src="https://github.com/formbricks/formbricks/assets/675065/59b1a4d4-25e4-4ef3-b0bf-4426446fbfd0" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://clovyr.io/"><img src="https://github.com/formbricks/formbricks/assets/675065/9291c8df-9aac-423a-a430-a9a581240075" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://neverinstall.com/"><img src="https://github.com/formbricks/formbricks/assets/675065/72e5e37b-8ef7-4340-b06e-f1d12a05330f" height="20px"></a>
+<a href="https://github.com/calcom/cal.com/"><img src="https://github.com/formbricks/formbricks/assets/675065/1a8763cf-f47e-4960-90f6-334f6dc12a17#gh-light-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://github.com/CrowdDotDev/crowd.dev"><img src="https://github.com/formbricks/formbricks/assets/675065/59b1a4d4-25e4-4ef3-b0bf-4426446fbfd0#gh-light-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://clovyr.io/"><img src="https://github.com/formbricks/formbricks/assets/675065/9291c8df-9aac-423a-a430-a9a581240075#gh-light-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://neverinstall.com/"><img src="https://github.com/formbricks/formbricks/assets/675065/72e5e37b-8ef7-4340-b06e-f1d12a05330f#gh-light-mode-only" height="20px"></a>
 </p>
 
 ## ✨ About Formbricks
