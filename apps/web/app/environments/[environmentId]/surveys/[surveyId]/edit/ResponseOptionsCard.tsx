@@ -23,17 +23,12 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   });
 
   const handleRedirectCheckMark = () => {
+    setRedirectToggle((prev) => !prev);
+
     if (redirectToggle && localSurvey.redirectUrl) {
-      setRedirectToggle(false);
       setRedirectUrl(null);
       setLocalSurvey({ ...localSurvey, redirectUrl: null });
-      return;
     }
-    if (redirectToggle) {
-      setRedirectToggle(false);
-      return;
-    }
-    setRedirectToggle(true);
   };
 
   const handleRedirectUrlChange = (link: string) => {
@@ -42,18 +37,11 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   };
 
   const handleCloseSurveyMessageToggle = () => {
+    setSurveyClosedMessageToggle((prev) => !prev);
+
     if (surveyClosedMessageToggle && localSurvey.surveyClosedMessage) {
-      setSurveyClosedMessageToggle(false);
       setLocalSurvey({ ...localSurvey, surveyClosedMessage: null });
-      return;
     }
-
-    if (surveyClosedMessageToggle) {
-      setSurveyClosedMessageToggle(false);
-      return;
-    }
-
-    setSurveyClosedMessageToggle(true);
   };
 
   const handleClosedSurveyMessageChange = ({
