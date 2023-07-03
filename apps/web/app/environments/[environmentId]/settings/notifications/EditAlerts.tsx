@@ -1,31 +1,8 @@
-import type { NotificationSettings } from "@formbricks/types/users";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 import { QuestionMarkCircleIcon, UsersIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { AlertSwitch } from "./AlertSwitch";
+import { NotificationSwitch } from "./NotificationSwitch";
 import { Membership, User } from "./types";
-
-const cleanNotificationSettings = (notificationSettings: NotificationSettings, memberships: Membership[]) => {
-  const newNotificationSettings = {};
-  for (const membership of memberships) {
-    for (const product of membership.team.products) {
-      for (const environment of product.environments) {
-        for (const survey of environment.surveys) {
-          // check if the user has notification settings for this survey
-          if (notificationSettings[survey.id]) {
-            newNotificationSettings[survey.id] = notificationSettings[survey.id];
-          } else {
-            newNotificationSettings[survey.id] = {
-              responseFinished: false,
-              weeklySummary: false,
-            };
-          }
-        }
-      }
-    }
-  }
-  return newNotificationSettings;
-};
 
 interface EditAlertsProps {
   memberships: Membership[];
@@ -34,8 +11,6 @@ interface EditAlertsProps {
 }
 
 export default function EditAlerts({ memberships, user, environmentId }: EditAlertsProps) {
-  user.notificationSettings = cleanNotificationSettings(user.notificationSettings, memberships);
-
   return (
     <>
       {memberships.map((membership) => (
@@ -80,11 +55,11 @@ export default function EditAlerts({ memberships, user, environmentId }: EditAle
                               {product?.name}
                             </div>
                             <div className="col-span-1 text-center">
-                              <AlertSwitch
-                                surveyId={survey.id}
+                              <NotificationSwitch
+                                surveyOrProductId={survey.id}
                                 userId={user.id}
                                 notificationSettings={user.notificationSettings}
-                                notificationType={"responseFinished"}
+                                notificationType={"alert"}
                               />
                             </div>
                           </div>

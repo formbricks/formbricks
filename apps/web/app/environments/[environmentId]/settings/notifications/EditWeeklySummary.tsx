@@ -1,30 +1,7 @@
-import type { NotificationSettings } from "@formbricks/types/users";
 import { UsersIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { AlertSwitch } from "./AlertSwitch";
+import { NotificationSwitch } from "./NotificationSwitch";
 import { Membership, User } from "./types";
-
-const cleanNotificationSettings = (notificationSettings: NotificationSettings, memberships: Membership[]) => {
-  const newNotificationSettings = {};
-  for (const membership of memberships) {
-    for (const product of membership.team.products) {
-      for (const environment of product.environments) {
-        for (const survey of environment.surveys) {
-          // check if the user has notification settings for this survey
-          if (notificationSettings[survey.id]) {
-            newNotificationSettings[survey.id] = notificationSettings[survey.id];
-          } else {
-            newNotificationSettings[survey.id] = {
-              responseFinished: false,
-              weeklySummary: false,
-            };
-          }
-        }
-      }
-    }
-  }
-  return newNotificationSettings;
-};
 
 interface EditAlertsProps {
   memberships: Membership[];
@@ -33,8 +10,6 @@ interface EditAlertsProps {
 }
 
 export default function EditWeeklySummary({ memberships, user, environmentId }: EditAlertsProps) {
-  user.notificationSettings = cleanNotificationSettings(user.notificationSettings, memberships);
-
   return (
     <>
       {memberships.map((membership) => (
@@ -52,26 +27,18 @@ export default function EditWeeklySummary({ memberships, user, environmentId }: 
             </div>
             <div className="grid-cols-8 space-y-1 p-2">
               {membership.team.products.map((product) => (
-                <div key={product.id}>
-                  {product.environments.map((environment) => (
-                    <div key={environment.id}>
-                      {environment.surveys.map((survey) => (
-                        <div
-                          className="grid h-auto w-full cursor-pointer grid-cols-2 place-content-center rounded-lg px-2 py-2 text-left text-sm text-slate-900 hover:bg-slate-50"
-                          key={survey.name}>
-                          <div>{product?.name}</div>
-                          <div className="mr-20 flex justify-end">
-                            <AlertSwitch
-                              surveyId={survey.id}
-                              userId={user.id}
-                              notificationSettings={user.notificationSettings}
-                              notificationType={"weeklySummary"}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
+                <div
+                  className="grid h-auto w-full cursor-pointer grid-cols-2 place-content-center rounded-lg px-2 py-2 text-left text-sm text-slate-900 hover:bg-slate-50"
+                  key={product.id}>
+                  <div>{product?.name}</div>
+                  <div className="mr-20 flex justify-end">
+                    <NotificationSwitch
+                      surveyOrProductId={product.id}
+                      userId={user.id}
+                      notificationSettings={user.notificationSettings}
+                      notificationType={"weeklySummary"}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
