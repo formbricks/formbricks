@@ -29,7 +29,7 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
           name="questionId"
           value={currentValue}
           onChange={(e) => setCurrentValue(e.target.value)}
-          disabled={localSurvey.status !== "draft"}
+          disabled={!(localSurvey.status === "draft" || question.isDraft)}
         />
         {localSurvey.status === "draft" && (
           <Button
