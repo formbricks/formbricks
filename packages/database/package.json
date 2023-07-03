@@ -20,8 +20,7 @@
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
     "prebuild": "npm run generate",
-    "predev": "npm run generate",
-    "studio": "prisma studio"
+    "predev": "npm run generate"
   },
   "dependencies": {
     "@prisma/client": "^4.16.1",

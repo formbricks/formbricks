@@ -15,6 +15,13 @@ export const useCreateTag = (environmentId: string) => {
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        if (errorData?.duplicateRecord) {
+          throw new Error("Tag already assigned", {
+            cause: "DUPLICATE_RECORD",
+          });
+        }
+
         throw new Error(errorData.message);
       }
 
