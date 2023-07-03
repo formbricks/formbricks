@@ -1,22 +1,10 @@
 "use client";
 
 import type { Survey } from "@formbricks/types/surveys";
-import {
-  Button,
-  Calendar,
-  Input,
-  Label,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  Switch,
-} from "@formbricks/ui";
+import { Input, Label, Switch, DatePicker } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CalendarIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { cn } from "@formbricks/lib/cn";
 
 interface ResponseOptionsCardProps {
   localSurvey: Survey;
@@ -67,12 +55,12 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   };
 
   const handleCloseOnDateChange = (date: Date) => {
-    const equivalentDate = date.getDate();
-    date.setUTCHours(0, 0, 0, 0);
-    date.setDate(equivalentDate);
+    const equivalentDate = date?.getDate();
+    date?.setUTCHours(0, 0, 0, 0);
+    date?.setDate(equivalentDate);
 
     setCloseOnDate(date);
-    setLocalSurvey({ ...localSurvey, closeOnDate: date });
+    setLocalSurvey({ ...localSurvey, closeOnDate: date ?? null });
   };
 
   useEffect(() => {
@@ -207,28 +195,5 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
-  );
-}
-
-export function DatePicker({ date, handleDateChange }) {
-  let formattedDate = date ? new Date(date) : undefined;
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant={"minimal"}
-          className={cn(
-            "w-[280px] justify-start border border-slate-300 text-left font-normal",
-            !formattedDate && "text-muted-foreground"
-          )}>
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {formattedDate ? format(formattedDate, "PPP") : <span>Pick a date</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
-        <Calendar mode="single" selected={formattedDate} onSelect={handleDateChange} initialFocus />
-      </PopoverContent>
-    </Popover>
   );
 }
