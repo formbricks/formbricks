@@ -3,7 +3,11 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/authOptions';
 import { getServerSession } from 'next-auth';
 import { getAnalysisData } from '@/app/environments/[environmentId]/surveys/[surveyId]/summary/data';
 
-export const generateMetadata = async ( {params} ): Promise<Metadata> => {
+type Props = {
+  params: { surveyId: string }
+}
+
+export const generateMetadata = async ({ params }: Props): Promise<Metadata> => {
   const session = await getServerSession(authOptions);
   
   if (session) {
@@ -12,7 +16,6 @@ export const generateMetadata = async ( {params} ): Promise<Metadata> => {
       title: `${responsesCount} Responses`,
     };
   }
-  
   return {
     title: "",
   };
