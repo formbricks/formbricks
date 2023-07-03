@@ -18,7 +18,7 @@ export function isLight(color) {
 
 export const shuffleArray = (array: any[], shuffleAll = false) => {
   const newArray = [...array];
-  const otherIndex = newArray.findIndex(item => item.id === "other");
+  const otherIndex = newArray.findIndex((item) => item.id === "other");
   if (!shuffleAll && otherIndex !== -1) {
     const otherItem = newArray.splice(otherIndex, 1)[0];
     newArray.sort(() => Math.random() - 0.5);
@@ -27,4 +27,4 @@ export const shuffleArray = (array: any[], shuffleAll = false) => {
     newArray.sort(() => Math.random() - 0.5);
   }
   return newArray;
-}
+};

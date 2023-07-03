@@ -1,6 +1,15 @@
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
+import {
+  Button,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";
@@ -26,18 +35,18 @@ export default function MultipleChoiceMultiForm({
 
   const shuffleOptionsTypes = {
     none: {
-    id: 'none',
-      label: 'None (Keep choices in current order)'
+      id: "none",
+      label: "None (Keep choices in current order)",
     },
     all: {
-      id: 'all',
-        label: 'All (Randomize all choices)'
+      id: "all",
+      label: "All (Randomize all choices)",
     },
     exceptLast: {
-      id: 'exceptLast',
-        label: 'Except Last (Keep last choice and randomize other choices)'
+      id: "exceptLast",
+      label: "Except Last (Keep last choice and randomize other choices)",
     },
-  }
+  };
 
   const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
     const newChoices = !question.choices
@@ -182,33 +191,33 @@ export default function MultipleChoiceMultiForm({
                 )}
               </div>
             ))}
-          <div className="flex items-center space-x-2 justify-between">
+          <div className="flex items-center justify-between space-x-2">
             {question.choices.filter((c) => c.id === "other").length === 0 && (
-
-                <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
-                  Add &quot;Other&quot;
-                </Button>
-
+              <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
+                Add &quot;Other&quot;
+              </Button>
             )}
 
-            <div className="flex flex-1 justify-end items-center gap-2">
-
-              <p className="text-slate-700 text-sm">Ordering</p>
+            <div className="flex flex-1 items-center justify-end gap-2">
+              <p className="text-sm text-slate-700">Ordering</p>
 
               <Select
                 defaultValue={question.shuffleOption}
-                onValueChange={(e) => { updateQuestion(questionIdx, { shuffleOption: e });}}>
+                onValueChange={(e) => {
+                  updateQuestion(questionIdx, { shuffleOption: e });
+                }}>
                 <SelectTrigger className="w-fit overflow-hidden ">
                   <SelectValue placeholder="Select ordering" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.values(shuffleOptionsTypes).map((shuffleOptionsType) =>
-                      (
-                        <SelectItem key={shuffleOptionsType.id} value={shuffleOptionsType.id} title={shuffleOptionsType.label}>
-                          {shuffleOptionsType.label}
-                        </SelectItem>
-                      )
-                  )}
+                  {Object.values(shuffleOptionsTypes).map((shuffleOptionsType) => (
+                    <SelectItem
+                      key={shuffleOptionsType.id}
+                      value={shuffleOptionsType.id}
+                      title={shuffleOptionsType.label}>
+                      {shuffleOptionsType.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

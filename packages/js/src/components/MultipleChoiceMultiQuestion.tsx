@@ -22,13 +22,15 @@ export default function MultipleChoiceMultiQuestion({
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
-  const [questionChoices, setQuestionChoices] = useState<Choice[]>(question.choices
-    ? question.shuffleOption === 'all'
-      ? shuffleArray(question.choices, true)
-      : question.shuffleOption === 'exceptLast'
+  const [questionChoices, setQuestionChoices] = useState<Choice[]>(
+    question.choices
+      ? question.shuffleOption === "all"
+        ? shuffleArray(question.choices, true)
+        : question.shuffleOption === "exceptLast"
         ? shuffleArray(question.choices)
         : question.choices
-    : []);
+      : []
+  );
   const otherInputRef = useRef(null);
 
   const isAtLeastOneChecked = () => {
@@ -42,14 +44,16 @@ export default function MultipleChoiceMultiQuestion({
   }, [showOther]);
 
   useEffect(() => {
-    setQuestionChoices(question.choices
-      ? question.shuffleOption === 'all'
-        ? shuffleArray(question.choices, true)
-        : question.shuffleOption === 'exceptLast'
+    setQuestionChoices(
+      question.choices
+        ? question.shuffleOption === "all"
+          ? shuffleArray(question.choices, true)
+          : question.shuffleOption === "exceptLast"
           ? shuffleArray(question.choices)
           : question.choices
-      : [])
-  }, [question.choices, question.shuffleOption])
+        : []
+    );
+  }, [question.choices, question.shuffleOption]);
 
   return (
     <form
@@ -80,60 +84,60 @@ export default function MultipleChoiceMultiQuestion({
           <legend className="fb-sr-only">Options</legend>
           <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white fb-max-h-[42vh] fb-overflow-y-auto fb-pr-2 fb-py-0.5">
             {questionChoices.map((choice) => (
-                <label
-                  key={choice.id}
-                  className={cn(
-                    selectedChoices.includes(choice.label)
-                      ? "fb-z-10 fb-border-slate-400 fb-bg-slate-50"
-                      : "fb-border-gray-200",
-                    "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-space-y-3 fb-rounded-md fb-border fb-p-4 hover:fb-bg-slate-50 focus:fb-outline-none"
-                  )}>
-                  <span className="fb-flex fb-items-center fb-text-sm">
-                    <input
-                      type="checkbox"
-                      id={choice.id}
-                      name={question.id}
-                      value={choice.label}
-                      className="fb-h-4 fb-w-4 fb-border fb-border-slate-300 focus:fb-ring-0 focus:fb-ring-offset-0"
-                      aria-labelledby={`${choice.id}-label`}
-                      onChange={(e) => {
-                        if (choice.id === "other") {
-                          setShowOther(e.currentTarget.checked);
+              <label
+                key={choice.id}
+                className={cn(
+                  selectedChoices.includes(choice.label)
+                    ? "fb-z-10 fb-border-slate-400 fb-bg-slate-50"
+                    : "fb-border-gray-200",
+                  "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-space-y-3 fb-rounded-md fb-border fb-p-4 hover:fb-bg-slate-50 focus:fb-outline-none"
+                )}>
+                <span className="fb-flex fb-items-center fb-text-sm">
+                  <input
+                    type="checkbox"
+                    id={choice.id}
+                    name={question.id}
+                    value={choice.label}
+                    className="fb-h-4 fb-w-4 fb-border fb-border-slate-300 focus:fb-ring-0 focus:fb-ring-offset-0"
+                    aria-labelledby={`${choice.id}-label`}
+                    onChange={(e) => {
+                      if (choice.id === "other") {
+                        setShowOther(e.currentTarget.checked);
 
-                          return;
-                        }
+                        return;
+                      }
 
-                        if (e.currentTarget.checked) {
-                          setSelectedChoices([...selectedChoices, e.currentTarget.value]);
-                        } else {
-                          setSelectedChoices(
-                            selectedChoices.filter((label) => label !== e.currentTarget.value)
-                          );
-                        }
-                      }}
-                      checked={selectedChoices.includes(choice.label) || (choice.id === "other" && showOther)}
-                      style={{ borderColor: brandColor, color: brandColor }}
-                    />
-                    <span id={`${choice.id}-label`} className="fb-ml-3 fb-font-medium">
-                      {choice.label}
-                    </span>
+                      if (e.currentTarget.checked) {
+                        setSelectedChoices([...selectedChoices, e.currentTarget.value]);
+                      } else {
+                        setSelectedChoices(
+                          selectedChoices.filter((label) => label !== e.currentTarget.value)
+                        );
+                      }
+                    }}
+                    checked={selectedChoices.includes(choice.label) || (choice.id === "other" && showOther)}
+                    style={{ borderColor: brandColor, color: brandColor }}
+                  />
+                  <span id={`${choice.id}-label`} className="fb-ml-3 fb-font-medium">
+                    {choice.label}
                   </span>
-                  {choice.id === "other" && showOther && (
-                    <input
-                      ref={otherInputRef}
-                      id={`${choice.id}-label`}
-                      name={question.id}
-                      placeholder="Please specify"
-                      className={cn(
-                        "fb-mt-3 fb-flex fb-h-10 fb-w-full fb-rounded-md fb-border fb-bg-white fb-border-slate-300 fb-bg-transparent fb-px-3 fb-py-2 fb-text-sm fb-text-slate-800 placeholder:fb-text-slate-400 focus:fb-outline-none  focus:fb-ring-2 focus:fb-ring-slate-400 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50 dark:fb-border-slate-500 dark:fb-text-slate-300"
-                      )}
-                      onChange={(e) => setOtherSpecified(e.currentTarget.value)}
-                      aria-labelledby={`${choice.id}-label`}
-                      required={question.required}
-                    />
-                  )}
-                </label>
-              ))}
+                </span>
+                {choice.id === "other" && showOther && (
+                  <input
+                    ref={otherInputRef}
+                    id={`${choice.id}-label`}
+                    name={question.id}
+                    placeholder="Please specify"
+                    className={cn(
+                      "fb-mt-3 fb-flex fb-h-10 fb-w-full fb-rounded-md fb-border fb-bg-white fb-border-slate-300 fb-bg-transparent fb-px-3 fb-py-2 fb-text-sm fb-text-slate-800 placeholder:fb-text-slate-400 focus:fb-outline-none  focus:fb-ring-2 focus:fb-ring-slate-400 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50 dark:fb-border-slate-500 dark:fb-text-slate-300"
+                    )}
+                    onChange={(e) => setOtherSpecified(e.currentTarget.value)}
+                    aria-labelledby={`${choice.id}-label`}
+                    required={question.required}
+                  />
+                )}
+              </label>
+            ))}
           </div>
         </fieldset>
       </div>

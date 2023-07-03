@@ -44,7 +44,7 @@ export const questionTypes: QuestionType[] = [
         { id: createId(), label: "Eat the cake 🍰" },
         { id: createId(), label: "Have the cake 🎂" },
       ],
-      shuffleOption: 'none',
+      shuffleOption: "none",
     },
   },
   {
@@ -59,7 +59,7 @@ export const questionTypes: QuestionType[] = [
         { id: createId(), label: "Ocean 🌊" },
         { id: createId(), label: "Palms 🌴" },
       ],
-      shuffleOption: 'none',
+      shuffleOption: "none",
     },
   },
   {
