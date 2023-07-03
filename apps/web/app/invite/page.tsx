@@ -23,15 +23,17 @@ export default async function JoinTeam({ searchParams }) {
       include: { creator: true },
     });
 
-    if (!currentUser) {
+    const isExpired = new Date(invite.expiresAt) < new Date();
+
+    if (!invite || isExpired) {
+      return <ExpiredContent />;
+    } else if (invite.accepted) {
+      return <UsedContent />;
+    } else if (!currentUser) {
       const redirectUrl = env.NEXTAUTH_URL + "/invite?token=" + searchParams.token;
       return <NotLoggedInContent email={email} token={searchParams.token} redirectUrl={redirectUrl} />;
     } else if (currentUser.user?.email !== email) {
       return <WrongAccountContent />;
-    } else if (!invite) {
-      return <ExpiredContent />;
-    } else if (invite.accepted) {
-      return <UsedContent />;
     } else {
       // create membership
       await prisma?.membership.create({
