@@ -131,14 +131,14 @@ export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.MultipleChoiceSingle),
   choices: z.array(ZSurveyChoice),
   logic: z.array(ZSurveyMultipleChoiceSingleLogic).optional(),
-  shuffleOption: z.enum(["none", "all", "exceptLast"]),
+  shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
 });
 
 export const ZSurveyMultipleChoiceMultiQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.MultipleChoiceMulti),
   choices: z.array(ZSurveyChoice),
   logic: z.array(ZSurveyMultipleChoiceMultiLogic).optional(),
-  shuffleOption: z.enum(["none", "all", "exceptLast"]),
+  shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
 });
 
 export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
