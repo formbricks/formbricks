@@ -27,6 +27,11 @@
 <a href="https://github.com/CrowdDotDev/crowd.dev"><img src="https://github.com/formbricks/formbricks/assets/675065/59b1a4d4-25e4-4ef3-b0bf-4426446fbfd0#gh-light-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://clovyr.io/"><img src="https://github.com/formbricks/formbricks/assets/675065/9291c8df-9aac-423a-a430-a9a581240075#gh-light-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://neverinstall.com/"><img src="https://github.com/formbricks/formbricks/assets/675065/72e5e37b-8ef7-4340-b06e-f1d12a05330f#gh-light-mode-only" height="20px"></a>
+    
+<a href="https://github.com/calcom/cal.com/"><img src="https://github.com/formbricks/formbricks/assets/72809645/7f436f26-53c0-4324-a4f0-33d09f6e055b7#gh-dark-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://github.com/CrowdDotDev/crowd.dev"><img src="https://github.com/formbricks/formbricks/assets/72809645/4bb4caf7-4b64-44c8-94bd-850606d181c1#gh-dark-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://clovyr.io/"><img src="https://github.com/formbricks/formbricks/assets/675065/9291c8df-9aac-423a-a430-a9a581240075#gh-dark-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://neverinstall.com/"><img src="[https://github.com/formbricks/formbricks/assets/675065/72e5e37b-8ef7-4340-b06e-f1d12a05330f](https://github.com/formbricks/formbricks/assets/72809645/497fa4d8-1955-4662-8b24-4e1636a87446)#gh-dark-mode-only" height="20px"></a>
 </p>
 
 ## ✨ About Formbricks
