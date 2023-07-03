@@ -109,7 +109,7 @@ export const checkClickMatch = (event: MouseEvent) => {
       trackEvent(e.name).then((res) => {
         match(
           res,
-          (_value) => { },
+          (_value) => {},
           (err) => {
             errorHandler.handle(err);
           }
@@ -124,7 +124,7 @@ export const checkClickMatch = (event: MouseEvent) => {
       trackEvent(e.name).then((res) => {
         match(
           res,
-          (_value) => { },
+          (_value) => {},
           (err) => {
             errorHandler.handle(err);
           }
