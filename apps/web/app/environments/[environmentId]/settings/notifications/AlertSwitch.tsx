@@ -28,16 +28,22 @@ export function AlertSwitch({ surveyId, userId, notificationSettings, notificati
         // update db
         await updateNotificationSettings(userId, notificationSettings);
         // show success message if toggled on, different message if toggled off
-        if (updatedNotificationSettings[surveyId]["responseFinished"] && notificationType == "responseFinished") {
+        if (
+          updatedNotificationSettings[surveyId]["responseFinished"] &&
+          notificationType == "responseFinished"
+        ) {
           toast.success(`Every new response is coming your way.`);
-        } else if (updatedNotificationSettings[surveyId]["weeklySummary"] && notificationType == "weeklySummary") {
+        } else if (
+          updatedNotificationSettings[surveyId]["weeklySummary"] &&
+          notificationType == "weeklySummary"
+        ) {
           toast.success(`You have signed up for weekly email notification.`);
         } else if (notificationType == "responseFinished") {
-            toast.success(`You won't receive notifications anymore.`);
+          toast.success(`You won't receive notifications anymore.`);
         } else {
           toast.success(`You have signed off for weekly email notification`);
         }
-      router.refresh();
+        router.refresh();
       }}
     />
   );

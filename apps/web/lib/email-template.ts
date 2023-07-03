@@ -216,8 +216,7 @@ export const withEmailTemplate = (content: string) =>
   </html>
   `;
 
-
-export const notificationHeader = (productName, startDate, endDate, startYear, endYear) => 
+export const notificationHeader = (productName, startDate, endDate, startYear, endYear) =>
   `
   <div style="display: block; padding: 1rem;">
     <div style="float: left;">
@@ -235,14 +234,13 @@ export const notificationHeader = (productName, startDate, endDate, startYear, e
 
 export const getNotificationHeaderimePeriod = (startDate, endDate, startYear, endYear) => {
   if (startYear == endYear) {
-    return `<p style="text-align: right; margin: 0;">${startDate} - ${endDate} ${endYear}</p>`
+    return `<p style="text-align: right; margin: 0;">${startDate} - ${endDate} ${endYear}</p>`;
   } else {
-    return `<p style="text-align: right; margin: 0;">${startDate} ${startYear} - ${endDate} ${endYear}</p>`
+    return `<p style="text-align: right; margin: 0;">${startDate} ${startYear} - ${endDate} ${endYear}</p>`;
   }
-  
 };
 
-export const notificationInsight = (insights) => 
+export const notificationInsight = (insights) =>
   `<div style="display: block;">
     <table style="background-color: #f1f5f9;">
         <tr>
@@ -289,7 +287,9 @@ export const notificationLiveSurveys = (surverys, environmentId, webUrl) => {
       <div style="display: block;">
         <h2 style="text-decoration: underline;">${survey.surveyName}</h2>
         ${createSurveyFields(survey.responses)}
-        <a class="button" href="${webUrl}/environments/${environmentId}/surveys/${survey.id}/responses" style="background: black;">View all Responses</a><br/>
+        <a class="button" href="${webUrl}/environments/${environmentId}/surveys/${
+        survey.id
+      }/responses" style="background: black;">View all Responses</a><br/>
       </div>
 
       <br/><br/>

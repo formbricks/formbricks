@@ -38,7 +38,7 @@ export async function createTeam(teamName: string, ownerUserId: string): Promise
                         name: "50% Scroll",
                         description: "A user scrolled 50% of the current page",
                         type: "automatic",
-                      }
+                      },
                     ],
                   },
                   attributeClasses: {

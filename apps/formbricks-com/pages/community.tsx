@@ -41,7 +41,7 @@ const CommunityPage = () => {
             Top Contributors
           </h2>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-           Super thankful to have you guys contribute for Formbricks 🙌
+            Super thankful to have you guys contribute for Formbricks 🙌
           </p>
           <ol className="ml-4 mt-10 list-decimal">
             {topContributors.map((MVP) => (

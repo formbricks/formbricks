@@ -3,7 +3,13 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Question } from "@formbricks/types/questions";
 import { Response } from "@formbricks/types/responses";
 import { AttributeClass } from "@prisma/client";
-import { withEmailTemplate, notificationHeader, notificationInsight, notificationLiveSurveys, createReminderNotificationBody } from "./email-template";
+import {
+  withEmailTemplate,
+  notificationHeader,
+  notificationInsight,
+  notificationLiveSurveys,
+  createReminderNotificationBody,
+} from "./email-template";
 import { createInviteToken, createToken } from "./jwt";
 
 const nodemailer = require("nodemailer");
@@ -158,12 +164,15 @@ export const sendResponseFinishedEmail = async (
   });
 };
 
-
 export const sendWeeklySummaryNotificationEmail = async (email, notificationData) => {
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-  const startDate = `${notificationData.lastWeekDate.getDate()} ${monthNames[notificationData.lastWeekDate.getMonth()]}`;
-  const endDate = `${notificationData.currentDate.getDate()} ${monthNames[notificationData.currentDate.getMonth()]}`;
+  const startDate = `${notificationData.lastWeekDate.getDate()} ${
+    monthNames[notificationData.lastWeekDate.getMonth()]
+  }`;
+  const endDate = `${notificationData.currentDate.getDate()} ${
+    monthNames[notificationData.currentDate.getMonth()]
+  }`;
   const startYear = notificationData.lastWeekDate.getFullYear();
   const endYear = notificationData.currentDate.getFullYear();
   await sendEmail({
@@ -175,14 +184,17 @@ export const sendWeeklySummaryNotificationEmail = async (email, notificationData
       ${notificationLiveSurveys(notificationData.surveyData, notificationData.environmentId, WEBAPP_URL)}
     `),
   });
-
 };
 
 export const sendNoLiveSurveyNotificationEmail = async (email, notificationData) => {
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-  const startDate = `${notificationData.lastWeekDate.getDate()} ${monthNames[notificationData.lastWeekDate.getMonth()]}`;
-  const endDate = `${notificationData.currentDate.getDate()} ${monthNames[notificationData.currentDate.getMonth()]}`;
+  const startDate = `${notificationData.lastWeekDate.getDate()} ${
+    monthNames[notificationData.lastWeekDate.getMonth()]
+  }`;
+  const endDate = `${notificationData.currentDate.getDate()} ${
+    monthNames[notificationData.currentDate.getMonth()]
+  }`;
   const startYear = notificationData.lastWeekDate.getFullYear();
   const endYear = notificationData.currentDate.getFullYear();
   await sendEmail({
@@ -193,5 +205,4 @@ export const sendNoLiveSurveyNotificationEmail = async (email, notificationData)
       ${createReminderNotificationBody(notificationData, WEBAPP_URL)}
     `),
   });
-
 };
