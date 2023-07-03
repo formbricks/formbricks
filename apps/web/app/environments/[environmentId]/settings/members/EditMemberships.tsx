@@ -180,6 +180,13 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
     mutateTeam();
   };
 
+  const isExpired = (invite) => {
+    const now = new Date();
+    const expiresAt = new Date(invite.expiresAt);
+    console.log("expiresAt", expiresAt, "now", now, "result", now > expiresAt);
+    return now > expiresAt;
+  };
+
   return (
     <>
       <div className="mb-6 text-right">
@@ -236,7 +243,12 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                 />
               </div>
               <div className="col-span-5 flex items-center justify-end gap-x-4 pr-4">
-                {!member.accepted && <Badge className="mr-2" type="warning" text="Pending" size="tiny" />}
+                {!member.accepted &&
+                  (isExpired(member) ? (
+                    <Badge className="mr-2" type="gray" text="Expired" size="tiny" />
+                  ) : (
+                    <Badge className="mr-2" type="warning" text="Pending" size="tiny" />
+                  ))}
                 {member.role !== "owner" && (
                   <button onClick={(e) => handleOpenDeleteMemberModal(e, member)}>
                     <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
