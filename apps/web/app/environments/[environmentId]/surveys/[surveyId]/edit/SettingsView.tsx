@@ -5,13 +5,13 @@ import ResponseOptionsCard from "./ResponseOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
 
-interface AudienceViewProps {
+interface SettingsViewProps {
   environmentId: string;
   localSurvey: Survey;
   setLocalSurvey: (survey: Survey) => void;
 }
 
-export default function AudienceView({ environmentId, localSurvey, setLocalSurvey }: AudienceViewProps) {
+export default function SettingsView({ environmentId, localSurvey, setLocalSurvey }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
       <HowToSendCard
@@ -32,7 +32,7 @@ export default function AudienceView({ environmentId, localSurvey, setLocalSurve
         environmentId={environmentId}
       />
 
-      {localSurvey.type==="link" && <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />}
+      <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
       <RecontactOptionsCard
         localSurvey={localSurvey}

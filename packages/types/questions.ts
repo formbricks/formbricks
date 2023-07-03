@@ -19,7 +19,8 @@ export type Question =
   | MultipleChoiceMultiQuestion
   | NPSQuestion
   | CTAQuestion
-  | RatingQuestion;
+  | RatingQuestion
+  | ConsentQuestion;
 
 export interface IQuestion<T extends Logic> {
   id: string;
@@ -33,6 +34,7 @@ export interface IQuestion<T extends Logic> {
 
 export interface OpenTextQuestion extends IQuestion<OpenTextLogic> {
   type: QuestionType.OpenText;
+  longAnswer?: boolean;
   placeholder?: string;
 }
 
@@ -68,9 +70,18 @@ export interface RatingQuestion extends IQuestion<RatingLogic> {
   upperLabel: string;
 }
 
+export interface ConsentQuestion extends IQuestion<CTALogic> {
+  type: "consent";
+  html?: string;
+  label: string;
+  dismissButtonLabel?: string;
+}
+
 export type LogicCondition =
   | "submitted"
   | "skipped"
+  | "accepted"
+  | "clicked"
   | "equals"
   | "notEquals"
   | "lessThan"
@@ -112,7 +123,7 @@ export interface NPSLogic extends LogicBase {
   value?: number;
 }
 export interface CTALogic extends LogicBase {
-  condition: "submitted" | "skipped" | undefined;
+  condition: "clicked" | "skipped" | undefined;
   value?: undefined;
 }
 export interface RatingLogic extends LogicBase {
@@ -128,10 +139,17 @@ export interface RatingLogic extends LogicBase {
     | undefined;
   value?: number | string;
 }
+
+export interface ConsentLogic extends LogicBase {
+  condition: "submitted" | "skipped" | "accepted" | undefined;
+  value: undefined;
+}
+
 export type Logic =
   | OpenTextLogic
   | MultipleChoiceSingleLogic
   | MultipleChoiceMultiLogic
   | NPSLogic
   | CTALogic
-  | RatingLogic;
+  | RatingLogic
+  | ConsentLogic;

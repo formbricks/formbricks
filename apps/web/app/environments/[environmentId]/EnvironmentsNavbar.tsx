@@ -52,6 +52,7 @@ import {
   PlusIcon,
   UserCircleIcon,
   UsersIcon,
+  ChatBubbleBottomCenterTextIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import type { Session } from "next-auth";
@@ -62,6 +63,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddProductModal from "./AddProductModal";
 import { formbricksLogout } from "@/lib/formbricks";
+import formbricks from "@formbricks/js";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
 interface EnvironmentsNavbarProps {
   environmentId: string;
@@ -163,7 +166,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           icon: CreditCardIcon,
           label: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
-          hidden: process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1",
+          hidden: IS_FORMBRICKS_CLOUD,
         },
       ],
     },
@@ -421,6 +424,19 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
+                  {IS_FORMBRICKS_CLOUD && (
+                    <DropdownMenuItem>
+                      <button
+                        onClick={() => {
+                          formbricks.track("Top Menu: Product Feedback");
+                        }}>
+                        <div className="flex items-center">
+                          <ChatBubbleBottomCenterTextIcon className="mr-2 h-4 w-4" />
+                          <span>Product Feedback</span>
+                        </div>
+                      </button>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onClick={async () => {
                       setLoading(true);

@@ -4,8 +4,14 @@ import { ValidationError } from "@formbricks/errors";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { TSurvey, ZSurvey } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
+import "server-only";
+import { cache } from "react";
 
-export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
+export const preloadSurvey = (surveyId: string) => {
+  void getSurvey(surveyId);
+};
+
+export const getSurvey = cache(async (surveyId: string): Promise<TSurvey | null> => {
   let surveyPrisma;
   try {
     surveyPrisma = await prisma.survey.findUnique({
@@ -96,4 +102,4 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     }
     throw new ValidationError("Data validation of survey failed");
   }
-};
+});

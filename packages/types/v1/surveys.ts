@@ -40,7 +40,7 @@ export const ZSurveyOpenTextLogic = ZSurveyLogicBase.extend({
 });
 
 export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped", "accepted"]).optional(),
+  condition: z.enum(["skipped", "accepted"]).optional(),
   value: z.undefined(),
 });
 
@@ -71,7 +71,8 @@ export const ZSurveyNPSLogic = ZSurveyLogicBase.extend({
 });
 
 const ZSurveyCTALogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped"]).optional(),
+  // "submitted" condition is legacy and should be removed later
+  condition: z.enum(["clicked", "submitted", "skipped"]).optional(),
   value: z.undefined(),
 });
 
@@ -116,6 +117,7 @@ const ZSurveyQuestionBase = z.object({
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.OpenText),
   placeholder: z.string().optional(),
+  longAnswer: z.boolean().optional(),
   logic: z.array(ZSurveyOpenTextLogic).optional(),
 });
 

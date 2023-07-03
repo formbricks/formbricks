@@ -9,7 +9,12 @@ interface ThankYouCardProps {
   initiateCountdown?: boolean;
 }
 
-export default function ThankYouCard({ headline, subheader, brandColor,initiateCountdown }: ThankYouCardProps) {
+export default function ThankYouCard({
+  headline,
+  subheader,
+  brandColor,
+  initiateCountdown,
+}: ThankYouCardProps) {
   return (
     <div className="text-center">
       <div className="flex items-center justify-center" style={{ color: brandColor }}>
@@ -33,7 +38,7 @@ export default function ThankYouCard({ headline, subheader, brandColor,initiateC
       <div>
         <Headline headline={headline} questionId="thankYouCard" />
         <Subheader subheader={subheader} questionId="thankYouCard" />
-        <RedirectCountDown initiateCountdown={initiateCountdown}/>
+        <RedirectCountDown initiateCountdown={initiateCountdown} />
       </div>
     </div>
   );
