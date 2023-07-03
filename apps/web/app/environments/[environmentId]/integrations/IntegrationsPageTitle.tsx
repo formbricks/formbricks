@@ -17,7 +17,7 @@ const IntegrationPageTitle: React.FC<IntegrationPageTitleProps> = ({ title, icon
 
         <div className="my-4 flex items-baseline">
           {icon && <div className="h-6 w-6">{icon}</div>}
-          <h1 className="ml-3 text-2xl font-bold text-slate-600">{title}</h1>
+          <h1 className="ml-3 text-2xl font-bold text-slate-800">{title}</h1>
         </div>
       </div>
       {/* <div className="flex items-center space-x-2">
