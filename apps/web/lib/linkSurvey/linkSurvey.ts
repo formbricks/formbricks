@@ -6,6 +6,8 @@ import { QuestionType, type Logic, type Question } from "@formbricks/types/quest
 import { TResponseInput } from "@formbricks/types/v1/responses";
 import { useState, useEffect, useCallback } from "react";
 import type { Survey } from "@formbricks/types/surveys";
+import { useRouter } from "next/navigation";
+import { useGetOrCreatePerson } from "../people/people";
 
 export const useLinkSurvey = (surveyId: string) => {
   const { data, error, mutate, isLoading } = useSWR(`/api/v1/client/surveys/${surveyId}`, fetcher);
@@ -26,7 +28,8 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   const [loadingElement, setLoadingElement] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
-
+  const [initiateCountdown, setinitiateCountdown] = useState<boolean>(false);
+  const router = useRouter();
   const URLParams = new URLSearchParams(window.location.search);
   const isPreview = URLParams.get("preview") === "true";
   const hasFirstQuestionPrefill = URLParams.has(survey.questions[0].id);
@@ -34,22 +37,28 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
   const lastQuestion = currentQuestion?.id === survey.questions[survey.questions.length - 1].id;
 
+  const userId = URLParams.get("userId");
+  const { person, isLoadingPerson } = useGetOrCreatePerson(survey.environmentId, isPreview ? null : userId);
+  const personId = person?.data.person.id ?? null;
+
   useEffect(() => {
-    if (survey) {
-      setCurrentQuestion(survey.questions[0]);
+    if (!isLoadingPerson) {
+      if (survey) {
+        setCurrentQuestion(survey.questions[0]);
 
-      if (isPreview) return;
+        if (isPreview) return;
 
-      // create display
-      createDisplay(
-        { surveyId: survey.id },
-        `${window.location.protocol}//${window.location.host}`,
-        survey.environmentId
-      ).then((display) => {
-        setDisplayId(display.id);
-      });
+        // create display
+        createDisplay(
+          { surveyId: survey.id },
+          `${window.location.protocol}//${window.location.host}`,
+          survey.environmentId
+        ).then((display) => {
+          setDisplayId(display.id);
+        });
+      }
     }
-  }, [survey, isPreview]);
+  }, [survey, isPreview, isLoadingPerson]);
 
   useEffect(() => {
     if (currentQuestion && survey) {
@@ -98,7 +107,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     // build response
     const responseRequest: TResponseInput = {
       surveyId: survey.id,
-      personId: null,
+      personId: personId,
       finished,
       data,
     };
@@ -135,7 +144,20 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     } else {
       setProgress(1);
       setFinished(true);
+      if (survey.redirectUrl && Object.values(data)[0] !== "dismissed") {
+        handleRedirect(survey.redirectUrl);
+      }
     }
+  };
+
+  const handleRedirect = (url) => {
+    if (!url.startsWith("https://") && !url.startsWith("http://")) {
+      url = `https://${url}`;
+    }
+    setinitiateCountdown(true);
+    setTimeout(() => {
+      router.push(url);
+    }, 3000);
   };
 
   const handlePrefilling = useCallback(async () => {
@@ -173,6 +195,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     loadingElement,
     prefilling,
     lastQuestion,
+    initiateCountdown,
     submitResponse,
     restartSurvey,
   };
@@ -291,6 +314,10 @@ const evaluateCondition = (logic: Logic, answerValue: any): boolean => {
         Array.isArray(logic.value) &&
         logic.value.some((v) => answerValue.includes(v))
       );
+    case "accepted":
+      return answerValue === "accepted";
+    case "clicked":
+      return answerValue === "clicked";
     case "submitted":
       if (typeof answerValue === "string") {
         return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;

@@ -33,16 +33,30 @@ export default function OpenTextQuestion({
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
-        <textarea
-          autoFocus
-          rows={3}
-          name={question.id}
-          id={question.id}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder={question.placeholder}
-          required={question.required}
-          className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"></textarea>
+        {question.longAnswer === false ? (
+          <input
+            autoFocus
+            name={question.id}
+            id={question.id}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={question.placeholder}
+            required={question.required}
+            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"
+          />
+        ) : (
+          <textarea
+            autoFocus
+            rows={3}
+            name={question.id}
+            id={question.id}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={question.placeholder}
+            required={question.required}
+            className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"
+          />
+        )}
       </div>
       <div className="mt-4 flex w-full justify-between">
         <div></div>

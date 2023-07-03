@@ -12,6 +12,7 @@ export interface Survey {
   createdAt: string;
   updatedAt: string;
   name: string;
+  redirectUrl: string | null;
   type: "web" | "email" | "link" | "mobile";
   environmentId: string;
   status: "draft" | "inProgress" | "archived" | "paused" | "completed";

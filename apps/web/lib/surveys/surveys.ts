@@ -1,5 +1,7 @@
 import useSWR from "swr";
 import { fetcher } from "@formbricks/lib/fetcher";
+import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TResponse } from "@formbricks/types/v1/responses";
 
 export const useSurveys = (environmentId: string) => {
   const { data, error, mutate, isLoading } = useSWR(`/api/v1/environments/${environmentId}/surveys`, fetcher);
@@ -134,34 +136,29 @@ export const duplicateSurvey = async (
   }
 };
 
-export const generateQuestionsAndAttributes = (survey, responses) => {
+export const generateQuestionsAndAttributes = (survey: TSurvey, responses: TResponse[]) => {
   let questionNames: string[] = [];
 
   if (survey?.questions) {
     questionNames = survey.questions.map((question) => question.headline);
   }
 
-  const attributeMap: Record<string, Record<string, string | null>> = {};
+  const attributeMap: Record<string, Record<string, string | number>> = {};
 
   if (responses) {
     responses.forEach((response) => {
       const { person } = response;
       if (person !== null) {
         const { id, attributes } = person;
-        attributes.forEach((attribute) => {
-          const { attributeClass, value } = attribute;
-          const attributeName = attributeClass.name;
-
+        Object.keys(attributes).forEach((attributeName) => {
           if (!attributeMap.hasOwnProperty(attributeName)) {
             attributeMap[attributeName] = {};
           }
-
-          attributeMap[attributeName][id] = value;
+          attributeMap[attributeName][id] = attributes[attributeName];
         });
       }
     });
   }
-
   return {
     questionNames,
     attributeMap,

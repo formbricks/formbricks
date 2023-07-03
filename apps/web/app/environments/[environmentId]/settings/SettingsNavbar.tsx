@@ -14,6 +14,7 @@ import {
   KeyIcon,
   LinkIcon,
   PaintBrushIcon,
+  HashtagIcon,
   UserCircleIcon,
   UsersIcon,
 } from "@heroicons/react/24/solid";
@@ -26,7 +27,22 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
   const pathname = usePathname();
   const { team } = useTeam(environmentId);
   const { product } = useProduct(environmentId);
-  const navigation = useMemo(
+  interface NavigationLink {
+    name: string;
+    href: string;
+    icon: React.ComponentType<any>;
+    current?: boolean;
+    hidden: boolean;
+    target?: string;
+  }
+
+  interface NavigationSection {
+    title: string;
+    links: NavigationLink[];
+  }
+
+  // Then, specify the type of the navigation array
+  const navigation: NavigationSection[] = useMemo(
     () => [
       {
         title: "Account",
@@ -71,6 +87,13 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
             current: pathname?.includes("/api-keys"),
             hidden: false,
           },
+          {
+            name: "Tags",
+            href: `/environments/${environmentId}/settings/tags`,
+            icon: HashtagIcon,
+            current: pathname?.includes("/tags"),
+            hidden: false,
+          },
         ],
       },
       {
@@ -83,13 +106,6 @@ export default function SettingsNavbar({ environmentId }: { environmentId: strin
             current: pathname?.includes("/members"),
             hidden: false,
           },
-          /* 
-        {
-          name: "Tags",
-          href: `/environments/${environmentId}/settings/tags`,
-          icon: PlusCircleIcon,
-           current: pathname?.includes("/tags"),
-        }, */
           {
             name: "Billing & Plan",
             href: `/environments/${environmentId}/settings/billing`,

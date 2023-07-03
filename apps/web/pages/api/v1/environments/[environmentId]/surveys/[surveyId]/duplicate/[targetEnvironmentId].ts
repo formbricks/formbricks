@@ -14,6 +14,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   if (surveyId === undefined) {
     return res.status(400).json({ message: "Missing surveyId" });
   }
+  if (targetEnvironmentId === undefined) {
+    return res.status(400).json({ message: "Missing targetEnvironmentId" });
+  }
 
   const hasAccess = await hasEnvironmentAccess(req, res, environmentId);
   const hasTargetEnvAccess = await hasEnvironmentAccess(req, res, targetEnvironmentId);

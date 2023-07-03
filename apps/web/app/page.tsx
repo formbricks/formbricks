@@ -1,5 +1,6 @@
-import { WEBAPP_URL } from "@/../../packages/lib/constants";
+import ClientLogout from "@/app/ClientLogout";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { headers } from "next/headers";
@@ -14,6 +15,8 @@ async function getEnvironment() {
   });
 
   if (!res.ok) {
+    const error = await res.json();
+    console.error(error);
     throw new Error("Failed to fetch data");
   }
 
@@ -31,10 +34,16 @@ export default async function Home() {
     return redirect(`/onboarding`);
   }
 
-  const environment = await getEnvironment();
+  let environment;
+  try {
+    environment = await getEnvironment();
+  } catch (error) {
+    console.error("error getting environment", error);
+  }
 
   if (!environment) {
-    throw Error("No environment found for user");
+    console.error("Failed to get first environment of user; signing out");
+    return <ClientLogout />;
   }
 
   return redirect(`/environments/${environment.id}`);
