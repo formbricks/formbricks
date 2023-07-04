@@ -1,12 +1,15 @@
-import { getAllPersons } from "@formbricks/lib/services/person";
+export const revalidate = 0;
+
+import { TransformPersonOutput, getPeople } from "@formbricks/lib/services/person";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
 import { PersonAvatar } from "@formbricks/ui";
+import Link from "next/link";
 
-const getAttributeValue = (person, attributeName: string) => person.attributes[attributeName];
+const getAttributeValue = (person: TransformPersonOutput, attributeName: string) => person.attributes[attributeName];
 
 export default async function PeoplePage({ params }) {
-  const people = await getAllPersons();
+  const people = await getPeople();
 
   return (
     <>
@@ -24,10 +27,10 @@ export default async function PeoplePage({ params }) {
               <div className="col-span-3 pl-6 ">User</div>
               <div className="col-span-2 text-center">User ID</div>
               <div className="text-center">Email</div>
-              {/* <div className="text-center">Sessions</div> */}
+              <div className="text-center">Sessions</div>
             </div>
-            {people.map((person) => (
-              <a
+            {people.map((person: TransformPersonOutput) => (
+              <Link
                 href={`/environments/${params.environmentId}/people/${person.id}`}
                 key={person.id}
                 className="w-full">
@@ -50,17 +53,17 @@ export default async function PeoplePage({ params }) {
                   </div>
                   <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
                     <div className="ph-no-capture text-slate-900">
-                      {truncateMiddle(getAttributeValue(person, "userId"), 24)}
+                      {truncateMiddle(getAttributeValue(person, "userId").toString(), 24)}
                     </div>
                   </div>
                   <div className="ph-no-capture my-auto whitespace-nowrap text-center text-sm text-slate-500">
                     <div className="text-slate-900">{getAttributeValue(person, "email")}</div>
                   </div>
-                  {/* <div className="ph-no-capture my-auto whitespace-nowrap text-center text-sm text-slate-500">
-                  <div className="text-slate-900">{person._count?.sessions}</div>
-                </div> */}
+                  <div className="ph-no-capture my-auto whitespace-nowrap text-center text-sm text-slate-500">
+                    <div className="text-slate-900">{person.sessionCount}</div>
+                  </div>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         )}
