@@ -4,7 +4,7 @@ import { CRON_SECRET } from "@formbricks/lib/constants";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
-import { EnvironmentData, NotificationResponse, ProductData, Survey } from "./types";
+import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyResponse } from "./types";
 
 export async function POST(): Promise<NextResponse> {
   // check authentication with x-api-key header and CRON_SECRET env variable
@@ -76,17 +76,20 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
     };
     // iterate through the responses and calculate the survey insights
     for (const response of survey.responses) {
+      // only take the first 3 responses
+      if (surveyData.responses.length >= 3) {
+        break;
+      }
+      const surveyResponse: SurveyResponse = {};
       for (const question of survey.questions) {
         const headline = question.headline;
         const answer = response.data[question.id]?.toString() || null;
         if (answer === null || answer === "" || answer?.length === 0) {
           continue;
         }
-        // only store the first 5 responses
-        if (surveyData.responses.length < 5) {
-          surveyData.responses.push({ headline, answer });
-        }
+        surveyResponse[headline] = answer;
       }
+      surveyData.responses.push(surveyResponse);
     }
     surveys.push(surveyData);
     // calculate the overall insights

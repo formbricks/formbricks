@@ -12,8 +12,7 @@ export interface Insights {
 }
 
 export interface SurveyResponse {
-  headline: string;
-  answer: string | null;
+  [headline: string]: string | number | boolean | Date | string[];
 }
 
 export interface Survey {

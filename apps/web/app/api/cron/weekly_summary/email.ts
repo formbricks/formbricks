@@ -100,13 +100,19 @@ const notificationLiveSurveys = (surverys: Survey[], environmentId: string) => {
   }
 };
 
-const createSurveyFields = (surveryResponse: SurveyResponse[]) => {
+const createSurveyFields = (surveryResponses: SurveyResponse[]) => {
   let surveyFields = "";
-  for (const response of surveryResponse) {
-    surveyFields += `
-      <p>${response.headline}</p>
-      <p style="font-weight: bold;">${response.answer}</p>
+  for (const response of surveryResponses) {
+    if (!response) {
+      continue;
+    }
+    for (const [headline, answer] of Object.entries(response)) {
+      surveyFields += `
+      <p>${headline}</p>
+      <p style="font-weight: bold;">${answer}</p>  
     `;
+    }
+    surveyFields += "<hr/>";
   }
   return surveyFields;
 };
