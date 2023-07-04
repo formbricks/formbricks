@@ -96,7 +96,6 @@ export default async function ProfileSettingsPage({ params }) {
   }
   const [user, memberships] = await Promise.all([getUser(session.user.id), getMemberships(session.user.id)]);
   user.notificationSettings = cleanNotificationSettings(user.notificationSettings, memberships);
-  console.log("notificationSettings", user.notificationSettings);
 
   return (
     <div>

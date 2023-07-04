@@ -33,7 +33,6 @@ export async function POST(): Promise<NextResponse> {
     }
     // calculate insights for the product
     const notificationResponse = getNotificationResponse(product.environments[0], product.name);
-    console.log(JSON.stringify(notificationResponse, null, 2));
 
     // if there were no responses in the last 7 days, send a different email
     if (notificationResponse.insights.totalCompletedResponses == 0) {
@@ -83,7 +82,10 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
         if (answer === null || answer === "" || answer?.length === 0) {
           continue;
         }
-        surveyData.responses.push({ headline, answer });
+        // only store the first 5 responses
+        if (surveyData.responses.length < 5) {
+          surveyData.responses.push({ headline, answer });
+        }
       }
     }
     surveys.push(surveyData);
