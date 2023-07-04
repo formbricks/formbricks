@@ -27,7 +27,7 @@ export default async function PeoplePage({ params }) {
               <div className="col-span-3 pl-6 ">User</div>
               <div className="col-span-2 text-center">User ID</div>
               <div className="text-center">Email</div>
-              <div className="text-center">Sessions</div>
+              {/* <div className="text-center">Sessions</div> */}
             </div>
             {people.map((person: TransformPersonOutput) => (
               <Link
@@ -59,9 +59,9 @@ export default async function PeoplePage({ params }) {
                   <div className="ph-no-capture my-auto whitespace-nowrap text-center text-sm text-slate-500">
                     <div className="text-slate-900">{getAttributeValue(person, "email")}</div>
                   </div>
-                  <div className="ph-no-capture my-auto whitespace-nowrap text-center text-sm text-slate-500">
+                  {/* <div className="ph-no-capture my-auto whitespace-nowrap text-center text-sm text-slate-500">
                     <div className="text-slate-900">{person.sessionCount}</div>
-                  </div>
+                  </div> */}
                 </div>
               </Link>
             ))}
