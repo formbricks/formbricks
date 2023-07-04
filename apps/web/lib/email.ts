@@ -3,13 +3,7 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Question } from "@formbricks/types/questions";
 import { Response } from "@formbricks/types/responses";
 import { AttributeClass } from "@prisma/client";
-import {
-  withEmailTemplate,
-  notificationHeader,
-  notificationInsight,
-  notificationLiveSurveys,
-  createReminderNotificationBody,
-} from "./email-template";
+import { withEmailTemplate } from "./email-template";
 import { createInviteToken, createToken } from "./jwt";
 
 const nodemailer = require("nodemailer");
@@ -22,7 +16,7 @@ interface sendEmailData {
   html: string;
 }
 
-const sendEmail = async (emailData: sendEmailData) => {
+export const sendEmail = async (emailData: sendEmailData) => {
   let transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
@@ -160,49 +154,6 @@ export const sendResponseFinishedEmail = async (
     <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
       survey.id
     }/responses">View response</a>
-    `),
-  });
-};
-
-export const sendWeeklySummaryNotificationEmail = async (email, notificationData) => {
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-  const startDate = `${notificationData.lastWeekDate.getDate()} ${
-    monthNames[notificationData.lastWeekDate.getMonth()]
-  }`;
-  const endDate = `${notificationData.currentDate.getDate()} ${
-    monthNames[notificationData.currentDate.getMonth()]
-  }`;
-  const startYear = notificationData.lastWeekDate.getFullYear();
-  const endYear = notificationData.currentDate.getFullYear();
-  await sendEmail({
-    to: email,
-    subject: `${notificationData.productName} User Insights - Last Week by Formbricks`,
-    html: withEmailTemplate(`
-      ${notificationHeader(notificationData.productName, startDate, endDate, startYear, endYear)}
-      ${notificationInsight(notificationData.insights)}
-      ${notificationLiveSurveys(notificationData.surveyData, notificationData.environmentId, WEBAPP_URL)}
-    `),
-  });
-};
-
-export const sendNoLiveSurveyNotificationEmail = async (email, notificationData) => {
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-  const startDate = `${notificationData.lastWeekDate.getDate()} ${
-    monthNames[notificationData.lastWeekDate.getMonth()]
-  }`;
-  const endDate = `${notificationData.currentDate.getDate()} ${
-    monthNames[notificationData.currentDate.getMonth()]
-  }`;
-  const startYear = notificationData.lastWeekDate.getFullYear();
-  const endYear = notificationData.currentDate.getFullYear();
-  await sendEmail({
-    to: email,
-    subject: `NO SURVEY LIVE`,
-    html: withEmailTemplate(`
-      ${notificationHeader(notificationData.productName, startDate, endDate, startYear, endYear)}
-      ${createReminderNotificationBody(notificationData, WEBAPP_URL)}
     `),
   });
 };
