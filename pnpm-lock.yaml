@@ -181,9 +181,6 @@ importers:
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
-      dotenv-webpack:
-        specifier: ^8.0.1
-        version: 8.0.1(webpack@5.75.0)
       eslint-config-next:
         specifier: ^13.4.8
         version: 13.4.8(eslint@8.44.0)(typescript@5.1.6)
@@ -8898,22 +8895,6 @@ packages:
     dependencies:
       is-obj: 2.0.0
 
-  /dotenv-defaults@2.0.2:
-    resolution: {integrity: sha512-iOIzovWfsUHU91L5i8bJce3NYK5JXeAwH50Jh6+ARUdLiiGlYWfGw6UkzsYqaXZH/hjE/eCd/PlfM/qqyK0AMg==}
-    dependencies:
-      dotenv: 8.6.0
-    dev: false
-
-  /dotenv-webpack@8.0.1(webpack@5.75.0):
-    resolution: {integrity: sha512-CdrgfhZOnx4uB18SgaoP9XHRN2v48BbjuXQsZY5ixs5A8579NxQkmMxRtI7aTwSiSQcM2ao12Fdu+L3ZS3bG4w==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      webpack: ^4 || ^5
-    dependencies:
-      dotenv-defaults: 2.0.2
-      webpack: 5.75.0
-    dev: false
-
   /dotenv@16.0.3:
     resolution: {integrity: sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==}
     engines: {node: '>=12'}
@@ -8922,11 +8903,6 @@ packages:
   /dotenv@5.0.1:
     resolution: {integrity: sha512-4As8uPrjfwb7VXC+WnLCbXK7y+Ueb2B3zgNCePYfhxS1PYeaO1YTeplffTEcbfLhvFNGLAz90VvJs9yomG7bow==}
     engines: {node: '>=4.6.0'}
-    dev: false
-
-  /dotenv@8.6.0:
-    resolution: {integrity: sha512-IrPdXQsk2BbzvCBGBOTmmSH5SodmqZNt4ERAZDmW4CT+tL8VtvinqywuANaFu4bOMWki16nqf0e4oC0QIaDr/g==}
-    engines: {node: '>=10'}
     dev: false
 
   /duplexer3@0.1.5:
