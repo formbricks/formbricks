@@ -27,7 +27,7 @@
     "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.221.0",
-    "next": "13.4.3",
+    "next": "13.4.8",
     "next-auth": "^4.22.1",
     "nodemailer": "^6.9.2",
     "posthog-js": "^1.57.3",
@@ -43,15 +43,13 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
+    "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@types/bcryptjs": "^2.4.2",
     "@types/lodash": "^4.14.195",
     "@types/markdown-it": "^12.2.3",
-    "@types/node": "20.2.3",
-    "@types/react": "18.2.7",
-    "@types/react-dom": "18.2.4",
     "eslint-config-formbricks": "workspace:*"
   }
 }

@@ -27,9 +27,10 @@
     "test": "turbo run test"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.26.1",
+    "@changesets/cli": "^2.26.2",
     "prettier": "latest",
-    "tsx": "^3.12.6",
+    "rimraf": "^5.0.1",
+    "tsx": "^3.12.7",
     "turbo": "latest"
   },
   "engines": {
