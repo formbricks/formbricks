@@ -67,7 +67,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
                 render={({ field: { onChange, value } }) => (
                   <div>
                     <Label>Role</Label>
-                    <Select value={value} onValueChange={onChange}>
+                    <Select value={value} onValueChange={(v) => onChange(v as MembershipRole)}>
                       <SelectTrigger className="capitalize">
                         <SelectValue placeholder={<span className="text-slate-400">Select role</span>} />
                       </SelectTrigger>

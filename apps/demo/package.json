@@ -12,9 +12,11 @@
   "dependencies": {
     "@formbricks/js": "workspace:*",
     "@heroicons/react": "^2.0.18",
-    "eslint-config-formbricks": "workspace:*",
     "next": "13.4.8",
     "react": "18.2.0",
     "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "eslint-config-formbricks": "workspace:*"
   }
 }
