@@ -12,15 +12,11 @@ type TransformPersonInput = {
       name: string;
     };
   }[];
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export type TransformPersonOutput = {
   id: string;
   attributes: Record<string, string | number>;
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export const transformPrismaPerson = (person: TransformPersonInput | null): TransformPersonOutput | null => {
@@ -36,8 +32,6 @@ export const transformPrismaPerson = (person: TransformPersonInput | null): Tran
   return {
     id: person.id,
     attributes: attributes,
-    createdAt: person.createdAt,
-    updatedAt: person.updatedAt
   };
 };
 
@@ -97,7 +91,7 @@ export const getPeople = cache(async (): Promise<TPerson[]> => {
 
     const transformedPersons: TransformPersonOutput[] = personsPrisma
       .map(transformPrismaPerson)
-      .filter((person): person is TransformPersonOutput => person !== null);
+      .filter((person: TransformPersonOutput | null): person is TransformPersonOutput => person !== null);
 
     return transformedPersons;
   } catch (error) {
