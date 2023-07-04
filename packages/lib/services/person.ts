@@ -68,3 +68,36 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
     throw error;
   }
 };
+
+export const getAllPersons = async (): Promise<Array<TPerson>> => {
+  try {
+    const personsPrisma = await prisma.person.findMany({
+      include: {
+        attributes: {
+          include: {
+            attributeClass: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!personsPrisma) {
+      throw new ResourceNotFoundError("Persons", "All Persons");
+    }
+
+    const transformedPersons: TransformPersonOutput[] = personsPrisma
+      .map(transformPrismaPerson)
+      .filter((person): person is TransformPersonOutput => person !== null);
+
+    return transformedPersons;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
