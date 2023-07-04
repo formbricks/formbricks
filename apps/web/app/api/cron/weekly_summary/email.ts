@@ -1,9 +1,15 @@
 import { sendEmail } from "@/lib/email";
 import { withEmailTemplate } from "@/lib/email-template";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { NotificationResponse, SurveyData } from "./types";
+import { Insights, NotificationResponse, Survey, SurveyResponse } from "./types";
 
-const notificationHeader = (productName, startDate, endDate, startYear, endYear) =>
+const notificationHeader = (
+  productName: string,
+  startDate: string,
+  endDate: string,
+  startYear: number,
+  endYear: number
+) =>
   `
   <div style="display: block; padding: 1rem;">
     <div style="float: left;">
@@ -19,8 +25,8 @@ const notificationHeader = (productName, startDate, endDate, startYear, endYear)
   `;
 
 const getNotificationHeaderimePeriod = (
-  startDate: Date,
-  endDate: Date,
+  startDate: string,
+  endDate: string,
   startYear: number,
   endYear: number
 ) => {
@@ -31,7 +37,7 @@ const getNotificationHeaderimePeriod = (
   }
 };
 
-const notificationInsight = (insights) =>
+const notificationInsight = (insights: Insights) =>
   `<div style="display: block;">
     <table style="background-color: #f1f5f9;">
         <tr>
@@ -60,7 +66,7 @@ const notificationInsight = (insights) =>
   </div>
 `;
 
-const notificationLiveSurveys = (surverys: SurveyData[], environmentId: string) => {
+const notificationLiveSurveys = (surverys: Survey[], environmentId: string) => {
   if (surverys.length == 0) {
     return `
 
@@ -90,11 +96,11 @@ const notificationLiveSurveys = (surverys: SurveyData[], environmentId: string) 
   }
 };
 
-const createSurveyFields = (surveryResponse) => {
+const createSurveyFields = (surveryResponse: SurveyResponse[]) => {
   let surveyFields = "";
   for (const response of surveryResponse) {
     surveyFields += `
-      <p>${response.title}</p>
+      <p>${response.headline}</p>
       <p style="font-weight: bold;">${response.answer}</p>
     `;
   }

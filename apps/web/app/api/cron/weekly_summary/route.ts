@@ -4,7 +4,7 @@ import { CRON_SECRET } from "@formbricks/lib/constants";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
-import { NotificationResponse, SurveyData } from "./types";
+import { EnvironmentData, NotificationResponse, ProductData, Survey } from "./types";
 
 export async function POST(): Promise<NextResponse> {
   // check authentication with x-api-key header and CRON_SECRET env variable
@@ -32,54 +32,11 @@ export async function POST(): Promise<NextResponse> {
       continue;
     }
     // calculate insights for the product
-    const insights = {
-      totalCompletedResponses: 0,
-      totalDisplays: 0,
-      totalResponses: 0,
-      completionRate: 0,
-      numLiveSurvey: 0,
-    };
-    const environment = product.environments[0];
-    const surveys: SurveyData[] = [];
+    const notificationResponse = getNotificationResponse(product.environments[0], product.name);
+    console.log(JSON.stringify(notificationResponse, null, 2));
 
-    // iterate through the surveys and calculate the overall insights
-    for await (const survey of environment.surveys) {
-      const surveyData: SurveyData = {
-        id: survey.id,
-        name: survey.name,
-        responses: [],
-      };
-      // iterate through the responses and calculate the survey insights
-      for await (const response of survey.responses) {
-        for await (const question of survey.questions) {
-          const headline = question.headline;
-          const answer = response.data[question.id].toString() || null;
-          surveyData.responses.push({ headline: headline, answer });
-        }
-      }
-      surveys.push(surveyData);
-      // calculate the overall insights
-      if (survey.status == "inProgress") {
-        insights.numLiveSurvey += 1;
-      }
-      insights.totalCompletedResponses += survey.responses.filter((r) => r.finished).length;
-      insights.totalDisplays += survey.displays.length;
-      insights.totalResponses += survey.responses.length;
-      insights.completionRate = Math.round((insights.totalCompletedResponses / insights.totalDisplays) * 100);
-    }
-    // build the notification response needed for the emails
-    const lastWeekDate = new Date();
-    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
-    const notificationResponse: NotificationResponse = {
-      environmentId: environment.id,
-      currentDate: new Date(),
-      lastWeekDate,
-      productName: product.name,
-      surveys,
-      insights,
-    };
     // if there were no responses in the last 7 days, send a different email
-    if (insights.totalCompletedResponses == 0) {
+    if (notificationResponse.insights.totalCompletedResponses == 0) {
       for (const teamMember of teamMembersWithNotificationEnabled) {
         emailSendingPromises.push(
           sendNoLiveSurveyNotificationEmail(teamMember.user.email, notificationResponse)
@@ -87,6 +44,7 @@ export async function POST(): Promise<NextResponse> {
       }
       continue;
     }
+
     // send weekly summary email
     for (const teamMember of teamMembersWithNotificationEnabled) {
       emailSendingPromises.push(
@@ -99,7 +57,59 @@ export async function POST(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
-const getProducts = async () => {
+const getNotificationResponse = (environment: EnvironmentData, productName: string): NotificationResponse => {
+  const insights = {
+    totalCompletedResponses: 0,
+    totalDisplays: 0,
+    totalResponses: 0,
+    completionRate: 0,
+    numLiveSurvey: 0,
+  };
+
+  const surveys: Survey[] = [];
+
+  // iterate through the surveys and calculate the overall insights
+  for (const survey of environment.surveys) {
+    const surveyData: Survey = {
+      id: survey.id,
+      name: survey.name,
+      responses: [],
+    };
+    // iterate through the responses and calculate the survey insights
+    for (const response of survey.responses) {
+      for (const question of survey.questions) {
+        const headline = question.headline;
+        const answer = response.data[question.id]?.toString() || null;
+        if (answer === null || answer === "" || answer?.length === 0) {
+          continue;
+        }
+        surveyData.responses.push({ headline, answer });
+      }
+    }
+    surveys.push(surveyData);
+    // calculate the overall insights
+    if (survey.status == "inProgress") {
+      insights.numLiveSurvey += 1;
+    }
+    insights.totalCompletedResponses += survey.responses.filter((r) => r.finished).length;
+    insights.totalDisplays += survey.displays.length;
+    insights.totalResponses += survey.responses.length;
+    insights.completionRate = Math.round((insights.totalCompletedResponses / insights.totalDisplays) * 100);
+  }
+  // build the notification response needed for the emails
+  const lastWeekDate = new Date();
+  lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+  return {
+    environmentId: environment.id,
+    currentDate: new Date(),
+    lastWeekDate,
+    productName: productName,
+    surveys,
+    insights,
+  };
+};
+
+const getProducts = async (): Promise<ProductData[]> => {
   // gets all products together with team members, surveys, responses, and displays for the last 7 days
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
