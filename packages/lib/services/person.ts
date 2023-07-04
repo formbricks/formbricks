@@ -73,9 +73,11 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
 export const getPeople = cache(async (): Promise<TPerson[]> => {
   try {
     const personsPrisma = await prisma.person.findMany({
-      include: {
+      select: {
+        id: true,
         attributes: {
-          include: {
+          select: {
+            value: true,
             attributeClass: {
               select: {
                 name: true,
