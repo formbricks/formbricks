@@ -166,6 +166,9 @@ importers:
       '@json2csv/node':
         specifier: ^7.0.1
         version: 7.0.1
+      '@next/env':
+        specifier: ^13.4.8
+        version: 13.4.8
       '@paralleldrive/cuid2':
         specifier: ^2.2.1
         version: 2.2.1

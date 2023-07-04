@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 
-const path = require("path");
-const Dotenv = require("dotenv-webpack");
-
-const rootPath = path.join(__dirname, "..", "..");
+require("@next/env").loadEnvConfig("../../");
 
 const { createId } = require("@paralleldrive/cuid2");
 
@@ -62,14 +59,6 @@ const nextConfig = {
         ],
       },
     ];
-  },
-  webpack: (config) => {
-    config.plugins.push(
-      new Dotenv({
-        path: path.resolve(rootPath, ".env"),
-      })
-    );
-    return config;
   },
   env: {
     INSTANCE_ID: createId(),
