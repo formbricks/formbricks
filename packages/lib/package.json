@@ -24,7 +24,6 @@
   "devDependencies": {
     "@formbricks/tsconfig": "*",
     "eslint": "^8.41.0",
-    "eslint-config-formbricks": "workspace:*",
-    "typescript": "^5.0.4"
+    "eslint-config-formbricks": "workspace:*"
   }
 }

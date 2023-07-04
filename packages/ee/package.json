@@ -13,9 +13,7 @@
     "@formbricks/tsconfig": "*",
     "@formbricks/types": "*",
     "eslint": "^8.41.0",
-    "eslint-config-formbricks": "workspace:*",
-    "rimraf": "^5.0.1",
-    "typescript": "^5.0.4"
+    "eslint-config-formbricks": "workspace:*"
   },
   "dependencies": {
     "@formbricks/database": "workspace:*",

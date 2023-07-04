@@ -1,5 +1,11 @@
 {
   "name": "@formbricks/tsconfig",
   "version": "1.0.0",
-  "private": true
+  "private": true,
+  "scripts": {
+    "clean": "rimraf node_modules"
+  },
+  "devDependencies": {
+    "typescript": "5.0.4"
+  }
 }

@@ -29,7 +29,6 @@
   "devDependencies": {
     "@changesets/cli": "^2.26.1",
     "prettier": "latest",
-    "rimraf": "^5.0.0",
     "tsx": "^3.12.6",
     "turbo": "latest"
   },

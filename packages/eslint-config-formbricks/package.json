@@ -13,8 +13,5 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-react": "7.32.2",
     "eslint-config-turbo": "latest"
-  },
-  "devDependencies": {
-    "rimraf": "^5.0.1"
   }
 }

@@ -20,9 +20,7 @@
     "eslint": "^8.41.0",
     "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.24",
-    "react": "^18.2.0",
-    "rimraf": "^5.0.1",
-    "typescript": "^5.0.4"
+    "react": "^18.2.0"
   },
   "dependencies": {
     "@formbricks/lib": "workspace:*",
