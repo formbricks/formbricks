@@ -236,6 +236,8 @@ export default function UpdateProfile() {
                         name="whatsapp"
                         type="text"
                         value={user.whatsapp}
+                        pattern="^[+]\d{5,15}"
+                        title="N'oublie pas le code pays. Ex: +243987654321"
                         placeholder="+243 810 000 000"
                         onChange={handleInputChange}
                         className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"

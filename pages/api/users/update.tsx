@@ -23,17 +23,20 @@ export default async function handle(
     const { user, address } = req.body;
 
     Object.keys(user).forEach((attr) => {
-      if (attr && ["whatsapp", "phone"].includes(attr)) {
-        let number = user[attr].replace(/[^0-9]/g, "");
-        if(attr === "phone") number = handlePhoneNumberValidity(number, attr);
-        user[attr] = number;
-      }
-      else if (attr && !["id", "profileIsValid"].includes(attr))
+      if (user[attr] && ["whatsapp", "phone"].includes(attr)) {
+        let number = user[attr].replace(/[^0-9+]/g, "");
+        if (attr === "phone")
+          user[attr] = handlePhoneNumberValidity(number, attr);
+        if (attr === "whatsapp") {
+          if (/^[+]\d{5,15}/.test(number)) user[attr] = number;
+          else throw new Error(`${attr}: Entrez un numéro valide`);
+        }
+      } else if (user[attr] && !["id", "profileIsValid"].includes(attr))
         user[attr] = user[attr].trim();
     });
 
     Object.keys(address).forEach((attr) => {
-      if (attr) address[attr] = address[attr].trim();
+      if (address[attr]) address[attr] = address[attr].trim();
     });
 
     const updatedUser = await prisma.user.update({
@@ -43,7 +46,7 @@ export default async function handle(
         phone: true,
         dob: true,
         whatsapp: true,
-        address: true
+        address: true,
       },
       where: {
         id: user.id,
@@ -59,7 +62,7 @@ export default async function handle(
         },
       },
     });
-    
+
     return res.json(updatedUser);
   }
 }
