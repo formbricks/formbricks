@@ -8,7 +8,7 @@ import {
   type NPSQuestion,
   type OpenTextQuestion,
   type RatingQuestion,
-  ConsentQuestion,
+  type ConsentQuestion,
 } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
