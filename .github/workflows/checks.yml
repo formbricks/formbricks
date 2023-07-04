@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --config.platform=linux --config.architecture=x64
 
+      - name: Build formbricks-js dependencies
+        run: pnpm build --filter=js
+
       - name: Lint
         run: pnpm lint
 
