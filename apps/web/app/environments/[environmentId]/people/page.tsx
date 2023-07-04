@@ -6,7 +6,8 @@ import { truncateMiddle } from "@/lib/utils";
 import { PersonAvatar } from "@formbricks/ui";
 import Link from "next/link";
 
-const getAttributeValue = (person: TransformPersonOutput, attributeName: string) => person.attributes[attributeName];
+const getAttributeValue = (person: TransformPersonOutput, attributeName: string) =>
+  person.attributes[attributeName]?.toString();
 
 export default async function PeoplePage({ params }) {
   const people = await getPeople();
@@ -53,7 +54,7 @@ export default async function PeoplePage({ params }) {
                   </div>
                   <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
                     <div className="ph-no-capture text-slate-900">
-                      {truncateMiddle(getAttributeValue(person, "userId").toString(), 24)}
+                      {truncateMiddle(getAttributeValue(person, "userId"), 24)}
                     </div>
                   </div>
                   <div className="ph-no-capture my-auto whitespace-nowrap text-center text-sm text-slate-500">
