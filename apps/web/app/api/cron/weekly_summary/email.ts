@@ -3,6 +3,10 @@ import { withEmailTemplate } from "@/lib/email-template";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Insights, NotificationResponse, Survey, SurveyResponse } from "./types";
 
+const getEmailSubject = (productName: string) => {
+  return `${productName} User Insights - Last Week by Formbricks`;
+};
+
 const notificationHeader = (
   productName: string,
   startDate: string,
@@ -141,7 +145,7 @@ export const sendWeeklySummaryNotificationEmail = async (
   const endYear = notificationData.currentDate.getFullYear();
   await sendEmail({
     to: email,
-    subject: `${notificationData.productName} User Insights - Last Week by Formbricks`,
+    subject: getEmailSubject(notificationData.productName),
     html: withEmailTemplate(`
         ${notificationHeader(notificationData.productName, startDate, endDate, startYear, endYear)}
         ${notificationInsight(notificationData.insights)}
@@ -166,7 +170,7 @@ export const sendNoLiveSurveyNotificationEmail = async (
   const endYear = notificationData.currentDate.getFullYear();
   await sendEmail({
     to: email,
-    subject: `NO SURVEY LIVE`,
+    subject: getEmailSubject(notificationData.productName),
     html: withEmailTemplate(`
         ${notificationHeader(notificationData.productName, startDate, endDate, startYear, endYear)}
         ${createReminderNotificationBody(notificationData, WEBAPP_URL)}
