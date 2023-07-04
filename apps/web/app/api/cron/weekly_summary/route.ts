@@ -4,29 +4,7 @@ import { CRON_SECRET } from "@formbricks/lib/constants";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
-
-interface Insights {
-  totalCompletedResponses: number;
-  totalDisplays: number;
-  totalResponses: number;
-  completionRate: number;
-  numLiveSurvey: number;
-}
-
-interface SurveyData {
-  id: string;
-  name: string;
-  responses: { headline: string; answer: string }[];
-}
-
-interface NotificationResponse {
-  environmentId: string;
-  currentDate: Date;
-  lastWeekDate: Date;
-  productName: string;
-  surveys: SurveyData[];
-  insights: Insights;
-}
+import { NotificationResponse, SurveyData } from "./types";
 
 export async function POST(): Promise<NextResponse> {
   // check authentication with x-api-key header and CRON_SECRET env variable
@@ -75,13 +53,13 @@ export async function POST(): Promise<NextResponse> {
       for await (const response of survey.responses) {
         for await (const question of survey.questions) {
           const headline = question.headline;
-          const answer = response.data[question.id] || null;
+          const answer = response.data[question.id].toString() || null;
           surveyData.responses.push({ headline: headline, answer });
         }
       }
       surveys.push(surveyData);
       // calculate the overall insights
-      if (survey.status == "live") {
+      if (survey.status == "inProgress") {
         insights.numLiveSurvey += 1;
       }
       insights.totalCompletedResponses += survey.responses.filter((r) => r.finished).length;
@@ -89,17 +67,7 @@ export async function POST(): Promise<NextResponse> {
       insights.totalResponses += survey.responses.length;
       insights.completionRate = Math.round((insights.totalCompletedResponses / insights.totalDisplays) * 100);
     }
-    // if there were no responses in the last 7 days, send a different email
-    if (insights.totalCompletedResponses == 0) {
-      for (const teamMember of teamMembersWithNotificationEnabled) {
-        emailSendingPromises.push(sendNoLiveSurveyNotificationEmail(teamMember.user.email, product));
-      }
-      emailSendingPromises.push(
-        sendNoLiveSurveyNotificationEmail(teamMembersWithNotificationEnabled, product)
-      );
-      continue;
-    }
-    // prepare weekly summary email
+    // build the notification response needed for the emails
     const lastWeekDate = new Date();
     lastWeekDate.setDate(lastWeekDate.getDate() - 7);
     const notificationResponse: NotificationResponse = {
@@ -110,10 +78,21 @@ export async function POST(): Promise<NextResponse> {
       surveys,
       insights,
     };
+    // if there were no responses in the last 7 days, send a different email
+    if (insights.totalCompletedResponses == 0) {
+      for (const teamMember of teamMembersWithNotificationEnabled) {
+        emailSendingPromises.push(
+          sendNoLiveSurveyNotificationEmail(teamMember.user.email, notificationResponse)
+        );
+      }
+      continue;
+    }
     // send weekly summary email
-    emailSendingPromises.push(
-      sendWeeklySummaryNotificationEmail(teamMembersWithNotificationEnabled, notificationResponse)
-    );
+    for (const teamMember of teamMembersWithNotificationEnabled) {
+      emailSendingPromises.push(
+        sendWeeklySummaryNotificationEmail(teamMember.user.email, notificationResponse)
+      );
+    }
   }
   // wait for all emails to be sent
   await Promise.all(emailSendingPromises);
@@ -128,6 +107,7 @@ const getProducts = async () => {
   return await prisma.product.findMany({
     select: {
       id: true,
+      name: true,
       environments: {
         where: {
           type: "production",
@@ -141,6 +121,7 @@ const getProducts = async () => {
               },
             },
             select: {
+              id: true,
               name: true,
               questions: true,
               status: true,

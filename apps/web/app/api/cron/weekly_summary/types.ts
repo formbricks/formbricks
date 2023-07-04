@@ -9,7 +9,7 @@ export interface Insights {
 export interface SurveyData {
   id: string;
   name: string;
-  responses: { headline: string; answer: string }[];
+  responses: { headline: string; answer: string | null }[];
 }
 
 export interface NotificationResponse {

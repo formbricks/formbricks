@@ -1,5 +1,4 @@
 import { Question } from "./questions";
-import { Response } from "./responses";
 
 export interface ThankYouCard {
   enabled: boolean;
