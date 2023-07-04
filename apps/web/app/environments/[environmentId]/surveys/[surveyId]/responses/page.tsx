@@ -21,7 +21,6 @@ export default async function ResponsesPage({ params }) {
         environmentId={params.environmentId}
         surveyId={params.surveyId}
       />
-      {/* @ts-expect-error Server Component */}
       <ResponsesLimitReachedBanner
         environmentId={params.environmentId}
         surveyId={params.surveyId}

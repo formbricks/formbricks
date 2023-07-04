@@ -10,7 +10,7 @@ import {
   type RatingQuestion,
 } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
+import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import { Session } from "next-auth";
 import CTASummary from "./CTASummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
@@ -22,7 +22,6 @@ interface SummaryListProps {
   environmentId: string;
   surveyId: string;
   session: Session;
-  survey: TSurvey;
 }
 
 export default async function SummaryList({ environmentId, surveyId, session }: SummaryListProps) {
