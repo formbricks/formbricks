@@ -61,8 +61,8 @@ export default function FormList() {
       return filteredList;
     }
 
-    const filteredData = filteredList.filter(
-      (card) => card.place.split(" ").indexOf(selectedLocation) !== -1
+    const filteredData = filteredList?.filter(
+      (card) => card.place.split(" ").indexOf(selectedLocation) !== -1,
     );
     return filteredData;
   };
@@ -70,8 +70,8 @@ export default function FormList() {
     // Avoid filter for empty string
     return !selectedFormation
       ? filteredList
-      : filteredList.filter(
-          (card) => card.formation.split(" ").indexOf(selectedFormation) !== -1
+      : filteredList?.filter(
+          (card) => card.formation.split(" ").indexOf(selectedFormation) !== -1,
         );
   };
 
@@ -125,11 +125,12 @@ export default function FormList() {
       return;
     }
   };
+
   return (
     <>
       {forms && forms.length > 100 ? (
         <SearchBar
-          className='mt-5 flex gap-4'
+          className="mt-5 flex gap-4"
           queryValue={queryValue}
           setQueryValue={setQueryValue}
           formData={formData}
@@ -138,16 +139,15 @@ export default function FormList() {
       ) : (
         <></>
       )}
-      <div className='h-full px-6 py-8'>
-        <div className='mb-10'>
+      <div className="h-full px-6 py-8">
+        <div className="mb-10">
           {session.user.role !== UserRole.ADMIN ? (
-            <div className='flex flex-row'>
+            <div className="flex flex-row">
               <select
-                className='flex justify-center text-sm font-medium text-black py-1 px-1 md:py-2 md:px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black mr-1'
+                className="flex justify-center text-sm font-medium text-black py-1 px-1 md:py-2 md:px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black mr-1"
                 value={selectedLocation}
-                onChange={handleChangeLocation}
-              >
-                <option value=''>LIEU</option>
+                onChange={handleChangeLocation}>
+                <option value="">LIEU</option>
                 {SourcingLocations.map((city, cityIndex) => (
                   <option key={cityIndex} value={city}>
                     {city}
@@ -156,11 +156,10 @@ export default function FormList() {
               </select>
 
               <select
-                className='flex justify-center text-sm font-medium text-black py-1 px-6 md:py-2 md:px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black mx-1'
+                className="flex justify-center text-sm font-medium text-black py-1 px-6 md:py-2 md:px-10 rounded-md shadow-sm border border-gray-300 bg-white rounded-md hover:border hover:border-black mx-1"
                 value={selectedFormation}
-                onChange={handleChangeFormation}
-              >
-                <option value=''>FORMATION</option>
+                onChange={handleChangeFormation}>
+                <option value="">FORMATION</option>
                 {SourcingFormations.map((formation, formationIndex) => (
                   <option key={formationIndex} value={formation}>
                     {formation}
@@ -168,9 +167,8 @@ export default function FormList() {
                 ))}
               </select>
               <button
-                className='flex justify-center text-sm font-medium py-2 px-2 md:py-2 md:px-10 rounded-md shadow-sm focus:outline-none focus:ring-2 bg-snoopfade text-white focus:ring-offset-2 focus:ring-red-500 mx-1'
-                onClick={() => filterSourcings("RESET")}
-              >
+                className="flex justify-center text-sm font-medium py-2 px-2 md:py-2 md:px-10 rounded-md shadow-sm focus:outline-none focus:ring-2 bg-snoopfade text-white focus:ring-offset-2 focus:ring-red-500 mx-1"
+                onClick={() => filterSourcings("RESET")}>
                 RESET
               </button>
             </div>
@@ -180,38 +178,36 @@ export default function FormList() {
         </div>
         {filteredData &&
           (filteredData.length === 0 ? (
-            <div className='mt-5 text-center'>
+            <div className="mt-5 text-center">
               {session.user.role !== UserRole.ADMIN ? (
                 <EmptyPageFiller
                   alertText="Aucune session d'inscription trouvée."
-                  hintText=''
-                  borderStyles='border-4 border-dotted border-red'
-                >
-                  <FolderOpenIcon className='w-24 h-24 mx-auto text-ui-gray-medium stroke-thin' />
+                  hintText=""
+                  borderStyles="border-4 border-dotted border-red">
+                  <FolderOpenIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
                 </EmptyPageFiller>
               ) : (
                 <EmptyPageFiller
                   onClick={() => newForm()}
                   alertText="Vous n'avez pas encore de sourcing"
-                  hintText='Commencez par créer un sourcing'
-                  buttonText='Nouveau Sourcing'
-                  borderStyles='border-4 border-dotted border-red'
-                  hasButton={true}
-                >
-                  <DocumentPlusIcon className='w-24 h-24 mx-auto text-ui-gray-medium stroke-thin' />
+                  hintText="Commencez par créer un sourcing"
+                  buttonText="Nouveau Sourcing"
+                  borderStyles="border-4 border-dotted border-red"
+                  hasButton={true}>
+                  <DocumentPlusIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
                 </EmptyPageFiller>
               )}
             </div>
           ) : (
-            <ul className='grid  max-sm:grid-cols-1  gap-6  max-md:grid-cols-2 max-lg:grid-cols-3 xl:grid-cols-3 place-content-stretch'>
+            <ul className="grid  max-sm:grid-cols-1  gap-6  max-md:grid-cols-2 max-lg:grid-cols-3 xl:grid-cols-3 place-content-stretch">
               {session.user.role !== UserRole.ADMIN ? (
                 <></>
               ) : (
                 <button onClick={() => newForm()}>
-                  <li className='h-80 col-span-1'>
-                    <div className='flex items-center justify-center h-full overflow-hidden font-light text-white rounded shadow bg-snoopfade'>
-                      <div className='px-4 py-8 sm:p-14'>
-                        <PlusIcon className='mx-auto w-14 h-14 stroke-thin' />
+                  <li className="h-80 col-span-1">
+                    <div className="flex items-center justify-center h-full overflow-hidden font-light text-white rounded shadow bg-snoopfade">
+                      <div className="px-4 py-8 sm:p-14">
+                        <PlusIcon className="mx-auto w-14 h-14 stroke-thin" />
                         Nouveau Sourcing
                       </div>
                     </div>
@@ -221,27 +217,27 @@ export default function FormList() {
               {filteredData
                 .sort((a, b) => b.updatedAt - a.updatedAt)
                 .map((form, formIdx) => (
-                  <li key={form.id} className='relative h-80 col-span-1'>
-                    <div className='flex flex-col justify-between h-full border border-gray-300 bg-white rounded-md hover:border hover:border-black'>
-                      <div className='p-6 h-2/5'>
-                        <p className='text-2xl font-semibold line-clamp-3'>
+                  <li key={form.id} className="relative h-80 col-span-1">
+                    <div className="flex flex-col justify-between h-full border border-gray-300 bg-white rounded-md hover:border hover:border-black">
+                      <div className="p-6 h-2/5">
+                        <p className="text-2xl font-semibold line-clamp-3">
                           {form.name}
                         </p>
                       </div>
 
-                      <div className='h-2/5'>
-                        <div className='px-6 mb-4'>
+                      <div className="h-2/5">
+                        <div className="px-6 mb-4">
                           <hr />
                         </div>
                         {form.place === "" ? (
                           <></>
                         ) : (
-                          <span className='flex items-center px-6 py-1 text-base font-bold text-black-title'>
-                            <HiLocationMarker className='w-5 h-5 text-rose-500 mr-1 text-2xl' />
+                          <span className="flex items-center px-6 py-1 text-base font-bold text-black-title">
+                            <HiLocationMarker className="w-5 h-5 text-rose-500 mr-1 text-2xl" />
                             {form.place}
                           </span>
                         )}
-                        <span className='flex items-center  px-6 py-1'>
+                        <span className="flex items-center  px-6 py-1">
                           <CalendarDaysIcon
                             className={
                               format(new Date(form.dueDate), "yyyy-MM-dd") ===
@@ -254,17 +250,17 @@ export default function FormList() {
                           />
                           {format(new Date(form.dueDate), "yyyy-MM-dd") ===
                           format(new Date(), "yyyy-MM-dd") ? (
-                            <span className='text-base text-red-800 line-clamp-3'>
+                            <span className="text-base text-red-800 line-clamp-3">
                               Ferme aujourd&apos;hui
                             </span>
                           ) : dateDayDiff(form.dueDate) > 7 ? (
-                            <span className='text-base font-normal text-black-title line-clamp-3'>
+                            <span className="text-base font-normal text-black-title line-clamp-3">
                               {format(new Date(form.dueDate), "dd MMMM yyyy", {
                                 locale: fr,
                               })}
                             </span>
                           ) : (
-                            <span className='text-base  text-rose-500 font-normal line-clamp-3 '>
+                            <span className="text-base  text-rose-500 font-normal line-clamp-3 ">
                               {format(new Date(form.dueDate), "yyyy-MM-dd") <
                               format(new Date(), "yyyy-MM-dd")
                                 ? "Fermé"
@@ -288,33 +284,31 @@ export default function FormList() {
                           session.user.role === UserRole.PUBLIC
                             ? `/sourcings/${form.id}`
                             : `/forms/${form.id}/form`
-                        }
-                      >
-                        <a className='absolute w-full h-full' />
+                        }>
+                        <a className="absolute w-full h-full" />
                       </Link>
-                      <div className='divide-y divide-ui-gray-light '>
+                      <div className="divide-y divide-ui-gray-light ">
                         {session.user.role === UserRole.PUBLIC ? (
                           <></>
                         ) : (
-                          <div className='flex justify-between px-6 py-2 text-right sm:px-6'>
-                            <p className='flex gap-1 items-center text-xs text-ui-gray-medium '>
-                              <EyeIcon className='w-3 h-3' />
+                          <div className="flex justify-between px-6 py-2 text-right sm:px-6">
+                            <p className="flex gap-1 items-center text-xs text-ui-gray-medium ">
+                              <EyeIcon className="w-3 h-3" />
                               <span>{form._count?.submissionSessions}</span>
                             </p>
                             <Menu
-                              as='div'
-                              className='relative z-10 inline-block text-left'
-                            >
+                              as="div"
+                              className="relative z-10 inline-block text-left">
                               {({ open }) => (
                                 <>
                                   <div>
-                                    <Menu.Button className='flex items-center p-2 -m-2 rounded-full text-red'>
-                                      <span className='sr-only'>
+                                    <Menu.Button className="flex items-center p-2 -m-2 rounded-full text-red">
+                                      <span className="sr-only">
                                         Ouvrir les options
                                       </span>
                                       <EllipsisHorizontalIcon
-                                        className='w-5 h-5'
-                                        aria-hidden='true'
+                                        className="w-5 h-5"
+                                        aria-hidden="true"
                                       />
                                     </Menu.Button>
                                   </div>
@@ -322,18 +316,16 @@ export default function FormList() {
                                   <Transition
                                     show={open}
                                     as={Fragment}
-                                    enter='transition ease-out duration-100'
-                                    enterFrom='transform opacity-0 scale-95'
-                                    enterTo='transform opacity-100 scale-100'
-                                    leave='transition ease-in duration-75'
-                                    leaveFrom='transform opacity-100 scale-100'
-                                    leaveTo='transform opacity-0 scale-95'
-                                  >
+                                    enter="transition ease-out duration-100"
+                                    enterFrom="transform opacity-0 scale-95"
+                                    enterTo="transform opacity-100 scale-100"
+                                    leave="transition ease-in duration-75"
+                                    leaveFrom="transform opacity-100 scale-100"
+                                    leaveTo="transform opacity-0 scale-95">
                                     <Menu.Items
                                       static
-                                      className='absolute left-0 w-56 px-1 mt-2 origin-top-right bg-white rounded-sm shadow-lg'
-                                    >
-                                      <div className='py-1'>
+                                      className="absolute left-0 w-56 px-1 mt-2 origin-top-right bg-white rounded-sm shadow-lg">
+                                      <div className="py-1">
                                         <Menu.Item>
                                           {({ active }) => (
                                             <>
@@ -345,12 +337,11 @@ export default function FormList() {
                                                   active
                                                     ? "bg-ui-gray-light rounded-sm text-ui-black"
                                                     : "text-ui-gray-dark",
-                                                  "flex px-4 py-2 text-sm w-full"
-                                                )}
-                                              >
+                                                  "flex px-4 py-2 text-sm w-full",
+                                                )}>
                                                 <TrashIcon
-                                                  className='w-5 h-5 mr-3 text-ui-gray-dark'
-                                                  aria-hidden='true'
+                                                  className="w-5 h-5 mr-3 text-ui-gray-dark"
+                                                  aria-hidden="true"
                                                 />
                                                 <span>Supprimer</span>
                                               </button>
@@ -362,12 +353,11 @@ export default function FormList() {
                                                   active
                                                     ? "bg-ui-gray-light rounded-sm text-ui-black"
                                                     : "text-ui-gray-dark",
-                                                  "flex px-4 py-2 text-sm w-full"
-                                                )}
-                                              >
+                                                  "flex px-4 py-2 text-sm w-full",
+                                                )}>
                                                 <HiDocumentDuplicate
-                                                  className='w-5 h-5 mr-3 text-ui-gray-dark'
-                                                  aria-hidden='true'
+                                                  className="w-5 h-5 mr-3 text-ui-gray-dark"
+                                                  aria-hidden="true"
                                                 />
                                                 <span>Duplicate</span>
                                               </button>

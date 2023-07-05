@@ -41,23 +41,24 @@ const App: FC<IProps> = ({
   //TODO Find better way to handle this
   if (findTimer(page, startDate) < 0 && isTimedPage(page)) {
     return (
-      <div className='flex min-h-screen bg-ui-gray-light'>
-        <div className='flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24'>
-          <div className='w-full max-w-sm p-8 mx-auto lg:w-96'>
-            <div className='w-fit m-auto'>
+      <div className="flex min-h-screen bg-ui-gray-light">
+        <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+          <div className="w-full max-w-sm p-8 mx-auto lg:w-96">
+            <div className="w-fit m-auto">
               <Image
-                src='/img/kadea_logo.png'
-                alt='Kadea  academy logo'
+                src="/img/kadea_logo.png"
+                alt="Kadea  academy logo"
                 width={180}
                 height={40}
               />
             </div>
-            <div className='mt-8'>
-              <h1 className='mb-4 font-bold text-center leading-2'>
+            <div className="mt-8">
+              <h1 className="mb-4 font-bold text-center leading-2">
                 Temps écoulé
               </h1>
-              <p className='text-center'>
-                Vous n'avez plus accès à ce formulaire car votre temps est écoulé
+              <p className="text-center">
+                Vous n'avez plus accès à ce formulaire car votre temps est
+                écoulé
               </p>
             </div>
           </div>
@@ -65,36 +66,38 @@ const App: FC<IProps> = ({
       </div>
     );
   }
-  
+
   return (
-    <div className='w-full min-h-screen bg-slate-200 pb-6'>
+    <div className="w-full min-h-screen bg-slate-200 pb-6">
       <SnoopForm
         key={id} // used to reset form
         domain={window.location.host}
         protocol={window.location.protocol === "http:" ? "http" : "https"}
         formId={formId}
         localOnly={localOnly}
-        className='w-full max-w-3xl mx-auto'
+        className="w-full max-w-3xl mx-auto"
         onSubmit={onSubmit}
         setFieldErrors={setFieldErrors}
-        page={page}
-      >
+        page={page}>
         <SnoopPage
           name={page.id}
           thankyou={false}
           time={findTimer(page, startDate)}
-          countDown={isTimedPage(page)}
-          
-        >
+          countDown={isTimedPage(page)}>
           {page.blocks.map((block: PageBlock) => (
-            <div key={block.id} className={`${block.type === "submitButton"?"":"bg-white"} px-5 py-5 ${/Question/.test(block.type) ? "mb-6 rounded-b-md": ""}`}>
+            <div
+              key={block.id}
+              className={`${
+                block.type === "submitButton" ? "" : "bg-white"
+              } px-5 py-5 ${
+                /Question/.test(block.type) ? "mb-6 rounded-b-md" : ""
+              }`}>
               {block.type === "paragraph" ? (
                 <p
-                  className='ce-paragraph'
+                  className="ce-paragraph"
                   dangerouslySetInnerHTML={{
                     __html: block.data.text as string,
-                  }}
-                ></p>
+                  }}></p>
               ) : block.type === "image" ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={block.data.file.url} alt={block.data.caption} />
@@ -104,18 +107,18 @@ const App: FC<IProps> = ({
                     dangerouslySetInnerHTML={{
                       __html: block.data.text as string,
                     }}
-                    className='ce-header'
+                    className="ce-header"
                   />
                 ) : block.level === 2 ? (
                   <h2
-                    className='ce-header'
+                    className="ce-header"
                     dangerouslySetInnerHTML={{
                       __html: block.data.text as string,
                     }}
                   />
                 ) : block.data.level === 3 ? (
                   <h3
-                    className='ce-header'
+                    className="ce-header"
                     dangerouslySetInnerHTML={{
                       __html: block.data.text as string,
                     }}
@@ -123,7 +126,7 @@ const App: FC<IProps> = ({
                 ) : null
               ) : block.type === "textQuestion" ? (
                 <SnoopElement
-                  type='text'
+                  type="text"
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
@@ -153,7 +156,7 @@ const App: FC<IProps> = ({
                 />
               ) : block.type === "emailQuestion" ? (
                 <SnoopElement
-                  type='email'
+                  type="email"
                   name={block.id}
                   label={block.data.label}
                   defaultValue={
@@ -163,7 +166,7 @@ const App: FC<IProps> = ({
                   }
                   help={block.data.help}
                   placeholder={block.data.placeholder}
-                  icon={<EnvelopeIcon className='w-5 h-5' />}
+                  icon={<EnvelopeIcon className="w-5 h-5" />}
                   classNames={{
                     label:
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
@@ -174,7 +177,7 @@ const App: FC<IProps> = ({
               ) : block.type === "multipleChoiceQuestion" &&
                 block.data.multipleChoice ? (
                 <SnoopElement
-                  type='checkbox'
+                  type="checkbox"
                   defaultValue={
                     !isTimedPage(page)
                       ? submission.data?.submission[block.id]
@@ -194,7 +197,7 @@ const App: FC<IProps> = ({
               ) : block.type === "multipleChoiceQuestion" &&
                 !block.data.multipleChoice ? (
                 <SnoopElement
-                  type='radio'
+                  type="radio"
                   name={block.id}
                   defaultValue={
                     !isTimedPage(page)
@@ -213,7 +216,7 @@ const App: FC<IProps> = ({
                 />
               ) : block.type === "numberQuestion" ? (
                 <SnoopElement
-                  type='number'
+                  type="number"
                   name={block.id}
                   label={block.data.label}
                   defaultValue={
@@ -232,7 +235,7 @@ const App: FC<IProps> = ({
                 />
               ) : block.type === "phoneQuestion" ? (
                 <SnoopElement
-                  type='phone'
+                  type="phone"
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
@@ -242,7 +245,7 @@ const App: FC<IProps> = ({
                       ? submission.data?.submission[block.id]
                       : ""
                   }
-                  icon={<PhoneIcon className='w-5 h-5' />}
+                  icon={<PhoneIcon className="w-5 h-5" />}
                   classNames={{
                     label:
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
@@ -252,8 +255,8 @@ const App: FC<IProps> = ({
                 />
               ) : block.type === "submitButton" ? (
                 <SnoopElement
-                  name='submit'
-                  type='submit'
+                  name="submit"
+                  type="submit"
                   label={block.data.label}
                   classNames={{
                     button:
@@ -262,7 +265,7 @@ const App: FC<IProps> = ({
                 />
               ) : block.type === "websiteQuestion" ? (
                 <SnoopElement
-                  type='website'
+                  type="website"
                   name={block.id}
                   label={block.data.label}
                   help={block.data.help}
@@ -272,7 +275,7 @@ const App: FC<IProps> = ({
                       : ""
                   }
                   placeholder={block.data.placeholder}
-                  icon={<GlobeAltIcon className='w-5 h-5' />}
+                  icon={<GlobeAltIcon className="w-5 h-5" />}
                   classNames={{
                     label:
                       "mt-4 mb-2 block text-lg font-bold leading-7 text-gray-800 ",
@@ -282,10 +285,11 @@ const App: FC<IProps> = ({
                 />
               ) : block.type === "dashboardRedirectButton" ? (
                 <SnoopElement
-                  type='button-link'
+                  type="button-link"
                   link={`/sourcings/${formId}`}
                   name={block.id}
                   label={block.data.submitLabel}
+                  
                   classNames={{
                     button:
                       "inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-white border border-transparent rounded-md shadow-sm bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500",
