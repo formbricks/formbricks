@@ -17,16 +17,13 @@ export default async function SummaryPage({ params }) {
   return (
     <>
       <SurveyResultsTabs activeId="summary" environmentId={params.environmentId} surveyId={params.surveyId} />
-      {/* @ts-expect-error Server Component */}
       <ResponsesLimitReachedBanner
         environmentId={params.environmentId}
         session={session}
         surveyId={params.surveyId}
       />
       <ContentWrapper>
-        {/* @ts-expect-error Server Component */}
         <SummaryMetadata surveyId={params.surveyId} environmentId={params.environmentId} session={session} />
-        {/* @ts-expect-error Server Component */}
         <SummaryList environmentId={params.environmentId} session={session} surveyId={params.surveyId} />
       </ContentWrapper>
     </>
