@@ -23,7 +23,7 @@ export default function Modal({
       <div
         className={cn(
           show ? "translate-x-0 opacity-100" : "translate-x-32 opacity-0",
-          "pointer-events-auto absolute h-fit w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out",
+          "pointer-events-auto absolute max-h-[90%] w-full max-w-sm overflow-hidden overflow-y-auto rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out",
           getPlacementStyle(placement)
         )}>
         {children}
