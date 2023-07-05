@@ -6,7 +6,7 @@ import type { Template } from "@formbricks/types/templates";
 import { useEffect } from "react";
 import { replacePresetPlaceholders } from "@/lib/templates";
 import { templates } from "./templates";
-import PreviewSurvey from "../PreviewSurvey";
+import PreviewSurvey from "./PreviewSurveyServer";
 import TemplateList from "./TemplateList";
 import { TProductWithEnvironmentIds } from "@formbricks/types/v1/product";
 import { TEnvironmentProduct } from "@formbricks/types/v1/environment";

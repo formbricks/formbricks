@@ -6,14 +6,8 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import { _ZEnvironmentProduct } from "@formbricks/types/v1/product";
 import { ZEnvironmentWithProduct } from "@formbricks/types/v1/environment";
 import type { TEnvironmentProduct } from "@formbricks/types/v1/environment";
-
-// const ZEnvironmentWithProduct = ZEnvironment.extend({
-//   product: _ZEnvironmentProduct,
-// });
-
-// type TEnvironmentProduct = z.infer<typeof ZEnvironmentWithProduct>;
-
-export const getEnvironment = async (environmentId: string): Promise<TEnvironmentProduct | null> => {
+import { cache } from "react";
+export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironmentProduct | null> => {
   let environmentPrisma;
   try {
     environmentPrisma = await prisma.environment.findUnique({
@@ -59,4 +53,4 @@ export const getEnvironment = async (environmentId: string): Promise<TEnvironmen
     }
     throw new ValidationError("Data validation of environment failed");
   }
-};
+});
