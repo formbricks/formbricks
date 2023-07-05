@@ -1,0 +1,88 @@
+import { Layout } from "@/components/docs/Layout";
+import Image from "next/image";
+
+import SetupChecklist from "./env-id.png";
+import WidgetNotConnected from "./widget-not-connected.png";
+import WidgetConnected from "./widget-connected.png";
+
+export const meta = {
+  title: "Setting up Formbricks SDK with Next.js Pages Directory",
+  description:
+    "Setting up Formbricks with the new Next.js 13 Pages Directory can be tricky. Follow this guide to make sure you get it right.",
+};
+
+This guide will walk you through the process of integrating the Formbricks SDK into a Next.js application using the Pages Directory. As the Formbricks SDK only works on the client side, it's essential to ensure proper integration to avoid any issues.
+
+## Prerequisites
+
+Before getting started, make sure you have:
+
+1. A Next.js application with Pages Directory set up and running.
+2. A Formbricks account with access to your environment ID and API host. You can find these in the **Setup Checklist** in the Settings:
+
+<Image src={SetupChecklist} alt="Step 2 - Setup Checklist" quality="100" className="rounded-lg" />
+
+## Installing Formbricks SDK
+
+First, you need to install the Formbricks SDK using one of the following commands:
+
+```bash
+npm install --save @formbricks/js
+# or
+yarn add @formbricks/js
+# or
+pnpm add @formbricks/js
+```
+
+## Integrating with Next.js 13 Pages Directory
+
+Update your Pages component in the \_app.ts file like so:
+
+```tsx
+import "@/styles/globals.css";
+import type { PagesProps } from "next/app";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+import formbricks from "@formbricks/js";
+
+if (typeof window !== "undefined") {
+  formbricks.init({
+    environmentId: "your-environment-id",
+    apiHost: "your-api-host", // e.g. https://app.formbricks.com
+    logLevel: "debug", // remove when in production
+  });
+}
+
+export default function Pages({ Component, pageProps }: PagesProps) {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Connect next.js router to Formbricks
+    const handleRouteChange = formbricks?.registerRouteChange;
+    router.events.on("routeChangeComplete", handleRouteChange);
+
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, []);
+
+  return <Component {...pageProps} />;
+}
+```
+
+## What are we doing here?
+
+1. First we need to initialize the Formbricks SDK, making sure it only runs on the client side.
+2. To connect the Next.js router to Formbricks and ensure the SDK can keep track of every page change, we are registering the route change event.
+
+## Validate your setup
+
+Once you have completed the steps above, you can validate your setup by checking the **Setup Checklist** in the Settings. Your widget status indicator should go from this:
+
+<Image src={WidgetNotConnected} alt="Widget isnt connected" quality="100" className="rounded-lg" />
+
+To this:
+
+<Image src={WidgetConnected} alt="Widget is connected" quality="100" className="rounded-lg" />
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

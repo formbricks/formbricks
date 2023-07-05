@@ -43,33 +43,15 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 
 2. In the Menu (top right) you see that you can switch between a “Development” and a “Production” environment. These are two separate environments so your test data doesn’t mess up the insights from prod. Switch to “Development”:
 
-<Image
-  src={SwitchToDev}
-  alt="switch to dev environment"
-  quality="100"
-  className="rounded-lg"
-  className="rounded"
-/>
+<Image src={SwitchToDev} alt="switch to dev environment" quality="100" className="rounded-lg" />
 
 3. Then, create a survey using the template “Docs Feedback”:
 
-<Image
-  src={DocsTemplate}
-  alt="select docs template"
-  quality="100"
-  className="rounded-lg"
-  className="rounded"
-/>
+<Image src={DocsTemplate} alt="select docs template" quality="100" className="rounded-lg" />
 
 4. Change the Internal Question ID of the first question to **“isHelpful”** to make your life easier 😉
 
-<Image
-  src={ChangeId}
-  alt="switch to dev environment"
-  quality="100"
-  className="rounded-lg"
-  className="rounded"
-/>
+<Image src={ChangeId} alt="switch to dev environment" quality="100" className="rounded-lg" />
 
 5. In the same way, you can change the Internal Question ID of the _Please elaborate_ question to **“additionalFeedback”** and the one of the _Page URL_ question to **“pageUrl”**.
 
@@ -80,13 +62,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 
 6. Click on “Continue to Settings or select the audience tab manually. Scroll down to “When to ask” and create a new Action:
 
-<Image
-  src={WhenToAsk}
-  alt="set up when to ask card"
-  quality="100"
-  className="rounded-lg"
-  className="rounded"
-/>
+<Image src={WhenToAsk} alt="set up when to ask card" quality="100" className="rounded-lg" />
 
 7. Our goal is to create an event that never fires. This is a bit nonsensical because it is a workaround. Stick with me 😃 Fill the action out like on the screenshot:
 
@@ -94,7 +70,7 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 
 8. Select the Non-Event in the dropdown. Now you see that the “Publish survey” button is active. Publish your survey 🤝
 
-<Image src={SelectNonevent} alt="select nonevent" quality="100" className="rounded-lg" className="rounded" />
+<Image src={SelectNonevent} alt="select nonevent" quality="100" className="rounded-lg" />
 
 **You’re all setup in Formbricks Cloud for now 👍**
 
@@ -280,7 +256,7 @@ return (
 
 ## 3. Connecting to the Formbricks API
 
-The last step is to hook up your sparkling new frontend to the Formbricks API. To do so, we followed the “[Create Response](https://formbricks.com/docs/api/create-response)” and “[Update Response](https://formbricks.com/docs/api/update-response)” pages in our docs.
+The last step is to hook up your sparkling new frontend to the Formbricks API. To do so, we followed the “[Create Response](/docs/client-api/create-response)” and “[Update Response](/docs/client-api/update-response)” pages in our docs.
 
 Here is the code for the `handleFeedbackSubmit` function with comments:
 
@@ -373,7 +349,7 @@ Before you roll it out in production, you want to test it. To do so, you need tw
 
 When you are on the survey detail page, you’ll find both of them in the URL:
 
-<Image src={CopyIds} alt="copy IDs" quality="100" className="rounded-lg" className="rounded" />
+<Image src={CopyIds} alt="copy IDs" quality="100" className="rounded-lg" />
 
 Now, you have to replace the IDs and the API host accordingly in your `handleFeedbackSubmit`:
 
