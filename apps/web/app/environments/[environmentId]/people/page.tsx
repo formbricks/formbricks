@@ -4,6 +4,7 @@ import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
 import { TransformPersonOutput, getPeople } from "@formbricks/lib/services/person";
 import { PersonAvatar } from "@formbricks/ui";
+import Link from "next/link";
 
 const getAttributeValue = (person: TransformPersonOutput, attributeName: string) =>
   person.attributes[attributeName]?.toString();
@@ -23,7 +24,7 @@ export default async function PeoplePage({ params }) {
             <div className="col-span-2 text-center">Email</div>
           </div>
           {people.map((person) => (
-            <a
+            <Link
               href={`/environments/${params.environmentId}/people/${person.id}`}
               key={person.id}
               className="w-full">
@@ -53,7 +54,7 @@ export default async function PeoplePage({ params }) {
                   <div className="ph-no-capture text-slate-900">{getAttributeValue(person, "email")}</div>
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       )}
