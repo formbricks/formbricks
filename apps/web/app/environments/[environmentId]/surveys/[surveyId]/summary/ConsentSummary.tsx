@@ -2,7 +2,6 @@ import { ConsentQuestion } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { ProgressBar } from "@formbricks/ui";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
-import { useMemo } from "react";
 
 interface ConsentSummaryProps {
   questionSummary: QuestionSummary<ConsentQuestion>;
@@ -17,18 +16,15 @@ interface ChoiceResult {
 }
 
 export default function ConsentSummary({ questionSummary }: ConsentSummaryProps) {
-  const ctr: ChoiceResult = useMemo(() => {
-    const total = questionSummary.responses.length;
-    const clickedAbs = questionSummary.responses.filter((response) => response.value !== "skipped").length;
-
-    return {
-      count: total,
-      acceptedCount: clickedAbs,
-      acceptedPercentage: clickedAbs / total,
-      dismissedCount: total - clickedAbs,
-      dismissedPercentage: 1 - clickedAbs / total,
-    };
-  }, [questionSummary]);
+  const total = questionSummary.responses.length;
+  const clickedAbs = questionSummary.responses.filter((response) => response.value !== "dismissed").length;
+  const ctr: ChoiceResult = {
+    count: total,
+    acceptedCount: clickedAbs,
+    acceptedPercentage: clickedAbs / total,
+    dismissedCount: total - clickedAbs,
+    dismissedPercentage: 1 - clickedAbs / total,
+  };
 
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
