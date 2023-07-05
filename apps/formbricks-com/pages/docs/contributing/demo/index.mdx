@@ -1,0 +1,67 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+
+import DemoApp from "./demoapp.png";
+
+export const meta = {
+  title: "Demo App",
+  description: "To test in-app surveys, trigger actions and set attributes, you can use the Demo App.",
+};
+
+To play around with the user actions, you can use the Demo App. It's a simple React app that you can run locally and use to trigger actions and set attributes.
+
+<Image src={DemoApp} alt="Demo App Preview" quality="100" className="rounded-lg" />
+
+## Functionality
+
+### Code Action
+
+This button sends a <a href="/docs/actions/code">Code Action</a> to the Formbricks API called 'Code Action'. You will find it in the Actions Tab.
+
+```tsx
+formbricks.track("Code Action");
+```
+
+### No Code Action
+
+This button sends a <a href="/docs/actions/no-code">No Code Action</a> as long as you created it beforehand in the Formbricks App. For it to work, you need to add the No Code Action within Formbricks.
+
+```tsx
+<button>No-Code Action</button>
+```
+
+### Set Plan to "Free"
+
+This button sets the <a href="/docs/attributes/custom-attributes">attribute</a> 'Plan' to 'Free'. If the attribute does not exist, it creates it.
+
+```tsx
+formbricks.setAttribute("Plan", "Free");
+```
+
+### Set Plan to "Paid"
+
+This button sets the <a href="/docs/attributes/custom-attributes">attribute</a> 'Plan' to 'Paid'. If the attribute does not exist, it creates it.
+
+```tsx
+formbricks.setAttribute("Plan", "Paid");
+```
+
+### Set Email
+
+This button sets the <a href="/docs/attributes/identify-users">user email</a> 'test@web.com'
+
+```tsx
+formbricks.setEmail("test@web.com");
+```
+
+### Set UserId
+
+This button sets an external <a href="/docs/attributes/identify-users">user ID</a> to 'THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING'
+
+```tsx
+formbricks.setUserId("THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING");
+```
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

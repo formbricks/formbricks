@@ -14,15 +14,10 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "@types/react": "^18.2.7",
-    "@types/react-dom": "^18.2.4",
-    "concurrently": "^8.1.0",
-    "eslint": "^8.41.0",
+    "concurrently": "^8.2.0",
     "eslint-config-formbricks": "workspace:*",
     "postcss": "^8.4.24",
-    "react": "^18.2.0",
-    "rimraf": "^5.0.1",
-    "typescript": "^5.0.4"
+    "react": "18.2.0"
   },
   "dependencies": {
     "@formbricks/lib": "workspace:*",
@@ -43,15 +38,15 @@
     "@radix-ui/react-select": "^1.2.2",
     "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-tooltip": "^1.0.6",
-    "boring-avatars": "^1.7.0",
-    "class-variance-authority": "^0.6.0",
+    "boring-avatars": "^1.10.1",
+    "class-variance-authority": "^0.6.1",
     "clsx": "^1.2.1",
     "cmdk": "^0.2.0",
-    "lucide-react": "^0.233.0",
-    "next": "^13.4.4",
+    "lucide-react": "^0.258.0",
+    "next": "13.4.8",
     "react-colorful": "^5.6.1",
     "react-confetti": "^6.1.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "18.2.0",
     "react-radio-group": "^3.0.3",
     "react-use": "^17.4.0"
   }
