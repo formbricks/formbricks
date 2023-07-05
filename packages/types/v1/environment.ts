@@ -9,3 +9,9 @@ export const ZEnvironment: any = z.object({
   productId: z.string(),
   widgetSetupCompleted: z.boolean(),
 });
+
+export const ZEnvironmentWithProduct = ZEnvironment.extend({
+  product: _ZEnvironmentProduct,
+});
+
+export type TEnvironmentProduct = z.infer<typeof ZEnvironment>;
