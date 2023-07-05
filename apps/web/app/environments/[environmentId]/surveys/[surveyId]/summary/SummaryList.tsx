@@ -8,6 +8,7 @@ import {
   type NPSQuestion,
   type OpenTextQuestion,
   type RatingQuestion,
+  type ConsentQuestion,
 } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
@@ -17,6 +18,7 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
+import ConsentSummary from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/ConsentSummary";
 
 interface SummaryListProps {
   environmentId: string;
@@ -102,6 +104,14 @@ export default async function SummaryList({ environmentId, surveyId, session }: 
                   <RatingSummary
                     key={questionSummary.question.id}
                     questionSummary={questionSummary as QuestionSummary<RatingQuestion>}
+                  />
+                );
+              }
+              if (questionSummary.question.type === QuestionType.Consent) {
+                return (
+                  <ConsentSummary
+                    key={questionSummary.question.id}
+                    questionSummary={questionSummary as QuestionSummary<ConsentQuestion>}
                   />
                 );
               }
