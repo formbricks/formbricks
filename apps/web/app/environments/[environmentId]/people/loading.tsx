@@ -1,4 +1,4 @@
-export default function SuspenseLoader() {
+export default function Loading() {
     return (
         <div className="rounded-lg border border-slate-200">
             <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
