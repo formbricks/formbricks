@@ -60,7 +60,7 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
         <div>
           <div className="text flex justify-between px-2 pb-2">
             <div className="mr-8 flex space-x-1">
-              <p className="font-semibold text-slate-700">Skipped</p>
+              <p className="font-semibold text-slate-700">Dismissed</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
                   {Math.round(ctr.dismissedPercentage * 100)}%
