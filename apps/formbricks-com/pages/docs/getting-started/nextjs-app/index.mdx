@@ -11,7 +11,7 @@ export const meta = {
     "Setting up Formbricks with the new Next.js 13 App Directory can be tricky. Follow this guide to make sure you get it right.",
 };
 
-This guide will walk you through the process of integrating the Formbricks SDK into a Next.js application using the new App Directory. As the Formbricks SDK only works on the client side, it's essential to ensure proper integration to avoid any issues.
+This guide will walk you through the process of integrating the Formbricks SDK into a Next.js application using the new app directory. As the Formbricks SDK only works on the client side, it's essential to ensure proper integration to avoid any issues.
 
 ## Prerequisites
 
@@ -36,10 +36,10 @@ pnpm add @formbricks/js
 
 ## Integrating with Next.js 13 App Directory
 
-The Next.js 13 app directory requires us to initialize Formbricks differently than the pages directory. Specifically, the app directory server-side renders components by default, and the formbricks-js library is a client-side library. To make these work together, create a providers.js file and set up the FormbricksProvider with the 'use client' directive:
+The Next.js 13 app directory requires us to initialize Formbricks differently than the pages directory. Specifically, the app directory server-side renders components by default, and the formbricks-js library is a client-side library. To make these work together, create a `formbricks.js` file (or formbricks.ts if you are using Typescript) and set up the FormbricksProvider with the 'use client' directive:
 
 ```tsx
-// app/providers.js
+// app/formbricks.js
 "use client";
 import formbricks from "@formbricks/js";
 
@@ -51,28 +51,23 @@ if (typeof window !== "undefined") {
   });
 }
 
-export default function App({ Component, pageProps }: AppProps) {
-  const router = useRouter();
+export default function Providers({ Component, pageProps }: AppProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Connect next.js router to Formbricks
-    const handleRouteChange = formbricks?.registerRouteChange;
-    router.events.on("routeChangeComplete", handleRouteChange);
+    formbricks?.registerRouteChange();
+  }, [pathname, searchParams]);
 
-    return () => {
-      router.events.off("routeChangeComplete", handleRouteChange);
-    };
-  }, []);
-
-  return <Component {...pageProps} />;
+  return null;
 }
 ```
 
-Once we do this, we can then import the provider.js file in our app/layout.js file, and wrap our app in the Formbricks provider.
+Once we do this, we can then import the `provider.js` file in our `app/layout.js` file, and wrap our app in the Formbricks provider.
 
 ```tsx
 // app/layout.js
-import Providers from "./providers";
+import Providers from "./formbricks";
 
 export const metadata = {
   title: "Create Next App",
@@ -82,9 +77,8 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <Providers>
-        <body>{children}</body>
-      </Providers>
+      <Providers />
+      <body>{children}</body>
     </html>
   );
 }

@@ -30,14 +30,8 @@ If nothing helps, run `pnpm clean` and then `pnpm i` again. This solves a lot.
 This usually happens when the Formbricks Widget wasn't correctly or completely built.
 
 ```bash
-// Go to the packages/js directory
-cd packages/js
-
-// Build the widget
-pnpm build
-
-// Go back to the root directory
-cd ../..
+// Build formbricks-js first
+pnpm build --filter=js
 
 // Run the app again
 pnpm dev
@@ -58,7 +52,7 @@ pnpm dev --filter=formbricks-com...
 pnpm dev --filter=demo...
 ```
 
-However, in our experience it's better to run `pnpm dev` than having to terminals open and one with the Formbricks app and one with the demo.
+However, in our experience it's better to run `pnpm dev` than having two terminals open (one with the Formbricks app and one with the demo).
 
 ## Uncaught (in promise) SyntaxError: Unexpected token !DOCTYPE ... is not valid JSON
 
