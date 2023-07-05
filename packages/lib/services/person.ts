@@ -2,6 +2,7 @@ import { prisma } from "@formbricks/database";
 import { TPerson } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { cache } from "react";
 
 type TransformPersonInput = {
   id: string;
@@ -68,3 +69,38 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
     throw error;
   }
 };
+
+export const getPeople = cache(async (): Promise<TPerson[]> => {
+  try {
+    const personsPrisma = await prisma.person.findMany({
+      select: {
+        id: true,
+        attributes: {
+          select: {
+            value: true,
+            attributeClass: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!personsPrisma) {
+      throw new ResourceNotFoundError("Persons", "All Persons");
+    }
+
+    const transformedPersons: TransformPersonOutput[] = personsPrisma
+      .map(transformPrismaPerson)
+      .filter((person: TransformPersonOutput | null): person is TransformPersonOutput => person !== null);
+
+    return transformedPersons;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+});
