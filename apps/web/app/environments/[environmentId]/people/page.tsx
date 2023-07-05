@@ -9,7 +9,7 @@ const getAttributeValue = (person: TransformPersonOutput, attributeName: string)
   person.attributes[attributeName]?.toString();
 
 export default async function PeoplePage({ params }) {
-  const people = await getPeople();
+  const people = await getPeople(params.environmentId);
 
   return (
     <>
