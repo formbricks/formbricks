@@ -18,8 +18,7 @@ export default async function PeopleList({ environmentId }) {
                     <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
                         <div className="col-span-3 pl-6 ">User</div>
                         <div className="col-span-2 text-center">User ID</div>
-                        <div className="text-center">Email</div>
-                        {/* <div className="text-center">Sessions</div> */}
+                        <div className="col-span-2 text-center">Email</div>
                     </div>
                     {people.map((person) => (
                         <a
@@ -48,12 +47,9 @@ export default async function PeopleList({ environmentId }) {
                                         {truncateMiddle(getAttributeValue(person, "userId"), 24)}
                                     </div>
                                 </div>
-                                <div className="ph-no-capture my-auto whitespace-nowrap text-center text-sm text-slate-500">
-                                    <div className="text-slate-900">{getAttributeValue(person, "email")}</div>
+                                <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
+                                    <div className="ph-no-capture text-slate-900">{getAttributeValue(person, "email")}</div>
                                 </div>
-                                {/* <div className="ph-no-capture my-auto whitespace-nowrap text-center text-sm text-slate-500">
-                  <div className="text-slate-900">{person._count?.sessions}</div>
-                </div> */}
                             </div>
                         </a>
                     ))}
