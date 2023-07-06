@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useState, useContext } from "react";
 import {
   GlobeAltIcon,
   EnvelopeIcon,
@@ -13,6 +13,8 @@ import {
 } from "../../kda-snoopforms-react/src";
 import { Page, PageBlock, pageSubmissionEvent } from "../../lib/types";
 import { findTimer, isTimedPage } from "../../lib/utils";
+// import { CurrentPageContext } from "../../kda-snoopforms-react/src";
+// import { SubmitButtonContext } from "../../kda-snoopforms-react/src";
 
 interface IProps {
   id: string;
@@ -21,6 +23,7 @@ interface IProps {
   submission?: pageSubmissionEvent;
   localOnly: boolean;
   startDate: Date;
+
 }
 
 const App: FC<IProps> = ({
@@ -32,12 +35,20 @@ const App: FC<IProps> = ({
   startDate = new Date(),
 }) => {
   const [fieldErrors, setFieldErrors] = useState({});
+  const [disabled, setDisabled] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
   const router = useRouter();
 
   const onSubmit = () => {
-    if (!Object.values(fieldErrors).filter((f) => f).length)
+    // if (error) console.log({ error });
+
+    if (!Object.values(fieldErrors).filter((f) => f).length && !error) {
       router.push(`/sourcings/${formId}`);
+    } else {
+      setDisabled(false);
+    }
   };
+
   //TODO Find better way to handle this
   if (findTimer(page, startDate) < 0 && isTimedPage(page)) {
     return (
@@ -78,6 +89,9 @@ const App: FC<IProps> = ({
         className="w-full max-w-3xl mx-auto"
         onSubmit={onSubmit}
         setFieldErrors={setFieldErrors}
+        setDisabled={setDisabled}
+        setError={setError}
+        error={error}
         page={page}>
         <SnoopPage
           name={page.id}
@@ -258,9 +272,11 @@ const App: FC<IProps> = ({
                   name="submit"
                   type="submit"
                   label={block.data.label}
+                  isDisabled={disabled}
                   classNames={{
-                    button:
-                      "inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500",
+                    button: !disabled
+                      ? "inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                      : "inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-300 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500",
                   }}
                 />
               ) : block.type === "websiteQuestion" ? (
@@ -289,7 +305,6 @@ const App: FC<IProps> = ({
                   link={`/sourcings/${formId}`}
                   name={block.id}
                   label={block.data.submitLabel}
-                  
                   classNames={{
                     button:
                       "inline-flex items-center px-3 py-2 text-sm font-medium leading-4 text-white border border-transparent rounded-md shadow-sm bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500",
