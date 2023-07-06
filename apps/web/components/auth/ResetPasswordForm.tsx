@@ -51,8 +51,8 @@ export const ResetPasswordForm = () => {
           </label>
           <div className="mt-1">
             <PasswordInput
-              id="resetPassword"
-              name="resetPassword"
+              id="password"
+              name="password"
               value={password ? password : ""}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
