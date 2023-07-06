@@ -1,7 +1,8 @@
 "use client";
 
+import IsPasswordValid from "@/components/auth/IsPasswordValid";
 import { resetPassword } from "@/lib/users/users";
-import { Button } from "@formbricks/ui";
+import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -10,6 +11,8 @@ export const ResetPasswordForm = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string>("");
+  const [password, setPassword] = useState<string | null>(null);
+  const [isValid, setIsValid] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,18 +50,22 @@ export const ResetPasswordForm = () => {
             New password
           </label>
           <div className="mt-1">
-            <input
-              id="password"
-              name="password"
-              type="password"
+            <PasswordInput
+              id="resetPassword"
+              name="resetPassword"
+              value={password ? password : ""}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              placeholder="*******"
               required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+              className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
             />
+             <IsPasswordValid password={password} setIsValid={setIsValid} />
           </div>
         </div>
 
         <div>
-          <Button type="submit" className="w-full justify-center">
+          <Button type="submit" variant="darkCTA" disabled={!isValid} className="w-full justify-center">
             Reset password
           </Button>
         </div>
