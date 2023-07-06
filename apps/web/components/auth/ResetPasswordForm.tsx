@@ -58,7 +58,7 @@ export const ResetPasswordForm = () => {
               autoComplete="current-password"
               placeholder="*******"
               required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
+              className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm border-slate-300 sm:text-sm"
             />
              <IsPasswordValid password={password} setIsValid={setIsValid} />
           </div>
