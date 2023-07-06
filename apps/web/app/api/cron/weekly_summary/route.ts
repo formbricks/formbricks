@@ -72,12 +72,14 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
     const surveyData: Survey = {
       id: survey.id,
       name: survey.name,
+      status: survey.status,
+      responsesCount: survey.responses.length,
       responses: [],
     };
     // iterate through the responses and calculate the survey insights
     for (const response of survey.responses) {
       // only take the first 3 responses
-      if (surveyData.responses.length >= 3) {
+      if (surveyData.responses.length >= 1) {
         break;
       }
       const surveyResponse: SurveyResponse = {};
@@ -152,6 +154,9 @@ const getProducts = async (): Promise<ProductData[]> => {
                   updatedAt: true,
                   finished: true,
                   data: true,
+                },
+                orderBy: {
+                  createdAt: "desc",
                 },
               },
               displays: {

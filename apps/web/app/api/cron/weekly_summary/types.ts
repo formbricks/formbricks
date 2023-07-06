@@ -19,6 +19,8 @@ export interface Survey {
   id: string;
   name: string;
   responses: SurveyResponse[];
+  responsesCount: number;
+  status: string;
 }
 
 export interface NotificationResponse {

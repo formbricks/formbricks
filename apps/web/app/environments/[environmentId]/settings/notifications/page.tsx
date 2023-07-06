@@ -100,10 +100,14 @@ export default async function ProfileSettingsPage({ params }) {
   return (
     <div>
       <SettingsTitle title="Notifications" />
-      <SettingsCard title="Email alerts" description="Set up an alert to get an email on new responses.">
+      <SettingsCard
+        title="Email alerts (Surveys)"
+        description="Set up an alert to get an email on new responses.">
         <EditAlerts memberships={memberships} user={user} environmentId={params.environmentId} />
       </SettingsCard>
-      <SettingsCard title="Weekly summary" description="Stay up-to-date with a Weekly every Monday.">
+      <SettingsCard
+        title="Weekly summary (Products)"
+        description="Stay up-to-date with a Weekly every Monday.">
         <EditWeeklySummary memberships={memberships} user={user} environmentId={params.environmentId} />
       </SettingsCard>
     </div>
