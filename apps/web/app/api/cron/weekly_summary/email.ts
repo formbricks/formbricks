@@ -150,21 +150,30 @@ const createSurveyFields = (surveryResponses: SurveyResponse[]) => {
   return surveyFields;
 };
 
+const notificationFooter = () => {
+  return `
+  <p style="margin-bottom:0px; padding-top:1em; font-weight:500">All the best,</p>
+  <p style="margin-top:0px;">The Formbricks Team</p>
+  <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:99px; margin:1em; padding:0.01em 1.6em; text-align:center;"><p><i>This is a Beta feature. If you experience any issues, please let us know by replying to this email 🙏</i></p></div>
+ `;
+};
+
 const createReminderNotificationBody = (notificationData: NotificationResponse, webUrl) => {
   return `
-    <p>We’d love to send you a Weekly Summary, but you currently there are no surveys running for ${notificationData.productName}.</p>
+    <p>We’d love to send you a Weekly Summary, but currently there are no surveys running for ${notificationData.productName}.</p>
 
-    <p style="font-weight: bold;">Don’t let a week pass without learning about your users.</p>
+    <p style="font-weight: bold; padding-top:1em;">Don’t let a week pass without learning about your users:</p>
 
-    <a class="button" href="${webUrl}/environments/${notificationData.environmentId}/surveys" style="background: black;">Setup a new survey</a>
+    <a class="button" href="${webUrl}/environments/${notificationData.environmentId}/surveys" style="background: #1e293b; font-size:0.9em; font-weight:500">Setup a new survey</a>
     
     <br/>
-    <p>Need help finding the right survey for your product?</p>
-
-    <p>Pick a 15 minute slot <a href="https://cal.com/johannes/15">in our CEOs calendar</a> or reply to this email :)</p>
-      
-    <p>All the best</p>
-    <p>The Formbricks Team</p>
+    <p style="padding-top:1em;">Need help finding the right survey for your product? Pick a 15-minute slot <a href="https://cal.com/johannes/15">in our CEOs calendar</a> or reply to this email :)</p>
+     
+   
+    <p style="margin-bottom:0px; padding-top:1em; font-weight:500">All the best,</p>
+    <p style="margin-top:0px;">The Formbricks Team</p>
+   
+    <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:99px; margin:1em; padding:0.01em 1.6em; text-align:center;"><p><i>This is a Beta feature. If you experience any issues, please let us know by replying to this email 🙏</i></p></div>
   `;
 };
 
@@ -189,6 +198,7 @@ export const sendWeeklySummaryNotificationEmail = async (
         ${notificationHeader(notificationData.productName, startDate, endDate, startYear, endYear)}
         ${notificationInsight(notificationData.insights)}
         ${notificationLiveSurveys(notificationData.surveys, notificationData.environmentId)}
+        ${notificationFooter()}
       `),
   });
 };
