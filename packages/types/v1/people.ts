@@ -7,7 +7,7 @@ export const ZPerson = z.object({
   id: z.string().cuid2(),
   attributes: ZPersonAttributes,
   createdAt: z.date(),
-  updatedAt: z.date()
+  updatedAt: z.date(),
 });
 
 export type TPerson = z.infer<typeof ZPerson>;
