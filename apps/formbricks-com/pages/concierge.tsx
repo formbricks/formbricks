@@ -69,13 +69,7 @@ const ConciergePage = () => {
             </div>
           ))}
           <div className="border-b border-t border-slate-300 p-6  text-4xl font-semibold text-slate-800">
-            <p className="mr-2 font-light line-through">$2.990</p>
-            <div className="xs:flex items-center gap-x-2">
-              <p>$990</p>
-              <p className="whitespace-nowrap rounded-full bg-indigo-200 px-4 text-base font-normal text-indigo-800">
-                24h GitHub Demo Offer 🔥
-              </p>
-            </div>
+            <p className="mr-2 font-light">$2.290</p>
           </div>
           <div className="p-6 text-sm text-slate-800">
             <p>

@@ -84,7 +84,7 @@ export const timeSince = (dateString: string) => {
 
 export const timeSinceConditionally = (dateString: string) => {
   return new Date().getTime() - new Date(dateString).getTime() > 14 * 24 * 60 * 60 * 1000
-    ? convertDateTimeString(dateString)
+    ? convertDateTimeStringShort(dateString)
     : timeSince(dateString);
 };
 

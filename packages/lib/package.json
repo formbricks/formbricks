@@ -19,12 +19,10 @@
     "markdown-it": "^13.0.1",
     "posthog-node": "^3.1.1",
     "server-only": "^0.0.1",
-    "tailwind-merge": "^1.12.0"
+    "tailwind-merge": "^1.13.2"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "*",
-    "eslint": "^8.41.0",
-    "eslint-config-formbricks": "workspace:*",
-    "typescript": "^5.0.4"
+    "eslint-config-formbricks": "workspace:*"
   }
 }

@@ -17,24 +17,22 @@
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:migrate:vercel": "turbo run db:migrate:vercel",
     "db:push": "turbo run db:push",
-    "dev": "turbo run dev --parallel",
+    "dev": "turbo run dev --parallel --filter=!formbricks-com",
     "start": "turbo run start --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
     "release": "turbo run build --filter=react^... && changeset publish",
-    "nuke": "rm -r node_modules; for d in **/node_modules; do echo $d; rm -r $d; done",
     "test": "turbo run test"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.26.1",
-    "prettier": "latest",
-    "rimraf": "^5.0.0",
-    "tsx": "^3.12.6",
+    "@changesets/cli": "^2.26.2",
+    "rimraf": "^5.0.1",
+    "tsx": "^3.12.7",
     "turbo": "latest"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "packageManager": "pnpm@8.1.1"
 }
