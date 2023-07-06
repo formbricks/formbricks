@@ -20,6 +20,8 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
     toast.success("Question ID updated.");
   };
 
+  const isInputInvalid = currentValue.trim() === "" || currentValue.includes(" ");
+
   return (
     <div>
       <Label htmlFor="questionId">Question ID</Label>
@@ -30,14 +32,14 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
           value={currentValue}
           onChange={(e) => setCurrentValue(e.target.value)}
           disabled={localSurvey.status !== "draft"}
-          className={currentValue.includes(" ") ? "focus:border-red-300 border-red-300" : ""}
+          className={isInputInvalid ? "focus:border-red-300 border-red-300" : ""}
         />
         {localSurvey.status === "draft" && (
           <Button
             variant="darkCTA"
             className="ml-2 bg-slate-600 text-white hover:bg-slate-700 disabled:bg-slate-400"
             onClick={saveAction}
-            disabled={currentValue.includes(" ") || currentValue === question.id}>
+            disabled={isInputInvalid || currentValue === question.id}>
             <CheckIcon className="h-4 w-4" />
           </Button>
         )}
