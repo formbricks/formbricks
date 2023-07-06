@@ -1,4 +1,4 @@
-import TemplateContainerWithPreview from "./templateContainer";
+import TemplateContainerWithPreview from "./TemplateContainer";
 import { getEnvironment } from "@formbricks/lib/services/environment";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 

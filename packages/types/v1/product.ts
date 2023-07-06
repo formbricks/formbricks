@@ -14,23 +14,4 @@ export const ZProduct = z.object({
   darkOverlay: z.boolean(),
 });
 
-export const _ZEnvironmentProduct = z
-  .object({
-    id: ZProduct.shape.id,
-    name: ZProduct.shape.name,
-    team: ZProduct.shape.teamId,
-    brandColor: ZProduct.shape.brandColor,
-  })
-  .partial();
-
-const _ZEnvironmentIdentifer = z.object({
-  id: z.string().cuid2(),
-  type: z.enum(["development", "production"]),
-});
-
-export const ZProductWithEnvironment = ZProduct.extend({
-  environments: z.array(_ZEnvironmentIdentifer),
-});
-
 export type TProduct = z.infer<typeof ZProduct>;
-export type TProductWithEnvironmentIds = z.infer<typeof ZProductWithEnvironment>;

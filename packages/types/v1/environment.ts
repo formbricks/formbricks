@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { _ZEnvironmentProduct } from "./product";
 
 export const ZEnvironment: any = z.object({
   id: z.string().cuid2(),
@@ -10,8 +9,4 @@ export const ZEnvironment: any = z.object({
   widgetSetupCompleted: z.boolean(),
 });
 
-export const ZEnvironmentWithProduct = ZEnvironment.extend({
-  product: _ZEnvironmentProduct,
-});
-
-export type TEnvironmentProduct = z.infer<typeof ZEnvironment>;
+export type TEnvironment = z.infer<typeof ZEnvironment>;

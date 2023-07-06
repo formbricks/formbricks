@@ -8,13 +8,13 @@ import { replacePresetPlaceholders } from "@/lib/templates";
 import { templates } from "./templates";
 import PreviewSurvey from "./PreviewSurveyServer";
 import TemplateList from "./TemplateList";
-import { TProductWithEnvironmentIds } from "@formbricks/types/v1/product";
-import { TEnvironmentProduct } from "@formbricks/types/v1/environment";
+import type { TProduct } from "@formbricks/types/v1/product";
+import type { TEnvironment } from "@formbricks/types/v1/environment";
 
 type TemplateContainerWithPreviewProps = {
   environmentId: string;
-  product: TProductWithEnvironmentIds;
-  environment: TEnvironmentProduct;
+  product: TProduct;
+  environment: TEnvironment;
 };
 
 export default function TemplateContainerWithPreview({

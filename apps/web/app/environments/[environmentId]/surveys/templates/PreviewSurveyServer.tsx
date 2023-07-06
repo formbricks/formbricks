@@ -8,8 +8,8 @@ import ThankYouCard from "@/components/preview/ThankYouCard";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
-import { TProductWithEnvironmentIds } from "@formbricks/types/v1/product";
-import { TEnvironmentProduct } from "@formbricks/types/v1/environment";
+import type { TProduct } from "@formbricks/types/v1/product";
+import type { TEnvironment } from "@formbricks/types/v1/environment";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
@@ -20,8 +20,8 @@ interface PreviewSurveyProps {
   thankYouCard: Survey["thankYouCard"];
   autoClose: Survey["autoClose"];
   previewType?: "modal" | "fullwidth" | "email";
-  product: TProductWithEnvironmentIds;
-  environment: TEnvironmentProduct;
+  product: TProduct;
+  environment: TEnvironment;
 }
 
 export default function PreviewSurvey({

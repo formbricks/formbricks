@@ -3,33 +3,15 @@ import { prisma } from "@formbricks/database";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
-import { _ZEnvironmentProduct } from "@formbricks/types/v1/product";
-import { ZEnvironmentWithProduct } from "@formbricks/types/v1/environment";
-import type { TEnvironmentProduct } from "@formbricks/types/v1/environment";
+import { ZEnvironment } from "@formbricks/types/v1/environment";
+import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { cache } from "react";
-export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironmentProduct | null> => {
+export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment | null> => {
   let environmentPrisma;
   try {
     environmentPrisma = await prisma.environment.findUnique({
       where: {
         id: environmentId,
-      },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        type: true,
-        productId: true,
-        widgetSetupCompleted: true,
-        product: {
-          select: {
-            id: true,
-            name: true,
-            teamId: true,
-            brandColor: true,
-            environments: true,
-          },
-        },
       },
     });
 
@@ -45,7 +27,7 @@ export const getEnvironment = cache(async (environmentId: string): Promise<TEnvi
   }
 
   try {
-    const environment = ZEnvironmentWithProduct.parse(environmentPrisma);
+    const environment = ZEnvironment.parse(environmentPrisma);
     return environment;
   } catch (error) {
     if (error instanceof z.ZodError) {
