@@ -1,4 +1,4 @@
-import { FC, useState, useContext } from "react";
+import { FC, useState, useEffect } from "react";
 import {
   GlobeAltIcon,
   EnvelopeIcon,
@@ -13,6 +13,7 @@ import {
 } from "../../kda-snoopforms-react/src";
 import { Page, PageBlock, pageSubmissionEvent } from "../../lib/types";
 import { findTimer, isTimedPage } from "../../lib/utils";
+import { toast } from "react-toastify";
 // import { CurrentPageContext } from "../../kda-snoopforms-react/src";
 // import { SubmitButtonContext } from "../../kda-snoopforms-react/src";
 
@@ -23,7 +24,8 @@ interface IProps {
   submission?: pageSubmissionEvent;
   localOnly: boolean;
   startDate: Date;
-
+  // error: boolean;
+  // setError?: (value: boolean) => void;
 }
 
 const App: FC<IProps> = ({
@@ -33,18 +35,26 @@ const App: FC<IProps> = ({
   submission,
   localOnly = false,
   startDate = new Date(),
+  // error = false,
+  // setError,
 }) => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [disabled, setDisabled] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const router = useRouter();
 
+  useEffect(() => {
+    if (error) setError(true);
+  }, [error, setError]);
+
   const onSubmit = () => {
-    // if (error) console.log({ error });
 
     if (!Object.values(fieldErrors).filter((f) => f).length && !error) {
       router.push(`/sourcings/${formId}`);
     } else {
+      toast.error(
+        "Une erreur s'est produite, surement un champ obligatoire non remplit ou une erreur de connexion. veuillez ressayer",
+      );
       setDisabled(false);
     }
   };
@@ -92,12 +102,14 @@ const App: FC<IProps> = ({
         setDisabled={setDisabled}
         setError={setError}
         error={error}
-        page={page}>
+        page={page}
+      >
         <SnoopPage
           name={page.id}
           thankyou={false}
           time={findTimer(page, startDate)}
-          countDown={isTimedPage(page)}>
+          countDown={isTimedPage(page)}
+        >
           {page.blocks.map((block: PageBlock) => (
             <div
               key={block.id}
@@ -105,13 +117,15 @@ const App: FC<IProps> = ({
                 block.type === "submitButton" ? "" : "bg-white"
               } px-5 py-5 ${
                 /Question/.test(block.type) ? "mb-6 rounded-b-md" : ""
-              }`}>
+              }`}
+            >
               {block.type === "paragraph" ? (
                 <p
                   className="ce-paragraph"
                   dangerouslySetInnerHTML={{
                     __html: block.data.text as string,
-                  }}></p>
+                  }}
+                ></p>
               ) : block.type === "image" ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={block.data.file.url} alt={block.data.caption} />
@@ -268,17 +282,21 @@ const App: FC<IProps> = ({
                   error={fieldErrors[block.id]}
                 />
               ) : block.type === "submitButton" ? (
-                <SnoopElement
-                  name="submit"
-                  type="submit"
-                  label={block.data.label}
-                  isDisabled={disabled}
-                  classNames={{
-                    button: !disabled
-                      ? "inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                      : "inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-300 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500",
-                  }}
-                />
+                <>
+                  {/* {console.log(error)} */}
+
+                  <SnoopElement
+                    name="submit"
+                    type="submit"
+                    label={block.data.label}
+                    isDisabled={disabled}
+                    classNames={{
+                      button: !disabled
+                        ? "inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-700 border border-transparent rounded-md shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                        : "inline-flex items-center px-4 py-3 text-sm font-medium text-white bg-gray-300 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500",
+                    }}
+                  />
+                </>
               ) : block.type === "websiteQuestion" ? (
                 <SnoopElement
                   type="website"
