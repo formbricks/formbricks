@@ -19,6 +19,8 @@ const responseSelection = {
   person: {
     select: {
       id: true,
+      createdAt: true,
+      updatedAt: true,
       attributes: {
         select: {
           value: true,
