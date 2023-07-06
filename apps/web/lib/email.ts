@@ -16,7 +16,7 @@ interface sendEmailData {
   html: string;
 }
 
-const sendEmail = async (emailData: sendEmailData) => {
+export const sendEmail = async (emailData: sendEmailData) => {
   let transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
