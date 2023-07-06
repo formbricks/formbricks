@@ -8,7 +8,7 @@ import { upload } from "../../lib/utils";
 import { DRCProvinces } from "../../lib/enums";
 import { Address } from "@prisma/client";
 import Loading from "../../components/Loading";
-import BaseLayoutManagement from "../../components/layout/BaseLayoutManagement";
+// import BaseLayoutManagement from "../../components/layout/BaseLayoutManagement";
 
 export default function UpdateProfile() {
   const router = useRouter();
@@ -86,8 +86,7 @@ export default function UpdateProfile() {
       } else {
         session.data.user = updatedUser;
         toast.success("Votre profil a bien été mis à jour");
-        // TODO: line below introduces an infinite callback url
-        // router.push(router.query.next?.toString() || "/");
+        router.push(router.query.next?.toString() || "/");
       }
     } catch (e) {
       toast(e.message);
@@ -97,7 +96,8 @@ export default function UpdateProfile() {
   if (!user) return <Loading />;
 
   return (
-    <BaseLayoutManagement title="Mise à jour profil">
+      // TODO: using BaseLayoutManagement introduces an infinite callback url
+      // <BaseLayoutManagement title="Mise à jour profil">
       <div className="flex min-h-screen bg-ui-gray-light w-full">
         <div className="flex flex-col justify-center flex-1 px-4 py-12 mx-auto sm:px-6 lg:flex-none lg:px-20 xl:px-24">
           <div className="w-full max-w-sm p-8 mx-auto bg-white rounded-xl shadow-cont lg:w-96">
@@ -346,6 +346,6 @@ export default function UpdateProfile() {
           </div>
         </div>
       </div>
-    </BaseLayoutManagement>
+      // </BaseLayoutManagement>
   );
 }

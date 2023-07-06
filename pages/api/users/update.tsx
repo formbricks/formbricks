@@ -47,6 +47,7 @@ export default async function handle(
         dob: true,
         whatsapp: true,
         address: true,
+        profileIsValid: true
       },
       where: {
         id: user.id,
