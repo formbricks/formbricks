@@ -19,13 +19,13 @@ export async function POST(_: Request, { params }: { params: { displayId: string
   try {
     display = await markDisplayResponded(displayId);
     return responses.successResponse(
-    {
-      ...display,
-      createdAt: display.createdAt.toISOString(),
-      updatedAt: display.updatedAt.toISOString(),
-    },
-    true
-  );
+      {
+        ...display,
+        createdAt: display.createdAt.toISOString(),
+        updatedAt: display.updatedAt.toISOString(),
+      },
+      true
+    );
   } catch (error) {
     return responses.internalServerErrorResponse(error.message);
   }

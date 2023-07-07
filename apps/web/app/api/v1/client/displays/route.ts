@@ -13,7 +13,6 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-
   const displayInput: TDisplayInput = await request.json();
   const inputValidation = ZDisplayInput.safeParse(displayInput);
 

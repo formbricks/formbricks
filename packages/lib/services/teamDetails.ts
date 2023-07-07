@@ -41,7 +41,6 @@ export const getTeamDetails = async (environmentId: string) => {
       teamId: teamId,
       teamOwnerId: teamOwnerId,
     };
-    
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
