@@ -1,7 +1,10 @@
 "use client";
 
+import ShareInviteModal from "@/app/environments/[environmentId]/settings/members/ShareInviteModal";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import CreateTeamModal from "@/components/team/CreateTeamModal";
+import { env } from "@/env.mjs";
 import {
   addMember,
   deleteInvite,
@@ -12,6 +15,8 @@ import {
   updateMemberRole,
   useMembers,
 } from "@/lib/members";
+import { useProfile } from "@/lib/profile";
+import { capitalizeFirstLetter } from "@/lib/utils";
 import {
   Badge,
   Button,
@@ -28,15 +33,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@formbricks/ui";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { PaperAirplaneIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import AddMemberModal from "./AddMemberModal";
-import CreateTeamModal from "@/components/team/CreateTeamModal";
-import { capitalizeFirstLetter } from "@/lib/utils";
-import { useProfile } from "@/lib/profile";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
-import ShareInviteModal from "@/app/environments/[environmentId]/settings/members/ShareInviteModal";
 
 type EditMembershipsProps = {
   environmentId: string;
@@ -191,7 +192,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
           }}>
           Create New Team
         </Button>
-        {process.env.NEXT_PUBLIC_INVITE_DISABLED !== "1" && isAdminOrOwner && (
+        {env.NEXT_PUBLIC_INVITE_DISABLED !== "1" && isAdminOrOwner && (
           <Button
             variant="darkCTA"
             onClick={() => {

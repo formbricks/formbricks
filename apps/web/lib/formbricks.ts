@@ -1,7 +1,8 @@
 import formbricks, { PersonId, SurveyId, ResponseId } from "@formbricks/js";
+import { env } from "@/env.mjs";
 
 export const formbricksEnabled =
-  typeof process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST && process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID;
+  typeof env.NEXT_PUBLIC_FORMBRICKS_API_HOST && env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID;
 
 export const createResponse = async (
   surveyId: SurveyId,
