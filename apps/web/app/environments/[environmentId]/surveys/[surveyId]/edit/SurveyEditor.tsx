@@ -7,7 +7,7 @@ import type { Survey } from "@formbricks/types/surveys";
 import { ErrorComponent } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../../PreviewSurvey";
-import AudienceView from "./AudienceView";
+import SettingsView from "./SettingsView";
 import QuestionsAudienceTabs from "./QuestionsAudienceTabs";
 import QuestionsView from "./QuestionsView";
 import SurveyMenuBar from "./SurveyMenuBar";
@@ -36,7 +36,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
       }
     }
   }, [survey]);
-
 
   if (isLoadingSurvey || isLoadingProduct || !localSurvey) {
     return <LoadingSpinner />;
@@ -68,7 +67,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
               environmentId={environmentId}
             />
           ) : (
-            <AudienceView
+            <SettingsView
               environmentId={environmentId}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}

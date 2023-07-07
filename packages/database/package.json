@@ -20,25 +20,20 @@
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
     "prebuild": "npm run generate",
-    "predev": "npm run generate",
-    "studio": "prisma studio"
+    "predev": "npm run generate"
   },
   "dependencies": {
-    "@formbricks/types": "workspace:*",
-    "@prisma/client": "^4.15.0",
-    "prisma-json-types-generator": "^2.4.0",
-    "zod": "^3.21.4",
-    "zod-prisma": "^0.5.4"
+    "@prisma/client": "^4.16.2"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "eslint": "^8.41.0",
+    "@formbricks/types": "workspace:*",
     "eslint-config-formbricks": "workspace:*",
-    "prisma": "^4.15.0",
+    "prisma": "^4.16.2",
+    "prisma-json-types-generator": "^2.5.0",
     "prisma-dbml-generator": "^0.10.0",
-    "rimraf": "^5.0.1",
-    "tsup": "^6.7.0",
-    "tsx": "^3.12.7",
-    "typescript": "^5.0.4"
+    "tsup": "^7.1.0",
+    "zod": "^3.21.4",
+    "zod-prisma": "^0.5.4"
   }
 }

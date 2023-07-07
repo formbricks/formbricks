@@ -12,13 +12,11 @@
   "devDependencies": {
     "@formbricks/tsconfig": "*",
     "@formbricks/types": "*",
-    "eslint": "^8.41.0",
-    "eslint-config-formbricks": "workspace:*",
-    "rimraf": "^5.0.1",
-    "typescript": "^5.0.4"
+    "eslint-config-formbricks": "workspace:*"
   },
   "dependencies": {
     "@formbricks/database": "workspace:*",
-    "next": "^13.4.4"
+    "next": "13.4.8",
+    "stripe": "^12.6.0"
   }
 }

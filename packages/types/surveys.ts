@@ -11,6 +11,7 @@ export interface Survey {
   createdAt: string;
   updatedAt: string;
   name: string;
+  redirectUrl: string | null;
   type: "web" | "email" | "link" | "mobile";
   environmentId: string;
   status: "draft" | "inProgress" | "archived" | "paused" | "completed";
@@ -31,4 +32,16 @@ export interface AttributeFilter {
   attributeClassId: string;
   condition: string;
   value: string;
+}
+
+export interface SurveyNotificationData {
+  id: string;
+  numDisplays: number;
+  numDisplaysResponded: number;
+  responseLenght: number;
+  responseCompletedLength: number;
+  latestResponse: any;
+  questions: Question[];
+  status: "draft" | "inProgress" | "archived" | "paused" | "completed";
+  name: String;
 }

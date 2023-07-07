@@ -1,13 +1,20 @@
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import RedirectCountDown from "./RedirectCountDown";
 
 interface ThankYouCardProps {
   headline: string;
   subheader: string;
   brandColor: string;
+  initiateCountdown?: boolean;
 }
 
-export default function ThankYouCard({ headline, subheader, brandColor }: ThankYouCardProps) {
+export default function ThankYouCard({
+  headline,
+  subheader,
+  brandColor,
+  initiateCountdown,
+}: ThankYouCardProps) {
   return (
     <div className="text-center">
       <div className="flex items-center justify-center" style={{ color: brandColor }}>
@@ -31,6 +38,7 @@ export default function ThankYouCard({ headline, subheader, brandColor }: ThankY
       <div>
         <Headline headline={headline} questionId="thankYouCard" />
         <Subheader subheader={subheader} questionId="thankYouCard" />
+        <RedirectCountDown initiateCountdown={initiateCountdown} />
       </div>
     </div>
   );

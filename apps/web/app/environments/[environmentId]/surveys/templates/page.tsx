@@ -6,12 +6,9 @@ import { useProduct } from "@/lib/products/products";
 import { replacePresetPlaceholders } from "@/lib/templates";
 import type { Template } from "@formbricks/types/templates";
 import { ErrorComponent } from "@formbricks/ui";
-/* import { PaintBrushIcon } from "@heroicons/react/24/solid";
-import Link from "next/link"; */
 import { useEffect, useState } from "react";
 import PreviewSurvey from "../PreviewSurvey";
 import TemplateList from "./TemplateList";
-/* import TemplateMenuBar from "./TemplateMenuBar"; */
 import { templates } from "./templates";
 
 export default function SurveyTemplatesPage({ params }) {
@@ -36,7 +33,6 @@ export default function SurveyTemplatesPage({ params }) {
 
   return (
     <div className="flex h-full flex-col ">
-      {/*       <TemplateMenuBar activeTemplate={activeTemplate} environmentId={environmentId} /> */}
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <div className="flex-1 flex-col overflow-auto bg-slate-50">
           <h1 className="ml-6 mt-6 text-2xl font-bold text-slate-800">Create a new survey</h1>

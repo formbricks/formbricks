@@ -1,5 +1,5 @@
 export const RESPONSES_LIMIT_FREE = 100;
-export const IS_FORMBRICKS_CLOUD = process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD !== "1";
+export const IS_FORMBRICKS_CLOUD = process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1";
 
 // URLs
 const VERCEL_URL = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "";
@@ -16,3 +16,4 @@ export const WEBAPP_URL =
 
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET;
+export const CRON_SECRET = process.env.CRON_SECRET;

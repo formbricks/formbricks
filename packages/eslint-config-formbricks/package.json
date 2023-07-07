@@ -7,14 +7,11 @@
   "scripts": {
     "clean": "rimraf node_modules .turbo"
   },
-  "dependencies": {
+  "devDependencies": {
     "eslint": "^8.41.0",
     "eslint-config-next": "^13.4.4",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-react": "7.32.2",
     "eslint-config-turbo": "latest"
-  },
-  "devDependencies": {
-    "rimraf": "^5.0.1"
   }
 }

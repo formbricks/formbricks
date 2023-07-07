@@ -1,10 +1,8 @@
 import { z } from "zod";
 
-export const ZUserNotificationSettings = z.record(
-  z.object({
-    responseFinished: z.boolean(),
-    weeklySummary: z.boolean(),
-  })
-);
+export const ZUserNotificationSettings = z.object({
+  alert: z.record(z.boolean()),
+  weeklySummary: z.record(z.boolean()),
+});
 
 export type TUserNotificationSettings = z.infer<typeof ZUserNotificationSettings>;

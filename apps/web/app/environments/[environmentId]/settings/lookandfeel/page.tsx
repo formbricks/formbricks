@@ -10,7 +10,6 @@ export default function ProfileSettingsPage({ params }: { params: { environmentI
         <EditBrandColor environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
-        soon
         title="In-app Survey Placement"
         description="Change where surveys will be shown in your web app.">
         <EditPlacement environmentId={params.environmentId} />

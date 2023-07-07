@@ -27,6 +27,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/deal",
+        destination: "/concierge",
+        permanent: false,
+      },
+      {
         source: "/privacy",
         destination: "/privacy-policy",
         permanent: true,
@@ -39,6 +44,11 @@ const nextConfig = {
       {
         source: "/docs",
         destination: "/docs/introduction/what-is-formbricks",
+        permanent: true,
+      },
+      {
+        source: "/docs/getting-started/nextjs",
+        destination: "/docs/getting-started/nextjs-app",
         permanent: true,
       },
       {

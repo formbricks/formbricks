@@ -1,7 +1,6 @@
 import fbsetup from "../../public/fb-setup.png";
 import formbricks from "@formbricks/js";
 import Image from "next/image";
-import { LogsContainer } from "../../components/ConsoleFeed";
 
 export default function AppPage({}) {
   return (
@@ -23,11 +22,14 @@ export default function AppPage({}) {
             <Image src={fbsetup} alt="fb setup" className="mt-4 rounded" priority />
           </div>
           <div className="mt-4 rounded-lg border border-slate-300 bg-slate-100 p-6">
-            <h3 className="text-lg font-semibold">Console</h3>
-            <p className="text-slate-700">You can also open your browser console to logs:</p>
-            <div className="max-h-[40vh] overflow-y-auto py-4">
+            <h3 className="text-lg font-semibold">Widget Logs</h3>
+            <p className="text-slate-700">
+              Look at the logs to understand how the widget works. <strong>Open your browser console</strong>{" "}
+              to see the logs.
+            </p>
+            {/*           <div className="max-h-[40vh] overflow-y-auto py-4">
               <LogsContainer />
-            </div>
+            </div> */}
           </div>
         </div>
 

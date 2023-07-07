@@ -9,6 +9,7 @@ import { getTeamDetails } from "@formbricks/lib/services/teamDetails";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
+import { UAParser } from "ua-parser-js";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -16,6 +17,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 
 export async function POST(request: Request): Promise<NextResponse> {
   const responseInput: TResponseInput = await request.json();
+  const agent = UAParser(request.headers.get("user-agent"));
   const inputValidation = ZResponseInput.safeParse(responseInput);
 
   if (!inputValidation.success) {
@@ -42,7 +44,18 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   let response: TResponse;
   try {
-    response = await createResponse(responseInput);
+    const meta = {
+      userAgent: {
+        browser: agent?.browser.name,
+        device: agent?.device.type,
+        os: agent?.os.name,
+      },
+    };
+
+    response = await createResponse({
+      ...responseInput,
+      meta,
+    });
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);

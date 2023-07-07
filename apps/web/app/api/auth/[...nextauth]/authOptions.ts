@@ -295,7 +295,7 @@ export const authOptions: NextAuthOptions = {
                                         name: "50% Scroll",
                                         description: "A user scrolled 50% of the current page",
                                         type: "automatic",
-                                      }
+                                      },
                                     ],
                                   },
                                   attributeClasses: {
@@ -331,7 +331,7 @@ export const authOptions: NextAuthOptions = {
                                         name: "50% Scroll",
                                         description: "A user scrolled 50% of the current page",
                                         type: "automatic",
-                                      }
+                                      },
                                     ],
                                   },
                                   attributeClasses: {

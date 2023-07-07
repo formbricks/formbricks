@@ -40,7 +40,7 @@ export const ZSurveyOpenTextLogic = ZSurveyLogicBase.extend({
 });
 
 export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped", "accepted"]).optional(),
+  condition: z.enum(["skipped", "accepted"]).optional(),
   value: z.undefined(),
 });
 
@@ -71,7 +71,8 @@ export const ZSurveyNPSLogic = ZSurveyLogicBase.extend({
 });
 
 const ZSurveyCTALogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped"]).optional(),
+  // "submitted" condition is legacy and should be removed later
+  condition: z.enum(["clicked", "submitted", "skipped"]).optional(),
   value: z.undefined(),
 });
 
@@ -108,12 +109,15 @@ const ZSurveyQuestionBase = z.object({
   subheader: z.string().optional(),
   required: z.boolean(),
   buttonLabel: z.string().optional(),
+  scale: z.enum(["number", "smiley", "star"]).optional(),
+  range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
 });
 
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.OpenText),
   placeholder: z.string().optional(),
+  longAnswer: z.boolean().optional(),
   logic: z.array(ZSurveyOpenTextLogic).optional(),
 });
 
@@ -153,7 +157,7 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
 
 export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.Rating),
-  scale: z.union([z.literal("number"), z.literal("smiley"), z.literal("star")]),
+  scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
   lowerLabel: z.string(),
   upperLabel: z.string(),
@@ -169,6 +173,8 @@ export const ZSurveyQuestion = z.union([
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
 ]);
+
+export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
 
 export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 
@@ -193,11 +199,12 @@ export const ZSurvey = z.object({
   displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
   autoClose: z.union([z.number(), z.null()]),
   triggers: z.array(ZEventClass),
+  redirectUrl: z.string().url().optional(),
   recontactDays: z.union([z.number(), z.null()]),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
   delay: z.number(),
-  autoComplete: z.union([z.boolean(), z.null()]),
+  autoComplete: z.union([z.number(), z.null()]),
   analytics: z.object({
     numDisplays: z.number(),
     responseRate: z.number(),
