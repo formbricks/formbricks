@@ -1,8 +1,7 @@
+import "./env.mjs";
+import { createId } from "@paralleldrive/cuid2";
+
 /** @type {import('next').NextConfig} */
-
-require("@next/env").loadEnvConfig("../../");
-
-const { createId } = require("@paralleldrive/cuid2");
 
 const nextConfig = {
   output: "standalone",
@@ -66,4 +65,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

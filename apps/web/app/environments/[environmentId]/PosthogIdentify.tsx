@@ -1,9 +1,10 @@
 "use client";
+import { env } from "@/env.mjs";
 import type { Session } from "next-auth";
 import { usePostHog } from "posthog-js/react";
 import { useEffect } from "react";
 
-const posthogEnabled = process.env.NEXT_PUBLIC_POSTHOG_API_KEY && process.env.NEXT_PUBLIC_POSTHOG_API_HOST;
+const posthogEnabled = env.NEXT_PUBLIC_POSTHOG_API_KEY && env.NEXT_PUBLIC_POSTHOG_API_HOST;
 
 export default function PosthogIdentify({ session }: { session: Session }) {
   const posthog = usePostHog();

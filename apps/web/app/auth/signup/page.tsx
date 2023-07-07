@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { SignupForm } from "@/components/auth/SignupForm";
 import FormWrapper from "@/components/auth/FormWrapper";
 import Testimonial from "@/components/auth/Testimonial";
+import { env } from "@/env.mjs";
 
 export default function SignUpPage() {
   const searchParams = useSearchParams();
@@ -18,9 +19,7 @@ export default function SignUpPage() {
       <div className="col-span-3 flex flex-col items-center justify-center">
         <FormWrapper>
           {(
-            inviteToken
-              ? process.env.NEXT_PUBLIC_INVITE_DISABLED === "1"
-              : process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1"
+            inviteToken ? env.NEXT_PUBLIC_INVITE_DISABLED === "1" : env.NEXT_PUBLIC_SIGNUP_DISABLED === "1"
           ) ? (
             <>
               <h1 className="leading-2 mb-4 text-center font-bold">Sign up disabled</h1>
