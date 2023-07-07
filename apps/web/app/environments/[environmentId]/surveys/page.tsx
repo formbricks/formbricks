@@ -1,6 +1,11 @@
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import WidgetStatusIndicator from "@/components/shared/WidgetStatusIndicator";
 import SurveysList from "./SurveyList";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title:"Survey"
+}
 
 export default async function SurveysPage({ params }) {
   return (

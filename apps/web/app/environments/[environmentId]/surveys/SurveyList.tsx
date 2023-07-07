@@ -174,13 +174,13 @@ export default function SurveysList({ environmentId }) {
                     className="font-base"></Badge>
                   <p className="my-2 line-clamp-3 text-lg">{survey.name}</p>
                 </div>
-                <a
+                <Link
                   href={
                     survey.status === "draft"
                       ? `/environments/${environmentId}/surveys/${survey.id}/edit`
                       : `/environments/${environmentId}/surveys/${survey.id}/summary`
                   }
-                  className="absolute h-full w-full"></a>
+                  className="absolute h-full w-full"></Link>
                 <div className="divide-y divide-slate-100">
                   <div className="flex justify-between px-4 py-2 text-right sm:px-6">
                     <div className="flex items-center">
@@ -209,12 +209,12 @@ export default function SurveysList({ environmentId }) {
                       <DropdownMenuContent className="w-40">
                         <DropdownMenuGroup>
                           <DropdownMenuItem>
-                            <a
+                            <Link
                               className="flex w-full items-center"
                               href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
                               <PencilSquareIcon className="mr-2 h-4 w-4" />
                               Edit
-                            </a>
+                            </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <button
