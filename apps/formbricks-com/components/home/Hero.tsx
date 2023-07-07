@@ -18,11 +18,11 @@ export const Hero: React.FC = ({}) => {
   const router = useRouter();
   return (
     <div className="relative">
-      <div className="px-4 pb-20 pt-16 text-center sm:px-6 lg:px-8 lg:pb-32 lg:pt-24">
+      <div className="px-4 pb-20 pt-16 text-center sm:px-6 lg:px-8 lg:pb-32 lg:pt-20">
         <a
           href="https://github.com/formbricks/formbricks"
           target="_blank"
-          className="border-brand-dark rounded-full border px-6 py-2 text-slate-300 hover:bg-slate-800">
+          className="border-brand-dark rounded-full border px-6 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
           We&apos;re Open-Source | Star us on GitHub{" "}
           <ChevronRightIcon className="inline h-5 w-5 text-slate-300" />
         </a>
@@ -43,7 +43,7 @@ export const Hero: React.FC = ({}) => {
           <p className="hidden whitespace-nowrap pt-3 text-xs text-slate-400 dark:text-slate-500 md:block">
             Trusted by
           </p>
-          <div className="grid grid-cols-3 items-center gap-8 pt-2 md:grid-cols-5">
+          <div className="grid grid-cols-3 items-center gap-8 pt-2 md:grid-cols-4">
             <Image
               src={CalLogoLight}
               alt="Cal Logo"
