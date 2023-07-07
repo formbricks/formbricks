@@ -116,7 +116,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // GET /api/v1/teams/[teamId]/invite/[inviteId]
   // Retrieve an invite token
   else if (req.method === "GET") {
-
     const invite = await prisma.invite.findUnique({
       where: {
         id: inviteId,

@@ -1,0 +1,57 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+
+import PeopleView from "./people-view.png";
+
+export const meta = {
+  title: "User Identification in Link Surveys",
+  description:
+    "Identify users in link surveys via URL parameter. Connect responses to existing users in Formbricks.",
+};
+
+Identifying users in link features lets you connect responses from link surveys with existing users in your Formbricks database.
+
+## Purpose
+
+Identifying users in link surveys comes in handy when you:
+
+- Want to send out link surveys to existing users in your database
+- Want to connect responses from link surveys with existing users in your database
+- Want to gather data and later connect it to a user who has not signed up yet
+
+## Quick Example
+
+```tsx
+https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?userId=ABC123
+```
+
+## How it works
+
+To link a response to a user in your Formbricks database, you can pass your internal user Id as a URL parameter.
+
+## Where do I find my userId?
+
+The `userId` we are refering to is the `userId` of your own system. For example, a user signs up to your app and gets the Id `ABC123` assigned then this is the Id you pass along in the URL parameter.
+
+This allows you to connect the response to the user profile of this specific in the Formbricks database. You can then use the response data to create segments for further surveying or invite them to an interview, etc.
+
+## getOrCreateUser - how it works exactly
+
+By default, respondents of link surveys are **not** recorded and displayed in the People view. This would lead to your People view to be spammend with unidentified people.
+
+If you add the `userId` URL parameter a Person will be created, if there is no existing person in your database with a matching `userId`.
+
+**Case 1:** User with userId `ABC111` exists, the response from the link survey will be added to this users profile.
+
+**Case 2:** User with userId `ABC222` does not yet exists, so it is created with the response from the link survey connected to this user.
+
+<Image
+  src={PeopleView}
+  alt="If users are identified by email, it will show. If not, the internal Id will be set."
+  quality="100"
+  className="rounded-lg"
+/>
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

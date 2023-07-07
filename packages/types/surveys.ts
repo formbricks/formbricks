@@ -33,3 +33,15 @@ export interface AttributeFilter {
   condition: string;
   value: string;
 }
+
+export interface SurveyNotificationData {
+  id: string;
+  numDisplays: number;
+  numDisplaysResponded: number;
+  responseLenght: number;
+  responseCompletedLength: number;
+  latestResponse: any;
+  questions: Question[];
+  status: "draft" | "inProgress" | "archived" | "paused" | "completed";
+  name: String;
+}

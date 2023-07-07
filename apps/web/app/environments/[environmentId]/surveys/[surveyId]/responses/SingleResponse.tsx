@@ -41,8 +41,7 @@ export interface OpenTextSummaryProps {
 }
 
 function findEmail(person) {
-  const emailAttribute = person.attributes.email;
-  return emailAttribute ? emailAttribute.value : null;
+  return person.attributes?.email || null;
 }
 
 interface TooltipRendererProps {
