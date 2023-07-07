@@ -1,13 +1,13 @@
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { sendToPipeline } from "@/lib/pipelines";
-import { prisma } from "@formbricks/database";
 import { InvalidInputError } from "@formbricks/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";
+import { getTeamDetails } from "@formbricks/lib/services/teamDetails";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
+import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/v1/responses";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 
@@ -40,41 +40,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
   }
 
-  // prisma call to get the teamId
-  // TODO use services
-  const environment = await prisma.environment.findUnique({
-    where: { id: survey.environmentId },
-    include: {
-      product: {
-        select: {
-          team: {
-            select: {
-              id: true,
-              memberships: {
-                where: { role: "owner" },
-                select: { userId: true },
-                take: 1,
-              },
-            },
-          },
-        },
-      },
-    },
-  });
+  const teamDetails = await getTeamDetails(survey.environmentId);
 
-  if (!environment) {
-    return responses.internalServerErrorResponse("Environment not found");
-  }
-  const {
-    product: {
-      team: { id: teamId, memberships },
-    },
-  } = environment;
-
-  const teamOwnerId = memberships[0]?.userId;
-
-  let response;
-
+  let response: TResponse;
   try {
     const meta = {
       userAgent: {
@@ -113,8 +81,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   captureTelemetry("response created");
-  if (teamOwnerId) {
-    await capturePosthogEvent(teamOwnerId, "response created", teamId, {
+
+  if (teamDetails?.teamOwnerId) {
+    await capturePosthogEvent(teamDetails.teamOwnerId, "response created", teamDetails.teamId, {
       surveyId: response.surveyId,
       surveyType: survey.type,
     });

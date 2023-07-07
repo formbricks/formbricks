@@ -7,7 +7,7 @@ export const createResponse = async (
   surveyId: SurveyId,
   data: { [questionId: string]: any },
   finished: boolean = false
-) => {
+): Promise<any> => {
   const api = formbricks.getApi();
   const personId = formbricks.getPerson()?.id as PersonId;
   return await api.createResponse({
@@ -22,7 +22,7 @@ export const updateResponse = async (
   responseId: ResponseId,
   data: { [questionId: string]: any },
   finished: boolean = false
-) => {
+): Promise<any> => {
   const api = formbricks.getApi();
   return await api.updateResponse({
     responseId,
