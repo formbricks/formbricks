@@ -1,6 +1,6 @@
 "use client";
 
-import AddNoCodeEventModal from "@/app/environments/[environmentId]/events/AddNoCodeEventModal";
+import AddNoCodeActionModal from "@/app/environments/[environmentId]/events/AddNoCodeActionModal";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
@@ -257,7 +257,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
           )}
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
-      <AddNoCodeEventModal
+      <AddNoCodeActionModal
         environmentId={environmentId}
         open={isAddEventModalOpen}
         setOpen={setAddEventModalOpen}

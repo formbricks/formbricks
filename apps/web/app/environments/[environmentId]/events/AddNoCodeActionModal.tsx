@@ -1,7 +1,6 @@
 "use client";
 
 import Modal from "@/components/shared/Modal";
-import { createEventClass } from "@/lib/eventClasses/eventClasses";
 import type { Event, NoCodeConfig } from "@formbricks/types/events";
 import {
   Button,
@@ -21,6 +20,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
+import { createActionClassServerAction } from "@formbricks/lib/services/serverActions";
 
 interface EventDetailModalProps {
   environmentId: string;
@@ -29,7 +29,7 @@ interface EventDetailModalProps {
   mutateEventClasses: (data?: any) => void;
 }
 
-export default function AddNoCodeEventModal({
+export default function AddNoCodeActionModal({
   environmentId,
   open,
   setOpen,
@@ -56,7 +56,7 @@ export default function AddNoCodeEventModal({
     } as Event;
 
     try {
-      await createEventClass(environmentId, updatedData);
+      await createActionClassServerAction(environmentId, updatedData);
       mutateEventClasses();
       reset();
       setOpen(false);

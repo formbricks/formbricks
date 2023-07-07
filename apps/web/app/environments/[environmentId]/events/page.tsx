@@ -1,5 +1,5 @@
-import EventClassesList from "./EventClassesList";
-import EventsAttributesTabs from "@/components/events_attributes/EventsAttributesTabs";
+import ActionsAttributesTabs from "@/components/events_attributes/EventsAttributesTabs";
+import ActionClassesComponent from "@/app/environments/[environmentId]/events/ActionClassesComponent";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import { Metadata } from "next";
 
@@ -7,13 +7,13 @@ export const metadata: Metadata = {
   title: "Actions & Attributes",
 };
 
-export default function EventsPage({ params }) {
+export default function ActionsPage({ params }) {
   return (
-    <div className="">
-      <EventsAttributesTabs activeId="events" environmentId={params.environmentId} />
+    <>
+      <ActionsAttributesTabs activeId="events" environmentId={params.environmentId} />
       <ContentWrapper>
-        <EventClassesList environmentId={params.environmentId} />
+        <ActionClassesComponent environmentId={params.environmentId}></ActionClassesComponent>
       </ContentWrapper>
-    </div>
+    </>
   );
 }

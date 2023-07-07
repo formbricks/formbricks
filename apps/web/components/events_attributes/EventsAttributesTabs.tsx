@@ -6,7 +6,7 @@ interface EventsAttributesTabsProps {
   environmentId: string;
 }
 
-export default function EventsAttributesTabs({ activeId, environmentId }: EventsAttributesTabsProps) {
+export default function ActionsAttributesTabs({ activeId, environmentId }: EventsAttributesTabsProps) {
   const tabs = [
     {
       id: "events",
