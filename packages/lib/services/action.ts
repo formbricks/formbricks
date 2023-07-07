@@ -1,44 +1,37 @@
+"use server";
+
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/errors";
-import { EventType } from "@prisma/client";
+import { TAction } from "@formbricks/types/v1/actions";
 
-export type TranformEventClassOutput = {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  name: string;
-  description: string | null;
-  type: EventType;
-  noCodeConfig: any;
-  environmentId: string;
-  eventCount: number;
-};
-
-export const transformPrismaEventClass = (eventClass): TranformEventClassOutput | null => {
-  if (eventClass === null) {
+export const transformPrismaActionClass = (actionClass): TAction | null => {
+  if (actionClass === null) {
     return null;
   }
 
-  const transformedEventClass: TranformEventClassOutput = {
-    id: eventClass.id,
-    name: eventClass.name,
-    description: eventClass.description,
-    type: eventClass.type,
-    noCodeConfig: eventClass.noCodeConfig,
-    environmentId: eventClass.environmentId,
-    eventCount: eventClass._count.events,
-    createdAt: eventClass.createdAt,
-    updatedAt: eventClass.updatedAt,
+  const transformedActionClass: TAction = {
+    id: actionClass.id,
+    name: actionClass.name,
+    description: actionClass.description,
+    type: actionClass.type,
+    noCodeConfig: actionClass.noCodeConfig,
+    environmentId: actionClass.environmentId,
+    actionCount: actionClass._count.events,
+    createdAt: actionClass.createdAt,
+    updatedAt: actionClass.updatedAt,
   };
 
-  return transformedEventClass;
+  return transformedActionClass;
 };
 
-export const getActionClasses = async (environmentId: string): Promise<TranformEventClassOutput[]> => {
+export const getActionClasses = async (environmentId: string): Promise<TAction[]> => {
   try {
-    let eventClasses = await prisma.eventClass.findMany({
+    let actionClasses = await prisma.eventClass.findMany({
       where: {
         environmentId: environmentId,
+      },
+      orderBy: {
+        createdAt: "asc",
       },
       include: {
         _count: {
@@ -48,18 +41,26 @@ export const getActionClasses = async (environmentId: string): Promise<TranformE
         },
       },
     });
-    eventClasses.sort((first, second) => {
-      return first.createdAt.getTime() - second.createdAt.getTime();
+
+    const transformedActionClasses: TAction[] = actionClasses
+      .map(transformPrismaActionClass)
+      .filter((actionClass): actionClass is TAction => actionClass !== null);
+
+    return transformedActionClasses;
+  } catch (error) {
+    throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
+  }
+};
+
+export const createActionClassServerAction = async (environmentId: string, eventClass) => {
+  try {
+    const result = await prisma.eventClass.create({
+      data: {
+        ...eventClass,
+        environment: { connect: { id: environmentId } },
+      },
     });
-
-    const transformedEventClasses: TranformEventClassOutput[] = eventClasses
-      .map(transformPrismaEventClass)
-      .filter(
-        (eventClass: TranformEventClassOutput | null): eventClass is TranformEventClassOutput =>
-          eventClass !== null
-      );
-
-    return transformedEventClasses;
+    return result;
   } catch (error) {
     throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
   }

@@ -20,7 +20,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
-import { createActionClassServerAction } from "@formbricks/lib/services/serverActions";
+import { createActionClassServerAction } from "@formbricks/lib/services/action";
 
 interface EventDetailModalProps {
   environmentId: string;

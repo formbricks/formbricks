@@ -23,7 +23,7 @@ export default function ActionClassDataRow({ actionClass }) {
         </div>
       </div>
       <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
-        {actionClass.eventCount}
+        {actionClass.actionCount}
       </div>
       <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
         {timeSinceConditionally(actionClass.createdAt.toString())}

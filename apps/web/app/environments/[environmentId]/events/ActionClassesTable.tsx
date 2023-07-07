@@ -5,8 +5,8 @@ import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import AddNoCodeActionModal from "./AddNoCodeActionModal";
 import ActionDetailModal from "./EventDetailModal";
-import { TranformEventClassOutput } from "@formbricks/lib/services/action";
 import { useRouter } from "next/navigation";
+import { TAction } from "@formbricks/types/v1/actions";
 
 export default function ActionClassesTable({
   environmentId,
@@ -14,7 +14,7 @@ export default function ActionClassesTable({
   children: [TableHeading, actionRows],
 }: {
   environmentId: string;
-  actionClasses: Array<TranformEventClassOutput>;
+  actionClasses: TAction[];
   children: [JSX.Element, JSX.Element[]];
 }) {
   const router = useRouter();
