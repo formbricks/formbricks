@@ -1,5 +1,5 @@
 import { TDisplay, TDisplayInput } from "@formbricks/types/v1/displays";
-import type { DisplayCreateRequest, JsConfig, Response } from "../../../types/js";
+import type { JsConfig } from "../../../types/js";
 import { NetworkError, Result, err, ok, okVoid } from "./errors";
 
 export const createDisplay = async (
