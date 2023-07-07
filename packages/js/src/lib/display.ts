@@ -14,17 +14,17 @@ export const createDisplay = async (
     body: JSON.stringify(displayCreateRequest),
   });
 
-  const jsonRes = await res.json();
-
   if (!res.ok) {
     return err({
       code: "network_error",
       message: "Could not create display",
       status: res.status,
       url,
-      responseMessage: jsonRes.message,
+      responseMessage: await res.text(),
     });
   }
+
+  const jsonRes = await res.json();
 
   return ok(jsonRes.data as TDisplay);
 };
@@ -40,15 +40,13 @@ export const markDisplayResponded = async (
     headers: { "Content-Type": "application/json" },
   });
 
-  const jsonRes = await res.json();
-
   if (!res.ok) {
     return err({
       code: "network_error",
       message: "Could not mark display as responded",
       status: res.status,
       url,
-      responseMessage: jsonRes.message,
+      responseMessage: await res.text(),
     });
   }
 

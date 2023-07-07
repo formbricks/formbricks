@@ -1,16 +1,12 @@
 import { z } from "zod";
+import { ZPerson } from "./people";
 
 export const ZDisplay = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   surveyId: z.string().cuid2(),
-  person: z
-  .object({
-    id: z.string().cuid2(),
-    attributes: z.record(z.union([z.string(), z.number()])),
-  })
-  .nullable(),
+  person: ZPerson.nullable(),
   status: z.enum(["seen", "responded"]),
 });
 
@@ -22,5 +18,3 @@ export const ZDisplayInput = z.object({
 });
 
 export type TDisplayInput = z.infer<typeof ZDisplayInput>;
-
-
