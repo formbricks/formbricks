@@ -5,10 +5,9 @@ import CrowdLogoDark from "@/images/clients/crowd-logo-dark.svg";
 import CrowdLogoLight from "@/images/clients/crowd-logo-light.svg";
 import NILogoDark from "@/images/clients/niLogoDark.svg";
 import NILogoLight from "@/images/clients/niLogoWhite.svg";
-import StackOceanLogoDark from "@/images/clients/stack-ocean-dark.png";
-import StackOceanLogoLight from "@/images/clients/stack-ocean-light.png";
 import AnimationFallback from "@/public/animations/fallback-image-open-source-feedback-software.jpg";
 import { Button } from "@formbricks/ui";
+import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { usePlausible } from "next-plausible";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -19,8 +18,15 @@ export const Hero: React.FC = ({}) => {
   const router = useRouter();
   return (
     <div className="relative">
-      <div className="px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
+      <div className="px-4 pb-20 pt-16 text-center sm:px-6 lg:px-8 lg:pb-32 lg:pt-24">
+        <a
+          href="https://github.com/formbricks/formbricks"
+          target="_blank"
+          className="border-brand-dark rounded-full border px-6 py-2 text-slate-300 hover:bg-slate-800">
+          We&apos;re Open-Source | Star us on GitHub{" "}
+          <ChevronRightIcon className="inline h-5 w-5 text-slate-300" />
+        </a>
+        <h1 className="mt-10 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
           <span className="xl:inline">Create Products People Remember</span>
         </h1>
 
@@ -29,7 +35,7 @@ export const Hero: React.FC = ({}) => {
           <br />
           <span className="hidden md:block">
             Continuously gather deep user insights,{" "}
-            <span className="decoration-brand-dark underline underline-offset-4">all privacy-first.</span>
+            <span className="decoration-brand-dark underline underline-offset-4">privacy-first.</span>
           </span>
         </p>
 
@@ -78,18 +84,6 @@ export const Hero: React.FC = ({}) => {
               src={NILogoLight}
               alt="Neverinstall Logo"
               className="hidden  pb-1 hover:opacity-100 dark:block md:opacity-50"
-              width={200}
-            />
-            <Image
-              src={StackOceanLogoLight}
-              alt="StackOcean Logo"
-              className="block  pb-1 hover:opacity-100 dark:hidden md:opacity-50"
-              width={200}
-            />
-            <Image
-              src={StackOceanLogoDark}
-              alt="StakcOcean Logo"
-              className="hidden pb-1 hover:opacity-100 dark:block md:opacity-50"
               width={200}
             />
           </div>
