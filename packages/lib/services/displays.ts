@@ -1,12 +1,36 @@
-import {prisma} from "@formbricks/database";
+import { prisma } from "@formbricks/database";
 import { TDisplay, TDisplayInput } from "@formbricks/types/v1/displays";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { transformPrismaPerson } from "./person";
 
+const selectDisplay = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  surveyId: true,
+  person: {
+    select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      attributes: {
+        select: {
+          value: true,
+          attributeClass: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  },
+  status: true,
+};
+
 export const createDisplay = async (displayInput: TDisplayInput): Promise<TDisplay> => {
   try {
-
     const displayPrisma = await prisma.display.create({
       data: {
         survey: {
@@ -15,40 +39,16 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
           },
         },
         status: "seen",
-        
-        ...(displayInput.personId &&
-          {
-              person: {
-                connect: {
-                  id: displayInput.personId,
-                },
-              },
-            }
-          ),
-        
-      },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        person: {
-          select: {
-            id: true,
-            attributes: {
-              select: {
-                value: true,
-                attributeClass: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
+
+        ...(displayInput.personId && {
+          person: {
+            connect: {
+              id: displayInput.personId,
             },
           },
-        },
-        status: true,
+        }),
       },
+      select: selectDisplay,
     });
 
     const display: TDisplay = {
@@ -66,13 +66,10 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
   }
 };
 
-
-
 export const markDisplayResponded = async (displayId: string): Promise<TDisplay> => {
   try {
+    if (!displayId) throw new Error("Display ID is required");
 
-    if(!displayId) throw new Error("Display ID is required");
-    
     const displayPrisma = await prisma.display.update({
       where: {
         id: displayId,
@@ -80,28 +77,7 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
       data: {
         status: "responded",
       },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        surveyId: true,
-        person: {
-          select: {
-            id: true,
-            attributes: {
-              select: {
-                value: true,
-                attributeClass: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        status: true,
-      },
+      select: selectDisplay,
     });
 
     if (!displayPrisma) {
@@ -122,6 +98,3 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
     throw error;
   }
 };
-
-
-
