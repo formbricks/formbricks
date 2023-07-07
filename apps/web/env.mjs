@@ -8,9 +8,9 @@ export const env = createEnv({
    */
   server: {
     DATABASE_URL: z.string().url(),
-    PRISMA_GENERATE_DATAPROXY: z.enum(["1", "0", ""]),
+    PRISMA_GENERATE_DATAPROXY: z.enum(["1", "0", ""]).optional(),
     NEXTAUTH_SECRET: z.string().min(1),
-    NEXTAUTH_URL: z.string().url(),
+    NEXTAUTH_URL: z.string().url().optional(),
     MAIL_FROM: z.string().email().optional(),
     SMTP_HOST: z.string().min(1).optional(),
     SMTP_PORT: z.string().min(1).optional(),
@@ -33,7 +33,7 @@ export const env = createEnv({
    * 💡 You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
    */
   client: {
-    NEXT_PUBLIC_WEBAPP_URL: z.string().url(),
+    NEXT_PUBLIC_WEBAPP_URL: z.string().url().optional(),
     NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
     NEXT_PUBLIC_PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     NEXT_PUBLIC_SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
