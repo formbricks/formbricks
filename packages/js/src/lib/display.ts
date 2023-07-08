@@ -1,11 +1,12 @@
-import type { DisplayCreateRequest, JsConfig, Response } from "../../../types/js";
+import { TDisplay, TDisplayInput } from "@formbricks/types/v1/displays";
+import type { JsConfig } from "../../../types/js";
 import { NetworkError, Result, err, ok, okVoid } from "./errors";
 
 export const createDisplay = async (
-  displayCreateRequest: DisplayCreateRequest,
+  displayCreateRequest: TDisplayInput,
   config: JsConfig
-): Promise<Result<Response, NetworkError>> => {
-  const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays`;
+): Promise<Result<TDisplay, NetworkError>> => {
+  const url = `${config.apiHost}/api/v1/client/displays`;
 
   const res = await fetch(url, {
     method: "POST",
@@ -14,41 +15,38 @@ export const createDisplay = async (
   });
 
   if (!res.ok) {
-    const jsonRes = await res.json();
-
     return err({
       code: "network_error",
       message: "Could not create display",
       status: res.status,
       url,
-      responseMessage: jsonRes.message,
+      responseMessage: await res.text(),
     });
   }
 
-  const response = (await res.json()) as Response;
+  const jsonRes = await res.json();
 
-  return ok(response);
+  return ok(jsonRes.data as TDisplay);
 };
 
 export const markDisplayResponded = async (
   displayId: string,
   config: JsConfig
 ): Promise<Result<void, NetworkError>> => {
-  const url = `${config.apiHost}/api/v1/client/environments/${config.environmentId}/displays/${displayId}/responded`;
+  const url = `${config.apiHost}/api/v1/client/displays/${displayId}/responded`;
 
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
   });
-  if (!res.ok) {
-    const jsonRes = await res.json();
 
+  if (!res.ok) {
     return err({
       code: "network_error",
       message: "Could not mark display as responded",
       status: res.status,
       url,
-      responseMessage: jsonRes.message,
+      responseMessage: await res.text(),
     });
   }
 

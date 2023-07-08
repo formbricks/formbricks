@@ -1,6 +1,7 @@
 "use client";
 
 import { GoogleButton } from "@/components/auth/GoogleButton";
+import { env } from "@/env.mjs";
 import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
@@ -75,7 +76,7 @@ export const SigninForm = () => {
                     className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                   />
                 </div>
-                {process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && isPasswordFocused && (
+                {env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && isPasswordFocused && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
@@ -105,18 +106,18 @@ export const SigninForm = () => {
             </Button>
           </form>
 
-          {process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
+          {env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
             <>
               <GoogleButton />
             </>
           )}
-          {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
+          {env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
             <>
               <GithubButton />
             </>
           )}
         </div>
-        {process.env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
+        {env.NEXT_PUBLIC_SIGNUP_DISABLED !== "1" && (
           <div className="mt-9 text-center text-xs ">
             <span className="leading-5 text-slate-500">New to Formbricks?</span>
             <br />
