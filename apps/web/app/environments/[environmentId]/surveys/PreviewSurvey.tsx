@@ -309,9 +309,7 @@ export default function PreviewSurvey({
                       lastQuestion={idx === questions.length - 1}
                       onSubmit={gotoNextQuestion}
                       savedAnswer={undefined}
-                      goToNextQuestion={function (): void {
-                        throw new Error("Function not implemented.");
-                      }}
+                      goToNextQuestion={() => {}}
                     />
                   ) : null
                 )
