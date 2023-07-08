@@ -86,7 +86,12 @@ export default function MultipleChoiceSingleForm({
     if (question.choices.filter((c) => c.id === "other").length === 0) {
       const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
       newChoices.push({ id: "other", label: "Other" });
-      updateQuestion(questionIdx, { choices: newChoices });
+      updateQuestion(questionIdx, {
+        choices: newChoices,
+        ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
+          shuffleOption: shuffleOptionsTypes.exceptLast.id,
+        }),
+      });
     }
   };
 
@@ -105,14 +110,7 @@ export default function MultipleChoiceSingleForm({
       newLogic.push({ ...logic, value: newL });
     });
 
-    updateQuestion(questionIdx, {
-      choices: newChoices,
-      logic: newLogic,
-      ...(question.choices[choiceIdx].id === "other" &&
-        question.shuffleOption === shuffleOptionsTypes.all.id && {
-          shuffleOption: shuffleOptionsTypes.exceptLast.id,
-        }),
-    });
+    updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
   };
 
   useEffect(() => {
@@ -213,6 +211,7 @@ export default function MultipleChoiceSingleForm({
 
               <Select
                 defaultValue={question.shuffleOption}
+                value={question.shuffleOption}
                 onValueChange={(e) => {
                   updateQuestion(questionIdx, { shuffleOption: e });
                 }}>
