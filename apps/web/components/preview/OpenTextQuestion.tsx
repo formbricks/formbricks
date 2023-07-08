@@ -1,14 +1,18 @@
 import type { OpenTextQuestion } from "@formbricks/types/questions";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "@/components/preview/SubmitButton";
+import { Button } from "@formbricks/ui";
+import { set } from "lodash";
 
 interface OpenTextQuestionProps {
   question: OpenTextQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  savedAnswer: string | null;
+  goToNextQuestion: () => void;
 }
 
 export default function OpenTextQuestion({
@@ -16,19 +20,35 @@ export default function OpenTextQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  savedAnswer,
+  goToNextQuestion,
 }: OpenTextQuestionProps) {
   const [value, setValue] = useState<string>("");
+
+  useEffect(() => {
+    setValue(savedAnswer ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSubmit = (value: string) => {
+    const data = {
+      [question.id]: value,
+    };
+    setValue(""); // reset value
+    onSubmit(data);
+  };
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
 
-        const data = {
-          [question.id]: value,
-        };
-        setValue(""); // reset value
-        onSubmit(data);
+        if (savedAnswer === value) {
+          goToNextQuestion();
+          return;
+        }
+
+        handleSubmit(value);
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -60,7 +80,8 @@ export default function OpenTextQuestion({
       </div>
       <div className="mt-4 flex w-full justify-between">
         <div></div>
-        <SubmitButton {...{ question, lastQuestion, brandColor }} />
+
+        <SubmitButton {...{ question, lastQuestion, brandColor, savedAnswer, goToNextQuestion }} />
       </div>
     </form>
   );

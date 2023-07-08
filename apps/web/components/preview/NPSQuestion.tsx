@@ -10,10 +10,17 @@ interface NPSQuestionProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  savedAnswer: number | null;
 }
 
-export default function NPSQuestion({ question, onSubmit, lastQuestion, brandColor }: NPSQuestionProps) {
-  const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
+export default function NPSQuestion({
+  question,
+  onSubmit,
+  lastQuestion,
+  brandColor,
+  savedAnswer,
+}: NPSQuestionProps) {
+  const [selectedChoice, setSelectedChoice] = useState<number | null>(savedAnswer ?? null);
 
   const handleSelect = (number: number) => {
     setSelectedChoice(number);

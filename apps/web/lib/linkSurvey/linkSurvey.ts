@@ -8,6 +8,8 @@ import { useState, useEffect, useCallback } from "react";
 import type { Survey } from "@formbricks/types/surveys";
 import { useRouter } from "next/navigation";
 import { useGetOrCreatePerson } from "../people/people";
+import { Response } from "@formbricks/types/js";
+import { set } from "lodash";
 
 export const useLinkSurvey = (surveyId: string) => {
   const { data, error, mutate, isLoading } = useSWR(`/api/v1/client/surveys/${surveyId}`, fetcher);
@@ -29,6 +31,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
   const [initiateCountdown, setinitiateCountdown] = useState<boolean>(false);
+  const [savedAnswer, setSavedAnswer] = useState<string | null>(null);
   const router = useRouter();
   const URLParams = new URLSearchParams(window.location.search);
   const isPreview = URLParams.get("preview") === "true";
@@ -72,22 +75,10 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     return elementIdx / survey.questions.length;
   }, []);
 
-  const getNextQuestionId = (answer: any): string => {
-    const activeQuestionId: string = currentQuestion?.id || "";
+  const getNextQuestionId = (): string => {
     const currentQuestionIndex = survey.questions.findIndex((q) => q.id === currentQuestion?.id);
     if (currentQuestionIndex === -1) throw new Error("Question not found");
 
-    const answerValue = answer[activeQuestionId];
-
-    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
-      for (let logic of currentQuestion.logic) {
-        if (!logic.destination) continue;
-
-        if (evaluateCondition(logic, answerValue)) {
-          return logic.destination;
-        }
-      }
-    }
     if (lastQuestion) return "end";
     return survey.questions[currentQuestionIndex + 1].id;
   };
@@ -100,8 +91,19 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
   const submitResponse = async (data: { [x: string]: any }) => {
     setLoadingElement(true);
+    const activeQuestionId: string = currentQuestion?.id || "";
+    const nextQuestionId = getNextQuestionId();
+    const answerValue = data[activeQuestionId];
 
-    const nextQuestionId = getNextQuestionId(data);
+    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
+      for (let logic of currentQuestion.logic) {
+        if (!logic.destination) continue;
+
+        if (evaluateCondition(logic, answerValue)) {
+          return logic.destination;
+        }
+      }
+    }
 
     const finished = nextQuestionId === "end";
     // build response
@@ -111,6 +113,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       finished,
       data,
     };
+
     if (!responseId && !isPreview) {
       const response = await createResponse(
         responseRequest,
@@ -124,12 +127,14 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         );
       }
       setResponseId(response.id);
+      storeAnswer(survey.id, response.data);
     } else if (responseId && !isPreview) {
-      await updateResponse(
+      const updatedResponse = await updateResponse(
         responseRequest,
         responseId,
         `${window.location.protocol}//${window.location.host}`
       );
+      storeAnswer(survey.id, updatedResponse.data);
     }
 
     setLoadingElement(false);
@@ -139,11 +144,13 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
       if (!question) throw new Error("Question not found");
 
+      setSavedAnswer(getStoredAnswer(survey.id, nextQuestionId));
       setCurrentQuestion(question);
       // setCurrentQuestion(survey.questions[questionIdx + 1]);
     } else {
       setProgress(1);
       setFinished(true);
+      clearStoredAnswers(survey.id);
       if (survey.redirectUrl && Object.values(data)[0] !== "dismissed") {
         handleRedirect(survey.redirectUrl);
       }
@@ -186,6 +193,38 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     handlePrefilling();
   }, [handlePrefilling]);
 
+  const getPreviousQuestionId = (): string => {
+    const currentQuestionIndex = survey.questions.findIndex((q) => q.id === currentQuestion?.id);
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
+
+    return survey.questions[currentQuestionIndex - 1].id;
+  };
+
+  const goToPreviousQuestion = () => {
+    setLoadingElement(true);
+    const previousQuestionId = getPreviousQuestionId();
+    const previousQuestion = survey.questions.find((q) => q.id === previousQuestionId);
+
+    if (!previousQuestion) throw new Error("Question not found");
+
+    setLoadingElement(false);
+    setSavedAnswer(getStoredAnswer(survey.id, previousQuestion.id));
+    setCurrentQuestion(previousQuestion);
+  };
+
+  const goToNextQuestion = () => {
+    console.log("goToNextQuestion");
+    setLoadingElement(true);
+    const nextQuestionId = getNextQuestionId();
+    const nextQuestion = survey.questions.find((q) => q.id === nextQuestionId);
+
+    if (!nextQuestion) throw new Error("Question not found");
+
+    setLoadingElement(false);
+    setSavedAnswer(getStoredAnswer(survey.id, nextQuestion.id));
+    setCurrentQuestion(nextQuestion);
+  };
+
   return {
     currentQuestion,
     progress,
@@ -197,7 +236,33 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     initiateCountdown,
     submitResponse,
     restartSurvey,
+    goToPreviousQuestion,
+    goToNextQuestion,
+    savedAnswer,
   };
+};
+
+const storeAnswer = (surveyId: string, answer: Response["data"]) => {
+  const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-answers`);
+  if (storedAnswers) {
+    const parsedAnswers = JSON.parse(storedAnswers);
+    localStorage.setItem(`formbricks-${surveyId}-answers`, JSON.stringify({ ...parsedAnswers, ...answer }));
+  } else {
+    localStorage.setItem(`formbricks-${surveyId}-answers`, JSON.stringify(answer));
+  }
+};
+
+const getStoredAnswer = (surveyId: string, questionId: string): string | null => {
+  const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-answers`);
+  if (storedAnswers) {
+    const parsedAnswers = JSON.parse(storedAnswers);
+    return parsedAnswers[questionId] || null;
+  }
+  return null;
+};
+
+const clearStoredAnswers = (surveyId: string) => {
+  localStorage.removeItem(`formbricks-${surveyId}-answers`);
 };
 
 const checkValidity = (question: Question, answer: any): boolean => {

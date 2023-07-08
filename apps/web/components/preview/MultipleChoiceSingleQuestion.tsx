@@ -11,6 +11,8 @@ interface MultipleChoiceSingleProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  savedAnswer: string | null;
+  goToNextQuestion: () => void;
 }
 
 export default function MultipleChoiceSingleQuestion({
@@ -18,8 +20,20 @@ export default function MultipleChoiceSingleQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  savedAnswer,
+  goToNextQuestion,
 }: MultipleChoiceSingleProps) {
-  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const savedAnswerValue = question.choices.find((choice) => choice.label === savedAnswer)?.id;
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(savedAnswerValue ?? null);
+
+  const handleSubmit = (value: string) => {
+    const data = {
+      [question.id]: value,
+    };
+    onSubmit(data);
+    setSelectedChoice(null); // reset form
+  };
+
   /*   const [isIphone, setIsIphone] = useState(false);
 
 
@@ -32,11 +46,11 @@ export default function MultipleChoiceSingleQuestion({
       onSubmit={(e) => {
         e.preventDefault();
         const value = e.currentTarget[question.id].value;
-        const data = {
-          [question.id]: value,
-        };
-        onSubmit(data);
-        setSelectedChoice(null); // reset form
+        if (value === savedAnswer) {
+          goToNextQuestion();
+          return;
+        }
+        handleSubmit(value);
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -60,7 +74,9 @@ export default function MultipleChoiceSingleQuestion({
                       value={choice.label}
                       className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
-                      onChange={() => setSelectedChoice(choice.id)}
+                      onChange={() => {
+                        setSelectedChoice(choice.id);
+                      }}
                       checked={selectedChoice === choice.id}
                       style={{ borderColor: brandColor, color: brandColor }}
                       required={question.required && idx === 0}

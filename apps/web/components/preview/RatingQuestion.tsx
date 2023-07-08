@@ -24,6 +24,7 @@ interface RatingQuestionProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  savedAnswer: number | null;
 }
 
 export default function RatingQuestion({
@@ -31,8 +32,9 @@ export default function RatingQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  savedAnswer,
 }: RatingQuestionProps) {
-  const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
+  const [selectedChoice, setSelectedChoice] = useState<number | null>(savedAnswer ?? null);
   const [hoveredNumber, setHoveredNumber] = useState(0);
   // const icons = RatingSmileyList(question.range);
 

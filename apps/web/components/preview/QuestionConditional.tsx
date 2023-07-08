@@ -12,6 +12,8 @@ interface QuestionConditionalProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  savedAnswer: any;
+  goToNextQuestion: () => void;
 }
 
 export default function QuestionConditional({
@@ -19,6 +21,8 @@ export default function QuestionConditional({
   onSubmit,
   lastQuestion,
   brandColor,
+  savedAnswer,
+  goToNextQuestion,
 }: QuestionConditionalProps) {
   return question.type === QuestionType.OpenText ? (
     <OpenTextQuestion
@@ -26,6 +30,8 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      savedAnswer={savedAnswer}
+      goToNextQuestion={goToNextQuestion}
     />
   ) : question.type === QuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
@@ -33,6 +39,8 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      savedAnswer={savedAnswer}
+      goToNextQuestion={goToNextQuestion}
     />
   ) : question.type === QuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -40,6 +48,8 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      savedAnswer={savedAnswer}
+      goToNextQuestion={goToNextQuestion}
     />
   ) : question.type === QuestionType.NPS ? (
     <NPSQuestion
@@ -47,6 +57,7 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      savedAnswer={savedAnswer}
     />
   ) : question.type === QuestionType.CTA ? (
     <CTAQuestion
@@ -61,6 +72,7 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      savedAnswer={savedAnswer}
     />
   ) : question.type === "consent" ? (
     <ConsentQuestion
@@ -68,6 +80,7 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      savedAnswer={savedAnswer}
     />
   ) : null;
 }

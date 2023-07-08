@@ -5,12 +5,15 @@ import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import _, { set } from "lodash";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  savedAnswer: string[] | null;
+  goToNextQuestion: () => void;
 }
 
 export default function MultipleChoiceMultiQuestion({
@@ -18,43 +21,87 @@ export default function MultipleChoiceMultiQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  savedAnswer,
+  goToNextQuestion,
 }: MultipleChoiceMultiProps) {
-  const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
+  const [selectedChoices, setSelectedChoices] = useState<string[]>(savedAnswer ? [...savedAnswer] : []);
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
-  /*   const [isIphone, setIsIphone] = useState(false);
-   */
+  const [savedOtherSpecified, setSavedOtherSpecified] = useState("");
+
+  const nonOtherChoiceLabels = question.choices
+    .map((choice) => choice.label)
+    .filter((label) => label !== "Other");
+
+  useEffect(() => {
+    const savedOtherValue = savedAnswer?.find((answer) => !nonOtherChoiceLabels.includes(answer));
+    if (savedOtherValue) {
+      setOtherSpecified(savedOtherValue);
+      setSavedOtherSpecified(savedOtherValue);
+      setShowOther(true);
+    }
+  }, []);
+
+  /*   
+  const [isIphone, setIsIphone] = useState(false);
+  useEffect(() => {
+    setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
+  }, []); 
+  */
+
   useEffect(() => {
     setIsAtLeastOneChecked(selectedChoices.length > 0 || otherSpecified.length > 0);
   }, [selectedChoices, otherSpecified]);
 
-  /*   useEffect(() => {
-    setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
-  }, []); */
+  const handleSubmit = () => {
+    if (question.required && selectedChoices.length <= 0) {
+      return;
+    }
+
+    const data = {
+      [question.id]: selectedChoices,
+    };
+
+    onSubmit(data);
+
+    setSelectedChoices([]); // reset value
+    setShowOther(false);
+    setOtherSpecified("");
+  };
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
 
-        if (otherSpecified.length > 0 && showOther) {
-          selectedChoices.push(otherSpecified);
+        // todo: try separating other value from selectedChoices when checking and add back after
+
+        const otherIndex = selectedChoices.findIndex((choice) => !nonOtherChoiceLabels.includes(choice));
+        // if the user unchecks the other option, remove the otherSpecified value from the selectedChoices
+        if (savedOtherSpecified && !showOther) {
+          if (otherIndex >= 0) {
+            selectedChoices.splice(otherIndex, 1);
+          }
         }
 
-        if (question.required && selectedChoices.length <= 0) {
+        if (otherSpecified.length > 0 && showOther) {
+          if (!savedAnswer) {
+            selectedChoices.push(otherSpecified);
+          } else {
+            if (otherIndex >= 0) {
+              selectedChoices[otherIndex] = otherSpecified;
+            }
+          }
+        }
+        console.log(savedAnswer, selectedChoices);
+        // checks if the saved answer is the same as the selected choices
+        if (_.xor(selectedChoices, savedAnswer).length === 0) {
+          goToNextQuestion();
           return;
         }
 
-        const data = {
-          [question.id]: selectedChoices,
-        };
-
-        onSubmit(data);
-
-        setSelectedChoices([]); // reset value
-        setShowOther(false);
-        setOtherSpecified("");
+        handleSubmit();
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -64,7 +111,7 @@ export default function MultipleChoiceMultiQuestion({
           <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
             {question.choices &&
               question.choices.map((choice) => (
-                <>
+                <div key={choice.id}>
                   <label
                     key={choice.id}
                     className={cn(
@@ -88,7 +135,6 @@ export default function MultipleChoiceMultiQuestion({
                           onChange={(e) => {
                             if (choice.id === "other") {
                               setShowOther(e.currentTarget.checked);
-
                               return;
                             }
 
@@ -112,6 +158,7 @@ export default function MultipleChoiceMultiQuestion({
                           name={question.id}
                           className="mt-2 bg-white focus:border-slate-300"
                           placeholder="Please specify"
+                          value={otherSpecified}
                           onChange={(e) => setOtherSpecified(e.currentTarget.value)}
                           aria-labelledby={`${choice.id}-label`}
                           required={question.required}
@@ -120,7 +167,7 @@ export default function MultipleChoiceMultiQuestion({
                       )}
                     </span>
                   </label>
-                </>
+                </div>
               ))}
           </div>
         </fieldset>

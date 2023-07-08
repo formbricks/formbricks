@@ -3,12 +3,14 @@ import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import { cn } from "@/../../packages/lib/cn";
 import { isLight } from "@/lib/utils";
+import { useState } from "react";
 
 interface ConsentQuestionProps {
   question: ConsentQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  savedAnswer: string | null;
 }
 
 export default function ConsentQuestion({
@@ -16,18 +18,23 @@ export default function ConsentQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  savedAnswer,
 }: ConsentQuestionProps) {
+  const [answer, setAnswer] = useState<string>(savedAnswer ?? "dismissed");
+
+  const handleOnChange = () => {
+    answer === "accepted" ? setAnswer("dissmissed") : setAnswer("accepted");
+  };
+
   return (
     <div>
       <Headline headline={question.headline} questionId={question.id} />
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
-
+      console.log(question.label)
       <form
         onSubmit={(e) => {
           e.preventDefault();
-
-          const checkbox = document.getElementById(question.id) as HTMLInputElement;
-          onSubmit({ [question.id]: checkbox.checked ? "accepted" : "dismissed" });
+          onSubmit({ [question.id]: answer });
         }}>
         <label className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-gray-200 bg-slate-50 p-4 text-sm focus:outline-none">
           <input
@@ -37,6 +44,8 @@ export default function ConsentQuestion({
             value={question.label}
             className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
             aria-labelledby={`${question.id}-label`}
+            onChange={handleOnChange}
+            checked={answer === "accepted"}
             style={{ borderColor: brandColor, color: brandColor }}
             required={question.required}
           />

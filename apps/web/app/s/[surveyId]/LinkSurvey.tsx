@@ -8,7 +8,7 @@ import ContentWrapper from "@/components/shared/ContentWrapper";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useLinkSurveyUtils } from "@/lib/linkSurvey/linkSurvey";
 import { cn } from "@formbricks/lib/cn";
-import { Confetti } from "@formbricks/ui";
+import { Button, Confetti } from "@formbricks/ui";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import type { Survey } from "@formbricks/types/surveys";
 
@@ -33,7 +33,12 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     initiateCountdown,
     restartSurvey,
     submitResponse,
+    goToPreviousQuestion,
+    goToNextQuestion,
+    savedAnswer,
   } = useLinkSurveyUtils(survey);
+
+  const showBackButton = progress !== 0 && !finished;
 
   if (!currentQuestion || prefilling) {
     return (
@@ -78,12 +83,41 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
               brandColor={survey.brandColor}
               lastQuestion={lastQuestion}
               onSubmit={submitResponse}
+              savedAnswer={savedAnswer}
+              goToNextQuestion={goToNextQuestion}
             />
           )}
         </ContentWrapper>
       </div>
       <div className="top-0 z-10 w-full border-b bg-white">
         <div className="mx-auto max-w-md space-y-6 p-6">
+          {showBackButton && (
+            <>
+              <Button
+                type="button"
+                variant="secondary"
+                className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  goToPreviousQuestion();
+                }}>
+                Back
+              </Button>
+              {savedAnswer && (
+                <Button
+                  type="button"
+                  variant="primary"
+                  className="ml-auto px-3 py-3 text-base font-medium leading-4"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    goToNextQuestion();
+                  }}
+                  style={{ backgroundColor: survey.brandColor }}>
+                  Next
+                </Button>
+              )}
+            </>
+          )}
           <Progress progress={progress} brandColor={survey.brandColor} />
           {survey.formbricksSignature && <FormbricksSignature />}
         </div>
