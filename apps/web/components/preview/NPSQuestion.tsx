@@ -11,6 +11,7 @@ interface NPSQuestionProps {
   lastQuestion: boolean;
   brandColor: string;
   savedAnswer: number | null;
+  goToNextQuestion: () => void;
 }
 
 export default function NPSQuestion({
@@ -19,15 +20,25 @@ export default function NPSQuestion({
   lastQuestion,
   brandColor,
   savedAnswer,
+  goToNextQuestion,
 }: NPSQuestionProps) {
-  const [selectedChoice, setSelectedChoice] = useState<number | null>(savedAnswer ?? null);
+  const [selectedChoice, setSelectedChoice] = useState<number | null>(savedAnswer);
+
+  const handleSubmit = (value: number | null) => {
+    if (savedAnswer === value) {
+      goToNextQuestion();
+      return;
+    }
+    const data = {
+      [question.id]: value,
+    };
+    onSubmit(data);
+  };
 
   const handleSelect = (number: number) => {
     setSelectedChoice(number);
     if (question.required) {
-      onSubmit({
-        [question.id]: number,
-      });
+      handleSubmit(number);
     }
   };
 
@@ -35,13 +46,7 @@ export default function NPSQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-
-        const data = {
-          [question.id]: selectedChoice,
-        };
-
-        onSubmit(data);
-        // reset form
+        handleSubmit(selectedChoice);
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />

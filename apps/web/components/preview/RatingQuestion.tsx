@@ -25,6 +25,7 @@ interface RatingQuestionProps {
   lastQuestion: boolean;
   brandColor: string;
   savedAnswer: number | null;
+  goToNextQuestion: () => void;
 }
 
 export default function RatingQuestion({
@@ -33,18 +34,27 @@ export default function RatingQuestion({
   lastQuestion,
   brandColor,
   savedAnswer,
+  goToNextQuestion,
 }: RatingQuestionProps) {
   const [selectedChoice, setSelectedChoice] = useState<number | null>(savedAnswer ?? null);
   const [hoveredNumber, setHoveredNumber] = useState(0);
   // const icons = RatingSmileyList(question.range);
 
+  const handleSubmit = (value: number | null) => {
+    if (savedAnswer === value) {
+      goToNextQuestion();
+      return;
+    }
+    const data = {
+      [question.id]: value,
+    };
+    onSubmit(data);
+  };
+
   const handleSelect = (number: number) => {
     setSelectedChoice(number);
     if (question.required) {
-      onSubmit({
-        [question.id]: number,
-      });
-      setSelectedChoice(null); // reset choice
+      handleSubmit(number);
     }
   };
 
@@ -63,14 +73,7 @@ export default function RatingQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-
-        const data = {
-          [question.id]: selectedChoice,
-        };
-
-        setSelectedChoice(null); // reset choice
-
-        onSubmit(data);
+        handleSubmit(selectedChoice);
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />

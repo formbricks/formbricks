@@ -11,6 +11,7 @@ interface ConsentQuestionProps {
   lastQuestion: boolean;
   brandColor: string;
   savedAnswer: string | null;
+  goToNextQuestion: () => void;
 }
 
 export default function ConsentQuestion({
@@ -19,11 +20,23 @@ export default function ConsentQuestion({
   lastQuestion,
   brandColor,
   savedAnswer,
+  goToNextQuestion,
 }: ConsentQuestionProps) {
   const [answer, setAnswer] = useState<string>(savedAnswer ?? "dismissed");
 
   const handleOnChange = () => {
     answer === "accepted" ? setAnswer("dissmissed") : setAnswer("accepted");
+  };
+
+  const handleSumbit = (value: string) => {
+    if (savedAnswer === value) {
+      goToNextQuestion();
+      return;
+    }
+    const data = {
+      [question.id]: value,
+    };
+    onSubmit(data);
   };
 
   return (
@@ -34,7 +47,7 @@ export default function ConsentQuestion({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit({ [question.id]: answer });
+          handleSumbit(answer);
         }}>
         <label className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-gray-200 bg-slate-50 p-4 text-sm focus:outline-none">
           <input

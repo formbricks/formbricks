@@ -58,6 +58,7 @@ export default function QuestionConditional({
       lastQuestion={lastQuestion}
       brandColor={brandColor}
       savedAnswer={savedAnswer}
+      goToNextQuestion={goToNextQuestion}
     />
   ) : question.type === QuestionType.CTA ? (
     <CTAQuestion
@@ -73,6 +74,7 @@ export default function QuestionConditional({
       lastQuestion={lastQuestion}
       brandColor={brandColor}
       savedAnswer={savedAnswer}
+      goToNextQuestion={goToNextQuestion}
     />
   ) : question.type === "consent" ? (
     <ConsentQuestion
@@ -81,6 +83,7 @@ export default function QuestionConditional({
       lastQuestion={lastQuestion}
       brandColor={brandColor}
       savedAnswer={savedAnswer}
+      goToNextQuestion={goToNextQuestion}
     />
   ) : null;
 }

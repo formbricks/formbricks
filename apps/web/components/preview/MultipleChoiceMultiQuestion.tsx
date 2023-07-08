@@ -5,7 +5,7 @@ import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import _, { set } from "lodash";
+import _ from "lodash";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -24,23 +24,26 @@ export default function MultipleChoiceMultiQuestion({
   savedAnswer,
   goToNextQuestion,
 }: MultipleChoiceMultiProps) {
-  const [selectedChoices, setSelectedChoices] = useState<string[]>(savedAnswer ? [...savedAnswer] : []);
+  const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
-  const [savedOtherSpecified, setSavedOtherSpecified] = useState("");
 
   const nonOtherChoiceLabels = question.choices
     .map((choice) => choice.label)
     .filter((label) => label !== "Other");
 
   useEffect(() => {
-    const savedOtherValue = savedAnswer?.find((answer) => !nonOtherChoiceLabels.includes(answer));
-    if (savedOtherValue) {
-      setOtherSpecified(savedOtherValue);
-      setSavedOtherSpecified(savedOtherValue);
+    const nonOtherSavedChoices = savedAnswer?.filter((answer) => nonOtherChoiceLabels.includes(answer));
+    const savedOtherSpecified = savedAnswer?.find((answer) => !nonOtherChoiceLabels.includes(answer));
+
+    setSelectedChoices(nonOtherSavedChoices ?? []);
+
+    if (savedOtherSpecified) {
+      setOtherSpecified(savedOtherSpecified);
       setShowOther(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /*   
@@ -64,10 +67,6 @@ export default function MultipleChoiceMultiQuestion({
     };
 
     onSubmit(data);
-
-    setSelectedChoices([]); // reset value
-    setShowOther(false);
-    setOtherSpecified("");
   };
 
   return (
@@ -75,26 +74,10 @@ export default function MultipleChoiceMultiQuestion({
       onSubmit={(e) => {
         e.preventDefault();
 
-        // todo: try separating other value from selectedChoices when checking and add back after
-
-        const otherIndex = selectedChoices.findIndex((choice) => !nonOtherChoiceLabels.includes(choice));
-        // if the user unchecks the other option, remove the otherSpecified value from the selectedChoices
-        if (savedOtherSpecified && !showOther) {
-          if (otherIndex >= 0) {
-            selectedChoices.splice(otherIndex, 1);
-          }
-        }
-
         if (otherSpecified.length > 0 && showOther) {
-          if (!savedAnswer) {
-            selectedChoices.push(otherSpecified);
-          } else {
-            if (otherIndex >= 0) {
-              selectedChoices[otherIndex] = otherSpecified;
-            }
-          }
+          selectedChoices.push(otherSpecified);
         }
-        console.log(savedAnswer, selectedChoices);
+
         // checks if the saved answer is the same as the selected choices
         if (_.xor(selectedChoices, savedAnswer).length === 0) {
           goToNextQuestion();
