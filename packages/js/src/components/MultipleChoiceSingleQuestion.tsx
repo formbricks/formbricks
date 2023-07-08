@@ -22,10 +22,8 @@ export default function MultipleChoiceSingleQuestion({
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [questionChoices, setQuestionChoices] = useState<Choice[]>(
     question.choices
-      ? question.shuffleOption === "all"
-        ? shuffleArray(question.choices, true)
-        : question.shuffleOption === "exceptLast"
-        ? shuffleArray(question.choices)
+      ? question.shuffleOption !== "none"
+        ? shuffleArray(question.choices, question.shuffleOption)
         : question.choices
       : []
   );
@@ -40,10 +38,8 @@ export default function MultipleChoiceSingleQuestion({
   useEffect(() => {
     setQuestionChoices(
       question.choices
-        ? question.shuffleOption === "all"
-          ? shuffleArray(question.choices, true)
-          : question.shuffleOption === "exceptLast"
-          ? shuffleArray(question.choices)
+        ? question.shuffleOption !== "none"
+          ? shuffleArray(question.choices, question.shuffleOption)
           : question.choices
         : []
     );

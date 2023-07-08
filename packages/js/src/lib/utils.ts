@@ -16,15 +16,28 @@ export function isLight(color) {
   return r * 0.299 + g * 0.587 + b * 0.114 > 128;
 }
 
-export const shuffleArray = (array: any[], shuffleAll = false) => {
-  const newArray = [...array];
-  const otherIndex = newArray.findIndex((item) => item.id === "other");
-  if (!shuffleAll && otherIndex !== -1) {
-    const otherItem = newArray.splice(otherIndex, 1)[0];
-    newArray.sort(() => Math.random() - 0.5);
-    newArray.push(otherItem);
-  } else {
-    newArray.sort(() => Math.random() - 0.5);
+const shuffle = (array: any[]) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
   }
-  return newArray;
+};
+
+export const shuffleArray = (array: any[], shuffleOption: string) => {
+  const otherIndex = array.findIndex((element) => element.id === "other");
+  const otherElement = otherIndex !== -1 ? array.splice(otherIndex, 1)[0] : null;
+
+  if (shuffleOption === "all") {
+    shuffle(array);
+  } else if (shuffleOption === "exceptLast") {
+    const lastElement = array.pop();
+    shuffle(array);
+    array.push(lastElement);
+  }
+
+  if (otherElement) {
+    array.push(otherElement);
+  }
+
+  return array;
 };

@@ -37,14 +37,17 @@ export default function MultipleChoiceMultiForm({
     none: {
       id: "none",
       label: "None (Keep choices in current order)",
+      show: true,
     },
     all: {
       id: "all",
       label: "All (Randomize all choices)",
+      show: question.choices.filter((c) => c.id === "other").length === 0,
     },
     exceptLast: {
       id: "exceptLast",
       label: "Except Last (Keep last choice and randomize other choices)",
+      show: true,
     },
   };
 
@@ -102,7 +105,14 @@ export default function MultipleChoiceMultiForm({
       newLogic.push({ ...logic, value: newL });
     });
 
-    updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
+    updateQuestion(questionIdx, {
+      choices: newChoices,
+      logic: newLogic,
+      ...(question.choices[choiceIdx].id === "other" &&
+        question.shuffleOption === shuffleOptionsTypes.all.id && {
+          shuffleOption: shuffleOptionsTypes.exceptLast.id,
+        }),
+    });
   };
 
   useEffect(() => {
@@ -210,14 +220,17 @@ export default function MultipleChoiceMultiForm({
                   <SelectValue placeholder="Select ordering" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.values(shuffleOptionsTypes).map((shuffleOptionsType) => (
-                    <SelectItem
-                      key={shuffleOptionsType.id}
-                      value={shuffleOptionsType.id}
-                      title={shuffleOptionsType.label}>
-                      {shuffleOptionsType.label}
-                    </SelectItem>
-                  ))}
+                  {Object.values(shuffleOptionsTypes).map(
+                    (shuffleOptionsType) =>
+                      shuffleOptionsType.show && (
+                        <SelectItem
+                          key={shuffleOptionsType.id}
+                          value={shuffleOptionsType.id}
+                          title={shuffleOptionsType.label}>
+                          {shuffleOptionsType.label}
+                        </SelectItem>
+                      )
+                  )}
                 </SelectContent>
               </Select>
             </div>
