@@ -5,6 +5,7 @@ import { cn } from "@/../../packages/lib/cn";
 import { isLight } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { Button } from "@formbricks/ui";
+import { Response } from "@formbricks/types/js";
 
 interface ConsentQuestionProps {
   question: ConsentQuestion;
@@ -13,7 +14,7 @@ interface ConsentQuestionProps {
   brandColor: string;
   savedAnswer: string | null;
   goToNextQuestion: () => void;
-  goToPreviousQuestion?: () => void;
+  goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
 export default function ConsentQuestion({
@@ -84,7 +85,13 @@ export default function ConsentQuestion({
               className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
               onClick={(e) => {
                 e.preventDefault();
-                goToPreviousQuestion();
+                goToPreviousQuestion(
+                  answer !== savedAnswer
+                    ? {
+                        [question.id]: answer,
+                      }
+                    : undefined
+                );
               }}>
               Back
             </Button>

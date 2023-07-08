@@ -19,6 +19,7 @@ import {
 } from "../Smileys";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { Button } from "@formbricks/ui";
+import { Response } from "@formbricks/types/js";
 
 interface RatingQuestionProps {
   question: RatingQuestion;
@@ -27,7 +28,7 @@ interface RatingQuestionProps {
   brandColor: string;
   savedAnswer: number | null;
   goToNextQuestion: () => void;
-  goToPreviousQuestion?: () => void;
+  goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
 export default function RatingQuestion({
@@ -143,24 +144,24 @@ export default function RatingQuestion({
         </fieldset>
       </div>
 
-      {(!question.required || savedAnswer) && (
-        <div className="mt-4 flex w-full justify-between">
-          {goToPreviousQuestion && (
-            <Button
-              type="button"
-              variant="secondary"
-              className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
-              onClick={(e) => {
-                e.preventDefault();
-                goToPreviousQuestion();
-              }}>
-              Back
-            </Button>
-          )}
-          <div></div>
-          <SubmitButton {...{ question, lastQuestion, brandColor }} />
-        </div>
-      )}
+      <div className="mt-4 flex w-full justify-between">
+        {goToPreviousQuestion && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
+            onClick={(e) => {
+              e.preventDefault();
+              goToPreviousQuestion(
+                savedAnswer !== selectedChoice ? { [question.id]: selectedChoice } : undefined
+              );
+            }}>
+            Back
+          </Button>
+        )}
+        <div></div>
+        {(!question.required || savedAnswer) && <SubmitButton {...{ question, lastQuestion, brandColor }} />}
+      </div>
     </form>
   );
 }

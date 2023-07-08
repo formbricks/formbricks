@@ -34,7 +34,7 @@ export interface Response {
   formId: string;
   customerId: string;
   data: {
-    [name: string]: string | number | string[] | number[] | undefined;
+    [name: string]: string | number | string[] | number[] | undefined | null;
   };
 }
 

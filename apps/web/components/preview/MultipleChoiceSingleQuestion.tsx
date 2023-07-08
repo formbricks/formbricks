@@ -5,6 +5,7 @@ import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { Response } from "@formbricks/types/js";
 
 interface MultipleChoiceSingleProps {
   question: MultipleChoiceSingleQuestion;
@@ -13,7 +14,7 @@ interface MultipleChoiceSingleProps {
   brandColor: string;
   savedAnswer: string | null;
   goToNextQuestion: () => void;
-  goToPreviousQuestion?: () => void;
+  goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
 export default function MultipleChoiceSingleQuestion({
@@ -26,11 +27,11 @@ export default function MultipleChoiceSingleQuestion({
   goToPreviousQuestion,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const savedAnswerValue = question.choices.find((choice) => choice.label === savedAnswer)?.id;
 
   useEffect(() => {
-    const savedAnswerValue = question.choices.find((choice) => choice.label === savedAnswer)?.id;
     setSelectedChoice(savedAnswerValue ?? null);
-  }, [savedAnswer, question]);
+  }, [savedAnswerValue, question]);
 
   const handleSubmit = (value: string) => {
     const data = {
@@ -111,7 +112,13 @@ export default function MultipleChoiceSingleQuestion({
             className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
             onClick={(e) => {
               e.preventDefault();
-              goToPreviousQuestion();
+              goToPreviousQuestion(
+                selectedChoice !== savedAnswerValue
+                  ? {
+                      [question.id]: question.choices.find((choice) => choice.id === selectedChoice)?.label,
+                    }
+                  : undefined
+              );
             }}>
             Back
           </Button>

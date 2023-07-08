@@ -9,7 +9,6 @@ import type { Survey } from "@formbricks/types/surveys";
 import { useRouter } from "next/navigation";
 import { useGetOrCreatePerson } from "../people/people";
 import { Response } from "@formbricks/types/js";
-import { set } from "lodash";
 
 export const useLinkSurvey = (surveyId: string) => {
   const { data, error, mutate, isLoading } = useSWR(`/api/v1/client/surveys/${surveyId}`, fetcher);
@@ -129,12 +128,12 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       setResponseId(response.id);
       storeAnswer(survey.id, response.data);
     } else if (responseId && !isPreview) {
-      const updatedResponse = await updateResponse(
+      await updateResponse(
         responseRequest,
         responseId,
         `${window.location.protocol}//${window.location.host}`
       );
-      storeAnswer(survey.id, updatedResponse.data);
+      storeAnswer(survey.id, data);
     }
 
     setLoadingElement(false);
@@ -200,12 +199,16 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     return survey.questions[currentQuestionIndex - 1].id;
   };
 
-  const goToPreviousQuestion = () => {
+  const goToPreviousQuestion = (answer?: Response["data"]) => {
     setLoadingElement(true);
     const previousQuestionId = getPreviousQuestionId();
     const previousQuestion = survey.questions.find((q) => q.id === previousQuestionId);
 
     if (!previousQuestion) throw new Error("Question not found");
+
+    if (answer) {
+      storeAnswer(survey.id, answer);
+    }
 
     setLoadingElement(false);
     setSavedAnswer(getStoredAnswer(survey.id, previousQuestion.id));

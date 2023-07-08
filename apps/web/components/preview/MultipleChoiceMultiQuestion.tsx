@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import _ from "lodash";
+import { Response } from "@formbricks/types/js";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -14,7 +15,7 @@ interface MultipleChoiceMultiProps {
   brandColor: string;
   savedAnswer: string[] | null;
   goToNextQuestion: () => void;
-  goToPreviousQuestion?: () => void;
+  goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
 export default function MultipleChoiceMultiQuestion({
@@ -34,7 +35,6 @@ export default function MultipleChoiceMultiQuestion({
   const nonOtherChoiceLabels = question.choices
     .map((choice) => choice.label)
     .filter((label) => label !== "Other");
-
   useEffect(() => {
     const nonOtherSavedChoices = savedAnswer?.filter((answer) => nonOtherChoiceLabels.includes(answer));
     const savedOtherSpecified = savedAnswer?.find((answer) => !nonOtherChoiceLabels.includes(answer));
@@ -46,7 +46,7 @@ export default function MultipleChoiceMultiQuestion({
       setShowOther(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savedAnswer, question]);
+  }, [savedAnswer, question.id]);
 
   /*   
   const [isIphone, setIsIphone] = useState(false);
@@ -180,7 +180,17 @@ export default function MultipleChoiceMultiQuestion({
             className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
             onClick={(e) => {
               e.preventDefault();
-              goToPreviousQuestion();
+              if (otherSpecified.length > 0 && showOther) {
+                selectedChoices.push(otherSpecified);
+              }
+              if (_.xor(selectedChoices, savedAnswer).length === 0) {
+                goToPreviousQuestion();
+                resetForm();
+              }
+              goToPreviousQuestion({
+                [question.id]: selectedChoices,
+              });
+              resetForm();
             }}>
             Back
           </Button>

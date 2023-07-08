@@ -4,6 +4,7 @@ import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { Button } from "@formbricks/ui";
+import { Response } from "@formbricks/types/js";
 
 interface OpenTextQuestionProps {
   question: OpenTextQuestion;
@@ -12,7 +13,7 @@ interface OpenTextQuestionProps {
   brandColor: string;
   savedAnswer: string | null;
   goToNextQuestion: () => void;
-  goToPreviousQuestion?: () => void;
+  goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
 export default function OpenTextQuestion({
@@ -86,7 +87,13 @@ export default function OpenTextQuestion({
             className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
             onClick={(e) => {
               e.preventDefault();
-              goToPreviousQuestion();
+              goToPreviousQuestion(
+                savedAnswer !== value
+                  ? {
+                      [question.id]: value,
+                    }
+                  : undefined
+              );
             }}>
             Back
           </Button>
