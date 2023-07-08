@@ -279,6 +279,8 @@ export default function PreviewSurvey({
                     brandColor={brandColor}
                     lastQuestion={idx === questions.length - 1}
                     onSubmit={gotoNextQuestion}
+                    savedAnswer={undefined}
+                    goToNextQuestion={() => {}}
                   />
                 ) : null
               )
@@ -306,6 +308,10 @@ export default function PreviewSurvey({
                       brandColor={brandColor}
                       lastQuestion={idx === questions.length - 1}
                       onSubmit={gotoNextQuestion}
+                      savedAnswer={undefined}
+                      goToNextQuestion={function (): void {
+                        throw new Error("Function not implemented.");
+                      }}
                     />
                   ) : null
                 )
