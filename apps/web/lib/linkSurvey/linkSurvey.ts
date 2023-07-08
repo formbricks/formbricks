@@ -213,7 +213,6 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   };
 
   const goToNextQuestion = () => {
-    console.log("nex");
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId();
     const nextQuestion = survey.questions.find((q) => q.id === nextQuestionId);
