@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import type { NPSQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "@/components/preview/SubmitButton";
+import { Button } from "@formbricks/ui";
 
 interface NPSQuestionProps {
   question: NPSQuestion;
@@ -12,6 +13,7 @@ interface NPSQuestionProps {
   brandColor: string;
   savedAnswer: number | null;
   goToNextQuestion: () => void;
+  goToPreviousQuestion?: () => void;
 }
 
 export default function NPSQuestion({
@@ -21,18 +23,25 @@ export default function NPSQuestion({
   brandColor,
   savedAnswer,
   goToNextQuestion,
+  goToPreviousQuestion,
 }: NPSQuestionProps) {
-  const [selectedChoice, setSelectedChoice] = useState<number | null>(savedAnswer);
+  const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
+
+  useEffect(() => {
+    setSelectedChoice(savedAnswer);
+  }, [savedAnswer, question]);
 
   const handleSubmit = (value: number | null) => {
     if (savedAnswer === value) {
       goToNextQuestion();
+      setSelectedChoice(null);
       return;
     }
     const data = {
       [question.id]: value,
     };
     onSubmit(data);
+    setSelectedChoice(null);
   };
 
   const handleSelect = (number: number) => {
@@ -65,6 +74,7 @@ export default function NPSQuestion({
                   type="radio"
                   name="nps"
                   value={number}
+                  checked={selectedChoice === number}
                   className="absolute h-full w-full cursor-pointer opacity-0"
                   onChange={() => handleSelect(number)}
                   required={question.required}
@@ -79,8 +89,20 @@ export default function NPSQuestion({
           </div>
         </fieldset>
       </div>
-      {!question.required && (
+      {(!question.required || savedAnswer) && (
         <div className="mt-4 flex w-full justify-between">
+          {goToPreviousQuestion && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
+              onClick={(e) => {
+                e.preventDefault();
+                goToPreviousQuestion();
+              }}>
+              Back
+            </Button>
+          )}
           <div></div>
           <SubmitButton {...{ question, lastQuestion, brandColor }} />
         </div>

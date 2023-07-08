@@ -3,7 +3,8 @@ import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import { cn } from "@/../../packages/lib/cn";
 import { isLight } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "@formbricks/ui";
 
 interface ConsentQuestionProps {
   question: ConsentQuestion;
@@ -12,6 +13,7 @@ interface ConsentQuestionProps {
   brandColor: string;
   savedAnswer: string | null;
   goToNextQuestion: () => void;
+  goToPreviousQuestion?: () => void;
 }
 
 export default function ConsentQuestion({
@@ -21,8 +23,13 @@ export default function ConsentQuestion({
   brandColor,
   savedAnswer,
   goToNextQuestion,
+  goToPreviousQuestion,
 }: ConsentQuestionProps) {
-  const [answer, setAnswer] = useState<string>(savedAnswer ?? "dismissed");
+  const [answer, setAnswer] = useState<string>("dismissed");
+
+  useEffect(() => {
+    setAnswer(savedAnswer ?? "dismissed");
+  }, [savedAnswer, question]);
 
   const handleOnChange = () => {
     answer === "accepted" ? setAnswer("dissmissed") : setAnswer("accepted");
@@ -31,19 +38,21 @@ export default function ConsentQuestion({
   const handleSumbit = (value: string) => {
     if (savedAnswer === value) {
       goToNextQuestion();
+      setAnswer("dismissed");
+
       return;
     }
     const data = {
       [question.id]: value,
     };
     onSubmit(data);
+    setAnswer("dismissed");
   };
 
   return (
     <div>
       <Headline headline={question.headline} questionId={question.id} />
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
-      console.log(question.label)
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -67,7 +76,20 @@ export default function ConsentQuestion({
           </span>
         </label>
 
-        <div className="mt-4 flex w-full justify-end">
+        <div className="mt-4 flex w-full justify-between">
+          {goToPreviousQuestion && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
+              onClick={(e) => {
+                e.preventDefault();
+                goToPreviousQuestion();
+              }}>
+              Back
+            </Button>
+          )}
+          <div></div>
           <button
             type="submit"
             className={cn(

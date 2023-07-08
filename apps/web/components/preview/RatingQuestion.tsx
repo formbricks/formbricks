@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import type { RatingQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
@@ -18,6 +18,7 @@ import {
   WearyFace,
 } from "../Smileys";
 import SubmitButton from "@/components/preview/SubmitButton";
+import { Button } from "@formbricks/ui";
 
 interface RatingQuestionProps {
   question: RatingQuestion;
@@ -26,6 +27,7 @@ interface RatingQuestionProps {
   brandColor: string;
   savedAnswer: number | null;
   goToNextQuestion: () => void;
+  goToPreviousQuestion?: () => void;
 }
 
 export default function RatingQuestion({
@@ -35,20 +37,27 @@ export default function RatingQuestion({
   brandColor,
   savedAnswer,
   goToNextQuestion,
+  goToPreviousQuestion,
 }: RatingQuestionProps) {
-  const [selectedChoice, setSelectedChoice] = useState<number | null>(savedAnswer ?? null);
+  const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
   const [hoveredNumber, setHoveredNumber] = useState(0);
   // const icons = RatingSmileyList(question.range);
+
+  useEffect(() => {
+    setSelectedChoice(savedAnswer);
+  }, [savedAnswer, question]);
 
   const handleSubmit = (value: number | null) => {
     if (savedAnswer === value) {
       goToNextQuestion();
+      setSelectedChoice(null);
       return;
     }
     const data = {
       [question.id]: value,
     };
     onSubmit(data);
+    setSelectedChoice(null);
   };
 
   const handleSelect = (number: number) => {
@@ -65,6 +74,7 @@ export default function RatingQuestion({
       value={number}
       className="absolute left-0 h-full w-full cursor-pointer opacity-0"
       onChange={() => handleSelect(number)}
+      checked={selectedChoice === number}
       required={question.required}
     />
   );
@@ -133,8 +143,20 @@ export default function RatingQuestion({
         </fieldset>
       </div>
 
-      {!question.required && (
+      {(!question.required || savedAnswer) && (
         <div className="mt-4 flex w-full justify-between">
+          {goToPreviousQuestion && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
+              onClick={(e) => {
+                e.preventDefault();
+                goToPreviousQuestion();
+              }}>
+              Back
+            </Button>
+          )}
           <div></div>
           <SubmitButton {...{ question, lastQuestion, brandColor }} />
         </div>

@@ -1,8 +1,8 @@
-import { Input } from "@/../../packages/ui";
+import { Button } from "@formbricks/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
@@ -13,6 +13,7 @@ interface MultipleChoiceSingleProps {
   brandColor: string;
   savedAnswer: string | null;
   goToNextQuestion: () => void;
+  goToPreviousQuestion?: () => void;
 }
 
 export default function MultipleChoiceSingleQuestion({
@@ -22,16 +23,20 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
   savedAnswer,
   goToNextQuestion,
+  goToPreviousQuestion,
 }: MultipleChoiceSingleProps) {
-  const savedAnswerValue = question.choices.find((choice) => choice.label === savedAnswer)?.id;
-  const [selectedChoice, setSelectedChoice] = useState<string | null>(savedAnswerValue ?? null);
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+
+  useEffect(() => {
+    const savedAnswerValue = question.choices.find((choice) => choice.label === savedAnswer)?.id;
+    setSelectedChoice(savedAnswerValue ?? null);
+  }, [savedAnswer, question]);
 
   const handleSubmit = (value: string) => {
     const data = {
       [question.id]: value,
     };
     onSubmit(data);
-    setSelectedChoice(null); // reset form
   };
 
   /*   const [isIphone, setIsIphone] = useState(false);
@@ -48,9 +53,11 @@ export default function MultipleChoiceSingleQuestion({
         const value = e.currentTarget[question.id].value;
         if (value === savedAnswer) {
           goToNextQuestion();
+          setSelectedChoice(null); // reset form
           return;
         }
         handleSubmit(value);
+        setSelectedChoice(null); // reset form
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -85,17 +92,6 @@ export default function MultipleChoiceSingleQuestion({
                       {choice.label}
                     </span>
                   </span>
-                  {choice.id === "other" && selectedChoice === "other" && (
-                    <Input
-                      id={`${choice.id}-label`}
-                      name={question.id}
-                      placeholder="Please specify"
-                      className="mt-3 bg-white focus:border-slate-300"
-                      required={question.required}
-                      aria-labelledby={`${choice.id}-label`}
-                      autoFocus
-                    />
-                  )}
                 </label>
               ))}
             {/*             {isIphone && question.choices.length > 5 && (
@@ -108,6 +104,18 @@ export default function MultipleChoiceSingleQuestion({
         </fieldset>
       </div>
       <div className="mt-4 flex w-full justify-between">
+        {goToPreviousQuestion && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
+            onClick={(e) => {
+              e.preventDefault();
+              goToPreviousQuestion();
+            }}>
+            Back
+          </Button>
+        )}
         <div></div>
         <SubmitButton {...{ question, lastQuestion, brandColor }} />
       </div>

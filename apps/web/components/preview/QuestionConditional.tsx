@@ -14,6 +14,7 @@ interface QuestionConditionalProps {
   brandColor: string;
   savedAnswer: any;
   goToNextQuestion: () => void;
+  goToPreviousQuestion?: () => void;
 }
 
 export default function QuestionConditional({
@@ -23,6 +24,7 @@ export default function QuestionConditional({
   brandColor,
   savedAnswer,
   goToNextQuestion,
+  goToPreviousQuestion,
 }: QuestionConditionalProps) {
   return question.type === QuestionType.OpenText ? (
     <OpenTextQuestion
@@ -32,6 +34,7 @@ export default function QuestionConditional({
       brandColor={brandColor}
       savedAnswer={savedAnswer}
       goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
@@ -41,6 +44,7 @@ export default function QuestionConditional({
       brandColor={brandColor}
       savedAnswer={savedAnswer}
       goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -50,6 +54,7 @@ export default function QuestionConditional({
       brandColor={brandColor}
       savedAnswer={savedAnswer}
       goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.NPS ? (
     <NPSQuestion
@@ -59,6 +64,7 @@ export default function QuestionConditional({
       brandColor={brandColor}
       savedAnswer={savedAnswer}
       goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.CTA ? (
     <CTAQuestion
@@ -66,6 +72,9 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      savedAnswer={savedAnswer}
+      goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.Rating ? (
     <RatingQuestion
@@ -75,6 +84,7 @@ export default function QuestionConditional({
       brandColor={brandColor}
       savedAnswer={savedAnswer}
       goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === "consent" ? (
     <ConsentQuestion
@@ -84,6 +94,7 @@ export default function QuestionConditional({
       brandColor={brandColor}
       savedAnswer={savedAnswer}
       goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : null;
 }

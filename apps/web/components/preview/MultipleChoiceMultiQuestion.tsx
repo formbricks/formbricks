@@ -1,4 +1,4 @@
-import { Input } from "@/../../packages/ui";
+import { Button, Input } from "@formbricks/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
@@ -14,6 +14,7 @@ interface MultipleChoiceMultiProps {
   brandColor: string;
   savedAnswer: string[] | null;
   goToNextQuestion: () => void;
+  goToPreviousQuestion?: () => void;
 }
 
 export default function MultipleChoiceMultiQuestion({
@@ -23,6 +24,7 @@ export default function MultipleChoiceMultiQuestion({
   brandColor,
   savedAnswer,
   goToNextQuestion,
+  goToPreviousQuestion,
 }: MultipleChoiceMultiProps) {
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
@@ -44,7 +46,7 @@ export default function MultipleChoiceMultiQuestion({
       setShowOther(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [savedAnswer, question]);
 
   /*   
   const [isIphone, setIsIphone] = useState(false);
@@ -56,6 +58,12 @@ export default function MultipleChoiceMultiQuestion({
   useEffect(() => {
     setIsAtLeastOneChecked(selectedChoices.length > 0 || otherSpecified.length > 0);
   }, [selectedChoices, otherSpecified]);
+
+  const resetForm = () => {
+    setSelectedChoices([]); // reset value
+    setShowOther(false);
+    setOtherSpecified("");
+  };
 
   const handleSubmit = () => {
     if (question.required && selectedChoices.length <= 0) {
@@ -81,10 +89,12 @@ export default function MultipleChoiceMultiQuestion({
         // checks if the saved answer is the same as the selected choices
         if (_.xor(selectedChoices, savedAnswer).length === 0) {
           goToNextQuestion();
+          resetForm();
           return;
         }
 
         handleSubmit();
+        resetForm();
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -163,6 +173,18 @@ export default function MultipleChoiceMultiQuestion({
         onChange={() => {}}
       />
       <div className="mt-4 flex w-full justify-between">
+        {goToPreviousQuestion && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
+            onClick={(e) => {
+              e.preventDefault();
+              goToPreviousQuestion();
+            }}>
+            Back
+          </Button>
+        )}
         <div></div>
         <SubmitButton {...{ question, lastQuestion, brandColor }} />
       </div>
