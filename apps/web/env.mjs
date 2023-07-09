@@ -7,9 +7,9 @@ export const env = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
-    DATABASE_URL: z.string().url().optional(),
+    DATABASE_URL: z.string().url(),
     PRISMA_GENERATE_DATAPROXY: z.enum(["1", "0", ""]).optional(),
-    NEXTAUTH_SECRET: z.string().min(1).optional(),
+    NEXTAUTH_SECRET: z.string().min(1),
     NEXTAUTH_URL: z.string().url().optional(),
     MAIL_FROM: z.string().email().optional(),
     SMTP_HOST: z.string().min(1).optional(),
