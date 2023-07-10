@@ -204,21 +204,27 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       storeAnswer(survey.id, answer);
     }
 
-    setLoadingElement(false);
     setSavedAnswer(getStoredAnswer(survey.id, previousQuestion.id));
     setCurrentQuestion(previousQuestion);
+    setLoadingElement(false);
   };
 
-  const goToNextQuestion = () => {
+  const goToNextQuestion = (answer: Response["data"]) => {
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId();
+
+    if (nextQuestionId === "end") {
+      submitResponse(answer);
+      return;
+    }
+
     const nextQuestion = survey.questions.find((q) => q.id === nextQuestionId);
 
     if (!nextQuestion) throw new Error("Question not found");
 
-    setLoadingElement(false);
     setSavedAnswer(getStoredAnswer(survey.id, nextQuestion.id));
     setCurrentQuestion(nextQuestion);
+    setLoadingElement(false);
   };
 
   return {

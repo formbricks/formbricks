@@ -13,7 +13,7 @@ interface ConsentQuestionProps {
   lastQuestion: boolean;
   brandColor: string;
   savedAnswer: string | null;
-  goToNextQuestion: () => void;
+  goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
@@ -37,15 +37,15 @@ export default function ConsentQuestion({
   };
 
   const handleSumbit = (value: string) => {
+    const data = {
+      [question.id]: value,
+    };
     if (savedAnswer === value) {
-      goToNextQuestion();
+      goToNextQuestion(data);
       setAnswer("dismissed");
 
       return;
     }
-    const data = {
-      [question.id]: value,
-    };
     onSubmit(data);
     setAnswer("dismissed");
   };
@@ -85,13 +85,9 @@ export default function ConsentQuestion({
               className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
               onClick={(e) => {
                 e.preventDefault();
-                goToPreviousQuestion(
-                  answer !== savedAnswer
-                    ? {
-                        [question.id]: answer,
-                      }
-                    : undefined
-                );
+                goToPreviousQuestion({
+                  [question.id]: answer,
+                });
               }}>
               Back
             </Button>

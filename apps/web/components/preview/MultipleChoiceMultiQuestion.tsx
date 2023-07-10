@@ -14,8 +14,8 @@ interface MultipleChoiceMultiProps {
   lastQuestion: boolean;
   brandColor: string;
   savedAnswer: string[] | null;
-  goToNextQuestion: () => void;
-  goToPreviousQuestion?: (answer?: Response["data"]) => void;
+  goToNextQuestion: (answer: Response["data"]) => void;
+  goToPreviousQuestion?: (answer: Response["data"]) => void;
 }
 
 export default function MultipleChoiceMultiQuestion({
@@ -33,8 +33,9 @@ export default function MultipleChoiceMultiQuestion({
   const [otherSpecified, setOtherSpecified] = useState("");
 
   const nonOtherChoiceLabels = question.choices
-    .map((choice) => choice.label)
-    .filter((label) => label !== "Other");
+    .filter((label) => label.id !== "other")
+    .map((choice) => choice.label);
+
   useEffect(() => {
     const nonOtherSavedChoices = savedAnswer?.filter((answer) => nonOtherChoiceLabels.includes(answer));
     const savedOtherSpecified = savedAnswer?.find((answer) => !nonOtherChoiceLabels.includes(answer));
@@ -66,13 +67,18 @@ export default function MultipleChoiceMultiQuestion({
   };
 
   const handleSubmit = () => {
-    if (question.required && selectedChoices.length <= 0) {
-      return;
-    }
-
     const data = {
       [question.id]: selectedChoices,
     };
+
+    if (_.xor(selectedChoices, savedAnswer).length === 0) {
+      goToNextQuestion(data);
+      return;
+    }
+
+    if (question.required && selectedChoices.length <= 0) {
+      return;
+    }
 
     onSubmit(data);
   };
@@ -85,14 +91,6 @@ export default function MultipleChoiceMultiQuestion({
         if (otherSpecified.length > 0 && showOther) {
           selectedChoices.push(otherSpecified);
         }
-
-        // checks if the saved answer is the same as the selected choices
-        if (_.xor(selectedChoices, savedAnswer).length === 0) {
-          goToNextQuestion();
-          resetForm();
-          return;
-        }
-
         handleSubmit();
         resetForm();
       }}>
@@ -182,10 +180,6 @@ export default function MultipleChoiceMultiQuestion({
               e.preventDefault();
               if (otherSpecified.length > 0 && showOther) {
                 selectedChoices.push(otherSpecified);
-              }
-              if (_.xor(selectedChoices, savedAnswer).length === 0) {
-                goToPreviousQuestion();
-                resetForm();
               }
               goToPreviousQuestion({
                 [question.id]: selectedChoices,

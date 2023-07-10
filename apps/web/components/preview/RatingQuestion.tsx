@@ -27,7 +27,7 @@ interface RatingQuestionProps {
   lastQuestion: boolean;
   brandColor: string;
   savedAnswer: number | null;
-  goToNextQuestion: () => void;
+  goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
@@ -49,14 +49,14 @@ export default function RatingQuestion({
   }, [savedAnswer, question]);
 
   const handleSubmit = (value: number | null) => {
-    if (savedAnswer === value) {
-      goToNextQuestion();
-      setSelectedChoice(null);
-      return;
-    }
     const data = {
       [question.id]: value,
     };
+    if (savedAnswer === value) {
+      goToNextQuestion(data);
+      setSelectedChoice(null);
+      return;
+    }
     onSubmit(data);
     setSelectedChoice(null);
   };
@@ -152,9 +152,7 @@ export default function RatingQuestion({
             className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
             onClick={(e) => {
               e.preventDefault();
-              goToPreviousQuestion(
-                savedAnswer !== selectedChoice ? { [question.id]: selectedChoice } : undefined
-              );
+              goToPreviousQuestion({ [question.id]: selectedChoice });
             }}>
             Back
           </Button>

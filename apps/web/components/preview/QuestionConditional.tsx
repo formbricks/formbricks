@@ -13,8 +13,8 @@ interface QuestionConditionalProps {
   lastQuestion: boolean;
   brandColor: string;
   savedAnswer: any;
-  goToNextQuestion: () => void;
-  goToPreviousQuestion?: (answer?: any) => void;
+  goToNextQuestion: (answer: any) => void;
+  goToPreviousQuestion?: (answer: any) => void;
 }
 
 export default function QuestionConditional({

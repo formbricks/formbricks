@@ -4,6 +4,7 @@ import HtmlBody from "./HtmlBody";
 import { cn } from "@/../../packages/lib/cn";
 import { isLight } from "@/lib/utils";
 import { Button } from "@formbricks/ui";
+import { Response } from "@formbricks/types/js";
 
 interface CTAQuestionProps {
   question: CTAQuestion;
@@ -11,8 +12,8 @@ interface CTAQuestionProps {
   lastQuestion: boolean;
   brandColor: string;
   savedAnswer: string | null;
-  goToNextQuestion: () => void;
-  goToPreviousQuestion?: () => void;
+  goToNextQuestion: (answer: Response["data"]) => void;
+  goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
 export default function CTAQuestion({
@@ -48,13 +49,13 @@ export default function CTAQuestion({
             type="button"
             onClick={() => {
               if (savedAnswer) {
-                goToNextQuestion();
+                goToNextQuestion({ [question.id]: "clicked" });
                 return;
               }
               onSubmit({ [question.id]: "dismissed" });
             }}
             className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 text-slate-500 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:border-slate-400 dark:text-slate-400">
-            {savedAnswer ? "Next" : question.dismissButtonLabel || "Skip"}
+            {savedAnswer === "clicked" ? "Next" : question.dismissButtonLabel || "Skip"}
           </button>
         )}
         <button

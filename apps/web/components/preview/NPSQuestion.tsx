@@ -13,7 +13,7 @@ interface NPSQuestionProps {
   lastQuestion: boolean;
   brandColor: string;
   savedAnswer: number | null;
-  goToNextQuestion: () => void;
+  goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
@@ -33,14 +33,14 @@ export default function NPSQuestion({
   }, [savedAnswer, question]);
 
   const handleSubmit = (value: number | null) => {
-    if (savedAnswer === value) {
-      goToNextQuestion();
-      setSelectedChoice(null);
-      return;
-    }
     const data = {
       [question.id]: value,
     };
+    if (savedAnswer === value) {
+      goToNextQuestion(data);
+      setSelectedChoice(null);
+      return;
+    }
     onSubmit(data);
     setSelectedChoice(null);
   };

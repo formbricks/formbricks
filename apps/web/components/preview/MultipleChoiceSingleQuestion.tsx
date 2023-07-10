@@ -13,7 +13,7 @@ interface MultipleChoiceSingleProps {
   lastQuestion: boolean;
   brandColor: string;
   savedAnswer: string | null;
-  goToNextQuestion: () => void;
+  goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
@@ -28,23 +28,44 @@ export default function MultipleChoiceSingleQuestion({
 }: MultipleChoiceSingleProps) {
   const savedAnswerValue = question.choices.find((choice) => choice.label === savedAnswer)?.id;
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const [savedOtherAnswer, setSavedOtherAnswer] = useState<string | null>(null);
   const otherSpecify = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setSelectedChoice(savedAnswerValue ?? null);
-  }, [savedAnswerValue]);
+    if (!savedAnswerValue) {
+      const otherChoiceId = question.choices.find((choice) => choice.id === "other")?.id;
+      if (otherChoiceId && savedAnswer) {
+        setSelectedChoice(otherChoiceId);
+        setSavedOtherAnswer(savedAnswer);
+      }
+    } else {
+      setSelectedChoice(savedAnswerValue);
+    }
+  }, [question.choices, savedAnswer, savedAnswerValue]);
 
   useEffect(() => {
-    if (selectedChoice === "other") {
-      otherSpecify.current?.focus();
+    if (selectedChoice === "other" && otherSpecify.current) {
+      otherSpecify.current.value = savedOtherAnswer ?? "";
+      otherSpecify.current.focus();
     }
-  }, [selectedChoice]);
+  }, [savedOtherAnswer, selectedChoice]);
+
+  const resetForm = () => {
+    setSelectedChoice(null);
+    setSavedOtherAnswer(null);
+  };
 
   const handleSubmit = (value: string) => {
     const data = {
       [question.id]: value,
     };
+    if (value === savedAnswer) {
+      goToNextQuestion(data);
+      resetForm(); // reset form
+      return;
+    }
     onSubmit(data);
+    resetForm(); // reset form
   };
 
   /*   const [isIphone, setIsIphone] = useState(false);
@@ -59,13 +80,7 @@ export default function MultipleChoiceSingleQuestion({
       onSubmit={(e) => {
         e.preventDefault();
         const value = otherSpecify.current?.value || e.currentTarget[question.id].value;
-        if (value === savedAnswer) {
-          goToNextQuestion();
-          setSelectedChoice(null); // reset form
-          return;
-        }
         handleSubmit(value);
-        setSelectedChoice(null); // reset form
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -132,11 +147,13 @@ export default function MultipleChoiceSingleQuestion({
             onClick={(e) => {
               e.preventDefault();
               goToPreviousQuestion(
-                selectedChoice !== savedAnswerValue
+                selectedChoice === "other"
                   ? {
+                      [question.id]: otherSpecify.current?.value,
+                    }
+                  : {
                       [question.id]: question.choices.find((choice) => choice.id === selectedChoice)?.label,
                     }
-                  : undefined
               );
             }}>
             Back
