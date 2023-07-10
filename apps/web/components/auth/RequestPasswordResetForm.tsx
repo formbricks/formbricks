@@ -9,14 +9,18 @@ import { useState } from "react";
 export const PasswordResetForm = ({}) => {
   const router = useRouter();
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await forgotPassword(e.target.elements.email.value);
-
       router.push("/auth/forgot-password/email-sent");
     } catch (e) {
       setError(e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,7 +59,7 @@ export const PasswordResetForm = ({}) => {
         </div>
 
         <div>
-          <Button type="submit" className="w-full justify-center">
+          <Button type="submit" variant="darkCTA" className="w-full justify-center" loading={loading}>
             Reset password
           </Button>
           <div className="mt-3 text-center">
