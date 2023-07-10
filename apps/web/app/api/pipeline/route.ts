@@ -51,6 +51,18 @@ export async function POST(request: Request) {
       triggers: {
         hasSome: event,
       },
+      OR: [
+        {
+          surveyIds: {
+            has: surveyId,
+          },
+        },
+        {
+          surveyIds: {
+            isEmpty: true,
+          },
+        },
+      ],
     },
   });
 
