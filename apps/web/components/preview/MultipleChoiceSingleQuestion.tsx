@@ -2,7 +2,7 @@ import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { Choice, MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import { shuffleArray } from "@/lib/utils";
@@ -28,6 +28,13 @@ export default function MultipleChoiceSingleQuestion({
         : question.choices
       : []
   );
+  const otherSpecify = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (selectedChoice === "other") {
+      otherSpecify.current?.focus();
+    }
+  }, [selectedChoice]);
   /*   const [isIphone, setIsIphone] = useState(false);
 
 
@@ -50,7 +57,7 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const value = e.currentTarget[question.id].value;
+        const value = otherSpecify.current?.value || e.currentTarget[question.id].value;
         const data = {
           [question.id]: value,
         };
@@ -86,20 +93,21 @@ export default function MultipleChoiceSingleQuestion({
                   <span id={`${choice.id}-label`} className="ml-3 font-medium">
                     {choice.label}
                   </span>
-                </span>
-                {choice.id === "other" && selectedChoice === "other" && (
-                  <Input
-                    id={`${choice.id}-label`}
-                    name={question.id}
-                    placeholder="Please specify"
-                    className="mt-3 bg-white focus:border-slate-300"
-                    required={question.required}
-                    aria-labelledby={`${choice.id}-label`}
-                    autoFocus
-                  />
-                )}
-              </label>
-            ))}
+                  {choice.id === "other" && selectedChoice === "other" && (
+                    <Input
+                      id={`${choice.id}-label`}
+                      ref={otherSpecify}
+                      name={question.id}
+                      placeholder="Please specify"
+                      className="mt-3 bg-white focus:border-slate-300"
+                      required={question.required}
+                      aria-labelledby={`${choice.id}-label`}
+                      autoFocus
+                    />
+                  )}
+                  </span>
+                </label>
+              ))}
             {/*             {isIphone && question.choices.length > 5 && (
               <div className="z-50 -mt-8 h-8 bg-gradient-to-b from-transparent to-white"></div>
             )} */}

@@ -1,8 +1,8 @@
 import { responses } from "@/lib/api/response";
-import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
-import { getEnvironmentResponses } from "@formbricks/lib/services/response";
-import { headers } from "next/headers";
 import { DatabaseError } from "@formbricks/errors";
+import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
+import { getSurveys } from "@formbricks/lib/services/survey";
+import { headers } from "next/headers";
 
 export async function GET() {
   const apiKey = headers().get("x-api-key");
@@ -19,10 +19,10 @@ export async function GET() {
     return responses.notAuthenticatedResponse();
   }
 
-  // get responses from database
+  // get surveys from database
   try {
-    const environmentResponses = await getEnvironmentResponses(apiKeyData.environmentId);
-    return responses.successResponse(environmentResponses);
+    const surveys = await getSurveys(apiKeyData.environmentId);
+    return responses.successResponse(surveys);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);
