@@ -2,6 +2,7 @@
 
 import { prisma } from "@formbricks/database";
 import { Team } from "@prisma/client";
+import { templates } from "./surveys/templates/templates";
 
 export async function createTeam(teamName: string, ownerUserId: string): Promise<Team> {
   const newTeam = await prisma.team.create({
@@ -90,6 +91,51 @@ export async function createTeam(teamName: string, ownerUserId: string): Promise
     },
     include: {
       memberships: true,
+      products: {
+        include: {
+          environments: true,
+        },
+      },
+    },
+  });
+
+  const people: any[] = [];
+  for (let i = 0; i < 5; i++) {
+    const person = await prisma.person.create({
+      data: {
+        environment: { connect: { id: newTeam.products[0].environments[0].id } },
+      },
+    });
+    people.push(person);
+  }
+
+  const { category, description, preset, ...template } = templates[0];
+
+  const newSurvey = await prisma.survey.create({
+    data: {
+      ...template,
+      status: "inProgress",
+      environment: { connect: { id: newTeam.products[0].environments[0].id } },
+      questions: preset.questions as any,
+      responses: {
+        create: [
+          {
+            finished: false,
+            data: {},
+            meta: {
+              userAgent: {
+                os: "Windows",
+                browser: "Firefox",
+              },
+            },
+            person: {
+              connect: {
+                id: people[0].id,
+              },
+            },
+          },
+        ],
+      },
     },
   });
 
