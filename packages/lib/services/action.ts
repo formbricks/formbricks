@@ -48,7 +48,7 @@ export const getActionClasses = async (environmentId: string): Promise<TAction[]
 
     return transformedActionClasses;
   } catch (error) {
-    throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
+    throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
   }
 };
 
@@ -62,6 +62,6 @@ export const createActionClassServerAction = async (environmentId: string, event
     });
     return result;
   } catch (error) {
-    throw new DatabaseError(`Database error when fetching webhooks for environment ${environmentId}`);
+    throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
   }
 };
