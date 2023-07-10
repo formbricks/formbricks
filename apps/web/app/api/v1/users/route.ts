@@ -3,14 +3,11 @@ import { verifyInviteToken } from "@/lib/jwt";
 import { populateEnvironment } from "@/lib/populate";
 import { prisma } from "@formbricks/database";
 import { NextResponse } from "next/server";
+import { env } from "@/env.mjs";
 
 export async function POST(request: Request) {
   let { inviteToken, ...user } = await request.json();
-  if (
-    inviteToken
-      ? process.env.NEXT_PUBLIC_INVITE_DISABLED === "1"
-      : process.env.NEXT_PUBLIC_SIGNUP_DISABLED === "1"
-  ) {
+  if (inviteToken ? env.NEXT_PUBLIC_INVITE_DISABLED === "1" : env.NEXT_PUBLIC_SIGNUP_DISABLED === "1") {
     return NextResponse.json({ error: "Signup disabled" }, { status: 403 });
   }
   user = { ...user, ...{ email: user.email.toLowerCase() } };
@@ -99,7 +96,7 @@ export async function POST(request: Request) {
       await prisma.invite.delete({ where: { id: inviteId } });
     }
 
-    if (process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
+    if (env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
       await sendVerificationEmail(userData);
     }
     return NextResponse.json(userData);

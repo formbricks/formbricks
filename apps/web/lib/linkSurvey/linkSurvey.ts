@@ -51,13 +51,11 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         if (isPreview) return;
 
         // create display
-        createDisplay(
-          { surveyId: survey.id },
-          `${window.location.protocol}//${window.location.host}`,
-          survey.environmentId
-        ).then((display) => {
-          setDisplayId(display.id);
-        });
+        createDisplay({ surveyId: survey.id }, `${window.location.protocol}//${window.location.host}`).then(
+          (display) => {
+            setDisplayId(display.id);
+          }
+        );
       }
     }
   }, [survey, isPreview, isLoadingPerson]);
@@ -119,11 +117,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         `${window.location.protocol}//${window.location.host}`
       );
       if (displayId) {
-        markDisplayResponded(
-          displayId,
-          `${window.location.protocol}//${window.location.host}`,
-          survey.environmentId
-        );
+        markDisplayResponded(displayId, `${window.location.protocol}//${window.location.host}`);
       }
       setResponseId(response.id);
       storeAnswer(survey.id, response.data);

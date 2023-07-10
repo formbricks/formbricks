@@ -1,8 +1,8 @@
-import { Button } from "@formbricks/ui";
+import { Button, Input } from "@formbricks/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import { Response } from "@formbricks/types/js";
@@ -26,12 +26,19 @@ export default function MultipleChoiceSingleQuestion({
   goToNextQuestion,
   goToPreviousQuestion,
 }: MultipleChoiceSingleProps) {
-  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const savedAnswerValue = question.choices.find((choice) => choice.label === savedAnswer)?.id;
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const otherSpecify = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setSelectedChoice(savedAnswerValue ?? null);
-  }, [savedAnswerValue, question]);
+  }, [savedAnswerValue]);
+
+  useEffect(() => {
+    if (selectedChoice === "other") {
+      otherSpecify.current?.focus();
+    }
+  }, [selectedChoice]);
 
   const handleSubmit = (value: string) => {
     const data = {
@@ -51,7 +58,7 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const value = e.currentTarget[question.id].value;
+        const value = otherSpecify.current?.value || e.currentTarget[question.id].value;
         if (value === savedAnswer) {
           goToNextQuestion();
           setSelectedChoice(null); // reset form
@@ -93,6 +100,18 @@ export default function MultipleChoiceSingleQuestion({
                       {choice.label}
                     </span>
                   </span>
+                  {choice.id === "other" && selectedChoice === "other" && (
+                    <Input
+                      id={`${choice.id}-label`}
+                      ref={otherSpecify}
+                      name={question.id}
+                      placeholder="Please specify"
+                      className="mt-3 bg-white focus:border-slate-300"
+                      required={question.required}
+                      aria-labelledby={`${choice.id}-label`}
+                      autoFocus
+                    />
+                  )}
                 </label>
               ))}
             {/*             {isIphone && question.choices.length > 5 && (
