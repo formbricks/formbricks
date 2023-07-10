@@ -37,7 +37,7 @@ export const transformPrismaPerson = (person: TransformPersonInput | null): Tran
     id: person.id,
     attributes: attributes,
     createdAt: person.createdAt,
-    updatedAt: person.updatedAt
+    updatedAt: person.updatedAt,
   };
 };
 
