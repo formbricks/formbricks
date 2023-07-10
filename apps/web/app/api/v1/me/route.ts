@@ -12,7 +12,21 @@ export async function GET() {
         hashedKey: hashApiKey(apiKey),
       },
       select: {
-        environment: true,
+        environment: {
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            type: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            widgetSetupCompleted: true,
+          },
+        },
       },
     });
     if (!apiKeyData) {

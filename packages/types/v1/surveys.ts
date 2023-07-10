@@ -204,11 +204,16 @@ export const ZSurvey = z.object({
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
   delay: z.number(),
-  autoComplete: z.union([z.boolean(), z.null()]),
+  autoComplete: z.union([z.number(), z.null()]),
+});
+
+export type TSurvey = z.infer<typeof ZSurvey>;
+
+export const ZSurveyWithAnalytics = ZSurvey.extend({
   analytics: z.object({
     numDisplays: z.number(),
     responseRate: z.number(),
   }),
 });
 
-export type TSurvey = z.infer<typeof ZSurvey>;
+export type TSurveyWithAnalytics = z.infer<typeof ZSurveyWithAnalytics>;

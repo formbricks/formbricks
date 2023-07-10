@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
 import { prisma } from "@formbricks/database";
+import { env } from "@/env.mjs";
 
 export function createToken(userId, userEmail, options = {}) {
-  return jwt.sign({ id: userId }, process.env.NEXTAUTH_SECRET + userEmail, options);
+  return jwt.sign({ id: userId }, env.NEXTAUTH_SECRET + userEmail, options);
 }
 
 export async function verifyToken(token, userEmail = "") {
@@ -20,11 +21,11 @@ export async function verifyToken(token, userEmail = "") {
     userEmail = foundUser.email;
   }
 
-  return jwt.verify(token, process.env.NEXTAUTH_SECRET + userEmail);
+  return jwt.verify(token, env.NEXTAUTH_SECRET + userEmail);
 }
 
 export const createInviteToken = (inviteId: string, email: string, options = {}) => {
-  return jwt.sign({ inviteId, email }, process.env.NEXTAUTH_SECRET, options);
+  return jwt.sign({ inviteId, email }, env.NEXTAUTH_SECRET, options);
 };
 
 export const verifyInviteToken = async (token: string) => {
