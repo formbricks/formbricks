@@ -13,9 +13,11 @@ export const ResetPasswordForm = () => {
   const [error, setError] = useState<string>("");
   const [password, setPassword] = useState<string | null>(null);
   const [isValid, setIsValid] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     const token = searchParams?.get("token");
     try {
       if (!token) throw new Error("No token provided");
@@ -24,6 +26,8 @@ export const ResetPasswordForm = () => {
       router.push("/auth/forgot-password/reset/success");
     } catch (e) {
       setError(e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,14 +62,19 @@ export const ResetPasswordForm = () => {
               autoComplete="current-password"
               placeholder="*******"
               required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm border-slate-300 sm:text-sm"
+              className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
             />
-             <IsPasswordValid password={password} setIsValid={setIsValid} />
+            <IsPasswordValid password={password} setIsValid={setIsValid} />
           </div>
         </div>
 
         <div>
-          <Button type="submit" variant="darkCTA" disabled={!isValid} className="w-full justify-center">
+          <Button
+            type="submit"
+            variant="darkCTA"
+            disabled={!isValid}
+            className="w-full justify-center"
+            loading={loading}>
             Reset password
           </Button>
         </div>
