@@ -1,4 +1,4 @@
-import AttributeClassesList from "./AttributeClassesList";
+import AttributeClassesComponent from "@/app/environments/[environmentId]/attributes/AttributeClassesComponent";
 import ActionsAttributesTabs from "@/components/events_attributes/EventsAttributesTabs";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 
@@ -7,7 +7,7 @@ export default function AttributesPage({ params }) {
     <div className="">
       <ActionsAttributesTabs activeId="attributes" environmentId={params.environmentId} />
       <ContentWrapper>
-        <AttributeClassesList environmentId={params.environmentId} />
+        <AttributeClassesComponent environmentId={params.environmentId} />
       </ContentWrapper>
     </div>
   );
