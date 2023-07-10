@@ -40,6 +40,11 @@ export default function PreviewSurvey({
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
   const [showFormbricksSignature, setShowFormbricksSignature] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [savedAnswer, setSavedAnswer] = useState<any>();
+  const [storedAnswer, setStoredAnswers] = useState<Record<string, any>>({});
+
+  const showBackButton = progress !== 0 && !finished;
 
   useEffect(() => {
     if (product) {
@@ -206,11 +211,13 @@ export default function PreviewSurvey({
   }
 
   const gotoNextQuestion = (data) => {
+    setStoredAnswers({ ...storedAnswer, ...data });
     const nextQuestionId = getNextQuestion(data);
-
+    setSavedAnswer(storedAnswer[nextQuestionId]);
     if (nextQuestionId !== "end") {
       setActiveQuestionId(nextQuestionId);
     } else {
+      setFinished(true);
       if (thankYouCard?.enabled) {
         setActiveQuestionId("thank-you-card");
         setProgress(1);
@@ -223,6 +230,15 @@ export default function PreviewSurvey({
       }
     }
   };
+
+  function goToPreviousQuestion(data: any) {
+    setStoredAnswers({ ...storedAnswer, ...data });
+    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
+    const previousQuestionId = questions[currentQuestionIndex - 1].id;
+    setSavedAnswer(storedAnswer[previousQuestionId]);
+    setActiveQuestionId(previousQuestionId);
+  }
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -279,8 +295,9 @@ export default function PreviewSurvey({
                     brandColor={brandColor}
                     lastQuestion={idx === questions.length - 1}
                     onSubmit={gotoNextQuestion}
-                    savedAnswer={undefined}
-                    goToNextQuestion={() => {}}
+                    savedAnswer={savedAnswer}
+                    goToNextQuestion={gotoNextQuestion}
+                    goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
                   />
                 ) : null
               )
@@ -308,8 +325,9 @@ export default function PreviewSurvey({
                       brandColor={brandColor}
                       lastQuestion={idx === questions.length - 1}
                       onSubmit={gotoNextQuestion}
-                      savedAnswer={undefined}
-                      goToNextQuestion={() => {}}
+                      savedAnswer={savedAnswer}
+                      goToNextQuestion={gotoNextQuestion}
+                      goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
                     />
                   ) : null
                 )
