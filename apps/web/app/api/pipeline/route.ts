@@ -72,6 +72,7 @@ export async function POST(request: Request) {
       await fetch(webhook.url, {
         method: "POST",
         body: JSON.stringify({
+          webhookId: webhook.id,
           event,
           data,
         }),
