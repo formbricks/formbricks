@@ -16,7 +16,7 @@ export default async function ResponsesPage({ params }) {
   if (!session) {
     throw new Error("Unauthorized");
   }
-  const { responses, survey } = await getAnalysisData(session, params.surveyId);
+  const { responses, survey } = await getAnalysisData(session, params.surveyId, params.environmentId);
   return (
     <>
       <SurveyResultsTabs
