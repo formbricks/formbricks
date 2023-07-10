@@ -32,7 +32,7 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
           value={currentValue}
           onChange={(e) => setCurrentValue(e.target.value)}
           disabled={localSurvey.status !== "draft"}
-          className={isInputInvalid ? "focus:border-red-300 border-red-300" : ""}
+          className={isInputInvalid ? "border-red-300 focus:border-red-300" : ""}
         />
         {localSurvey.status === "draft" && (
           <Button
