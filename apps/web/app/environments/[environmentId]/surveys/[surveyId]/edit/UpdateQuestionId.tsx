@@ -31,7 +31,7 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
           value={currentValue}
           onChange={(e) => setCurrentValue(e.target.value)}
           onBlur={saveAction}
-          disabled={localSurvey.status !== "draft"}
+          disabled={!(localSurvey.status === "draft" || question.isDraft)}
           className={isInputInvalid ? "border-red-300 focus:border-red-300" : ""}
         />
       </div>

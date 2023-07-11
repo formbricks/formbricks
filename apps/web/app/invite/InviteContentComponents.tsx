@@ -57,7 +57,7 @@ export const ExpiredContent = () => {
   return (
     <ContentLayout
       headline="Invite expired 😥"
-      description="The invitation was valid for 7 days. Please request a new invite.">
+      description="Invies are valid for 7 days. Please request a new invite.">
       <div></div>
     </ContentLayout>
   );
