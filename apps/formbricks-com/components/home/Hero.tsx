@@ -5,7 +5,7 @@ import CrowdLogoDark from "@/images/clients/crowd-logo-dark.svg";
 import CrowdLogoLight from "@/images/clients/crowd-logo-light.svg";
 import NILogoDark from "@/images/clients/niLogoDark.svg";
 import NILogoLight from "@/images/clients/niLogoWhite.svg";
-import AnimationFallback from "@/public/animations/fallback-image-open-source-feedback-software.jpg";
+import AnimationFallback from "@/public/animations/opensource-xm-platform-formbricks-fallback.png";
 import { Button } from "@formbricks/ui";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { usePlausible } from "next-plausible";
@@ -27,14 +27,14 @@ export const Hero: React.FC = ({}) => {
           <ChevronRightIcon className="inline h-5 w-5 text-slate-300" />
         </a>
         <h1 className="mt-10 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
-          <span className="xl:inline">Create Products People Remember</span>
+          <span className="xl:inline">Open-source Experience Management</span>
         </h1>
 
         <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-500 dark:text-slate-400 sm:text-lg md:mt-5 md:text-xl">
           Understand what customers think & feel about your product.
           <br />
           <span className="hidden md:block">
-            Continuously gather deep user insights,{" "}
+            Natively integrate user research with minimal dev attention,{" "}
             <span className="decoration-brand-dark underline underline-offset-4">privacy-first.</span>
           </span>
         </p>
