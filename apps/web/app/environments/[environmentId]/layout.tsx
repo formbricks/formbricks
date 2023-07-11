@@ -6,6 +6,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import PosthogIdentify from "./PosthogIdentify";
 import FormbricksClient from "../../FormbricksClient";
 import { PosthogClientWrapper } from "../../PosthogClientWrapper";
+import { ResponseFilterProvider } from "@/lib/surveys/ResponseFilterContext";
 import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
 
 export default async function EnvironmentLayout({ children, params }) {
@@ -20,16 +21,18 @@ export default async function EnvironmentLayout({ children, params }) {
 
   return (
     <>
-      <PosthogIdentify session={session} />
-      <FormbricksClient session={session} />
-      <ToasterClient />
-      <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
-      <PosthogClientWrapper>
-        <main className="h-full flex-1 overflow-y-auto bg-slate-50">
-          {children}
-          <main />
-        </main>
-      </PosthogClientWrapper>
+      <ResponseFilterProvider>
+        <PosthogIdentify session={session} />
+        <FormbricksClient session={session} />
+        <ToasterClient />
+        <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
+        <PosthogClientWrapper>
+          <main className="h-full flex-1 overflow-y-auto bg-slate-50">
+            {children}
+            <main />
+          </main>
+        </PosthogClientWrapper>
+      </ResponseFilterProvider>
     </>
   );
 }

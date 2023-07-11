@@ -81,7 +81,7 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
           <div className="p-1">
             <CommandInput
               placeholder={tagsToSearch?.length === 0 ? "Add tag..." : "Search or add tags..."}
-              className="border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
+              className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
               value={searchValue}
               onValueChange={(search) => setSearchValue(search)}
               onKeyDown={(e) => {

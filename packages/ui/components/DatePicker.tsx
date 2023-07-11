@@ -40,7 +40,15 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
-        <Calendar mode="single" selected={formattedDate} onSelect={handleDateSelect} initialFocus />
+        <Calendar
+          mode="single"
+          selected={formattedDate}
+          disabled={{
+            before: new Date(),
+          }}
+          onSelect={handleDateSelect}
+          initialFocus
+        />
       </PopoverContent>
     </Popover>
   );
