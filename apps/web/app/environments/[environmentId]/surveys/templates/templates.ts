@@ -329,7 +329,7 @@ export const templates: Template[] = [
             { id: createId(), label: "Yes" },
             { id: createId(), label: "No" },
           ],
-          headline: "Have you actively discouraged others from choosing {{produtName}}?",
+          headline: "Have you actively discouraged others from choosing {{productName}}?",
           required: true,
           subheader: "",
         },
