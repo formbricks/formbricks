@@ -53,7 +53,7 @@ export const createDisplay = async (displayInput: TDisplayInput): Promise<TDispl
 
     const display: TDisplay = {
       ...displayPrisma,
-      person: transformPrismaPerson(displayPrisma.person),
+      person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
     };
 
     return display;
@@ -86,7 +86,7 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
 
     const display: TDisplay = {
       ...displayPrisma,
-      person: transformPrismaPerson(displayPrisma.person),
+      person: displayPrisma.person ? transformPrismaPerson(displayPrisma.person) : null,
     };
 
     return display;

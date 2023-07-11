@@ -2,11 +2,12 @@ export const revalidate = 0;
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
-import { TransformPersonOutput, getPeople } from "@formbricks/lib/services/person";
+import { getPeople } from "@formbricks/lib/services/person";
+import { TPerson } from "@formbricks/types/v1/people";
 import { PersonAvatar } from "@formbricks/ui";
 import Link from "next/link";
 
-const getAttributeValue = (person: TransformPersonOutput, attributeName: string) =>
+const getAttributeValue = (person: TPerson, attributeName: string) =>
   person.attributes[attributeName]?.toString();
 
 export default async function PeoplePage({ params }) {
