@@ -1,5 +1,6 @@
 import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
+import { Prisma as prismaClient } from "@prisma/client/";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -144,6 +145,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             id: targetEnvironmentId,
           },
         },
+        surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
       },
     });
 
