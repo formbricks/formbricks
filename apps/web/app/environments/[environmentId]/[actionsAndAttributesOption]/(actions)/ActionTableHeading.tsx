@@ -1,4 +1,4 @@
-export default function TableHeading() {
+export default function ActionTableHeading() {
   return (
     <>
       <div className="grid h-12 grid-cols-6 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">

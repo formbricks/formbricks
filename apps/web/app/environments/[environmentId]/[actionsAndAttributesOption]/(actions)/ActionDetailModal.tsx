@@ -1,31 +1,31 @@
 import ModalWithTabs from "@/components/shared/ModalWithTabs";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
 import type { EventClass } from "@prisma/client";
-import EventActivityTab from "./EventActivityTab";
-import EventSettingsTab from "./EventSettingsTab";
+import EventActivityTab from "./ActionActivityTab";
+import ActionSettingsTab from "./ActionSettingsTab";
 
-interface EventDetailModalProps {
+interface ActionDetailModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
-  eventClass: EventClass;
+  actionClass: EventClass;
 }
 
-export default function EventDetailModal({
+export default function ActionDetailModal({
   environmentId,
   open,
   setOpen,
-  eventClass,
-}: EventDetailModalProps) {
+  actionClass,
+}: ActionDetailModalProps) {
   const tabs = [
     {
       title: "Activity",
-      children: <EventActivityTab environmentId={environmentId} eventClassId={eventClass.id} />,
+      children: <EventActivityTab environmentId={environmentId} actionClassId={actionClass.id} />,
     },
     {
       title: "Settings",
       children: (
-        <EventSettingsTab environmentId={environmentId} eventClassId={eventClass.id} setOpen={setOpen} />
+        <ActionSettingsTab environmentId={environmentId} eventClassId={actionClass.id} setOpen={setOpen} />
       ),
     },
   ];
@@ -37,16 +37,16 @@ export default function EventDetailModal({
         setOpen={setOpen}
         tabs={tabs}
         icon={
-          eventClass.type === "code" ? (
+          actionClass.type === "code" ? (
             <CodeBracketIcon />
-          ) : eventClass.type === "noCode" ? (
+          ) : actionClass.type === "noCode" ? (
             <CursorArrowRaysIcon />
-          ) : eventClass.type === "automatic" ? (
+          ) : actionClass.type === "automatic" ? (
             <SparklesIcon />
           ) : null
         }
-        label={eventClass.name}
-        description={eventClass.description || ""}
+        label={actionClass.name}
+        description={actionClass.description || ""}
       />
     </>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import AddNoCodeActionModal from "@/app/environments/[environmentId]/events/AddNoCodeActionModal";
+import AddNoCodeActionModal from "@/app/environments/[environmentId]/[actionsAndAttributesOption]/(actions)/AddNoCodeActionModal";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";

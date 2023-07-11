@@ -1,18 +1,18 @@
 import SecondNavbar from "../environments/SecondNavBar";
 import { CursorArrowRaysIcon, TagIcon } from "@heroicons/react/24/solid";
 
-interface EventsAttributesTabsProps {
+interface ActionsAttributesTabsProps {
   activeId: string;
   environmentId: string;
 }
 
-export default function ActionsAttributesTabs({ activeId, environmentId }: EventsAttributesTabsProps) {
+export default function ActionsAttributesTabs({ activeId, environmentId }: ActionsAttributesTabsProps) {
   const tabs = [
     {
-      id: "events",
+      id: "actions",
       label: "Actions",
       icon: <CursorArrowRaysIcon />,
-      href: `/environments/${environmentId}/events`,
+      href: `/environments/${environmentId}/actions`,
     },
     {
       id: "attributes",

@@ -1,7 +1,8 @@
-import AttributeClassesTable from "@/app/environments/[environmentId]/attributes/AttributeClassesTable";
-import HowToAddAttributesButton from "@/app/environments/[environmentId]/attributes/HowToAddAttributesButton";
-import AttributeClassDataRow from "@/app/environments/[environmentId]/attributes/RowData";
-import TableHeading from "@/app/environments/[environmentId]/attributes/TableHeading";
+
+import AttributeClassesTable from "@/app/environments/[environmentId]/[actionsAndAttributesOption]/(attributes)/AttributeClassesTable";
+import AttributeClassDataRow from "@/app/environments/[environmentId]/[actionsAndAttributesOption]/(attributes)/AttributeRowData";
+import AttributeTableHeading from "@/app/environments/[environmentId]/[actionsAndAttributesOption]/(attributes)/AttributeTableHeading";
+import HowToAddAttributesButton from "@/app/environments/[environmentId]/[actionsAndAttributesOption]/(attributes)/HowToAddAttributesButton";
 import { getAttributeClasses } from "@formbricks/lib/services/attribute";
 
 export default async function AttributeClassesComponent({ environmentId }: { environmentId: string }) {
@@ -9,7 +10,7 @@ export default async function AttributeClassesComponent({ environmentId }: { env
   return (
     <>
       <AttributeClassesTable environmentId={environmentId} attributeClasses={attributeClasses}>
-        <TableHeading />
+        <AttributeTableHeading />
         <HowToAddAttributesButton />
 
         {attributeClasses.map((attributeClass) => (

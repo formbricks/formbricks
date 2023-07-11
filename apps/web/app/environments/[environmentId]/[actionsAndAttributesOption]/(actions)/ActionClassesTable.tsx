@@ -4,7 +4,7 @@ import { Button } from "@formbricks/ui";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import AddNoCodeActionModal from "./AddNoCodeActionModal";
-import ActionDetailModal from "./EventDetailModal";
+import ActionDetailModal from "./ActionDetailModal";
 import { useRouter } from "next/navigation";
 import { TAction } from "@formbricks/types/v1/actions";
 
@@ -64,7 +64,7 @@ export default function ActionClassesTable({
         environmentId={environmentId}
         open={isActionDetailModalOpen}
         setOpen={setActionDetailModalOpen}
-        eventClass={activeActionClass}
+        actionClass={activeActionClass}
       />
       <AddNoCodeActionModal
         environmentId={environmentId}

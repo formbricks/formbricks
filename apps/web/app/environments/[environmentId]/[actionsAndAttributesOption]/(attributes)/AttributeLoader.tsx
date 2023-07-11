@@ -1,13 +1,11 @@
-import ActionsAttributesTabs from "@/components/events_attributes/EventsAttributesTabs";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import { Button } from "@formbricks/ui";
 import { TagIcon } from "@heroicons/react/24/solid";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 
-export default function Loading() {
+export default function AttributeLoader() {
   return (
     <>
-      <ActionsAttributesTabs activeId="attributes" environmentId={""} />
       <ContentWrapper>
         <div className="mb-6 text-right">
           <div className="mb-6 flex items-center justify-end text-right">

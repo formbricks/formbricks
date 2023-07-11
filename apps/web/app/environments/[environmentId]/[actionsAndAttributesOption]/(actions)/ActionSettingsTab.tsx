@@ -23,13 +23,13 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
 
-interface EventSettingsTabProps {
+interface ActionSettingsTabProps {
   environmentId: string;
   eventClassId: string;
   setOpen: (v: boolean) => void;
 }
 
-export default function EventSettingsTab({ environmentId, eventClassId, setOpen }: EventSettingsTabProps) {
+export default function ActionSettingsTab({ environmentId, eventClassId, setOpen }: ActionSettingsTabProps) {
   const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, eventClassId);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 

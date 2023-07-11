@@ -8,11 +8,11 @@ import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/r
 
 interface ActivityTabProps {
   environmentId: string;
-  eventClassId: string;
+  actionClassId: string;
 }
 
-export default function EventActivityTab({ environmentId, eventClassId }: ActivityTabProps) {
-  const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, eventClassId);
+export default function EventActivityTab({ environmentId, actionClassId }: ActivityTabProps) {
+  const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, actionClassId);
 
   if (isLoadingEventClass) return <LoadingSpinner />;
   if (isErrorEventClass) return <ErrorComponent />;

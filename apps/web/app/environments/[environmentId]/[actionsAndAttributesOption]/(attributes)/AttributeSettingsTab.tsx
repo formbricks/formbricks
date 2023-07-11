@@ -26,14 +26,16 @@ export default async function AttributeSettingsTab({
   const onSubmit = async (data) => {
     setisAttributeBeingSubmitted(true);
     setOpen(false);
-    router.refresh();
     await updatetAttributeClass(environmentId, attributeClass.id, data);
+    router.refresh();
+    setisAttributeBeingSubmitted(false);
   };
 
   const handleArchiveToggle = async () => {
     setisAttributeBeingSubmitted(true);
     const data = { archived: !attributeClass.archived };
     await updatetAttributeClass(environmentId, attributeClass.id, data);
+    setisAttributeBeingSubmitted(false);
   };
 
   return (
