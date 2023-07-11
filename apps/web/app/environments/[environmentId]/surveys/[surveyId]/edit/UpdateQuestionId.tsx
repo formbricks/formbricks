@@ -6,17 +6,32 @@ import toast from "react-hot-toast";
 
 export default function UpdateQuestionId({ localSurvey, question, questionIdx, updateQuestion }) {
   const [currentValue, setCurrentValue] = useState(question.id);
+  const [prevValue, setPrevValue] = useState(question.id);
 
   const saveAction = () => {
+    // return early if the input value was not changed
+    if (currentValue === prevValue) {
+      return;
+    }
+
     // check if id is unique
     const questionIds = localSurvey.questions.map((q) => q.id);
     if (questionIds.includes(currentValue)) {
-      alert("Question Identifier must be unique within the survey.");
+      toast.error("IDs have to be unique per survey.");
       setCurrentValue(question.id);
       return;
     }
+
+    // check if id contains any spaces
+    if (currentValue.trim() === "" || currentValue.includes(" ")) {
+      toast.error("ID should not contain space.");
+      setCurrentValue(question.id);
+      return;
+    }
+
     updateQuestion(questionIdx, { id: currentValue });
     toast.success("Question ID updated.");
+    setPrevValue(currentValue); // after successful update, set current value as previous value
   };
 
   const isInputInvalid = currentValue.trim() === "" || currentValue.includes(" ");
