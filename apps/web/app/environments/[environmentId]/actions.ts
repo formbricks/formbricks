@@ -99,6 +99,7 @@ export async function createTeam(teamName: string, ownerUserId: string): Promise
     },
   });
 
+  // create some people
   const people: any[] = [];
   for (let i = 0; i < 5; i++) {
     const person = await prisma.person.create({
@@ -109,32 +110,52 @@ export async function createTeam(teamName: string, ownerUserId: string): Promise
     people.push(person);
   }
 
+  // use the first survey template
   const { category, description, preset, ...template } = templates[0];
 
-  const newSurvey = await prisma.survey.create({
+  // add response data that will be added for every person
+  const responseTemplates = [
+    {
+      finished: false,
+      data: {},
+      meta: {},
+    },
+  ];
+
+  const responses: any = [];
+  const displays: any = [];
+  people.forEach((person) => {
+    responseTemplates.forEach((template) => {
+      responses.push({
+        ...template,
+        person: {
+          connect: {
+            id: person.id,
+          },
+        },
+      });
+      displays.push({
+        person: {
+          connect: {
+            id: person.id,
+          },
+        },
+        status: "responded",
+      });
+    });
+  });
+
+  await prisma.survey.create({
     data: {
       ...template,
       status: "inProgress",
       environment: { connect: { id: newTeam.products[0].environments[0].id } },
       questions: preset.questions as any,
       responses: {
-        create: [
-          {
-            finished: false,
-            data: {},
-            meta: {
-              userAgent: {
-                os: "Windows",
-                browser: "Firefox",
-              },
-            },
-            person: {
-              connect: {
-                id: people[0].id,
-              },
-            },
-          },
-        ],
+        create: responses,
+      },
+      displays: {
+        create: displays,
       },
     },
   });
