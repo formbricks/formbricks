@@ -45,6 +45,10 @@ const navigation = [
     ],
   },
   {
+    title: "Integrations",
+    links: [{ title: "Zapier", href: "/docs/integrations/zapier" }],
+  },
+  {
     title: "Link Surveys",
     links: [
       { title: "Data Prefilling", href: "/docs/link-surveys/data-prefilling" },
