@@ -31,7 +31,7 @@ export function DatePicker({
         <Button
           variant={"minimal"}
           className={cn(
-            "w-[280px] justify-start border border-slate-300 text-left font-normal",
+            "w-[280px] justify-start border border-slate-300 bg-white text-left font-normal",
             !formattedDate && "text-muted-foreground"
           )}
           ref={btnRef}>
