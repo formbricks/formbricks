@@ -1,6 +1,6 @@
-import LinkSurveyShareButton from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/LinkModalButton";
-import StatusDropdown from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/StatusDropdown";
-import SuccessMessage from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/SuccessMessage";
+import LinkSurveyShareButton from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/LinkModalButton";
+import StatusDropdown from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/StatusDropdown";
+import SuccessMessage from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SuccessMessage";
 import { IS_FORMBRICKS_CLOUD, RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
 import { getSurveyResponses } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";

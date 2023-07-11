@@ -1,4 +1,4 @@
-import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/data";
+import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/data";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import {
   QuestionType,
@@ -18,7 +18,7 @@ import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
-import ConsentSummary from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/ConsentSummary";
+import ConsentSummary from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/ConsentSummary";
 
 interface SummaryListProps {
   environmentId: string;

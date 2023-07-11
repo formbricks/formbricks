@@ -6,7 +6,7 @@ import ResponseTimeline from "./ResponseTimeline";
 import ResponsesLimitReachedBanner from "../ResponsesLimitReachedBanner";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/data";
+import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/data";
 
 export default async function ResponsesPage({ params }) {
   const environmentId = params.environmentId;
