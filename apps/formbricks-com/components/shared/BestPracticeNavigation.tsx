@@ -84,7 +84,7 @@ export default function BestPracticeNavigation() {
     <div className=" mx-auto grid grid-cols-1 gap-6 px-2 sm:grid-cols-3">
       {BestPractices.map((bestPractice) => (
         <Link href={bestPractice.href} key={bestPractice.name}>
-          <div className="drop-shadow-card duration-120 relative rounded-lg bg-slate-100 p-8 transition-all ease-in-out hover:scale-105 hover:cursor-pointer dark:bg-slate-800">
+          <div className="drop-shadow-card duration-120 hover:border-brand-dark relative rounded-lg border border-slate-100 bg-slate-100 p-8 transition-all ease-in-out hover:scale-105 hover:cursor-pointer dark:bg-slate-800">
             <div
               className={clsx(
                 // base styles independent what type of button it is

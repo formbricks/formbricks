@@ -3,14 +3,14 @@
 import { cn } from "@/../../packages/lib/cn";
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
+import { env } from "@/env.mjs";
 import { createResponse, formbricksEnabled } from "@/lib/formbricks";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
-import { SurveyId } from "@formbricks/js";
+import { ResponseId, SurveyId } from "@formbricks/js";
 import { Button } from "@formbricks/ui";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { ResponseId } from "@formbricks/js";
 
 type RoleProps = {
   next: () => void;
@@ -48,13 +48,10 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId }) => {
           toast.error("An error occured saving your settings");
           console.error(e);
         }
-        if (formbricksEnabled && process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID) {
-          const res = await createResponse(
-            process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID as SurveyId,
-            {
-              role: selectedRole.label,
-            }
-          );
+        if (formbricksEnabled && env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID) {
+          const res = await createResponse(env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID as SurveyId, {
+            role: selectedRole.label,
+          });
           if (res.ok) {
             const response = res.data;
             setFormbricksResponseId(response.id);
