@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { Template } from "@formbricks/types/templates";
-// import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { useEffect } from "react";
 import { replacePresetPlaceholders } from "@/lib/templates";
 import { templates } from "./templates";

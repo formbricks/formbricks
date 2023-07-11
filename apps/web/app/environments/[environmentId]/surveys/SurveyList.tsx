@@ -32,12 +32,17 @@ import toast from "react-hot-toast";
 import TemplateList from "./templates/TemplateList";
 import { useEffect } from "react";
 import { changeEnvironment } from "@/lib/environments/changeEnvironments";
+import { TProduct } from "@formbricks/types/v1/product";
 
-export default function SurveysList({ environmentId }) {
+interface SurveyListProps {
+  environmentId: string;
+  product: TProduct;
+}
+
+export default function SurveysList({ environmentId, product }: SurveyListProps) {
   const router = useRouter();
   const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
   const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
-
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
 
@@ -133,6 +138,8 @@ export default function SurveysList({ environmentId }) {
               onTemplateClick={(template) => {
                 newSurveyFromTemplate(template);
               }}
+              environment={environment}
+              product={product}
             />
           </>
         )}

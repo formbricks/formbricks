@@ -1,10 +1,10 @@
+"use client";
+
 import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Modal from "@/components/preview/Modal";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
-// import { useEnvironment } from "@/lib/environments/environments";
-// import { useProduct } from "@/lib/products/products";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";

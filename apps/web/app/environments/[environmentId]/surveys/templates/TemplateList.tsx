@@ -12,16 +12,16 @@ import { useEffect, useState } from "react";
 import { customSurvey, templates } from "./templates";
 import { SplitIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
-import { TEnvironmentProduct } from "@formbricks/types/v1/environment";
-import { TProductWithEnvironmentIds } from "@formbricks/types/v1/product";
+import type { TEnvironment } from "@formbricks/types/v1/environment";
+import type { TProduct } from "@formbricks/types/v1/product";
 import { useProfile } from "@/lib/profile";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 type TemplateList = {
   environmentId: string;
   onTemplateClick: (template: Template) => void;
-  environment: TEnvironmentProduct;
-  product: TProductWithEnvironmentIds;
+  environment: TEnvironment;
+  product: TProduct;
 };
 
 const ALL_CATEGORY_NAME = "All";
