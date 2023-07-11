@@ -41,15 +41,15 @@ export default function QuestionsView({
         }
       });
     });
-    return survey
-  }
+    return survey;
+  };
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     if ("id" in updatedAttributes) {
-      // if the survey whose id is to be changed is linked to logic of any other survey then changing it 
+      // if the survey whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
-      updatedSurvey = handleQuestionLogicChange(updatedSurvey, initialQuestionId, updatedAttributes.id)
+      updatedSurvey = handleQuestionLogicChange(updatedSurvey, initialQuestionId, updatedAttributes.id);
 
       // relink the question to internal Id
       internalQuestionIdMap[updatedAttributes.id] =
@@ -63,7 +63,6 @@ export default function QuestionsView({
       ...updatedAttributes,
     };
     setLocalSurvey(updatedSurvey);
-
   };
 
   const deleteQuestion = (questionIdx: number) => {
@@ -71,7 +70,7 @@ export default function QuestionsView({
     let updatedSurvey: Survey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions.splice(questionIdx, 1);
 
-    updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end")
+    updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");
 
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
