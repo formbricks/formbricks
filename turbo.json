@@ -8,7 +8,6 @@
         "CRON_SECRET",
         "GITHUB_ID",
         "GITHUB_SECRET",
-        "CRON_SECRET",
         "GOOGLE_CLIENT_ID",
         "GOOGLE_CLIENT_SECRET",
         "HEROKU_APP_NAME",
