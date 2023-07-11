@@ -1,7 +1,6 @@
 "use client";
 
-import { Button, Input, Label } from "@formbricks/ui";
-import { CheckIcon } from "@heroicons/react/24/solid";
+import { Input, Label } from "@formbricks/ui";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
