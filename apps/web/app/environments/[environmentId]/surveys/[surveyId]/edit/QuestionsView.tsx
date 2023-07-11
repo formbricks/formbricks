@@ -151,7 +151,6 @@ export default function QuestionsView({
                   <QuestionCard
                     key={internalQuestionIdMap[question.id]}
                     localSurvey={localSurvey}
-                    question={question}
                     questionIdx={questionIdx}
                     moveQuestion={moveQuestion}
                     updateQuestion={updateQuestion}
