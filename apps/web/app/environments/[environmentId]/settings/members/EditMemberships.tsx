@@ -183,7 +183,6 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
   const isExpired = (invite) => {
     const now = new Date();
     const expiresAt = new Date(invite.expiresAt);
-    console.log("expiresAt", expiresAt, "now", now, "result", now > expiresAt);
     return now > expiresAt;
   };
 
