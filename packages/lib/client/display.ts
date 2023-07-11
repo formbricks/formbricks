@@ -1,11 +1,10 @@
-import { DisplayCreateRequest } from "@formbricks/types/js";
+import { TDisplay, TDisplayInput } from "@formbricks/types/v1/displays";
 
 export const createDisplay = async (
-  displayCreateRequest: DisplayCreateRequest,
-  apiHost: string,
-  environmentId: string
-): Promise<{ id: string }> => {
-  const res = await fetch(`${apiHost}/api/v1/client/environments/${environmentId}/displays`, {
+  displayCreateRequest: TDisplayInput,
+  apiHost: string
+): Promise<TDisplay> => {
+  const res = await fetch(`${apiHost}/api/v1/client/displays`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(displayCreateRequest),
@@ -14,21 +13,15 @@ export const createDisplay = async (
     console.error(res.text);
     throw new Error("Could not create display");
   }
-  return await res.json();
+  const resJson = await res.json();
+  return resJson.data;
 };
 
-export const markDisplayResponded = async (
-  displayId: string,
-  apiHost: string,
-  environmentId: string
-): Promise<void> => {
-  const res = await fetch(
-    `${apiHost}/api/v1/client/environments/${environmentId}/displays/${displayId}/responded`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+export const markDisplayResponded = async (displayId: string, apiHost: string): Promise<void> => {
+  const res = await fetch(`${apiHost}/api/v1/client/displays/${displayId}/responded`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
   if (!res.ok) {
     throw new Error("Could not update display");
   }

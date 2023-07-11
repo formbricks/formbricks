@@ -51,6 +51,18 @@ export async function POST(request: Request) {
       triggers: {
         hasSome: event,
       },
+      OR: [
+        {
+          surveyIds: {
+            has: surveyId,
+          },
+        },
+        {
+          surveyIds: {
+            isEmpty: true,
+          },
+        },
+      ],
     },
   });
 
@@ -60,6 +72,7 @@ export async function POST(request: Request) {
       await fetch(webhook.url, {
         method: "POST",
         body: JSON.stringify({
+          webhookId: webhook.id,
           event,
           data,
         }),

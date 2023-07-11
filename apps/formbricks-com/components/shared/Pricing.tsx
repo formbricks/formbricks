@@ -37,6 +37,7 @@ const tiers = [
     features: [
       "Unlimited surveys",
       "Unlimited team members",
+      "Remove branding",
       "Granular targeting",
       "In-product surveys",
       "Link surveys",
@@ -57,8 +58,8 @@ const tiers = [
     discounted: false,
     highlight: false,
     description: "All features included. Unlimited usage.",
-    features: ["All features of Free plan", "Unlimited responses", "Remove branding"],
-    ctaName: "Sign up now",
+    features: ["Unlimited responses per survey"],
+    ctaName: "Start for free",
     plausibleGoal: "Pricing_CTA_ProPlan",
   },
 ];
@@ -145,7 +146,7 @@ export default function Pricing() {
                   {tier.ctaName}
                 </Button>
 
-                {tier.name === "Free" && (
+                {tier.name !== "Self-hosting" && (
                   <p className="mt-1.5 text-center text-xs text-slate-500">No Creditcard required.</p>
                 )}
               </div>

@@ -2,6 +2,7 @@
 
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
+import { env } from "@/env.mjs";
 import { formbricksEnabled, updateResponse } from "@/lib/formbricks";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
@@ -49,11 +50,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId 
           console.error(e);
           toast.error("An error occured saving your settings");
         }
-        if (
-          formbricksEnabled &&
-          process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID &&
-          formbricksResponseId
-        ) {
+        if (formbricksEnabled && env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID && formbricksResponseId) {
           const res = await updateResponse(
             formbricksResponseId,
             {
