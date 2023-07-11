@@ -19,6 +19,7 @@ A clear and concise description of any alternative solutions or features you've 
 Add any other context or screenshots about the feature request here.
 
 ### How we code at Formbricks 🤓
+
 - Everything is type-safe
 - All UI components are in the package `formbricks/ui`
 - Run `pnpm dev` to find a demo app to test in-app surveys at `localhost:3002`
