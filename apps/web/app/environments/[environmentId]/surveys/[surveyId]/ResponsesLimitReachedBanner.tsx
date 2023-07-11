@@ -14,7 +14,7 @@ export default async function ResponsesLimitReachedBanner({
   environmentId,
   session,
 }: ResponsesLimitReachedBannerProps) {
-  const { responsesCount, limitReached } = await getAnalysisData(session, surveyId);
+  const { responsesCount, limitReached } = await getAnalysisData(session, surveyId, environmentId);
   return (
     <>
       {limitReached && (

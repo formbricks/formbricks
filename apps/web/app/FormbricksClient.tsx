@@ -1,13 +1,14 @@
 "use client";
 
+import { env } from "@/env.mjs";
 import { formbricksEnabled } from "@/lib/formbricks";
 import formbricks from "@formbricks/js";
 import { useEffect } from "react";
 
 /* if (typeof window !== "undefined" && formbricksEnabled) {
   formbricks.init({
-    environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
-    apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
+    environmentId: env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
+    apiHost: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
     logLevel: "debug",
   });
 } */
@@ -16,8 +17,8 @@ export default function FormbricksClient({ session }) {
   useEffect(() => {
     if (formbricksEnabled && session.user && formbricks) {
       formbricks.init({
-        environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
-        apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
+        environmentId: env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
+        apiHost: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
       });
       formbricks.setUserId(session.user.id);
       formbricks.setEmail(session.user.email);

@@ -22,7 +22,7 @@ export const useLinkSurvey = (surveyId: string) => {
 
 export const useLinkSurveyUtils = (survey: Survey) => {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-  const [prefilling, setPrefilling] = useState(false);
+  const [prefilling, setPrefilling] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [finished, setFinished] = useState(false);
   const [loadingElement, setLoadingElement] = useState(false);
@@ -49,13 +49,11 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         if (isPreview) return;
 
         // create display
-        createDisplay(
-          { surveyId: survey.id },
-          `${window.location.protocol}//${window.location.host}`,
-          survey.environmentId
-        ).then((display) => {
-          setDisplayId(display.id);
-        });
+        createDisplay({ surveyId: survey.id }, `${window.location.protocol}//${window.location.host}`).then(
+          (display) => {
+            setDisplayId(display.id);
+          }
+        );
       }
     }
   }, [survey, isPreview, isLoadingPerson]);
@@ -117,11 +115,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         `${window.location.protocol}//${window.location.host}`
       );
       if (displayId) {
-        markDisplayResponded(
-          displayId,
-          `${window.location.protocol}//${window.location.host}`,
-          survey.environmentId
-        );
+        markDisplayResponded(displayId, `${window.location.protocol}//${window.location.host}`);
       }
       setResponseId(response.id);
     } else if (responseId && !isPreview) {
@@ -166,7 +160,6 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         if (!currentQuestion) return;
         const firstQuestionId = survey.questions[0].id;
         if (currentQuestion.id !== firstQuestionId) return;
-        setPrefilling(true);
         const question = survey.questions.find((q) => q.id === firstQuestionId);
         if (!question) throw new Error("Question not found");
 
@@ -239,6 +232,11 @@ const checkValidity = (question: Question, answer: any): boolean => {
         if (answer !== "clicked" && answer !== "dismissed") return false;
         return true;
       }
+      case QuestionType.Consent: {
+        if (question.required && answer === "dismissed") return false;
+        if (answer !== "accepted" && answer !== "dismissed") return false;
+        return true;
+      }
       case QuestionType.Rating: {
         answer = answer.replace(/&/g, ";");
         const answerNumber = Number(JSON.parse(answer));
@@ -257,6 +255,7 @@ const createAnswer = (question: Question, answer: string): string | number | str
   switch (question.type) {
     case QuestionType.OpenText:
     case QuestionType.MultipleChoiceSingle:
+    case QuestionType.Consent:
     case QuestionType.CTA: {
       return answer;
     }

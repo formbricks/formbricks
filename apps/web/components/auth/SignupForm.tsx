@@ -1,15 +1,15 @@
 "use client";
 
-import { Button } from "@formbricks/ui";
-import { PasswordInput } from "@formbricks/ui";
+import { GoogleButton } from "@/components/auth/GoogleButton";
+import IsPasswordValid from "@/components/auth/IsPasswordValid";
+import { env } from "@/env.mjs";
 import { createUser } from "@/lib/users/users";
+import { Button, PasswordInput } from "@formbricks/ui";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
-import { GoogleButton } from "@/components/auth/GoogleButton";
-import IsPasswordValid from "@/components/auth/IsPasswordValid";
 
 export const SignupForm = () => {
   const searchParams = useSearchParams();
@@ -33,7 +33,7 @@ export const SignupForm = () => {
         searchParams?.get("inviteToken")
       );
       const url =
-        process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED === "1"
+        env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED === "1"
           ? `/auth/signup-without-verification-success`
           : `/auth/verification-requested?email=${encodeURIComponent(e.target.elements.email.value)}`;
 
@@ -131,7 +131,7 @@ export const SignupForm = () => {
                     className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
                   />
                 </div>
-                {process.env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && isPasswordFocused && (
+                {env.NEXT_PUBLIC_PASSWORD_RESET_DISABLED !== "1" && isPasswordFocused && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"
@@ -163,36 +163,36 @@ export const SignupForm = () => {
             </Button>
           </form>
 
-          {process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
+          {env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
             <>
               <GoogleButton />
             </>
           )}
-          {process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
+          {env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
             <>
               <GithubButton />{" "}
             </>
           )}
         </div>
 
-        {(process.env.NEXT_PUBLIC_TERMS_URL || process.env.NEXT_PUBLIC_PRIVACY_URL) && (
+        {(env.NEXT_PUBLIC_TERMS_URL || env.NEXT_PUBLIC_PRIVACY_URL) && (
           <div className="mt-3 text-center text-xs text-slate-500">
             By signing up, you agree to our
             <br />
-            {process.env.NEXT_PUBLIC_TERMS_URL && (
+            {env.NEXT_PUBLIC_TERMS_URL && (
               <Link
                 className="font-semibold"
-                href="google.com" /* {process.env.NEXT_PUBLIC_TERMS_URL} */
+                href="google.com" /* {env.NEXT_PUBLIC_TERMS_URL} */
                 rel="noreferrer"
                 target="_blank">
                 Terms of Service
               </Link>
             )}
-            {process.env.NEXT_PUBLIC_TERMS_URL && process.env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
-            {process.env.NEXT_PUBLIC_PRIVACY_URL && (
+            {env.NEXT_PUBLIC_TERMS_URL && env.NEXT_PUBLIC_PRIVACY_URL && <span> and </span>}
+            {env.NEXT_PUBLIC_PRIVACY_URL && (
               <Link
                 className="font-semibold"
-                href="google.com" /* {/* process.env.NEXT_PUBLIC_PRIVACY_URL }*/
+                href="google.com" /* {/* env.NEXT_PUBLIC_PRIVACY_URL }*/
                 rel="noreferrer"
                 target="_blank">
                 Privacy Policy.

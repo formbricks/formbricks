@@ -16,10 +16,11 @@ interface ChoiceResult {
 export default function CTASummary({ questionSummary }: CTASummaryProps) {
   const ctr: ChoiceResult = useMemo(() => {
     const clickedAbs = questionSummary.responses.filter((response) => response.value === "clicked").length;
-
+    const count = questionSummary.responses.length;
+    if (count === 0) return { count: 0, percentage: 0 };
     return {
-      count: questionSummary.responses.length,
-      percentage: clickedAbs / questionSummary.responses.length,
+      count: count,
+      percentage: clickedAbs / count,
     };
   }, [questionSummary]);
 

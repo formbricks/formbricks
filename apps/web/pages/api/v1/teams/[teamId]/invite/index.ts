@@ -1,3 +1,4 @@
+import { env } from "@/env.mjs";
 import { getSessionUser, hasTeamAccess, isAdminOrOwner } from "@/lib/api/apiHelper";
 import { sendInviteMemberEmail } from "@/lib/email";
 import { prisma } from "@formbricks/database";
@@ -20,7 +21,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(403).json({ message: "Not authorized" });
   }
 
-  if (process.env.NEXT_PUBLIC_INVITE_DISABLED === "1") {
+  if (env.NEXT_PUBLIC_INVITE_DISABLED === "1") {
     return res.status(403).json({ message: "Invite Disabled" });
   }
 

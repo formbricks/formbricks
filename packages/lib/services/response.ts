@@ -19,6 +19,8 @@ const responseSelection = {
   person: {
     select: {
       id: true,
+      createdAt: true,
+      updatedAt: true,
       attributes: {
         select: {
           value: true,
@@ -144,6 +146,42 @@ export const getSurveyResponses = cache(async (surveyId: string): Promise<TRespo
     const responsesPrisma = await prisma.response.findMany({
       where: {
         surveyId,
+      },
+      select: responseSelection,
+      orderBy: [
+        {
+          createdAt: "desc",
+        },
+      ],
+    });
+
+    const responses: TResponse[] = responsesPrisma.map((responsePrisma) => ({
+      ...responsePrisma,
+      person: transformPrismaPerson(responsePrisma.person),
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    }));
+
+    return responses;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+});
+
+export const preloadEnvironmentResponses = (environmentId: string) => {
+  void getEnvironmentResponses(environmentId);
+};
+
+export const getEnvironmentResponses = cache(async (environmentId: string): Promise<TResponse[]> => {
+  try {
+    const responsesPrisma = await prisma.response.findMany({
+      where: {
+        survey: {
+          environmentId,
+        },
       },
       select: responseSelection,
       orderBy: [

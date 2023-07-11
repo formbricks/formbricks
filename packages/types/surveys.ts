@@ -32,10 +32,23 @@ export interface Survey {
   delay: number;
   autoComplete: number | null;
   surveyClosedMessage: SurveyClosedMessage | null;
+  closeOnDate: Date | null;
 }
 
 export interface AttributeFilter {
   attributeClassId: string;
   condition: string;
   value: string;
+}
+
+export interface SurveyNotificationData {
+  id: string;
+  numDisplays: number;
+  numDisplaysResponded: number;
+  responseLenght: number;
+  responseCompletedLength: number;
+  latestResponse: any;
+  questions: Question[];
+  status: "draft" | "inProgress" | "archived" | "paused" | "completed";
+  name: String;
 }

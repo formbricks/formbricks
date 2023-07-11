@@ -50,7 +50,7 @@ To get the project running locally on your machine you need to have the followin
 1. Make sure your PostgreSQL Database Server is running. Then let prisma set up the database for you:
 
    ```sh
-   pnpm dlx prisma migrate dev
+   pnpm prisma migrate dev
    ```
 
 1. Start the development server:

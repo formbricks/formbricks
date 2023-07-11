@@ -100,7 +100,7 @@ export default function QuestionsView({
 
   const addQuestion = (question: any) => {
     const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
-    updatedSurvey.questions.push(question);
+    updatedSurvey.questions.push({ ...question, isDraft: true });
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
     internalQuestionIdMap[question.id] = createId();
