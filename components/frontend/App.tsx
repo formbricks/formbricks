@@ -14,8 +14,7 @@ import {
 import { Page, PageBlock, pageSubmissionEvent } from "../../lib/types";
 import { findTimer, isTimedPage } from "../../lib/utils";
 import { toast } from "react-toastify";
-// import { CurrentPageContext } from "../../kda-snoopforms-react/src";
-// import { SubmitButtonContext } from "../../kda-snoopforms-react/src";
+
 
 interface IProps {
   id: string;
@@ -24,8 +23,6 @@ interface IProps {
   submission?: pageSubmissionEvent;
   localOnly: boolean;
   startDate: Date;
-  // error: boolean;
-  // setError?: (value: boolean) => void;
 }
 
 const App: FC<IProps> = ({
@@ -35,8 +32,6 @@ const App: FC<IProps> = ({
   submission,
   localOnly = false,
   startDate = new Date(),
-  // error = false,
-  // setError,
 }) => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [disabled, setDisabled] = useState<boolean>(false);
