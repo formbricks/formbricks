@@ -31,18 +31,19 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
           name="questionId"
           value={currentValue}
           onChange={(e) => setCurrentValue(e.target.value)}
-          disabled={localSurvey.status !== "draft"}
+          disabled={!(localSurvey.status === "draft" || question.isDraft)}
           className={isInputInvalid ? "border-red-300 focus:border-red-300" : ""}
         />
-        {localSurvey.status === "draft" && (
-          <Button
-            variant="darkCTA"
-            className="ml-2 bg-slate-600 text-white hover:bg-slate-700 disabled:bg-slate-400"
-            onClick={saveAction}
-            disabled={isInputInvalid || currentValue === question.id}>
-            <CheckIcon className="h-4 w-4" />
-          </Button>
-        )}
+        {localSurvey.status === "draft" ||
+          (question.isDraft && (
+            <Button
+              variant="darkCTA"
+              className="ml-2 bg-slate-600 text-white hover:bg-slate-700 disabled:bg-slate-400"
+              onClick={saveAction}
+              disabled={isInputInvalid || currentValue === question.id}>
+              <CheckIcon className="h-4 w-4" />
+            </Button>
+          ))}
       </div>
     </div>
   );

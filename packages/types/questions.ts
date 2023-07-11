@@ -30,6 +30,7 @@ export interface IQuestion<T extends Logic> {
   required: boolean;
   buttonLabel?: string;
   logic?: T[];
+  isDraft?: boolean;
 }
 
 export interface OpenTextQuestion extends IQuestion<OpenTextLogic> {
