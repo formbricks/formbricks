@@ -78,6 +78,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         acceptorId: true,
         role: true,
         accepted: true,
+        expiresAt: true,
       },
     });
     const invitees = inviteeData.map((invite) => {
@@ -88,6 +89,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         acceptorId: invite.acceptorId,
         role: invite.role,
         accepted: invite.accepted,
+        expiresAt: invite.expiresAt,
       };
     });
 
