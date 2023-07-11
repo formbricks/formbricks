@@ -32,7 +32,7 @@ export default function QuestionsView({
     }, {});
   }, []);
 
-  const handleQuestionLogicChange = (survey, compareId, updatedId) => {
+  const handleQuestionLogicChange = (survey: Survey, compareId: string, updatedId: string): Survey => {
     survey.questions.forEach((question) => {
       if (!question.logic) return;
       question.logic.forEach((rule) => {
