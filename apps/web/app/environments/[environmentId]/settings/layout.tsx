@@ -2,9 +2,8 @@ import SettingsNavbar from "./SettingsNavbar";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title:"Settings"
-}
-
+  title: "Settings",
+};
 
 export default function SettingsLayout({ children, params }) {
   return (

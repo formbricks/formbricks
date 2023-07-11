@@ -2,8 +2,8 @@ import ContentWrapper from "@/components/shared/ContentWrapper";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title:"People"
-}
+  title: "People",
+};
 
 export default function PeopleLayout({ children }) {
   return (

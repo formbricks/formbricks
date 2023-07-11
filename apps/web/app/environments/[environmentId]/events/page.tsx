@@ -4,8 +4,8 @@ import ContentWrapper from "@/components/shared/ContentWrapper";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title:"Actions & Attributes"
-}
+  title: "Actions & Attributes",
+};
 
 export default function EventsPage({ params }) {
   return (

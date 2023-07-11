@@ -4,8 +4,8 @@ import SurveysList from "./SurveyList";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title:"Your Surveys"
-}
+  title: "Your Surveys",
+};
 
 export default async function SurveysPage({ params }) {
   return (
