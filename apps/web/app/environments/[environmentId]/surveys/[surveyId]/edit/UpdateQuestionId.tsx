@@ -40,7 +40,7 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
               variant="darkCTA"
               className="ml-2 bg-slate-600 text-white hover:bg-slate-700 disabled:bg-slate-400"
               onClick={saveAction}
-              disabled={currentValue === question.id}>
+              disabled={isInputInvalid || currentValue === question.id}>
               <CheckIcon className="h-4 w-4" />
             </Button>
           ))}
