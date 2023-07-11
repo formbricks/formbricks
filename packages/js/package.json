@@ -54,7 +54,6 @@
     "autoprefixer": "^10.4.14",
     "babel-jest": "^29.5.0",
     "cross-env": "^7.0.3",
-    "eslint": "^8.42.0",
     "eslint-config-formbricks": "workspace:*",
     "eslint-config-preact": "^1.3.0",
     "isomorphic-fetch": "^3.0.0",
@@ -63,14 +62,10 @@
     "jest-fetch-mock": "^3.0.3",
     "jest-preset-preact": "^4.0.5",
     "microbundle": "^0.15.1",
-    "postcss": "^8.4.24",
     "preact": "10.15.1",
     "preact-cli": "^3.4.5",
     "preact-render-to-string": "^6.1.0",
-    "regenerator-runtime": "^0.13.11",
-    "rimraf": "^5.0.1",
-    "tailwindcss": "^3.3.2",
-    "typescript": "^5.1.3"
+    "regenerator-runtime": "^0.13.11"
   },
   "jest": {
     "transformIgnorePatterns": [

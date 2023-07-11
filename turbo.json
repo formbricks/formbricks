@@ -5,6 +5,7 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
       "env": [
+        "CRON_SECRET",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "CRON_SECRET",
@@ -56,6 +57,8 @@
         "RAILWAY_STATIC_URL",
         "RENDER_EXTERNAL_URL",
         "SENTRY_DSN",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
         "TELEMETRY_DISABLED",
         "VERCEL_URL"
       ]

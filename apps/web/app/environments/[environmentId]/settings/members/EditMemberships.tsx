@@ -1,7 +1,10 @@
 "use client";
 
+import ShareInviteModal from "@/app/environments/[environmentId]/settings/members/ShareInviteModal";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import CreateTeamModal from "@/components/team/CreateTeamModal";
+import { env } from "@/env.mjs";
 import {
   addMember,
   deleteInvite,
@@ -12,6 +15,8 @@ import {
   updateMemberRole,
   useMembers,
 } from "@/lib/members";
+import { useProfile } from "@/lib/profile";
+import { capitalizeFirstLetter } from "@/lib/utils";
 import {
   Badge,
   Button,
@@ -28,15 +33,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@formbricks/ui";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { PaperAirplaneIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import AddMemberModal from "./AddMemberModal";
-import CreateTeamModal from "@/components/team/CreateTeamModal";
-import { capitalizeFirstLetter } from "@/lib/utils";
-import { useProfile } from "@/lib/profile";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
-import ShareInviteModal from "@/app/environments/[environmentId]/settings/members/ShareInviteModal";
 
 type EditMembershipsProps = {
   environmentId: string;
@@ -180,6 +181,12 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
     mutateTeam();
   };
 
+  const isExpired = (invite) => {
+    const now = new Date();
+    const expiresAt = new Date(invite.expiresAt);
+    return now > expiresAt;
+  };
+
   return (
     <>
       <div className="mb-6 text-right">
@@ -191,7 +198,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
           }}>
           Create New Team
         </Button>
-        {process.env.NEXT_PUBLIC_INVITE_DISABLED !== "1" && isAdminOrOwner && (
+        {env.NEXT_PUBLIC_INVITE_DISABLED !== "1" && isAdminOrOwner && (
           <Button
             variant="darkCTA"
             onClick={() => {
@@ -202,7 +209,7 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
         )}
       </div>
       <div className="rounded-lg border border-slate-200">
-        <div className="grid h-12 grid-cols-20 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+        <div className="grid-cols-20 grid h-12 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-2"></div>
           <div className="col-span-5">Fullname</div>
           <div className="col-span-5">Email</div>
@@ -212,9 +219,9 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
         <div className="grid-cols-20">
           {[...team.members, ...team.invitees].map((member) => (
             <div
-              className="grid h-auto w-full grid-cols-20 content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
+              className="grid-cols-20 grid h-auto w-full content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
               key={member.email}>
-              <div className="h-58 pl-4 col-span-2">
+              <div className="h-58 col-span-2 pl-4">
                 <ProfileAvatar userId={member.userId || member.email} />
               </div>
               <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
@@ -236,7 +243,12 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                 />
               </div>
               <div className="col-span-5 flex items-center justify-end gap-x-4 pr-4">
-                {!member.accepted && <Badge className="mr-2" type="warning" text="Pending" size="tiny" />}
+                {!member.accepted &&
+                  (isExpired(member) ? (
+                    <Badge className="mr-2" type="gray" text="Expired" size="tiny" />
+                  ) : (
+                    <Badge className="mr-2" type="warning" text="Pending" size="tiny" />
+                  ))}
                 {member.role !== "owner" && (
                   <button onClick={(e) => handleOpenDeleteMemberModal(e, member)}>
                     <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />

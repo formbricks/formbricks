@@ -9,11 +9,14 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/data";
 
 export default async function ResponsesPage({ params }) {
+  const environmentId = params.environmentId;
+
+  console.log(environmentId);
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");
   }
-  const { responses, survey } = await getAnalysisData(session, params.surveyId);
+  const { responses, survey } = await getAnalysisData(session, params.surveyId, params.environmentId);
   return (
     <>
       <SurveyResultsTabs
@@ -21,7 +24,6 @@ export default async function ResponsesPage({ params }) {
         environmentId={params.environmentId}
         surveyId={params.surveyId}
       />
-      {/* @ts-expect-error Server Component */}
       <ResponsesLimitReachedBanner
         environmentId={params.environmentId}
         surveyId={params.surveyId}

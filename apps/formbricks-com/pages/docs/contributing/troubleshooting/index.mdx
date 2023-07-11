@@ -1,0 +1,65 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+
+import ClearAppData from "./clear-app-data.png";
+import UncaughtPromise from "./uncaught-promise.png";
+import Logout from "./logout.png";
+
+export const meta = {
+  title: "Troubleshooting",
+  description:
+    "Formbricks is a complex application in constant development. Sometimes, things don't go as planned. Here are some tips to help you troubleshoot.",
+};
+
+Here you'll find help with Frequently Recurring Problems
+
+## "The app doesn't work after doing a prisma migration"
+
+This can happen but fear not, the fix is easy: Delete the application storage of your browser and reload the page. This will force the app to re-fetch the data from the server:
+
+<Image src={ClearAppData} alt="Demo App Preview" quality="100" className="rounded-lg" />
+
+## "I ran 'pnpm i' but there seems to be an error with the packages"
+
+If nothing helps, run `pnpm clean` and then `pnpm i` again. This solves a lot.
+
+## "I get a full-screen error with cryptic strings"
+
+This usually happens when the Formbricks Widget wasn't correctly or completely built.
+
+```bash
+// Build formbricks-js first
+pnpm build --filter=js
+
+// Run the app again
+pnpm dev
+```
+
+## My machine struggles with the repository
+
+Since we're working with a monorepo structure, the repository can get quite big. If you're having trouble working with the repository, try the following:
+
+```bash
+// Only run the Formbricks app
+pnpm dev --filter=web...
+
+// Only run the landing page app
+pnpm dev --filter=formbricks-com...
+
+// Only run the demo app
+pnpm dev --filter=demo...
+```
+
+However, in our experience it's better to run `pnpm dev` than having two terminals open (one with the Formbricks app and one with the demo).
+
+## Uncaught (in promise) SyntaxError: Unexpected token !DOCTYPE ... is not valid JSON
+
+<Image src={UncaughtPromise} alt="Uncaught promise" quality="100" className="rounded-lg" />
+
+This happens when you're using the Demo App and delete the Person within the Formbricks app which the widget is currently connected with. We're fixing it, but you can also just logout your test person and reload the page to get rid of it.
+
+<Image src={Logout} alt="Logout Person" quality="100" className="rounded-lg" />
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

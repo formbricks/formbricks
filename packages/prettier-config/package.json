@@ -8,7 +8,6 @@
   },
   "devDependencies": {
     "prettier": "^2.8.8",
-    "prettier-plugin-tailwindcss": "^0.3.0",
-    "rimraf": "^5.0.1"
+    "prettier-plugin-tailwindcss": "^0.3.0"
   }
 }

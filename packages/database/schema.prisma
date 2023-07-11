@@ -37,6 +37,7 @@ model Webhook {
   environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
   triggers      PipelineTriggers[]
+  surveyIds     String[]
 }
 
 model Attribute {

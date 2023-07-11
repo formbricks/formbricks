@@ -1,3 +1,4 @@
+import { env } from "@/env.mjs";
 import { verifyPassword } from "@/lib/auth";
 import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
@@ -120,12 +121,12 @@ export const authOptions: NextAuthOptions = {
       },
     }),
     GitHubProvider({
-      clientId: process.env.GITHUB_ID || "",
-      clientSecret: process.env.GITHUB_SECRET || "",
+      clientId: env.GITHUB_ID || "",
+      clientSecret: env.GITHUB_SECRET || "",
     }),
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: env.GOOGLE_CLIENT_ID || "",
+      clientSecret: env.GOOGLE_CLIENT_SECRET || "",
       allowDangerousEmailAccountLinking: true,
     }),
   ],
@@ -189,7 +190,7 @@ export const authOptions: NextAuthOptions = {
     },
     async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
-        if (!user.emailVerified && process.env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
+        if (!user.emailVerified && env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED !== "1") {
           return `/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
         }
         return true;

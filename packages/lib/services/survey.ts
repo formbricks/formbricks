@@ -2,60 +2,62 @@ import { prisma } from "@formbricks/database";
 import { z } from "zod";
 import { ValidationError } from "@formbricks/errors";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
-import { TSurvey, ZSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyWithAnalytics, ZSurvey, ZSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import "server-only";
 import { cache } from "react";
+
+const selectSurvey = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  name: true,
+  type: true,
+  environmentId: true,
+  status: true,
+  questions: true,
+  thankYouCard: true,
+  displayOption: true,
+  recontactDays: true,
+  autoClose: true,
+  closeOnDate: true,
+  delay: true,
+  autoComplete: true,
+  triggers: {
+    select: {
+      eventClass: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          type: true,
+          noCodeConfig: true,
+        },
+      },
+    },
+  },
+  attributeFilters: {
+    select: {
+      id: true,
+      attributeClassId: true,
+      condition: true,
+      value: true,
+    },
+  },
+};
 
 export const preloadSurvey = (surveyId: string) => {
   void getSurvey(surveyId);
 };
 
-export const getSurvey = cache(async (surveyId: string): Promise<TSurvey | null> => {
+export const getSurvey = cache(async (surveyId: string): Promise<TSurveyWithAnalytics | null> => {
   let surveyPrisma;
   try {
     surveyPrisma = await prisma.survey.findUnique({
       where: {
         id: surveyId,
       },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        name: true,
-        type: true,
-        environmentId: true,
-        status: true,
-        questions: true,
-        thankYouCard: true,
-        displayOption: true,
-        recontactDays: true,
-        autoClose: true,
-        closeOnDate: true,
-        delay: true,
-        autoComplete: true,
-        triggers: {
-          select: {
-            eventClass: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                type: true,
-                noCodeConfig: true,
-              },
-            },
-          },
-        },
-        attributeFilters: {
-          select: {
-            id: true,
-            attributeClassId: true,
-            condition: true,
-            value: true,
-          },
-        },
-      },
+      select: selectSurvey,
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -95,8 +97,45 @@ export const getSurvey = cache(async (surveyId: string): Promise<TSurvey | null>
   };
 
   try {
-    const survey = ZSurvey.parse(transformedSurvey);
+    const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
     return survey;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
+    }
+    throw new ValidationError("Data validation of survey failed");
+  }
+});
+
+export const getSurveys = cache(async (environmentId: string): Promise<TSurvey[]> => {
+  let surveysPrisma;
+  try {
+    surveysPrisma = await prisma.survey.findMany({
+      where: {
+        environmentId,
+      },
+      select: selectSurvey,
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+
+  const surveys: TSurvey[] = [];
+  for (const surveyPrisma of surveysPrisma) {
+    const transformedSurvey = {
+      ...surveyPrisma,
+      triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+    };
+    const survey = ZSurvey.parse(transformedSurvey);
+    surveys.push(survey);
+  }
+
+  try {
+    return surveys;
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
