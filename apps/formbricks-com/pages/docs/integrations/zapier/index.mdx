@@ -3,9 +3,7 @@ import { Fence } from "@/components/shared/Fence";
 import { Callout } from "@/components/shared/Callout";
 import Image from "next/image";
 
-import AddApiKey from "./add-api-key.png";
 import AddNewZap from "./add-new-zap.png";
-import ApiKeySecret from "./api-key-secret.png";
 import ChooseEvent from "./choose-event.png";
 import ConnectWithFB1 from "./connect-with-formbricks-1.png";
 import ConnectWithFB2 from "./connect-with-formbricks-2.png";
@@ -47,7 +45,7 @@ _In every question card in the Advanced Settings you find the Question ID field.
 
 ## Step 3: Send a test response
 
-In order to set up Zapier you’ll need a test response. This allows you to select the individual values of each response in your Zap. If you want to set up an in-app survey, you can use our [Demo App](/docs/contributing/demo) to trigger a survey and submit a response without much setup. It also works with Formbricks Cloud.
+In order to set up Zapier you’ll need a test response. This allows you to select the individual values of each response in your Zap. If you have Formbricks running locally and you want to set up an in-app survey, you can use our [Demo App](/docs/contributing/demo) to trigger a survey and submit a response.
 
 <Image src={SubmitTestResponse} alt="Submit Test Response" quality="100" className="rounded-lg" />
 
@@ -68,13 +66,7 @@ Now, you have to connect Zapier with Formbricks via an API Key:
 <Image src={ConnectWithFB1} alt="Connect with Formbricks - 1" quality="100" className="rounded-lg" />
 <Image src={ConnectWithFB2} alt="Connect with Formbricks - 2" quality="100" className="rounded-lg" />
 
-Go back to your Formbricks → Settings → API Keys and create an API key for the environment you’re working with: When you **don’t** see an orange bar at the top of your app, you are in Production Mode hence you need a Production Key:
-
-<Image src={AddApiKey} alt="Add API Key" quality="100" className="rounded-lg" />
-
-Copy the API key right away. It will disappear shortly and you wont be able to view it again for security reasons:
-
-<Image src={ApiKeySecret} alt="API Key Secret" quality="100" className="rounded-lg" />
+Now you need an API key. Please refer to the [API Key Setup](/docs/api/api-key-setup) page to learn how to create one.
 
 Once you copied it in the newly opened Zapier window, you will be connected:
 
