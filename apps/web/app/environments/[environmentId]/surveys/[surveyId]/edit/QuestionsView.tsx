@@ -32,35 +32,46 @@ export default function QuestionsView({
     }, {});
   }, []);
 
+  const handleQuestionLogicChange = (survey, compareId, updatedId) => {
+    survey.questions.forEach((question) => {
+      if (!question.logic) return;
+      question.logic.forEach((rule) => {
+        if (rule.destination === compareId) {
+          rule.destination = updatedId;
+        }
+      });
+    });
+    return survey
+  }
+
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
-    const updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
-    updatedSurvey.questions[questionIdx] = {
-      ...updatedSurvey.questions[questionIdx],
-      ...updatedAttributes,
-    };
-    setLocalSurvey(updatedSurvey);
+    let updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     if ("id" in updatedAttributes) {
+      // if the survey whose id is to be changed is linked to logic of any other survey then changing it 
+      const initialQuestionId = updatedSurvey.questions[questionIdx].id;
+      updatedSurvey = handleQuestionLogicChange(updatedSurvey, initialQuestionId, updatedAttributes.id)
+
       // relink the question to internal Id
       internalQuestionIdMap[updatedAttributes.id] =
         internalQuestionIdMap[localSurvey.questions[questionIdx].id];
       delete internalQuestionIdMap[localSurvey.questions[questionIdx].id];
       setActiveQuestionId(updatedAttributes.id);
     }
+
+    updatedSurvey.questions[questionIdx] = {
+      ...updatedSurvey.questions[questionIdx],
+      ...updatedAttributes,
+    };
+    setLocalSurvey(updatedSurvey);
+
   };
 
   const deleteQuestion = (questionIdx: number) => {
     const questionId = localSurvey.questions[questionIdx].id;
-    const updatedSurvey: Survey = JSON.parse(JSON.stringify(localSurvey));
+    let updatedSurvey: Survey = JSON.parse(JSON.stringify(localSurvey));
     updatedSurvey.questions.splice(questionIdx, 1);
 
-    updatedSurvey.questions.forEach((question) => {
-      if (!question.logic) return;
-      question.logic.forEach((rule) => {
-        if (rule.destination === questionId) {
-          rule.destination = "end";
-        }
-      });
-    });
+    updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end")
 
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
