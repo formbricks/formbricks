@@ -1,4 +1,3 @@
-
 import AttributeClassesTable from "@/app/environments/[environmentId]/[actionsAndAttributesOption]/(attributes)/AttributeClassesTable";
 import AttributeClassDataRow from "@/app/environments/[environmentId]/[actionsAndAttributesOption]/(attributes)/AttributeRowData";
 import AttributeTableHeading from "@/app/environments/[environmentId]/[actionsAndAttributesOption]/(attributes)/AttributeTableHeading";
