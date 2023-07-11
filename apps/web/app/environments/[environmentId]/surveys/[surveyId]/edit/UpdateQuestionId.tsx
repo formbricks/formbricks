@@ -20,6 +20,8 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
     toast.success("Question ID updated.");
   };
 
+  const isInputInvalid = currentValue.trim() === "" || currentValue.includes(" ");
+
   return (
     <div>
       <Label htmlFor="questionId">Question ID</Label>
@@ -30,6 +32,7 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
           value={currentValue}
           onChange={(e) => setCurrentValue(e.target.value)}
           disabled={!(localSurvey.status === "draft" || question.isDraft)}
+          className={isInputInvalid ? "border-red-300 focus:border-red-300" : ""}
         />
         {localSurvey.status === "draft" ||
           (question.isDraft && (

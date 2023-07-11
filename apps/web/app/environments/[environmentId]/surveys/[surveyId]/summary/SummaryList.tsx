@@ -27,7 +27,7 @@ interface SummaryListProps {
 }
 
 export default async function SummaryList({ environmentId, surveyId, session }: SummaryListProps) {
-  const { survey, responses } = await getAnalysisData(session, surveyId);
+  const { survey, responses } = await getAnalysisData(session, surveyId, environmentId);
 
   const getSummaryData = (): QuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {

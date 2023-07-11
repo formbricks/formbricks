@@ -45,13 +45,11 @@ export default function EventClassesList({ environmentId }) {
         </Button>
       </div>
       <div className="rounded-lg border border-slate-200">
-        <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+        <div className="grid h-12 grid-cols-6 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+          <span className="sr-only">Edit</span>
           <div className="col-span-4 pl-6 ">User Actions</div>
           <div className="text-center"># Reps</div>
           <div className="text-center">Created</div>
-          <div className="text-center">
-            <span className="sr-only">Edit</span>
-          </div>
         </div>
         <div className="grid-cols-7">
           {eventClasses.map((eventClass) => (
@@ -61,7 +59,7 @@ export default function EventClassesList({ environmentId }) {
               }}
               className="w-full"
               key={eventClass.id}>
-              <div className="m-2 grid h-16  grid-cols-7 content-center rounded-lg hover:bg-slate-100">
+              <div className="m-2 grid h-16  grid-cols-6 content-center rounded-lg hover:bg-slate-100">
                 <div className="col-span-4 flex items-center pl-6 text-sm">
                   <div className="flex items-center">
                     <div className="h-5 w-5 flex-shrink-0 text-slate-500">
@@ -85,17 +83,7 @@ export default function EventClassesList({ environmentId }) {
                 <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
                   {timeSinceConditionally(eventClass.createdAt)}
                 </div>
-                <div className="text-center">
-                  {/*                   {eventClass.type !== "automatic" && (
-                    <button
-                      onClick={(e) => {
-                        handleOpenEventDetailModalClick(e, eventClass);
-                      }}
-                      className="text-brand-dark hover:text-brand">
-                      Edit<span className="sr-only">, {eventClass.name}</span>
-                    </button>
-                  )} */}
-                </div>
+                <div className="text-center"></div>
               </div>
             </button>
           ))}

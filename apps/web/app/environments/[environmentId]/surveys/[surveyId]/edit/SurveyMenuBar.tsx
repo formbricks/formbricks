@@ -100,7 +100,6 @@ export default function SurveyMenuBar({
           throw new Error(await response?.text());
         }
         const updatedSurvey = await response.json();
-        console.log("updatedSurvey", updatedSurvey);
         setLocalSurvey(updatedSurvey);
         toast.success("Changes saved.");
         if (shouldNavigateBack) {

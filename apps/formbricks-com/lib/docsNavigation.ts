@@ -11,7 +11,8 @@ const navigation = [
     title: "Getting Started",
     links: [
       { title: "Quickstart", href: "/docs/getting-started/quickstart" },
-      { title: "Setup with Next.js", href: "/docs/getting-started/nextjs" },
+      { title: "Next.js App Dir", href: "/docs/getting-started/nextjs-app" },
+      { title: "Next.js Pages Dir", href: "/docs/getting-started/nextjs-pages" },
       { title: "Setup with Vue.js", href: "/docs/getting-started/vuejs" },
     ],
   },
@@ -41,6 +42,13 @@ const navigation = [
       { title: "Feature Chaser", href: "/docs/best-practices/feature-chaser" },
       { title: "Feedback Box", href: "/docs/best-practices/feedback-box" },
       { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
+    ],
+  },
+  {
+    title: "Link Surveys",
+    links: [
+      { title: "Data Prefilling", href: "/docs/link-surveys/data-prefilling" },
+      { title: "User Identification", href: "/docs/link-surveys/user-identification" },
     ],
   },
   {
@@ -77,6 +85,8 @@ const navigation = [
     links: [
       { title: "Introduction", href: "/docs/contributing/introduction" },
       { title: "Setup Dev Environment", href: "/docs/contributing/setup" },
+      { title: "Demo App", href: "/docs/contributing/demo" },
+      { title: "Troubleshooting", href: "/docs/contributing/troubleshooting" },
     ],
   },
 ];

@@ -1,6 +1,8 @@
 export interface NotificationSettings {
-  [surveyId: string]: {
-    responseFinished: boolean;
-    weeklySummary: boolean;
+  alert: {
+    [surveyId: string]: boolean;
+  };
+  weeklySummary: {
+    [productId: string]: boolean;
   };
 }

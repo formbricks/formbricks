@@ -36,6 +36,8 @@ const ZResponse = z.object({
     .object({
       id: z.string().cuid2(),
       attributes: z.record(z.union([z.string(), z.number()])),
+      createdAt: z.date(),
+      updatedAt: z.date(),
     })
     .nullable(),
   personAttributes: ZResponsePersonAttributes,

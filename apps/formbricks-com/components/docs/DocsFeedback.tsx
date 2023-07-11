@@ -23,7 +23,7 @@ export const DocsFeedback: React.FC = () => {
     <div className="mt-6 inline-flex cursor-default items-center rounded-md border border-slate-200 bg-white p-4 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
       {!sharedFeedback ? (
         <div className="text-center md:text-left">
-          Was this page helpful?
+          Is everything on this page clear?
           <Popover open={isOpen} onOpenChange={setIsOpen}>
             <div className="mt-2 inline-flex space-x-3 md:ml-4 md:mt-0">
               {["Yes 👍", " No 👎"].map((option) => (
