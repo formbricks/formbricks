@@ -1,3 +1,4 @@
+import { env } from "@/env.mjs";
 import { getQuestionResponseMapping } from "@/lib/responses/questionResponseMapping";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Question } from "@formbricks/types/questions";
@@ -16,20 +17,20 @@ interface sendEmailData {
   html: string;
 }
 
-const sendEmail = async (emailData: sendEmailData) => {
+export const sendEmail = async (emailData: sendEmailData) => {
   let transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: process.env.SMTP_SECURE_ENABLED === "1", // true for 465, false for other ports
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    secure: env.SMTP_SECURE_ENABLED === "1", // true for 465, false for other ports
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASSWORD,
     },
     // logger: true,
     // debug: true,
   });
   const emailDefaults = {
-    from: `Formbricks <${process.env.MAIL_FROM || "noreply@formbricks.com"}>`,
+    from: `Formbricks <${env.MAIL_FROM || "noreply@formbricks.com"}>`,
   };
   await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
@@ -128,7 +129,7 @@ export const sendResponseFinishedEmail = async (
     subject: personEmail
       ? `${personEmail} just completed your ${survey.name} survey ✅`
       : `A response for ${survey.name} was completed ✅`,
-    replyTo: personEmail || process.env.MAIL_FROM,
+    replyTo: personEmail || env.MAIL_FROM,
     html: withEmailTemplate(`<h1>Survey completed</h1>Someone just completed your survey "${survey.name}"<br/>
 
     <hr/> 

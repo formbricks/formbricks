@@ -1,5 +1,6 @@
 "use client";
 
+import AddNoCodeEventModal from "@/app/environments/[environmentId]/events/AddNoCodeEventModal";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
@@ -7,7 +8,7 @@ import type { Survey } from "@formbricks/types/surveys";
 import {
   Badge,
   Button,
-  Switch,
+  Input,
   Label,
   Select,
   SelectContent,
@@ -15,12 +16,11 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-  Input,
+  Switch,
 } from "@formbricks/ui";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
-import AddNoCodeEventModal from "../../../events/AddNoCodeEventModal";
 
 interface WhenToSendCardProps {
   localSurvey: Survey;

@@ -47,6 +47,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/docs/getting-started/nextjs",
+        destination: "/docs/getting-started/nextjs-app",
+        permanent: true,
+      },
+      {
         source: "/docs/formbricks-hq/self-hosting",
         destination: "/docs",
         permanent: true,

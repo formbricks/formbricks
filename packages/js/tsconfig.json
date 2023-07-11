@@ -58,6 +58,6 @@
   "references": [
     { "path": "../../../types/tsconfig.json" } // Add this line, adjust the path to the actual location
   ],
-  "include": ["src", "../types", "../lib/client"],
+  "include": ["src", "../types/**/*.ts"],
   "exclude": ["node_modules", "dist", "coverage"]
 }

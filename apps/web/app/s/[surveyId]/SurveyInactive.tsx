@@ -5,7 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@formbricks/ui";
 
-const SurveyInactive = ({ status }) => {
+const SurveyInactive = ({
+  status,
+  surveyClosedMessage,
+}: {
+  status: string;
+  surveyClosedMessage?: { heading: string; subheading: string };
+}) => {
   const icons = {
     "not found": <QuestionMarkCircleIcon className="h-20 w-20" />,
     paused: <PauseCircleIcon className="h-20 w-20" />,
@@ -23,11 +29,20 @@ const SurveyInactive = ({ status }) => {
       <div></div>
       <div className="flex flex-col items-center space-y-3 text-slate-300">
         {icons[status]}
-        <h1 className="text-4xl font-bold text-slate-800">Survey {status}.</h1>
-        <p className="text-lg leading-10 text-gray-500">{descriptions[status]}</p>
-        <Button variant="darkCTA" className="mt-2" href="https://formbricks.com">
-          Create your own
-        </Button>
+        <h1 className="text-4xl font-bold text-slate-800">
+          {status === "completed" && surveyClosedMessage ? surveyClosedMessage.heading : `Survey ${status}.`}
+        </h1>
+        <p className="text-lg leading-10 text-gray-500">
+          {" "}
+          {status === "completed" && surveyClosedMessage
+            ? surveyClosedMessage.subheading
+            : descriptions[status]}
+        </p>
+        {!(status === "completed" && surveyClosedMessage) && (
+          <Button variant="darkCTA" className="mt-2" href="https://formbricks.com">
+            Create your own
+          </Button>
+        )}
       </div>
       <div>
         <Link href="https://formbricks.com">

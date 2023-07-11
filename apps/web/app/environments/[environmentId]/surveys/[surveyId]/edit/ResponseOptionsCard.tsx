@@ -1,7 +1,7 @@
 "use client";
 
 import type { Survey } from "@formbricks/types/surveys";
-import { Input, Label, Switch } from "@formbricks/ui";
+import { Input, Label, Switch, DatePicker } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
@@ -15,20 +15,38 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
+  const [surveyCloseOnDateToggle, setSurveyCloseOnDateToggle] = useState(false);
+
   const [redirectUrl, setRedirectUrl] = useState<string | null>("");
+  const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
+  const [surveyClosedMessage, setSurveyClosedMessage] = useState({
+    heading: "Survey Completed",
+    subheading: "This free & open-source survey has been closed",
+  });
+  const [closeOnDate, setCloseOnDate] = useState<Date>();
 
   const handleRedirectCheckMark = () => {
+    setRedirectToggle((prev) => !prev);
+
     if (redirectToggle && localSurvey.redirectUrl) {
-      setRedirectToggle(false);
       setRedirectUrl(null);
       setLocalSurvey({ ...localSurvey, redirectUrl: null });
+    }
+  };
+
+  const handleSurveyCloseOnDateToggle = () => {
+    if (surveyCloseOnDateToggle && localSurvey.closeOnDate) {
+      setSurveyCloseOnDateToggle(false);
+      setCloseOnDate(undefined);
+      setLocalSurvey({ ...localSurvey, closeOnDate: null });
       return;
     }
-    if (redirectToggle) {
-      setRedirectToggle(false);
+
+    if (surveyCloseOnDateToggle) {
+      setSurveyCloseOnDateToggle(false);
       return;
     }
-    setRedirectToggle(true);
+    setSurveyCloseOnDateToggle(true);
   };
 
   const handleRedirectUrlChange = (link: string) => {
@@ -36,12 +54,59 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setLocalSurvey({ ...localSurvey, redirectUrl: link });
   };
 
+  const handleCloseSurveyMessageToggle = () => {
+    setSurveyClosedMessageToggle((prev) => !prev);
+
+    if (surveyClosedMessageToggle && localSurvey.surveyClosedMessage) {
+      setLocalSurvey({ ...localSurvey, surveyClosedMessage: null });
+    }
+  };
+
+  const handleCloseOnDateChange = (date: Date) => {
+    const equivalentDate = date?.getDate();
+    date?.setUTCHours(0, 0, 0, 0);
+    date?.setDate(equivalentDate);
+
+    setCloseOnDate(date);
+    setLocalSurvey({ ...localSurvey, closeOnDate: date ?? null });
+  };
+
+  const handleClosedSurveyMessageChange = ({
+    heading,
+    subheading,
+  }: {
+    heading?: string;
+    subheading?: string;
+  }) => {
+    const message = {
+      heading: heading ?? surveyClosedMessage.heading,
+      subheading: subheading ?? surveyClosedMessage.subheading,
+    };
+
+    setSurveyClosedMessage(message);
+    setLocalSurvey({ ...localSurvey, surveyClosedMessage: message });
+  };
+
   useEffect(() => {
     if (localSurvey.redirectUrl) {
       setRedirectUrl(localSurvey.redirectUrl);
       setRedirectToggle(true);
     }
+
+    if (!!localSurvey.surveyClosedMessage) {
+      setSurveyClosedMessage({
+        heading: localSurvey.surveyClosedMessage.heading ?? surveyClosedMessage.heading,
+        subheading: localSurvey.surveyClosedMessage.subheading ?? surveyClosedMessage.subheading,
+      });
+      setSurveyClosedMessageToggle(true);
+    }
+
+    if (localSurvey.closeOnDate) {
+      setCloseOnDate(localSurvey.closeOnDate);
+      setSurveyCloseOnDateToggle(true);
+    }
   }, []);
+
   const handleCheckMark = () => {
     if (autoComplete) {
       const updatedSurvey: Survey = { ...localSurvey, autoComplete: null };
@@ -113,8 +178,8 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
             </div>
           )}
           {localSurvey.type === "link" && (
-            <div className="p-3 ">
-              <div className="ml-2 flex items-center space-x-1">
+            <>
+              <div className="ml-2 flex items-center space-x-1 p-4">
                 <Switch id="redirectUrl" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
                 <Label htmlFor="redirectUrl" className="cursor-pointer">
                   <div className="ml-2">
@@ -125,18 +190,110 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                   </div>
                 </Label>
               </div>
-              <div className="mt-4">
-                {redirectToggle && (
+              {redirectToggle && (
+                <div className="ml-2 space-x-1 px-4 pb-4">
                   <Input
                     type="url"
                     placeholder="https://www.example.com"
                     value={redirectUrl ? redirectUrl : ""}
                     onChange={(e) => handleRedirectUrlChange(e.target.value)}
                   />
-                )}
+                </div>
+              )}
+              <div className="ml-2 flex items-center space-x-1 p-4">
+                <Switch
+                  id="redirectUrl"
+                  checked={surveyClosedMessageToggle}
+                  onCheckedChange={handleCloseSurveyMessageToggle}
+                />
+                <Label htmlFor="redirectUrl" className="cursor-pointer">
+                  <div className="ml-2">
+                    <h3 className="text-sm font-semibold text-slate-700">
+                      {"Adjust 'Survey Closed' Message"}
+                    </h3>
+                    <p className="text-xs font-normal text-slate-500">
+                      Change the message visitors see when the survey is closed.
+                    </p>
+                  </div>
+                </Label>
               </div>
-            </div>
+              {surveyClosedMessageToggle && (
+                <div className="ml-2 space-x-1 px-4 pb-4">
+                  <div>
+                    <Label htmlFor="headline">Heading</Label>
+                    <div className="mt-2">
+                      <Input
+                        autoFocus
+                        id="heading"
+                        name="heading"
+                        defaultValue={surveyClosedMessage.heading}
+                        onChange={(e) => handleClosedSurveyMessageChange({ heading: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <Label htmlFor="headline">Subheading</Label>
+                    <div className="mt-2">
+                      <Input
+                        id="subheading"
+                        name="subheading"
+                        defaultValue={surveyClosedMessage.subheading}
+                        onChange={(e) => handleClosedSurveyMessageChange({ subheading: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
+          <div className="p-3 ">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch id="redirectUrl" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
+              <Label htmlFor="redirectUrl" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
+                  <p className="text-xs font-normal text-slate-500">
+                    Redirect user to specified link on survey completion
+                  </p>
+                </div>
+              </Label>
+            </div>
+            {redirectToggle && (
+              <div className="mt-4">
+                <Input
+                  type="url"
+                  placeholder="https://www.example.com"
+                  value={redirectUrl ? redirectUrl : ""}
+                  onChange={(e) => handleRedirectUrlChange(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+          <div className="p-3 ">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch
+                id="surveyDeadline"
+                checked={surveyCloseOnDateToggle}
+                onCheckedChange={handleSurveyCloseOnDateToggle}
+              />
+              <Label htmlFor="surveyDeadline" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Close survey on date</h3>
+                  {localSurvey.status === "completed" && (
+                    <p className="text-xs font-normal text-slate-500">
+                      This form is already completed. You can change the status settings to make best use of
+                      this option.
+                    </p>
+                  )}
+                </div>
+              </Label>
+            </div>
+            {surveyCloseOnDateToggle && (
+              <div className="mt-4">
+                <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
+              </div>
+            )}
+          </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

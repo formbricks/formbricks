@@ -1,0 +1,115 @@
+import { Layout } from "@/components/docs/Layout";
+import { Fence } from "@/components/shared/Fence";
+import { Callout } from "@/components/shared/Callout";
+import Image from "next/image";
+
+import QuestionId from "./question-id.png";
+
+export const meta = {
+  title: "Data Prefilling in Link Surveys",
+  description: "Prefill data in your surveys to make it easier for your users to provide feedback.",
+};
+
+Data prefilling via the URL allows you to increase conversion rate by prefilling data you already have in a different system.
+
+## Purpose
+
+URL prefilling of data comes in handy when you:
+
+- Have data for some of the respondents, but not all
+- Have data in a different system (e.g. your database) and want to add it to the user profile in Formbricks
+- Want to embed the first question in an email and increase conversion by prefilling the choice
+
+## Quick Example
+
+```tsx
+https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id=5
+```
+
+## How it works
+
+To prefill the first question of a survey, append `?question_id=answer` at the end of the survey URL. The answer has to match the expected type of the question. For example, if the first question is a rating question, the answer has to be a number. If the first question is a single select question, the answer has to be a string.
+
+Please make sure the answer is [URL encoded](https://www.urlencoder.org/).
+
+<Callout title="Prefill only the first question" type="note">
+  Currently, you can only prefill the first question of a link survey.
+</Callout>
+
+## Where do I find my question Id?
+
+You find the `questionId` in the Advanced Settings at the bottom of each question card in the Survey Editor. As you see, you can update the `questionId` to any string you like. However, once you published your survey, this `questionId` cannot be updated anymore:
+
+<Image
+  src={QuestionId}
+  alt="The question Id is located at the bottom of each question card in the survey editor."
+  quality="100"
+  className="rounded-lg"
+/>
+
+## Examples
+
+Here are a few examples to get you started:
+
+### Rating Question
+
+```tsx
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?rating_question_id=5
+
+// -> translates to 5 stars / points / emojis
+```
+
+### NPS Question
+
+```tsx
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?nps_question_id=10
+
+// -> translates to an NPS rating of 10
+```
+
+### Single Select Question (Radio)
+
+```tsx
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id=Very%20disappointed
+
+// -> Chooses the option "Very disappointed" in the single select question. The string has to be identical to the option in your question.
+```
+
+### Multi Select Question (Checkbox)
+
+```tsx
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id=Sun%2CPalms%2CBeach
+
+// -> Selects three options "Sun, Palms and Beach" in the multi select question. The strings have to be identical to the options in your question.
+```
+
+### Open Text Question
+
+```tsx
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20love%20Formbricks
+
+// -> Adds "I love Formbricks" as the answer to the open text question
+```
+
+### CTA Question
+
+```tsx
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?cta_question_id=clicked
+
+// -> Adds "clicked" as the answer to the CTA question. Alternatively, you can set it to "dismissed" to skip the question.
+```
+
+## Validation
+
+Make sure that the answer in the URL matches the expected type for the first question.
+
+The URL validation works as follows:
+
+- For Rating or NPS questions, the response is parsed as a number and verified if it's accepted by the schema.
+- For CTA type questions, the valid values are "clicked" (main CTA) and "dismissed" (skip CTA).
+- For Consent type questions, the valid values are "accepted" (consent given) and "dismissed" (consent not given).
+- All other question types are strings.
+
+### You’re good to go! 🎉
+
+export default ({ children }) => <Layout meta={meta}>{children}</Layout>;
