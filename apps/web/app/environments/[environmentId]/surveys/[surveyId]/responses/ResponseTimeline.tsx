@@ -172,7 +172,11 @@ export default function ResponseTimeline({
   return (
     <div className="space-y-4">
       {responses.length === 0 ? (
-        <EmptySpaceFiller type="response" environmentId={environmentId} />
+        <EmptySpaceFiller
+          type="response"
+          environmentId={environmentId}
+          noWidgetRequired={survey.type === "link"}
+        />
       ) : (
         <div>
           <Button variant="darkCTA" onClick={() => downloadResponses()} loading={isDownloadCSVLoading}>
