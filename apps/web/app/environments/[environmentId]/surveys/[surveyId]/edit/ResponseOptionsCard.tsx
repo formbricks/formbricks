@@ -1,7 +1,7 @@
 "use client";
 
 import type { Survey } from "@formbricks/types/surveys";
-import { Input, Label, Switch } from "@formbricks/ui";
+import { Input, Label, Switch, DatePicker } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
@@ -15,7 +15,10 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
+  const [surveyCloseOnDateToggle, setSurveyCloseOnDateToggle] = useState(false);
+
   const [redirectUrl, setRedirectUrl] = useState<string | null>("");
+  const [closeOnDate, setCloseOnDate] = useState<Date>();
 
   const handleRedirectCheckMark = () => {
     if (redirectToggle && localSurvey.redirectUrl) {
@@ -31,9 +34,33 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     setRedirectToggle(true);
   };
 
+  const handleSurveyCloseOnDateToggle = () => {
+    if (surveyCloseOnDateToggle && localSurvey.closeOnDate) {
+      setSurveyCloseOnDateToggle(false);
+      setCloseOnDate(undefined);
+      setLocalSurvey({ ...localSurvey, closeOnDate: null });
+      return;
+    }
+
+    if (surveyCloseOnDateToggle) {
+      setSurveyCloseOnDateToggle(false);
+      return;
+    }
+    setSurveyCloseOnDateToggle(true);
+  };
+
   const handleRedirectUrlChange = (link: string) => {
     setRedirectUrl(link);
     setLocalSurvey({ ...localSurvey, redirectUrl: link });
+  };
+
+  const handleCloseOnDateChange = (date: Date) => {
+    const equivalentDate = date?.getDate();
+    date?.setUTCHours(0, 0, 0, 0);
+    date?.setDate(equivalentDate);
+
+    setCloseOnDate(date);
+    setLocalSurvey({ ...localSurvey, closeOnDate: date ?? null });
   };
 
   useEffect(() => {
@@ -41,7 +68,12 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
       setRedirectUrl(localSurvey.redirectUrl);
       setRedirectToggle(true);
     }
+    if (localSurvey.closeOnDate) {
+      setCloseOnDate(localSurvey.closeOnDate);
+      setSurveyCloseOnDateToggle(true);
+    }
   }, []);
+
   const handleCheckMark = () => {
     if (autoComplete) {
       const updatedSurvey: Survey = { ...localSurvey, autoComplete: null };
@@ -112,31 +144,54 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
               </label>
             </div>
           )}
-          {localSurvey.type === "link" && (
-            <div className="p-3 ">
-              <div className="ml-2 flex items-center space-x-1">
-                <Switch id="redirectUrl" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
-                <Label htmlFor="redirectUrl" className="cursor-pointer">
-                  <div className="ml-2">
-                    <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
-                    <p className="text-xs font-normal text-slate-500">
-                      Redirect user to specified link on survey completion
-                    </p>
-                  </div>
-                </Label>
-              </div>
-              <div className="mt-4">
-                {redirectToggle && (
-                  <Input
-                    type="url"
-                    placeholder="https://www.example.com"
-                    value={redirectUrl ? redirectUrl : ""}
-                    onChange={(e) => handleRedirectUrlChange(e.target.value)}
-                  />
-                )}
-              </div>
+          <div className="p-3 ">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch id="redirectUrl" checked={redirectToggle} onCheckedChange={handleRedirectCheckMark} />
+              <Label htmlFor="redirectUrl" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Redirect on completion</h3>
+                  <p className="text-xs font-normal text-slate-500">
+                    Redirect user to specified link on survey completion
+                  </p>
+                </div>
+              </Label>
             </div>
-          )}
+            {redirectToggle && (
+              <div className="mt-4">
+                <Input
+                  type="url"
+                  placeholder="https://www.example.com"
+                  value={redirectUrl ? redirectUrl : ""}
+                  onChange={(e) => handleRedirectUrlChange(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+          <div className="p-3 ">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch
+                id="surveyDeadline"
+                checked={surveyCloseOnDateToggle}
+                onCheckedChange={handleSurveyCloseOnDateToggle}
+              />
+              <Label htmlFor="surveyDeadline" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Close survey on date</h3>
+                  {localSurvey.status === "completed" && (
+                    <p className="text-xs font-normal text-slate-500">
+                      This form is already completed. You can change the status settings to make best use of
+                      this option.
+                    </p>
+                  )}
+                </div>
+              </Label>
+            </div>
+            {surveyCloseOnDateToggle && (
+              <div className="mt-4">
+                <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
+              </div>
+            )}
+          </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

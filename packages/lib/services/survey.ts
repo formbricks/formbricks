@@ -20,8 +20,10 @@ const selectSurvey = {
   displayOption: true,
   recontactDays: true,
   autoClose: true,
+  closeOnDate: true,
   delay: true,
   autoComplete: true,
+  closeOnDate: true,
   triggers: {
     select: {
       eventClass: {

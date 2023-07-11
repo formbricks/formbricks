@@ -205,6 +205,7 @@ export const ZSurvey = z.object({
   thankYouCard: ZSurveyThankYouCard,
   delay: z.number(),
   autoComplete: z.union([z.number(), z.null()]),
+  closeOnDate: z.date().nullable(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
