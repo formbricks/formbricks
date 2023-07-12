@@ -81,6 +81,9 @@
     "db:seed": {
       "outputs": []
     },
+    "db:start":{
+      "cache": false
+    },
     "dev": {
       "cache": false,
       "persistent": true
