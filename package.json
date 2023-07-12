@@ -18,7 +18,7 @@
     "db:migrate:vercel": "turbo run db:migrate:vercel",
     "db:push": "turbo run db:push",
     "go": "turbo run go",
-    "dev": "turbo run dev --parallel --filter=web... --filter=demo...",
+    "dev": "turbo run dev --parallel",
     "start": "turbo run start --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
