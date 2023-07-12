@@ -1,21 +1,19 @@
 /**
  * @jest-environment jsdom
  */
-import formbricks from "../src/index";
-import { constants } from "./constants";
-import { Attribute } from "./types";
 import { TPersonAttributes } from "@formbricks/types/v1/people";
+import formbricks from "../src/index";
 import {
   mockEventTrackResponse,
   mockInitResponse,
   mockLogoutResponse,
-  mockRefreshResponse,
   mockRegisterRouteChangeResponse,
   mockSetCustomAttributeResponse,
   mockSetEmailIdResponse,
   mockSetUserIdResponse,
   mockUpdateEmailResponse,
 } from "./__mocks__/apiMock";
+import { constants } from "./constants";
 
 const consoleLogMock = jest.spyOn(console, "log").mockImplementation();
 
