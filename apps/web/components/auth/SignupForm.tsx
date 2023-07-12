@@ -165,12 +165,16 @@ export const SignupForm = () => {
 
           {env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
             <>
-              <GoogleButton />
+              <GoogleButton
+                inviteUrl={env.NEXT_PUBLIC_WEBAPP_URL + "/invite?token=" + searchParams?.get("inviteToken")}
+              />
             </>
           )}
           {env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
             <>
-              <GithubButton />{" "}
+              <GithubButton
+                inviteUrl={env.NEXT_PUBLIC_WEBAPP_URL + "/invite?token=" + searchParams?.get("inviteToken")}
+              />
             </>
           )}
         </div>

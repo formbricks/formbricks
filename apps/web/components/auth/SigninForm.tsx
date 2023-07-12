@@ -30,6 +30,8 @@ export const SigninForm = () => {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
+  const callbackUrl = searchParams?.get("callbackUrl");
+
   const checkFormValidity = () => {
     // If both fields are filled, enable the button
     if (formRef.current) {
@@ -108,12 +110,12 @@ export const SigninForm = () => {
 
           {env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
             <>
-              <GoogleButton />
+              <GoogleButton inviteUrl={callbackUrl} />
             </>
           )}
           {env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
             <>
-              <GithubButton />
+              <GithubButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>
