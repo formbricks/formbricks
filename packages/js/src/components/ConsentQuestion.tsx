@@ -1,11 +1,11 @@
-import type { ConsentQuestion } from "../../../types/questions";
+import type { TSurveyConsentQuestion } from "../../../types/v1/surveys";
 import { h } from "preact";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import SubmitButton from "./SubmitButton";
 
 interface ConsentQuestionProps {
-  question: ConsentQuestion;
+  question: TSurveyConsentQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

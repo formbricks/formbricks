@@ -2,12 +2,11 @@ import type { InitConfig } from "../../types/js";
 import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";
-import { trackEvent } from "./lib/event";
+import { trackAction } from "./lib/actions";
 import { initialize } from "./lib/init";
 import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeEvents";
 import { resetPerson, setPersonAttribute, setPersonUserId, getPerson } from "./lib/person";
-import { refreshSettings } from "./lib/settings";
 
 export type { EnvironmentId, KeyValueData, PersonId, ResponseId, SurveyId } from "@formbricks/api";
 
@@ -42,13 +41,8 @@ const logout = async (): Promise<void> => {
   await queue.wait();
 };
 
-const track = async (eventName: string, properties: any = {}): Promise<void> => {
-  queue.add(true, trackEvent, eventName, properties);
-  await queue.wait();
-};
-
-const refresh = async (): Promise<void> => {
-  queue.add(true, refreshSettings);
+const track = async (name: string, properties: any = {}): Promise<void> => {
+  queue.add(true, trackAction, name, properties);
   await queue.wait();
 };
 
@@ -64,7 +58,6 @@ const formbricks = {
   setAttribute,
   track,
   logout,
-  refresh,
   registerRouteChange,
   getApi,
   getPerson,

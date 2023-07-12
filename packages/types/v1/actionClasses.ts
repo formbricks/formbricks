@@ -1,6 +1,6 @@
-import { z } from "zod";
+import z from "zod";
 
-export const ZEventClassNoCodeConfig = z.object({
+export const ZActionClassNoCodeConfig = z.object({
   type: z.union([z.literal("innerHtml"), z.literal("pageUrl"), z.literal("cssSelector")]),
   pageUrl: z.optional(
     z.object({
@@ -19,14 +19,17 @@ export const ZEventClassNoCodeConfig = z.object({
   cssSelector: z.optional(z.object({ value: z.string() })),
 });
 
-export type TEventClassNoCodeConfig = z.infer<typeof ZEventClassNoCodeConfig>;
+export type TActionClassNoCodeConfig = z.infer<typeof ZActionClassNoCodeConfig>;
 
-export const ZEventClass = z.object({
+export const ZActionClass = z.object({
   id: z.string().cuid2(),
   name: z.string(),
-  description: z.union([z.string(), z.null()]),
-  noCodeConfig: z.union([ZEventClassNoCodeConfig, z.null()]),
+  description: z.string().nullable(),
   type: z.enum(["code", "noCode", "automatic"]),
+  noCodeConfig: z.union([ZActionClassNoCodeConfig, z.null()]),
+  environmentId: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
 
-export type TEventClass = z.infer<typeof ZEventClass>;
+export type TActionClass = z.infer<typeof ZActionClass>;

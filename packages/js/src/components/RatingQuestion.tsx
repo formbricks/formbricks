@@ -1,7 +1,7 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
-import type { RatingQuestion } from "../../../types/questions";
+import type { TSurveyRatingQuestion } from "../../../types/v1/surveys";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import {
@@ -19,7 +19,7 @@ import {
 import SubmitButton from "./SubmitButton";
 
 interface RatingQuestionProps {
-  question: RatingQuestion;
+  question: TSurveyRatingQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
