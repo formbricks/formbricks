@@ -18,6 +18,9 @@ export const SignupForm = () => {
   const [signingUp, setSigningUp] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
+  const inviteToken = searchParams?.get("inviteToken");
+  const callbackUrl = env.NEXT_PUBLIC_WEBAPP_URL + "/invite?token=" + inviteToken;
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
@@ -30,7 +33,7 @@ export const SignupForm = () => {
         e.target.elements.name.value,
         e.target.elements.email.value,
         e.target.elements.password.value,
-        searchParams?.get("inviteToken")
+        inviteToken
       );
       const url =
         env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED === "1"
@@ -165,16 +168,12 @@ export const SignupForm = () => {
 
           {env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
             <>
-              <GoogleButton
-                inviteUrl={env.NEXT_PUBLIC_WEBAPP_URL + "/invite?token=" + searchParams?.get("inviteToken")}
-              />
+              <GoogleButton inviteUrl={callbackUrl} />
             </>
           )}
           {env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
             <>
-              <GithubButton
-                inviteUrl={env.NEXT_PUBLIC_WEBAPP_URL + "/invite?token=" + searchParams?.get("inviteToken")}
-              />
+              <GithubButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>
@@ -211,7 +210,9 @@ export const SignupForm = () => {
         <div className="mt-9 text-center text-xs ">
           <span className="leading-5 text-slate-500">Have an account?</span>
           <br />
-          <Link href="/auth/login" className="font-semibold text-slate-600 underline hover:text-slate-700">
+          <Link
+            href={inviteToken ? `/auth/login?callbackUrl=${callbackUrl}` : "/auth/login"}
+            className="font-semibold text-slate-600 underline hover:text-slate-700">
             Log in.
           </Link>
         </div>
