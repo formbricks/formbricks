@@ -2,11 +2,13 @@ import z from "zod";
 import { ZPerson } from "./people";
 import { ZSession } from "./sessions";
 import { ZSurvey } from "./surveys";
+import { ZActionClass } from "./actionClasses";
 
 export const ZJsState = z.object({
   person: ZPerson,
   session: ZSession,
   surveys: z.array(ZSurvey),
+  noCodeActionClasses: z.array(ZActionClass),
 });
 
 export type TJsState = z.infer<typeof ZJsState>;
