@@ -176,6 +176,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     const responseRequest: TResponseInput = {
       surveyId: survey.id,
       personId: config.person.id,
+      displayId: displayId || "",
       finished,
       data,
     };
