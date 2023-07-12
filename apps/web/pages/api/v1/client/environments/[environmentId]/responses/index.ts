@@ -18,7 +18,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // POST
   else if (req.method === "POST") {
-    const { surveyId, personId, response } = req.body;
+    const { surveyId, displayId, personId, response } = req.body;
 
     if (!surveyId) {
       return res.status(400).json({ message: "Missing surveyId" });
@@ -80,6 +80,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         survey: {
           connect: {
             id: surveyId,
+          },
+        },
+        display: {
+          connect: {
+            id: displayId,
           },
         },
         ...response,

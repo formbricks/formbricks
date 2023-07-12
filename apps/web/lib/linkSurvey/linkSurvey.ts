@@ -106,9 +106,11 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     const responseRequest: TResponseInput = {
       surveyId: survey.id,
       personId: personId,
+      displayId: displayId,
       finished,
       data,
     };
+    console.log("client", displayId);
     if (!responseId && !isPreview) {
       const response = await createResponse(
         responseRequest,

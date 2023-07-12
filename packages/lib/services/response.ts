@@ -77,6 +77,13 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
             id: responseInput.surveyId,
           },
         },
+        ...(responseInput.displayId && {
+          display: {
+            connect: {
+              id: responseInput.displayId,
+            },
+          },
+        }),
         finished: responseInput.finished,
         data: responseInput.data,
         ...(responseInput.personId && {
