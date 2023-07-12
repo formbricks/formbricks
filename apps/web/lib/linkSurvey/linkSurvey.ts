@@ -110,7 +110,6 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       finished,
       data,
     };
-    console.log("client", displayId);
     if (!responseId && !isPreview) {
       const response = await createResponse(
         responseRequest,
