@@ -56,7 +56,7 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
     });
 
     if (!personPrisma) {
-      throw new ResourceNotFoundError("Person", personId);
+      return null;
     }
 
     const person = transformPrismaPerson(personPrisma);

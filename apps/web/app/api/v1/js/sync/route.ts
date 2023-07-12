@@ -6,6 +6,8 @@ import { createPerson, getPerson } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { createSession, extendSession, getSession } from "@formbricks/lib/services/session";
 import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
+import { TPerson } from "@formbricks/types/v1/people";
+import { TSession } from "@formbricks/types/v1/sessions";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -48,14 +50,14 @@ export async function POST(req: Request): Promise<NextResponse> {
         noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
         product,
       };
-      return responses.successResponse({ state }, true);
+      return responses.successResponse({ ...state }, true);
     }
 
     if (!sessionId) {
-      let person;
+      let person: TPerson | null;
       // check if person exists
       person = await getPerson(personId);
-      if (!person || person.environmentId !== environmentId) {
+      if (!person) {
         // create a new person
         person = await createPerson(environmentId);
       }
@@ -74,18 +76,18 @@ export async function POST(req: Request): Promise<NextResponse> {
         noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
         product,
       };
-      return responses.successResponse({ state }, true);
+      return responses.successResponse({ ...state }, true);
     }
     // person & session exists
 
     // check if session exists
-    let person;
-    let session;
+    let person: TPerson | null;
+    let session: TSession | null;
     session = await getSession(sessionId);
     if (!session) {
       // check if person exits
       person = await getPerson(personId);
-      if (!person || person.environmentId !== environmentId) {
+      if (!person) {
         // create a new person
         person = await createPerson(environmentId);
       }
@@ -95,7 +97,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       // session exists
       // check if person exists (should always exist, but just in case)
       person = await getPerson(personId);
-      if (!person || person.environmentId !== environmentId) {
+      if (!person) {
         // create a new person & session
         person = await createPerson(environmentId);
         session = await createSession(person.id);

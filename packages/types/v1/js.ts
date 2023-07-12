@@ -33,7 +33,7 @@ export type TJsConfig = z.infer<typeof ZJsConfig>;
 
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid2(),
-  userId: z.string().cuid2(),
+  userId: z.string().min(1).max(255),
   sessionId: z.string().cuid2(),
 });
 

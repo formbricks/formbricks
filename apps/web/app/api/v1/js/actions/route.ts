@@ -10,58 +10,66 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
-  const jsonInput = await req.json();
+  try {
+    const jsonInput = await req.json();
 
-  // validate using zod
-  const inputValidation = ZJsActionInput.safeParse(jsonInput);
+    // validate using zod
+    const inputValidation = ZJsActionInput.safeParse(jsonInput);
 
-  if (!inputValidation.success) {
-    return responses.badRequestResponse(
-      "Fields are missing or incorrectly formatted",
-      transformErrorToDetails(inputValidation.error),
-      true
-    );
-  }
+    if (!inputValidation.success) {
+      return responses.badRequestResponse(
+        "Fields are missing or incorrectly formatted",
+        transformErrorToDetails(inputValidation.error),
+        true
+      );
+    }
 
-  const { environmentId, sessionId, name, properties } = inputValidation.data;
+    const { environmentId, sessionId, name, properties } = inputValidation.data;
 
-  let eventType: EventType = EventType.code;
-  if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
-    eventType = EventType.automatic;
-  }
+    let eventType: EventType = EventType.code;
+    if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
+      eventType = EventType.automatic;
+    }
 
-  await prisma.event.create({
-    data: {
-      properties,
-      session: {
-        connect: {
-          id: sessionId,
-        },
-      },
-      eventClass: {
-        connectOrCreate: {
-          where: {
-            name_environmentId: {
-              name,
-              environmentId,
-            },
+    await prisma.event.create({
+      data: {
+        properties,
+        session: {
+          connect: {
+            id: sessionId,
           },
-          create: {
-            name,
-            type: eventType,
-            environment: {
-              connect: {
-                id: environmentId,
+        },
+        eventClass: {
+          connectOrCreate: {
+            where: {
+              name_environmentId: {
+                name,
+                environmentId,
+              },
+            },
+            create: {
+              name,
+              type: eventType,
+              environment: {
+                connect: {
+                  id: environmentId,
+                },
               },
             },
           },
         },
       },
-    },
-    select: {
-      id: true,
-    },
-  });
+      select: {
+        id: true,
+      },
+    });
 
-  return responses.successResponse({}, true);
+    return responses.successResponse({}, true);
+  } catch (error) {
+    console.error(error);
+    return responses.internalServerErrorResponse(
+      "Unable to complete response. See server logs for details.",
+      true
+    );
+  }
 }

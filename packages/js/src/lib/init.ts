@@ -23,20 +23,30 @@ import { addWidgetContainer } from "./widget";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
-const addSyncEventListener = (): void => {
-  // add event listener to check the session every minute
+let syncIntervalId: number | null = null;
+
+const addSyncEventListener = (debug?: boolean): void => {
+  const updateInverval = debug ? 1000 * 30 : 1000 * 60 * 2; // 2 minutes in production, 30 seconds in debug mode
+  // add event listener to check sync with backend on regular interval
   if (typeof window !== "undefined") {
-    const intervalId = window.setInterval(async () => {
+    // clear any existing interval
+    if (syncIntervalId !== null) {
+      window.clearInterval(syncIntervalId);
+    }
+    syncIntervalId = window.setInterval(async () => {
+      logger.debug("Syncing.");
       const syncResult = await sync();
       if (syncResult.ok !== true) {
         return err(syncResult.error);
       }
       const state = syncResult.value;
       config.update({ state });
-    }, 1000 * 60); // check every minute
+    }, updateInverval);
     // clear interval on page unload
     window.addEventListener("beforeunload", () => {
-      clearInterval(intervalId);
+      if (syncIntervalId !== null) {
+        window.clearInterval(syncIntervalId);
+      }
     });
   }
 };
@@ -101,7 +111,7 @@ export const initialize = async (
 
       if (trackActionResult.ok !== true) return err(trackActionResult.error);
     } else {
-      logger.debug("Session valid. Continueing.");
+      logger.debug("Session valid. Continuing.");
       // continue for now - next sync will check complete state
     }
   } else {
@@ -118,8 +128,6 @@ export const initialize = async (
 
     const state = syncResult.value;
 
-    console.log("state", state);
-
     config.update({ state });
 
     const trackActionResult = await trackAction("New Session");
@@ -128,7 +136,7 @@ export const initialize = async (
   }
 
   logger.debug("Add session event listeners");
-  addSyncEventListener();
+  addSyncEventListener(c.debug);
 
   logger.debug("Add page url event listeners");
   addPageUrlEventListeners();
