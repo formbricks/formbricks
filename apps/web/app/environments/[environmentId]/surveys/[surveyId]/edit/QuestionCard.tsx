@@ -1,8 +1,9 @@
 "use client";
 
+import AdvancedSettings from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/AdvancedSettings";
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
-import { QuestionType, type Question } from "@formbricks/types/questions";
+import { QuestionType } from "@formbricks/types/questions";
 import type { Survey } from "@formbricks/types/surveys";
 import { Input, Label, Switch } from "@formbricks/ui";
 import {
@@ -20,18 +21,16 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 import CTAQuestionForm from "./CTAQuestionForm";
+import ConsentQuestionForm from "./ConsentQuestionForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
 import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
-import ConsentQuestionForm from "./ConsentQuestionForm";
-import AdvancedSettings from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/AdvancedSettings";
 
 interface QuestionCardProps {
   localSurvey: Survey;
-  question: Question;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -44,7 +43,6 @@ interface QuestionCardProps {
 
 export default function QuestionCard({
   localSurvey,
-  question,
   questionIdx,
   moveQuestion,
   updateQuestion,
@@ -54,6 +52,7 @@ export default function QuestionCard({
   setActiveQuestionId,
   lastQuestion,
 }: QuestionCardProps) {
+  const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
   return (
