@@ -217,6 +217,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     delete data.responseRate;
     delete data.numDisplays;
 
+    if (data.surveyClosedMessage === null) {
+      data.surveyClosedMessage = prismaClient.JsonNull;
+    }
+
     const prismaRes = await prisma.survey.update({
       where: { id: surveyId },
       data,
