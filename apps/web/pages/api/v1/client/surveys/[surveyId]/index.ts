@@ -28,6 +28,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         environmentId: true,
         status: true,
         redirectUrl: true,
+        surveyClosedMessage: true,
       },
     });
 
@@ -57,6 +58,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         reason: survey.status,
         brandColor: product?.brandColor,
         formbricksSignature: product?.formbricksSignature,
+        surveyClosedMessage: survey?.surveyClosedMessage,
       });
     }
 

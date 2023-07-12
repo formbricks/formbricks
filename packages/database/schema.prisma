@@ -210,32 +210,36 @@ enum displayOptions {
 }
 
 model Survey {
-  id               String                  @id @default(cuid())
-  createdAt        DateTime                @default(now()) @map(name: "created_at")
-  updatedAt        DateTime                @updatedAt @map(name: "updated_at")
-  name             String
-  redirectUrl      String?
-  type             SurveyType              @default(web)
-  environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  environmentId    String
-  status           SurveyStatus            @default(draft)
+  id                  String                  @id @default(cuid())
+  createdAt           DateTime                @default(now()) @map(name: "created_at")
+  updatedAt           DateTime                @updatedAt @map(name: "updated_at")
+  name                String
+  redirectUrl         String?
+  type                SurveyType              @default(web)
+  environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  environmentId       String
+  status              SurveyStatus            @default(draft)
   /// @zod.custom(imports.ZSurveyQuestions)
   /// @zod.custom(imports.ZSurveyQuestions)
   /// [SurveyQuestions]
-  questions        Json                    @default("[]")
+  questions           Json                    @default("[]")
   /// @zod.custom(imports.ZSurveyThankYouCard)
   /// @zod.custom(imports.ZSurveyThankYouCard)
   /// [SurveyThankYouCard]
-  thankYouCard     Json                    @default("{\"enabled\": false}")
-  responses        Response[]
-  displayOption    displayOptions          @default(displayOnce)
-  recontactDays    Int?
-  triggers         SurveyTrigger[]
-  attributeFilters SurveyAttributeFilter[]
-  displays         Display[]
-  autoClose        Int?
-  delay            Int                     @default(0)
-  autoComplete     Int?
+  thankYouCard        Json                    @default("{\"enabled\": false}")
+  responses           Response[]
+  displayOption       displayOptions          @default(displayOnce)
+  recontactDays       Int?
+  triggers            SurveyTrigger[]
+  attributeFilters    SurveyAttributeFilter[]
+  displays            Display[]
+  autoClose           Int?
+  delay               Int                     @default(0)
+  autoComplete        Int?
+  closeOnDate         DateTime?
+  /// @zod.custom(imports.ZSurveyClosedMessage)
+  /// [SurveyClosedMessage]
+  surveyClosedMessage Json?
 }
 
 model Event {

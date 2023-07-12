@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { AttributeClass } from "@prisma/client";
 import { sendResponseFinishedEmail } from "@/lib/email";
 import { Question } from "@formbricks/types/questions";
+import { NotificationSettings } from "@formbricks/types/users";
 
 export async function POST(request: Request) {
   const { internalSecret, environmentId, surveyId, event, data } = await request.json();
@@ -104,14 +105,11 @@ export async function POST(request: Request) {
     });
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {
-      if (!user.notificationSettings) {
-        return false;
+      const notificationSettings: NotificationSettings | null = user.notificationSettings;
+      if (notificationSettings?.alert && notificationSettings.alert[surveyId]) {
+        return true;
       }
-      const notificationSettings = user.notificationSettings[surveyId];
-      if (!notificationSettings || !notificationSettings.responseFinished) {
-        return false;
-      }
-      return true;
+      return false;
     });
 
     if (usersWithNotifications.length > 0) {

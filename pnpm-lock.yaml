@@ -592,8 +592,11 @@ importers:
       react-confetti:
         specifier: ^6.1.0
         version: 6.1.0(react@18.2.0)
+      react-day-picker:
+        specifier: ^8.8.0
+        version: 8.8.0(date-fns@2.30.0)(react@18.2.0)
       react-dom:
-        specifier: 18.2.0
+        specifier: ^18.2.0
         version: 18.2.0(react@18.2.0)
       react-radio-group:
         specifier: ^3.0.3
@@ -16712,6 +16715,16 @@ packages:
     dependencies:
       react: 18.2.0
       tween-functions: 1.2.0
+    dev: false
+
+  /react-day-picker@8.8.0(date-fns@2.30.0)(react@18.2.0):
+    resolution: {integrity: sha512-QIC3uOuyGGbtypbd5QEggsCSqVaPNu8kzUWquZ7JjW9fuWB9yv7WyixKmnaFelTLXFdq7h7zU6n/aBleBqe/dA==}
+    peerDependencies:
+      date-fns: ^2.28.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      date-fns: 2.30.0
+      react: 18.2.0
     dev: false
 
   /react-dom@18.2.0(react@18.2.0):
