@@ -1,6 +1,11 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "pipeline": {
+    "@formbricks/web#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/database#go"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
@@ -62,6 +67,9 @@
         "VERCEL_URL"
       ]
     },
+    "go": {
+      "cache": false
+    },
     "prebuild": {
       "outputs": []
     },
@@ -80,6 +88,9 @@
     },
     "db:seed": {
       "outputs": []
+    },
+    "db:start": {
+      "cache": false
     },
     "dev": {
       "cache": false,
