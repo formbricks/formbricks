@@ -220,7 +220,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
       <div
         className={cn(
           loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
-          "fb-text-slate-800 fb-font-sans fb-px-4 fb-py-6 sm:fb-p-6 fb-max-h-[90vh] fb-overflow-y-auto"
+          "fb-text-slate-800 fb-font-sans fb-px-4 fb-py-6 sm:fb-p-6 fb-max-h-[80vh] fb-overflow-y-auto"
         )}
         onClick={() => handleStopCountdown()}
         onMouseOver={() => handleStopCountdown()}>
