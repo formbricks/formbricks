@@ -1,4 +1,4 @@
-import { getSurveys } from "@/app/api/v1/js/sync/surveys";
+import { getSurveys } from "@/app/api/v1/js/surveys";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { getActionClasses } from "@formbricks/lib/services/actionClass";

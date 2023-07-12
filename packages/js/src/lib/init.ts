@@ -44,9 +44,9 @@ const addSyncEventListener = (): void => {
 export const initialize = async (
   c: InitConfig
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
-  if (c.logLevel) {
-    logger.debug(`Setting log level to ${c.logLevel}`);
-    logger.configure({ logLevel: c.logLevel });
+  if (c.debug) {
+    logger.debug(`Setting log level to debug`);
+    logger.configure({ logLevel: "debug" });
   }
 
   ErrorHandler.getInstance().printStatus();

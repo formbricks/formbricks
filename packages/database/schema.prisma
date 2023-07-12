@@ -283,7 +283,7 @@ model Session {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @updatedAt @map(name: "updated_at")
-  exipresAt DateTime @default(now())
+  expiresAt DateTime @default(now())
   person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId  String
   events    Event[]
