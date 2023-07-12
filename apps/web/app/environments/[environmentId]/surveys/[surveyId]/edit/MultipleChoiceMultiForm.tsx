@@ -24,16 +24,28 @@ export default function MultipleChoiceMultiForm({
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const questionRef = useRef<HTMLInputElement>(null);
 
-  const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
-    const newChoices = !question.choices
-      ? []
-      : question.choices.map((choice, idx) => {
-          if (idx === choiceIdx) {
-            return { ...choice, ...updatedAttributes };
-          }
-          return choice;
-        });
-    updateQuestion(questionIdx, { choices: newChoices });
+  const updateChoice = (choiceIdx: number, updatedAttributes: { label: string }) => {
+    const newLabel = updatedAttributes.label;
+    const oldLabel = question.choices[choiceIdx].label;
+    let newChoices: any[] = [];
+    if (question.choices) {
+      newChoices = question.choices.map((choice, idx) => {
+        if (idx !== choiceIdx) return choice;
+        return { ...choice, ...updatedAttributes };
+      });
+    }
+
+    let newLogic: any[] = [];
+    question.logic?.forEach((logic) => {
+      let newL: string | string[] | undefined = logic.value;
+      if (Array.isArray(logic.value)) {
+        newL = logic.value.map((value) => (value === oldLabel ? newLabel : value));
+      } else {
+        newL = logic.value === oldLabel ? newLabel : logic.value;
+      }
+      newLogic.push({ ...logic, value: newL });
+    });
+    updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
   };
 
   const addChoice = (choiceIdx?: number) => {
