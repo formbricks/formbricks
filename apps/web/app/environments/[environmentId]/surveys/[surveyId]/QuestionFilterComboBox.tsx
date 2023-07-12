@@ -116,7 +116,7 @@ const QuestionFilterComboBox = ({
             !isMultiple ? (
               <p className="text-slate-600">{filterComboBoxValue}</p>
             ) : (
-              <div className="no-scrollbar flex w-[7rem] gap-3 overflow-auto sm:w-full">
+              <div className="no-scrollbar flex w-[7rem] gap-3 overflow-auto md:w-[10rem] lg:w-[18rem]">
                 {typeof filterComboBoxValue !== "string" &&
                   filterComboBoxValue?.map((o) => (
                     <button

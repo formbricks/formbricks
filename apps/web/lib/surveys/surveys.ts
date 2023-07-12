@@ -401,7 +401,7 @@ export const getFilterResponses = (
               if (question) {
                 const responseValue = response.data[question.id];
                 const filterValue = filter?.filterType?.filterComboBoxValue;
-                if (isArray(responseValue) && isArray(filterValue)) {
+                if (isArray(responseValue) && isArray(filterValue) && filterValue.length > 0) {
                   //@ts-ignore
                   const updatedResponseValue = question?.choices
                     ? //@ts-ignore
@@ -433,6 +433,7 @@ export const getFilterResponses = (
                 if (
                   filter?.filterType?.filterValue === "Includes either" &&
                   isArray(filterValue) &&
+                  filterValue.length > 0 &&
                   typeof responseValue === "string"
                 ) {
                   return filterValue.includes(responseValue);
