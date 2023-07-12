@@ -22,3 +22,28 @@ export const ZJsSyncInput = z.object({
 });
 
 export type TJsSyncInput = z.infer<typeof ZJsSyncInput>;
+
+export const ZJsConfig = z.object({
+  environmentId: z.string().cuid2(),
+  apiHost: z.string(),
+  state: ZJsState,
+});
+
+export type TJsConfig = z.infer<typeof ZJsConfig>;
+
+export const ZJsPeopleUserIdInput = z.object({
+  environmentId: z.string().cuid2(),
+  userId: z.string().cuid2(),
+  sessionId: z.string().cuid2(),
+});
+
+export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
+
+export const ZJsPeopleAttributeInput = z.object({
+  environmentId: z.string().cuid2(),
+  sessionId: z.string().cuid2(),
+  key: z.string(),
+  value: z.string(),
+});
+
+export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;

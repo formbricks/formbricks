@@ -1,13 +1,13 @@
 import { h } from "preact";
 import { useRef, useState, useEffect } from "preact/hooks";
 import { cn } from "../lib/utils";
-import type { MultipleChoiceSingleQuestion } from "../../../types/questions";
+import type { TSurveyMultipleChoiceSingleQuestion } from "../../../types/v1/surveys";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 
 interface MultipleChoiceSingleProps {
-  question: MultipleChoiceSingleQuestion;
+  question: TSurveyMultipleChoiceSingleQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

@@ -4,7 +4,7 @@ import { TPerson } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 
-const PersonSelect = {
+export const select = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -52,7 +52,7 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
       where: {
         id: personId,
       },
-      select: PersonSelect,
+      select,
     });
 
     if (!personPrisma) {
@@ -77,7 +77,7 @@ export const getPeople = cache(async (environmentId: string): Promise<TPerson[]>
       where: {
         environmentId: environmentId,
       },
-      select: PersonSelect,
+      select,
     });
     if (!personsPrisma) {
       throw new ResourceNotFoundError("Persons", "All Persons");
@@ -103,12 +103,28 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
       data: {
         environmentId: environmentId,
       },
-      select: PersonSelect,
+      select,
     });
 
     const person = transformPrismaPerson(personPrisma);
 
     return person;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
+export const deletePerson = async (personId: string): Promise<void> => {
+  try {
+    await prisma.person.delete({
+      where: {
+        id: personId,
+      },
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

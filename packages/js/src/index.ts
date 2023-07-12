@@ -7,7 +7,6 @@ import { initialize } from "./lib/init";
 import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeEvents";
 import { resetPerson, setPersonAttribute, setPersonUserId, getPerson } from "./lib/person";
-import { refreshSettings } from "./lib/settings";
 
 export type { EnvironmentId, KeyValueData, PersonId, ResponseId, SurveyId } from "@formbricks/api";
 
@@ -47,11 +46,6 @@ const track = async (eventName: string, properties: any = {}): Promise<void> => 
   await queue.wait();
 };
 
-const refresh = async (): Promise<void> => {
-  queue.add(true, refreshSettings);
-  await queue.wait();
-};
-
 const registerRouteChange = async (): Promise<void> => {
   queue.add(true, checkPageUrl);
   await queue.wait();
@@ -64,7 +58,6 @@ const formbricks = {
   setAttribute,
   track,
   logout,
-  refresh,
   registerRouteChange,
   getApi,
   getPerson,

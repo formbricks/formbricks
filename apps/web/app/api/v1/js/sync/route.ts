@@ -1,12 +1,12 @@
-import { getSurveys } from "./surveys";
+import { getSurveys } from "@/app/api/v1/js/sync/surveys";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
-import { createPerson } from "@formbricks/lib/services/person";
-import { createSession } from "@formbricks/lib/services/session";
+import { getActionClasses } from "@formbricks/lib/services/actionClass";
+import { createPerson, getPerson } from "@formbricks/lib/services/person";
+import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { createSession, extendSession, getSession } from "@formbricks/lib/services/session";
 import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
 import { NextResponse } from "next/server";
-import { getActionClasses } from "@formbricks/lib/services/actionClass";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 
 export async function POST(req: Request): Promise<NextResponse> {
   const jsonInput = await req.json();
@@ -47,11 +47,79 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   if (!sessionId) {
-    // find person and return state
-    return responses.successResponse({}, true);
+    let person;
+    // check if person exists
+    person = await getPerson(personId);
+    if (!person || person.environmentId !== environmentId) {
+      // create a new person
+      person = await createPerson(environmentId);
+    }
+    // get/create rest of the state
+    const [session, surveys, noCodeActionClasses, product] = await Promise.all([
+      createSession(person.id),
+      getSurveys(environmentId, person),
+      getActionClasses(environmentId),
+      getProductByEnvironmentId(environmentId),
+    ]);
+    // return state
+    const state: TJsState = {
+      person,
+      session,
+      surveys,
+      noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
+      product,
+    };
+    return responses.successResponse({ state }, true);
+  }
+  // person & session exists
+
+  // check if session exists
+  let person;
+  let session;
+  session = await getSession(sessionId);
+  if (!session) {
+    // check if person exits
+    person = await getPerson(personId);
+    if (!person || person.environmentId !== environmentId) {
+      // create a new person
+      person = await createPerson(environmentId);
+    }
+    // create a new session
+    session = await createSession(person.id);
+  } else {
+    // session exists
+    // check if person exists (should always exist, but just in case)
+    person = await getPerson(personId);
+    if (!person || person.environmentId !== environmentId) {
+      // create a new person & session
+      person = await createPerson(environmentId);
+      session = await createSession(person.id);
+    } else {
+      // check if session is expired
+      if (session.expiresAt < new Date()) {
+        // create a new session
+        session = await createSession(person.id);
+      } else {
+        // extend session
+        session = await extendSession(sessionId);
+      }
+    }
   }
 
-  // find person and session and check if session is still valid
+  // get/create rest of the state
+  const [surveys, noCodeActionClasses, product] = await Promise.all([
+    getSurveys(environmentId, person),
+    getActionClasses(environmentId),
+    getProductByEnvironmentId(environmentId),
+  ]);
+
   // return state
-  return responses.successResponse({}, true);
+  const state: TJsState = {
+    person,
+    session,
+    surveys,
+    noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
+    product,
+  };
+  return responses.successResponse({ state }, true);
 }

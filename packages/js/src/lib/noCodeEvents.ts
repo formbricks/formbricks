@@ -1,4 +1,4 @@
-import type { Event } from "../../../types/events";
+import type { TActionClass } from "../../../types/v1/actionClasses";
 import type { MatchType } from "../../../types/js";
 import { Config } from "./config";
 import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
@@ -11,12 +11,14 @@ const errorHandler = ErrorHandler.getInstance();
 
 export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError | NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
-  const { settings } = config.get();
-  if (settings?.noCodeEvents === undefined) {
+  const { state } = config.get();
+  if (state?.noCodeActionClasses === undefined) {
     return okVoid();
   }
 
-  const pageUrlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "pageUrl");
+  const pageUrlEvents: TActionClass[] = state?.noCodeActionClasses.filter(
+    (e) => e.noCodeConfig?.type === "pageUrl"
+  );
 
   if (pageUrlEvents.length === 0) {
     return okVoid();
@@ -95,9 +97,11 @@ export function checkUrlMatch(
 }
 
 export const checkClickMatch = (event: MouseEvent) => {
-  const { settings } = config.get();
-  const innerHtmlEvents: Event[] = settings?.noCodeEvents.filter((e) => e.noCodeConfig?.type === "innerHtml");
-  const cssSelectorEvents: Event[] = settings?.noCodeEvents.filter(
+  const { state } = config.get();
+  const innerHtmlEvents: TActionClass[] = state?.noCodeActionClasses.filter(
+    (e) => e.noCodeConfig?.type === "innerHtml"
+  );
+  const cssSelectorEvents: TActionClass[] = state?.noCodeActionClasses.filter(
     (e) => e.noCodeConfig?.type === "cssSelector"
   );
 

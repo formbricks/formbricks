@@ -14,20 +14,26 @@ import {
 import { trackEvent } from "./event";
 import { Logger } from "./logger";
 import { addClickEventListener, addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
-import { createPerson, resetPerson } from "./person";
-import { createSession, extendOrCreateSession, extendSession, isExpired } from "./session";
+import { resetPerson } from "./person";
+import { isExpired } from "./session";
 import { addStylesToDom } from "./styles";
+import { sync } from "./sync";
 import { addWidgetContainer } from "./widget";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
-const addSessionEventListeners = (): void => {
+const addSyncEventListener = (): void => {
   // add event listener to check the session every minute
   if (typeof window !== "undefined") {
     const intervalId = window.setInterval(async () => {
-      await extendOrCreateSession();
-    }, 1000 * 60 * 5); // check every 5 minutes
+      const syncResult = await sync();
+      if (syncResult.ok !== true) {
+        return err(syncResult.error);
+      }
+      const state = syncResult.value;
+      config.update({ state });
+    }, 1000 * 60); // check every minute
     // clear interval on page unload
     window.addEventListener("beforeunload", () => {
       clearInterval(intervalId);
@@ -70,49 +76,49 @@ export const initialize = async (
   logger.debug("Adding styles to DOM");
   addStylesToDom();
   if (
-    config.get().session &&
+    config.get().state.session &&
     config.get().environmentId === c.environmentId &&
     config.get().apiHost === c.apiHost
   ) {
     logger.debug("Found existing configuration. Checking session.");
-    const existingSession = config.get().session;
+    const existingSession = config.get().state.session;
     if (isExpired(existingSession)) {
-      logger.debug("Session expired. Creating new session.");
+      logger.debug("Session expired. Resyncing.");
 
-      const createSessionResult = await createSession();
+      const syncResult = await sync();
 
-      // if create session fails, clear config and start from scratch
-      if (createSessionResult.ok !== true) {
+      // if create sync fails, clear config and start from scratch
+      if (syncResult.ok !== true) {
         await resetPerson();
         return await initialize(c);
       }
 
-      const { session, settings } = createSessionResult.value;
+      const state = syncResult.value;
 
-      config.update({ session: extendSession(session), settings });
+      config.update({ state });
 
       const trackEventResult = await trackEvent("New Session");
 
       if (trackEventResult.ok !== true) return err(trackEventResult.error);
     } else {
-      logger.debug("Session valid. Extending session.");
-      config.update({ session: extendSession(existingSession) });
+      logger.debug("Session valid. Continueing.");
+      // continue for now - next sync will check complete state
     }
   } else {
     logger.debug("No valid session found. Creating new config.");
     // we need new config
     config.update({ environmentId: c.environmentId, apiHost: c.apiHost });
 
-    logger.debug("Get person, session and settings from server");
-    const result = await createPerson();
+    logger.debug("Syncing.");
+    const syncResult = await sync();
 
-    if (result.ok !== true) {
-      return err(result.error);
+    if (syncResult.ok !== true) {
+      return err(syncResult.error);
     }
 
-    const { person, session, settings } = result.value;
+    const state = syncResult.value;
 
-    config.update({ person, session: extendSession(session), settings });
+    config.update({ state });
 
     const trackEventResult = await trackEvent("New Session");
 
@@ -120,7 +126,7 @@ export const initialize = async (
   }
 
   logger.debug("Add session event listeners");
-  addSessionEventListeners();
+  addSyncEventListener();
 
   logger.debug("Add page url event listeners");
   addPageUrlEventListeners();
@@ -146,9 +152,7 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
   if (
     !config.get().apiHost ||
     !config.get().environmentId ||
-    !config.get().person ||
-    !config.get().session ||
-    !config.get().settings ||
+    !config.get().state ||
     !ErrorHandler.initialized
   ) {
     return err({

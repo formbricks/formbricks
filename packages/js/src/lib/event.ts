@@ -2,7 +2,7 @@ import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { renderWidget } from "./widget";
-import { Survey } from "@formbricks/types/js";
+import { TSurvey } from "../../../types/v1/surveys";
 const logger = Logger.getInstance();
 const config = Config.getInstance();
 
@@ -19,7 +19,7 @@ export const trackEvent = async (
       },
 
       body: JSON.stringify({
-        sessionId: config.get().session.id,
+        sessionId: config.get().state?.session?.id,
         eventName,
         properties,
       }),
@@ -41,7 +41,7 @@ export const trackEvent = async (
   logger.debug(`Formbricks: Event "${eventName}" tracked`);
 
   // get a list of surveys that are collecting insights
-  const activeSurveys = config.get().settings?.surveys;
+  const activeSurveys = config.get().state?.surveys;
 
   if (activeSurveys.length > 0) {
     triggerSurvey(eventName, activeSurveys);
@@ -52,10 +52,10 @@ export const trackEvent = async (
   return okVoid();
 };
 
-export const triggerSurvey = (eventName: string, activeSurveys: Survey[]): void => {
+export const triggerSurvey = (eventName: string, activeSurveys: TSurvey[]): void => {
   for (const survey of activeSurveys) {
     for (const trigger of survey.triggers) {
-      if (trigger.eventClass?.name === eventName) {
+      if (trigger.name === eventName) {
         logger.debug(`Formbricks: survey ${survey.id} triggered by event "${eventName}"`);
         renderWidget(survey);
         return;

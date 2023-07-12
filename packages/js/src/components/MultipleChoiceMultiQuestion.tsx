@@ -1,4 +1,4 @@
-import type { MultipleChoiceMultiQuestion } from "../../../types/questions";
+import type { TSurveyMultipleChoiceMultiQuestion } from "../../../types/v1/surveys";
 import { h } from "preact";
 import { useState, useRef, useEffect } from "preact/hooks";
 import { cn } from "../lib/utils";
@@ -7,7 +7,7 @@ import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 
 interface MultipleChoiceMultiProps {
-  question: MultipleChoiceMultiQuestion;
+  question: TSurveyMultipleChoiceMultiQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

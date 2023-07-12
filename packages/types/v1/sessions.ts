@@ -4,6 +4,7 @@ export const ZSession = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  expiresAt: z.date(),
   personId: z.string().cuid2(),
 });
 
