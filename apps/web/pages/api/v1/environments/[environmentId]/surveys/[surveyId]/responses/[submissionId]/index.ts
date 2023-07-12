@@ -49,11 +49,18 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // Delete /api/environments[environmentId]/surveys/[surveyId]/responses/[responseId]
   // Deletes a single survey
   else if (req.method === "DELETE") {
-    const submissionId = req.query.submissionId?.toString();
-    const prismaRes = await prisma.response.delete({
-      where: { id: submissionId },
+    const responseId = req.query.submissionId?.toString();
+    const response = await prisma.response.findUnique({
+      where: { id: responseId },
+      select: { displayId: true },
     });
-    return res.json(prismaRes);
+    if (response?.displayId) {
+      const prismaRes = await prisma.display.delete({ where: { id: response.displayId } });
+      return res.json(prismaRes);
+    } else {
+      const prismaRes = await prisma.response.delete({ where: { id: responseId } });
+      return res.json(prismaRes);
+    }
   }
 
   // Unknown HTTP Method
