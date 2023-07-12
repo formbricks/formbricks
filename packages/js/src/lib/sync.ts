@@ -16,8 +16,8 @@ export const sync = async (): Promise<Result<TJsState, NetworkError>> => {
     },
     body: JSON.stringify({
       environmentId: config.get().environmentId,
-      personId: config.get().state.person.id,
-      sessionId: config.get().state.session.id,
+      personId: config.get().state?.person.id,
+      sessionId: config.get().state?.session.id,
     }),
   });
   if (!response.ok) {

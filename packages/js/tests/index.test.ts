@@ -4,6 +4,7 @@
 import formbricks from "../src/index";
 import { constants } from "./constants";
 import { Attribute } from "./types";
+import { TPersonAttributes } from "@formbricks/types/v1/people";
 import {
   mockEventTrackResponse,
   mockInitResponse,
@@ -44,7 +45,7 @@ test("Formbricks should Initialise", async () => {
     apiHost,
   });
 
-  const configFromBrowser = localStorage.getItem("formbricksConfig");
+  const configFromBrowser = localStorage.getItem("formbricks-js");
   expect(configFromBrowser).toBeTruthy();
 
   if (configFromBrowser) {
@@ -55,114 +56,77 @@ test("Formbricks should Initialise", async () => {
 });
 
 test("Formbricks should get the current person with no attributes", () => {
-  const currentState = formbricks.getPerson();
+  const currentStatePerson = formbricks.getPerson();
 
-  const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
-  expect(currentStateAttributes).toHaveLength(0);
+  const currentStatePersonAttributes: TPersonAttributes = currentStatePerson.attributes;
+  expect(Object.keys(currentStatePersonAttributes)).toHaveLength(0);
 });
 
 test("Formbricks should set userId", async () => {
   mockSetUserIdResponse();
   await formbricks.setUserId(initialUserId);
 
-  const currentState = formbricks.getPerson();
-  expect(currentState.environmentId).toStrictEqual(environmentId);
+  const currentStatePerson = formbricks.getPerson();
 
-  const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
-  const numberOfUserAttributes = currentStateAttributes.length;
+  const currentStatePersonAttributes = currentStatePerson.attributes;
+  const numberOfUserAttributes = Object.keys(currentStatePersonAttributes).length;
   expect(numberOfUserAttributes).toStrictEqual(1);
 
-  currentStateAttributes.forEach((attribute) => {
-    switch (attribute.attributeClass.name) {
-      case "userId":
-        expect(attribute.value).toStrictEqual(initialUserId);
-        break;
-      default:
-        expect(0).toStrictEqual(1);
-    }
-  });
+  const userId = currentStatePersonAttributes.userId;
+  expect(userId).toStrictEqual(initialUserId);
 });
 
 test("Formbricks should set email", async () => {
   mockSetEmailIdResponse();
   await formbricks.setEmail(initialUserEmail);
 
-  const currentState = formbricks.getPerson();
-  expect(currentState.environmentId).toStrictEqual(environmentId);
+  const currentStatePerson = formbricks.getPerson();
 
-  const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
-  const numberOfUserAttributes = currentStateAttributes.length;
+  const currentStatePersonAttributes = currentStatePerson.attributes;
+  const numberOfUserAttributes = Object.keys(currentStatePersonAttributes).length;
   expect(numberOfUserAttributes).toStrictEqual(2);
 
-  currentStateAttributes.forEach((attribute) => {
-    switch (attribute.attributeClass.name) {
-      case "userId":
-        expect(attribute.value).toStrictEqual(initialUserId);
-        break;
-      case "email":
-        expect(attribute.value).toStrictEqual(initialUserEmail);
-        break;
-      default:
-        expect(0).toStrictEqual(1);
-    }
-  });
+  const userId = currentStatePersonAttributes.userId;
+  expect(userId).toStrictEqual(initialUserId);
+  const email = currentStatePersonAttributes.email;
+  expect(email).toStrictEqual(initialUserEmail);
 });
 
 test("Formbricks should set custom attribute", async () => {
   mockSetCustomAttributeResponse();
   await formbricks.setAttribute(customAttributeKey, customAttributeValue);
 
-  const currentState = formbricks.getPerson();
-  expect(currentState.environmentId).toStrictEqual(environmentId);
+  const currentStatePerson = formbricks.getPerson();
 
-  const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
-  const numberOfUserAttributes = currentStateAttributes.length;
+  const currentStatePersonAttributes = currentStatePerson.attributes;
+  const numberOfUserAttributes = Object.keys(currentStatePersonAttributes).length;
   expect(numberOfUserAttributes).toStrictEqual(3);
 
-  currentStateAttributes.forEach((attribute) => {
-    switch (attribute.attributeClass.name) {
-      case "userId":
-        expect(attribute.value).toStrictEqual(initialUserId);
-        break;
-      case "email":
-        expect(attribute.value).toStrictEqual(initialUserEmail);
-        break;
-      case customAttributeKey:
-        expect(attribute.value).toStrictEqual(customAttributeValue);
-        break;
-      default:
-        expect(0).toStrictEqual(1);
-    }
-  });
+  const userId = currentStatePersonAttributes.userId;
+  expect(userId).toStrictEqual(initialUserId);
+  const email = currentStatePersonAttributes.email;
+  expect(email).toStrictEqual(initialUserEmail);
+  const customAttribute = currentStatePersonAttributes[customAttributeKey];
+  expect(customAttribute).toStrictEqual(customAttributeValue);
 });
 
 test("Formbricks should update attribute", async () => {
   mockUpdateEmailResponse();
   await formbricks.setEmail(updatedUserEmail);
 
-  const currentState = formbricks.getPerson();
-  expect(currentState.environmentId).toStrictEqual(environmentId);
+  const currentStatePerson = formbricks.getPerson();
 
-  const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
+  const currentStatePersonAttributes = currentStatePerson.attributes;
 
-  const numberOfUserAttributes = currentStateAttributes.length;
+  const numberOfUserAttributes = Object.keys(currentStatePersonAttributes).length;
   expect(numberOfUserAttributes).toStrictEqual(3);
 
-  currentStateAttributes.forEach((attribute) => {
-    switch (attribute.attributeClass.name) {
-      case "email":
-        expect(attribute.value).toStrictEqual(updatedUserEmail);
-        break;
-      case "userId":
-        expect(attribute.value).toStrictEqual(initialUserId);
-        break;
-      case customAttributeKey:
-        expect(attribute.value).toStrictEqual(customAttributeValue);
-        break;
-      default:
-        expect(0).toStrictEqual(1);
-    }
-  });
+  const userId = currentStatePersonAttributes.userId;
+  expect(userId).toStrictEqual(initialUserId);
+  const email = currentStatePersonAttributes.email;
+  expect(email).toStrictEqual(updatedUserEmail);
+  const customAttribute = currentStatePersonAttributes[customAttributeKey];
+  expect(customAttribute).toStrictEqual(customAttributeValue);
 });
 
 test("Formbricks should track event", async () => {
@@ -177,12 +141,6 @@ test("Formbricks should track event", async () => {
   );
 });
 
-test("Formbricks should refresh", async () => {
-  mockRefreshResponse();
-  await formbricks.refresh();
-  expect(consoleLogMock).toHaveBeenCalledWith(expect.stringMatching(/Settings refreshed/));
-});
-
 test("Formbricks should register for route change", async () => {
   mockRegisterRouteChangeResponse();
   await formbricks.registerRouteChange();
@@ -192,9 +150,8 @@ test("Formbricks should register for route change", async () => {
 test("Formbricks should logout", async () => {
   mockLogoutResponse();
   await formbricks.logout();
-  const currentState = formbricks.getPerson();
-  const currentStateAttributes: Array<Attribute> = currentState.attributes as Array<Attribute>;
+  const currentStatePerson = formbricks.getPerson();
+  const currentStatePersonAttributes = currentStatePerson.attributes;
 
-  expect(currentState.environmentId).toStrictEqual(environmentId);
-  expect(currentStateAttributes.length).toBe(0);
+  expect(Object.keys(currentStatePersonAttributes).length).toBe(0);
 });

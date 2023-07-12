@@ -76,7 +76,7 @@ export const initialize = async (
   logger.debug("Adding styles to DOM");
   addStylesToDom();
   if (
-    config.get().state.session &&
+    config.get().state &&
     config.get().environmentId === c.environmentId &&
     config.get().apiHost === c.apiHost
   ) {
