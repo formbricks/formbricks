@@ -47,3 +47,12 @@ export const ZJsPeopleAttributeInput = z.object({
 });
 
 export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
+
+export const ZJsActionInput = z.object({
+  environmentId: z.string().cuid2(),
+  sessionId: z.string().cuid2(),
+  name: z.string(),
+  properties: z.record(z.string()),
+});
+
+export type TJsActionInput = z.infer<typeof ZJsActionInput>;

@@ -26,11 +26,11 @@ export const sync = async (): Promise<Result<TJsState, NetworkError>> => {
     return err({
       code: "network_error",
       status: response.status,
-      message: "Error getting settings",
+      message: "Error syncing with backend",
       url,
       responseMessage: jsonRes.message,
     });
   }
 
-  return ok((await response.json()) as TJsState);
+  return ok((await response.json()).data as TJsState);
 };

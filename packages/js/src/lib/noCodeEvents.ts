@@ -2,7 +2,7 @@ import type { TActionClass } from "../../../types/v1/actionClasses";
 import type { MatchType } from "../../../types/js";
 import { Config } from "./config";
 import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
-import { trackEvent } from "./event";
+import { trackAction } from "./actions";
 import { Logger } from "./logger";
 
 const config = Config.getInstance();
@@ -37,7 +37,7 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
 
     if (match.value === false) continue;
 
-    const trackResult = await trackEvent(event.name);
+    const trackResult = await trackAction(event.name);
 
     if (trackResult.ok !== true) return err(trackResult.error);
   }
@@ -110,7 +110,7 @@ export const checkClickMatch = (event: MouseEvent) => {
   innerHtmlEvents.forEach((e) => {
     const innerHtml = e.noCodeConfig?.innerHtml;
     if (innerHtml && targetElement.innerHTML === innerHtml.value) {
-      trackEvent(e.name).then((res) => {
+      trackAction(e.name).then((res) => {
         match(
           res,
           (_value) => {},
@@ -125,7 +125,7 @@ export const checkClickMatch = (event: MouseEvent) => {
   cssSelectorEvents.forEach((e) => {
     const cssSelector = e.noCodeConfig?.cssSelector;
     if (cssSelector && targetElement.matches(cssSelector.value)) {
-      trackEvent(e.name).then((res) => {
+      trackAction(e.name).then((res) => {
         match(
           res,
           (_value) => {},

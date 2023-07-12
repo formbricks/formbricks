@@ -1,30 +1,31 @@
+import { TJsActionInput } from "@formbricks/types/v1/js";
 import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { renderWidget } from "./widget";
-import { TSurvey } from "../../../types/v1/surveys";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 const logger = Logger.getInstance();
 const config = Config.getInstance();
 
-export const trackEvent = async (
-  eventName: string,
-  properties?: any
+export const trackAction = async (
+  name: string,
+  properties: TJsActionInput["properties"] = {}
 ): Promise<Result<void, NetworkError>> => {
-  const res = await fetch(
-    `${config.get().apiHost}/api/v1/client/environments/${config.get().environmentId}/events`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+  const input: TJsActionInput = {
+    environmentId: config.get().environmentId,
+    sessionId: config.get().state?.session?.id,
+    name,
+    properties: properties || {},
+  };
 
-      body: JSON.stringify({
-        sessionId: config.get().state?.session?.id,
-        eventName,
-        properties,
-      }),
-    }
-  );
+  const res = await fetch(`${config.get().apiHost}/api/v1/js/actions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+
+    body: JSON.stringify(input),
+  });
 
   if (!res.ok) {
     const error = await res.json();
@@ -38,13 +39,13 @@ export const trackEvent = async (
     });
   }
 
-  logger.debug(`Formbricks: Event "${eventName}" tracked`);
+  logger.debug(`Formbricks: Event "${name}" tracked`);
 
   // get a list of surveys that are collecting insights
   const activeSurveys = config.get().state?.surveys;
 
   if (activeSurveys.length > 0) {
-    triggerSurvey(eventName, activeSurveys);
+    triggerSurvey(name, activeSurveys);
   } else {
     logger.debug("No active surveys to display");
   }
@@ -52,11 +53,11 @@ export const trackEvent = async (
   return okVoid();
 };
 
-export const triggerSurvey = (eventName: string, activeSurveys: TSurvey[]): void => {
+export const triggerSurvey = (actionName: string, activeSurveys: TSurvey[]): void => {
   for (const survey of activeSurveys) {
     for (const trigger of survey.triggers) {
-      if (trigger.name === eventName) {
-        logger.debug(`Formbricks: survey ${survey.id} triggered by event "${eventName}"`);
+      if (trigger.name === actionName) {
+        logger.debug(`Formbricks: survey ${survey.id} triggered by action "${actionName}"`);
         renderWidget(survey);
         return;
       }

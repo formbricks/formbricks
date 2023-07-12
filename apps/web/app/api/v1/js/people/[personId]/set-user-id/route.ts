@@ -9,6 +9,10 @@ import { extendSession } from "@formbricks/lib/services/session";
 import { TJsState, ZJsPeopleUserIdInput } from "@formbricks/types/v1/js";
 import { NextResponse } from "next/server";
 
+export async function OPTIONS(): Promise<NextResponse> {
+  return responses.successResponse({}, true);
+}
+
 export async function POST(req: Request, params): Promise<NextResponse> {
   const { personId } = params;
   const jsonInput = await req.json();
@@ -104,5 +108,5 @@ export async function POST(req: Request, params): Promise<NextResponse> {
     noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
     product,
   };
-  return responses.successResponse({ state }, true);
+  return responses.successResponse({ ...state }, true);
 }

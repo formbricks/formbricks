@@ -1,11 +1,11 @@
-import { trackEvent } from "./event";
+import { trackAction } from "./actions";
 import { err } from "./errors";
 
 export const addExitIntentListener = (): void => {
   if (typeof document !== "undefined") {
     const exitIntentListener = async function (e: MouseEvent) {
       if (e.clientY <= 0) {
-        const trackResult = await trackEvent("Exit Intent (Desktop)");
+        const trackResult = await trackAction("Exit Intent (Desktop)");
         if (trackResult.ok !== true) {
           return err(trackResult.error);
         }
@@ -29,7 +29,7 @@ export const addScrollDepthListener = (): void => {
         }
         if (!scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5) {
           scrollDepthTriggered = true;
-          const trackResult = await trackEvent("50% Scroll");
+          const trackResult = await trackAction("50% Scroll");
           if (trackResult.ok !== true) {
             return err(trackResult.error);
           }

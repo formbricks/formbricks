@@ -101,7 +101,11 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
   try {
     const personPrisma = await prisma.person.create({
       data: {
-        environmentId: environmentId,
+        environment: {
+          connect: {
+            id: environmentId,
+          },
+        },
       },
       select,
     });
@@ -111,7 +115,7 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
     return person;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     throw error;

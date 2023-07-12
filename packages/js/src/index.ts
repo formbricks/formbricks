@@ -2,7 +2,7 @@ import type { InitConfig } from "../../types/js";
 import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";
-import { trackEvent } from "./lib/event";
+import { trackAction } from "./lib/actions";
 import { initialize } from "./lib/init";
 import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeEvents";
@@ -41,8 +41,8 @@ const logout = async (): Promise<void> => {
   await queue.wait();
 };
 
-const track = async (eventName: string, properties: any = {}): Promise<void> => {
-  queue.add(true, trackEvent, eventName, properties);
+const track = async (name: string, properties: any = {}): Promise<void> => {
+  queue.add(true, trackAction, name, properties);
   await queue.wait();
 };
 

@@ -56,7 +56,7 @@ export const updatePersonUserId = async (
     });
   }
 
-  return ok(jsonRes as TJsState);
+  return ok(jsonRes.data as TJsState);
 };
 
 export const updatePersonAttribute = async (
@@ -100,7 +100,7 @@ export const updatePersonAttribute = async (
     });
   }
 
-  return ok(resJson as TJsState);
+  return ok(resJson.data as TJsState);
 };
 
 export const hasAttributeValue = (key: string, value: string): boolean => {

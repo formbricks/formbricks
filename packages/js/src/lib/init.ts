@@ -1,5 +1,5 @@
 import type { InitConfig } from "../../../types/js";
-import { addExitIntentListener, addScrollDepthListener } from "./automaticEvents";
+import { addExitIntentListener, addScrollDepthListener } from "./automaticActions";
 import { Config } from "./config";
 import {
   ErrorHandler,
@@ -11,7 +11,7 @@ import {
   err,
   okVoid,
 } from "./errors";
-import { trackEvent } from "./event";
+import { trackAction } from "./actions";
 import { Logger } from "./logger";
 import { addClickEventListener, addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
 import { resetPerson } from "./person";
@@ -97,9 +97,9 @@ export const initialize = async (
 
       config.update({ state });
 
-      const trackEventResult = await trackEvent("New Session");
+      const trackActionResult = await trackAction("New Session");
 
-      if (trackEventResult.ok !== true) return err(trackEventResult.error);
+      if (trackActionResult.ok !== true) return err(trackActionResult.error);
     } else {
       logger.debug("Session valid. Continueing.");
       // continue for now - next sync will check complete state
@@ -118,11 +118,13 @@ export const initialize = async (
 
     const state = syncResult.value;
 
+    console.log("state", state);
+
     config.update({ state });
 
-    const trackEventResult = await trackEvent("New Session");
+    const trackActionResult = await trackAction("New Session");
 
-    if (trackEventResult.ok !== true) return err(trackEventResult.error);
+    if (trackActionResult.ok !== true) return err(trackActionResult.error);
   }
 
   logger.debug("Add session event listeners");
