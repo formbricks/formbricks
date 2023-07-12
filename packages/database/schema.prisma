@@ -95,6 +95,8 @@ model Response {
   survey           Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId         String
   person           Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
+  displayId        String?           
+  display          Display?          @relation(fields: [displayId], references: [id], onDelete: Cascade)
   personId         String?
   notes            ResponseNote[]
   /// @zod.custom(imports.ZResponseData)
@@ -163,6 +165,7 @@ model Display {
   person    Person?       @relation(fields: [personId], references: [id], onDelete: Cascade)
   personId  String?
   status    DisplayStatus @default(seen)
+  Response  Response[]
 }
 
 model SurveyTrigger {
