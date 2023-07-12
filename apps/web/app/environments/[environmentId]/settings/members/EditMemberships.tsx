@@ -156,10 +156,16 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
   }
 
   const handleDeleteMember = async () => {
+    let result = false;
     if (activeMember.accepted) {
-      await removeMember(team.teamId, activeMember.userId);
+      result = await removeMember(team.teamId, activeMember.userId);
     } else {
-      await deleteInvite(team.teamId, activeMember.inviteId);
+      result = await deleteInvite(team.teamId, activeMember.inviteId);
+    }
+    if (result) {
+      toast.success("Member removed successfully");
+    } else {
+      toast.error("Something went wrong");
     }
     setDeleteMemberModalOpen(false);
     mutateTeam();
