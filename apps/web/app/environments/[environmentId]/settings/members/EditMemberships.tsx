@@ -177,7 +177,12 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
 
   const handleAddMember = async (data) => {
     // TODO: handle http 409 user is already part of the team
-    await addMember(team.teamId, data);
+    const add = await addMember(team.teamId, data);
+    if (add) {
+      toast.success("Member invited successfully");
+    } else {
+      toast.error("Something went wrong");
+    }
     mutateTeam();
   };
 
