@@ -3,12 +3,14 @@ import { ZPerson } from "./people";
 import { ZSession } from "./sessions";
 import { ZSurvey } from "./surveys";
 import { ZActionClass } from "./actionClasses";
+import { ZProduct } from "./product";
 
 export const ZJsState = z.object({
   person: ZPerson,
   session: ZSession,
   surveys: z.array(ZSurvey),
   noCodeActionClasses: z.array(ZActionClass),
+  product: ZProduct,
 });
 
 export type TJsState = z.infer<typeof ZJsState>;

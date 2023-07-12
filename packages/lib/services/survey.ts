@@ -28,6 +28,9 @@ export const select = {
       eventClass: {
         select: {
           id: true,
+          createdAt: true,
+          updatedAt: true,
+          environmentId: true,
           name: true,
           description: true,
           type: true,

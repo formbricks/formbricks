@@ -5,7 +5,8 @@ import { createPerson } from "@formbricks/lib/services/person";
 import { createSession } from "@formbricks/lib/services/session";
 import { TJsState, ZJsSyncInput } from "@formbricks/types/v1/js";
 import { NextResponse } from "next/server";
-import { getActionClasses } from "@formbricks/lib/services/action";
+import { getActionClasses } from "@formbricks/lib/services/actionClass";
+import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 
 export async function POST(req: Request): Promise<NextResponse> {
   const jsonInput = await req.json();
@@ -40,6 +41,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       session,
       surveys,
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
+      product,
     };
     return responses.successResponse({ state }, true);
   }

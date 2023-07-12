@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZEventClass } from "./eventClasses";
+import { ZActionClass } from "./actionClasses";
 import { QuestionType } from "../questions";
 
 export const ZSurveyThankYouCard = z.object({
@@ -207,7 +207,7 @@ export const ZSurvey = z.object({
   attributeFilters: z.array(ZSurveyAttributeFilter),
   displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
   autoClose: z.union([z.number(), z.null()]),
-  triggers: z.array(ZEventClass),
+  triggers: z.array(ZActionClass),
   redirectUrl: z.string().url().optional(),
   recontactDays: z.union([z.number(), z.null()]),
   questions: ZSurveyQuestions,
