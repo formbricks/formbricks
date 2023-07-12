@@ -1,4 +1,5 @@
 import { Html, Head, Main, NextScript } from "next/document";
+import TagManagerScript from "../components/TagManagerScript";
 
 export default function Document() {
   return (
@@ -28,8 +29,17 @@ export default function Document() {
           color="#5bbad5"
         />
         <meta name="theme-color" content="#0D0010" />
+        <TagManagerScript />
       </Head>
       <body>
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-5N2W64C"
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          ></iframe>
+        </noscript>
         <Main />
         <NextScript />
       </body>
