@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZEnvironment } from "./environment";
 
 export const ZProduct = z.object({
   id: z.string().cuid2(),
@@ -14,4 +15,8 @@ export const ZProduct = z.object({
   darkOverlay: z.boolean(),
 });
 
+export const ZProductWithEnvironments = ZProduct.extend({
+  environments: z.array(ZEnvironment),
+});
 export type TProduct = z.infer<typeof ZProduct>;
+export type TProductWithEnvironments = z.infer<typeof ZProductWithEnvironments>;
