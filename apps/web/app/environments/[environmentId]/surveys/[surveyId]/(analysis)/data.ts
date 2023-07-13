@@ -10,9 +10,10 @@ export const getAnalysisData = async (surveyId: string, environmentId: string) =
     getSurveyResponses(surveyId),
   ]);
   if (!survey) throw new Error(`Survey not found: ${surveyId}`);
+  if (!team) throw new Error(`Team not found for environment: ${environmentId}`);
   if (survey.environmentId !== environmentId) throw new Error(`Survey not found: ${surveyId}`);
   const limitReached =
-    IS_FORMBRICKS_CLOUD && team?.plan === "free" && allResponses.length >= RESPONSES_LIMIT_FREE;
+    IS_FORMBRICKS_CLOUD && team.plan === "free" && allResponses.length >= RESPONSES_LIMIT_FREE;
   const responses = limitReached ? allResponses.slice(0, RESPONSES_LIMIT_FREE) : allResponses;
   const responsesCount = allResponses.length;
 

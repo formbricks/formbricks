@@ -1,7 +1,8 @@
-export const revalidate = 0;
+export const revalidate = REVALIDATION_INTERVAL;
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
+import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getPeople } from "@formbricks/lib/services/person";
 import { TPerson } from "@formbricks/types/v1/people";
 import { PersonAvatar } from "@formbricks/ui";
