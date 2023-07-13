@@ -74,7 +74,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
           <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
             <div className="p-8">
               <h2 className="inline-flex text-3xl font-bold text-slate-700">Free</h2>
-              {session.user?.plan === "free" && <Badge text="Current Plan" size="normal" type="success" />}
+              {team.plan === "free" && <Badge text="Current Plan" size="normal" type="success" />}
               <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
                 Always free. Giving back to the community.
               </p>
@@ -91,7 +91,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
               <p className="mt-6 text-3xl">
                 <span className="text-slate-800font-light">Always free</span>
               </p>
-              {session.user?.plan === "free" ? (
+              {team.plan === "free" ? (
                 <Button variant="minimal" disabled className="mt-6 w-full justify-center py-4 shadow-sm">
                   Your current plan
                 </Button>
@@ -110,7 +110,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
           <div className="rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
             <div className="p-8">
               <h2 className="inline-flex text-3xl font-bold text-slate-700">Pro</h2>
-              {session.user?.plan === "pro" && <Badge text="Current Plan" size="normal" type="success" />}
+              {team.plan === "pro" && <Badge text="Current Plan" size="normal" type="success" />}
               <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
                 All features included. Unlimited usage.
               </p>
@@ -129,7 +129,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
 
                 <span className="text-base font-medium text-slate-400">/ month</span>
               </p>
-              {session.user?.plan === "pro" ? (
+              {team.plan === "pro" ? (
                 <Button
                   variant="secondary"
                   className="mt-6 w-full justify-center py-4 shadow-sm"

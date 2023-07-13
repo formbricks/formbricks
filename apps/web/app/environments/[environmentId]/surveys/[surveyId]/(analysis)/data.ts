@@ -1,15 +1,18 @@
 import { IS_FORMBRICKS_CLOUD, RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
 import { getSurveyResponses } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";
-import { Session } from "next-auth";
+import { getTeamByEnvironmentId } from "@formbricks/lib/services/team";
 
-export const getAnalysisData = async (session: Session, surveyId: string, environmentId: string) => {
-  const survey = await getSurvey(surveyId);
+export const getAnalysisData = async (surveyId: string, environmentId: string) => {
+  const [survey, team, allResponses] = await Promise.all([
+    getSurvey(surveyId),
+    getTeamByEnvironmentId(environmentId),
+    getSurveyResponses(surveyId),
+  ]);
   if (!survey) throw new Error(`Survey not found: ${surveyId}`);
   if (survey.environmentId !== environmentId) throw new Error(`Survey not found: ${surveyId}`);
-  const allResponses = await getSurveyResponses(surveyId);
   const limitReached =
-    IS_FORMBRICKS_CLOUD && session?.user.plan === "free" && allResponses.length >= RESPONSES_LIMIT_FREE;
+    IS_FORMBRICKS_CLOUD && team?.plan === "free" && allResponses.length >= RESPONSES_LIMIT_FREE;
   const responses = limitReached ? allResponses.slice(0, RESPONSES_LIMIT_FREE) : allResponses;
   const responsesCount = allResponses.length;
 
