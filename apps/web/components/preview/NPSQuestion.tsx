@@ -6,6 +6,7 @@ import Subheader from "./Subheader";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { Button } from "@formbricks/ui";
 import { Response } from "@formbricks/types/js";
+import { BackButton } from "@/components/preview/BackButton";
 
 interface NPSQuestionProps {
   question: NPSQuestion;
@@ -92,12 +93,8 @@ export default function NPSQuestion({
       </div>
       <div className="mt-4 flex w-full justify-between">
         {goToPreviousQuestion && (
-          <Button
-            type="button"
-            variant="secondary"
-            className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
-            onClick={(e) => {
-              e.preventDefault();
+          <BackButton
+            onClick={() => {
               goToPreviousQuestion(
                 savedAnswer !== selectedChoice
                   ? {
@@ -105,9 +102,8 @@ export default function NPSQuestion({
                     }
                   : undefined
               );
-            }}>
-            Back
-          </Button>
+            }}
+          />
         )}
         <div></div>
         {(!question.required || savedAnswer) && <SubmitButton {...{ question, lastQuestion, brandColor }} />}

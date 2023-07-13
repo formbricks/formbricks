@@ -20,6 +20,7 @@ import {
 import SubmitButton from "@/components/preview/SubmitButton";
 import { Button } from "@formbricks/ui";
 import { Response } from "@formbricks/types/js";
+import { BackButton } from "@/components/preview/BackButton";
 
 interface RatingQuestionProps {
   question: RatingQuestion;
@@ -146,16 +147,11 @@ export default function RatingQuestion({
 
       <div className="mt-4 flex w-full justify-between">
         {goToPreviousQuestion && (
-          <Button
-            type="button"
-            variant="secondary"
-            className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
-            onClick={(e) => {
-              e.preventDefault();
+          <BackButton
+            onClick={() => {
               goToPreviousQuestion({ [question.id]: selectedChoice });
-            }}>
-            Back
-          </Button>
+            }}
+          />
         )}
         <div></div>
         {(!question.required || savedAnswer) && <SubmitButton {...{ question, lastQuestion, brandColor }} />}

@@ -1,11 +1,11 @@
+import { cn } from "@/../../packages/lib/cn";
+import { BackButton } from "@/components/preview/BackButton";
+import { isLight } from "@/lib/utils";
+import { Response } from "@formbricks/types/js";
 import type { ConsentQuestion } from "@formbricks/types/questions";
+import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
-import { cn } from "@/../../packages/lib/cn";
-import { isLight } from "@/lib/utils";
-import { useEffect, useState } from "react";
-import { Button } from "@formbricks/ui";
-import { Response } from "@formbricks/types/js";
 
 interface ConsentQuestionProps {
   question: ConsentQuestion;
@@ -79,18 +79,13 @@ export default function ConsentQuestion({
 
         <div className="mt-4 flex w-full justify-between">
           {goToPreviousQuestion && (
-            <Button
-              type="button"
-              variant="secondary"
-              className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
-              onClick={(e) => {
-                e.preventDefault();
+            <BackButton
+              onClick={() =>
                 goToPreviousQuestion({
                   [question.id]: answer,
-                });
-              }}>
-              Back
-            </Button>
+                })
+              }
+            />
           )}
           <div></div>
           <button

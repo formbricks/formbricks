@@ -8,6 +8,7 @@ import { Button, Input } from "@formbricks/ui";
 import { useEffect, useRef, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { BackButton } from "@/components/preview/BackButton";
 
 interface MultipleChoiceSingleProps {
   question: MultipleChoiceSingleQuestion;
@@ -145,12 +146,8 @@ export default function MultipleChoiceSingleQuestion({
       </div>
       <div className="mt-4 flex w-full justify-between">
         {goToPreviousQuestion && (
-          <Button
-            type="button"
-            variant="secondary"
-            className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
-            onClick={(e) => {
-              e.preventDefault();
+          <BackButton
+            onClick={() => {
               goToPreviousQuestion(
                 selectedChoice === "other"
                   ? {
@@ -160,9 +157,8 @@ export default function MultipleChoiceSingleQuestion({
                       [question.id]: question.choices.find((choice) => choice.id === selectedChoice)?.label,
                     }
               );
-            }}>
-            Back
-          </Button>
+            }}
+          />
         )}
         <div></div>
         <SubmitButton {...{ question, lastQuestion, brandColor }} />

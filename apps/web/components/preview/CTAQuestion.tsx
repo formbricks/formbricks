@@ -5,6 +5,7 @@ import { cn } from "@/../../packages/lib/cn";
 import { isLight } from "@/lib/utils";
 import { Button } from "@formbricks/ui";
 import { Response } from "@formbricks/types/js";
+import { BackButton } from "@/components/preview/BackButton";
 
 interface CTAQuestionProps {
   question: CTAQuestion;
@@ -31,18 +32,7 @@ export default function CTAQuestion({
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
 
       <div className="mt-4 flex w-full justify-end">
-        {goToPreviousQuestion && (
-          <Button
-            type="button"
-            variant="secondary"
-            className="mr-auto px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
-            onClick={(e) => {
-              e.preventDefault();
-              goToPreviousQuestion();
-            }}>
-            Back
-          </Button>
-        )}
+        {goToPreviousQuestion && <BackButton onClick={() => goToPreviousQuestion()} />}
         <div></div>
         {(!question.required || savedAnswer) && (
           <button

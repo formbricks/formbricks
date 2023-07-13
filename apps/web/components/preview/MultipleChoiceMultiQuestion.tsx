@@ -8,6 +8,7 @@ import Headline from "./Headline";
 import Subheader from "./Subheader";
 import _ from "lodash";
 import { Response } from "@formbricks/types/js";
+import { BackButton } from "@/components/preview/BackButton";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -182,12 +183,8 @@ export default function MultipleChoiceMultiQuestion({
       />
       <div className="mt-4 flex w-full justify-between">
         {goToPreviousQuestion && (
-          <Button
-            type="button"
-            variant="secondary"
-            className="px-3 py-3 text-base font-medium leading-4 focus:ring-offset-2"
-            onClick={(e) => {
-              e.preventDefault();
+          <BackButton
+            onClick={() => {
               if (otherSpecified.length > 0 && showOther) {
                 selectedChoices.push(otherSpecified);
               }
@@ -195,9 +192,8 @@ export default function MultipleChoiceMultiQuestion({
                 [question.id]: selectedChoices,
               });
               resetForm();
-            }}>
-            Back
-          </Button>
+            }}
+          />
         )}
         <div></div>
         <SubmitButton {...{ question, lastQuestion, brandColor }} />
