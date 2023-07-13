@@ -29,7 +29,6 @@ export { ErrorComponent } from "./components/ErrorComponent";
 export { Input } from "./components/Input";
 export { PasswordInput } from "./components/PasswordInput";
 export { Label } from "./components/Label";
-export { PageTitle } from "./components/PageTitle";
 export { Popover, PopoverTrigger, PopoverContent } from "./components/Popover";
 export { ProgressBar, HalfCircle } from "./components/ProgressBar";
 export { RadioGroup, RadioGroupItem } from "./components/RadioGroup";
@@ -58,6 +57,8 @@ export {
   CommandSeparator,
   CommandShortcut,
 } from "./components/Command";
+export { Calendar } from "./components/Calendar";
+export { DatePicker } from "./components/DatePicker";
 
 /* Icons */
 export { AngryBirdRageIcon } from "./components/icons/AngryBirdRageIcon";

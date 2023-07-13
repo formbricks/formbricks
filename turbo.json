@@ -1,10 +1,16 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "pipeline": {
+    "@formbricks/web#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/database#go"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
       "env": [
+        "CRON_SECRET",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",
@@ -55,9 +61,14 @@
         "RAILWAY_STATIC_URL",
         "RENDER_EXTERNAL_URL",
         "SENTRY_DSN",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
         "TELEMETRY_DISABLED",
         "VERCEL_URL"
       ]
+    },
+    "go": {
+      "cache": false
     },
     "prebuild": {
       "outputs": []
@@ -77,6 +88,9 @@
     },
     "db:seed": {
       "outputs": []
+    },
+    "db:start": {
+      "cache": false
     },
     "dev": {
       "cache": false,

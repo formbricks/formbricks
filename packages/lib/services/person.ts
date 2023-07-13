@@ -1,7 +1,24 @@
 import { prisma } from "@formbricks/database";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { TPerson } from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { cache } from "react";
+
+export const select = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  attributes: {
+    select: {
+      value: true,
+      attributeClass: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  },
+};
 
 type TransformPersonInput = {
   id: string;
@@ -11,18 +28,11 @@ type TransformPersonInput = {
       name: string;
     };
   }[];
+  createdAt: Date;
+  updatedAt: Date;
 };
 
-export type TransformPersonOutput = {
-  id: string;
-  attributes: Record<string, string | number>;
-};
-
-export const transformPrismaPerson = (person: TransformPersonInput | null): TransformPersonOutput | null => {
-  if (person === null) {
-    return null;
-  }
-
+export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
   const attributes = person.attributes.reduce((acc, attr) => {
     acc[attr.attributeClass.name] = attr.value;
     return acc;
@@ -31,6 +41,8 @@ export const transformPrismaPerson = (person: TransformPersonInput | null): Tran
   return {
     id: person.id,
     attributes: attributes,
+    createdAt: person.createdAt,
+    updatedAt: person.updatedAt,
   };
 };
 
@@ -40,26 +52,83 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
       where: {
         id: personId,
       },
-      include: {
-        attributes: {
-          include: {
-            attributeClass: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
+      select,
     });
 
     if (!personPrisma) {
-      throw new ResourceNotFoundError("Person", personId);
+      return null;
     }
 
     const person = transformPrismaPerson(personPrisma);
 
     return person;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
+export const getPeople = cache(async (environmentId: string): Promise<TPerson[]> => {
+  try {
+    const personsPrisma = await prisma.person.findMany({
+      where: {
+        environmentId: environmentId,
+      },
+      select,
+    });
+    if (!personsPrisma) {
+      throw new ResourceNotFoundError("Persons", "All Persons");
+    }
+
+    const transformedPersons: TPerson[] = personsPrisma
+      .map(transformPrismaPerson)
+      .filter((person: TPerson | null): person is TPerson => person !== null);
+
+    return transformedPersons;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+});
+
+export const createPerson = async (environmentId: string): Promise<TPerson> => {
+  try {
+    const personPrisma = await prisma.person.create({
+      data: {
+        environment: {
+          connect: {
+            id: environmentId,
+          },
+        },
+      },
+      select,
+    });
+
+    const person = transformPrismaPerson(personPrisma);
+
+    return person;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const deletePerson = async (personId: string): Promise<void> => {
+  try {
+    await prisma.person.delete({
+      where: {
+        id: personId,
+      },
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

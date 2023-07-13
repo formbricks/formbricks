@@ -3,9 +3,10 @@ import { getSurveyResponses } from "@formbricks/lib/services/response";
 import { getSurvey } from "@formbricks/lib/services/survey";
 import { Session } from "next-auth";
 
-export const getAnalysisData = async (session: Session, surveyId: string) => {
+export const getAnalysisData = async (session: Session, surveyId: string, environmentId: string) => {
   const survey = await getSurvey(surveyId);
   if (!survey) throw new Error(`Survey not found: ${surveyId}`);
+  if (survey.environmentId !== environmentId) throw new Error(`Survey not found: ${surveyId}`);
   const allResponses = await getSurveyResponses(surveyId);
   const limitReached =
     IS_FORMBRICKS_CLOUD && session?.user.plan === "free" && allResponses.length >= RESPONSES_LIMIT_FREE;

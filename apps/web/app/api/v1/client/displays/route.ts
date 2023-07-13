@@ -1,11 +1,11 @@
-/*
-THIS FILE IS WORK IN PROGRESS
-PLEASE DO NOT USE IT YET
-*/
-
 import { responses } from "@/lib/api/response";
-import { prisma } from "@formbricks/database";
+import { transformErrorToDetails } from "@/lib/api/validator";
+import { InvalidInputError } from "@formbricks/errors";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { createDisplay } from "@formbricks/lib/services/displays";
+import { getSurvey } from "@formbricks/lib/services/survey";
+import { getTeamDetails } from "@formbricks/lib/services/teamDetails";
+import { TDisplay, ZDisplayInput } from "@formbricks/types/v1/displays";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -13,76 +13,50 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const { surveyId, personId, environmentId } = await request.json();
+  const jsonInput: unknown = await request.json();
+  const inputValidation = ZDisplayInput.safeParse(jsonInput);
 
-  if (!surveyId) {
-    return responses.missingFieldResponse("surveyId", true);
+  if (!inputValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(inputValidation.error),
+      true
+    );
   }
 
-  if (!environmentId) {
-    return responses.missingFieldResponse("environmentId", true);
+  const displayInput = inputValidation.data;
+
+  // find environmentId from surveyId
+  let survey;
+
+  try {
+    survey = await getSurvey(displayInput.surveyId);
+  } catch (error) {
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    } else {
+      return responses.internalServerErrorResponse(error.message);
+    }
   }
 
-  // get teamId from environment
-  const environment = await prisma.environment.findUnique({
-    where: {
-      id: environmentId,
-    },
-    select: {
-      product: {
-        select: {
-          team: {
-            select: {
-              id: true,
-              memberships: {
-                select: {
-                  userId: true,
-                  role: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
+  // find teamId & teamOwnerId from environmentId
+  const teamDetails = await getTeamDetails(survey.environmentId);
 
-  if (!environment) {
-    return responses.notFoundResponse("Environment", environmentId, true);
+  // create display
+  let display: TDisplay;
+  try {
+    display = await createDisplay(displayInput);
+  } catch (error) {
+    if (error instanceof InvalidInputError) {
+      return responses.badRequestResponse(error.message);
+    } else {
+      return responses.internalServerErrorResponse(error.message);
+    }
   }
 
-  const teamId = environment.product.team.id;
-  // find team owner
-  const teamOwnerId = environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
-
-  const createBody: any = {
-    select: {
-      id: true,
-    },
-    data: {
-      status: "seen",
-      survey: {
-        connect: {
-          id: surveyId,
-        },
-      },
-    },
-  };
-
-  if (personId) {
-    createBody.data.person = {
-      connect: {
-        id: personId,
-      },
-    };
-  }
-
-  // create new display
-  const display = await prisma.display.create(createBody);
-
-  if (teamOwnerId) {
-    await capturePosthogEvent(teamOwnerId, "display created", teamId, {
-      surveyId,
+  if (teamDetails?.teamOwnerId) {
+    await capturePosthogEvent(teamDetails.teamOwnerId, "display created", teamDetails.teamId, {
+      surveyId: displayInput.surveyId,
     });
   } else {
     console.warn("Posthog capture not possible. No team owner found");

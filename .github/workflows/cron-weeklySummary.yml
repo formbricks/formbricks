@@ -1,0 +1,23 @@
+name: Cron - weeklySummary
+
+on:
+  # "Scheduled workflows run on the latest commit on the default or base branch."
+  # — https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#schedule
+  schedule:
+    # Runs “At 08:00 on Monday.” (see https://crontab.guru)
+    - cron: "0 8 * * 1"
+jobs:
+  cron-weeklySummary:
+    env:
+      APP_URL: ${{ secrets.APP_URL }}
+      CRON_API_KEY: ${{ secrets.CRON_SECRET }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: cURL request
+        if: ${{ env.APP_URL && env.CRON_SECRET }}
+        run: |
+          curl ${{ secrets.APP_URL }}/api/cron/weekly_summary \
+            -X POST \
+            -H 'content-type: application/json' \
+            -H 'x-api-key: ${{ secrets.CRON_SECRET }}' \
+            --fail

@@ -2,7 +2,7 @@ import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
@@ -20,6 +20,13 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const otherSpecify = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (selectedChoice === "other") {
+      otherSpecify.current?.focus();
+    }
+  }, [selectedChoice]);
   /*   const [isIphone, setIsIphone] = useState(false);
 
 
@@ -31,7 +38,7 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const value = e.currentTarget[question.id].value;
+        const value = otherSpecify.current?.value || e.currentTarget[question.id].value;
         const data = {
           [question.id]: value,
         };
@@ -72,6 +79,7 @@ export default function MultipleChoiceSingleQuestion({
                   {choice.id === "other" && selectedChoice === "other" && (
                     <Input
                       id={`${choice.id}-label`}
+                      ref={otherSpecify}
                       name={question.id}
                       placeholder="Please specify"
                       className="mt-3 bg-white focus:border-slate-300"

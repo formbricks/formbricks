@@ -70,7 +70,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
     });
-    if (membership?.role !== "owner" || membership?.role !== "owner") {
+    if (membership?.role !== "owner" && membership?.role !== "admin") {
       return res.status(403).json({ message: "You are not allowed to delete members from this team" });
     }
 
@@ -116,7 +116,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // GET /api/v1/teams/[teamId]/invite/[inviteId]
   // Retrieve an invite token
   else if (req.method === "GET") {
-
     const invite = await prisma.invite.findUnique({
       where: {
         id: inviteId,

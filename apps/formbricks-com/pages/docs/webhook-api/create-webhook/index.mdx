@@ -13,7 +13,7 @@ export const meta = {
   description="Add a new webhook."
   headers={[
     {
-      label: "X-Api-Key",
+      label: "x-Api-Key",
       type: "string",
       description: "Your Formbricks API key.",
       required: true,
@@ -27,10 +27,16 @@ export const meta = {
       required: true,
     },
     {
-      label: "trigger",
-      type: "string",
-      description: "The event that will trigger the webhook.",
+      label: "triggers",
+      type: "string[]",
+      description: "List of events that will trigger the webhook",
       required: true,
+    },
+    {
+      label: "surveyIds",
+      type: "string[]",
+      description:
+        "List of survey IDs that will trigger the webhook. If not provided, the webhook will be triggered for all surveys.",
     },
   ]}
   example={`{
@@ -51,7 +57,8 @@ export const meta = {
     "environmentId": "clisypjy4000319t4imm289uo",
     "triggers": [
         "responseFinished"
-    ]
+    ],
+    "surveyIds": ["clisypjy4000319t4imm289uo"]
   }
 }`,
     },
@@ -75,16 +82,17 @@ export const meta = {
   "code": "not_authenticated",
   "message": "Not authenticated",
   "details": {
-    "X-Api-Key": "Header not provided or API Key invalid"
+    "x-Api-Key": "Header not provided or API Key invalid"
   }
 }`,
     },
   ]}
 />
 
-| field name | required | default | description                                                                                            |
-| ---------- | -------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| url        | yes      | -       | The endpoint that the webhook will send data to                                                        |
-| trigger    | yes      | -       | The event that will trigger the webhook ("responseCreated" or "responseUpdated" or "responseFinished") |
+| field name | required | default | description                                                                                                       |
+| ---------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------- |
+| url        | yes      | -       | The endpoint that the webhook will send data to                                                                   |
+| trigger    | yes      | -       | The event that will trigger the webhook ("responseCreated" or "responseUpdated" or "responseFinished")            |
+| surveyIds  | no       | -       | List of survey IDs that will trigger the webhook. If not provided, the webhook will be triggered for all surveys. |
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

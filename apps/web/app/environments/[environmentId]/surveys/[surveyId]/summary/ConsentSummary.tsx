@@ -19,8 +19,10 @@ interface ChoiceResult {
 export default function ConsentSummary({ questionSummary }: ConsentSummaryProps) {
   const ctr: ChoiceResult = useMemo(() => {
     const total = questionSummary.responses.length;
-    const clickedAbs = questionSummary.responses.filter((response) => response.value !== "skipped").length;
-
+    const clickedAbs = questionSummary.responses.filter((response) => response.value !== "dismissed").length;
+    if (total === 0) {
+      return { count: 0, acceptedCount: 0, acceptedPercentage: 0, dismissedCount: 0, dismissedPercentage: 0 };
+    }
     return {
       count: total,
       acceptedCount: clickedAbs,
@@ -64,7 +66,7 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
         <div>
           <div className="text flex justify-between px-2 pb-2">
             <div className="mr-8 flex space-x-1">
-              <p className="font-semibold text-slate-700">Skipped</p>
+              <p className="font-semibold text-slate-700">Dismissed</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
                   {Math.round(ctr.dismissedPercentage * 100)}%
