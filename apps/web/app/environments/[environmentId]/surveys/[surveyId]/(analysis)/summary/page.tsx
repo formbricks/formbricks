@@ -1,10 +1,11 @@
-export const revalidate = 0;
+export const revalidate = REVALIDATION_INTERVAL;
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import { getServerSession } from "next-auth";
 import ResponsesLimitReachedBanner from "../ResponsesLimitReachedBanner";
 import SummaryPage from "./SummaryPage";
+import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);

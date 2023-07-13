@@ -38,6 +38,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         id: true,
         name: true,
         stripeCustomerId: true,
+        plan: true,
       },
     });
 

@@ -73,9 +73,9 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
         <div className="">
           <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
             <div className="p-8">
-              <h2 className="inline-flex text-3xl font-bold text-slate-700">Free</h2>
+              <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">Free</h2>
               {team.plan === "free" && <Badge text="Current Plan" size="normal" type="success" />}
-              <p className="  mt-4 whitespace-pre-wrap text-sm text-slate-600">
+              <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
                 Always free. Giving back to the community.
               </p>
               <ul className="mt-4 space-y-4">
@@ -109,7 +109,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
         <div className="">
           <div className="rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
             <div className="p-8">
-              <h2 className="inline-flex text-3xl font-bold text-slate-700">Pro</h2>
+              <h2 className="mr-2 inline-flex text-3xl font-bold text-slate-700">Pro</h2>
               {team.plan === "pro" && <Badge text="Current Plan" size="normal" type="success" />}
               <p className="mt-4 whitespace-pre-wrap text-sm text-slate-600">
                 All features included. Unlimited usage.
