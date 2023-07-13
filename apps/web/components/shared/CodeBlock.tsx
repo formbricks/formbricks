@@ -1,4 +1,5 @@
-// components/ui/CodeBlock.tsx
+"use client";
+
 import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";

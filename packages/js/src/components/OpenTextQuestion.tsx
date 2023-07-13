@@ -1,12 +1,13 @@
-import type { OpenTextQuestion } from "../../../types/questions";
 import { h } from "preact";
+import { TResponseData } from "../../../types/v1/responses";
+import type { TSurveyOpenTextQuestion } from "../../../types/v1/surveys";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 
 interface OpenTextQuestionProps {
-  question: OpenTextQuestion;
-  onSubmit: (data: { [x: string]: any }) => void;
+  question: TSurveyOpenTextQuestion;
+  onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
 }

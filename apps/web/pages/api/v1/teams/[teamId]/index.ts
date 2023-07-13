@@ -37,7 +37,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
     });
-    if (membership?.role !== "owner") {
+    if (membership?.role !== "owner" && membership?.role !== "admin") {
       return res.status(403).json({ message: "You are not allowed to update this team" });
     }
 

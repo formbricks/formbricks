@@ -9,10 +9,9 @@ import { Button } from "@formbricks/ui";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MetaInformation from "../shared/MetaInformation";
 import DocsFeedback from "./DocsFeedback";
-import { useRef } from "react";
 
 function GitHubIcon(props: any) {
   return (
@@ -23,7 +22,6 @@ function GitHubIcon(props: any) {
 }
 
 function Header({ navigation }: any) {
-  const router = useRouter();
   let [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -63,13 +61,15 @@ function Header({ navigation }: any) {
           variant="secondary"
           EndIcon={GitHubIcon}
           endIconClassName="fill-slate-800 dark:fill-slate-200 ml-2"
-          onClick={() => router.push("https://github.com/formbricks/formbricks")}>
-          View on Github
+          href="https://github.com/formbricks/formbricks"
+          target="_blank">
+          Star us on Github
         </Button>
         <Button
           variant="highlight"
           className="ml-2"
-          onClick={() => router.push("https://app.formbricks.com/auth/signup")}>
+          href="https://app.formbricks.com/auth/signup"
+          target="_blank">
           Get started
         </Button>
       </div>
@@ -100,6 +100,26 @@ export const Layout: React.FC<LayoutProps> = ({ children, meta }) => {
     const scroll = Math.abs(linkRef.current.getBoundingClientRect().top - linkRef.current.offsetTop);
     sessionStorage.setItem("scrollPosition", (scroll + 89).toString());
   };
+
+  const useExternalLinks = (selector: string) => {
+    useEffect(() => {
+      const links = document.querySelectorAll(selector);
+
+      links.forEach((link) => {
+        link.setAttribute("target", "_blank");
+        link.setAttribute("rel", "noopener noreferrer");
+      });
+
+      return () => {
+        links.forEach((link) => {
+          link.removeAttribute("target");
+          link.removeAttribute("rel");
+        });
+      };
+    }, [selector]);
+  };
+
+  useExternalLinks(".prose a");
 
   useEffect(() => {
     if (parentRef.current) {

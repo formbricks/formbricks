@@ -9,7 +9,7 @@ import { useEffect } from "react";
   formbricks.init({
     environmentId: env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
     apiHost: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
-    logLevel: "debug",
+    debug: true,
   });
 } */
 

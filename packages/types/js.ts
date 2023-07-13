@@ -41,7 +41,7 @@ export interface Response {
 export interface InitConfig {
   environmentId: string;
   apiHost: string;
-  logLevel?: "debug" | "error";
+  debug?: boolean;
   errorHandler?: ErrorHandler;
 }
 

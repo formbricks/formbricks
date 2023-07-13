@@ -1,10 +1,10 @@
-import { TDisplay, TDisplayInput } from "@formbricks/types/v1/displays";
-import type { JsConfig } from "../../../types/js";
+import type { TDisplay, TDisplayInput } from "../../../types/v1/displays";
+import type { TJsConfig } from "../../../types/v1/js";
 import { NetworkError, Result, err, ok, okVoid } from "./errors";
 
 export const createDisplay = async (
   displayCreateRequest: TDisplayInput,
-  config: JsConfig
+  config: TJsConfig
 ): Promise<Result<TDisplay, NetworkError>> => {
   const url = `${config.apiHost}/api/v1/client/displays`;
 
@@ -31,7 +31,7 @@ export const createDisplay = async (
 
 export const markDisplayResponded = async (
   displayId: string,
-  config: JsConfig
+  config: TJsConfig
 ): Promise<Result<void, NetworkError>> => {
   const url = `${config.apiHost}/api/v1/client/displays/${displayId}/responded`;
 

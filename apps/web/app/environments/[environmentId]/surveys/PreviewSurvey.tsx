@@ -1,14 +1,15 @@
+"use client";
+
 import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Modal from "@/components/preview/Modal";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
 import ThankYouCard from "@/components/preview/ThankYouCard";
-import { useEnvironment } from "@/lib/environments/environments";
-import { useProduct } from "@/lib/products/products";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
-
+import type { TProduct } from "@formbricks/types/v1/product";
+import type { TEnvironment } from "@formbricks/types/v1/environment";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
@@ -19,6 +20,8 @@ interface PreviewSurveyProps {
   thankYouCard: Survey["thankYouCard"];
   autoClose: Survey["autoClose"];
   previewType?: "modal" | "fullwidth" | "email";
+  product: TProduct;
+  environment: TEnvironment;
 }
 
 export default function PreviewSurvey({
@@ -26,15 +29,13 @@ export default function PreviewSurvey({
   activeQuestionId,
   questions,
   brandColor,
-  environmentId,
   surveyType,
   thankYouCard,
   autoClose,
   previewType,
+  product,
+  environment,
 }: PreviewSurveyProps) {
-  const { environment } = useEnvironment(environmentId);
-  const { product } = useProduct(environmentId);
-
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
@@ -241,7 +242,7 @@ export default function PreviewSurvey({
   }
 
   return (
-    <div className="my-4 flex h-full w-5/6 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
+    <div className="flex h-full w-5/6 flex-1 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
       <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
         <div className="ml-6 flex space-x-2">
           <div className="h-3 w-3 rounded-full bg-red-500"></div>
@@ -288,8 +289,8 @@ export default function PreviewSurvey({
           <Progress progress={progress} brandColor={brandColor} />
         </Modal>
       ) : (
-        <div className="flex flex-grow flex-col">
-          <div className="flex  w-full flex-grow flex-col items-center justify-center bg-white py-6">
+        <div className="flex flex-grow flex-col overflow-y-auto">
+          <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
             <div className="w-full max-w-md">
               {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
                 <ThankYouCard

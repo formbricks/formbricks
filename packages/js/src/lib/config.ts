@@ -1,9 +1,11 @@
-import type { JsConfig } from "../../../types/js";
+import { TJsConfig } from "@formbricks/types/v1/js";
 import { Result, wrapThrows } from "./errors";
+
+const LOCAL_STORAGE_KEY = "formbricks-js";
 
 export class Config {
   private static instance: Config | undefined;
-  private config: JsConfig = this.loadFromLocalStorage();
+  private config: TJsConfig = this.loadFromLocalStorage();
 
   static getInstance(): Config {
     if (!Config.instance) {
@@ -12,7 +14,7 @@ export class Config {
     return Config.instance;
   }
 
-  public update(newConfig: Partial<JsConfig>): void {
+  public update(newConfig: Partial<TJsConfig>): void {
     if (newConfig) {
       this.config = {
         ...this.config,
@@ -22,13 +24,13 @@ export class Config {
     }
   }
 
-  public get(): JsConfig {
+  public get(): TJsConfig {
     return this.config;
   }
 
-  private loadFromLocalStorage(): JsConfig {
+  private loadFromLocalStorage(): TJsConfig {
     if (typeof window !== "undefined") {
-      const savedConfig = localStorage.getItem("formbricksConfig");
+      const savedConfig = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (savedConfig) {
         return JSON.parse(savedConfig);
       }
@@ -40,6 +42,6 @@ export class Config {
   }
 
   private saveToLocalStorage(): Result<void, Error> {
-    return wrapThrows(() => localStorage.setItem("formbricksConfig", JSON.stringify(this.config)))();
+    return wrapThrows(() => localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.config)))();
   }
 }

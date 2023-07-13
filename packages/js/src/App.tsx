@@ -1,4 +1,5 @@
-import type { JsConfig, Survey } from "../../types/js";
+import type { TJsConfig } from "../../types/v1/js";
+import type { TSurvey } from "../../types/v1/surveys";
 import { VNode, h } from "preact";
 import { useState } from "preact/hooks";
 import Modal from "./components/Modal";
@@ -6,8 +7,8 @@ import SurveyView from "./components/SurveyView";
 import { IErrorHandler } from "./lib/errors";
 
 interface AppProps {
-  config: JsConfig;
-  survey: Survey;
+  config: TJsConfig;
+  survey: TSurvey;
   closeSurvey: () => Promise<void>;
   errorHandler: IErrorHandler;
 }
@@ -27,9 +28,9 @@ export default function App({ config, survey, closeSurvey, errorHandler }: AppPr
       <Modal
         isOpen={isOpen}
         close={close}
-        placement={config.settings.placement}
-        darkOverlay={config.settings.darkOverlay}
-        clickOutside={config.settings.clickOutsideClose}>
+        placement={config.state.product.placement}
+        darkOverlay={config.state.product.darkOverlay}
+        clickOutside={config.state.product.clickOutsideClose}>
         <SurveyView config={config} survey={survey} close={close} errorHandler={errorHandler} />
       </Modal>
     </div>
