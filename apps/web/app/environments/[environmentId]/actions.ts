@@ -312,6 +312,7 @@ export async function addDemoData(teamId: string): Promise<void> {
     },
     include: {
       attributeClasses: true, // include attributeClasses
+      eventClasses: true, // include eventClasses
     },
   });
 
@@ -400,7 +401,7 @@ export async function addDemoData(teamId: string): Promise<void> {
         return `${Math.floor(Math.random() * 101)}`; // Satisfaction score from 0 to 100
       case "Recommendation Likelihood":
         return `${Math.floor(Math.random() * 11)}`; // Likelihood from 0 to 10
-      case "Company Name":
+      case "Company":
         return company;
       default:
         return "Unknown";
@@ -408,7 +409,6 @@ export async function addDemoData(teamId: string): Promise<void> {
   }
 
   for (let i = 0; i < 20; i++) {
-    // for each person, create a set of attributes that link to the attributeClasses
     const attributes = attributeClasses.map((attributeClass) => {
       let value = generateAttributeValue(
         attributeClass.name,
@@ -430,14 +430,35 @@ export async function addDemoData(teamId: string): Promise<void> {
       },
     });
     people.push(person);
+
+    const session = await prisma.session.create({
+      data: {
+        person: { connect: { id: person.id } },
+      },
+    });
+
+    const eventClasses = updatedEnvironment.eventClasses;
+
+    for (let eventClass of eventClasses) {
+      // create a random number of events for each event class
+      const eventCount = Math.floor(Math.random() * 5) + 1;
+      for (let j = 0; j < eventCount; j++) {
+        await prisma.event.create({
+          data: {
+            eventClass: { connect: { id: eventClass.id } },
+            session: { connect: { id: session.id } },
+          },
+        });
+      }
+    }
   }
 
   // Create Surveys with Display and Responses
 
-  // PMF survey
+  // Surveys
   const PMFSurvey = {
     name: "Product Market Fit",
-    type: "link",
+    type: "web",
     status: "inProgress",
     questions: [
       {
@@ -688,7 +709,7 @@ export async function addDemoData(teamId: string): Promise<void> {
 
   const OnboardingSurvey = {
     name: "Onboarding Survey",
-    type: "link",
+    type: "web",
     status: "inProgress",
     questions: [
       {
@@ -883,6 +904,401 @@ export async function addDemoData(teamId: string): Promise<void> {
     },
   ];
 
+  const ChurnSurvey = {
+    name: "Churn Survey",
+    type: "link",
+    status: "inProgress",
+    questions: [
+      {
+        id: "churn-reason",
+        type: QuestionType.MultipleChoiceSingle,
+        logic: [
+          { value: "Difficult to use", condition: "equals", destination: "easier-to-use" },
+          { value: "It's too expensive", condition: "equals", destination: "30-off" },
+          {
+            value: "I am missing features",
+            condition: "equals",
+            destination: "missing-features",
+          },
+          {
+            value: "Poor customer service",
+            condition: "equals",
+            destination: "poor-service",
+          },
+          { value: "I just didn't need it anymore", condition: "equals", destination: "end" },
+        ],
+        choices: [
+          { id: createId(), label: "Difficult to use" },
+          { id: createId(), label: "It's too expensive" },
+          { id: createId(), label: "I am missing features" },
+          { id: createId(), label: "Poor customer service" },
+          { id: createId(), label: "I just didn't need it anymore" },
+        ],
+        headline: "Why did you cancel your subscription?",
+        required: true,
+        subheader: "We're sorry to see you leave. Help us do better:",
+      },
+      {
+        id: "reason-easier-use",
+        type: QuestionType.OpenText,
+        logic: [{ condition: "submitted", destination: "end" }],
+        headline: "What would have made {{productName}} easier to use?",
+        required: true,
+        subheader: "",
+        buttonLabel: "Send",
+      },
+      {
+        id: "30-off",
+        html: '<p class="fb-editor-paragraph" dir="ltr"><span>We\'d love to keep you as a customer. Happy to offer a 30% discount for the next year.</span></p>',
+        type: QuestionType.CTA,
+        logic: [{ condition: "clicked", destination: "end" }],
+        headline: "Get 30% off for the next year!",
+        required: true,
+        buttonUrl: "https://formbricks.com",
+        buttonLabel: "Get 30% off",
+        buttonExternal: true,
+        dismissButtonLabel: "Skip",
+      },
+      {
+        id: "missing-features",
+        type: QuestionType.OpenText,
+
+        logic: [{ condition: "submitted", destination: "end" }],
+        headline: "What features are you missing?",
+        required: true,
+        subheader: "",
+      },
+      {
+        id: "poor-service",
+        html: '<p class="fb-editor-paragraph" dir="ltr"><span>We aim to provide the best possible customer service. Please email our CEO and she will personally handle your issue.</span></p>',
+        type: QuestionType.CTA,
+        logic: [{ condition: "clicked", destination: "end" }],
+        headline: "So sorry to hear 😔 Talk to our CEO directly!",
+        required: true,
+        buttonUrl: "mailto:ceo@company.com",
+        buttonLabel: "Send email to CEO",
+        buttonExternal: true,
+        dismissButtonLabel: "Skip",
+      },
+    ],
+  };
+
+  const ChurnResponses = [
+    {
+      "churn-reason": "Difficult to use",
+      "reason-easier-use": "Better onboarding would help, I was confused with time zone settings",
+    },
+    {
+      "churn-reason": "Difficult to use",
+      "reason-easier-use":
+        "The UI could be more intuitive. I often struggled with setting up the available time slots",
+    },
+    {
+      "churn-reason": "Difficult to use",
+      "reason-easier-use": "Please make the instructions clearer on how to integrate with my Google Calendar",
+    },
+    {
+      "churn-reason": "It's too expensive",
+      "30-off": "clicked",
+    },
+    {
+      "churn-reason": "It's too expensive",
+      "30-off": "clicked",
+    },
+    {
+      "churn-reason": "It's too expensive",
+      "30-off": "clicked",
+    },
+    {
+      "churn-reason": "I am missing features",
+      "missing-features": "I would love to see more customization options for the meeting invitation emails",
+    },
+    {
+      "churn-reason": "I am missing features",
+      "missing-features": "Integration with Microsoft Teams would be very helpful for my workflow",
+    },
+    {
+      "churn-reason": "I am missing features",
+      "missing-features": "I need more advanced reporting features to better understand my meeting patterns",
+    },
+    {
+      "churn-reason": "Poor customer service",
+      "poor-service": "clicked",
+    },
+    {
+      "churn-reason": "Poor customer service",
+      "poor-service": "clicked",
+    },
+    {
+      "churn-reason": "Poor customer service",
+      "poor-service": "clicked",
+    },
+    {
+      "churn-reason": "I just didn't need it anymore",
+    },
+    {
+      "churn-reason": "I just didn't need it anymore",
+    },
+    {
+      "churn-reason": "I just didn't need it anymore",
+    },
+    {
+      "churn-reason": "I am missing features",
+      "missing-features": "It would be great if the tool could automatically exclude my lunch hours",
+    },
+    {
+      "churn-reason": "I am missing features",
+      "missing-features": "More filtering options in the dashboard would make the tool more usable",
+    },
+    {
+      "churn-reason": "Difficult to use",
+      "reason-easier-use":
+        "A simpler user interface would be much appreciated. The current one is a bit cluttered",
+    },
+    {
+      "churn-reason": "It's too expensive",
+      "30-off": "clicked",
+    },
+    {
+      "churn-reason": "Poor customer service",
+      "poor-service": "clicked",
+    },
+  ];
+
+  const EASSurvey = {
+    name: "Earned Advocacy Score (EAS)",
+    type: "web",
+    status: "completed",
+    questions: [
+      {
+        id: "actively-recommended",
+        type: QuestionType.MultipleChoiceSingle,
+        logic: [{ value: "No", condition: "equals", destination: "duz2qp8eftix9wty1l221x1h" }],
+        shuffleOption: "none",
+        choices: [
+          { id: createId(), label: "Yes" },
+          { id: createId(), label: "No" },
+        ],
+        headline: "Have you actively recommended {{productName}} to others?",
+        required: true,
+        subheader: "",
+      },
+      {
+        id: "reason-recommended",
+        type: QuestionType.OpenText,
+        logic: [{ condition: "submitted", destination: "yhfew1j3ng6luy7t7qynwj79" }],
+        headline: "Great to hear! Why did you recommend us?",
+        required: true,
+        placeholder: "Type your answer here...",
+      },
+      {
+        id: "reason-not-recommended",
+        type: QuestionType.OpenText,
+        headline: "So sad. Why not?",
+        required: true,
+        placeholder: "Type your answer here...",
+      },
+      {
+        id: "actively-discouraged",
+        type: QuestionType.MultipleChoiceSingle,
+        logic: [{ value: "No", condition: "equals", destination: "end" }],
+        shuffleOption: "none",
+        choices: [
+          { id: createId(), label: "Yes" },
+          { id: createId(), label: "No" },
+        ],
+        headline: "Have you actively discouraged others from choosing {{productName}}?",
+        required: true,
+        subheader: "",
+      },
+      {
+        id: "reason-discouraged",
+        type: QuestionType.OpenText,
+        headline: "What made you discourage them?",
+        required: true,
+        placeholder: "Type your answer here...",
+      },
+    ],
+  };
+
+  const EASResponses = [
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended":
+        "The time zone feature is a game-changer. No more time conversions for international meetings!",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended": "The Google Calendar integration saves me so much time!",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended": "I love how easy it is to set available time slots. Makes scheduling a breeze!",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended": "The user interface is intuitive and easy to use. A big plus in my book.",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "No",
+      "reason-not-recommended": "I've had some issues with the meeting links not working properly.",
+      "actively-discouraged": "Yes",
+      "reason-discouraged": "The meeting link issues can cause quite a bit of confusion and delays.",
+    },
+    {
+      "actively-recommended": "No",
+      "reason-not-recommended": "I find the pricing a bit too steep for the features offered.",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "No",
+      "reason-not-recommended": "The lack of integration with Microsoft Teams is a big drawback for me.",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended": "Being able to customize meeting invitations is a great feature.",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended": "The customer service has been exceptional. Prompt responses and helpful advice.",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "No",
+      "reason-not-recommended": "I often have trouble with the time zone settings. They're a bit confusing.",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "No",
+      "reason-not-recommended": "The UI could be cleaner. It feels a bit cluttered at times.",
+      "actively-discouraged": "Yes",
+      "reason-discouraged": "The UI can be off-putting for some users.",
+    },
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended": "I find the reporting features very insightful for managing my schedule.",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended": "Being able to exclude my lunch hours automatically is a neat feature!",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended": "The filtering options in the dashboard are excellent for managing my bookings.",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "No",
+      "reason-not-recommended": "I've had a couple of instances where my meetings were double booked.",
+      "actively-discouraged": "Yes",
+      "reason-discouraged": "Double bookings can be quite embarrassing and unprofessional.",
+    },
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended": "The tool is always improving and adding new features. Keeps me coming back!",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "No",
+      "reason-not-recommended": "I've had some issues with my meeting notifications not going out.",
+      "actively-discouraged": "Yes",
+      "reason-discouraged": "It's important for a scheduling tool to send out reliable notifications.",
+    },
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended": "The ability to set buffer times between meetings is a lifesaver!",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "Yes",
+      "reason-recommended":
+        "It's so convenient to share my scheduling link and let others pick a time that works for them.",
+      "actively-discouraged": "No",
+    },
+    {
+      "actively-recommended": "No",
+      "reason-not-recommended": "I find the time slot setup a bit cumbersome.",
+      "actively-discouraged": "No",
+    },
+  ];
+
+  const InterviewPromptSurvey = {
+    name: "Interview Prompt",
+    type: "web",
+    status: "paused",
+    questions: [
+      {
+        id: "interview-prompt",
+        type: QuestionType.CTA,
+        headline: "Do you have 15 min to talk to us? 🙏",
+        html: "You're one of our power users. We would love to interview you briefly!",
+        buttonLabel: "Book slot",
+        buttonUrl: "https://cal.com/johannes",
+        buttonExternal: true,
+        required: false,
+      },
+    ],
+  };
+
+  const InterviewPromptResponses = [
+    {
+      "interview-prompt": "clicked",
+    },
+    {
+      "interview-prompt": "skipped",
+    },
+    {
+      "interview-prompt": "clicked",
+    },
+    {
+      "interview-prompt": "skipped",
+    },
+    {
+      "interview-prompt": "clicked",
+    },
+    {
+      "interview-prompt": "skipped",
+    },
+    {
+      "interview-prompt": "clicked",
+    },
+    {
+      "interview-prompt": "skipped",
+    },
+    {
+      "interview-prompt": "clicked",
+    },
+    {
+      "interview-prompt": "skipped",
+    },
+    {
+      "interview-prompt": "skipped",
+    },
+    {
+      "interview-prompt": "skipped",
+    },
+    {
+      "interview-prompt": "skipped",
+    },
+    {
+      "interview-prompt": "skipped",
+    },
+    {
+      "interview-prompt": "skipped",
+    },
+    {
+      "interview-prompt": "skipped",
+    },
+  ];
+
   // Define possible user agents
   const userAgents = [
     { os: "Windows", browser: "Chrome" },
@@ -901,16 +1317,25 @@ export async function addDemoData(teamId: string): Promise<void> {
     const displays: any = [];
 
     people.forEach((person, index) => {
-      responses.push({
-        finished: true,
-        data: detailedResponses[index % detailedResponses.length],
-        meta: { userAgent: userAgents[Math.floor(Math.random() * userAgents.length)] },
-        person: { connect: { id: person.id } },
-      });
-      displays.push({
-        person: { connect: { id: person.id } },
-        status: "responded",
-      });
+      // Each person has a 70% chance to respond to the survey
+      if (Math.random() < 0.7) {
+        responses.push({
+          finished: true,
+          data: detailedResponses[index % detailedResponses.length],
+          meta: { userAgent: userAgents[Math.floor(Math.random() * userAgents.length)] },
+          person: { connect: { id: person.id } },
+        });
+        displays.push({
+          person: { connect: { id: person.id } },
+          status: "responded",
+        });
+      } else {
+        // If the person does not respond, they get a 'notResponded' status
+        displays.push({
+          person: { connect: { id: person.id } },
+          status: "seen",
+        });
+      }
     });
 
     return { responses, displays };
@@ -929,13 +1354,21 @@ export async function addDemoData(teamId: string): Promise<void> {
     });
   };
 
-  // Generate responses and displays for PMF survey
+  // Generate responses and displays for surveys
   const PMFResults = generateResponsesAndDisplays(people, PMFResponses, userAgents);
-
-  // Generate responses and displays for Onboarding survey
   const OnboardingResults = generateResponsesAndDisplays(people, OnboardingResponses, userAgents);
+  const ChurnResults = generateResponsesAndDisplays(people, ChurnResponses, userAgents);
+  const EASResults = generateResponsesAndDisplays(people, EASResponses, userAgents);
+  const InterviewPromptResults = generateResponsesAndDisplays(people, InterviewPromptResponses, userAgents);
 
   // Create the surveys
   await createSurvey(PMFSurvey, PMFResults.responses, PMFResults.displays);
   await createSurvey(OnboardingSurvey, OnboardingResults.responses, OnboardingResults.displays);
+  await createSurvey(ChurnSurvey, ChurnResults.responses, ChurnResults.displays);
+  await createSurvey(EASSurvey, EASResults.responses, EASResults.displays);
+  await createSurvey(
+    InterviewPromptSurvey,
+    InterviewPromptResults.responses,
+    InterviewPromptResults.displays
+  );
 }
