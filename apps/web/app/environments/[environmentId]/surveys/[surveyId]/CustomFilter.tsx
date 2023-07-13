@@ -23,7 +23,7 @@ import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import ResponseFilter from "./ResponseFilter";
-import { DateRange, useResponseFilter } from "@/lib/surveys/ResponseFilterContext";
+import { DateRange, useResponseFilter } from "@/app/environments/[environmentId]/ResponseFilterContext";
 import { useTagsForEnvironment } from "@/lib/tags/tags";
 
 enum DateSelected {

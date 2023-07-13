@@ -6,7 +6,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import PosthogIdentify from "./PosthogIdentify";
 import FormbricksClient from "../../FormbricksClient";
 import { PosthogClientWrapper } from "../../PosthogClientWrapper";
-import { ResponseFilterProvider } from "@/lib/surveys/ResponseFilterContext";
+import { ResponseFilterProvider } from "@/app/environments/[environmentId]/ResponseFilterContext";
 import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
 
 export default async function EnvironmentLayout({ children, params }) {

@@ -4,7 +4,7 @@ import SummaryHeader from "@/app/environments/[environmentId]/surveys/[surveyId]
 import SurveyResultsTabs from "@/app/environments/[environmentId]/surveys/[surveyId]/SurveyResultsTabs";
 import ResponseTimeline from "@/app/environments/[environmentId]/surveys/[surveyId]/responses/ResponseTimeline";
 import ContentWrapper from "@/components/shared/ContentWrapper";
-import { useResponseFilter } from "@/lib/surveys/ResponseFilterContext";
+import { useResponseFilter } from "@/app/environments/[environmentId]/ResponseFilterContext";
 import { getFilterResponses } from "@/lib/surveys/surveys";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";

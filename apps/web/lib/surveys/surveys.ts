@@ -9,7 +9,7 @@ import {
 import { QuestionFilterOptions } from "@/app/environments/[environmentId]/surveys/[surveyId]/ResponseFilter";
 import { QuestionType } from "@formbricks/types/questions";
 import { TTag } from "@formbricks/types/v1/tags";
-import { DateRange, SelectedFilterValue } from "@/lib/surveys/ResponseFilterContext";
+import { DateRange, SelectedFilterValue } from "@/app/environments/[environmentId]/ResponseFilterContext";
 import { isArray } from "lodash";
 import { isWithinInterval } from "date-fns";
 
