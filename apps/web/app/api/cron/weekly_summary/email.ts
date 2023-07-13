@@ -113,7 +113,7 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
             survey.responsesCount >= 1
               ? `<a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
                   survey.id
-                }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="background: #0f172a; margin-top:1em; font-size:0.9em; font-weight:500">
+                }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA">
                 ${getButtonLabel(survey.responsesCount)}
               </a>`
               : ""
@@ -153,8 +153,9 @@ const createSurveyFields = (surveryResponses: SurveyResponse[]) => {
 const notificationFooter = () => {
   return `
   <p style="margin-bottom:0px; padding-top:1em; font-weight:500">All the best,</p>
-  <p style="margin-top:0px;">The Formbricks Team</p>
-  <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:99px; margin:1em; padding:0.01em 1.6em; text-align:center;"><p><i>This is a Beta feature. If you experience any issues, please let us know by replying to this email 🙏</i></p></div>
+  <p style="margin-top:0px;">The Formbricks Team 🤍</p>
+  <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:8px; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1em;"><p><i>This is a Beta feature. If you experience any issues, please let us know by replying to this email 🙏</i></p></div>
+  <p style="margin-top:0.8em; text-align:center; font-size:0.8em; line-height:1em;">The Formbricks Team 🤍</p>
  `;
 };
 
@@ -164,7 +165,7 @@ const createReminderNotificationBody = (notificationData: NotificationResponse, 
 
     <p style="font-weight: bold; padding-top:1em;">Don’t let a week pass without learning about your users:</p>
 
-    <a class="button" href="${webUrl}/environments/${notificationData.environmentId}/surveys?utm_source=weekly&utm_medium=email&utm_content=SetupANewSurveyCTA" style="background: #1e293b; font-size:0.9em; font-weight:500">Setup a new survey</a>
+    <a class="button" href="${webUrl}/environments/${notificationData.environmentId}/surveys?utm_source=weekly&utm_medium=email&utm_content=SetupANewSurveyCTA">Setup a new survey</a>
     
     <br/>
     <p style="padding-top:1em;">Need help finding the right survey for your product? Pick a 15-minute slot <a href="https://cal.com/johannes/15">in our CEOs calendar</a> or reply to this email :)</p>

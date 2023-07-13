@@ -35,7 +35,7 @@ export async function POST(): Promise<NextResponse> {
     const notificationResponse = getNotificationResponse(product.environments[0], product.name);
 
     // if there were no responses in the last 7 days, send a different email
-    if (notificationResponse.insights.totalCompletedResponses == 0) {
+    if (notificationResponse.insights.numLiveSurvey == 0) {
       for (const teamMember of teamMembersWithNotificationEnabled) {
         emailSendingPromises.push(
           sendNoLiveSurveyNotificationEmail(teamMember.user.email, notificationResponse)

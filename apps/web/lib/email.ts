@@ -130,18 +130,27 @@ export const sendResponseFinishedEmail = async (
       ? `${personEmail} just completed your ${survey.name} survey ✅`
       : `A response for ${survey.name} was completed ✅`,
     replyTo: personEmail || env.MAIL_FROM,
-    html: withEmailTemplate(`<h1>Survey completed</h1>Someone just completed your survey "${survey.name}"<br/>
+    html: withEmailTemplate(`<h1>Hey 👋</h1>Someone just completed your survey <strong>${
+      survey.name
+    }</strong><br/>
 
     <hr/> 
 
     ${getQuestionResponseMapping(survey, response)
       .map(
         (question) =>
-          question.answer && `<p><strong>${question.question}</strong></p><p>${question.answer}</p>`
+          question.answer &&
+          `<div style="margin-top:1em;">
+          <p style="margin:0px;">${question.question}</p>
+          <p style="font-weight: 500; margin:0px;">${question.answer}</p>  
+        </div>`
       )
       .join("")} 
    
-    <hr/>
+   
+    <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
+      survey.id
+    }/responses?utm_source=emailnotification&utm_medium=email&utm_content=ViewResponsesCTA">View all responses</a>
 
     <div class="tooltip">
     <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
@@ -151,10 +160,6 @@ export const sendResponseFinishedEmail = async (
         : "<p>If you set the email address as an attribute in in-app surveys, you can reply directly to the respondent.</p>"
     }
     </div>
-    
-    <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
-      survey.id
-    }/responses?utm_source=emailnotification&utm_medium=email&utm_content=ViewResponsesCTA">View response</a>
     `),
   });
 };
