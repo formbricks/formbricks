@@ -71,16 +71,18 @@ export const withEmailTemplate = (content: string) =>
         }
   
         .button {
-          background: #00c4b8;
+          margin-top:12px;
+          background: #0f172a;
           border-radius: 8px;
           text-decoration: none !important;
           color: #fff !important;
-          font-weight: 600;
+          font-weight: 500;
           padding: 10px 30px;
           display: inline-block;
+          font-size: 0.9em;
         }
         .button:hover {
-          background: #00e6ca;
+          background: #334155;
         }
   
         .footer {
