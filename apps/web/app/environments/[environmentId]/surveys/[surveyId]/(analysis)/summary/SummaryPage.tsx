@@ -1,9 +1,9 @@
 "use client";
 import CustomFilter from "@/app/environments/[environmentId]/surveys/[surveyId]/CustomFilter";
 import SummaryHeader from "@/app/environments/[environmentId]/surveys/[surveyId]/SummaryHeader";
-import SurveyResultsTabs from "@/app/environments/[environmentId]/surveys/[surveyId]/SurveyResultsTabs";
-import SummaryList from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/SummaryList";
-import SummaryMetadata from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/SummaryMetadata";
+import SurveyResultsTabs from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/SurveyResultsTabs";
+import SummaryList from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SummaryList";
+import SummaryMetadata from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SummaryMetadata";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import { useResponseFilter } from "@/app/environments/[environmentId]/ResponseFilterContext";
 import { getFilterResponses } from "@/lib/surveys/surveys";

@@ -1,23 +1,23 @@
+import ConsentSummary from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/ConsentSummary";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import {
   QuestionType,
   type CTAQuestion,
+  type ConsentQuestion,
   type MultipleChoiceMultiQuestion,
   type MultipleChoiceSingleQuestion,
   type NPSQuestion,
   type OpenTextQuestion,
   type RatingQuestion,
-  type ConsentQuestion,
 } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
+import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import CTASummary from "./CTASummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
-import { TResponse } from "@formbricks/types/v1/responses";
-import ConsentSummary from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/ConsentSummary";
 
 interface SummaryListProps {
   environmentId: string;

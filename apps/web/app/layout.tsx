@@ -1,7 +1,11 @@
 import "./globals.css";
+import { Metadata } from "next";
 
-export const metadata = {
-  title: "Formbricks",
+export const metadata: Metadata = {
+  title: {
+    template: "%s | Formbricks",
+    default: "Formbricks",
+  },
   description: "Open-Source In-Product Survey Platform",
 };
 

@@ -33,8 +33,8 @@ import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import SuccessMessage from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/SuccessMessage";
-import LinkSurveyShareButton from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/LinkModalButton";
+import SuccessMessage from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SuccessMessage";
+import LinkSurveyShareButton from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/LinkModalButton";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 interface SummaryHeaderProps {
