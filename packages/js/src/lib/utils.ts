@@ -24,20 +24,21 @@ const shuffle = (array: any[]) => {
 };
 
 export const shuffleArray = (array: any[], shuffleOption: string) => {
-  const otherIndex = array.findIndex((element) => element.id === "other");
-  const otherElement = otherIndex !== -1 ? array.splice(otherIndex, 1)[0] : null;
+  const arrayCopy = [...array];
+  const otherIndex = arrayCopy.findIndex((element) => element.id === "other");
+  const otherElement = otherIndex !== -1 ? arrayCopy.splice(otherIndex, 1)[0] : null;
 
   if (shuffleOption === "all") {
-    shuffle(array);
+    shuffle(arrayCopy);
   } else if (shuffleOption === "exceptLast") {
-    const lastElement = array.pop();
-    shuffle(array);
-    array.push(lastElement);
+    const lastElement = arrayCopy.pop();
+    shuffle(arrayCopy);
+    arrayCopy.push(lastElement);
   }
 
   if (otherElement) {
-    array.push(otherElement);
+    arrayCopy.push(otherElement);
   }
 
-  return array;
+  return arrayCopy;
 };
