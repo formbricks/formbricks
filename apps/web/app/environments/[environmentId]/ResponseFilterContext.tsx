@@ -69,10 +69,6 @@ function ResponseFilterProvider({ children }: { children: React.ReactNode }) {
       filter: [],
       onlyComplete: false,
     });
-    setSelectedOptions({
-      questionFilterOptions: [],
-      questionOptions: [],
-    });
   };
 
   return (
