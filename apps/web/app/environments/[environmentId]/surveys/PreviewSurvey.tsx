@@ -242,7 +242,7 @@ export default function PreviewSurvey({
   }
 
   return (
-    <div className="my-4 flex h-full w-5/6 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
+    <div className="flex h-full w-5/6 flex-1 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
       <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
         <div className="ml-6 flex space-x-2">
           <div className="h-3 w-3 rounded-full bg-red-500"></div>
@@ -289,8 +289,8 @@ export default function PreviewSurvey({
           <Progress progress={progress} brandColor={brandColor} />
         </Modal>
       ) : (
-        <div className="flex flex-grow flex-col">
-          <div className="flex  w-full flex-grow flex-col items-center justify-center bg-white py-6">
+        <div className="flex flex-grow flex-col overflow-y-auto">
+          <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
             <div className="w-full max-w-md">
               {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
                 <ThankYouCard
