@@ -12,7 +12,7 @@ import Progress from "./Progress";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import FormbricksSignature from "./FormbricksSignature";
-import type { TResponseInput } from "../../../types/v1/responses";
+import type { TResponseData, TResponseInput } from "../../../types/v1/responses";
 
 interface SurveyViewProps {
   config: TJsConfig;
@@ -168,7 +168,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     return questions[currentQuestionIndex + 1]?.id || "end";
   }
 
-  const submitResponse = async (data: { [x: string]: any }) => {
+  const submitResponse = async (data: TResponseData) => {
     setLoadingElement(true);
     const nextQuestionId = getNextQuestion(data);
 
