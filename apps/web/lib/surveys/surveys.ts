@@ -190,7 +190,7 @@ const filterOptions = {
   openText: ["Filled out", "Skipped"],
   rating: ["1", "2", "3", "4", "5"],
   nps: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-  cta: ["Clicked", "Skipped"],
+  cta: ["Clicked", "Dismissed"],
   tags: ["Applied", "Not applied"],
   consent: ["Accepted", "Dismissed"],
 };
@@ -338,7 +338,7 @@ export const getFilterResponses = (
               if (questionID) {
                 const responseValue = response.data[questionID];
                 if (filter?.filterType?.filterComboBoxValue === "Accepted") {
-                  return responseValue ? true : false;
+                  return responseValue === "accepted";
                 }
                 if (filter?.filterType?.filterComboBoxValue === "Dismissed") {
                   return responseValue === "dismissed";
@@ -382,7 +382,7 @@ export const getFilterResponses = (
                 if (filter?.filterType?.filterComboBoxValue === "Clicked") {
                   return responseValue === "clicked";
                 }
-                if (filter?.filterType?.filterComboBoxValue === "Skipped") {
+                if (filter?.filterType?.filterComboBoxValue === "Dismissed") {
                   return responseValue === "dismissed";
                 }
                 return true;
