@@ -50,7 +50,7 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
+          <div className="relative space-y-2 rounded-md py-0.5">
             {question.choices &&
               question.choices.map((choice, idx) => (
                 <label
