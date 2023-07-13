@@ -35,6 +35,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     let { email, name, role } = req.body;
     email = email.toLowerCase();
 
+    const existingInvite = await prisma.invite.findFirst({ where: { email, teamId } });
+    if (existingInvite) {
+      return res.status(409).json({ message: "Invite already exists" });
+    }
+
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (user) {

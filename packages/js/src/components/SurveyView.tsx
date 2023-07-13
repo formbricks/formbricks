@@ -2,7 +2,7 @@ import type { TJsConfig } from "../../../types/v1/js";
 import type { TSurvey } from "../../../types/v1/surveys";
 import type { TSurveyLogic } from "../../../types/v1/surveys";
 import { h } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState, useLayoutEffect } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
 import { IErrorHandler } from "../lib/errors";
 import { Logger } from "../lib/logger";
@@ -12,7 +12,7 @@ import Progress from "./Progress";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import FormbricksSignature from "./FormbricksSignature";
-import type { TResponseInput } from "../../../types/v1/responses";
+import type { TResponseData, TResponseInput } from "../../../types/v1/responses";
 
 interface SurveyViewProps {
   config: TJsConfig;
@@ -27,6 +27,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
   const [loadingElement, setLoadingElement] = useState(false);
+  const contentRef = useRef(null);
 
   const [countdownProgress, setCountdownProgress] = useState(100);
   const [countdownStop, setCountdownStop] = useState(false);
@@ -39,6 +40,13 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
       cancelAnimationFrame(frameRef.current);
     }
   };
+
+  //Scroll to top when question changes
+  useLayoutEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [activeQuestionId]);
 
   useEffect(() => {
     if (!survey.autoClose) return;
@@ -168,7 +176,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     return questions[currentQuestionIndex + 1]?.id || "end";
   }
 
-  const submitResponse = async (data: { [x: string]: any }) => {
+  const submitResponse = async (data: TResponseData) => {
     setLoadingElement(true);
     const nextQuestionId = getNextQuestion(data);
 
@@ -219,9 +227,10 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
         <Progress progress={countdownProgress} brandColor={config.state?.product?.brandColor} />
       )}
       <div
+        ref={contentRef}
         className={cn(
           loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
-          "fb-text-slate-800 fb-font-sans fb-px-4 fb-py-6 sm:fb-p-6"
+          "fb-text-slate-800 fb-font-sans fb-px-4 fb-py-6 sm:fb-p-6 fb-max-h-[80vh] fb-overflow-y-auto"
         )}
         onClick={() => handleStopCountdown()}
         onMouseOver={() => handleStopCountdown()}>

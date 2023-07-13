@@ -1,12 +1,13 @@
-import type { TSurveyCTAQuestion } from "../../../types/v1/surveys";
 import { h } from "preact";
+import { TResponseData } from "../../../types/v1/responses";
+import type { TSurveyCTAQuestion } from "../../../types/v1/surveys";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import SubmitButton from "./SubmitButton";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
-  onSubmit: (data: { [x: string]: any }) => void;
+  onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
 }

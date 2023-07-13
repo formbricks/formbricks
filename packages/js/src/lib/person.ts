@@ -177,7 +177,7 @@ export const setPersonAttribute = async (
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
-  logger.debug("Resetting person. Getting new person, session and settings from backend");
+  logger.debug("Resetting state & getting new state from backend");
   config.update({ state: undefined });
   const syncResult = await sync();
 

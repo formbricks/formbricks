@@ -98,10 +98,13 @@ export function checkUrlMatch(
 
 export const checkClickMatch = (event: MouseEvent) => {
   const { state } = config.get();
-  const innerHtmlEvents: TActionClass[] = state?.noCodeActionClasses.filter(
+  if (!state) {
+    return;
+  }
+  const innerHtmlEvents: TActionClass[] = state?.noCodeActionClasses?.filter(
     (e) => e.noCodeConfig?.type === "innerHtml"
   );
-  const cssSelectorEvents: TActionClass[] = state?.noCodeActionClasses.filter(
+  const cssSelectorEvents: TActionClass[] = state?.noCodeActionClasses?.filter(
     (e) => e.noCodeConfig?.type === "cssSelector"
   );
 
