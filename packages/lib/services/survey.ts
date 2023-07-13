@@ -7,7 +7,7 @@ import { Prisma } from "@prisma/client";
 import "server-only";
 import { cache } from "react";
 
-const selectSurvey = {
+export const select = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -28,6 +28,9 @@ const selectSurvey = {
       eventClass: {
         select: {
           id: true,
+          createdAt: true,
+          updatedAt: true,
+          environmentId: true,
           name: true,
           description: true,
           type: true,
@@ -57,7 +60,7 @@ export const getSurvey = cache(async (surveyId: string): Promise<TSurveyWithAnal
       where: {
         id: surveyId,
       },
-      select: selectSurvey,
+      select,
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -114,7 +117,7 @@ export const getSurveys = cache(async (environmentId: string): Promise<TSurvey[]
       where: {
         environmentId,
       },
-      select: selectSurvey,
+      select,
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

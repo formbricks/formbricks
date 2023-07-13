@@ -1,13 +1,13 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
 import { cn } from "../lib/utils";
-import type { NPSQuestion } from "../../../types/questions";
+import type { TSurveyNPSQuestion } from "../../../types/v1/surveys";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 
 interface NPSQuestionProps {
-  question: NPSQuestion;
+  question: TSurveyNPSQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

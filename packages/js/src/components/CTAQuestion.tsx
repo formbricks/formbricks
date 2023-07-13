@@ -1,11 +1,11 @@
-import type { CTAQuestion } from "../../../types/questions";
+import type { TSurveyCTAQuestion } from "../../../types/v1/surveys";
 import { h } from "preact";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import SubmitButton from "./SubmitButton";
 
 interface CTAQuestionProps {
-  question: CTAQuestion;
+  question: TSurveyCTAQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

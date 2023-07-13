@@ -2,7 +2,7 @@ import { Button } from "@formbricks/ui";
 
 export default function DocsSidebar() {
   return (
-    <div className="w-fit rounded-lg border border-slate-300 bg-slate-200 p-8 pr-16">
+    <div className="w-20 min-w-max rounded-lg border border-slate-200 bg-slate-100 p-8">
       <p className="font-bold text-slate-700">Documentation</p>
       <p className="text-xs text-slate-500">Get detailed instructions</p>
       <Button className="my-2" href="https://formbricks.com/docs" target="_blank">
