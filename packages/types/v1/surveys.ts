@@ -24,6 +24,8 @@ export const ZSurveyChoice = z.object({
   label: z.string(),
 });
 
+export type TSurveyChoice = z.infer<typeof ZSurveyChoice>;
+
 export const ZSurveyLogicCondition = z.enum([
   "submitted",
   "skipped",
@@ -149,6 +151,7 @@ export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.MultipleChoiceSingle),
   choices: z.array(ZSurveyChoice),
   logic: z.array(ZSurveyMultipleChoiceSingleLogic).optional(),
+  shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
 });
 
 export type TSurveyMultipleChoiceSingleQuestion = z.infer<typeof ZSurveyMultipleChoiceSingleQuestion>;
@@ -157,6 +160,7 @@ export const ZSurveyMultipleChoiceMultiQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.MultipleChoiceMulti),
   choices: z.array(ZSurveyChoice),
   logic: z.array(ZSurveyMultipleChoiceMultiLogic).optional(),
+  shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
 });
 
 export type TSurveyMultipleChoiceMultiQuestion = z.infer<typeof ZSurveyMultipleChoiceMultiQuestion>;

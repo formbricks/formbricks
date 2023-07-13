@@ -34,6 +34,7 @@ export const templates: Template[] = [
           headline: "How disappointed would you be if you could no longer use {{productName}}?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -55,6 +56,7 @@ export const templates: Template[] = [
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -115,6 +117,7 @@ export const templates: Template[] = [
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -144,6 +147,7 @@ export const templates: Template[] = [
           headline: "What's your company size?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -173,6 +177,7 @@ export const templates: Template[] = [
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -212,7 +217,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
-
+          shuffleOption: "none",
           logic: [
             { value: "Difficult to use", condition: "equals", destination: "sxwpskjgzzpmkgfxzi15inif" },
             { value: "It's too expensive", condition: "equals", destination: "mao94214zoo6c1at5rpuz7io" },
@@ -298,6 +303,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
           logic: [{ value: "No", condition: "equals", destination: "duz2qp8eftix9wty1l221x1h" }],
+          shuffleOption: "none",
           choices: [
             { id: createId(), label: "Yes" },
             { id: createId(), label: "No" },
@@ -325,6 +331,7 @@ export const templates: Template[] = [
           id: "yhfew1j3ng6luy7t7qynwj79",
           type: QuestionType.MultipleChoiceSingle,
           logic: [{ value: "No", condition: "equals", destination: "end" }],
+          shuffleOption: "none",
           choices: [
             { id: createId(), label: "Yes" },
             { id: createId(), label: "No" },
@@ -355,6 +362,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
+          shuffleOption: "none",
           logic: [
             {
               value: "I didn't get much value out of it",
@@ -520,6 +528,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
+          shuffleOption: "none",
           logic: [
             {
               value: "Difficult to set up or use",
@@ -609,6 +618,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
+          shuffleOption: "none",
           choices: [
             { id: createId(), label: "Ease of use" },
             { id: createId(), label: "Good value for money" },
@@ -623,6 +633,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
+          shuffleOption: "none",
           choices: [
             { id: createId(), label: "Documentation" },
             { id: createId(), label: "Customizability" },
@@ -657,6 +668,7 @@ export const templates: Template[] = [
           headline: "How disappointed would you be if you could no longer use {{productName}}?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -698,6 +710,7 @@ export const templates: Template[] = [
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -739,6 +752,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "How easy was it to change your plan?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -767,6 +781,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "Is the pricing information easy to understand?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -802,6 +817,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "What's your primary goal for using {{productName}}?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -847,6 +863,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
+          shuffleOption: "none",
           choices: [
             { id: createId(), label: "Aspect 1" },
             { id: createId(), label: "Aspect 2" },
@@ -885,6 +902,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceMulti,
           headline: "What should be definitely include building this?",
           required: false,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -920,6 +938,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
+          shuffleOption: "none",
           logic: [
             { value: "Bug report 🐞", condition: "equals", destination: "dnbiuq4l33l7jypcf2cg6vhh" },
             { value: "Feature Request 💡", condition: "equals", destination: "en9nuuevbf7g9oa9rzcs1l50" },
@@ -1020,6 +1039,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "Which other tools are you using?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -1058,6 +1078,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "Was this page helpful?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -1166,6 +1187,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "How many hours does your team save per week by using {{productName}}?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -1203,6 +1225,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
           logic: [],
+          shuffleOption: "none",
           choices: [
             { id: createId(), label: "Feature 1" },
             { id: createId(), label: "Feature 2" },
@@ -1217,6 +1240,7 @@ export const templates: Template[] = [
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
           logic: [],
+          shuffleOption: "none",
           choices: [
             { id: createId(), label: "Feature 1" },
             { id: createId(), label: "Feature 2" },
@@ -1280,6 +1304,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "Do you have all the info you need to give {{productName}} a try?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -1478,6 +1503,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
+          shuffleOption: "none",
           logic: [
             { value: "Working on it, boss", condition: "equals", destination: "nq88udm0jjtylr16ax87xlyc" },
             { value: "Yes", condition: "equals", destination: "rjeac33gd13h3nnbrbid1fb2" },
@@ -1571,6 +1597,7 @@ export const templates: Template[] = [
         {
           id: createId(),
           type: QuestionType.MultipleChoiceSingle,
+          shuffleOption: "none",
           logic: [
             {
               value: "May not have what I'm looking for",
@@ -1887,6 +1914,7 @@ export const templates: Template[] = [
         {
           id: "aq9dafe9nxe0kpm67b1os2z9",
           type: QuestionType.MultipleChoiceSingle,
+          shuffleOption: "none",
           logic: [
             { value: "Difficult to use", condition: "equals", destination: "r0zvi3vburf4hm7qewimzjux" },
             {

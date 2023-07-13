@@ -40,7 +40,7 @@ const MergeTagsCombobox: React.FC<IMergeTagsComboboxProps> = ({ tags, onSelect }
           <div className="p-1">
             <CommandInput
               placeholder="Search Tags..."
-              className="border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
+              className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
             />
           </div>
           <CommandEmpty>

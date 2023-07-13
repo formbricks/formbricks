@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY . .
 # Copy .env file because Docker don't follow symlinks
-COPY .env /app/apps/web/
+COPY .env.docker /app/apps/web/.env
 
 RUN pnpm install
 
@@ -34,4 +34,11 @@ COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/publ
 COPY --from=installer --chown=nextjs:nodejs /app/packages/database/schema.prisma ./packages/database/schema.prisma
 COPY --from=installer --chown=nextjs:nodejs /app/packages/database/migrations ./packages/database/migrations
 
-CMD pnpm dlx prisma migrate deploy && node apps/web/server.js
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+
+CMD if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
+        pnpm dlx prisma migrate deploy && node apps/web/server.js; \
+    else \
+        echo "ERROR: Please set a value for NEXTAUTH_SECRET in .env.docker!"; \
+        exit 1; \
+    fi
