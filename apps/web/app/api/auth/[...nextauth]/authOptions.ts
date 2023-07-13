@@ -141,6 +141,7 @@ export const authOptions: NextAuthOptions = {
           memberships: {
             select: {
               teamId: true,
+              role: true,
               team: {
                 select: {
                   plan: true,
@@ -156,15 +157,17 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
+      const teams = existingUser.memberships.map((membership) => ({
+        id: membership.teamId,
+        role: membership.role,
+        plan: membership.team.plan,
+      }));
+
       const additionalAttributs = {
         id: existingUser.id,
         createdAt: existingUser.createdAt,
         onboardingCompleted: existingUser.onboardingCompleted,
-        teamId: existingUser.memberships.length > 0 ? existingUser.memberships[0].teamId : undefined,
-        plan:
-          existingUser.memberships.length > 0 && existingUser.memberships[0].team
-            ? existingUser.memberships[0].team.plan
-            : undefined,
+        teams,
         name: existingUser.name,
       };
 
@@ -181,9 +184,7 @@ export const authOptions: NextAuthOptions = {
       // @ts-ignore
       session.user.onboardingCompleted = token?.onboardingCompleted;
       // @ts-ignore
-      session.user.teamId = token?.teamId;
-      // @ts-ignore
-      session.user.plan = token?.plan;
+      session.user.teams = token?.teams;
       session.user.name = token.name || "";
 
       return session;

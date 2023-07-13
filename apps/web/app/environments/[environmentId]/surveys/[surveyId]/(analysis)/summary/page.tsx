@@ -1,7 +1,7 @@
 export const revalidate = 0;
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/data";
+import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import { getServerSession } from "next-auth";
 import ResponsesLimitReachedBanner from "../ResponsesLimitReachedBanner";
 import SummaryPage from "./SummaryPage";
@@ -11,15 +11,11 @@ export default async function Page({ params }) {
   if (!session) {
     throw new Error("Unauthorized");
   }
-  const { responses, survey } = await getAnalysisData(session, params.surveyId, params.environmentId);
+  const { responses, survey } = await getAnalysisData(params.surveyId, params.environmentId);
 
   return (
     <>
-      <ResponsesLimitReachedBanner
-        environmentId={params.environmentId}
-        session={session}
-        surveyId={params.surveyId}
-      />
+      <ResponsesLimitReachedBanner environmentId={params.environmentId} surveyId={params.surveyId} />
       <SummaryPage
         environmentId={params.environmentId}
         responses={responses}

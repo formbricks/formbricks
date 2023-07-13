@@ -1,20 +1,17 @@
-import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/data";
+import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import { RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
-import { Session } from "next-auth";
 import Link from "next/link";
 
 interface ResponsesLimitReachedBannerProps {
   environmentId: string;
-  session: Session;
   surveyId: string;
 }
 
 export default async function ResponsesLimitReachedBanner({
   surveyId,
   environmentId,
-  session,
 }: ResponsesLimitReachedBannerProps) {
-  const { responsesCount, limitReached } = await getAnalysisData(session, surveyId, environmentId);
+  const { responsesCount, limitReached } = await getAnalysisData(surveyId, environmentId);
   return (
     <>
       {limitReached && (

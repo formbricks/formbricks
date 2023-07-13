@@ -8,8 +8,11 @@ declare module "next-auth" {
     user: {
       id: string;
       createdAt: string;
-      teamId?: string;
-      plan?: string;
+      teams: {
+        id: string;
+        plan: string;
+        role: string;
+      }[];
       email: string;
       name: string;
       onboardingCompleted: boolean;
