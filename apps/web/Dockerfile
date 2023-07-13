@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY . .
 # Copy .env file because Docker don't follow symlinks
-COPY .env /app/apps/web/
+COPY .env.docker /app/apps/web/.env
 
 RUN pnpm install
 
