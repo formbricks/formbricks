@@ -22,10 +22,8 @@ import {
   Button,
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
   ProfileAvatar,
   Tooltip,
@@ -105,8 +103,6 @@ function RoleElement({
         </DropdownMenuTrigger>
         {!disableRole && (
           <DropdownMenuContent>
-            <DropdownMenuLabel className="text-center">Select Role</DropdownMenuLabel>
-            <DropdownMenuSeparator />
             <DropdownMenuRadioGroup
               value={capitalizeFirstLetter(memberRole)}
               onValueChange={(value) => handleMemberRoleUpdate(value.toLowerCase())}>
@@ -249,11 +245,12 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                   ) : (
                     <Badge className="mr-2" type="warning" text="Pending" size="tiny" />
                   ))}
-                {member.role !== "owner" && (
+                {isAdminOrOwner && member.role !== "owner" && member.userId !== profile?.id && (
                   <button onClick={(e) => handleOpenDeleteMemberModal(e, member)}>
                     <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
                   </button>
                 )}
+
                 {!member.accepted && (
                   <TooltipProvider delayDuration={50}>
                     <Tooltip>
