@@ -144,17 +144,17 @@ export const sendResponseFinishedEmail = async (
     <hr/>
 
     <div class="tooltip">
-    <p class='brandcolor'><strong>Did you know? 💡</strong></p>
+    <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
     ${
       personEmail
-        ? "<p>You can reply to this email to start a conversation with this user.</p>"
+        ? "<p>Hit 'Reply' or reach out manually: ${personEmail}</p>"
         : "<p>If you set the email address as an attribute in in-app surveys, you can reply directly to the respondent.</p>"
     }
     </div>
     
     <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
       survey.id
-    }/responses">View response</a>
+    }/responses?utm_source=emailnotification&utm_medium=email&utm_content=ViewResponsesCTA">View response</a>
     `),
   });
 };

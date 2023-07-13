@@ -71,7 +71,7 @@ export const withEmailTemplate = (content: string) =>
         }
   
         .button {
-          background: #00c4b8;
+          background: #0f172a;
           border-radius: 8px;
           text-decoration: none !important;
           color: #fff !important;
@@ -80,7 +80,7 @@ export const withEmailTemplate = (content: string) =>
           display: inline-block;
         }
         .button:hover {
-          background: #00e6ca;
+          background: #334155;
         }
   
         .footer {

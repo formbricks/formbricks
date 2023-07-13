@@ -100,7 +100,7 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
         <div style="display: block; margin-top:3em;">
           <a href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
         survey.id
-      }/responses" style="color:#1e293b;">
+      }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="color:#1e293b;">
             <h2 style="text-decoration: underline; display:inline;">${survey.name}</h2>
           </a>
           <span style="display: inline; margin-left: 10px; background-color: ${
@@ -113,7 +113,7 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
             survey.responsesCount >= 1
               ? `<a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
                   survey.id
-                }/responses" style="background: #1e293b; margin-top:1em; font-size:0.9em; font-weight:500">
+                }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="background: #0f172a; margin-top:1em; font-size:0.9em; font-weight:500">
                 ${getButtonLabel(survey.responsesCount)}
               </a>`
               : ""
@@ -164,7 +164,7 @@ const createReminderNotificationBody = (notificationData: NotificationResponse, 
 
     <p style="font-weight: bold; padding-top:1em;">Don’t let a week pass without learning about your users:</p>
 
-    <a class="button" href="${webUrl}/environments/${notificationData.environmentId}/surveys" style="background: #1e293b; font-size:0.9em; font-weight:500">Setup a new survey</a>
+    <a class="button" href="${webUrl}/environments/${notificationData.environmentId}/surveys?utm_source=weekly&utm_medium=email&utm_content=SetupANewSurveyCTA" style="background: #1e293b; font-size:0.9em; font-weight:500">Setup a new survey</a>
     
     <br/>
     <p style="padding-top:1em;">Need help finding the right survey for your product? Pick a 15-minute slot <a href="https://cal.com/johannes/15">in our CEOs calendar</a> or reply to this email :)</p>
