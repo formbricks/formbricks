@@ -11,9 +11,7 @@ import {
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { useEnvironment } from "@/lib/environments/environments";
-import { createSurvey, deleteSurvey, duplicateSurvey, useSurveys } from "@/lib/surveys/surveys";
-import { Badge, ErrorComponent } from "@formbricks/ui";
+import { Badge } from "@formbricks/ui";
 import {
   ComputerDesktopIcon,
   DocumentDuplicateIcon,
@@ -30,31 +28,38 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import TemplateList from "./templates/TemplateList";
-import { useEffect } from "react";
-import { changeEnvironment } from "@/lib/environments/changeEnvironments";
-import { TProduct } from "@formbricks/types/v1/product";
+import type { TProduct } from "@formbricks/types/v1/product";
+import type { TEnvironment } from "@formbricks/types/v1/environment";
+import type { TSurveyWithResponseCount } from "@formbricks/types/v1/surveys";
 
 interface SurveyListProps {
   environmentId: string;
   product: TProduct;
+  environment: TEnvironment;
+  otherEnvironment: TEnvironment;
+  surveys: TSurveyWithResponseCount[];
+  createSurveyAction: any;
+  deleteSurveyAction: any;
+  duplicateSurveyAction:any;
+  copyToOtherEnvironmentAction:any;
 }
 
-export default function SurveysList({ environmentId, product }: SurveyListProps) {
-  const router = useRouter();
-  const { surveys, mutateSurveys, isLoadingSurveys, isErrorSurveys } = useSurveys(environmentId);
-  const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
+export default function SurveysList({
+  environmentId,
+  product,
+  environment,
+  surveys,
+  createSurveyAction,
+  otherEnvironment,
+  deleteSurveyAction,
+  duplicateSurveyAction,
+  copyToOtherEnvironmentAction
+}: SurveyListProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
-
+  const router = useRouter();
   const [activeSurvey, setActiveSurvey] = useState("" as any);
-  const [activeSurveyIdx, setActiveSurveyIdx] = useState("" as any);
-  const [otherEnvironment, setOtherEnvironment] = useState("" as any);
-
-  useEffect(() => {
-    if (environment) {
-      setOtherEnvironment(environment.product.environments.find((e) => e.type !== environment.type));
-    }
-  }, [environment]);
+  const [_, setActiveSurveyIdx] = useState("" as any);
 
   const newSurvey = async () => {
     router.push(`/environments/${environmentId}/surveys/templates`);
@@ -67,7 +72,7 @@ export default function SurveysList({ environmentId, product }: SurveyListProps)
       type: environment?.widgetSetupCompleted ? "web" : "link",
     };
     try {
-      const survey = await createSurvey(environmentId, augmentedTemplate);
+      const survey = await createSurveyAction(environmentId, augmentedTemplate);
       router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
     } catch (e) {
       toast.error("An error occured creating a new survey");
@@ -75,13 +80,10 @@ export default function SurveysList({ environmentId, product }: SurveyListProps)
     }
   };
 
-  const deleteSurveyAction = async (survey, surveyIdx) => {
+  const handleDeleteSurvey = async (survey) => {
     try {
-      await deleteSurvey(environmentId, survey.id);
-      // remove locally
-      const updatedsurveys = JSON.parse(JSON.stringify(surveys));
-      updatedsurveys.splice(surveyIdx, 1);
-      mutateSurveys(updatedsurveys);
+      await deleteSurveyAction(survey.id);
+      router.refresh();
       setDeleteDialogOpen(false);
       toast.success("Survey deleted successfully.");
     } catch (error) {
@@ -91,8 +93,8 @@ export default function SurveysList({ environmentId, product }: SurveyListProps)
 
   const duplicateSurveyAndRefresh = async (surveyId) => {
     try {
-      await duplicateSurvey(environmentId, surveyId);
-      mutateSurveys();
+      await duplicateSurveyAction(environmentId, surveyId);
+      router.refresh();
       toast.success("Survey duplicated successfully.");
     } catch (error) {
       toast.error("Failed to duplicate the survey.");
@@ -101,27 +103,20 @@ export default function SurveysList({ environmentId, product }: SurveyListProps)
 
   const copyToOtherEnvironment = async (surveyId) => {
     try {
-      await duplicateSurvey(environmentId, surveyId, otherEnvironment.id);
+      await copyToOtherEnvironmentAction(environmentId, surveyId, otherEnvironment.id)
       if (otherEnvironment.type === "production") {
         toast.success("Survey copied to production env.");
       } else if (otherEnvironment.type === "development") {
         toast.success("Survey copied to development env.");
       }
-      changeEnvironment(otherEnvironment.type, environment, router);
+      router.replace(`/environments/${otherEnvironment.id}`)
     } catch (error) {
+      console.log(error)
       toast.error(`Failed to copy to ${otherEnvironment.type}`);
     }
   };
 
-  if (isLoadingSurveys || isLoadingEnvironment) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorSurveys || isErrorEnvironment) {
-    return <ErrorComponent />;
-  }
-
-  if (surveys.length === 0) {
+  if (typeof window == undefined || surveys.length === 0) {
     return (
       <div className="mx-auto flex w-full max-w-5xl flex-col py-12">
         {isCreateSurveyLoading ? (
@@ -160,155 +155,156 @@ export default function SurveysList({ environmentId, product }: SurveyListProps)
             </div>
           </li>
         </button>
-        {surveys
-          .sort((a, b) => b.updatedAt - a.updatedAt)
-          .map((survey, surveyIdx) => (
-            <li key={survey.id} className="relative col-span-1 h-56">
-              <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
-                <div className="px-6 py-4">
-                  <Badge
-                    StartIcon={survey.type === "link" ? LinkIcon : ComputerDesktopIcon}
-                    startIconClassName="mr-2"
-                    text={
-                      survey.type === "link"
-                        ? "Link Survey"
-                        : survey.type === "web"
-                        ? "In-Product Survey"
-                        : ""
+        {window &&
+          surveys
+            .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+            .map((survey, surveyIdx) => (
+              <li key={survey.id} className="relative col-span-1 h-56">
+                <div className="delay-50 flex h-full flex-col justify-between rounded-md bg-white shadow transition ease-in-out hover:scale-105">
+                  <div className="px-6 py-4">
+                    <Badge
+                      StartIcon={survey.type === "link" ? LinkIcon : ComputerDesktopIcon}
+                      startIconClassName="mr-2"
+                      text={
+                        survey.type === "link"
+                          ? "Link Survey"
+                          : survey.type === "web"
+                          ? "In-Product Survey"
+                          : ""
+                      }
+                      type="gray"
+                      size={"tiny"}
+                      className="font-base"></Badge>
+                    <p className="my-2 line-clamp-3 text-lg">{survey.name}</p>
+                  </div>
+                  <Link
+                    href={
+                      survey.status === "draft"
+                        ? `/environments/${environmentId}/surveys/${survey.id}/edit`
+                        : `/environments/${environmentId}/surveys/${survey.id}/summary`
                     }
-                    type="gray"
-                    size={"tiny"}
-                    className="font-base"></Badge>
-                  <p className="my-2 line-clamp-3 text-lg">{survey.name}</p>
-                </div>
-                <Link
-                  href={
-                    survey.status === "draft"
-                      ? `/environments/${environmentId}/surveys/${survey.id}/edit`
-                      : `/environments/${environmentId}/surveys/${survey.id}/summary`
-                  }
-                  className="absolute h-full w-full"></Link>
-                <div className="divide-y divide-slate-100">
-                  <div className="flex justify-between px-4 py-2 text-right sm:px-6">
-                    <div className="flex items-center">
-                      {survey.status !== "draft" && (
-                        <>
-                          <SurveyStatusIndicator
-                            status={survey.status}
-                            tooltip
-                            environmentId={environmentId}
-                          />
-                          <p className="ml-2 text-xs text-slate-400 ">{survey._count?.responses} responses</p>
-                        </>
-                      )}
-                      {survey.status === "draft" && (
-                        <span className="text-xs italic text-slate-400">Draft</span>
-                      )}
-                    </div>
+                    className="absolute h-full w-full"></Link>
+                  <div className="divide-y divide-slate-100">
+                    <div className="flex justify-between px-4 py-2 text-right sm:px-6">
+                      <div className="flex items-center">
+                        {survey.status !== "draft" && (
+                          <>
+                            <SurveyStatusIndicator
+                              status={survey.status}
+                              tooltip
+                              environmentId={environmentId}
+                            />
+                            <p className="ml-2 text-xs text-slate-400 ">{survey.responses} responses</p>
+                          </>
+                        )}
+                        {survey.status === "draft" && (
+                          <span className="text-xs italic text-slate-400">Draft</span>
+                        )}
+                      </div>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-                        <div>
-                          <span className="sr-only">Open options</span>
-                          <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
-                        </div>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-40">
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem>
-                            <Link
-                              className="flex w-full items-center"
-                              href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                              <PencilSquareIcon className="mr-2 h-4 w-4" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <button
-                              className="flex w-full items-center"
-                              onClick={async () => {
-                                duplicateSurveyAndRefresh(survey.id);
-                              }}>
-                              <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
-                              Duplicate
-                            </button>
-                          </DropdownMenuItem>
-                          {environment.type === "development" ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
+                          <div>
+                            <span className="sr-only">Open options</span>
+                            <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-40">
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem>
+                              <Link
+                                className="flex w-full items-center"
+                                href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                                <PencilSquareIcon className="mr-2 h-4 w-4" />
+                                Edit
+                              </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem>
                               <button
                                 className="flex w-full items-center"
-                                onClick={() => {
-                                  copyToOtherEnvironment(survey.id);
+                                onClick={async () => {
+                                  duplicateSurveyAndRefresh(survey.id);
                                 }}>
-                                <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
-                                Copy to Prod
+                                <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
+                                Duplicate
                               </button>
                             </DropdownMenuItem>
-                          ) : environment.type === "production" ? (
-                            <DropdownMenuItem>
-                              <button
-                                className="flex w-full items-center"
-                                onClick={() => {
-                                  copyToOtherEnvironment(survey.id);
-                                }}>
-                                <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
-                                Copy to Dev
-                              </button>
-                            </DropdownMenuItem>
-                          ) : null}
-                          {survey.type === "link" && survey.status !== "draft" && (
-                            <>
-                              <DropdownMenuItem>
-                                <Link
-                                  className="flex w-full items-center"
-                                  href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}
-                                  target="_blank">
-                                  <EyeIcon className="mr-2 h-4 w-4" />
-                                  Preview Survey
-                                </Link>
-                              </DropdownMenuItem>
+                            {environment.type === "development" ? (
                               <DropdownMenuItem>
                                 <button
                                   className="flex w-full items-center"
                                   onClick={() => {
-                                    navigator.clipboard.writeText(
-                                      `${window.location.protocol}//${window.location.host}/s/${survey.id}`
-                                    );
-                                    toast.success("Copied link to clipboard");
+                                    copyToOtherEnvironment(survey.id);
                                   }}>
-                                  <LinkIcon className="mr-2 h-4 w-4" />
-                                  Copy Link
+                                  <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                                  Copy to Prod
                                 </button>
                               </DropdownMenuItem>
-                            </>
-                          )}
-                          <DropdownMenuItem>
-                            <button
-                              className="flex w-full  items-center"
-                              onClick={() => {
-                                setActiveSurvey(survey);
-                                setActiveSurveyIdx(surveyIdx);
-                                setDeleteDialogOpen(true);
-                              }}>
-                              <TrashIcon className="mr-2 h-4 w-4" />
-                              Delete
-                            </button>
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                            ) : environment.type === "production" ? (
+                              <DropdownMenuItem>
+                                <button
+                                  className="flex w-full items-center"
+                                  onClick={() => {
+                                    copyToOtherEnvironment(survey.id);
+                                  }}>
+                                  <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                                  Copy to Dev
+                                </button>
+                              </DropdownMenuItem>
+                            ) : null}
+                            {survey.type === "link" && survey.status !== "draft" && (
+                              <>
+                                <DropdownMenuItem>
+                                  <Link
+                                    className="flex w-full items-center"
+                                    href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}
+                                    target="_blank">
+                                    <EyeIcon className="mr-2 h-4 w-4" />
+                                    Preview Survey
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <button
+                                    className="flex w-full items-center"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(
+                                        `${window.location.protocol}//${window.location.host}/s/${survey.id}`
+                                      );
+                                      toast.success("Copied link to clipboard");
+                                    }}>
+                                    <LinkIcon className="mr-2 h-4 w-4" />
+                                    Copy Link
+                                  </button>
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            <DropdownMenuItem>
+                              <button
+                                className="flex w-full  items-center"
+                                onClick={() => {
+                                  setActiveSurvey(survey);
+                                  setActiveSurveyIdx(surveyIdx);
+                                  setDeleteDialogOpen(true);
+                                }}>
+                                <TrashIcon className="mr-2 h-4 w-4" />
+                                Delete
+                              </button>
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            ))}
       </ul>
 
       <DeleteDialog
         deleteWhat="Survey"
         open={isDeleteDialogOpen}
         setOpen={setDeleteDialogOpen}
-        onDelete={() => deleteSurveyAction(activeSurvey, activeSurveyIdx)}
+        onDelete={() => handleDeleteSurvey(activeSurvey)}
         text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
       />
     </>
