@@ -14,7 +14,8 @@ export type TWebhook = z.infer<typeof ZWebhook>;
 
 export const ZWebhookInput = z.object({
   url: z.string().url(),
-  trigger: ZPipelineTrigger,
+  triggers: z.array(ZPipelineTrigger),
+  surveyIds: z.array(z.string().cuid2()).optional(),
 });
 
 export type TWebhookInput = z.infer<typeof ZWebhookInput>;

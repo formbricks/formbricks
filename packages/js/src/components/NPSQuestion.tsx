@@ -1,14 +1,15 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
+import { TResponseData } from "../../../types/v1/responses";
+import type { TSurveyNPSQuestion } from "../../../types/v1/surveys";
 import { cn } from "../lib/utils";
-import type { NPSQuestion } from "../../../types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 
 interface NPSQuestionProps {
-  question: NPSQuestion;
-  onSubmit: (data: { [x: string]: any }) => void;
+  question: TSurveyNPSQuestion;
+  onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
@@ -30,9 +31,10 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
       onSubmit={(e) => {
         e.preventDefault();
 
-        const data = {
-          [question.id]: selectedChoice,
-        };
+        const data = {};
+        if (selectedChoice !== null) {
+          data[question.id] = selectedChoice;
+        }
 
         onSubmit(data);
         // reset form

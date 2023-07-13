@@ -19,5 +19,5 @@ jobs:
           curl ${{ secrets.APP_URL }}/api/cron/weekly_summary \
             -X POST \
             -H 'content-type: application/json' \
-            -H 'authorization: ${{ secrets.CRON_SECRET }}' \
+            -H 'x-api-key: ${{ secrets.CRON_SECRET }}' \
             --fail

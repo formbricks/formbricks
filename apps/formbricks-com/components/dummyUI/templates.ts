@@ -69,6 +69,7 @@ export const templates: Template[] = [
           headline: "How disappointed would you be if you could no longer use Formbricks?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -90,6 +91,7 @@ export const templates: Template[] = [
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -154,6 +156,7 @@ export const templates: Template[] = [
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -183,6 +186,7 @@ export const templates: Template[] = [
           headline: "What's your company size?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -212,6 +216,7 @@ export const templates: Template[] = [
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -253,6 +258,7 @@ export const templates: Template[] = [
           headline: "What do you value most about our service?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -278,6 +284,7 @@ export const templates: Template[] = [
           headline: "What should we improve on?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -323,6 +330,7 @@ export const templates: Template[] = [
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -364,6 +372,7 @@ export const templates: Template[] = [
           headline: "Why did you cancel your subscription?",
           subheader: "We're sorry to see you leave. Please help us do better:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -413,6 +422,7 @@ export const templates: Template[] = [
           headline: "Why did you stop your trial?",
           subheader: "Help us understand you better:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -468,6 +478,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "How easy was it to change your plan?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -496,6 +507,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "Is the pricing information easy to understand?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -528,6 +540,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "Were you able to accomplish what you came here to do today?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -578,6 +591,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "What's your primary goal for using Formbricks?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -668,6 +682,7 @@ export const templates: Template[] = [
           headline: "How disappointed would you be if you could no longer use Formbricks?",
           subheader: "Please select one of the following options:",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -709,6 +724,7 @@ export const templates: Template[] = [
           headline: "What's on your mind, boss?",
           subheader: "Thanks for sharing. We'll get back to you asap.",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -744,6 +760,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "How easy was it to set this integration up?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -792,6 +809,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "Which other tools are you using?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -839,6 +857,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "Was this page helpful?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -945,6 +964,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "How many hours does your team save per week by using Formbricks?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),
@@ -1039,6 +1059,7 @@ export const templates: Template[] = [
           type: QuestionType.MultipleChoiceSingle,
           headline: "Do you have all the info you need to give Formbricks a try?",
           required: true,
+          shuffleOption: "none",
           choices: [
             {
               id: createId(),

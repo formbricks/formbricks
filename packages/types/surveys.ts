@@ -6,6 +6,11 @@ export interface ThankYouCard {
   subheader?: string;
 }
 
+export interface SurveyClosedMessage {
+  heading?: string;
+  subheading?: string;
+}
+
 export interface Survey {
   id: string;
   createdAt: string;
@@ -26,6 +31,8 @@ export interface Survey {
   autoClose: number | null;
   delay: number;
   autoComplete: number | null;
+  surveyClosedMessage: SurveyClosedMessage | null;
+  closeOnDate: Date | null;
 }
 
 export interface AttributeFilter {

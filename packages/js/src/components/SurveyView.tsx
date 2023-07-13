@@ -1,7 +1,8 @@
-import type { JsConfig, Survey } from "../../../types/js";
-import type { Logic } from "../../../types/questions";
+import type { TJsConfig } from "../../../types/v1/js";
+import type { TSurvey } from "../../../types/v1/surveys";
+import type { TSurveyLogic } from "../../../types/v1/surveys";
 import { h } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState, useLayoutEffect } from "preact/hooks";
 import { createDisplay, markDisplayResponded } from "../lib/display";
 import { IErrorHandler } from "../lib/errors";
 import { Logger } from "../lib/logger";
@@ -11,11 +12,11 @@ import Progress from "./Progress";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import FormbricksSignature from "./FormbricksSignature";
-import type { TResponseInput } from "../../../types/v1/responses";
+import type { TResponseData, TResponseInput } from "../../../types/v1/responses";
 
 interface SurveyViewProps {
-  config: JsConfig;
-  survey: Survey;
+  config: TJsConfig;
+  survey: TSurvey;
   close: () => void;
   errorHandler: IErrorHandler;
 }
@@ -26,6 +27,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
   const [loadingElement, setLoadingElement] = useState(false);
+  const contentRef = useRef(null);
 
   const [countdownProgress, setCountdownProgress] = useState(100);
   const [countdownStop, setCountdownStop] = useState(false);
@@ -38,6 +40,13 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
       cancelAnimationFrame(frameRef.current);
     }
   };
+
+  //Scroll to top when question changes
+  useLayoutEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [activeQuestionId]);
 
   useEffect(() => {
     if (!survey.autoClose) return;
@@ -73,7 +82,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     initDisplay();
     async function initDisplay() {
       const createDisplayResult = await createDisplay(
-        { surveyId: survey.id, personId: config.person.id },
+        { surveyId: survey.id, personId: config.state.person.id },
         config
       );
 
@@ -92,7 +101,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     }
   }, [activeQuestionId, survey]);
 
-  function evaluateCondition(logic: Logic, answerValue: any): boolean {
+  function evaluateCondition(logic: TSurveyLogic, answerValue: any): boolean {
     switch (logic.condition) {
       case "equals":
         return (
@@ -167,7 +176,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     return questions[currentQuestionIndex + 1]?.id || "end";
   }
 
-  const submitResponse = async (data: { [x: string]: any }) => {
+  const submitResponse = async (data: TResponseData) => {
     setLoadingElement(true);
     const nextQuestionId = getNextQuestion(data);
 
@@ -175,7 +184,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     // build response
     const responseRequest: TResponseInput = {
       surveyId: survey.id,
-      personId: config.person.id,
+      personId: config.state.person.id,
       finished,
       data,
     };
@@ -215,12 +224,13 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   return (
     <div>
       {!countdownStop && survey.autoClose && (
-        <Progress progress={countdownProgress} brandColor={config.settings?.brandColor} />
+        <Progress progress={countdownProgress} brandColor={config.state?.product?.brandColor} />
       )}
       <div
+        ref={contentRef}
         className={cn(
           loadingElement ? "fb-animate-pulse fb-opacity-60" : "",
-          "fb-text-slate-800 fb-font-sans fb-px-4 fb-py-6 sm:fb-p-6"
+          "fb-text-slate-800 fb-font-sans fb-px-4 fb-py-6 sm:fb-p-6 fb-max-h-[80vh] fb-overflow-y-auto"
         )}
         onClick={() => handleStopCountdown()}
         onMouseOver={() => handleStopCountdown()}>
@@ -228,7 +238,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
           <ThankYouCard
             headline={survey.thankYouCard.headline}
             subheader={survey.thankYouCard.subheader}
-            brandColor={config.settings?.brandColor}
+            brandColor={config.state.product?.brandColor}
           />
         ) : (
           survey.questions.map(
@@ -236,7 +246,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
               activeQuestionId === question.id && (
                 <QuestionConditional
                   key={question.id}
-                  brandColor={config.settings?.brandColor}
+                  brandColor={config.state?.product?.brandColor}
                   lastQuestion={idx === survey.questions.length - 1}
                   onSubmit={submitResponse}
                   question={question}
@@ -245,8 +255,8 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
           )
         )}
       </div>
-      {config.settings?.formbricksSignature && <FormbricksSignature />}
-      <Progress progress={progress} brandColor={config.settings?.brandColor} />
+      {config.state?.product?.formbricksSignature && <FormbricksSignature />}
+      <Progress progress={progress} brandColor={config.state?.product.brandColor} />
     </div>
   );
 }

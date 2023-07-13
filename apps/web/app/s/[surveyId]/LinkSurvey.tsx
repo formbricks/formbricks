@@ -8,9 +8,10 @@ import ContentWrapper from "@/components/shared/ContentWrapper";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useLinkSurveyUtils } from "@/lib/linkSurvey/linkSurvey";
 import { cn } from "@formbricks/lib/cn";
+import type { Survey } from "@formbricks/types/surveys";
 import { Confetti } from "@formbricks/ui";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import type { Survey } from "@formbricks/types/surveys";
+import { useEffect, useRef } from "react";
 
 type EnhancedSurvey = Survey & {
   brandColor: string;
@@ -39,6 +40,15 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
   } = useLinkSurveyUtils(survey);
 
   const showBackButton = progress !== 0 && !finished;
+  // Create a reference to the top element
+  const topRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top when the currentQuestion changes
+  useEffect(() => {
+    if (topRef.current) {
+      topRef.current.scrollTop = 0;
+    }
+  }, [currentQuestion]);
 
   if (!currentQuestion || prefilling) {
     return (
@@ -51,11 +61,12 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
   return (
     <>
       <div
+        ref={topRef}
         className={cn(
           loadingElement && "animate-pulse opacity-60",
           "flex h-full flex-1 items-center overflow-y-auto bg-white"
         )}>
-        <ContentWrapper className="w-full md:max-w-lg">
+        <ContentWrapper className={cn(isPreview && "mt-[44px]", "max-h-full w-full md:max-w-lg")}>
           {isPreview && (
             <div className="absolute left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
               <div className="w-20"></div>

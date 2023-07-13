@@ -5,6 +5,7 @@
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
     "dev": "next dev",
+    "go": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

@@ -1,10 +1,10 @@
-import type { Survey } from "../../../types/js";
 import { h, render } from "preact";
+import type { TSurvey } from "../../../types/v1/surveys";
 import App from "../App";
 import { Config } from "./config";
 import { ErrorHandler, match } from "./errors";
 import { Logger } from "./logger";
-import { getSettings } from "./settings";
+import { sync } from "./sync";
 
 const containerId = "formbricks-web-container";
 const config = Config.getInstance();
@@ -12,7 +12,7 @@ const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 
-export const renderWidget = (survey: Survey) => {
+export const renderWidget = (survey: TSurvey) => {
   if (surveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
@@ -36,12 +36,12 @@ export const closeSurvey = async (): Promise<void> => {
   document.getElementById(containerId).remove();
   addWidgetContainer();
 
-  const settings = await getSettings();
+  const syncResult = await sync();
 
   match(
-    settings,
+    syncResult,
     (value) => {
-      config.update({ settings: value });
+      config.update({ state: value });
       surveyRunning = false;
     },
     (error) => {

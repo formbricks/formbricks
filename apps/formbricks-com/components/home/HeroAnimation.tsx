@@ -19,7 +19,7 @@ export const HeroAnimation: React.FC<any> = ({ fallbackImage, ...props }) => {
         loop: true,
         autoplay: true,
         // path to your animation file, place it inside public folder
-        path: "/animations/formbricks-open-source-survey-software-hero-animation-v1.json",
+        path: "/animations/opensource-xm-platform-formbricks.json",
       });
 
       animation.addEventListener("DOMLoaded", () => {

@@ -1,6 +1,15 @@
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
-import { Button, Input, Label } from "@formbricks/ui";
+import {
+  Button,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@formbricks/ui";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { cn } from "@formbricks/lib/cn";
@@ -23,6 +32,24 @@ export default function MultipleChoiceSingleForm({
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const questionRef = useRef<HTMLInputElement>(null);
+
+  const shuffleOptionsTypes = {
+    none: {
+      id: "none",
+      label: "None (Keep choices in current order)",
+      show: true,
+    },
+    all: {
+      id: "all",
+      label: "All (Randomize all choices)",
+      show: question.choices.filter((c) => c.id === "other").length === 0,
+    },
+    exceptLast: {
+      id: "exceptLast",
+      label: "Except Last (Keep last choice and randomize other choices)",
+      show: true,
+    },
+  };
 
   const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
     const newChoices = !question.choices
@@ -59,7 +86,12 @@ export default function MultipleChoiceSingleForm({
     if (question.choices.filter((c) => c.id === "other").length === 0) {
       const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
       newChoices.push({ id: "other", label: "Other" });
-      updateQuestion(questionIdx, { choices: newChoices });
+      updateQuestion(questionIdx, {
+        choices: newChoices,
+        ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
+          shuffleOption: shuffleOptionsTypes.exceptLast.id,
+        }),
+      });
     }
   };
 
@@ -167,12 +199,40 @@ export default function MultipleChoiceSingleForm({
                 )}
               </div>
             ))}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-between space-x-2">
             {question.choices.filter((c) => c.id === "other").length === 0 && (
               <Button size="sm" variant="minimal" type="button" onClick={() => addOther()}>
                 Add &quot;Other&quot;
               </Button>
             )}
+
+            <div className="flex flex-1 items-center justify-end gap-2">
+              <p className="text-sm text-slate-700">Ordering</p>
+
+              <Select
+                defaultValue={question.shuffleOption}
+                value={question.shuffleOption}
+                onValueChange={(e) => {
+                  updateQuestion(questionIdx, { shuffleOption: e });
+                }}>
+                <SelectTrigger className="w-fit overflow-hidden ">
+                  <SelectValue placeholder="Select ordering" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(shuffleOptionsTypes).map(
+                    (shuffleOptionsType) =>
+                      shuffleOptionsType.show && (
+                        <SelectItem
+                          key={shuffleOptionsType.id}
+                          value={shuffleOptionsType.id}
+                          title={shuffleOptionsType.label}>
+                          {shuffleOptionsType.label}
+                        </SelectItem>
+                      )
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>

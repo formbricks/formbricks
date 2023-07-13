@@ -11,6 +11,7 @@ import SettingsView from "./SettingsView";
 import QuestionsAudienceTabs from "./QuestionsAudienceTabs";
 import QuestionsView from "./QuestionsView";
 import SurveyMenuBar from "./SurveyMenuBar";
+import { useEnvironment } from "@/lib/environments/environments";
 
 interface SurveyEditorProps {
   environmentId: string;
@@ -24,6 +25,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
 
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+  const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
 
   useEffect(() => {
     if (survey) {
@@ -37,11 +39,11 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
     }
   }, [survey]);
 
-  if (isLoadingSurvey || isLoadingProduct || !localSurvey) {
+  if (isLoadingSurvey || isLoadingProduct || isLoadingEnvironment || !localSurvey) {
     return <LoadingSpinner />;
   }
 
-  if (isErrorSurvey || isErrorProduct) {
+  if (isErrorSurvey || isErrorProduct || isErrorEnvironment) {
     return <ErrorComponent />;
   }
 
@@ -74,13 +76,15 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             />
           )}
         </main>
-        <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-2  md:flex md:flex-col">
+        <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
           <PreviewSurvey
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
             questions={localSurvey.questions}
             brandColor={product.brandColor}
             environmentId={environmentId}
+            product={product}
+            environment={environment}
             surveyType={localSurvey.type}
             thankYouCard={localSurvey.thankYouCard}
             previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}

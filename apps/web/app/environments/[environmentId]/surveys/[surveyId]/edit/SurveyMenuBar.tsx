@@ -71,7 +71,7 @@ export default function SurveyMenuBar({
       setDeleteDialogOpen(false);
       router.back();
     } catch (error) {
-      console.log("An error occured deleting the survey");
+      console.log("An error occurred deleting the survey");
     }
   };
 
@@ -86,7 +86,15 @@ export default function SurveyMenuBar({
   };
 
   const saveSurveyAction = (shouldNavigateBack = false) => {
-    triggerSurveyMutate({ ...localSurvey })
+    // variable named strippedSurvey that is a copy of localSurvey with isDraft removed from every question
+    const strippedSurvey = {
+      ...localSurvey,
+      questions: localSurvey.questions.map((question) => {
+        const { isDraft, ...rest } = question;
+        return rest;
+      }),
+    };
+    triggerSurveyMutate({ ...strippedSurvey })
       .then(async (response) => {
         if (!response?.ok) {
           throw new Error(await response?.text());
@@ -108,6 +116,7 @@ export default function SurveyMenuBar({
         toast.error(`Error saving changes`);
       });
   };
+
   return (
     <div className="border-b border-slate-200 bg-white px-5 py-3 sm:flex sm:items-center sm:justify-between">
       <div className="flex items-center space-x-2 whitespace-nowrap">

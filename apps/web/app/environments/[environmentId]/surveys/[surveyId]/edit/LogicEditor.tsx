@@ -82,6 +82,7 @@ export default function LogicEditor({
     cta: ["clicked", "skipped"],
     consent: ["skipped", "accepted"],
   };
+
   const logicConditions: LogicConditions = {
     submitted: {
       label: "is submitted",
@@ -201,10 +202,9 @@ export default function LogicEditor({
   };
 
   const deleteLogic = (logicIdx: number) => {
-    const newLogic = !question.logic
-      ? []
-      : (question.logic as Logic[]).filter((_: any, idx: number) => idx !== logicIdx);
-    updateQuestion(questionIdx, { logic: newLogic });
+    const updatedLogic = !question.logic ? [] : JSON.parse(JSON.stringify(question.logic));
+    updatedLogic.splice(logicIdx, 1);
+    updateQuestion(questionIdx, { logic: updatedLogic });
   };
 
   const truncate = (str: string, n: number) =>
@@ -225,9 +225,7 @@ export default function LogicEditor({
               <BsArrowReturnRight className="h-4 w-4" />
               <p className="text-slate-700">If this answer</p>
 
-              <Select
-                defaultValue={logic.condition}
-                onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
+              <Select value={logic.condition} onValueChange={(e) => updateLogic(logicIdx, { condition: e })}>
                 <SelectTrigger className="min-w-fit flex-1">
                   <SelectValue placeholder="Select condition" />
                 </SelectTrigger>
@@ -246,9 +244,7 @@ export default function LogicEditor({
               {logic.condition && logicConditions[logic.condition].values != null && (
                 <div className="flex-1 basis-1/5">
                   {!logicConditions[logic.condition].multiSelect ? (
-                    <Select
-                      defaultValue={logic.value}
-                      onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
+                    <Select value={logic.value} onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select match type" />
                       </SelectTrigger>
@@ -294,7 +290,7 @@ export default function LogicEditor({
               <p className="text-slate-700">skip to</p>
 
               <Select
-                defaultValue={logic.destination}
+                value={logic.destination}
                 onValueChange={(e) => updateLogic(logicIdx, { destination: e })}>
                 <SelectTrigger className="w-fit overflow-hidden ">
                   <SelectValue placeholder="Select question" />

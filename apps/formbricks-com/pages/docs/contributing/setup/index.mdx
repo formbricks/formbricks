@@ -31,36 +31,24 @@ To get the project running locally on your machine you need to have the followin
    pnpm install
    ```
 
-1. To make the process of installing a dev dependencies easier, we offer a [`docker-compose.yml`](https://docs.docker.com/compose/) with the following servers:
-
-   - a `postgres` container and environment variables preset to reach it,
-   - a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
-
-   ```bash
-   docker-compose -f docker-compose.dev.yml up -d
-   ```
-
 1. Create a `.env` file based on `.env.example`. It's already preset to work with the docker-compose setup but you can also change values if needed.
 
    ```bash
    cp .env.example .env
    ```
 
-1. Make sure your Docker containers are running. Then let prisma set up the database for you:
+1. Make sure you have [`Docker`](https://docs.docker.com/compose/) & [`docker-compose`](https://docs.docker.com/compose/) installed and running on your machine. Then run the following command to start the formbricks dev setup:
 
    ```bash
-   pnpm prisma migrate dev
+   pnpm go
    ```
 
-1. Start the development server of the app:
+   This starts the Formbricks main app (plus all its dependencies) as well as the following services using Docker:
 
-   ```bash
-   pnpm dev --filter=web...
-   ```
+   - a `postgres` container for hosting your database,
+   - a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
 
-   This only starts the Formbricks main app plus all its dependencies to save memory. If you want to start all apps at once, run `pnpm dev` instead.
-
-   **You can now access the app on [http://localhost:3000](http://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of formbricks, create a new account.
+   **You can now access the Formbricks app on [http://localhost:3000](http://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of formbricks, create a new account.
 
    For viewing the confirmation email and other emails the system sends you, you can access mailhog at [http://localhost:8025](http://localhost:8025)
 
@@ -71,5 +59,25 @@ To build all apps and packages and check for build errors, run the following com
 ```bash
 pnpm build
 ```
+
+### Access Demo app
+
+To run the [Demo app](/docs/contributing/demo), run the following command in a separate terminal window:
+
+```bash
+pnpm dev --filter=demo
+```
+
+You can now access the Demo app on [http://localhost:3002](http://localhost:3002).
+
+### Access Formbricks website
+
+If you want to make changes to the Formbricks website, e.g. to update the documentation, run the following command in a separate terminal window:
+
+```bash
+pnpm dev --filter=formbricks-com
+```
+
+You can now access the Formbricks website on [http://localhost:3001](http://localhost:3001).
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

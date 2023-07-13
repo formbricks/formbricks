@@ -1,5 +1,6 @@
 import { h } from "preact";
-import { QuestionType, type Question } from "@formbricks/types/questions";
+import { QuestionType } from "../../../types/questions";
+import { TSurveyQuestion } from "../../../types/v1/surveys";
 import OpenTextQuestion from "./OpenTextQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
@@ -9,7 +10,7 @@ import RatingQuestion from "./RatingQuestion";
 import ConsentQuestion from "./ConsentQuestion";
 
 interface QuestionConditionalProps {
-  question: Question;
+  question: TSurveyQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

@@ -28,7 +28,7 @@ export default function IsPasswordValid({
 
   useEffect(() => {
     let newValidations = [...DEFAULT_VALIDATIONS];
-    if (password) {
+    if (password !== null) {
       newValidations = checkValidation(newValidations, 0, PASSWORD_REGEX.UPPER_AND_LOWER.test(password));
       newValidations = checkValidation(newValidations, 1, password.length >= 8);
       newValidations = checkValidation(newValidations, 2, PASSWORD_REGEX.NUMBER.test(password));
