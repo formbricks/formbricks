@@ -37,6 +37,7 @@ enum FilterDownload {
 }
 
 enum FilterDropDownLabels {
+  ALL_TIME = "All time",
   LAST_7_DAYS = "Last 7 days",
   LAST_30_DAYS = "Last 30 days",
   CUSTOM_RANGE = "Custom range...",
@@ -65,7 +66,7 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
       ? getDifferenceOfDays(dateRange.from, dateRange.to)
-      : FilterDropDownLabels.LAST_7_DAYS
+      : FilterDropDownLabels.ALL_TIME
   );
   const [selectingDate, setSelectingDate] = useState<DateSelected>(DateSelected.FROM);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
@@ -318,6 +319,14 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
+              <DropdownMenuItem
+                className="hover:ring-0"
+                onClick={() => {
+                  setFilterRange(FilterDropDownLabels.ALL_TIME);
+                  setDateRange({ from: undefined, to: getTodayDate() });
+                }}>
+                <p className="text-slate-700">All time</p>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {

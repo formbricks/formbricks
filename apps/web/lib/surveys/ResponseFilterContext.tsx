@@ -57,13 +57,13 @@ function ResponseFilterProvider({ children }: { children: React.ReactNode }) {
   });
 
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: subDays(new Date(), 7),
+    from: undefined,
     to: getTodayDate(),
   });
 
   const resetState = () => {
     setDateRange({
-      from: subDays(new Date(), 7),
+      from: undefined,
       to: getTodayDate(),
     });
     setSelectedFilter({
