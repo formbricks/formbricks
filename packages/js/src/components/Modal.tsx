@@ -21,9 +21,6 @@ export default function Modal({
   const [show, setShow] = useState(false);
   const isCenter = placement === "center";
   const modalRef = useRef(null);
-  /* useEffect(() => {
-    setLoaded(true);
-  }, []); */
 
   useEffect(() => {
     setShow(isOpen);
@@ -87,7 +84,7 @@ export default function Modal({
             <button
               type="button"
               onClick={close}
-              class="fb-rounded-md fb-bg-white focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 fb-text-slate-400 hover:fb-text-slate-500 focus:ring-slate-500">
+              class="fb-rounded-md fb-bg-white fb-relative fb-z-50 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 fb-text-slate-400 hover:fb-text-slate-500 focus:ring-slate-500">
               <span class="fb-sr-only">Close</span>
               <svg
                 class="fb-h-6 fb-w-6"

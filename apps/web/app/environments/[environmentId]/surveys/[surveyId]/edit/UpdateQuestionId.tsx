@@ -1,23 +1,37 @@
 "use client";
 
-import { Button, Input, Label } from "@formbricks/ui";
-import { CheckIcon } from "@heroicons/react/24/solid";
+import { Input, Label } from "@formbricks/ui";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 export default function UpdateQuestionId({ localSurvey, question, questionIdx, updateQuestion }) {
   const [currentValue, setCurrentValue] = useState(question.id);
+  const [prevValue, setPrevValue] = useState(question.id);
 
   const saveAction = () => {
+    // return early if the input value was not changed
+    if (currentValue === prevValue) {
+      return;
+    }
+
     // check if id is unique
     const questionIds = localSurvey.questions.map((q) => q.id);
     if (questionIds.includes(currentValue)) {
-      alert("Question Identifier must be unique within the survey.");
+      toast.error("IDs have to be unique per survey.");
       setCurrentValue(question.id);
       return;
     }
+
+    // check if id contains any spaces
+    if (currentValue.trim() === "" || currentValue.includes(" ")) {
+      toast.error("ID should not contain space.");
+      setCurrentValue(question.id);
+      return;
+    }
+
     updateQuestion(questionIdx, { id: currentValue });
     toast.success("Question ID updated.");
+    setPrevValue(currentValue); // after successful update, set current value as previous value
   };
 
   const isInputInvalid = currentValue.trim() === "" || currentValue.includes(" ");
@@ -31,18 +45,10 @@ export default function UpdateQuestionId({ localSurvey, question, questionIdx, u
           name="questionId"
           value={currentValue}
           onChange={(e) => setCurrentValue(e.target.value)}
-          disabled={localSurvey.status !== "draft"}
-          className={isInputInvalid ? "focus:border-red-300 border-red-300" : ""}
+          onBlur={saveAction}
+          disabled={!(localSurvey.status === "draft" || question.isDraft)}
+          className={isInputInvalid ? "border-red-300 focus:border-red-300" : ""}
         />
-        {localSurvey.status === "draft" && (
-          <Button
-            variant="darkCTA"
-            className="ml-2 bg-slate-600 text-white hover:bg-slate-700 disabled:bg-slate-400"
-            onClick={saveAction}
-            disabled={isInputInvalid || currentValue === question.id}>
-            <CheckIcon className="h-4 w-4" />
-          </Button>
-        )}
       </div>
     </div>
   );

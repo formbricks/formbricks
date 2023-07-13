@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZEventClass } from "./eventClasses";
+import { ZActionClass } from "./actionClasses";
 import { QuestionType } from "../questions";
 
 export const ZSurveyThankYouCard = z.object({
@@ -8,12 +8,23 @@ export const ZSurveyThankYouCard = z.object({
   subheader: z.optional(z.string()),
 });
 
+export const ZSurveyClosedMessage = z
+  .object({
+    heading: z.optional(z.string()),
+    subheading: z.optional(z.string()),
+  })
+  .optional();
+
 export type TSurveyThankYouCard = z.infer<typeof ZSurveyThankYouCard>;
+
+export type TSurveyClosedMessage = z.infer<typeof ZSurveyThankYouCard>;
 
 export const ZSurveyChoice = z.object({
   id: z.string(),
   label: z.string(),
 });
+
+export type TSurveyChoice = z.infer<typeof ZSurveyChoice>;
 
 export const ZSurveyLogicCondition = z.enum([
   "submitted",
@@ -102,6 +113,8 @@ export const ZSurveyLogic = z.union([
   ZSurveyRatingLogic,
 ]);
 
+export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
+
 const ZSurveyQuestionBase = z.object({
   id: z.string(),
   type: z.string(),
@@ -121,11 +134,18 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   logic: z.array(ZSurveyOpenTextLogic).optional(),
 });
 
+export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
+
 export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.Consent),
+  html: z.string().optional(),
+  label: z.string(),
+  dismissButtonLabel: z.string().optional(),
   placeholder: z.string().optional(),
   logic: z.array(ZSurveyConsentLogic).optional(),
 });
+
+export type TSurveyConsentQuestion = z.infer<typeof ZSurveyConsentQuestion>;
 
 export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.MultipleChoiceSingle),
@@ -134,6 +154,8 @@ export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
 });
 
+export type TSurveyMultipleChoiceSingleQuestion = z.infer<typeof ZSurveyMultipleChoiceSingleQuestion>;
+
 export const ZSurveyMultipleChoiceMultiQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.MultipleChoiceMulti),
   choices: z.array(ZSurveyChoice),
@@ -141,12 +163,16 @@ export const ZSurveyMultipleChoiceMultiQuestion = ZSurveyQuestionBase.extend({
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
 });
 
+export type TSurveyMultipleChoiceMultiQuestion = z.infer<typeof ZSurveyMultipleChoiceMultiQuestion>;
+
 export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.NPS),
   lowerLabel: z.string(),
   upperLabel: z.string(),
   logic: z.array(ZSurveyNPSLogic).optional(),
 });
+
+export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.CTA),
@@ -157,6 +183,8 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   logic: z.array(ZSurveyCTALogic).optional(),
 });
 
+export type TSurveyCTAQuestion = z.infer<typeof ZSurveyCTAQuestion>;
+
 export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(QuestionType.Rating),
   scale: z.enum(["number", "smiley", "star"]),
@@ -165,6 +193,8 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   upperLabel: z.string(),
   logic: z.array(ZSurveyRatingLogic).optional(),
 });
+
+export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
@@ -200,13 +230,14 @@ export const ZSurvey = z.object({
   attributeFilters: z.array(ZSurveyAttributeFilter),
   displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
   autoClose: z.union([z.number(), z.null()]),
-  triggers: z.array(ZEventClass),
+  triggers: z.array(ZActionClass),
   redirectUrl: z.string().url().optional(),
   recontactDays: z.union([z.number(), z.null()]),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
   delay: z.number(),
   autoComplete: z.union([z.number(), z.null()]),
+  closeOnDate: z.date().nullable(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
@@ -216,6 +247,7 @@ export const ZSurveyWithAnalytics = ZSurvey.extend({
     numDisplays: z.number(),
     responseRate: z.number(),
   }),
+  surveyClosedMessage: ZSurveyClosedMessage,
 });
 
 export type TSurveyWithAnalytics = z.infer<typeof ZSurveyWithAnalytics>;

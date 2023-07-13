@@ -1,9 +1,5 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useEnvironment } from "@/lib/environments/environments";
-import { useProduct } from "@/lib/products/products";
-import { useProfile } from "@/lib/profile";
 import { createSurvey } from "@/lib/surveys/surveys";
 import { replacePresetPlaceholders } from "@/lib/templates";
 import { cn } from "@formbricks/lib/cn";
@@ -16,24 +12,26 @@ import { useEffect, useState } from "react";
 import { customSurvey, templates } from "./templates";
 import { SplitIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
+import type { TEnvironment } from "@formbricks/types/v1/environment";
+import type { TProduct } from "@formbricks/types/v1/product";
+import { useProfile } from "@/lib/profile";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
 
 type TemplateList = {
   environmentId: string;
   onTemplateClick: (template: Template) => void;
+  environment: TEnvironment;
+  product: TProduct;
 };
 
 const ALL_CATEGORY_NAME = "All";
 const RECOMMENDED_CATEGORY_NAME = "For you";
-
-export default function TemplateList({ environmentId, onTemplateClick }: TemplateList) {
+export default function TemplateList({ environmentId, onTemplateClick, product, environment }: TemplateList) {
   const router = useRouter();
-
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(false);
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-  const { profile, isLoadingProfile, isErrorProfile } = useProfile();
-  const { environment } = useEnvironment(environmentId);
   const [selectedFilter, setSelectedFilter] = useState(RECOMMENDED_CATEGORY_NAME);
+  const { profile, isLoadingProfile, isErrorProfile } = useProfile();
 
   const [categories, setCategories] = useState<Array<string>>([]);
 
@@ -65,8 +63,8 @@ export default function TemplateList({ environmentId, onTemplateClick }: Templat
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
   };
 
-  if (isLoadingProduct || isLoadingProfile) return <LoadingSpinner />;
-  if (isErrorProduct || isErrorProfile) return <ErrorComponent />;
+  if (isLoadingProfile) return <LoadingSpinner />;
+  if (isErrorProfile) return <ErrorComponent />;
 
   return (
     <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-3 focus:outline-none">

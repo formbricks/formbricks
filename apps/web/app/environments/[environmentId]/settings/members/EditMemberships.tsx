@@ -22,10 +22,8 @@ import {
   Button,
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
   ProfileAvatar,
   Tooltip,
@@ -105,8 +103,6 @@ function RoleElement({
         </DropdownMenuTrigger>
         {!disableRole && (
           <DropdownMenuContent>
-            <DropdownMenuLabel className="text-center">Select Role</DropdownMenuLabel>
-            <DropdownMenuSeparator />
             <DropdownMenuRadioGroup
               value={capitalizeFirstLetter(memberRole)}
               onValueChange={(value) => handleMemberRoleUpdate(value.toLowerCase())}>
@@ -156,10 +152,16 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
   }
 
   const handleDeleteMember = async () => {
+    let result = false;
     if (activeMember.accepted) {
-      await removeMember(team.teamId, activeMember.userId);
+      result = await removeMember(team.teamId, activeMember.userId);
     } else {
-      await deleteInvite(team.teamId, activeMember.inviteId);
+      result = await deleteInvite(team.teamId, activeMember.inviteId);
+    }
+    if (result) {
+      toast.success("Member removed successfully");
+    } else {
+      toast.error("Something went wrong");
     }
     setDeleteMemberModalOpen(false);
     mutateTeam();
@@ -177,8 +179,19 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
 
   const handleAddMember = async (data) => {
     // TODO: handle http 409 user is already part of the team
-    await addMember(team.teamId, data);
+    const add = await addMember(team.teamId, data);
+    if (add) {
+      toast.success("Member invited successfully");
+    } else {
+      toast.error("Something went wrong");
+    }
     mutateTeam();
+  };
+
+  const isExpired = (invite) => {
+    const now = new Date();
+    const expiresAt = new Date(invite.expiresAt);
+    return now > expiresAt;
   };
 
   return (
@@ -237,12 +250,18 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
                 />
               </div>
               <div className="col-span-5 flex items-center justify-end gap-x-4 pr-4">
-                {!member.accepted && <Badge className="mr-2" type="warning" text="Pending" size="tiny" />}
-                {member.role !== "owner" && (
+                {!member.accepted &&
+                  (isExpired(member) ? (
+                    <Badge className="mr-2" type="gray" text="Expired" size="tiny" />
+                  ) : (
+                    <Badge className="mr-2" type="warning" text="Pending" size="tiny" />
+                  ))}
+                {isAdminOrOwner && member.role !== "owner" && member.userId !== profile?.id && (
                   <button onClick={(e) => handleOpenDeleteMemberModal(e, member)}>
                     <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
                   </button>
                 )}
+
                 {!member.accepted && (
                   <TooltipProvider delayDuration={50}>
                     <Tooltip>

@@ -1,11 +1,12 @@
 import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
+import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
-import type { Choice, MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
+import { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
+import { TSurveyChoice } from "@formbricks/types/v1/surveys";
 import { useEffect, useRef, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import { shuffleArray } from "@/lib/utils";
 
 interface MultipleChoiceSingleProps {
   question: MultipleChoiceSingleQuestion;
@@ -21,9 +22,9 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
-  const [questionChoices, setQuestionChoices] = useState<Choice[]>(
+  const [questionChoices, setQuestionChoices] = useState<TSurveyChoice[]>(
     question.choices
-      ? question.shuffleOption !== "none"
+      ? question.shuffleOption && question.shuffleOption !== "none"
         ? shuffleArray(question.choices, question.shuffleOption)
         : question.choices
       : []
@@ -35,18 +36,11 @@ export default function MultipleChoiceSingleQuestion({
       otherSpecify.current?.focus();
     }
   }, [selectedChoice]);
-  /*   const [isIphone, setIsIphone] = useState(false);
-
-
-  useEffect(() => {
-    setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
-  }, []);
- */
 
   useEffect(() => {
     setQuestionChoices(
       question.choices
-        ? question.shuffleOption !== "none"
+        ? question.shuffleOption && question.shuffleOption !== "none"
           ? shuffleArray(question.choices, question.shuffleOption)
           : question.choices
         : []
@@ -105,15 +99,9 @@ export default function MultipleChoiceSingleQuestion({
                       autoFocus
                     />
                   )}
-                  </span>
-                </label>
-              ))}
-            {/*             {isIphone && question.choices.length > 5 && (
-              <div className="z-50 -mt-8 h-8 bg-gradient-to-b from-transparent to-white"></div>
-            )} */}
-            {/*             {isIphone && question.choices.length > 5 && (
-              <div className="z-50 -mt-8 h-8 bg-gradient-to-b from-transparent to-white"></div>
-            )} */}
+                </span>
+              </label>
+            ))}
           </div>
         </fieldset>
       </div>

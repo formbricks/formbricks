@@ -4,11 +4,17 @@ import { Button } from "@formbricks/ui";
 import { signIn } from "next-auth/react";
 import { FaGoogle } from "react-icons/fa";
 
-export const GoogleButton = ({ text = "Continue with Google" }) => {
+export const GoogleButton = ({
+  text = "Continue with Google",
+  inviteUrl,
+}: {
+  text?: string;
+  inviteUrl?: string | null;
+}) => {
   const handleLogin = async () => {
     await signIn("google", {
       redirect: true,
-      callbackUrl: "/", // redirect after login to /
+      callbackUrl: inviteUrl ? inviteUrl : "/", // redirect after login to /
     });
   };
 

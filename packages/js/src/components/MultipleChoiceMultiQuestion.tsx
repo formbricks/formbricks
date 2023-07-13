@@ -1,14 +1,15 @@
-import type { Choice, MultipleChoiceMultiQuestion } from "../../../types/questions";
 import { h } from "preact";
-import { useState, useRef, useEffect } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { TResponseData } from "../../../types/v1/responses";
+import type { TSurveyChoice, TSurveyMultipleChoiceMultiQuestion } from "../../../types/v1/surveys";
 import { cn, shuffleArray } from "../lib/utils";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 
 interface MultipleChoiceMultiProps {
-  question: MultipleChoiceMultiQuestion;
-  onSubmit: (data: { [x: string]: any }) => void;
+  question: TSurveyMultipleChoiceMultiQuestion;
+  onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
@@ -22,9 +23,9 @@ export default function MultipleChoiceMultiQuestion({
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
-  const [questionChoices, setQuestionChoices] = useState<Choice[]>(
+  const [questionChoices, setQuestionChoices] = useState<TSurveyChoice[]>(
     question.choices
-      ? question.shuffleOption !== "none"
+      ? question.shuffleOption && question.shuffleOption !== "none"
         ? shuffleArray(question.choices, question.shuffleOption)
         : question.choices
       : []
@@ -44,7 +45,7 @@ export default function MultipleChoiceMultiQuestion({
   useEffect(() => {
     setQuestionChoices(
       question.choices
-        ? question.shuffleOption !== "none"
+        ? question.shuffleOption && question.shuffleOption !== "none"
           ? shuffleArray(question.choices, question.shuffleOption)
           : question.choices
         : []

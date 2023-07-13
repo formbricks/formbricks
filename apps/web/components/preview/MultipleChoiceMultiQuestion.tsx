@@ -1,11 +1,11 @@
 import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
+import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
 import type { Choice, MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import { shuffleArray } from "@/lib/utils";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
@@ -36,10 +36,6 @@ export default function MultipleChoiceMultiQuestion({
   useEffect(() => {
     setIsAtLeastOneChecked(selectedChoices.length > 0 || otherSpecified.length > 0);
   }, [selectedChoices, otherSpecified]);
-
-  /*   useEffect(() => {
-    setIsIphone(/iPhone|iPad|iPod/.test(navigator.userAgent));
-  }, []); */
 
   useEffect(() => {
     setQuestionChoices(
@@ -105,7 +101,6 @@ export default function MultipleChoiceMultiQuestion({
                         onChange={(e) => {
                           if (choice.id === "other") {
                             setShowOther(e.currentTarget.checked);
-
                             return;
                           }
 

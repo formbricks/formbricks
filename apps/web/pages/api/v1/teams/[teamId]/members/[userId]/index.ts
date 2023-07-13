@@ -64,7 +64,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
       },
     });
-    if (membership?.role !== "owner") {
+    if (membership?.role !== "owner" && membership?.role !== "admin") {
       return res.status(403).json({ message: "You are not allowed to delete member froms this team" });
     } else if (membership?.role === "owner" && userId === currentUser.id) {
       return res.status(403).json({ message: "You cannot delete yourself from this team" });
