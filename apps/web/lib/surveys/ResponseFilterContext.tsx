@@ -7,7 +7,6 @@ import {
 import { QuestionFilterOptions } from "@/app/environments/[environmentId]/surveys/[surveyId]/ResponseFilter";
 import { getTodayDate } from "@/lib/surveys/surveys";
 import { createContext, useContext, useState } from "react";
-import { subDays } from "date-fns";
 
 interface FilterValue {
   questionType: Partial<QuestionOption>;
@@ -48,7 +47,7 @@ function ResponseFilterProvider({ children }: { children: React.ReactNode }) {
   // state holds the filter selected value
   const [selectedFilter, setSelectedFilter] = useState<SelectedFilterValue>({
     filter: [],
-    onlyComplete: true,
+    onlyComplete: false,
   });
   // state holds all the options of the responses fetched
   const [selectedOptions, setSelectedOptions] = useState<SelectedFilterOptions>({
@@ -68,7 +67,7 @@ function ResponseFilterProvider({ children }: { children: React.ReactNode }) {
     });
     setSelectedFilter({
       filter: [],
-      onlyComplete: true,
+      onlyComplete: false,
     });
     setSelectedOptions({
       questionFilterOptions: [],
