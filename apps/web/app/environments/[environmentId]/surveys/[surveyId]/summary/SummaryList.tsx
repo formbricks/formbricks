@@ -1,4 +1,3 @@
-import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/data";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import {
   QuestionType,
@@ -11,24 +10,22 @@ import {
   type ConsentQuestion,
 } from "@formbricks/types/questions";
 import type { QuestionSummary } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/v1/surveys";
-import { Session } from "next-auth";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
 import CTASummary from "./CTASummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
 import RatingSummary from "./RatingSummary";
+import { TResponse } from "@formbricks/types/v1/responses";
 import ConsentSummary from "@/app/environments/[environmentId]/surveys/[surveyId]/summary/ConsentSummary";
 
 interface SummaryListProps {
   environmentId: string;
-  surveyId: string;
-  session: Session;
+  survey: TSurvey;
+  responses: TResponse[];
 }
 
-export default async function SummaryList({ environmentId, surveyId, session }: SummaryListProps) {
-  const { survey, responses } = await getAnalysisData(session, surveyId, environmentId);
-
+export default function SummaryList({ environmentId, survey, responses }: SummaryListProps) {
   const getSummaryData = (): QuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {
       const questionResponses = responses
