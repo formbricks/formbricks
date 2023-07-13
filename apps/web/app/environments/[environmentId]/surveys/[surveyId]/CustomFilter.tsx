@@ -385,7 +385,7 @@ const CustomFilter = ({ environmentId, responses, survey, totalResponses }: Cust
                 onClick={() => {
                   downloadResponses(FilterDownload.FILTER);
                 }}>
-                <p className="text-slate-700">Current date range (CSV)</p>
+                <p className="text-slate-700">Current selection (CSV)</p>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

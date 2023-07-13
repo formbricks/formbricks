@@ -62,7 +62,7 @@ const QuestionFilterComboBox = ({
     <div className="inline-flex w-full flex-row">
       {filterOptions && filterOptions?.length <= 1 ? (
         <div className="h-9 max-w-fit rounded-md rounded-r-none border-r-[1px] border-slate-300 bg-white p-2 text-sm text-slate-600">
-          <p className="mr-1 max-w-[50px] truncate text-slate-600 sm:max-w-[80px]">{filterValue}</p>
+          <p className="mr-1 max-w-[50px] truncate text-slate-600 sm:max-w-[100px]">{filterValue}</p>
         </div>
       ) : (
         <DropdownMenu
