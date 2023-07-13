@@ -30,6 +30,9 @@ export const SigninForm = () => {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
+  const callbackUrl = searchParams?.get("callbackUrl");
+  const inviteToken = callbackUrl ? new URL(callbackUrl).searchParams.get("token") : null;
+
   const checkFormValidity = () => {
     // If both fields are filled, enable the button
     if (formRef.current) {
@@ -108,12 +111,12 @@ export const SigninForm = () => {
 
           {env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "1" && (
             <>
-              <GoogleButton />
+              <GoogleButton inviteUrl={callbackUrl} />
             </>
           )}
           {env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "1" && (
             <>
-              <GithubButton />
+              <GithubButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>
@@ -121,7 +124,9 @@ export const SigninForm = () => {
           <div className="mt-9 text-center text-xs ">
             <span className="leading-5 text-slate-500">New to Formbricks?</span>
             <br />
-            <Link href="/auth/signup" className="font-semibold text-slate-600 underline hover:text-slate-700">
+            <Link
+              href={callbackUrl ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup"}
+              className="font-semibold text-slate-600 underline hover:text-slate-700">
               Create an account
             </Link>
           </div>

@@ -1,14 +1,15 @@
-import type { MultipleChoiceMultiQuestion } from "../../../types/questions";
 import { h } from "preact";
-import { useState, useRef, useEffect } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { TResponseData } from "../../../types/v1/responses";
+import type { TSurveyMultipleChoiceMultiQuestion } from "../../../types/v1/surveys";
 import { cn } from "../lib/utils";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 
 interface MultipleChoiceMultiProps {
-  question: MultipleChoiceMultiQuestion;
-  onSubmit: (data: { [x: string]: any }) => void;
+  question: TSurveyMultipleChoiceMultiQuestion;
+  onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
@@ -61,7 +62,7 @@ export default function MultipleChoiceMultiQuestion({
       <div className="fb-mt-4">
         <fieldset>
           <legend className="fb-sr-only">Options</legend>
-          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white fb-max-h-[42vh] fb-overflow-y-auto fb-pr-2 fb-py-0.5">
+          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white">
             {question.choices &&
               question.choices.map((choice) => (
                 <label

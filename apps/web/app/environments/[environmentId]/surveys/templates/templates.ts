@@ -329,7 +329,7 @@ export const templates: Template[] = [
             { id: createId(), label: "Yes" },
             { id: createId(), label: "No" },
           ],
-          headline: "Have you actively discouraged others from choosing {{produtName}}?",
+          headline: "Have you actively discouraged others from choosing {{productName}}?",
           required: true,
           subheader: "",
         },
@@ -1658,7 +1658,7 @@ export const templates: Template[] = [
     objectives: ["increase_user_adoption"],
     description: "Identify the ONE thing your users want the most and build it.",
     preset: {
-      name: "{{productName} Roadmap Input",
+      name: "{{productName}} Roadmap Input",
       questions: [
         {
           id: createId(),

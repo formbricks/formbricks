@@ -1,14 +1,15 @@
 import { h } from "preact";
-import { useRef, useState, useEffect } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { TResponseData } from "../../../types/v1/responses";
+import type { TSurveyMultipleChoiceSingleQuestion } from "../../../types/v1/surveys";
 import { cn } from "../lib/utils";
-import type { MultipleChoiceSingleQuestion } from "../../../types/questions";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 
 interface MultipleChoiceSingleProps {
-  question: MultipleChoiceSingleQuestion;
-  onSubmit: (data: { [x: string]: any }) => void;
+  question: TSurveyMultipleChoiceSingleQuestion;
+  onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
@@ -46,7 +47,7 @@ export default function MultipleChoiceSingleQuestion({
       <div className="fb-mt-4">
         <fieldset>
           <legend className="fb-sr-only">Options</legend>
-          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white fb-max-h-[42vh] fb-overflow-y-auto fb-pr-2 fb-py-0.5">
+          <div className="fb-relative fb-space-y-2 fb-rounded-md fb-bg-white">
             {question.choices &&
               question.choices.map((choice, idx) => (
                 <label

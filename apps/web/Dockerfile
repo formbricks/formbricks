@@ -23,7 +23,7 @@ USER nextjs
 
 WORKDIR /home/nextjs
 
-COPY --from=installer /app/apps/web/next.config.js .
+COPY --from=installer /app/apps/web/next.config.mjs .
 COPY --from=installer /app/apps/web/package.json .
 
 # Automatically leverage output traces to reduce image size

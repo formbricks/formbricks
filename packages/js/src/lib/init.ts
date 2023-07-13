@@ -1,5 +1,5 @@
 import type { InitConfig } from "../../../types/js";
-import { addExitIntentListener, addScrollDepthListener } from "./automaticEvents";
+import { addExitIntentListener, addScrollDepthListener } from "./automaticActions";
 import { Config } from "./config";
 import {
   ErrorHandler,
@@ -11,26 +11,42 @@ import {
   err,
   okVoid,
 } from "./errors";
-import { trackEvent } from "./event";
+import { trackAction } from "./actions";
 import { Logger } from "./logger";
 import { addClickEventListener, addPageUrlEventListeners, checkPageUrl } from "./noCodeEvents";
-import { createPerson, resetPerson } from "./person";
-import { createSession, extendOrCreateSession, extendSession, isExpired } from "./session";
+import { resetPerson } from "./person";
+import { isExpired } from "./session";
 import { addStylesToDom } from "./styles";
+import { sync } from "./sync";
 import { addWidgetContainer } from "./widget";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
-const addSessionEventListeners = (): void => {
-  // add event listener to check the session every minute
+let syncIntervalId: number | null = null;
+
+const addSyncEventListener = (debug?: boolean): void => {
+  const updateInverval = debug ? 1000 * 30 : 1000 * 60 * 2; // 2 minutes in production, 30 seconds in debug mode
+  // add event listener to check sync with backend on regular interval
   if (typeof window !== "undefined") {
-    const intervalId = window.setInterval(async () => {
-      await extendOrCreateSession();
-    }, 1000 * 60 * 5); // check every 5 minutes
+    // clear any existing interval
+    if (syncIntervalId !== null) {
+      window.clearInterval(syncIntervalId);
+    }
+    syncIntervalId = window.setInterval(async () => {
+      logger.debug("Syncing.");
+      const syncResult = await sync();
+      if (syncResult.ok !== true) {
+        return err(syncResult.error);
+      }
+      const state = syncResult.value;
+      config.update({ state });
+    }, updateInverval);
     // clear interval on page unload
     window.addEventListener("beforeunload", () => {
-      clearInterval(intervalId);
+      if (syncIntervalId !== null) {
+        window.clearInterval(syncIntervalId);
+      }
     });
   }
 };
@@ -38,9 +54,9 @@ const addSessionEventListeners = (): void => {
 export const initialize = async (
   c: InitConfig
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
-  if (c.logLevel) {
-    logger.debug(`Setting log level to ${c.logLevel}`);
-    logger.configure({ logLevel: c.logLevel });
+  if (c.debug) {
+    logger.debug(`Setting log level to debug`);
+    logger.configure({ logLevel: "debug" });
   }
 
   ErrorHandler.getInstance().printStatus();
@@ -70,57 +86,57 @@ export const initialize = async (
   logger.debug("Adding styles to DOM");
   addStylesToDom();
   if (
-    config.get().session &&
+    config.get().state &&
     config.get().environmentId === c.environmentId &&
     config.get().apiHost === c.apiHost
   ) {
     logger.debug("Found existing configuration. Checking session.");
-    const existingSession = config.get().session;
+    const existingSession = config.get().state.session;
     if (isExpired(existingSession)) {
-      logger.debug("Session expired. Creating new session.");
+      logger.debug("Session expired. Resyncing.");
 
-      const createSessionResult = await createSession();
+      const syncResult = await sync();
 
-      // if create session fails, clear config and start from scratch
-      if (createSessionResult.ok !== true) {
+      // if create sync fails, clear config and start from scratch
+      if (syncResult.ok !== true) {
         await resetPerson();
         return await initialize(c);
       }
 
-      const { session, settings } = createSessionResult.value;
+      const state = syncResult.value;
 
-      config.update({ session: extendSession(session), settings });
+      config.update({ state });
 
-      const trackEventResult = await trackEvent("New Session");
+      const trackActionResult = await trackAction("New Session");
 
-      if (trackEventResult.ok !== true) return err(trackEventResult.error);
+      if (trackActionResult.ok !== true) return err(trackActionResult.error);
     } else {
-      logger.debug("Session valid. Extending session.");
-      config.update({ session: extendSession(existingSession) });
+      logger.debug("Session valid. Continuing.");
+      // continue for now - next sync will check complete state
     }
   } else {
     logger.debug("No valid session found. Creating new config.");
     // we need new config
     config.update({ environmentId: c.environmentId, apiHost: c.apiHost });
 
-    logger.debug("Get person, session and settings from server");
-    const result = await createPerson();
+    logger.debug("Syncing.");
+    const syncResult = await sync();
 
-    if (result.ok !== true) {
-      return err(result.error);
+    if (syncResult.ok !== true) {
+      return err(syncResult.error);
     }
 
-    const { person, session, settings } = result.value;
+    const state = syncResult.value;
 
-    config.update({ person, session: extendSession(session), settings });
+    config.update({ state });
 
-    const trackEventResult = await trackEvent("New Session");
+    const trackActionResult = await trackAction("New Session");
 
-    if (trackEventResult.ok !== true) return err(trackEventResult.error);
+    if (trackActionResult.ok !== true) return err(trackActionResult.error);
   }
 
   logger.debug("Add session event listeners");
-  addSessionEventListeners();
+  addSyncEventListener(c.debug);
 
   logger.debug("Add page url event listeners");
   addPageUrlEventListeners();
@@ -146,9 +162,7 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
   if (
     !config.get().apiHost ||
     !config.get().environmentId ||
-    !config.get().person ||
-    !config.get().session ||
-    !config.get().settings ||
+    !config.get().state ||
     !ErrorHandler.initialized
   ) {
     return err({

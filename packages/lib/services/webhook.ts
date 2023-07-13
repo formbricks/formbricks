@@ -39,13 +39,14 @@ export const createWebhook = async (
   webhookInput: TWebhookInput
 ): Promise<TWebhook> => {
   try {
-    if (!webhookInput.url || !webhookInput.trigger) {
+    if (!webhookInput.url || !webhookInput.triggers) {
       throw new InvalidInputError("Missing URL or trigger in webhook input");
     }
     return await prisma.webhook.create({
       data: {
         url: webhookInput.url,
-        triggers: [webhookInput.trigger],
+        triggers: webhookInput.triggers,
+        surveyIds: webhookInput.surveyIds || [],
         environment: {
           connect: {
             id: environmentId,

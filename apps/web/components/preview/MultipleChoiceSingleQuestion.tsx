@@ -2,7 +2,7 @@ import { Input } from "@/../../packages/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { cn } from "@formbricks/lib/cn";
 import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
@@ -20,6 +20,13 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const otherSpecify = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (selectedChoice === "other") {
+      otherSpecify.current?.focus();
+    }
+  }, [selectedChoice]);
   /*   const [isIphone, setIsIphone] = useState(false);
 
 
@@ -31,7 +38,7 @@ export default function MultipleChoiceSingleQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const value = e.currentTarget[question.id].value;
+        const value = otherSpecify.current?.value || e.currentTarget[question.id].value;
         const data = {
           [question.id]: value,
         };
@@ -43,7 +50,7 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
+          <div className="relative space-y-2 rounded-md py-0.5">
             {question.choices &&
               question.choices.map((choice, idx) => (
                 <label
@@ -72,6 +79,7 @@ export default function MultipleChoiceSingleQuestion({
                   {choice.id === "other" && selectedChoice === "other" && (
                     <Input
                       id={`${choice.id}-label`}
+                      ref={otherSpecify}
                       name={question.id}
                       placeholder="Please specify"
                       className="mt-3 bg-white focus:border-slate-300"
