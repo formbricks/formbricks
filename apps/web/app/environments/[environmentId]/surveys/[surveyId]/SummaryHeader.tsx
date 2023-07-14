@@ -58,8 +58,8 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
   return (
     <div className="mb-11 mt-6 flex flex-wrap items-center justify-between">
       <div>
-        <p className="text-3xl font-bold text-black">{product.name}</p>
-        <span className="text-base font-extralight text-black">*{survey.name}*</span>
+        <p className="text-3xl font-bold text-slate-800">{survey.name}</p>
+        <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
         {survey.type === "link" && <LinkSurveyShareButton survey={survey} />}
