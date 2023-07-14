@@ -31,6 +31,12 @@ import TemplateList from "./templates/TemplateList";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TSurveyWithResponseCount } from "@formbricks/types/v1/surveys";
+import {
+  createSurveyAction,
+  deleteSurveyAction,
+  duplicateSurveyAction,
+  copyToOtherEnvironmentAction,
+} from "@/app/environments/[environmentId]/actions";
 
 interface SurveyListProps {
   environmentId: string;
@@ -38,10 +44,6 @@ interface SurveyListProps {
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
   surveys: TSurveyWithResponseCount[];
-  createSurveyAction: any;
-  deleteSurveyAction: any;
-  duplicateSurveyAction:any;
-  copyToOtherEnvironmentAction:any;
 }
 
 export default function SurveysList({
@@ -49,14 +51,11 @@ export default function SurveysList({
   product,
   environment,
   surveys,
-  createSurveyAction,
   otherEnvironment,
-  deleteSurveyAction,
-  duplicateSurveyAction,
-  copyToOtherEnvironmentAction
 }: SurveyListProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [activeSurvey, setActiveSurvey] = useState("" as any);
   const [_, setActiveSurveyIdx] = useState("" as any);
@@ -71,6 +70,7 @@ export default function SurveysList({
       ...template.preset,
       type: environment?.widgetSetupCompleted ? "web" : "link",
     };
+    setLoading(true);
     try {
       const survey = await createSurveyAction(environmentId, augmentedTemplate);
       router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
@@ -78,9 +78,11 @@ export default function SurveysList({
       toast.error("An error occured creating a new survey");
       setIsCreateSurveyLoading(false);
     }
+    setLoading(false);
   };
 
   const handleDeleteSurvey = async (survey) => {
+    setLoading(true);
     try {
       await deleteSurveyAction(survey.id);
       router.refresh();
@@ -89,9 +91,11 @@ export default function SurveysList({
     } catch (error) {
       console.error(error);
     }
+    setLoading(false);
   };
 
   const duplicateSurveyAndRefresh = async (surveyId) => {
+    setLoading(true);
     try {
       await duplicateSurveyAction(environmentId, surveyId);
       router.refresh();
@@ -99,21 +103,24 @@ export default function SurveysList({
     } catch (error) {
       toast.error("Failed to duplicate the survey.");
     }
+    setLoading(false);
   };
 
   const copyToOtherEnvironment = async (surveyId) => {
+    setLoading(true);
     try {
-      await copyToOtherEnvironmentAction(environmentId, surveyId, otherEnvironment.id)
+      await copyToOtherEnvironmentAction(environmentId, surveyId, otherEnvironment.id);
       if (otherEnvironment.type === "production") {
         toast.success("Survey copied to production env.");
       } else if (otherEnvironment.type === "development") {
         toast.success("Survey copied to development env.");
       }
-      router.replace(`/environments/${otherEnvironment.id}`)
+      router.replace(`/environments/${otherEnvironment.id}`);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast.error(`Failed to copy to ${otherEnvironment.type}`);
     }
+    setLoading(false);
   };
 
   if (typeof window == undefined || surveys.length === 0) {
@@ -140,6 +147,10 @@ export default function SurveysList({
         )}
       </div>
     );
+  }
+
+  if (loading) {
+    return <LoadingSpinner />;
   }
 
   return (
