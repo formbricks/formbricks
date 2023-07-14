@@ -134,7 +134,7 @@ export default function PricingTable({ environmentId, session }: PricingTablePro
                   variant="secondary"
                   className="mt-6 w-full justify-center py-4 shadow-sm"
                   onClick={() => openCustomerPortal()}>
-                  Change Plan
+                  Manage Subscription
                 </Button>
               ) : (
                 <Button
