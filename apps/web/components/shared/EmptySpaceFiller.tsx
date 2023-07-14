@@ -9,9 +9,15 @@ type EmptySpaceFillerProps = {
   type: "table" | "response" | "event" | "linkResponse" | "tag";
   environmentId: string;
   noWidgetRequired?: boolean;
+  emptyMessage?: string;
 };
 
-const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({ type, environmentId, noWidgetRequired }) => {
+const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
+  type,
+  environmentId,
+  noWidgetRequired,
+  emptyMessage,
+}) => {
   const { environment, isErrorEnvironment, isLoadingEnvironment } = useEnvironment(environmentId);
 
   if (isLoadingEnvironment) return <LoadingSpinner />;
@@ -34,7 +40,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({ type, environmentId
                 </span>
               </Link>
             )}
-            {(environment.widgetSetupCompleted || noWidgetRequired) &&
+            {((environment.widgetSetupCompleted || noWidgetRequired) && emptyMessage) ||
               "Your data will appear here as soon as you receive your first response ⏲️"}
           </div>
 

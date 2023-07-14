@@ -36,6 +36,10 @@ export default function SuccessMessage({ environmentId, survey }: SummaryMetadat
         if (survey.type === "link") {
           setShowLinkModal(true);
         }
+        // Remove success param from url
+        const url = new URL(window.location.href);
+        url.searchParams.delete("success");
+        window.history.replaceState({}, "", url.toString());
       }
     }
   }, [environment, searchParams, survey]);

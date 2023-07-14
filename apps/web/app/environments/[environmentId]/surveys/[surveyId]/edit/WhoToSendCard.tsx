@@ -85,7 +85,11 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     <>
       <Collapsible.Root
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={(openState) => {
+          if (localSurvey.type !== "link") {
+            setOpen(openState);
+          }
+        }}
         className="w-full rounded-lg border border-slate-300 bg-white">
         <Collapsible.CollapsibleTrigger
           asChild
