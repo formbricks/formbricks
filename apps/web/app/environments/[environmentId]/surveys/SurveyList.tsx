@@ -89,7 +89,7 @@ export default function SurveysList({
       setDeleteDialogOpen(false);
       toast.success("Survey deleted successfully.");
     } catch (error) {
-      console.error(error);
+      toast.error("An error occured while deleting survey");
     }
     setLoading(false);
   };
@@ -117,7 +117,6 @@ export default function SurveysList({
       }
       router.replace(`/environments/${otherEnvironment.id}`);
     } catch (error) {
-      console.log(error);
       toast.error(`Failed to copy to ${otherEnvironment.type}`);
     }
     setLoading(false);
