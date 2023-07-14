@@ -97,7 +97,7 @@ const QuestionFilterComboBox = ({
             {filterOptions?.map((o, index) => (
               <DropdownMenuItem
                 key={`${o}-${index}`}
-                className="px-0.5 py-1 text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
+                className="px-0.5 py-1 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
                 onClick={() => onChangeFilterValue(o)}>
                 {o}
               </DropdownMenuItem>

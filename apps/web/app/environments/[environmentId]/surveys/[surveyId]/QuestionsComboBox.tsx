@@ -79,7 +79,7 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
     if (type === OptionsType.ATTRIBUTES) {
       return "bg-indigo-500";
     } else if (type === OptionsType.QUESTIONS) {
-      return "bg-brand-light";
+      return "bg-brand-dark";
     } else {
       return "bg-amber-500";
     }
@@ -99,7 +99,7 @@ const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBo
   useClickOutside(commandRef, () => setOpen(false));
 
   return (
-    <Command ref={commandRef} className="h-10  overflow-visible bg-transparent">
+    <Command ref={commandRef} className="h-10 overflow-visible bg-transparent hover:bg-slate-50">
       <div
         onClick={() => setOpen(true)}
         className="group flex cursor-pointer items-center justify-between rounded-md bg-white px-3 py-2 text-sm">
