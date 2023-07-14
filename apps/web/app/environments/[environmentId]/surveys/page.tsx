@@ -1,9 +1,14 @@
 import ContentWrapper from "@/components/shared/ContentWrapper";
 import WidgetStatusIndicator from "@/components/shared/WidgetStatusIndicator";
-import SurveysList from "./SurveyList";
-import { getProductByEnvironmentId, getProductWithEnvironments } from "@formbricks/lib/services/product";
 import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getProductByEnvironmentId, getProductWithEnvironments } from "@formbricks/lib/services/product";
 import { getSurveysWithResponseCount } from "@formbricks/lib/services/survey";
+import { Metadata } from "next";
+import SurveysList from "./SurveyList";
+
+export const metadata: Metadata = {
+  title: "Your Surveys",
+};
 
 export default async function SurveysPage({ params }) {
   const environmentId = params.environmentId;

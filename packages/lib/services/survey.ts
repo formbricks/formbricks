@@ -30,6 +30,7 @@ export const select = {
   closeOnDate: true,
   delay: true,
   autoComplete: true,
+  redirectUrl: true,
   triggers: {
     select: {
       eventClass: {

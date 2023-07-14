@@ -6,6 +6,7 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import { ZEnvironment } from "@formbricks/types/v1/environment";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import { cache } from "react";
+
 export const getEnvironment = cache(async (environmentId: string): Promise<TEnvironment | null> => {
   let environmentPrisma;
   try {
