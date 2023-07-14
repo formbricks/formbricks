@@ -130,7 +130,7 @@ export function DeleteProduct({ environmentId }) {
 
     if (deleteProductRes?.id?.length > 0) {
       toast.success("Product deleted successfully.");
-      router.push("/environments");
+      router.push("/");
     } else if (deleteProductRes?.message?.length > 0) {
       toast.error(deleteProductRes.message);
       setIsDeleteDialogOpen(false);

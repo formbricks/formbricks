@@ -83,11 +83,11 @@ export const getPeople = cache(async (environmentId: string): Promise<TPerson[]>
       throw new ResourceNotFoundError("Persons", "All Persons");
     }
 
-    const transformedPersons: TPerson[] = personsPrisma
+    const transformedPeople: TPerson[] = personsPrisma
       .map(transformPrismaPerson)
       .filter((person: TPerson | null): person is TPerson => person !== null);
 
-    return transformedPersons;
+    return transformedPeople;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

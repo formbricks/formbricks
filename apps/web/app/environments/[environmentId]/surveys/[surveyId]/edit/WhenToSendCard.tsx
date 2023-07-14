@@ -100,10 +100,6 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
     return <div>Error</div>;
   }
 
-  /*   if (localSurvey.type === "link") {
-    return null;
-  } */
-
   return (
     <>
       <Collapsible.Root
