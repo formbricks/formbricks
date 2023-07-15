@@ -1,0 +1,40 @@
+tasks:
+  - init: |
+      pnpm install &&
+      cp .env.example .env &&
+    command: pnpm go
+
+ports:
+  - port: 3000
+    visibility: public
+    onOpen: open-preview
+  - port: 3002
+    visibility: public
+    onOpen: ignore
+  - port: 5432
+    visibility: private
+    onOpen: ignore
+  - port: 1025
+    visibility: private
+    onOpen: ignore
+  - port: 8025
+    visibility: public
+    onOpen: ignore
+
+github:
+  prebuilds:
+    master: true
+    pullRequests: true
+    pullRequestsFromForks: true
+    addCheck: true
+    addComment: true
+    addBadge: true
+
+vscode:
+  extensions:
+    - DavidAnson.vscode-markdownlint
+    - yzhang.markdown-all-in-one
+    - esbenp.prettier-vscode
+    - dbaeumer.vscode-eslint
+    - bradlc.vscode-tailwindcss
+    - Prisma.prisma
