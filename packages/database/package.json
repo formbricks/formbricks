@@ -19,7 +19,7 @@
     "db:setup": "pnpm db:up && pnpm db:migrate:dev",
     "db:start": "pnpm db:setup",
     "dev": "tsup --watch",
-    "go": "pnpm db:setup && tsup --watch",
+    "go": "pnpm db:setup && tsup",
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
