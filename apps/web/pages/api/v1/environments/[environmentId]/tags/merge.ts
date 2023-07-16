@@ -92,24 +92,35 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     if (!!responsesWithBothTags?.length) {
       try {
-        responsesWithBothTags.map(async (response) => {
-          await prisma.$transaction([
-            prisma.tagsOnResponses.deleteMany({
-              where: {
-                responseId: response.id,
-                tagId: {
-                  in: [originalTagId, newTagId],
+        await Promise.all(
+          responsesWithBothTags.map(async (response) => {
+            await prisma.$transaction([
+              prisma.tagsOnResponses.deleteMany({
+                where: {
+                  responseId: response.id,
+                  tagId: {
+                    in: [originalTagId, newTagId],
+                  },
                 },
-              },
-            }),
+              }),
 
-            prisma.tagsOnResponses.create({
-              data: {
-                responseId: response.id,
-                tagId: newTagId,
-              },
-            }),
-          ]);
+              prisma.tagsOnResponses.create({
+                data: {
+                  responseId: response.id,
+                  tagId: newTagId,
+                },
+              }),
+            ]);
+          })
+        );
+
+        await prisma.tagsOnResponses.updateMany({
+          where: {
+            tagId: originalTagId,
+          },
+          data: {
+            tagId: newTagId,
+          },
         });
 
         await prisma.tag.delete({

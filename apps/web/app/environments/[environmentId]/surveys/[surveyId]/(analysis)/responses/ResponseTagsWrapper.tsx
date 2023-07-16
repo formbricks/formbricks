@@ -8,6 +8,8 @@ import { toast } from "react-hot-toast";
 import { Tag } from "./Tag";
 import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
+import { Button } from "@formbricks/ui";
+import { Settings } from "lucide-react";
 
 interface ResponseTagsWrapperProps {
   tags: {
@@ -57,7 +59,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   }, [tagIdToHighlight]);
 
   return (
-    <div className="flex items-start gap-3 p-6">
+    <div className="flex items-start justify-between gap-3 p-6">
       <div className="flex flex-wrap items-center gap-2">
         {tagsState?.map((tag) => (
           <Tag
@@ -159,6 +161,15 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
           }}
         />
       </div>
+
+      <Button
+        variant="minimal"
+        className="cursor-pointer"
+        onClick={() => {
+          router.push(`/environments/${environmentId}/settings/tags`);
+        }}>
+        <Settings className="h-6 w-6 text-slate-500" />
+      </Button>
     </div>
   );
 };
