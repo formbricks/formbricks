@@ -114,20 +114,22 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           })
         );
 
-        await prisma.tagsOnResponses.updateMany({
-          where: {
-            tagId: originalTagId,
-          },
-          data: {
-            tagId: newTagId,
-          },
-        });
+        await prisma.$transaction([
+          prisma.tagsOnResponses.updateMany({
+            where: {
+              tagId: originalTagId,
+            },
+            data: {
+              tagId: newTagId,
+            },
+          }),
 
-        await prisma.tag.delete({
-          where: {
-            id: originalTagId,
-          },
-        });
+          prisma.tag.delete({
+            where: {
+              id: originalTagId,
+            },
+          }),
+        ]);
 
         return res.json({
           success: true,
