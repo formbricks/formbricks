@@ -18,6 +18,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 export async function POST(request: Request): Promise<NextResponse> {
   const responseInput: TResponseInput = await request.json();
   const agent = UAParser(request.headers.get("user-agent"));
+  const referer = UAParser(request.headers.get("referer"));
   const inputValidation = ZResponseInput.safeParse(responseInput);
 
   if (!inputValidation.success) {
@@ -45,6 +46,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   let response: TResponse;
   try {
     const meta = {
+      url: referer?.ua,
       userAgent: {
         browser: agent?.browser.name,
         device: agent?.device.type,
