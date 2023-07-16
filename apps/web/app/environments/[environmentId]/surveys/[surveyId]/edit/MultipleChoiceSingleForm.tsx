@@ -36,17 +36,17 @@ export default function MultipleChoiceSingleForm({
   const shuffleOptionsTypes = {
     none: {
       id: "none",
-      label: "None (Keep choices in current order)",
+      label: "Keep current order",
       show: true,
     },
     all: {
       id: "all",
-      label: "All (Randomize all choices)",
+      label: "Randomize all",
       show: question.choices.filter((c) => c.id === "other").length === 0,
     },
     exceptLast: {
       id: "exceptLast",
-      label: "Except Last (Keep last choice and randomize other choices)",
+      label: "Randomize all except last option",
       show: true,
     },
   };
@@ -191,12 +191,14 @@ export default function MultipleChoiceSingleForm({
                     onClick={() => deleteChoice(choiceIdx)}
                   />
                 )}
-                {choice.id !== "other" && (
-                  <PlusIcon
-                    className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                    onClick={() => addChoice(choiceIdx)}
-                  />
-                )}
+                <div className="ml-2 h-4 w-4">
+                  {choice.id !== "other" && (
+                    <PlusIcon
+                      className="h-full w-full cursor-pointer text-slate-400 hover:text-slate-500"
+                      onClick={() => addChoice(choiceIdx)}
+                    />
+                  )}
+                </div>
               </div>
             ))}
           <div className="flex items-center justify-between space-x-2">
@@ -207,15 +209,13 @@ export default function MultipleChoiceSingleForm({
             )}
 
             <div className="flex flex-1 items-center justify-end gap-2">
-              <p className="text-sm text-slate-700">Ordering</p>
-
               <Select
                 defaultValue={question.shuffleOption}
                 value={question.shuffleOption}
                 onValueChange={(e) => {
                   updateQuestion(questionIdx, { shuffleOption: e });
                 }}>
-                <SelectTrigger className="w-fit overflow-hidden ">
+                <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-semibold text-slate-600">
                   <SelectValue placeholder="Select ordering" />
                 </SelectTrigger>
                 <SelectContent>
