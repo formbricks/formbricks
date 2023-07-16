@@ -1,7 +1,7 @@
 tasks:
   - init: |
       pnpm install &&
-      cp .env.example .env &&
+      cp .env.example .env
     command: pnpm go
 
 ports:
