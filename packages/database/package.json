@@ -9,7 +9,7 @@
     "zod-utils.ts"
   ],
   "scripts": {
-    "clean": "rimraf .turbo node_modules dist",
+    "clean": "rimraf .turbo node_modules",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "dotenv -e ../../.env -- pnpm prisma migrate dev",
     "db:migrate:vercel": "if test \"$NEXT_PUBLIC_VERCEL_ENV\" = \"preview\" ; then env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma db push --accept-data-loss ; else env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma migrate deploy ; fi",
