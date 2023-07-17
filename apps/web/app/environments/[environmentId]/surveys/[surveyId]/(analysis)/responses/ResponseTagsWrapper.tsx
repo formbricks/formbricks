@@ -6,10 +6,9 @@ import { useTagsForEnvironment } from "@/lib/tags/tags";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Tag } from "./Tag";
-import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
+import { ExclamationCircleIcon, Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { Button } from "@formbricks/ui";
-import { Settings } from "lucide-react";
 
 interface ResponseTagsWrapperProps {
   tags: {
@@ -59,7 +58,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   }, [tagIdToHighlight]);
 
   return (
-    <div className="flex items-start justify-between gap-3 p-6">
+    <div className="flex items-center justify-between gap-3 p-6">
       <div className="flex flex-wrap items-center gap-2">
         {tagsState?.map((tag) => (
           <Tag
@@ -164,11 +163,12 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
       <Button
         variant="minimal"
-        className="cursor-pointer"
+        size="sm"
+        className="cursor-pointer p-0"
         onClick={() => {
           router.push(`/environments/${environmentId}/settings/tags`);
         }}>
-        <Settings className="h-6 w-6 text-slate-500" />
+        <Cog6ToothIcon className="h-5 w-5 text-slate-300 hover:text-slate-400" />
       </Button>
     </div>
   );
