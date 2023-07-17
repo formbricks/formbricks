@@ -7,13 +7,11 @@ import { updatetAttributeClass } from "@formbricks/lib/services/attribute";
 import { useState } from "react";
 
 interface AttributeSettingsTabProps {
-  environmentId: string;
   attributeClass: AttributeClass;
   setOpen: (v: boolean) => void;
 }
 
 export default async function AttributeSettingsTab({
-  environmentId,
   attributeClass,
   setOpen,
 }: AttributeSettingsTabProps) {
@@ -26,7 +24,7 @@ export default async function AttributeSettingsTab({
   const onSubmit = async (data) => {
     setisAttributeBeingSubmitted(true);
     setOpen(false);
-    await updatetAttributeClass(environmentId, attributeClass.id, data);
+    await updatetAttributeClass(attributeClass.id, data);
     router.refresh();
     setisAttributeBeingSubmitted(false);
   };
@@ -34,7 +32,7 @@ export default async function AttributeSettingsTab({
   const handleArchiveToggle = async () => {
     setisAttributeBeingSubmitted(true);
     const data = { archived: !attributeClass.archived };
-    await updatetAttributeClass(environmentId, attributeClass.id, data);
+    await updatetAttributeClass(attributeClass.id, data);
     setisAttributeBeingSubmitted(false);
   };
 

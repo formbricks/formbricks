@@ -38,14 +38,12 @@ export const getAttributeClasses = async (environmentId: string): Promise<TAttri
 };
 
 export const updatetAttributeClass = async (
-  environmentId: string,
   attributeClassId: string,
   data: { description?: string; archived?: boolean }
 ): Promise<TAttributeClass | null> => {
   try {
     let attributeClass = await prisma.attributeClass.update({
       where: {
-        environmentId: environmentId,
         id: attributeClassId,
       },
       data: {
@@ -58,7 +56,7 @@ export const updatetAttributeClass = async (
     return transformedAttributeClass;
   } catch (error) {
     throw new DatabaseError(
-      `Database error when updating attribute class with id ${attributeClassId} for environment ${environmentId}`
+      `Database error when updating attribute class with id ${attributeClassId}`
     );
   }
 };

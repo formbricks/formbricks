@@ -3,6 +3,11 @@ import AttributeClassDataRow from "@/app/environments/[environmentId]/(actionsAn
 import AttributeTableHeading from "@/app/environments/[environmentId]/(actionsAndAttributes)/attributes/AttributeTableHeading";
 import HowToAddAttributesButton from "@/app/environments/[environmentId]/(actionsAndAttributes)/attributes/HowToAddAttributesButton";
 import { getAttributeClasses } from "@formbricks/lib/services/attribute";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Attributes",
+};
 
 export default async function AttributesPage({ params }) {
   let attributeClasses = await getAttributeClasses(params.environmentId);
