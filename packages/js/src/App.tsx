@@ -5,6 +5,7 @@ import { useState } from "preact/hooks";
 import Modal from "./components/Modal";
 import SurveyView from "./components/SurveyView";
 import { IErrorHandler } from "./lib/errors";
+import { clearStoredAnswers } from "./lib/localStorage";
 
 interface AppProps {
   config: TJsConfig;
@@ -18,6 +19,7 @@ export default function App({ config, survey, closeSurvey, errorHandler }: AppPr
 
   const close = () => {
     setIsOpen(false);
+    clearStoredAnswers(survey.id);
     setTimeout(() => {
       closeSurvey();
     }, 1000); // wait for animation to finish}

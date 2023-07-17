@@ -13,6 +13,7 @@ import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import FormbricksSignature from "./FormbricksSignature";
 import type { TResponseData, TResponseInput } from "../../../types/v1/responses";
+import { clearStoredAnswers, getStoredAnswer, storeAnswer } from "../lib/localStorage";
 
 interface SurveyViewProps {
   config: TJsConfig;
@@ -269,29 +270,6 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
         close();
       }
     }
-  };
-
-  const storeAnswer = (surveyId: string, answer: TResponseData) => {
-    const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-answers`);
-    if (storedAnswers) {
-      const parsedAnswers = JSON.parse(storedAnswers);
-      localStorage.setItem(`formbricks-${surveyId}-answers`, JSON.stringify({ ...parsedAnswers, ...answer }));
-    } else {
-      localStorage.setItem(`formbricks-${surveyId}-answers`, JSON.stringify(answer));
-    }
-  };
-
-  const getStoredAnswer = (surveyId: string, questionId: string): string | null => {
-    const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-answers`);
-    if (storedAnswers) {
-      const parsedAnswers = JSON.parse(storedAnswers);
-      return parsedAnswers[questionId] || null;
-    }
-    return null;
-  };
-
-  const clearStoredAnswers = (surveyId: string) => {
-    localStorage.removeItem(`formbricks-${surveyId}-answers`);
   };
 
   return (
