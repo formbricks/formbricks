@@ -1,7 +1,8 @@
-export const revalidate = 0;
+export const revalidate = REVALIDATION_INTERVAL;
 
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import { truncateMiddle } from "@/lib/utils";
+import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getPeople } from "@formbricks/lib/services/person";
 import { TPerson } from "@formbricks/types/v1/people";
 import { PersonAvatar } from "@formbricks/ui";
@@ -16,7 +17,11 @@ export default async function PeoplePage({ params }) {
   return (
     <>
       {people.length === 0 ? (
-        <EmptySpaceFiller type="table" environmentId={params.environmentId} />
+        <EmptySpaceFiller
+          type="table"
+          environmentId={params.environmentId}
+          emptyMessage="Your users will appear here as soon as they use your app ⏲️"
+        />
       ) : (
         <div className="rounded-lg border border-slate-200">
           <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">

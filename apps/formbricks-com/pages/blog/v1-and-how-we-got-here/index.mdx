@@ -1,0 +1,171 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import { Callout } from "@/components/shared/Callout";
+
+import TweetPeer from "./peer-tweet-typeform-open-source.png";
+import SnoopForms from "./snoopforms-open-source-typeform-alternative.png";
+import TwitterResult from "./twitter-results-PMF-cal.png";
+import EmailResult from "./email-results-PMF-cal.png";
+import TitleImage from "../github-accelerator-experience/formbricks-sponsored-by-github-accelerator-2023.webp";
+import PMFDashboard from "./pmf-survey-dashboard.png";
+import MattiJojo from "./matti-jojo.jpg";
+
+export const meta = {
+  title: "Formbricks v1 - How we got here 🤸",
+  description:
+    "A lot has happened since Matti and I had a chat about open-source surveys in May last year. The release of Formbricks v1.0 is a perfect opportunity to look back on how it all started.",
+  date: "2023-07-14",
+};
+
+_A lot has happened since Matti and I had a chat about open-source surveys in May last year. The release of Formbricks v1.0 is a perfect opportunity to look back on how it all started._
+
+Funnily enough, it started with a tweet:
+
+<Image
+  src={TweetPeer}
+  alt="Peer tweets about the best open-source Typeform alternative"
+  className="rounded-lg"
+/>
+
+When I read this tweet, I was sitting in a WeWork in Mexico City, feeling a bit guilty for being such a cliché digital nomad. Sipping on my decaffeinated matcha with lactose-free goat milk, I slid into Matti's DMs. I knew he had built an open-source survey tool a few months ago and suggested he comment on the tweet. We started chatting.
+
+Both Matti and I had been freelancing for several months. While the money was good, we missed working on a project of our own. We met a couple of years ago while working on our startups. I had an app and wanted to be GDPR compliant; Matti offered to help out. We've stayed in contact ever since, giving feedback on projects and ideas.
+
+So we chatted about the opportunity of building a commercial open-source alternative to Typeform. After reading up on the advantages - and challenges - of open-source, we decided to build a side project together: **[snoopForms: The Open-Source Typeform Alternative](https://snoopforms.com/)** 🦝
+
+<Image
+  src={SnoopForms}
+  alt="SnoopForms was the OS Typeform alternative with a twist"
+  className="rounded-lg"
+/>
+
+### **snoopForms and why OS Typeform isn’t a good business**
+
+We shipped a first version of the product and the landing page and shared it on ProductHunt and HackerNews. It stirred up quite some interest—1.5k people signed up over a few weeks. During the launch, we sold 10 early bird deals for $179 each. We got excited! Is it really that easy?
+
+Well no, it is not. Apart from the Early Birds (🤍) we attracted a looooooooot of people who liked Typeform, but didn’t want to pay the high price tag. Generally, it's not the best idea to build a product with high competition (100s of survey tools) for a price-sensitive target group. Even data privacy isn’t a good selling point when Jotform offers self-hosting and Typeform is an EU-based company (GDPR). We’ve written **[in-depth](https://formbricks.com/blog/open-source-qualtrics-beats-typeform)** about why we eventually decided to shift our focus away from open-source Typeform.
+
+Nonetheless, we were hooked on open-source surveys; we just hadn't found the right application yet.
+
+### **snoopForms → Formbricks, a detour, and going full-time**
+
+We decided to wrap up our freelance gigs and go in full-time, to find the right angle quicker. We built a MVP for _Building Bricks for Forms and Surveys_, but while the idea made sense, we struggled to build an easy, opionated solution which can be used for several use cases. To help engineers build form and survey applications faster, it needed to pack form creation, form analytics, graphs, data handling, data storage, analysis, integrations, and ways to act on the insights for a variety of use cases 🤷 There's a reason why successful dev tools focus on one of these aspects and do them well. So we kept looking…
+
+### **Data Processing vs. Experience Management**
+
+We had talked to and surveyed a lot of people. Zooming out, we saw that there are two applications for forms: data processing and experience management.
+
+**Data processing** is essentially getting information out of a human brain into a digital system. The focus here lies on high integrability with (legacy) systems, versatility, and a great developer experience. Libraries like React Hook Forms or the more productized form.io fall into this category. While there certainly is a need here, it was a less inspiring field for us, especially after reading how [tedious](https://medium.com/@jgee/what-i-learned-in-two-years-of-moving-government-forms-online-1edc4c2aa089) it can be to bring [legacy](https://medium.com/san-francisco-digital-services/how-to-make-a-form-d1d1b67d95d7) form systems up to speed.
+
+**Experience Management** on the other hand is a lot more exciting! Helping teams build better products, services, and organizations is a mission both Matti and I could get behind ❤️
+
+<Callout title="In a nutshell" type="note">
+  Experience Management, in a nutshell, is enabling teams to gather, analyze, and act on qualitative data
+  collected from their users, customers, and employees.
+</Callout>
+
+We researched what was out there and talked to more founders. Initially, we wanted to build a solution for a problem we had ourselves: Gathering qualitative insights along the user journey of early adopters. It’s common sense to never launch without analytics, but why does everyone launch without a system to gather qualitative user insights continuously? Mostly, because there's no easy, cheap and quick way to do it (yet).
+
+### **The Product-Market Fit Survey Tool**
+
+Following Paul Graham's advice to start with a **[narrow but deep hole](http://paulgraham.com/startupideas.html)**, we narrowed it down to one specific problem every founder has: Measuring Product-Market Fit. Many know the **[article](https://review.firstround.com/how-superhuman-built-an-engine-to-find-product-market-fit)** on how Superhuman built an engine to measure and optimize PMF. However, to run it correctly within your product, you do have to do quite some custom coding. So we decided to offer a solution which works out of the box.
+
+<Image
+  src={PMFDashboard}
+  alt="Peer tweets about the best open-source Typeform alternative"
+  className="rounded-lg"
+/>
+_We built a custom dashboard just to visualize the PMF survey results_
+
+We shipped an MVP, launched it, and picked up the conversations with the founders who had tried to measure PMF
+before. We quickly learned this:
+
+- Our MVP was scoped so rigidly that we had to do quite some custom coding ourselves to get it implemented. Setting it up and maintaining it stood in no relation to the value it provided because…
+- The PMF survey is for teams that "kinda" have PMF, not for teams which are just starting out. You need a few hundred recurring users in your app to be able to reach statistical significance and run the survey every 3 months without asking anyone twice. For teams who don’t have that, talking to users 1:1 will remain the best way to go.
+- Founders were reluctant to add another tool just for one survey and purpose.
+
+After the rather disappointing launch of the PMF survey tool, we hit a low. The excitement about the initial snoopForm traction had passed. Since November, we had been working full-time for four months iterating on different products in the forms and survey space, and it didn’t feel like we made much progress. But that wasn’t really true.
+
+### **"The essence of strategy is choosing what not to do.”**
+
+It was quite a journey since Matti wrote the first line of code in July last year. Even though it didn’t _feel_ like much progress, we had learned a lot. Most importantly, we knew what **not** to build.
+
+With snoopForms, we learned that there is a latent need for an open-source standalone survey tool, with a Typeform-like feature set: It’s a great opportunity to build a community and **not** a great business opportunity. The PMF survey tool taught us about the needs of early-stage teams and that surveys are **not** the best solution to their problems. However, they do need some form to gather qualitative feedback and a smooth way to work with it 😏
+
+We took everything we knew and wrote a Masterplan. And then we sat down coded.
+
+### **Open-source in-product surveys**
+
+March and the first half of April flew by as we hacked together the MVP of what Formbricks is today: A tool which enables teams to target specific segments of their user base with versatile micro-surveys. Matti solved some tricky technical challenges around the Formbricks Widget and shipped the backend. ChatGPT and I warmed up with next.js and built frontend. Seeing the product come together was fun and felt like progress - exactly what we needed!
+
+<Image
+  src={TitleImage}
+  alt="GitHub sponsors Formbricks to join their open-source accelerator program"
+  className="rounded-lg"
+/>
+
+A welcomed motivator came in the form of an email from GitHub: We we were chosen to take part in the first-ever batch of the GitHub Open-Source Accelerator! It was a really fun programme and we learned a lot! You can read about our experience [here.](https://formbricks.com/blog/github-accelerator-experience)
+
+### **On the right track 🚆**
+
+Once we were ready to share our MVP with the world, we knew we were on the right track! The feedback was really good and usage picked up right from the start. One morning we woke up to our analytics dashboard showing thousands of survey displays with 500+ responses in the past couple of hours! This is when we knew we’re onto something 🚀
+
+A couple of weeks later, Peer from [Cal.com](http://Cal.com) came back to northern Germany to visit his family and friends. We hung out in the co-working space, where he did his first steps as an entrepreneur. As we were chatting about how to separate opinion from experience, Peer decided to shoot an email with a survey to the 12k most active users of Cal.com. A few days before, he asked his Twitter following the PMF question:
+
+<Image
+  src={TwitterResult}
+  alt="SnoopForms was the OS Typeform alternative with a twist"
+  className="rounded-lg"
+/>
+
+We wanted to compare how the publicly asked survey (Twitter) compared to a survey among the community of users. The results were eye-opening:
+
+<Image
+  src={EmailResult}
+  alt="SnoopForms was the OS Typeform alternative with a twist"
+  className="rounded-lg"
+/>
+_Anything above 40% is considered PMF, 60% is 🔥🔥🔥_
+
+For us, this was not only a good test for our system but it was a great example that Experience Management does not only happen within apps, but on several touch points right from the start. If we want to offer a solution which can comprehensively measure and evaluate experiences, it cannot be confined to in-product surveys for too long.
+
+### **Typeform sneaking back in?**
+
+Given our early traction with snoopForms, it’s not a big surprise that community requests for a Typeform-like standalone survey popped up more and more. Since we had all the pieces in place, we shipped standalone surveys in a day. However, it’s not our focus right now, so we hand over most of the feature requests to the community. And the community ships! Just in the past couple of weeks, we got:
+
+- **Prefill Data in Link Surveys** by Piyush - [Docs](https://formbricks.com/docs/link-surveys/data-prefilling)
+- **Identify Users Link identification** by Zorig - [Docs](https://formbricks.com/docs/link-surveys/user-identification)
+- **Close Survey on Date** by Piyush
+- **Close Survey after x Responses** by Pradumn
+- **Redirect on Link Survey Completion** by Dhruwang
+- **Embed Link Survey via iframe** by Ankur
+- **Set Custom ‘Survey Closed’ Message** by Pradumn
+- **Randomize Answer Options** by Shubdeep
+
+We absolutely love the idea of being the platform for a community-developed standalone survey experience! It’s a win-win: The community gets a free, self-hostable standalone survey product and we get a growing upper funnel for our Experience Management solution 🤸
+
+### **It’s coming together 🔥**
+
+Looking back at the amount of value Formbricks can deliver after not even 5 months fills us with excitement. Matti and I have been hacking it together for the most part but we wouldn’t be anywhere nearly as close without the support of our community and friends - thank you!
+
+And we’re only getting started: We were able to hire two engineers from our community of contributors to build up more shipping velocity. We also started working with Kristian who runs our [open-source Design repo](https://github.com/formbricks/design) more closely and are super excited about what we’re cooking up. We’ll make sure Formbricks stays easy-to-use, accessible and simply beautiful as it grows more powerful! We can't tell you how excited we are about what's coming 😁
+
+If you’re curious to learn about all the things you can do with Formbricks today, we’ve written and keep updating a list of Best Practices incl. survey templates in our [Docs](https://formbricks.com/docs/best-practices/cancel-subscription).
+
+### Sounds good? **Build with us!**
+
+- **Eager to contribute?** [Join our Discord](https://formbricks.com/discord) and say Hi! We’re more than happy to find the perfect issue for your level of experience 🙌 😊
+
+- **Got an experience to measure?** Open-source is the way to go. [Let’s have a chat 🤙](https://cal.com/johannes/15)
+
+<Image
+  src={MattiJojo}
+  alt="SnoopForms was the OS Typeform alternative with a twist"
+  className="rounded-lg w-1/2"
+/>
+
+### All the best!
+
+Johannes & Matti
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

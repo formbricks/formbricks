@@ -19,7 +19,7 @@
     "db:setup": "pnpm db:up && pnpm db:migrate:dev",
     "db:start": "pnpm db:setup",
     "dev": "tsup --watch",
-    "go": "pnpm db:setup",
+    "go": "pnpm db:setup && tsup",
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
@@ -27,14 +27,14 @@
     "predev": "npm run generate"
   },
   "dependencies": {
-    "@prisma/client": "^4.16.2",
+    "@prisma/client": "^5.0.0",
     "dotenv-cli": "^7.2.1"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
     "eslint-config-formbricks": "workspace:*",
-    "prisma": "^4.16.2",
+    "prisma": "^5.0.0",
     "prisma-dbml-generator": "^0.10.0",
     "prisma-json-types-generator": "^2.5.0",
     "tsup": "^7.1.0",

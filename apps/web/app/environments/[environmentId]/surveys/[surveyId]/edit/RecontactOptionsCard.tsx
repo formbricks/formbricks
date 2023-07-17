@@ -106,7 +106,7 @@ export default function RecontactOptionsCard({
           </div>
           {localSurvey.type === "link" && (
             <div className="flex w-full items-center justify-end pr-2">
-              <Badge size="normal" text="In-app survey settings" type="warning" />
+              <Badge size="normal" text="In-app survey settings" type="gray" />
             </div>
           )}
         </div>
