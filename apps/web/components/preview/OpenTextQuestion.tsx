@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "@/components/preview/SubmitButton";
-import { Button } from "@formbricks/ui";
 import { Response } from "@formbricks/types/js";
 import { BackButton } from "@/components/preview/BackButton";
 

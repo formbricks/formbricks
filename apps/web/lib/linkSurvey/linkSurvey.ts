@@ -139,7 +139,6 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
       setSavedAnswer(getStoredAnswer(survey.id, nextQuestionId));
       setCurrentQuestion(question);
-      // setCurrentQuestion(survey.questions[questionIdx + 1]);
     } else {
       setProgress(1);
       setFinished(true);

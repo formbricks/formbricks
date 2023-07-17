@@ -6,12 +6,17 @@ import { cn, shuffleArray } from "../lib/utils";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
+import _ from "lodash";
+import { BackButton } from "./BackButton";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
   onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
+  savedAnswer: string[] | null;
+  goToNextQuestion: (answer: TResponseData) => void;
+  goToPreviousQuestion?: (answer: TResponseData) => void;
 }
 
 export default function MultipleChoiceMultiQuestion({
@@ -19,6 +24,9 @@ export default function MultipleChoiceMultiQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  savedAnswer,
+  goToNextQuestion,
+  goToPreviousQuestion,
 }: MultipleChoiceMultiProps) {
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [showOther, setShowOther] = useState(false);
@@ -36,11 +44,29 @@ export default function MultipleChoiceMultiQuestion({
     return selectedChoices.length > 0 || otherSpecified.length > 0;
   };
 
+  const nonOtherChoiceLabels = question.choices
+    .filter((label) => label.id !== "other")
+    .map((choice) => choice.label);
+
+  useEffect(() => {
+    const nonOtherSavedChoices = savedAnswer?.filter((answer) => nonOtherChoiceLabels.includes(answer));
+    const savedOtherSpecified = savedAnswer?.find((answer) => !nonOtherChoiceLabels.includes(answer));
+
+    setSelectedChoices(nonOtherSavedChoices ?? []);
+
+    if (savedOtherSpecified) {
+      setOtherSpecified(savedOtherSpecified);
+      setShowOther(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedAnswer, question.id]);
+
   useEffect(() => {
     if (showOther && otherInputRef.current) {
+      otherInputRef.current.value = otherSpecified ?? "";
       otherInputRef.current.focus();
     }
-  }, [showOther]);
+  }, [otherSpecified, showOther]);
 
   useEffect(() => {
     setQuestionChoices(
@@ -52,27 +78,38 @@ export default function MultipleChoiceMultiQuestion({
     );
   }, [question.choices, question.shuffleOption]);
 
+  const resetForm = () => {
+    setSelectedChoices([]); // reset value
+    setShowOther(false);
+    setOtherSpecified("");
+  };
+
+  const handleSubmit = () => {
+    const data = {
+      [question.id]: selectedChoices,
+    };
+
+    if (_.xor(selectedChoices, savedAnswer).length === 0) {
+      goToNextQuestion(data);
+      return;
+    }
+
+    if (question.required && selectedChoices.length <= 0) {
+      return;
+    }
+
+    onSubmit(data);
+  };
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-
         if (otherSpecified.length > 0 && showOther) {
           selectedChoices.push(otherSpecified);
         }
-
-        if (question.required && selectedChoices.length <= 0) {
-          return;
-        }
-
-        const data = {
-          [question.id]: selectedChoices,
-        };
-
-        onSubmit(data);
-        setSelectedChoices([]); // reset value
-        setShowOther(false);
-        setOtherSpecified("");
+        handleSubmit();
+        resetForm();
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -145,6 +182,19 @@ export default function MultipleChoiceMultiQuestion({
         value={isAtLeastOneChecked() ? "checked" : ""}
       />
       <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
+        {goToPreviousQuestion && (
+          <BackButton
+            onClick={() => {
+              if (otherSpecified.length > 0 && showOther) {
+                selectedChoices.push(otherSpecified);
+              }
+              goToPreviousQuestion({
+                [question.id]: selectedChoices,
+              });
+              resetForm();
+            }}
+          />
+        )}
         <div></div>
         <SubmitButton
           question={question}

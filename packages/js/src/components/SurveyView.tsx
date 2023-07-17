@@ -28,11 +28,15 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   const [displayId, setDisplayId] = useState<string | null>(null);
   const [loadingElement, setLoadingElement] = useState(false);
   const contentRef = useRef(null);
+  const [finished, setFinished] = useState(false);
+  const [savedAnwer, setSavedAnswer] = useState<any>(null);
 
   const [countdownProgress, setCountdownProgress] = useState(100);
   const [countdownStop, setCountdownStop] = useState(false);
   const startRef = useRef(performance.now());
   const frameRef = useRef<number | null>(null);
+
+  const showBackButton = progress !== 0 && !finished;
 
   const handleStopCountdown = () => {
     if (frameRef.current !== null) {
@@ -155,16 +159,62 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     }
   }
 
-  function getNextQuestion(answer: any): string {
+  function getNextQuestionId() {
     const questions = survey.questions;
-
     const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
     if (currentQuestionIndex === -1) throw new Error("Question not found");
 
-    const answerValue = answer[activeQuestionId];
-    const currentQuestion = questions[currentQuestionIndex];
+    return questions[currentQuestionIndex + 1]?.id || "end";
+  }
 
-    if (currentQuestion.logic && currentQuestion.logic.length > 0) {
+  function goToNextQuestion(answer: TResponseData): string {
+    setLoadingElement(true);
+    const questions = survey.questions;
+    const nextQuestionId = getNextQuestionId();
+
+    if (nextQuestionId === "end") {
+      submitResponse(answer);
+      return;
+    }
+
+    const nextQuestion = questions.find((q) => q.id === nextQuestionId);
+    if (!nextQuestion) throw new Error("Question not found");
+
+    setSavedAnswer(getStoredAnswer(survey.id, nextQuestionId));
+    setActiveQuestionId(nextQuestionId);
+    setLoadingElement(false);
+  }
+
+  function getPreviousQuestionId() {
+    const questions = survey.questions;
+    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
+
+    return questions[currentQuestionIndex - 1]?.id;
+  }
+
+  function goToPreviousQuestion(answer: TResponseData) {
+    setLoadingElement(true);
+    const previousQuestionId = getPreviousQuestionId();
+    if (!previousQuestionId) throw new Error("Question not found");
+
+    if (answer) {
+      storeAnswer(survey.id, answer);
+    }
+
+    setSavedAnswer(getStoredAnswer(survey.id, previousQuestionId));
+    setActiveQuestionId(previousQuestionId);
+    setLoadingElement(false);
+  }
+
+  const submitResponse = async (data: TResponseData) => {
+    setLoadingElement(true);
+    const questions = survey.questions;
+    const nextQuestionId = getNextQuestionId();
+    const currentQuestion = questions[activeQuestionId];
+    const answerValue = data[activeQuestionId];
+
+    if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
       for (let logic of currentQuestion.logic) {
         if (!logic.destination) continue;
 
@@ -173,12 +223,6 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
         }
       }
     }
-    return questions[currentQuestionIndex + 1]?.id || "end";
-  }
-
-  const submitResponse = async (data: TResponseData) => {
-    setLoadingElement(true);
-    const nextQuestionId = getNextQuestion(data);
 
     const finished = nextQuestionId === "end";
     // build response
@@ -193,11 +237,15 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
         createResponse(responseRequest, config),
         markDisplayResponded(displayId, config),
       ]);
-
-      response.ok === true ? setResponseId(response.value.id) : errorHandler(response.error);
+      if (response.ok === true) {
+        setResponseId(response.value.id);
+        storeAnswer(survey.id, data);
+      } else {
+        errorHandler(response.error);
+      }
     } else {
       const result = await updateResponse(responseRequest, responseId, config);
-
+      storeAnswer(survey.id, data);
       if (result.ok !== true) {
         errorHandler(result.error);
       } else if (responseRequest.finished) {
@@ -207,10 +255,12 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     setLoadingElement(false);
 
     if (!finished && nextQuestionId !== "end") {
+      setSavedAnswer(getStoredAnswer(survey.id, nextQuestionId));
       setActiveQuestionId(nextQuestionId);
     } else {
       setProgress(100);
-
+      setFinished(true);
+      clearStoredAnswers(survey.id);
       if (survey.thankYouCard.enabled) {
         setTimeout(() => {
           close();
@@ -219,6 +269,29 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
         close();
       }
     }
+  };
+
+  const storeAnswer = (surveyId: string, answer: TResponseData) => {
+    const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-answers`);
+    if (storedAnswers) {
+      const parsedAnswers = JSON.parse(storedAnswers);
+      localStorage.setItem(`formbricks-${surveyId}-answers`, JSON.stringify({ ...parsedAnswers, ...answer }));
+    } else {
+      localStorage.setItem(`formbricks-${surveyId}-answers`, JSON.stringify(answer));
+    }
+  };
+
+  const getStoredAnswer = (surveyId: string, questionId: string): string | null => {
+    const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-answers`);
+    if (storedAnswers) {
+      const parsedAnswers = JSON.parse(storedAnswers);
+      return parsedAnswers[questionId] || null;
+    }
+    return null;
+  };
+
+  const clearStoredAnswers = (surveyId: string) => {
+    localStorage.removeItem(`formbricks-${surveyId}-answers`);
   };
 
   return (
@@ -250,6 +323,9 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
                   lastQuestion={idx === survey.questions.length - 1}
                   onSubmit={submitResponse}
                   question={question}
+                  savedAnswer={savedAnwer}
+                  goToNextQuestion={goToNextQuestion}
+                  goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
                 />
               )
           )

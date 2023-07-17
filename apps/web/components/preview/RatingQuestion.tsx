@@ -18,7 +18,7 @@ import {
   WearyFace,
 } from "../Smileys";
 import SubmitButton from "@/components/preview/SubmitButton";
-import { Button } from "@formbricks/ui";
+
 import { Response } from "@formbricks/types/js";
 import { BackButton } from "@/components/preview/BackButton";
 

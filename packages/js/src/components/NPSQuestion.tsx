@@ -1,21 +1,49 @@
 import { h } from "preact";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { TResponseData } from "../../../types/v1/responses";
 import type { TSurveyNPSQuestion } from "../../../types/v1/surveys";
 import { cn } from "../lib/utils";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
+import { BackButton } from "./BackButton";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
   onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
+  savedAnswer: number | null;
+  goToNextQuestion: (answer: TResponseData) => void;
+  goToPreviousQuestion?: (answer?: TResponseData) => void;
 }
 
-export default function NPSQuestion({ question, onSubmit, lastQuestion, brandColor }: NPSQuestionProps) {
+export default function NPSQuestion({
+  question,
+  onSubmit,
+  lastQuestion,
+  brandColor,
+  savedAnswer,
+  goToNextQuestion,
+  goToPreviousQuestion,
+}: NPSQuestionProps) {
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
+  useEffect(() => {
+    setSelectedChoice(savedAnswer);
+  }, [savedAnswer, question]);
+
+  const handleSubmit = (value: number | null) => {
+    const data = {
+      [question.id]: value,
+    };
+    if (savedAnswer === value) {
+      goToNextQuestion(data);
+      setSelectedChoice(null);
+      return;
+    }
+    onSubmit(data);
+    setSelectedChoice(null);
+  };
 
   const handleSelect = (number: number) => {
     setSelectedChoice(number);
@@ -30,14 +58,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
     <form
       onSubmit={(e) => {
         e.preventDefault();
-
-        const data = {};
-        if (selectedChoice !== null) {
-          data[question.id] = selectedChoice;
-        }
-
-        onSubmit(data);
-        // reset form
+        handleSubmit(selectedChoice);
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -56,6 +77,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
                   type="radio"
                   name="nps"
                   value={number}
+                  checked={selectedChoice === number}
                   className="fb-absolute fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
                   onChange={() => handleSelect(number)}
                   required={question.required}
@@ -70,17 +92,31 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
           </div>
         </fieldset>
       </div>
-      {!question.required && (
-        <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
-          <div></div>
+
+      <div className="fb-mt-4 fb-flex fb-w-full fb-justify-between">
+        {goToPreviousQuestion && (
+          <BackButton
+            onClick={() => {
+              goToPreviousQuestion(
+                savedAnswer !== selectedChoice
+                  ? {
+                      [question.id]: selectedChoice,
+                    }
+                  : undefined
+              );
+            }}
+          />
+        )}
+        <div></div>
+        {(!question.required || savedAnswer) && (
           <SubmitButton
             question={question}
             lastQuestion={lastQuestion}
             brandColor={brandColor}
             onClick={() => {}}
           />
-        </div>
-      )}
+        )}
+      </div>
     </form>
   );
 }

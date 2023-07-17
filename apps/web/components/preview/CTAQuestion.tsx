@@ -3,7 +3,6 @@ import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 import { cn } from "@/../../packages/lib/cn";
 import { isLight } from "@/lib/utils";
-import { Button } from "@formbricks/ui";
 import { Response } from "@formbricks/types/js";
 import { BackButton } from "@/components/preview/BackButton";
 
