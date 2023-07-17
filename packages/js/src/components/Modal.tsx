@@ -3,6 +3,13 @@ import { h, VNode } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 
+// CSS classes object
+const mobileClasses = {
+  hide: "fb--translate-y-full",
+  show: "fb-translate-y-0"
+};
+
+
 export default function Modal({
   children,
   isOpen,
@@ -41,25 +48,26 @@ export default function Modal({
     };
   }, [show, clickOutside, close, isCenter]);
 
-  const handleMobileClasses = () => {
-    if(isMobile){
-      if(show){
-        return "fb--translate-y-full"
-      }
-      else{
-        return "fb-translate-y-0"
-      }
-    }
-  }
-
-  useEffect(() => {
-    if(window.innerWidth<640){
-      setIsMobile(true)
-      return
-    }
-  }, [window.innerWidth])
   
 
+  const handleMobileClasses = (isMobile, show) => {
+    return isMobile ? (show ? mobileClasses.hide : mobileClasses.show) : "";
+  };
+  
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+  
+
+  // This classes will be applied only when screen size is greater than sm, hence sm is common prefix for all 
   const getPlacementStyle = (placement: PlacementType) => {
     switch (placement) {
       case "bottomRight":
@@ -71,9 +79,9 @@ export default function Modal({
       case "bottomLeft":
         return "sm:fb-bottom-3 sm:fb-left-3";
       case "center":
-        return "fb-top-1/2 fb-left-1/2 fb-transform -fb-translate-x-1/2 -fb-translate-y-1/2";
+        return "sm:fb-top-1/2 sm:fb-left-1/2 sm:fb-transform sm:-fb-translate-x-1/2 sm:-fb-translate-y-1/2";
       default:
-        return "fb-bottom-3 sm:fb-right-3";
+        return "sm:fb-bottom-3 sm:fb-right-3";
     }
   };
 
@@ -93,7 +101,7 @@ export default function Modal({
               : "sm:fb-bg-white/50"
             : "fb-bg-none fb-transition-all fb-duration-500 fb-ease-in-out"
         )}>
-        <div
+        <div 
           ref={modalRef}
           className={cn(
             "fb-bottom-0 fb-inset-x-0",
@@ -101,7 +109,7 @@ export default function Modal({
             show ? "fb-opacity-100" : "fb-opacity-0",
             "fb-h-fit fb-pointer-events-auto fb-absolute fb-w-full sm:fb-max-w-sm fb-overflow-hidden fb-rounded-lg fb-bg-white fb-shadow-lg fb-ring-1 fb-ring-black fb-ring-opacity-5 fb-transition-all fb-duration-500 fb-ease-in-out sm:fb-m-4",
             isMobile && "fb-top-full fb-rounded-t-3xl",
-            handleMobileClasses(),
+            handleMobileClasses(isMobile, show)
             
           )}>
           <div class="fb-absolute fb-top-0 fb-right-0 fb-pt-4 fb-pr-4 fb-block">
