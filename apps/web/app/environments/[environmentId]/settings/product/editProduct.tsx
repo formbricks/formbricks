@@ -141,21 +141,24 @@ export function DeleteProduct({ environmentId }) {
 
   return (
     <div>
-      <p className="text-sm text-slate-900">
-        Here you can delete&nbsp;
-        <strong>{truncate(product?.name, 30)}</strong>
-        &nbsp;incl. all surveys, responses, people, actions and attributes.{" "}
-        <strong>This action cannot be undone.</strong>
-      </p>
-      <Button
-        disabled={isDeleteDisabled}
-        variant="warn"
-        className={`mt-4 ${isDeleteDisabled ? "ring-grey-500 ring-1 ring-offset-1" : ""}`}
-        onClick={() => setIsDeleteDialogOpen(true)}>
-        Delete
-      </Button>
+      {!isDeleteDisabled && (
+        <div>
+          <p className="text-sm text-slate-900">
+            Delete {truncate(product?.name, 30)}
+            &nbsp;incl. all surveys, responses, people, actions and attributes.{" "}
+            <strong>This action cannot be undone.</strong>
+          </p>
+          <Button
+            disabled={isDeleteDisabled}
+            variant="warn"
+            className={`mt-4 ${isDeleteDisabled ? "ring-grey-500 ring-1 ring-offset-1" : ""}`}
+            onClick={() => setIsDeleteDialogOpen(true)}>
+            Delete
+          </Button>
+        </div>
+      )}
       {isDeleteDisabled && (
-        <p className="mt-2 text-xs text-red-700">
+        <p className="text-sm text-red-700">
           {!isUserAdminOrOwner
             ? "Only Admin or Owners can delete products."
             : "This is your only product, it cannot be deleted. Create a new product first."}
