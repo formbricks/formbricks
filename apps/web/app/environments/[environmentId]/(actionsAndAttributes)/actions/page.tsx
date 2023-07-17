@@ -1,0 +1,18 @@
+import ActionClassesTable from "@/app/environments/[environmentId]/(actionsAndAttributes)/actions/ActionClassesTable";
+import ActionClassDataRow from "@/app/environments/[environmentId]/(actionsAndAttributes)/actions/ActionRowData";
+import ActionTableHeading from "@/app/environments/[environmentId]/(actionsAndAttributes)/actions/ActionTableHeading";
+import { getActionClasses } from "@formbricks/lib/services/action";
+
+export default async function ActionClassesComponent({ params }) {
+  let actionClasses = await getActionClasses(params.environmentId);
+  return (
+    <>
+      <ActionClassesTable environmentId={params.environmentId} actionClasses={actionClasses}>
+        <ActionTableHeading />
+        {actionClasses.map((actionClass) => (
+          <ActionClassDataRow key={actionClass.id} actionClass={actionClass} />
+        ))}
+      </ActionClassesTable>
+    </>
+  );
+}

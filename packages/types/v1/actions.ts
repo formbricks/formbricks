@@ -14,3 +14,12 @@ export const ZAction = z.object({
 });
 
 export type TAction = z.infer<typeof ZAction>;
+
+export const ZActionInput = z.object({
+  name: z.string(),
+  description: z.union([z.string(), z.null()]),
+  noCodeConfig: z.union([ZEventClassNoCodeConfig, z.null()]),
+  type: z.enum(["code", "noCode", "automatic"]),
+});
+
+export type TActionInput = z.infer<typeof ZActionInput>;

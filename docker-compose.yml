@@ -1,11 +1,12 @@
 version: "3.3"
 services:
   postgres:
-    restart: always
     image: postgres:15-alpine
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - formbricks-postgres:/var/lib/postgresql/data
     environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
 
   formbricks:
@@ -25,5 +26,5 @@ services:
       - "traefik.http.services.formbricks.loadbalancer.server.port=3000"
 
 volumes:
-  postgres:
+  formbricks-postgres:
     driver: local

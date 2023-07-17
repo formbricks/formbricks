@@ -1,7 +1,7 @@
 import { Button } from "@formbricks/ui";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 
-export default function ActionLoader() {
+export default function Loading() {
   return (
     <>
       <div className="mb-6 text-right">

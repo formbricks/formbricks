@@ -2,7 +2,7 @@
 
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/errors";
-import { TAction } from "@formbricks/types/v1/actions";
+import { TAction, TActionInput } from "@formbricks/types/v1/actions";
 
 export const transformPrismaActionClass = (actionClass): TAction | null => {
   if (actionClass === null) {
@@ -52,11 +52,16 @@ export const getActionClasses = async (environmentId: string): Promise<TAction[]
   }
 };
 
-export const createActionClassServerAction = async (environmentId: string, eventClass) => {
+export const createActionClassServerAction = async (environmentId: string, actionClass: TActionInput) => {
   try {
     const result = await prisma.eventClass.create({
       data: {
-        ...eventClass,
+        name: actionClass.name,
+        description: actionClass.description,
+        type: actionClass.type,
+        noCodeConfig: actionClass.noCodeConfig
+          ? JSON.parse(JSON.stringify(actionClass.noCodeConfig))
+          : undefined,
         environment: { connect: { id: environmentId } },
       },
     });
