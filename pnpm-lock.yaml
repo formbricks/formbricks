@@ -295,9 +295,6 @@ importers:
       prisma-json-types-generator:
         specifier: ^2.5.0
         version: 2.5.0(prisma@5.0.0)
-      tsup:
-        specifier: ^7.1.0
-        version: 7.1.0
       zod:
         specifier: ^3.21.4
         version: 3.21.4
