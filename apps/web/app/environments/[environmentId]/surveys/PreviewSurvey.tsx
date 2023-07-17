@@ -43,7 +43,6 @@ const PreviewModalContent = ({
       onClick={() => handleStopCountdown()}
       onMouseOver={() => handleStopCountdown()}
       className="px-4 py-6 sm:p-6">
-      {/* Modal content JSX */}
       {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
         <ThankYouCard
           brandColor={brandColor}
