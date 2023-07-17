@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: cURL request
-        if: ${{ env.APP_URL && env.CRON_SECRET }}
+        if: ${{ secrets.APP_URL && secrets.CRON_SECRET }}
         run: |
           curl ${{ secrets.APP_URL }}/api/cron/weekly_summary \
             -X POST \
