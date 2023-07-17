@@ -1,4 +1,7 @@
-export default function OptionButton ({ active, icon, onClick }) {
+import { ReactNode } from "react";
+
+export default function OptionButton ({ active, icon, onClick }:
+  {active:boolean, icon:ReactNode, onClick:()=>void}) {
     return (
       <div
         className={`${
