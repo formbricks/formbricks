@@ -4,12 +4,14 @@ import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Modal from "@/components/preview/Modal";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
+import TabOption from "@/components/preview/TabOption";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
+import { DevicePhoneMobileIcon, ComputerDesktopIcon } from "@heroicons/react/24/solid";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
@@ -51,6 +53,7 @@ export default function PreviewSurvey({
   const [countdownProgress, setCountdownProgress] = useState(1);
   const startRef = useRef(performance.now());
   const frameRef = useRef<number | null>(null);
+  const [previewMode, setPreviewMode] = useState("desktop")
   const [countdownStop, setCountdownStop] = useState(false);
 
   const handleStopCountdown = () => {
@@ -242,56 +245,30 @@ export default function PreviewSurvey({
   }
 
   return (
-    <div className="flex h-full w-5/6 flex-1 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
-      <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
-        <div className="ml-6 flex space-x-2">
-          <div className="h-3 w-3 rounded-full bg-red-500"></div>
-          <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-          <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
-        </div>
-        <p>
-          <span className="ml-4 font-mono text-sm text-slate-400">
-            {previewType === "modal" ? "Your web app" : "Preview"}
-          </span>
-        </p>
-      </div>
-
-      {previewType === "modal" ? (
-        <Modal isOpen={isModalOpen} placement={product.placement}>
-          {!countdownStop && autoClose !== null && autoClose > 0 && (
-            <Progress progress={countdownProgress} brandColor={brandColor} />
-          )}
-          <div
-            onClick={() => handleStopCountdown()}
-            onMouseOver={() => handleStopCountdown()}
-            className="px-4 py-6 sm:p-6">
-            {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
-              <ThankYouCard
-                brandColor={brandColor}
-                headline={thankYouCard?.headline || "Thank you!"}
-                subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-              />
-            ) : (
-              questions.map((question, idx) =>
-                (activeQuestionId || lastActiveQuestionId) === question.id ? (
-                  <QuestionConditional
-                    key={question.id}
-                    question={question}
-                    brandColor={brandColor}
-                    lastQuestion={idx === questions.length - 1}
-                    onSubmit={gotoNextQuestion}
-                  />
-                ) : null
-              )
-            )}
-            {showFormbricksSignature && <FormbricksSignature />}
+    <div className="h-full w-full flex flex-col justify-items-center items-center">
+      <div className="flex h-full w-5/6 flex-1 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
+        <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
+          <div className="ml-6 flex space-x-2">
+            <div className="h-3 w-3 rounded-full bg-red-500"></div>
+            <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+            <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
           </div>
-          <Progress progress={progress} brandColor={brandColor} />
-        </Modal>
-      ) : (
-        <div className="flex flex-grow flex-col overflow-y-auto">
-          <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
-            <div className="w-full max-w-md">
+          <p>
+            <span className="ml-4 font-mono text-sm text-slate-400">
+              {previewType === "modal" ? "Your web app" : "Preview"}
+            </span>
+          </p>
+        </div>
+
+        {previewType === "modal" ? (
+          <Modal isOpen={isModalOpen} placement={product.placement}>
+            {!countdownStop && autoClose !== null && autoClose > 0 && (
+              <Progress progress={countdownProgress} brandColor={brandColor} />
+            )}
+            <div
+              onClick={() => handleStopCountdown()}
+              onMouseOver={() => handleStopCountdown()}
+              className="px-4 py-6 sm:p-6">
               {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
                 <ThankYouCard
                   brandColor={brandColor}
@@ -311,16 +288,56 @@ export default function PreviewSurvey({
                   ) : null
                 )
               )}
-            </div>
-          </div>
-          <div className="z-10 w-full rounded-b-lg bg-white">
-            <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
-              <Progress progress={progress} brandColor={brandColor} />
               {showFormbricksSignature && <FormbricksSignature />}
             </div>
+            <Progress progress={progress} brandColor={brandColor} />
+          </Modal>
+        ) : (
+          <div className="flex flex-grow flex-col overflow-y-auto">
+            <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
+              <div className="w-full max-w-md">
+                {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+                  <ThankYouCard
+                    brandColor={brandColor}
+                    headline={thankYouCard?.headline || "Thank you!"}
+                    subheader={thankYouCard?.subheader || "We appreciate your feedback."}
+                  />
+                ) : (
+                  questions.map((question, idx) =>
+                    (activeQuestionId || lastActiveQuestionId) === question.id ? (
+                      <QuestionConditional
+                        key={question.id}
+                        question={question}
+                        brandColor={brandColor}
+                        lastQuestion={idx === questions.length - 1}
+                        onSubmit={gotoNextQuestion}
+                      />
+                    ) : null
+                  )
+                )}
+              </div>
+            </div>
+            <div className="z-10 w-full rounded-b-lg bg-white">
+              <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
+                <Progress progress={progress} brandColor={brandColor} />
+                {showFormbricksSignature && <FormbricksSignature />}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+      <div className="flex border border-slate-300 border-2 rounded-full mt-4 p-1">
+        <TabOption
+          active={previewMode === "mobile"}
+          icon={<DevicePhoneMobileIcon className="h-6 w-6 my-4 mx-6 text-slate-700" />}
+          onClick={() => setPreviewMode("mobile")}
+        />
+        <TabOption
+          active={previewMode === "desktop"}
+          icon={<ComputerDesktopIcon className="h-6 w-6 my-4 mx-6 text-slate-700" />}
+          onClick={() => setPreviewMode("desktop")}
+        />
+      </div>
     </div>
   );
 }
