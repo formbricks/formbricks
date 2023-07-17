@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "main": "./src/index.ts",
   "files": [
-    "dist/**"
+    "src",
+    "zod",
+    "zod-utils.ts"
   ],
   "scripts": {
     "clean": "rimraf .turbo node_modules dist",
