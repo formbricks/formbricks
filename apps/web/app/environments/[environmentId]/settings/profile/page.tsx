@@ -17,8 +17,7 @@ export default async function ProfileSettingsPage() {
       </SettingsCard>
       <SettingsCard
         title="Delete account"
-        description="Delete your account, your personal information, your preferences and access to your data"
-        dangerZone>
+        description="Delete your account with all of your personal information and data.">
         <DeleteAccount session={session} />
       </SettingsCard>
     </div>
