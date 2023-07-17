@@ -15,7 +15,7 @@
     "db:migrate:dev": "dotenv -e ../../.env -- pnpm prisma migrate dev",
     "db:migrate:vercel": "if test \"$NEXT_PUBLIC_VERCEL_ENV\" = \"preview\" ; then env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma db push --accept-data-loss ; else env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma migrate deploy ; fi",
     "db:push": "prisma db push --accept-data-loss",
-    "db:up": "docker-compose -f ../../docker-compose.dev.yml up -d ",
+    "db:up": "docker-compose up -d ",
     "db:setup": "pnpm db:up && pnpm db:migrate:dev",
     "db:start": "pnpm db:setup",
     "dev": "tsup --watch",
