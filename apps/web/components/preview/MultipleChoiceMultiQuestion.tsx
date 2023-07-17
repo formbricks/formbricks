@@ -1,4 +1,4 @@
-import { Button, Input } from "@formbricks/ui";
+import { Input } from "@formbricks/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
