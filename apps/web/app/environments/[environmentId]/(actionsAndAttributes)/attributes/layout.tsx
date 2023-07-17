@@ -1,4 +1,4 @@
-import ActionsAttributesTabs from "@/components/actions_attributes/ActionsAttributesTabs";
+import ActionsAttributesTabs from "@/app/environments/[environmentId]/(actionsAndAttributes)/ActionsAttributesTabs";
 import ContentWrapper from "@/components/shared/ContentWrapper";
 
 export default function ActionsAndAttributesLayout({ params, children }) {
