@@ -4,7 +4,7 @@
     "@formbricks/web#go": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["@formbricks/database#go"]
+      "dependsOn": ["@formbricks/database#build"]
     },
     "build": {
       "dependsOn": ["^build"],

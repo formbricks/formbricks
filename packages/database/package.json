@@ -1,21 +1,24 @@
 {
   "name": "@formbricks/database",
   "private": true,
-  "version": "0.1.0",
-  "main": "./src/index.ts",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist/**"
   ],
   "scripts": {
+    "build": "tsup",
     "clean": "rimraf .turbo node_modules dist",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "dotenv -e ../../.env -- pnpm prisma migrate dev",
     "db:migrate:vercel": "if test \"$NEXT_PUBLIC_VERCEL_ENV\" = \"preview\" ; then env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma db push --accept-data-loss ; else env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma migrate deploy ; fi",
     "db:push": "prisma db push --accept-data-loss",
-    "db:up": "docker-compose -f ../../docker-compose.dev.yml up -d ",
+    "db:up": "docker-compose up -d ",
     "db:setup": "pnpm db:up && pnpm db:migrate:dev",
     "db:start": "pnpm db:setup",
-    "go": "pnpm db:setup",
+    "go": "pnpm db:setup && tsup --watch",
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
@@ -33,6 +36,7 @@
     "prisma": "^5.0.0",
     "prisma-dbml-generator": "^0.10.0",
     "prisma-json-types-generator": "^2.5.0",
+    "tsup": "^7.1.0",
     "zod": "^3.21.4",
     "zod-prisma": "^0.5.4"
   }
