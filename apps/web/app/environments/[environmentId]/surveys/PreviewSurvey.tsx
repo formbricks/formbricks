@@ -26,6 +26,47 @@ interface PreviewSurveyProps {
   environment: TEnvironment;
 }
 
+// Extracted modal content to prevent duplication
+const PreviewModalContent = ({
+  handleStopCountdown,
+  activeQuestionId,
+  lastActiveQuestionId,
+  thankYouCard,
+  questions,
+  brandColor,
+  gotoNextQuestion,
+  showFormbricksSignature,
+  progress,
+}) => (
+  <div>
+    <div onClick={() => handleStopCountdown()} onMouseOver={() => handleStopCountdown()} className="px-4 py-6 sm:p-6">
+      {/* Modal content JSX */}
+      {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+        <ThankYouCard
+          brandColor={brandColor}
+          headline={thankYouCard?.headline || "Thank you!"}
+          subheader={thankYouCard?.subheader || "We appreciate your feedback."}
+        />
+      ) : (
+        questions.map((question, idx) =>
+          (activeQuestionId || lastActiveQuestionId) === question.id ? (
+            <QuestionConditional
+              key={question.id}
+              question={question}
+              brandColor={brandColor}
+              lastQuestion={idx === questions.length - 1}
+              onSubmit={gotoNextQuestion}
+            />
+          ) : null
+        )
+      )}
+      {showFormbricksSignature && <FormbricksSignature />}
+    </div>
+    <Progress progress={progress} brandColor={brandColor} />
+  </div>
+);
+
+
 export default function PreviewSurvey({
   setActiveQuestionId,
   activeQuestionId,
@@ -43,18 +84,18 @@ export default function PreviewSurvey({
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
   const [showFormbricksSignature, setShowFormbricksSignature] = useState(false);
+  const [countdownProgress, setCountdownProgress] = useState(1);
+  const startRef = useRef(performance.now());
+  const frameRef = useRef<number | null>(null);
+  const [previewMode, setPreviewMode] = useState("desktop")
+  const [countdownStop, setCountdownStop] = useState(false);
+
 
   useEffect(() => {
     if (product) {
       setShowFormbricksSignature(product.formbricksSignature);
     }
   }, [product]);
-
-  const [countdownProgress, setCountdownProgress] = useState(1);
-  const startRef = useRef(performance.now());
-  const frameRef = useRef<number | null>(null);
-  const [previewMode, setPreviewMode] = useState("desktop")
-  const [countdownStop, setCountdownStop] = useState(false);
 
   const handleStopCountdown = () => {
     if (frameRef.current !== null) {
@@ -246,8 +287,30 @@ export default function PreviewSurvey({
 
   return (
     <div className="h-full w-full flex flex-col justify-items-center items-center">
-      <div className="flex h-full w-5/6 flex-1 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
-        <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
+      {previewMode === "mobile" && <div className="h-full w-5/6 flex justify-center items-center rounded-lg border border-slate-300 bg-slate-200" >
+        <div className="h-5/6 w-1/2 border border-[1rem] border-slate-500 rounded-[3rem] relative overflow-hidden bg-slate-400 pb-4"> 
+        {/* below element is use to create notch for the mobile device mockup   */}
+          <div className="w-1/2 h-6 absoulte top-0 bg-slate-500 mx-auto rounded-b-md"></div>
+          <Modal isOpen={isModalOpen} placement={product.placement} previewMode="mobile">
+            {!countdownStop && autoClose !== null && autoClose > 0 && (
+              <Progress progress={countdownProgress} brandColor={brandColor} />
+            )}
+            <PreviewModalContent
+              handleStopCountdown={handleStopCountdown}
+              activeQuestionId={activeQuestionId}
+              lastActiveQuestionId={lastActiveQuestionId}
+              thankYouCard={thankYouCard}
+              questions={questions}
+              brandColor={brandColor}
+              gotoNextQuestion={gotoNextQuestion}
+              showFormbricksSignature={showFormbricksSignature}
+              progress={progress}
+            />
+          </Modal>
+        </div>
+      </div>}
+      {previewMode === "desktop" && <div className="flex h-full w-5/6 flex-1 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
+        <div className="flex h-8 items-center rounded-t-lg bg-slate-200">
           <div className="ml-6 flex space-x-2">
             <div className="h-3 w-3 rounded-full bg-red-500"></div>
             <div className="h-3 w-3 rounded-full bg-amber-500"></div>
@@ -261,36 +324,21 @@ export default function PreviewSurvey({
         </div>
 
         {previewType === "modal" ? (
-          <Modal isOpen={isModalOpen} placement={product.placement}>
+          <Modal isOpen={isModalOpen} placement={product.placement} previewMode="desktop">
             {!countdownStop && autoClose !== null && autoClose > 0 && (
               <Progress progress={countdownProgress} brandColor={brandColor} />
             )}
-            <div
-              onClick={() => handleStopCountdown()}
-              onMouseOver={() => handleStopCountdown()}
-              className="px-4 py-6 sm:p-6">
-              {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
-                <ThankYouCard
-                  brandColor={brandColor}
-                  headline={thankYouCard?.headline || "Thank you!"}
-                  subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-                />
-              ) : (
-                questions.map((question, idx) =>
-                  (activeQuestionId || lastActiveQuestionId) === question.id ? (
-                    <QuestionConditional
-                      key={question.id}
-                      question={question}
-                      brandColor={brandColor}
-                      lastQuestion={idx === questions.length - 1}
-                      onSubmit={gotoNextQuestion}
-                    />
-                  ) : null
-                )
-              )}
-              {showFormbricksSignature && <FormbricksSignature />}
-            </div>
-            <Progress progress={progress} brandColor={brandColor} />
+            <PreviewModalContent
+              handleStopCountdown={handleStopCountdown}
+              activeQuestionId={activeQuestionId}
+              lastActiveQuestionId={lastActiveQuestionId}
+              thankYouCard={thankYouCard}
+              questions={questions}
+              brandColor={brandColor}
+              gotoNextQuestion={gotoNextQuestion}
+              showFormbricksSignature={showFormbricksSignature}
+              progress={progress}
+            />
           </Modal>
         ) : (
           <div className="flex flex-grow flex-col overflow-y-auto">
@@ -325,7 +373,7 @@ export default function PreviewSurvey({
             </div>
           </div>
         )}
-      </div>
+      </div>}
       <div className="flex border border-slate-300 border-2 rounded-full mt-4 p-1">
         <TabOption
           active={previewMode === "mobile"}
