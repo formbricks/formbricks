@@ -71,21 +71,23 @@ export default function MultipleChoiceSingleQuestion({
                   selectedChoice === choice.label ? "z-10 border-slate-400 bg-slate-50" : "border-gray-200",
                   "relative mb-2 flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-50 focus:outline-none"
                 )}>
-                <span className="flex items-center text-sm">
-                  <input
-                    type="radio"
-                    id={choice.id}
-                    name={question.id}
-                    value={choice.label}
-                    className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
-                    aria-labelledby={`${choice.id}-label`}
-                    onChange={() => setSelectedChoice(choice.id)}
-                    checked={selectedChoice === choice.id}
-                    style={{ borderColor: brandColor, color: brandColor }}
-                    required={question.required && idx === 0}
-                  />
-                  <span id={`${choice.id}-label`} className="ml-3 font-medium">
-                    {choice.label}
+                <span className="flex flex-col text-sm">
+                  <span className="flex items-center">
+                    <input
+                      type="radio"
+                      id={choice.id}
+                      name={question.id}
+                      value={choice.label}
+                      className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
+                      aria-labelledby={`${choice.id}-label`}
+                      onChange={() => setSelectedChoice(choice.id)}
+                      checked={selectedChoice === choice.id}
+                      style={{ borderColor: brandColor, color: brandColor }}
+                      required={question.required && idx === 0}
+                    />
+                    <span id={`${choice.id}-label`} className="ml-3 font-medium">
+                      {choice.label}
+                    </span>
                   </span>
                   {choice.id === "other" && selectedChoice === "other" && (
                     <Input
