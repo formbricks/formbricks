@@ -2,7 +2,7 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { TActionClass, TActionClassInput } from "@formbricks/types/v1/actionClasses";
 
 const select = {
@@ -45,7 +45,7 @@ export const deleteActionClass = async (
       },
       select,
     });
-    if (result === null) throw new Error(`Action with id ${actionClassId} not found so cannot delete it`);
+    if (result === null) throw new ResourceNotFoundError("Action", actionClassId);
 
     return result;
   } catch (error) {
