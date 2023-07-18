@@ -61,7 +61,7 @@
     "jest": "^29.6.1",
     "jest-environment-jsdom": "^29.6.1",
     "jest-fetch-mock": "^3.0.3",
-    "jest-preset-preact": "^4.0.5",
+    "jest-preset-preact": "^4.1.0",
     "microbundle": "^0.15.1",
     "preact": "10.16.0",
     "preact-cli": "^3.4.6",
