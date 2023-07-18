@@ -5,8 +5,8 @@ import { cn } from "../lib/utils";
 
 // CSS classes object
 const mobileClasses = {
-  hide: "fb--translate-y-full",
-  show: "fb-translate-y-0",
+  show: "fb--translate-y-full",
+  hide: "fb-translate-y-0",
 };
 
 export default function Modal({
@@ -48,7 +48,7 @@ export default function Modal({
   }, [show, clickOutside, close, isCenter]);
 
   const handleMobileClasses = (isMobile, show) => {
-    return isMobile ? (show ? mobileClasses.hide : mobileClasses.show) : "";
+    return isMobile ? (show ? mobileClasses.show : mobileClasses.hide) : "";
   };
 
   useEffect(() => {
