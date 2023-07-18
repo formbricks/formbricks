@@ -1,12 +1,10 @@
-import EnvironmentsNavbar from "@/app/environments/[environmentId]/EnvironmentsNavbar";
+import EnvironmentsNavbar from "@/app/(app)/environments/[environmentId]/EnvironmentsNavbar";
 import ToasterClient from "@/components/ToasterClient";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import PosthogIdentify from "./PosthogIdentify";
 import FormbricksClient from "../../FormbricksClient";
-import { PosthogClientWrapper } from "../../PosthogClientWrapper";
-import { ResponseFilterProvider } from "@/app/environments/[environmentId]/ResponseFilterContext";
+import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
 import { hasUserEnvironmentAccess } from "@/lib/api/apiHelper";
 
 export default async function EnvironmentLayout({ children, params }) {
@@ -22,16 +20,13 @@ export default async function EnvironmentLayout({ children, params }) {
   return (
     <>
       <ResponseFilterProvider>
-        <PosthogIdentify session={session} />
         <FormbricksClient session={session} />
         <ToasterClient />
         <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
-        <PosthogClientWrapper>
-          <main className="h-full flex-1 overflow-y-auto bg-slate-50">
-            {children}
-            <main />
-          </main>
-        </PosthogClientWrapper>
+        <main className="h-full flex-1 overflow-y-auto bg-slate-50">
+          {children}
+          <main />
+        </main>
       </ResponseFilterProvider>
     </>
   );

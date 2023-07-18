@@ -1,6 +1,6 @@
 "use client";
 
-import AdvancedSettings from "@/app/environments/[environmentId]/surveys/[surveyId]/edit/AdvancedSettings";
+import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AdvancedSettings";
 import { getQuestionTypeName } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";
 import { QuestionType } from "@formbricks/types/questions";

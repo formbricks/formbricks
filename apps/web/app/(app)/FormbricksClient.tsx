@@ -5,14 +5,6 @@ import { formbricksEnabled } from "@/lib/formbricks";
 import formbricks from "@formbricks/js";
 import { useEffect } from "react";
 
-/* if (typeof window !== "undefined" && formbricksEnabled) {
-  formbricks.init({
-    environmentId: env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
-    apiHost: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
-    debug: true,
-  });
-} */
-
 export default function FormbricksClient({ session }) {
   useEffect(() => {
     if (formbricksEnabled && session.user && formbricks) {

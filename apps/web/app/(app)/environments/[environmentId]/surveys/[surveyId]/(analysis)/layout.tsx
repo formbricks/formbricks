@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
-import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
+import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 
 type Props = {
   params: { surveyId: string; environmentId: string };

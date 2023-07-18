@@ -1,11 +1,11 @@
 "use client";
-import CustomFilter from "@/app/environments/[environmentId]/surveys/[surveyId]/CustomFilter";
-import SummaryHeader from "@/app/environments/[environmentId]/surveys/[surveyId]/SummaryHeader";
-import SurveyResultsTabs from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/SurveyResultsTabs";
-import SummaryList from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SummaryList";
-import SummaryMetadata from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SummaryMetadata";
+import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/CustomFilter";
+import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/SummaryHeader";
+import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/SurveyResultsTabs";
+import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SummaryList";
+import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SummaryMetadata";
 import ContentWrapper from "@/components/shared/ContentWrapper";
-import { useResponseFilter } from "@/app/environments/[environmentId]/ResponseFilterContext";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
 import { getFilterResponses } from "@/lib/surveys/surveys";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";

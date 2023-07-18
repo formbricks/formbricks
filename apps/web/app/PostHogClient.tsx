@@ -36,8 +36,5 @@ export function PostHogPageview(): JSX.Element {
 }
 
 export function PHProvider({ children }: { children: React.ReactNode }) {
-  {
-    posthogEnabled ? <PostHogProvider client={posthog}>{children}</PostHogProvider> : children;
-  }
-  return;
+  return posthogEnabled ? <PostHogProvider client={posthog}>{children}</PostHogProvider> : children;
 }

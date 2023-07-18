@@ -1,4 +1,4 @@
-import { getAnalysisData } from "@/app/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
+import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import { RESPONSES_LIMIT_FREE } from "@formbricks/lib/constants";
 import Link from "next/link";
 

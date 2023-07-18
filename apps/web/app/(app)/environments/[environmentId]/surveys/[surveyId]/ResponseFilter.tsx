@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import { Popover, PopoverTrigger, PopoverContent, Button, Checkbox } from "@formbricks/ui";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { TrashIcon } from "@heroicons/react/24/solid";
-import QuestionFilterComboBox from "@/app/environments/[environmentId]/surveys/[surveyId]/QuestionFilterComboBox";
-import { useResponseFilter } from "@/app/environments/[environmentId]/ResponseFilterContext";
+import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/QuestionFilterComboBox";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
 import clsx from "clsx";
 
 export type QuestionFilterOptions = {

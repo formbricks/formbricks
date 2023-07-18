@@ -1,6 +1,6 @@
 "use client";
 
-import MergeTagsCombobox from "@/app/environments/[environmentId]/settings/tags/MergeTagsCombobox";
+import MergeTagsCombobox from "@/app/(app)/environments/[environmentId]/settings/tags/MergeTagsCombobox";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useDeleteTag, useMergeTags, useUpdateTag } from "@/lib/tags/mutateTags";

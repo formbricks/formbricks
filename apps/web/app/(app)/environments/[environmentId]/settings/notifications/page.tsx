@@ -1,5 +1,5 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import SettingsCard from "@/app/environments/[environmentId]/settings/SettingsCard";
+import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/SettingsCard";
 import { prisma } from "@formbricks/database";
 import { NotificationSettings } from "@formbricks/types/users";
 import { getServerSession } from "next-auth";

@@ -1,6 +1,6 @@
 "use client";
 
-import ShareInviteModal from "@/app/environments/[environmentId]/settings/members/ShareInviteModal";
+import ShareInviteModal from "@/app/(app)/environments/[environmentId]/settings/members/ShareInviteModal";
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
