@@ -1,14 +1,14 @@
 import ModalWithTabs from "@/components/shared/ModalWithTabs";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
-import type { EventClass } from "@prisma/client";
 import EventActivityTab from "./ActionActivityTab";
 import ActionSettingsTab from "./ActionSettingsTab";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
 
 interface ActionDetailModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
-  actionClass: EventClass;
+  actionClass: TActionClass;
 }
 
 export default function ActionDetailModal({

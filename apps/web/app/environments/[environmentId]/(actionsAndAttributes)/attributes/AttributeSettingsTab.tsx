@@ -1,9 +1,11 @@
+"use client";
+
 import { Button, Input, Label } from "@formbricks/ui";
 import type { AttributeClass } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { ArchiveBoxArrowDownIcon, ArchiveBoxXMarkIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
-import { updatetAttributeClass } from "@formbricks/lib/services/attribute";
+import { updatetAttributeClass } from "@formbricks/lib/services/attributeClass";
 import { useState } from "react";
 
 interface AttributeSettingsTabProps {
@@ -11,10 +13,7 @@ interface AttributeSettingsTabProps {
   setOpen: (v: boolean) => void;
 }
 
-export default async function AttributeSettingsTab({
-  attributeClass,
-  setOpen,
-}: AttributeSettingsTabProps) {
+export default async function AttributeSettingsTab({ attributeClass, setOpen }: AttributeSettingsTabProps) {
   const router = useRouter();
   const { register, handleSubmit } = useForm({
     defaultValues: { name: attributeClass.name, description: attributeClass.description },

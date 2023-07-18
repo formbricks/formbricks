@@ -1,9 +1,9 @@
 "use server";
+import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/errors";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import "server-only";
+import { TActionClass, TActionClassInput } from "@formbricks/types/v1/actionClasses";
 
 const select = {
   id: true,
@@ -34,13 +34,22 @@ export const getActionClasses = async (environmentId: string): Promise<TActionCl
   }
 };
 
-export const createActionClassServerAction = async (environmentId: string, actionClass) => {
+export const createActionClass = async (
+  environmentId: string,
+  actionClass: TActionClassInput
+): Promise<TActionClass> => {
   try {
     const result = await prisma.eventClass.create({
       data: {
-        ...actionClass,
+        name: actionClass.name,
+        description: actionClass.description,
+        type: actionClass.type,
+        noCodeConfig: actionClass.noCodeConfig
+          ? JSON.parse(JSON.stringify(actionClass.noCodeConfig))
+          : undefined,
         environment: { connect: { id: environmentId } },
       },
+      select,
     });
     return result;
   } catch (error) {

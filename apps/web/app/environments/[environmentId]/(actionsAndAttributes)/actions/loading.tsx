@@ -17,8 +17,7 @@ export default function Loading() {
         <div className="grid h-12 grid-cols-6 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
           <span className="sr-only">Edit</span>
           <div className="col-span-4 pl-6 ">User Actions</div>
-          <div className="text-center"># Reps</div>
-          <div className="text-center">Created</div>
+          <div className="col-span-2 text-center">Created</div>
         </div>
       </div>
 
@@ -37,11 +36,8 @@ export default function Loading() {
               </div>
             </div>
           </div>
-          <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
-            <div className="m-20 h-4 animate-pulse rounded-full bg-gray-200"></div>
-          </div>
-          <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
-            <div className="m-2 h-4 animate-pulse rounded-full bg-gray-200"></div>
+          <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
+            <div className="m-28 h-4 animate-pulse rounded-full bg-gray-200"></div>
           </div>
           <div className="text-center"></div>
         </div>

@@ -3,7 +3,7 @@ import 'server-only'
 
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/errors";
-import { TAttributeClass } from "@formbricks/types/v1/attributes";
+import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 export const transformPrismaAttributeClass = (attributeClass): TAttributeClass | null => {
   if (attributeClass === null) {

@@ -1,7 +1,7 @@
 import ActionClassesTable from "@/app/environments/[environmentId]/(actionsAndAttributes)/actions/ActionClassesTable";
 import ActionClassDataRow from "@/app/environments/[environmentId]/(actionsAndAttributes)/actions/ActionRowData";
 import ActionTableHeading from "@/app/environments/[environmentId]/(actionsAndAttributes)/actions/ActionTableHeading";
-import { getActionClasses } from "@formbricks/lib/services/action";
+import { getActionClasses } from "@formbricks/lib/services/actionClass";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

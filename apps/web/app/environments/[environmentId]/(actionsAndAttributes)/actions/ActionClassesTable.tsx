@@ -6,7 +6,7 @@ import { useState } from "react";
 import AddNoCodeActionModal from "./AddNoCodeActionModal";
 import ActionDetailModal from "./ActionDetailModal";
 import { useRouter } from "next/navigation";
-import { TAction } from "@formbricks/types/v1/actions";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
 
 export default function ActionClassesTable({
   environmentId,
@@ -14,16 +14,25 @@ export default function ActionClassesTable({
   children: [TableHeading, actionRows],
 }: {
   environmentId: string;
-  actionClasses: TAction[];
+  actionClasses: TActionClass[];
   children: [JSX.Element, JSX.Element[]];
 }) {
   const router = useRouter();
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
 
-  const [activeActionClass, setActiveActionClass] = useState("" as any);
+  const [activeActionClass, setActiveActionClass] = useState<TActionClass>({
+    environmentId,
+    id: "",
+    name: "",
+    type: "noCode",
+    description: "",
+    noCodeConfig: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
 
-  const handleOpenActionDetailModalClick = (e, actionClass) => {
+  const handleOpenActionDetailModalClick = (e, actionClass: TActionClass) => {
     e.preventDefault();
     setActiveActionClass(actionClass);
     setActionDetailModalOpen(true);

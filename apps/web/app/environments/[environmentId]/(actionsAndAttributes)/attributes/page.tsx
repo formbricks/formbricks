@@ -2,7 +2,7 @@ import AttributeClassesTable from "@/app/environments/[environmentId]/(actionsAn
 import AttributeClassDataRow from "@/app/environments/[environmentId]/(actionsAndAttributes)/attributes/AttributeRowData";
 import AttributeTableHeading from "@/app/environments/[environmentId]/(actionsAndAttributes)/attributes/AttributeTableHeading";
 import HowToAddAttributesButton from "@/app/environments/[environmentId]/(actionsAndAttributes)/attributes/HowToAddAttributesButton";
-import { getAttributeClasses } from "@formbricks/lib/services/attribute";
+import { getAttributeClasses } from "@formbricks/lib/services/attributeClass";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

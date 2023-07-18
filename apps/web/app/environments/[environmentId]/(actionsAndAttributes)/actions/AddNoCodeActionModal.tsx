@@ -20,8 +20,8 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
-import { createActionClassServerAction } from "@formbricks/lib/services/action";
-import { TActionInput } from "@formbricks/types/v1/actions";
+import { createActionClass } from "@formbricks/lib/services/actionClass";
+import { TActionClassInput } from "@formbricks/types/v1/actionClasses";
 
 interface EventDetailModalProps {
   environmentId: string;
@@ -50,14 +50,14 @@ export default function AddNoCodeActionModal({
   const submitEventClass = async (data: Partial<Event>): Promise<void> => {
     const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as NoCodeConfig);
 
-    const updatedData: TActionInput = {
+    const updatedData: TActionClassInput = {
       ...data,
       noCodeConfig: filteredNoCodeConfig,
       type: "noCode",
-    } as TActionInput;
+    } as TActionClassInput;
 
     try {
-      await createActionClassServerAction(environmentId, updatedData);
+      await createActionClass(environmentId, updatedData);
       mutateEventClasses();
       reset();
       setOpen(false);
