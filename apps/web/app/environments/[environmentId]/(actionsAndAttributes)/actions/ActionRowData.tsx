@@ -1,7 +1,6 @@
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { CodeBracketIcon, CursorArrowRaysIcon } from "@heroicons/react/24/solid";
-import { SparklesIcon } from "lucide-react";
+import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
 
 export default function ActionClassDataRow({ actionClass }: { actionClass: TActionClass }) {
   return (
