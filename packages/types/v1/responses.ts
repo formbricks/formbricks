@@ -27,7 +27,12 @@ const ZResponseNote = z.object({
 
 export type TResponseNote = z.infer<typeof ZResponseNote>;
 
-export const ZResponseMeta = z.record(z.union([z.string(), z.number()]));
+export const ZResponseMeta = z.object({
+  userAgent: z.object({
+    browser: z.string().optional(),
+    os: z.string().optional(),
+  }),
+});
 
 export type TResponseMeta = z.infer<typeof ZResponseMeta>;
 
@@ -49,7 +54,7 @@ export const ZResponse = z.object({
   data: ZResponseData,
   notes: z.array(ZResponseNote),
   tags: z.array(ZTag),
-  meta: ZResponseMeta,
+  meta: ZResponseMeta.nullable(),
 });
 
 export type TResponse = z.infer<typeof ZResponse>;
