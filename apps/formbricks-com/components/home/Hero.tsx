@@ -22,7 +22,7 @@ export const Hero: React.FC = ({}) => {
         <a
           href="https://github.com/formbricks/formbricks"
           target="_blank"
-          className="border-brand-dark rounded-full border px-6 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
+          className="border-brand-dark rounded-full border px-4 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
           We&apos;re Open-Source | Star us on GitHub{" "}
           <ChevronRightIcon className="inline h-5 w-5 text-slate-300" />
         </a>
