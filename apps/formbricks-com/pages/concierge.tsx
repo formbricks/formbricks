@@ -82,7 +82,7 @@ const ConciergePage = () => {
             </p>
           </div>
         </div>
-        <div className="rounded-xl">
+        <div className="!mt-0 rounded-xl">
           <Cal
             calLink="johannes/kick-off"
             style={{
