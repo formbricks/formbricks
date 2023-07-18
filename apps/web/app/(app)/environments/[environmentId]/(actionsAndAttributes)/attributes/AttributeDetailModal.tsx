@@ -27,7 +27,6 @@ export default function AttributeDetailModal({
       children: (
         <AttributeSettingsTab
           attributeClass={attributeClass}
-          environmentId={environmentId}
           setOpen={setOpen}
         />
       ),

@@ -1,6 +1,6 @@
 "use client";
 
-import AddNoCodeEventModal from "@/app/(app)/environments/[environmentId]/events/AddNoCodeEventModal";
+import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/AddNoCodeActionModal";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useEventClasses } from "@/lib/eventClasses/eventClasses";
 import { cn } from "@formbricks/lib/cn";
@@ -30,8 +30,7 @@ interface WhenToSendCardProps {
 
 export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhenToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
-  const { eventClasses, isLoadingEventClasses, isErrorEventClasses, mutateEventClasses } =
-    useEventClasses(environmentId);
+  const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
 
   const autoClose = localSurvey.autoClose !== null;
@@ -257,11 +256,10 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
           )}
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
-      <AddNoCodeEventModal
+      <AddNoCodeActionModal
         environmentId={environmentId}
         open={isAddEventModalOpen}
         setOpen={setAddEventModalOpen}
-        mutateEventClasses={mutateEventClasses}
       />
     </>
   );

@@ -1,11 +1,9 @@
+"use client";
+
 import DeleteDialog from "@/components/shared/DeleteDialog";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { deleteEventClass, useEventClass, useEventClasses } from "@/lib/eventClasses/eventClasses";
-import { useEventClassMutation } from "@/lib/eventClasses/mutateEventClasses";
-import type { Event, NoCodeConfig } from "@formbricks/types/events";
+import type { NoCodeConfig } from "@formbricks/types/events";
 import {
   Button,
-  ErrorComponent,
   Input,
   Label,
   RadioGroup,
@@ -18,46 +16,46 @@ import {
 } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
+import { deleteActionClass, updateActionClass } from "@formbricks/lib/services/actionClass";
+import { TActionClassInput } from "@formbricks/types/v1/actionClasses";
 
-interface EventSettingsTabProps {
+interface ActionSettingsTabProps {
   environmentId: string;
-  eventClassId: string;
+  actionClass: any;
   setOpen: (v: boolean) => void;
 }
 
-export default function EventSettingsTab({ environmentId, eventClassId, setOpen }: EventSettingsTabProps) {
-  const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, eventClassId);
+export default function ActionSettingsTab({ environmentId, actionClass, setOpen }: ActionSettingsTabProps) {
+  const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
   const { register, handleSubmit, control, watch } = useForm({
     defaultValues: {
-      name: eventClass.name,
-      description: eventClass.description,
-      noCodeConfig: eventClass.noCodeConfig,
+      name: actionClass.name,
+      description: actionClass.description,
+      noCodeConfig: actionClass.noCodeConfig,
     },
   });
-  const { triggerEventClassMutate, isMutatingEventClass } = useEventClassMutation(
-    environmentId,
-    eventClass.id
-  );
-
-  const { mutateEventClasses } = useEventClasses(environmentId);
+  const [isUpdatingAction, setIsUpdatingAction] = useState(false);
 
   const onSubmit = async (data) => {
     const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as NoCodeConfig);
 
-    const updatedData: Event = {
+    const updatedData: TActionClassInput = {
       ...data,
       noCodeConfig: filteredNoCodeConfig,
       type: "noCode",
-    } as Event;
+    } as TActionClassInput;
 
-    await triggerEventClassMutate(updatedData);
-    mutateEventClasses();
+    setIsUpdatingAction(true);
+    await updateActionClass(environmentId, actionClass.id, updatedData);
+    router.refresh();
+    setIsUpdatingAction(false);
     setOpen(false);
   };
 
@@ -83,9 +81,6 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
     if (match === "no") toast.error("Your survey would not be shown.");
   };
 
-  if (isLoadingEventClass) return <LoadingSpinner />;
-  if (isErrorEventClass) return <ErrorComponent />;
-
   return (
     <div>
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -95,8 +90,8 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
             type="text"
             placeholder="e.g. Product Team Info"
             {...register("name", {
-              value: eventClass.name,
-              disabled: eventClass.type === "automatic" || eventClass.type === "code" ? true : false,
+              value: actionClass.name,
+              disabled: actionClass.type === "automatic" || actionClass.type === "code" ? true : false,
             })}
           />
         </div>
@@ -106,18 +101,18 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
             type="text"
             placeholder="e.g. Triggers when user changed subscription"
             {...register("description", {
-              value: eventClass.description,
-              disabled: eventClass.type === "automatic" ? true : false,
+              value: actionClass.description,
+              disabled: actionClass.type === "automatic" ? true : false,
             })}
           />
         </div>
         <div className="">
           <Label>Action Type</Label>
-          {eventClass.type === "code" ? (
+          {actionClass.type === "code" ? (
             <p className="text-sm text-slate-600">
               This is a code action. Please make changes in your code base.
             </p>
-          ) : eventClass.type === "noCode" ? (
+          ) : actionClass.type === "noCode" ? (
             <div className="flex justify-between rounded-lg">
               <div className="w-full space-y-4">
                 <Controller
@@ -258,7 +253,7 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
                 )}
               </div>
             </div>
-          ) : eventClass.type === "automatic" ? (
+          ) : actionClass.type === "automatic" ? (
             <p className="text-sm text-slate-600">
               This action was created automatically. You cannot make changes to it.
             </p>
@@ -266,7 +261,7 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
         </div>
         <div className="flex justify-between border-t border-slate-200 py-6">
           <div>
-            {eventClass.type !== "automatic" && (
+            {actionClass.type !== "automatic" && (
               <Button
                 type="button"
                 variant="warn"
@@ -281,9 +276,9 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
               Read Docs
             </Button>
           </div>
-          {eventClass.type !== "automatic" && (
+          {actionClass.type !== "automatic" && (
             <div className="flex space-x-2">
-              <Button type="submit" variant="darkCTA" loading={isMutatingEventClass}>
+              <Button type="submit" variant="darkCTA" loading={isUpdatingAction}>
                 Save changes
               </Button>
             </div>
@@ -298,8 +293,8 @@ export default function EventSettingsTab({ environmentId, eventClassId, setOpen 
         onDelete={async () => {
           setOpen(false);
           try {
-            await deleteEventClass(environmentId, eventClass.id);
-            mutateEventClasses();
+            await deleteActionClass(environmentId, actionClass.id);
+            router.refresh();
             toast.success("Action deleted successfully");
           } catch (error) {
             toast.error("Something went wrong. Please try again.");
