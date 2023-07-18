@@ -108,6 +108,7 @@ export default function PreviewSurvey({
   const [countdownProgress, setCountdownProgress] = useState(1);
   const startRef = useRef(performance.now());
   const frameRef = useRef<number | null>(null);
+  const ContentRef = useRef<HTMLDivElement | null>(null);
   const [previewMode, setPreviewMode] = useState("desktop");
   const [countdownStop, setCountdownStop] = useState(false);
 
@@ -165,6 +166,10 @@ export default function PreviewSurvey({
   }, [autoClose]);
 
   useEffect(() => {
+    if(ContentRef.current){
+      // scroll to top whenever question changes 
+      ContentRef.current.scrollTop = 0
+    }
     if (activeQuestionId) {
       setLastActiveQuestionId(activeQuestionId);
       setProgress(calculateProgress(questions, activeQuestionId));
@@ -307,11 +312,11 @@ export default function PreviewSurvey({
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-items-center">
-      {previewMode === "mobile" && (
-        <div className="flex h-full w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+      <div className="flex h-[95%] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        {previewMode === "mobile" && (
           <div className="relative h-[90%] w-1/2 overflow-hidden rounded-[3rem] border-8 border-slate-500 bg-slate-400">
             {/* below element is use to create notch for the mobile device mockup   */}
-            <div className="absolute top-0 right-1/2 left-1/2 transform -translate-x-1/2 h-6 w-1/2 rounded-b-md bg-slate-500 z-20"></div>
+            <div className="absolute top-0 right-1/2 left-1/2 transform -translate-x-1/2 h-4 w-1/2 rounded-b-md bg-slate-500 z-20"></div>
             {previewType === "modal" ?
               (<Modal isOpen={isModalOpen} placement={product.placement} previewMode="mobile">
                 {!countdownStop && autoClose !== null && autoClose > 0 && (
@@ -329,7 +334,7 @@ export default function PreviewSurvey({
                   progress={progress}
                 />
               </Modal>) :
-              (<div className="h-full w-full flex flex-grow flex-col overflow-y-auto absolute top-0 z-10">
+              (<div className="h-full w-full flex flex-grow flex-col overflow-y-auto absolute top-0 z-10" ref={ContentRef}>
                 <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
                   <div className="w-full max-w-md px-4">
                     <QuestionRenderer
@@ -352,64 +357,64 @@ export default function PreviewSurvey({
             }
 
           </div>
-        </div>
-      )}
-      {previewMode === "desktop" && (
-        <div className="flex h-full w-5/6 flex-1 flex-col rounded-lg border border-slate-300 bg-slate-200 ">
-          <div className="flex h-8 items-center rounded-t-lg bg-slate-200">
-            <div className="ml-6 flex space-x-2">
-              <div className="h-3 w-3 rounded-full bg-red-500"></div>
-              <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-              <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+        )}
+        {previewMode === "desktop" && (
+          <div className="flex h-full w-5/6 flex-1 flex-col ">
+            <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
+              <div className="ml-6 flex space-x-2">
+                <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+                <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+              </div>
+              <p>
+                <span className="ml-4 font-mono text-sm text-slate-400">
+                  {previewType === "modal" ? "Your web app" : "Preview"}
+                </span>
+              </p>
             </div>
-            <p>
-              <span className="ml-4 font-mono text-sm text-slate-400">
-                {previewType === "modal" ? "Your web app" : "Preview"}
-              </span>
-            </p>
-          </div>
 
-          {previewType === "modal" ? (
-            <Modal isOpen={isModalOpen} placement={product.placement} previewMode="desktop">
-              {!countdownStop && autoClose !== null && autoClose > 0 && (
-                <Progress progress={countdownProgress} brandColor={brandColor} />
-              )}
-              <PreviewModalContent
-                handleStopCountdown={handleStopCountdown}
-                activeQuestionId={activeQuestionId}
-                lastActiveQuestionId={lastActiveQuestionId}
-                thankYouCard={thankYouCard}
-                questions={questions}
-                brandColor={brandColor}
-                gotoNextQuestion={gotoNextQuestion}
-                showFormbricksSignature={showFormbricksSignature}
-                progress={progress}
-              />
-            </Modal>
-          ) : (
-            <div className="flex flex-grow flex-col overflow-y-auto">
-              <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
-                <div className="w-full max-w-md">
-                  <QuestionRenderer
-                    activeQuestionId={activeQuestionId}
-                    lastActiveQuestionId={lastActiveQuestionId}
-                    questions={questions}
-                    brandColor={brandColor}
-                    thankYouCard={thankYouCard}
-                    gotoNextQuestion={gotoNextQuestion}
-                  />
+            {previewType === "modal" ? (
+              <Modal isOpen={isModalOpen} placement={product.placement} previewMode="desktop">
+                {!countdownStop && autoClose !== null && autoClose > 0 && (
+                  <Progress progress={countdownProgress} brandColor={brandColor} />
+                )}
+                <PreviewModalContent
+                  handleStopCountdown={handleStopCountdown}
+                  activeQuestionId={activeQuestionId}
+                  lastActiveQuestionId={lastActiveQuestionId}
+                  thankYouCard={thankYouCard}
+                  questions={questions}
+                  brandColor={brandColor}
+                  gotoNextQuestion={gotoNextQuestion}
+                  showFormbricksSignature={showFormbricksSignature}
+                  progress={progress}
+                />
+              </Modal>
+            ) : (
+              <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
+                <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
+                  <div className="w-full max-w-md">
+                    <QuestionRenderer
+                      activeQuestionId={activeQuestionId}
+                      lastActiveQuestionId={lastActiveQuestionId}
+                      questions={questions}
+                      brandColor={brandColor}
+                      thankYouCard={thankYouCard}
+                      gotoNextQuestion={gotoNextQuestion}
+                    />
+                  </div>
+                </div>
+                <div className="z-10 w-full rounded-b-lg bg-white">
+                  <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
+                    <Progress progress={progress} brandColor={brandColor} />
+                    {showFormbricksSignature && <FormbricksSignature />}
+                  </div>
                 </div>
               </div>
-              <div className="z-10 w-full rounded-b-lg bg-white">
-                <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
-                  <Progress progress={progress} brandColor={brandColor} />
-                  {showFormbricksSignature && <FormbricksSignature />}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
+      </div>
       <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
         <TabOption
           active={previewMode === "mobile"}
