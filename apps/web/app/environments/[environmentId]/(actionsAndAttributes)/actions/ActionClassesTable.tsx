@@ -5,7 +5,6 @@ import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import AddNoCodeActionModal from "./AddNoCodeActionModal";
 import ActionDetailModal from "./ActionDetailModal";
-import { useRouter } from "next/navigation";
 import { TActionClass } from "@formbricks/types/v1/actionClasses";
 
 export default function ActionClassesTable({
@@ -17,7 +16,6 @@ export default function ActionClassesTable({
   actionClasses: TActionClass[];
   children: [JSX.Element, JSX.Element[]];
 }) {
-  const router = useRouter();
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
 

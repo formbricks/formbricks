@@ -1,7 +1,6 @@
 "use client";
 
 import Modal from "@/components/shared/Modal";
-import type { Event, NoCodeConfig } from "@formbricks/types/events";
 import {
   Button,
   Input,
@@ -21,7 +20,7 @@ import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
 import { createActionClass } from "@formbricks/lib/services/actionClass";
-import { TActionClassInput } from "@formbricks/types/v1/actionClasses";
+import { TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
 import { useRouter } from "next/navigation";
 
 interface AddNoCodeActionModalProps {
@@ -35,7 +34,7 @@ export default function AddNoCodeActionModal({ environmentId, open, setOpen }: A
   const { register, control, handleSubmit, watch, reset } = useForm();
 
   // clean up noCodeConfig before submitting by removing unnecessary fields
-  const filterNoCodeConfig = (noCodeConfig: NoCodeConfig): NoCodeConfig => {
+  const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
     const { type } = noCodeConfig;
     return {
       type,
@@ -43,8 +42,8 @@ export default function AddNoCodeActionModal({ environmentId, open, setOpen }: A
     };
   };
 
-  const submitEventClass = async (data: Partial<Event>): Promise<void> => {
-    const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as NoCodeConfig);
+  const submitEventClass = async (data: Partial<TActionClassInput>): Promise<void> => {
+    const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TActionClassNoCodeConfig);
 
     const updatedData: TActionClassInput = {
       ...data,

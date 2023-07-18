@@ -25,7 +25,7 @@ export default function ActionDetailModal({
     {
       title: "Settings",
       children: (
-        <ActionSettingsTab environmentId={environmentId} eventClassId={actionClass.id} setOpen={setOpen} />
+        <ActionSettingsTab environmentId={environmentId} actionClass={actionClass} setOpen={setOpen} />
       ),
     },
   ];

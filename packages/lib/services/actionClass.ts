@@ -34,6 +34,27 @@ export const getActionClasses = async (environmentId: string): Promise<TActionCl
   }
 };
 
+export const deleteActionClass = async (
+  environmentId: string,
+  actionClassId: string
+): Promise<TActionClass> => {
+  try {
+    const result = await prisma.eventClass.delete({
+      where: {
+        id: actionClassId,
+      },
+      select,
+    });
+    if (result === null) throw new Error(`Action with id ${actionClassId} not found so cannot delete it`);
+
+    return result;
+  } catch (error) {
+    throw new DatabaseError(
+      `Database error when deleting an action with id ${actionClassId} for environment ${environmentId}`
+    );
+  }
+};
+
 export const createActionClass = async (
   environmentId: string,
   actionClass: TActionClassInput
@@ -54,5 +75,31 @@ export const createActionClass = async (
     return result;
   } catch (error) {
     throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
+  }
+};
+
+export const updateActionClass = async (
+  environmentId: string,
+  actionClassId: string,
+  inputActionClass: Partial<TActionClassInput>
+): Promise<TActionClass> => {
+  try {
+    const result = await prisma.eventClass.update({
+      where: {
+        id: actionClassId,
+      },
+      data: {
+        name: inputActionClass.name,
+        description: inputActionClass.description,
+        type: inputActionClass.type,
+        noCodeConfig: inputActionClass.noCodeConfig
+          ? JSON.parse(JSON.stringify(inputActionClass.noCodeConfig))
+          : undefined,
+      },
+      select,
+    });
+    return result;
+  } catch (error) {
+    throw new DatabaseError(`Database error when updating an action for environment ${environmentId}`);
   }
 };
