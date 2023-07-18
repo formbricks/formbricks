@@ -185,6 +185,12 @@ And set the correct permissions:
 chmod 600 acme.json
 ```
 
+As a last step you need to create the network traefik is using to connect your apps with each other:
+
+```bash
+docker network create web
+```
+
 Now you can start traefik:
 
 ```bash
