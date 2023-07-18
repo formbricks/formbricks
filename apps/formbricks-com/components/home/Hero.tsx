@@ -43,7 +43,7 @@ export const Hero: React.FC = ({}) => {
           <p className="hidden whitespace-nowrap pt-3 text-xs text-slate-400 dark:text-slate-500 md:block">
             Trusted by
           </p>
-          <div className="grid grid-cols-3 items-center gap-8 pt-2 md:grid-cols-4">
+          <div className="grid grid-cols-4 items-center gap-5 pt-2 md:gap-8">
             <Image
               src={CalLogoLight}
               alt="Cal Logo"
