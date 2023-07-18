@@ -5,39 +5,25 @@ import { AttributeClass } from "@prisma/client";
 import { sendResponseFinishedEmail } from "@/lib/email";
 import { Question } from "@formbricks/types/questions";
 import { NotificationSettings } from "@formbricks/types/users";
+import { ZPipelineInput } from "@formbricks/types/v1/pipelines";
+import { responses } from "@/lib/api/response";
+import { transformErrorToDetails } from "@/lib/api/validator";
 
 export async function POST(request: Request) {
-  const { internalSecret, environmentId, surveyId, event, data } = await request.json();
-  if (!internalSecret) {
-    console.error("Pipeline: Missing internalSecret");
-    return new Response("Missing internalSecret", {
-      status: 400,
-    });
+  const jsonInput = await request.json();
+
+  const inputValidation = ZPipelineInput.safeParse(jsonInput);
+
+  if (!inputValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(inputValidation.error),
+      true
+    );
   }
-  if (!environmentId) {
-    console.error("Pipeline: Missing environmentId");
-    return new Response("Missing environmentId", {
-      status: 400,
-    });
-  }
-  if (!surveyId) {
-    console.error("Pipeline: Missing surveyId");
-    return new Response("Missing surveyId", {
-      status: 400,
-    });
-  }
-  if (!event) {
-    console.error("Pipeline: Missing event");
-    return new Response("Missing event", {
-      status: 400,
-    });
-  }
-  if (!data) {
-    console.error("Pipeline: Missing data");
-    return new Response("Missing data", {
-      status: 400,
-    });
-  }
+
+  const { internalSecret, environmentId, surveyId, event, data } = inputValidation.data;
+
   if (internalSecret !== INTERNAL_SECRET) {
     console.error("Pipeline: internalSecret doesn't match");
     return new Response("Invalid internalSecret", {
@@ -50,7 +36,7 @@ export async function POST(request: Request) {
     where: {
       environmentId,
       triggers: {
-        hasSome: event,
+        has: event,
       },
       OR: [
         {
