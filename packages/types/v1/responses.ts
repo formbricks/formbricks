@@ -27,7 +27,11 @@ const ZResponseNote = z.object({
 
 export type TResponseNote = z.infer<typeof ZResponseNote>;
 
-const ZResponse = z.object({
+export const ZResponseMeta = z.record(z.union([z.string(), z.number()]));
+
+export type TResponseMeta = z.infer<typeof ZResponseMeta>;
+
+export const ZResponse = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -45,6 +49,7 @@ const ZResponse = z.object({
   data: ZResponseData,
   notes: z.array(ZResponseNote),
   tags: z.array(ZTag),
+  meta: ZResponseMeta,
 });
 
 export type TResponse = z.infer<typeof ZResponse>;

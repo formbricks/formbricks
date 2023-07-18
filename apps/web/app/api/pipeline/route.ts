@@ -1,20 +1,28 @@
-import { INTERNAL_SECRET } from "@formbricks/lib/constants";
-import { prisma } from "@formbricks/database";
-import { NextResponse } from "next/server";
-import { AttributeClass } from "@prisma/client";
+import { responses } from "@/lib/api/response";
+import { transformErrorToDetails } from "@/lib/api/validator";
 import { sendResponseFinishedEmail } from "@/lib/email";
+import { prisma } from "@formbricks/database";
+import { INTERNAL_SECRET } from "@formbricks/lib/constants";
+import { convertDatesInObject } from "@formbricks/lib/time";
 import { Question } from "@formbricks/types/questions";
 import { NotificationSettings } from "@formbricks/types/users";
 import { ZPipelineInput } from "@formbricks/types/v1/pipelines";
-import { responses } from "@/lib/api/response";
-import { transformErrorToDetails } from "@/lib/api/validator";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
+  // check authentication with x-api-key header and CRON_SECRET env variable
+  if (headers().get("x-api-key") !== INTERNAL_SECRET) {
+    return responses.notAuthenticatedResponse();
+  }
   const jsonInput = await request.json();
+
+  convertDatesInObject(jsonInput);
 
   const inputValidation = ZPipelineInput.safeParse(jsonInput);
 
   if (!inputValidation.success) {
+    console.error(inputValidation.error);
     return responses.badRequestResponse(
       "Fields are missing or incorrectly formatted",
       transformErrorToDetails(inputValidation.error),
@@ -22,14 +30,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { internalSecret, environmentId, surveyId, event, data } = inputValidation.data;
-
-  if (internalSecret !== INTERNAL_SECRET) {
-    console.error("Pipeline: internalSecret doesn't match");
-    return new Response("Invalid internalSecret", {
-      status: 401,
-    });
-  }
+  const { environmentId, surveyId, event, response } = inputValidation.data;
 
   // get all webhooks of this environment where event in triggers
   const webhooks = await prisma.webhook.findMany({
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           webhookId: webhook.id,
           event,
-          data,
+          data: response,
         }),
       });
     })
@@ -122,32 +123,10 @@ export async function POST(request: Request) {
         name: surveyData.name,
         questions: JSON.parse(JSON.stringify(surveyData.questions)) as Question[],
       };
-      // get person for response
-      let person: {
-        id: string;
-        attributes: { id: string; value: string; attributeClass: AttributeClass }[];
-      } | null;
-      if (data.personId) {
-        person = await prisma.person.findUnique({
-          where: {
-            id: data.personId,
-          },
-          select: {
-            id: true,
-            attributes: {
-              select: {
-                id: true,
-                value: true,
-                attributeClass: true,
-              },
-            },
-          },
-        });
-      }
       // send email to all users
       await Promise.all(
         usersWithNotifications.map(async (user) => {
-          await sendResponseFinishedEmail(user.email, environmentId, survey, data, person);
+          await sendResponseFinishedEmail(user.email, environmentId, survey, response);
         })
       );
     }

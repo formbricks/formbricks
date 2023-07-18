@@ -68,11 +68,7 @@ export async function PUT(
     event: "responseUpdated",
     environmentId: survey.environmentId,
     surveyId: survey.id,
-    // only send the updated fields
-    data: {
-      ...response,
-      data: inputValidation.data.data,
-    },
+    response,
   });
 
   if (response.finished) {
@@ -82,7 +78,7 @@ export async function PUT(
       event: "responseFinished",
       environmentId: survey.environmentId,
       surveyId: survey.id,
-      data: response,
+      response: response,
     });
   }
 
