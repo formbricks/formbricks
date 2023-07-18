@@ -2,7 +2,7 @@
 
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { deleteEventClass, useEventClass, useEventClasses } from "@/lib/eventClasses/eventClasses";
+import { deleteEventClass, useEventClass } from "@/lib/eventClasses/eventClasses";
 import { useEventClassMutation } from "@/lib/eventClasses/mutateEventClasses";
 import type { Event, NoCodeConfig } from "@formbricks/types/events";
 import {
@@ -20,11 +20,11 @@ import {
 } from "@formbricks/ui";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
-import { useRouter } from "next/navigation";
 
 interface ActionSettingsTabProps {
   environmentId: string;
@@ -49,8 +49,6 @@ export default function ActionSettingsTab({ environmentId, eventClassId, setOpen
     eventClass.id
   );
 
-  const { mutateEventClasses } = useEventClasses(environmentId);
-
   const onSubmit = async (data) => {
     const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as NoCodeConfig);
 
@@ -61,7 +59,6 @@ export default function ActionSettingsTab({ environmentId, eventClassId, setOpen
     } as Event;
 
     await triggerEventClassMutate(updatedData);
-    mutateEventClasses();
     router.refresh();
     setOpen(false);
   };

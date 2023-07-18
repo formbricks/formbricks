@@ -24,13 +24,13 @@ import { createActionClass } from "@formbricks/lib/services/actionClass";
 import { TActionClassInput } from "@formbricks/types/v1/actionClasses";
 import { useRouter } from "next/navigation";
 
-interface EventDetailModalProps {
+interface AddNoCodeActionModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
 }
 
-export default function AddNoCodeActionModal({ environmentId, open, setOpen }: EventDetailModalProps) {
+export default function AddNoCodeActionModal({ environmentId, open, setOpen }: AddNoCodeActionModalProps) {
   const router = useRouter();
   const { register, control, handleSubmit, watch, reset } = useForm();
 
