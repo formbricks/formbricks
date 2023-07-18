@@ -15,8 +15,8 @@ export default function ProfileSettingsPage({ params }) {
         <EditWaitingTime environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
-        title="Danger Zone"
-        description="You will delete all surveys, responses, people, actions and attributes along with the product.">
+        title="Delete Product"
+        description="Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.">
         <DeleteProduct environmentId={params.environmentId} />
       </SettingsCard>
     </div>

@@ -114,23 +114,27 @@ function DeleteAccountModal({ setOpen, open, session }: DeleteAccounModaltProps)
       isDeleting={deleting}
       disabled={inputValue !== session.user.email}>
       <div className="py-5">
-        <p>
-          Deleting your account will result in the permanent removal of all your personal information, saved
-          preferences, and access to team data. If you are the owner of a team with other admins, the
-          ownership of that team will be transferred to another admin.
-        </p>
-        <p className="py-5">
-          Please note, however, that if you are the only member of a team or there is no other admin present,
-          the team will be irreversibly deleted along with all associated data.
-        </p>
+        <ul className="list-disc pb-6 pl-6">
+          <li>Permanent removal of all of your personal information and data.</li>
+          <li>
+            If you are the owner of a team with other admins, the ownership of that team will be transferred
+            to another admin.
+          </li>
+          <li>
+            If you are the only member of a team or there is no other admin present, the team will be
+            irreversibly deleted along with all associated data.
+          </li>
+          <li>This action cannot be undone. If it&apos;s gone, it&apos;s gone.</li>
+        </ul>
         <form>
           <label htmlFor="deleteAccountConfirmation">
             Please enter <span className="font-bold">{session.user.email}</span> in the following field to
-            confirm the definitive deletion of your account.
+            confirm the definitive deletion of your account:
           </label>
           <Input
             value={inputValue}
             onChange={handleInputChange}
+            placeholder={session.user.email}
             className="mt-5"
             type="text"
             id="deleteAccountConfirmation"
@@ -152,6 +156,9 @@ export function DeleteAccount({ session }: { session: Session | null }) {
   return (
     <div>
       <DeleteAccountModal open={isModalOpen} setOpen={setModalOpen} session={session} />
+      <p className="text-sm text-slate-700">
+        Delete your account with all personal data. <strong>This cannot be undone!</strong>
+      </p>
       <Button className="mt-4" variant="warn" onClick={() => setModalOpen(!isModalOpen)}>
         Delete my account
       </Button>

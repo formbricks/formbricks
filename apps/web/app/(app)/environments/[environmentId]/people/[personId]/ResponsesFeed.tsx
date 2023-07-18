@@ -38,7 +38,7 @@ export default function ResponseFeed({ person, sortByDate, environmentId }) {
                           <div className="flex items-center justify-center space-x-2  rounded-full bg-slate-50 px-3 py-1 text-sm text-slate-600">
                             <Link
                               className="hover:underline"
-                              href={`environments/${environmentId}/surveys/${response.survey.id}/summary`}>
+                              href={`/environments/${environmentId}/surveys/${response.survey.id}/summary`}>
                               {response.survey.name}
                             </Link>
                             <SurveyStatusIndicator

@@ -12,8 +12,7 @@ interface OpenTextSummaryProps {
 }
 
 function findEmail(person) {
-  const emailAttribute = person.attributes.email;
-  return emailAttribute ? emailAttribute.value : null;
+  return person.attributes?.email || null;
 }
 
 export default function OpenTextSummary({ questionSummary, environmentId }: OpenTextSummaryProps) {

@@ -55,7 +55,11 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
             <div className="grid w-full gap-x-2">
               <div>
                 <Label>Team Name</Label>
-                <Input placeholder="e.g. Power Puff Girls" {...register("name", { required: true })} />
+                <Input
+                  autoFocus
+                  placeholder="e.g. Power Puff Girls"
+                  {...register("name", { required: true })}
+                />
               </div>
             </div>
           </div>
