@@ -1,7 +1,10 @@
+export const revalidate = REVALIDATION_INTERVAL;
+
 import AttributeClassesTable from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/AttributeClassesTable";
 import AttributeClassDataRow from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/AttributeRowData";
 import AttributeTableHeading from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/AttributeTableHeading";
 import HowToAddAttributesButton from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/HowToAddAttributesButton";
+import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getAttributeClasses } from "@formbricks/lib/services/attributeClass";
 import { Metadata } from "next";
 
