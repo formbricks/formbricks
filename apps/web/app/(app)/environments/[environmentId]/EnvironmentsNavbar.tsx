@@ -117,9 +117,9 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
       },
       {
         name: "Actions & Attributes",
-        href: `/environments/${environmentId}/events`,
+        href: `/environments/${environmentId}/actions`,
         icon: FilterIcon,
-        current: pathname?.includes("/events") || pathname?.includes("/attributes"),
+        current: pathname?.includes("/actions") || pathname?.includes("/attributes"),
       },
       {
         name: "Integrations",
@@ -221,7 +221,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
     <nav className="top-0 z-10 w-full border-b border-slate-200 bg-white">
       {environment?.type === "development" && (
         <div className="h-6 w-full bg-[#A33700] p-0.5 text-center text-sm text-white">
-          You&apos;re in development mode. Use it to test surveys, events and attributes.
+          You&apos;re in development mode. Use it to test surveys, actions and attributes.
         </div>
       )}
 

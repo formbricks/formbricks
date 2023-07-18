@@ -1,41 +1,38 @@
-import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
-import { useAttributeClassMutation } from "@/lib/attributeClasses/mutateAttributeClasses";
+"use client";
+
 import { Button, Input, Label } from "@formbricks/ui";
 import type { AttributeClass } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { ArchiveBoxArrowDownIcon, ArchiveBoxXMarkIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
+import { updatetAttributeClass } from "@formbricks/lib/services/attributeClass";
+import { useState } from "react";
 
 interface AttributeSettingsTabProps {
-  environmentId: string;
   attributeClass: AttributeClass;
   setOpen: (v: boolean) => void;
 }
 
-export default function AttributeSettingsTab({
-  environmentId,
-  attributeClass,
-  setOpen,
-}: AttributeSettingsTabProps) {
+export default function AttributeSettingsTab({ attributeClass, setOpen }: AttributeSettingsTabProps) {
+  const router = useRouter();
   const { register, handleSubmit } = useForm({
     defaultValues: { name: attributeClass.name, description: attributeClass.description },
   });
-  const { triggerAttributeClassMutate, isMutatingAttributeClass } = useAttributeClassMutation(
-    environmentId,
-    attributeClass.id
-  );
-
-  const { mutateAttributeClasses } = useAttributeClasses(environmentId);
+  const [isAttributeBeingSubmitted, setisAttributeBeingSubmitted] = useState(false);
 
   const onSubmit = async (data) => {
-    await triggerAttributeClassMutate(data);
-    mutateAttributeClasses();
+    setisAttributeBeingSubmitted(true);
     setOpen(false);
+    await updatetAttributeClass(attributeClass.id, data);
+    router.refresh();
+    setisAttributeBeingSubmitted(false);
   };
 
   const handleArchiveToggle = async () => {
+    setisAttributeBeingSubmitted(true);
     const data = { archived: !attributeClass.archived };
-    await triggerAttributeClassMutate(data);
-    mutateAttributeClasses();
+    await updatetAttributeClass(attributeClass.id, data);
+    setisAttributeBeingSubmitted(false);
   };
 
   return (
@@ -101,7 +98,7 @@ export default function AttributeSettingsTab({
           </div>
           {attributeClass.type !== "automatic" && (
             <div className="flex space-x-2">
-              <Button type="submit" variant="darkCTA" loading={isMutatingAttributeClass}>
+              <Button type="submit" variant="darkCTA" loading={isAttributeBeingSubmitted}>
                 Save changes
               </Button>
             </div>

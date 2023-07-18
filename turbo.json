@@ -15,6 +15,7 @@
       "outputs": ["dist/**", ".next/**"],
       "env": [
         "CRON_SECRET",
+        "PRISMA_GENERATE_DATAPROXY",
         "GITHUB_ID",
         "GITHUB_SECRET",
         "GOOGLE_CLIENT_ID",

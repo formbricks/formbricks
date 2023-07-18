@@ -1,8 +1,6 @@
 "use client";
 
 import Modal from "@/components/shared/Modal";
-import { createEventClass } from "@/lib/eventClasses/eventClasses";
-import type { Event, NoCodeConfig } from "@formbricks/types/events";
 import {
   Button,
   Input,
@@ -21,24 +19,22 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
+import { createActionClass } from "@formbricks/lib/services/actionClass";
+import { TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
+import { useRouter } from "next/navigation";
 
-interface EventDetailModalProps {
+interface AddNoCodeActionModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
-  mutateEventClasses: (data?: any) => void;
 }
 
-export default function AddNoCodeEventModal({
-  environmentId,
-  open,
-  setOpen,
-  mutateEventClasses,
-}: EventDetailModalProps) {
+export default function AddNoCodeActionModal({ environmentId, open, setOpen }: AddNoCodeActionModalProps) {
+  const router = useRouter();
   const { register, control, handleSubmit, watch, reset } = useForm();
 
   // clean up noCodeConfig before submitting by removing unnecessary fields
-  const filterNoCodeConfig = (noCodeConfig: NoCodeConfig): NoCodeConfig => {
+  const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
     const { type } = noCodeConfig;
     return {
       type,
@@ -46,18 +42,18 @@ export default function AddNoCodeEventModal({
     };
   };
 
-  const submitEventClass = async (data: Partial<Event>): Promise<void> => {
-    const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as NoCodeConfig);
+  const submitEventClass = async (data: Partial<TActionClassInput>): Promise<void> => {
+    const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TActionClassNoCodeConfig);
 
-    const updatedData: Event = {
+    const updatedData: TActionClassInput = {
       ...data,
       noCodeConfig: filteredNoCodeConfig,
       type: "noCode",
-    } as Event;
+    } as TActionClassInput;
 
     try {
-      await createEventClass(environmentId, updatedData);
-      mutateEventClasses();
+      await createActionClass(environmentId, updatedData);
+      router.refresh();
       reset();
       setOpen(false);
       toast.success("Action added successfully.");
