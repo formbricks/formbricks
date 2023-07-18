@@ -24,8 +24,6 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     CRON_SECRET: z.string().optional(),
-    NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
-    NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
   },
   /*
    * Environment variables available on the client (and server).
@@ -64,6 +62,8 @@ export const env = createEnv({
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: z.string().optional(),
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: z.string().optional(),
     NEXT_PUBLIC_IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
+    NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
+    NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
