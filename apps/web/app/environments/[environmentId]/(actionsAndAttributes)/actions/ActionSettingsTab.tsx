@@ -1,3 +1,5 @@
+"use client";
+
 import DeleteDialog from "@/components/shared/DeleteDialog";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { deleteEventClass, useEventClass, useEventClasses } from "@/lib/eventClasses/eventClasses";
@@ -22,6 +24,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
+import { useRouter } from "next/navigation";
 
 interface ActionSettingsTabProps {
   environmentId: string;
@@ -30,6 +33,7 @@ interface ActionSettingsTabProps {
 }
 
 export default function ActionSettingsTab({ environmentId, eventClassId, setOpen }: ActionSettingsTabProps) {
+  const router = useRouter();
   const { eventClass, isLoadingEventClass, isErrorEventClass } = useEventClass(environmentId, eventClassId);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
@@ -58,6 +62,7 @@ export default function ActionSettingsTab({ environmentId, eventClassId, setOpen
 
     await triggerEventClassMutate(updatedData);
     mutateEventClasses();
+    router.refresh();
     setOpen(false);
   };
 
