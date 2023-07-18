@@ -38,10 +38,6 @@ export default function ActionClassesTable({
     setActionDetailModalOpen(true);
   };
 
-  const mutateActionClasses = () => {
-    router.refresh();
-  };
-
   return (
     <>
       <div className="mb-6 text-right">
@@ -79,7 +75,6 @@ export default function ActionClassesTable({
         environmentId={environmentId}
         open={isAddActionModalOpen}
         setOpen={setAddActionModalOpen}
-        mutateEventClasses={mutateActionClasses}
       />
     </>
   );

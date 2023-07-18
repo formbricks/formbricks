@@ -22,20 +22,16 @@ import toast from "react-hot-toast";
 import { testURLmatch } from "./testURLmatch";
 import { createActionClass } from "@formbricks/lib/services/actionClass";
 import { TActionClassInput } from "@formbricks/types/v1/actionClasses";
+import { useRouter } from "next/navigation";
 
 interface EventDetailModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
-  mutateEventClasses: (data?: any) => void;
 }
 
-export default function AddNoCodeActionModal({
-  environmentId,
-  open,
-  setOpen,
-  mutateEventClasses,
-}: EventDetailModalProps) {
+export default function AddNoCodeActionModal({ environmentId, open, setOpen }: EventDetailModalProps) {
+  const router = useRouter();
   const { register, control, handleSubmit, watch, reset } = useForm();
 
   // clean up noCodeConfig before submitting by removing unnecessary fields
@@ -58,7 +54,7 @@ export default function AddNoCodeActionModal({
 
     try {
       await createActionClass(environmentId, updatedData);
-      mutateEventClasses();
+      router.refresh();
       reset();
       setOpen(false);
       toast.success("Action added successfully.");
