@@ -43,15 +43,36 @@ const PreviewModalContent = ({
       onClick={() => handleStopCountdown()}
       onMouseOver={() => handleStopCountdown()}
       className="px-4 py-6 sm:p-6">
-      {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
-        <ThankYouCard
-          brandColor={brandColor}
-          headline={thankYouCard?.headline || "Thank you!"}
-          subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-        />
-      ) : (
-        questions.map((question, idx) =>
-          (activeQuestionId || lastActiveQuestionId) === question.id ? (
+      <QuestionRenderer
+        activeQuestionId={activeQuestionId}
+        lastActiveQuestionId={lastActiveQuestionId}
+        questions={questions}
+        brandColor={brandColor}
+        thankYouCard={thankYouCard}
+        gotoNextQuestion={gotoNextQuestion}
+      />
+      {showFormbricksSignature && <FormbricksSignature />}
+    </div>
+    <Progress progress={progress} brandColor={brandColor} />
+  </div>
+);
+
+const QuestionRenderer = ({ activeQuestionId, lastActiveQuestionId, questions, brandColor, thankYouCard, gotoNextQuestion }) => {
+  if ((activeQuestionId || lastActiveQuestionId) === "thank-you-card") {
+    return (
+      <ThankYouCard
+        brandColor={brandColor}
+        headline={thankYouCard?.headline || "Thank you!"}
+        subheader={thankYouCard?.subheader || "We appreciate your feedback."}
+      />
+    );
+  }
+
+  return (
+    <>
+      {questions.map((question, idx) => {
+        if ((activeQuestionId || lastActiveQuestionId) === question.id) {
+          return (
             <QuestionConditional
               key={question.id}
               question={question}
@@ -59,14 +80,13 @@ const PreviewModalContent = ({
               lastQuestion={idx === questions.length - 1}
               onSubmit={gotoNextQuestion}
             />
-          ) : null
-        )
-      )}
-      {showFormbricksSignature && <FormbricksSignature />}
-    </div>
-    <Progress progress={progress} brandColor={brandColor} />
-  </div>
-);
+          );
+        }
+        return null;
+      })}
+    </>
+  );
+};
 
 export default function PreviewSurvey({
   setActiveQuestionId,
@@ -289,25 +309,48 @@ export default function PreviewSurvey({
     <div className="flex h-full w-full flex-col items-center justify-items-center">
       {previewMode === "mobile" && (
         <div className="flex h-full w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
-          <div className="relative h-5/6 w-1/2 overflow-hidden rounded-[3rem] border border-[1rem] border-slate-500 bg-slate-400 pb-4">
+          <div className="relative h-[90%] w-1/2 overflow-hidden rounded-[3rem] border-8 border-slate-500 bg-slate-400">
             {/* below element is use to create notch for the mobile device mockup   */}
-            <div className="absoulte top-0 mx-auto h-6 w-1/2 rounded-b-md bg-slate-500"></div>
-            <Modal isOpen={isModalOpen} placement={product.placement} previewMode="mobile">
-              {!countdownStop && autoClose !== null && autoClose > 0 && (
-                <Progress progress={countdownProgress} brandColor={brandColor} />
-              )}
-              <PreviewModalContent
-                handleStopCountdown={handleStopCountdown}
-                activeQuestionId={activeQuestionId}
-                lastActiveQuestionId={lastActiveQuestionId}
-                thankYouCard={thankYouCard}
-                questions={questions}
-                brandColor={brandColor}
-                gotoNextQuestion={gotoNextQuestion}
-                showFormbricksSignature={showFormbricksSignature}
-                progress={progress}
-              />
-            </Modal>
+            <div className="absolute top-0 right-1/2 left-1/2 transform -translate-x-1/2 h-6 w-1/2 rounded-b-md bg-slate-500 z-20"></div>
+            {previewType === "modal" ?
+              (<Modal isOpen={isModalOpen} placement={product.placement} previewMode="mobile">
+                {!countdownStop && autoClose !== null && autoClose > 0 && (
+                  <Progress progress={countdownProgress} brandColor={brandColor} />
+                )}
+                <PreviewModalContent
+                  handleStopCountdown={handleStopCountdown}
+                  activeQuestionId={activeQuestionId}
+                  lastActiveQuestionId={lastActiveQuestionId}
+                  thankYouCard={thankYouCard}
+                  questions={questions}
+                  brandColor={brandColor}
+                  gotoNextQuestion={gotoNextQuestion}
+                  showFormbricksSignature={showFormbricksSignature}
+                  progress={progress}
+                />
+              </Modal>) :
+              (<div className="h-full w-full flex flex-grow flex-col overflow-y-auto absolute top-0 z-10">
+                <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
+                  <div className="w-full max-w-md px-4">
+                    <QuestionRenderer
+                      activeQuestionId={activeQuestionId}
+                      lastActiveQuestionId={lastActiveQuestionId}
+                      questions={questions}
+                      brandColor={brandColor}
+                      thankYouCard={thankYouCard}
+                      gotoNextQuestion={gotoNextQuestion}
+                    />
+                  </div>
+                </div>
+                <div className="z-10 w-full rounded-b-lg bg-white">
+                  <div className="mx-auto max-w-md space-y-6 p-6 pt-4">
+                    <Progress progress={progress} brandColor={brandColor} />
+                    {showFormbricksSignature && <FormbricksSignature />}
+                  </div>
+                </div>
+              </div>)
+            }
+
           </div>
         </div>
       )}
@@ -347,25 +390,14 @@ export default function PreviewSurvey({
             <div className="flex flex-grow flex-col overflow-y-auto">
               <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
                 <div className="w-full max-w-md">
-                  {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
-                    <ThankYouCard
-                      brandColor={brandColor}
-                      headline={thankYouCard?.headline || "Thank you!"}
-                      subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-                    />
-                  ) : (
-                    questions.map((question, idx) =>
-                      (activeQuestionId || lastActiveQuestionId) === question.id ? (
-                        <QuestionConditional
-                          key={question.id}
-                          question={question}
-                          brandColor={brandColor}
-                          lastQuestion={idx === questions.length - 1}
-                          onSubmit={gotoNextQuestion}
-                        />
-                      ) : null
-                    )
-                  )}
+                  <QuestionRenderer
+                    activeQuestionId={activeQuestionId}
+                    lastActiveQuestionId={lastActiveQuestionId}
+                    questions={questions}
+                    brandColor={brandColor}
+                    thankYouCard={thankYouCard}
+                    gotoNextQuestion={gotoNextQuestion}
+                  />
                 </div>
               </div>
               <div className="z-10 w-full rounded-b-lg bg-white">
@@ -378,15 +410,15 @@ export default function PreviewSurvey({
           )}
         </div>
       )}
-      <div className="mt-4 flex rounded-full border border-2 border-slate-300 p-1">
+      <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
         <TabOption
           active={previewMode === "mobile"}
-          icon={<DevicePhoneMobileIcon className="mx-6 my-4 h-6 w-6 text-slate-700" />}
+          icon={<DevicePhoneMobileIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
           onClick={() => setPreviewMode("mobile")}
         />
         <TabOption
           active={previewMode === "desktop"}
-          icon={<ComputerDesktopIcon className="mx-6 my-4 h-6 w-6 text-slate-700" />}
+          icon={<ComputerDesktopIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
           onClick={() => setPreviewMode("desktop")}
         />
       </div>
