@@ -31,6 +31,7 @@ export const ZResponseMeta = z.object({
   userAgent: z.object({
     browser: z.string().optional(),
     os: z.string().optional(),
+    device: z.string().optional(),
   }),
 });
 
