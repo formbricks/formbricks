@@ -115,9 +115,9 @@ export const initialize = async (
       // continue for now - next sync will check complete state
     }
   } else {
-    logger.debug("No valid session found. Creating new config.");
+    logger.debug("No valid configuration found. Creating new config.");
     // we need new config
-    config.update({ environmentId: c.environmentId, apiHost: c.apiHost });
+    config.update({ environmentId: c.environmentId, apiHost: c.apiHost, state: undefined });
 
     logger.debug("Syncing.");
     const syncResult = await sync();

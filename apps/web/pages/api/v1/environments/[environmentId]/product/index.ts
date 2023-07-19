@@ -123,23 +123,36 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // DELETE
   else if (req.method === "DELETE") {
+    // get teamId from product
+    const environment = await prisma.environment.findUnique({
+      where: { id: environmentId },
+      select: {
+        product: {
+          select: {
+            id: true,
+            teamId: true,
+          },
+        },
+      },
+    });
+    if (!environment) {
+      res.status(404).json({ error: "Environment not found" });
+      return;
+    }
+    const teamId = environment?.product.teamId;
+
     const membership = await prisma.membership.findUnique({
       where: {
         userId_teamId: {
           userId: currentUser.id,
-          teamId: currentUser.teamId,
+          teamId: teamId,
         },
       },
     });
     if (membership?.role !== "admin" && membership?.role !== "owner") {
       return res.status(403).json({ message: "You are not allowed to delete products." });
     }
-    const environment = await prisma.environment.findUnique({
-      where: { id: environmentId },
-      select: {
-        productId: true,
-      },
-    });
+    const productId = environment?.product.id;
 
     if (environment === null) {
       return res.status(404).json({ message: "This environment doesn't exist" });
@@ -147,7 +160,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     // Delete the product with
     const prismaRes = await prisma.product.delete({
-      where: { id: environment.productId },
+      where: { id: productId },
     });
 
     return res.json(prismaRes);

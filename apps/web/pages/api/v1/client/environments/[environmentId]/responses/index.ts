@@ -1,8 +1,9 @@
+import { sendToPipeline } from "@/lib/pipelines";
 import { prisma } from "@formbricks/database";
-import type { NextApiRequest, NextApiResponse } from "next";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { createResponse } from "@formbricks/lib/services/response";
+import { captureTelemetry } from "@formbricks/lib/telemetry";
+import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -95,39 +96,25 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // create new response
-    const responseData = await prisma.response.create(createBody);
+    const responseData = await createResponse(createBody);
 
     // send response to pipeline
     // don't await to not block the response
-    fetch(`${WEBAPP_URL}/api/pipeline`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        internalSecret: INTERNAL_SECRET,
-        environmentId,
-        surveyId,
-        event: "responseCreated",
-        data: responseData,
-      }),
+    sendToPipeline({
+      environmentId,
+      surveyId,
+      event: "responseCreated",
+      response: responseData,
     });
 
     if (response.finished) {
       // send response to pipeline
       // don't await to not block the response
-      fetch(`${WEBAPP_URL}/api/pipeline`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          internalSecret: INTERNAL_SECRET,
-          environmentId,
-          surveyId,
-          event: "responseFinished",
-          data: responseData,
-        }),
+      sendToPipeline({
+        environmentId,
+        surveyId,
+        event: "responseFinished",
+        response: responseData,
       });
     }
 

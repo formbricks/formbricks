@@ -1,6 +1,9 @@
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { TPipelineInput } from "@formbricks/types/v1/pipelines";
+import { updateResponse } from "@formbricks/lib/services/response";
+import { sendToPipeline } from "@/lib/pipelines";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -42,15 +45,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       ...response.data,
     };
 
-    // update response
-    const responseData = await prisma.response.update({
-      where: {
-        id: responseId,
-      },
-      data: {
-        ...{ ...response, data: newResponseData },
-      },
-    });
+    const updatedResponse = await updateResponse(responseId, { ...response, data: newResponseData });
 
     // send response update to pipeline
     // don't await to not block the response
@@ -62,31 +57,24 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       body: JSON.stringify({
         internalSecret: INTERNAL_SECRET,
         environmentId,
-        surveyId: responseData.surveyId,
+        surveyId: updatedResponse.surveyId,
         event: "responseUpdated",
-        data: { id: responseId, ...response },
-      }),
+        response: updatedResponse,
+      } as TPipelineInput),
     });
 
     if (response.finished) {
       // send response to pipeline
       // don't await to not block the response
-      fetch(`${WEBAPP_URL}/api/pipeline`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          internalSecret: INTERNAL_SECRET,
-          environmentId,
-          surveyId: responseData.surveyId,
-          event: "responseFinished",
-          data: responseData,
-        }),
+      sendToPipeline({
+        environmentId,
+        surveyId: updatedResponse.surveyId,
+        event: "responseFinished",
+        response: updatedResponse,
       });
     }
 
-    return res.json(responseData);
+    return res.json({ message: "Response updated" });
   }
 
   // Unknown HTTP Method
