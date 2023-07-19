@@ -16,6 +16,8 @@ interface QuestionsViewProps {
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   environmentId: string;
+  invalidQuestions: Number[]
+  setInvalidQuestions: (invalidQuestions: Number[]) => void;
 }
 
 export default function QuestionsView({
@@ -24,6 +26,8 @@ export default function QuestionsView({
   localSurvey,
   setLocalSurvey,
   environmentId,
+  invalidQuestions,
+  setInvalidQuestions
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -44,6 +48,38 @@ export default function QuestionsView({
     return survey;
   };
 
+  // function to validate individual questions
+  const validateSurvey = (questionIdx, updatedSurvey) => {
+    let temp = invalidQuestions
+    const question = updatedSurvey.questions[questionIdx];
+    const isNotEmptyHeadline = question.headline.trim() !== "";
+
+    if (isNotEmptyHeadline) {
+      if (
+        question.type === "multipleChoiceMulti" ||
+        question.type === "multipleChoiceSingle"
+      ) {
+        const hasEmptyChoices = question.choices.some((element) => element.label.trim() === "");
+
+        // removing question that have a headline and are valid multile choice from invalidQuestions array 
+        if (!hasEmptyChoices) {
+          temp =  invalidQuestions.filter((id) => id !== questionIdx)
+          setInvalidQuestions(temp)
+        }
+      } else {
+        // question that have a headline 
+        temp =  invalidQuestions.filter((id) => id !== questionIdx)
+          setInvalidQuestions(temp)
+      }
+    }
+    // if none of the above conditions match it means question is still invalid and hence including it in invalidQuestions array 
+     else if (!invalidQuestions.includes(questionIdx)) {
+      temp.push(questionIdx)
+      setInvalidQuestions(temp);
+    }
+  };
+
+
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     if ("id" in updatedAttributes) {
@@ -63,6 +99,10 @@ export default function QuestionsView({
       ...updatedAttributes,
     };
     setLocalSurvey(updatedSurvey);
+    if (invalidQuestions.includes(-1)) {
+      // if there is no -1 it means user still hasen't tried to save the survey and hence till then no checks will be performed 
+      validateSurvey(questionIdx, updatedSurvey)
+    }
   };
 
   const deleteQuestion = (questionIdx: number) => {
@@ -159,6 +199,7 @@ export default function QuestionsView({
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
                     lastQuestion={questionIdx === localSurvey.questions.length - 1}
+                    isFaulty={invalidQuestions.includes(questionIdx)}
                   />
                 ))}
                 {provided.placeholder}
