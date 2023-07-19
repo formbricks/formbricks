@@ -6,12 +6,13 @@ import SurveyDropDownMenu from "@/app/environments/[environmentId]/surveys/Surve
 import SurveyStarter from "@/app/environments/[environmentId]/surveys/SurveyStarter";
 import { getProductByEnvironmentId, getProductWithEnvironments } from "@formbricks/lib/services/product";
 import { getEnvironment } from "@formbricks/lib/services/environment";
-import { getSurveysWithResponseCount } from "@formbricks/lib/services/survey";
+import { getSurveysWithAnalytics } from "@formbricks/lib/services/survey";
+import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const product = await getProductByEnvironmentId(environmentId);
   const environment = await getEnvironment(environmentId);
-  const surveys = await getSurveysWithResponseCount(environmentId);
+  const surveys:TSurveyWithAnalytics[] = await getSurveysWithAnalytics(environmentId);
   const productWithEnvironments = await getProductWithEnvironments(product.id);
   const otherEnvironment = productWithEnvironments.environments.find((e) => e.type !== environment.type);
 
@@ -70,7 +71,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                             tooltip
                             environmentId={environmentId}
                           />
-                          <p className="ml-2 text-xs text-slate-400 ">{survey.responses} responses</p>
+                          <p className="ml-2 text-xs text-slate-400 ">{survey.analytics.numResponses} responses</p>
                         </>
                       )}
                       {survey.status === "draft" && (

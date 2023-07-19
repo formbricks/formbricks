@@ -6,9 +6,7 @@ import {
   TSurvey,
   TSurveyWithAnalytics,
   ZSurvey,
-  ZSurveyWithAnalytics,
-  TSurveyWithResponseCount,
-  ZSurveyWithResponseCount,
+  ZSurveyWithAnalytics
 } from "@formbricks/types/v1/surveys";
 import { Prisma } from "@prisma/client";
 import "server-only";
@@ -55,7 +53,18 @@ export const select = {
       value: true,
     },
   },
-};
+displays:{
+  select:{
+    status:true,
+    id:true
+  }
+},
+_count:{
+  select:{
+    responses:true
+  }
+}
+}
 
 export const preloadSurvey = (surveyId: string) => {
   void getSurvey(surveyId);
@@ -68,7 +77,7 @@ export const getSurvey = cache(async (surveyId: string): Promise<TSurveyWithAnal
       where: {
         id: surveyId,
       },
-      select,
+      select
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -82,28 +91,21 @@ export const getSurvey = cache(async (surveyId: string): Promise<TSurveyWithAnal
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  const numDisplays = await prisma.display.count({
-    where: {
-      surveyId,
-    },
-  });
+  let {_count,displays, ...surveyPrismaFields}=surveyPrisma;
 
-  const numDisplaysResponded = await prisma.display.count({
-    where: {
-      surveyId,
-      status: "responded",
-    },
-  });
-
+  const numDisplays=displays.length
+  const numDisplaysResponded=displays.filter((item)=>item.status==='responded').length
+  const numResponses=_count.responses
   // responseRate, rounded to 2 decimal places
   const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
-
+  
   const transformedSurvey = {
-    ...surveyPrisma,
-    triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+    ...surveyPrismaFields,
+    triggers: surveyPrismaFields.triggers.map((trigger) => trigger.eventClass),
     analytics: {
       numDisplays,
       responseRate,
+      numResponses
     },
   };
 
@@ -136,7 +138,7 @@ export const getSurveys = cache(async (environmentId: string): Promise<TSurvey[]
   }
 
   const surveys: TSurvey[] = [];
-  for (const surveyPrisma of surveysPrisma) {
+  for (const {_count,displays, ...surveyPrisma} of surveysPrisma) {
     const transformedSurvey = {
       ...surveyPrisma,
       triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
@@ -155,52 +157,48 @@ export const getSurveys = cache(async (environmentId: string): Promise<TSurvey[]
   }
 });
 
-export const getSurveysWithResponseCount = cache(
-  async (environmentId: string): Promise<TSurveyWithResponseCount[]> => {
-    let surveysPrisma;
-    try {
-      surveysPrisma = await prisma.survey.findMany({
-        where: {
-          environment: {
-            id: environmentId,
-          },
-        },
-        include: {
-          _count: {
-            select: {
-              responses: true,
-            },
-          },
-        },
-      });
-    } catch (error) {
-      console.log(error);
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Database operation failed");
-      }
-
-      throw error;
+export const getSurveysWithAnalytics = cache(async (environmentId: string): Promise<TSurveyWithAnalytics[]> => {
+  let surveysPrisma;
+  try {
+    surveysPrisma = await prisma.survey.findMany({
+      where: {
+        environmentId,
+      },
+      select
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
     }
 
-    const surveys: TSurveyWithResponseCount[] = [];
-    for (const surveyPrisma of surveysPrisma) {
-      const transformedSurvey = {
-        ...surveyPrisma,
-        attributeFilters: [],
-        triggers: [],
-        responses: surveyPrisma._count.responses,
-      };
-      const survey = ZSurveyWithResponseCount.parse(transformedSurvey);
-      surveys.push(survey);
-    }
-
-    try {
-      return surveys;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
-      }
-      throw new ValidationError("Data validation of survey failed");
-    }
+    throw error;
   }
-);
+
+  const surveys: TSurveyWithAnalytics[] = [];
+  for (const {_count,displays, ...surveyPrisma} of surveysPrisma) {
+    const numDisplays=displays.length
+    const numDisplaysResponded=displays.filter((item)=>item.status==='responded').length
+    const responseRate = numDisplays ? Math.round((numDisplaysResponded / numDisplays) * 100) / 100 : 0;
+
+    const transformedSurvey = {
+      ...surveyPrisma,
+      triggers: surveyPrisma.triggers.map((trigger) => trigger.eventClass),
+      analytics:{
+        numDisplays,
+        responseRate,
+        numResponses:_count.responses
+      }
+    };
+    const survey = ZSurveyWithAnalytics.parse(transformedSurvey);
+    surveys.push(survey);
+  }
+
+  try {
+    return surveys;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error(JSON.stringify(error.errors, null, 2)); // log the detailed error information
+    }
+    throw new ValidationError("Data validation of survey failed");
+  }
+});

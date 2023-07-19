@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import {
   DocumentDuplicateIcon,
   EllipsisHorizontalIcon,
@@ -26,21 +27,28 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
 import toast from "react-hot-toast";
+import type { TEnvironment } from "@formbricks/types/v1/environment";
+
+interface SurveyDropDownMenuProps{
+  environmentId:string,
+  survey:TSurveyWithAnalytics,
+  environment:TEnvironment,
+  otherEnvironment:TEnvironment
+}
 
 export default function SurveyDropDownMenu({
   environmentId,
   survey,
   environment,
   otherEnvironment,
-}: any) {
+}: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  
   const handleDeleteSurvey = async (survey) => {
     setLoading(true);
-
     try {
       await deleteSurveyAction(survey.id);
       router.refresh();

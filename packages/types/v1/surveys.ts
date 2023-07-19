@@ -246,13 +246,9 @@ export const ZSurveyWithAnalytics = ZSurvey.extend({
   analytics: z.object({
     numDisplays: z.number(),
     responseRate: z.number(),
+    numResponses: z.number(),
   }),
   surveyClosedMessage: ZSurveyClosedMessage,
 });
 
-export const ZSurveyWithResponseCount = ZSurvey.extend({
-  responses: z.number(),
-});
-
 export type TSurveyWithAnalytics = z.infer<typeof ZSurveyWithAnalytics>;
-export type TSurveyWithResponseCount = z.infer<typeof ZSurveyWithResponseCount>;
