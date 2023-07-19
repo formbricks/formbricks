@@ -59,6 +59,7 @@ export default function QuestionCard({
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
+      
       {(provided) => (
         <div
           className={cn(
@@ -68,6 +69,8 @@ export default function QuestionCard({
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}>
+            {console.log(question.id)}
+      {console.log(questionIdx)}
           <div
             className={cn(
               open ? "bg-slate-700" : "bg-slate-400",

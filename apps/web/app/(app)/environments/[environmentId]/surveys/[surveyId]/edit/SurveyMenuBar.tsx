@@ -91,17 +91,30 @@ export default function SurveyMenuBar({
   // use to validate :
   // -> All questions should have a headline 
   // -> Multiple choice questions cannot have empty options 
-  const validateSurvey = (question, index) => {
-    if(!faultyQuestions.includes(-1)){
-      // Use to keep a track whether user as initially tried to save the survey or not 
+  const validateSurvey = (survey) => {
+    if (!faultyQuestions.includes(-1)) {
+      // Use to keep a track whether user has initially tried to save the survey or not 
       faultyQuestions.push(-1)
     }
-    const isEmptyHeadline = question.headline.trim() === "";
-    const isMultipleChoice = question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle";
 
-    if (isEmptyHeadline || (isMultipleChoice && question.choices.some((choice) => choice.label.trim() === ""))) {
-      faultyQuestions.push(index);
+    for (let index = 0; index < survey.questions.length; index++) {
+      const question = survey.questions[index]
+      const isEmptyHeadline = question.headline.trim() === "";
+      const isMultipleChoice = question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle";
+
+      if (isEmptyHeadline || (isMultipleChoice && question.choices.some((choice) => choice.label.trim() === ""))) {
+        faultyQuestions.push(index);
+      }
+
     }
+    // if there are any faulty questions user wont be allowed to save the survey 
+    // By default it will have -1 that indicates that survey has undergone validation initially 
+    if (faultyQuestions.length > 1) {
+      setInvalidQuestions(faultyQuestions)
+      toast.error("Please fill required fields")
+      return false
+    }
+    return true
   }
 
 
@@ -109,19 +122,16 @@ export default function SurveyMenuBar({
     // variable named strippedSurvey that is a copy of localSurvey with isDraft removed from every question
     const strippedSurvey = {
       ...localSurvey,
-      questions: localSurvey.questions.map((question, index) => {
-        validateSurvey(question, index)
+      questions: localSurvey.questions.map((question) => {
         const { isDraft, ...rest } = question;
         return rest;
       }),
     };
-    // if there are any faulty questions user wont be allowed to save the survey 
-    // By default it will have -1 that indicates that survey has undergone validation initially 
-    if (faultyQuestions.length > 1 ) {
-      setInvalidQuestions(faultyQuestions)
-      toast.error("Please fill required fields")
+
+    if (!validateSurvey(localSurvey)) {
       return
     }
+
     triggerSurveyMutate({ ...strippedSurvey })
       .then(async (response) => {
         if (!response?.ok) {
@@ -208,6 +218,9 @@ export default function SurveyMenuBar({
             variant="darkCTA"
             loading={isMutatingSurvey}
             onClick={async () => {
+              if (!validateSurvey(localSurvey)) {
+                return
+              }
               await triggerSurveyMutate({ ...localSurvey, status: "inProgress" });
               router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
             }}>
