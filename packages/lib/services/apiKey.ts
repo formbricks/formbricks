@@ -42,10 +42,6 @@ export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> 
       },
     });
 
-    if (!apiKeyData) {
-      throw new ResourceNotFoundError("API Key", apiKey);
-    }
-
     return apiKeyData;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
