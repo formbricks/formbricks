@@ -114,7 +114,7 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
               : createSurveyFields(survey.responses)
           }
           ${
-            survey.responsesCount >= 1
+            survey.responsesCount >= 0
               ? `<a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
                   survey.id
                 }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA">
