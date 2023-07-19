@@ -2,7 +2,7 @@
 
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/errors";
-import { captureTelemetry } from "@formbricks/lib/telemetry";
+import { deleteSurvey, getSurvey } from "@formbricks/lib/services/survey";
 import { QuestionType } from "@formbricks/types/questions";
 import { createId } from "@paralleldrive/cuid2";
 import { Team } from "@prisma/client";
@@ -1376,46 +1376,13 @@ export async function addDemoData(teamId: string): Promise<void> {
   );
 }
 
-export async function deleteSurveyAction(surveyId: string) {
-  const deletedSurvey = await prisma.survey.delete({
-    where: {
-      id: surveyId,
-    },
-  });
-  return deletedSurvey;
-}
-
-export async function createSurveyAction(environmentId: string, surveyBody: any) {
-  const survey = await prisma.survey.create({
-    data: {
-      ...surveyBody,
-      environment: {
-        connect: {
-          id: environmentId,
-        },
-      },
-    },
-  });
-  captureTelemetry("survey created");
-
-  return survey;
-}
-
 export async function duplicateSurveyAction(environmentId: string, surveyId: string) {
-  const existingSurvey = await prisma.survey.findFirst({
-    where: {
-      id: surveyId,
-      environmentId,
-    },
-    include: {
-      triggers: true,
-      attributeFilters: true,
-    },
-  });
+  const existingSurvey = await getSurvey(surveyId);
 
   if (!existingSurvey) {
     throw new ResourceNotFoundError("Survey", surveyId);
   }
+
   // create new survey with the data of the existing survey
   const newSurvey = await prisma.survey.create({
     data: {
@@ -1428,7 +1395,7 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
       thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
       triggers: {
         create: existingSurvey.triggers.map((trigger) => ({
-          eventClassId: trigger.eventClassId,
+          eventClassId: trigger.id,
         })),
       },
       attributeFilters: {
@@ -1575,3 +1542,7 @@ export async function copyToOtherEnvironmentAction(
   });
   return newSurvey;
 }
+
+export const deleteSurveyAction = async (surveyId: string) => {
+  await deleteSurvey(surveyId);
+};

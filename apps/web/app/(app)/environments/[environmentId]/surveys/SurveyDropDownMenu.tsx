@@ -14,21 +14,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import {
+  ArrowUpOnSquareStackIcon,
   DocumentDuplicateIcon,
   EllipsisHorizontalIcon,
+  EyeIcon,
   LinkIcon,
   PencilSquareIcon,
-  EyeIcon,
   TrashIcon,
-  ArrowUpOnSquareStackIcon,
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
@@ -151,7 +151,7 @@ export default function SurveyDropDownMenu({
                 <DropdownMenuItem>
                   <Link
                     className="flex w-full items-center"
-                    href={`${window.location.protocol}//${window.location.host}/s/${survey.id}?preview=true`}
+                    href={`/s/${survey.id}?preview=true`}
                     target="_blank">
                     <EyeIcon className="mr-2 h-4 w-4" />
                     Preview Survey

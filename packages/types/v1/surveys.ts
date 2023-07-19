@@ -238,6 +238,7 @@ export const ZSurvey = z.object({
   delay: z.number(),
   autoComplete: z.union([z.number(), z.null()]),
   closeOnDate: z.date().nullable(),
+  surveyClosedMessage: ZSurveyClosedMessage,
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
@@ -248,7 +249,6 @@ export const ZSurveyWithAnalytics = ZSurvey.extend({
     responseRate: z.number(),
     numResponses: z.number(),
   }),
-  surveyClosedMessage: ZSurveyClosedMessage,
 });
 
 export type TSurveyWithAnalytics = z.infer<typeof ZSurveyWithAnalytics>;

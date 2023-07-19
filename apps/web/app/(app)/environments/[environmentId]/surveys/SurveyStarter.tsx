@@ -1,6 +1,6 @@
 "use client";
 import { Template } from "@/../../packages/types/templates";
-import { createSurveyAction } from "@/app/(app)/environments/[environmentId]/actions";
+import { createSurveyAction } from "./actions";
 import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
