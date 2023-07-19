@@ -16,5 +16,5 @@ export const WEBAPP_URL =
   "http://localhost:3000";
 
 // Other
-export const INTERNAL_SECRET = process.env.INTERNAL_SECRET;
+export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
 export const CRON_SECRET = process.env.CRON_SECRET;

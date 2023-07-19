@@ -25,7 +25,7 @@ export async function GET() {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);
     }
-    throw error;
+    return responses.internalServerErrorResponse(error.message);
   }
 }
 
