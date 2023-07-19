@@ -104,7 +104,7 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
             <h2 style="text-decoration: underline; display:inline;">${survey.name}</h2>
           </a>
           <span style="display: inline; margin-left: 10px; background-color: ${
-            isLive ? "#34D399" : "#a7f3d0"
+            isLive ? "#34D399" : "#cbd5e1"
           }; color: ${isLive ? "#F3F4F6" : "#15803d"}; border-radius:99px; padding: 2px 8px; font-size:0.9em">
             ${displayStatus}
           </span>
