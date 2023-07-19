@@ -4,17 +4,18 @@ import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/sol
 import Link from "next/link";
 import SurveyDropDownMenu from "@/app/environments/[environmentId]/surveys/SurveyDropDownMenu";
 import SurveyStarter from "@/app/environments/[environmentId]/surveys/SurveyStarter";
-import { getProductByEnvironmentId, getProductWithEnvironments } from "@formbricks/lib/services/product";
-import { getEnvironment } from "@formbricks/lib/services/environment";
+import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getEnvironment, getEnvironments } from "@formbricks/lib/services/environment";
 import { getSurveysWithAnalytics } from "@formbricks/lib/services/survey";
 import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import type { TEnvironment } from "@formbricks/types/v1/environment";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const product = await getProductByEnvironmentId(environmentId);
   const environment = await getEnvironment(environmentId);
   const surveys:TSurveyWithAnalytics[] = await getSurveysWithAnalytics(environmentId);
-  const productWithEnvironments = await getProductWithEnvironments(product.id);
-  const otherEnvironment = productWithEnvironments.environments.find((e) => e.type !== environment.type);
+  const environments:TEnvironment[] = await getEnvironments(product.id);
+  const otherEnvironment = environments.find((e) => e.type !== environment.type);
 
   if (surveys.length === 0) {
     return <SurveyStarter environmentId={environmentId} environment={environment} product={product} />;

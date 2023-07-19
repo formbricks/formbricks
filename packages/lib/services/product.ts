@@ -4,8 +4,8 @@ import { prisma } from "@formbricks/database";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/errors";
-import { ZProduct, ZProductWithEnvironments } from "@formbricks/types/v1/product";
-import type { TProduct, TProductWithEnvironments } from "@formbricks/types/v1/product";
+import { ZProduct } from "@formbricks/types/v1/product";
+import type { TProduct } from "@formbricks/types/v1/product";
 import { cache } from "react";
 
 export const getProductByEnvironmentId = cache(async (environmentId: string): Promise<TProduct> => {
@@ -42,37 +42,3 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
   }
 });
 
-export const getProductWithEnvironments = cache(
-  async (productId: string): Promise<TProductWithEnvironments> => {
-    let productPrisma;
-    try {
-      productPrisma = await prisma.product.findFirst({
-        where: {
-          id: productId,
-        },
-        include:{
-          environments:true
-        }
-      });
-
-      if (!productPrisma) {
-        throw new ResourceNotFoundError("Product", productId);
-      }
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Database operation failed");
-      }
-      throw error;
-    }
-
-    try {
-      const product = ZProductWithEnvironments.parse(productPrisma);
-      return product;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error(JSON.stringify(error.errors, null, 2));
-      }
-      throw new ValidationError("Data validation of product with environments failed");
-    }
-  }
-);
