@@ -65,8 +65,17 @@ export default function QuestionsView({
       return;
     }
     let temp = invalidQuestions;
-    const validationFunction = validationRules[question.type] && validationRules.defaultValidation;
-    if (validationFunction(question)) {
+    const validateQuestion = (question) => {
+      const specificValidation = validationRules[question.type];
+      const defaultValidation = validationRules.defaultValidation;
+    
+      const specificValidationResult = specificValidation ? specificValidation(question) : true;
+      const defaultValidationResult = defaultValidation(question);
+    
+      // Return true only if both specific and default validation pass
+      return specificValidationResult && defaultValidationResult;
+    };
+    if (validateQuestion(question)) {
       temp = invalidQuestions.filter((id) => id !== questionIdx);
       setInvalidQuestions(temp);
       return;
