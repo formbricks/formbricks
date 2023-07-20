@@ -28,7 +28,7 @@ export default function MultipleChoiceMultiForm({
   question,
   questionIdx,
   updateQuestion,
-  isFaulty
+  isFaulty,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);

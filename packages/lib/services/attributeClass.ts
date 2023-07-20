@@ -1,5 +1,5 @@
 "use server";
-import 'server-only'
+import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/errors";
@@ -55,8 +55,6 @@ export const updatetAttributeClass = async (
 
     return transformedAttributeClass;
   } catch (error) {
-    throw new DatabaseError(
-      `Database error when updating attribute class with id ${attributeClassId}`
-    );
+    throw new DatabaseError(`Database error when updating attribute class with id ${attributeClassId}`);
   }
 };

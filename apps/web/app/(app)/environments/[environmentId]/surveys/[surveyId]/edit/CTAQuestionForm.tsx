@@ -20,7 +20,7 @@ export default function CTAQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-  isFaulty
+  isFaulty,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 

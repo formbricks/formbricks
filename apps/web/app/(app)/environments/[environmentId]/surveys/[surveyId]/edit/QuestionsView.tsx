@@ -24,9 +24,9 @@ interface QuestionsViewProps {
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   environmentId: string;
-  invalidQuestions: Number[] | null
+  invalidQuestions: Number[] | null;
   setInvalidQuestions: (invalidQuestions: Number[] | null) => void;
-  validationRules: ValidationRules
+  validationRules: ValidationRules;
 }
 
 export default function QuestionsView({
@@ -37,7 +37,7 @@ export default function QuestionsView({
   environmentId,
   invalidQuestions,
   setInvalidQuestions,
-  validationRules
+  validationRules,
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -59,20 +59,19 @@ export default function QuestionsView({
   };
 
   // function to validate individual questions
-  const validateQuestion = (question:any, questionIdx:Number) => {
-    // prevent this function to execute further if user hasnt still tried to save the survey 
+  const validateQuestion = (question: any, questionIdx: Number) => {
+    // prevent this function to execute further if user hasnt still tried to save the survey
     if (invalidQuestions === null) {
-      return
+      return;
     }
-    let temp = invalidQuestions
+    let temp = invalidQuestions;
     const validationFunction = validationRules[question.type] || validationRules.defaultValidation;
     if (validationFunction(question)) {
-      temp = invalidQuestions.filter((id) => id !== questionIdx)
-      setInvalidQuestions(temp)
-      return
-    }
-    else if (!invalidQuestions.includes(question.questionIdx)) {
-      temp.push(questionIdx)
+      temp = invalidQuestions.filter((id) => id !== questionIdx);
+      setInvalidQuestions(temp);
+      return;
+    } else if (!invalidQuestions.includes(question.questionIdx)) {
+      temp.push(questionIdx);
       setInvalidQuestions(temp);
     }
   };
@@ -96,7 +95,7 @@ export default function QuestionsView({
       ...updatedAttributes,
     };
     setLocalSurvey(updatedSurvey);
-    validateQuestion(updatedSurvey.questions[questionIdx], questionIdx)
+    validateQuestion(updatedSurvey.questions[questionIdx], questionIdx);
   };
 
   const deleteQuestion = (questionIdx: number) => {
@@ -156,9 +155,17 @@ export default function QuestionsView({
     }
     if (invalidQuestions) {
       if (invalidQuestions.includes(result.source.index)) {
-        setInvalidQuestions(invalidQuestions.map((number) => (number === result.source.index ? result.destination.index : number)))
+        setInvalidQuestions(
+          invalidQuestions.map((number) =>
+            number === result.source.index ? result.destination.index : number
+          )
+        );
       } else {
-        setInvalidQuestions(invalidQuestions.map((number) => (number === result.destination.index ? result.source.index : number)))
+        setInvalidQuestions(
+          invalidQuestions.map((number) =>
+            number === result.destination.index ? result.source.index : number
+          )
+        );
       }
     }
     const newQuestions = Array.from(localSurvey.questions);

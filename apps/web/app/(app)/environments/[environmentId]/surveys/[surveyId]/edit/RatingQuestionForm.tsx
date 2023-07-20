@@ -20,7 +20,7 @@ export default function RatingQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-  isFaulty
+  isFaulty,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 

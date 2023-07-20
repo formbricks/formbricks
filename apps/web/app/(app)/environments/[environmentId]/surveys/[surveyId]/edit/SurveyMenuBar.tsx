@@ -30,7 +30,7 @@ interface SurveyMenuBarProps {
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
   setInvalidQuestions: (invalidQuestions: number[]) => void;
-  validationRules: ValidationRules
+  validationRules: ValidationRules;
 }
 
 export default function SurveyMenuBar({
@@ -41,7 +41,7 @@ export default function SurveyMenuBar({
   activeId,
   setActiveId,
   setInvalidQuestions,
-  validationRules
+  validationRules,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
@@ -134,7 +134,7 @@ export default function SurveyMenuBar({
     };
 
     if (!validateSurvey(localSurvey)) {
-      return
+      return;
     }
 
     triggerSurveyMutate({ ...strippedSurvey })
@@ -224,7 +224,7 @@ export default function SurveyMenuBar({
             loading={isMutatingSurvey}
             onClick={async () => {
               if (!validateSurvey(localSurvey)) {
-                return
+                return;
               }
               await triggerSurveyMutate({ ...localSurvey, status: "inProgress" });
               router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);

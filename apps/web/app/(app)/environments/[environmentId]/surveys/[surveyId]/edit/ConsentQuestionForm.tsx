@@ -18,7 +18,7 @@ export default function ConsentQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isFaulty
+  isFaulty,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
   return (

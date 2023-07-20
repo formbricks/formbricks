@@ -39,7 +39,7 @@ interface QuestionCardProps {
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
-  isFaulty: boolean
+  isFaulty: boolean;
 }
 
 export default function QuestionCard({
@@ -52,14 +52,13 @@ export default function QuestionCard({
   activeQuestionId,
   setActiveQuestionId,
   lastQuestion,
-  isFaulty
+  isFaulty,
 }: QuestionCardProps) {
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
-      
       {(provided) => (
         <div
           className={cn(

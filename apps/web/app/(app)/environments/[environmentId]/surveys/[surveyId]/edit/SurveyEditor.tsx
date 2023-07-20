@@ -22,7 +22,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<Survey | null>();
-  const [invalidQuestions, setInvalidQuestions] = useState<Number[]|null>(null);
+  const [invalidQuestions, setInvalidQuestions] = useState<Number[] | null>(null);
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
@@ -70,7 +70,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
         setActiveId={setActiveView}
         setInvalidQuestions={setInvalidQuestions}
         validationRules={validationRules}
-        />
+      />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
           <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
@@ -84,7 +84,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
               invalidQuestions={invalidQuestions}
               setInvalidQuestions={setInvalidQuestions}
               validationRules={validationRules}
-              
             />
           ) : (
             <SettingsView
