@@ -1,9 +1,11 @@
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { prisma } from "@formbricks/database";
-import type { NextApiRequest, NextApiResponse } from "next";
-import { TPipelineInput } from "@formbricks/types/v1/pipelines";
-import { updateResponse } from "@formbricks/lib/services/response";
 import { sendToPipeline } from "@/lib/pipelines";
+import { prisma } from "@formbricks/database";
+import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { TPerson } from "@formbricks/types/v1/people";
+import { TPipelineInput } from "@formbricks/types/v1/pipelines";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { TTag } from "@formbricks/types/v1/tags";
+import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -45,7 +47,89 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       ...response.data,
     };
 
-    const updatedResponse = await updateResponse(responseId, { ...response, data: newResponseData });
+    const responsePrisma = await prisma.response.update({
+      where: {
+        id: responseId,
+      },
+      data: {
+        ...response,
+        data: newResponseData,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        surveyId: true,
+        finished: true,
+        data: true,
+        meta: true,
+        personAttributes: true,
+        person: {
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            attributes: {
+              select: {
+                value: true,
+                attributeClass: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        notes: {
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            text: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                createdAt: true,
+                updatedAt: true,
+                name: true,
+                environmentId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const transformPrismaPerson = (person): TPerson => {
+      const attributes = person.attributes.reduce((acc, attr) => {
+        acc[attr.attributeClass.name] = attr.value;
+        return acc;
+      }, {} as Record<string, string | number>);
+
+      return {
+        id: person.id,
+        attributes: attributes,
+        createdAt: person.createdAt,
+        updatedAt: person.updatedAt,
+      };
+    };
+
+    const responseData: TResponse = {
+      ...responsePrisma,
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
 
     // send response update to pipeline
     // don't await to not block the response
@@ -57,9 +141,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       body: JSON.stringify({
         internalSecret: INTERNAL_SECRET,
         environmentId,
-        surveyId: updatedResponse.surveyId,
+        surveyId: responseData.surveyId,
         event: "responseUpdated",
-        response: updatedResponse,
+        response: responseData,
       } as TPipelineInput),
     });
 
@@ -68,9 +152,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       // don't await to not block the response
       sendToPipeline({
         environmentId,
-        surveyId: updatedResponse.surveyId,
+        surveyId: responseData.surveyId,
         event: "responseFinished",
-        response: updatedResponse,
+        response: responseData,
       });
     }
 

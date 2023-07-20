@@ -1,8 +1,10 @@
 import { sendToPipeline } from "@/lib/pipelines";
 import { prisma } from "@formbricks/database";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
-import { createResponse } from "@formbricks/lib/services/response";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
+import { TPerson } from "@formbricks/types/v1/people";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { TTag } from "@formbricks/types/v1/tags";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -14,7 +16,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   // CORS
   if (req.method === "OPTIONS") {
-    res.status(200).end();
+    return res.status(200).end();
   }
 
   // POST
@@ -76,19 +78,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     // find team owner
     const teamOwnerId = environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
 
-    const createBody = {
-      data: {
-        survey: {
-          connect: {
-            id: surveyId,
-          },
+    const responseInput = {
+      survey: {
+        connect: {
+          id: surveyId,
         },
-        ...response,
       },
+      ...response,
     };
 
     if (personId) {
-      createBody.data.person = {
+      responseInput.data.person = {
         connect: {
           id: personId,
         },
@@ -96,7 +96,85 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // create new response
-    const responseData = await createResponse(createBody);
+    const responsePrisma = await prisma.response.create({
+      data: {
+        ...responseInput,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        surveyId: true,
+        finished: true,
+        data: true,
+        meta: true,
+        personAttributes: true,
+        person: {
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            attributes: {
+              select: {
+                value: true,
+                attributeClass: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        notes: {
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            text: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                createdAt: true,
+                updatedAt: true,
+                name: true,
+                environmentId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const transformPrismaPerson = (person): TPerson => {
+      const attributes = person.attributes.reduce((acc, attr) => {
+        acc[attr.attributeClass.name] = attr.value;
+        return acc;
+      }, {} as Record<string, string | number>);
+
+      return {
+        id: person.id,
+        attributes: attributes,
+        createdAt: person.createdAt,
+        updatedAt: person.updatedAt,
+      };
+    };
+
+    const responseData: TResponse = {
+      ...responsePrisma,
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
 
     // send response to pipeline
     // don't await to not block the response
