@@ -100,6 +100,11 @@ export default function QuestionsView({
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
 
+    if (invalidQuestions?.includes(questionIdx)) {
+      const updatedInvalidQuestions = invalidQuestions.filter(idx => idx !== questionIdx);
+      setInvalidQuestions(updatedInvalidQuestions);
+    }
+
     if (questionId === activeQuestionId) {
       if (questionIdx < localSurvey.questions.length - 1) {
         setActiveQuestionId(localSurvey.questions[questionIdx + 1].id);
