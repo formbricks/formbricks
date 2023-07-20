@@ -100,7 +100,7 @@ export default function SurveyMenuBar({
 
   // Function to validate a single question based on its type
   const validateQuestion = (question) => {
-    const validationFunction = validationRules[question.type] || validationRules.defaultValidation;
+    const validationFunction = validationRules[question.type] && validationRules.defaultValidation;
     return validationFunction(question);
   };
 
