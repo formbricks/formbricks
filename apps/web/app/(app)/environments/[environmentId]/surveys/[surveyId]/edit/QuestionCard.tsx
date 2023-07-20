@@ -69,8 +69,6 @@ export default function QuestionCard({
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}>
-            {console.log(question.id)}
-      {console.log(questionIdx)}
           <div
             className={cn(
               open ? "bg-slate-700" : "bg-slate-400",

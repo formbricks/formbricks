@@ -10,14 +10,23 @@ import EditThankYouCard from "./EditThankYouCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 
+type ValidationFunction = (question: any) => boolean;
+
+interface ValidationRules {
+  multipleChoiceMulti: ValidationFunction;
+  multipleChoiceSingle: ValidationFunction;
+  defaultValidation: ValidationFunction;
+}
+
 interface QuestionsViewProps {
   localSurvey: Survey;
   setLocalSurvey: (survey: Survey) => void;
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   environmentId: string;
-  invalidQuestions: Number[]
-  setInvalidQuestions: (invalidQuestions: Number[]) => void;
+  invalidQuestions: Number[] | null
+  setInvalidQuestions: (invalidQuestions: Number[] | null) => void;
+  validationRules: ValidationRules
 }
 
 export default function QuestionsView({
@@ -27,7 +36,8 @@ export default function QuestionsView({
   setLocalSurvey,
   environmentId,
   invalidQuestions,
-  setInvalidQuestions
+  setInvalidQuestions,
+  validationRules
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -49,36 +59,23 @@ export default function QuestionsView({
   };
 
   // function to validate individual questions
-  const validateSurvey = (questionIdx, updatedSurvey) => {
-    let temp = invalidQuestions
-    const question = updatedSurvey.questions[questionIdx];
-    const isNotEmptyHeadline = question.headline.trim() !== "";
-
-    if (isNotEmptyHeadline) {
-      if (
-        question.type === "multipleChoiceMulti" ||
-        question.type === "multipleChoiceSingle"
-      ) {
-        const hasEmptyChoices = question.choices.some((element) => element.label.trim() === "");
-
-        // removing question that have a headline and are valid multile choice from invalidQuestions array 
-        if (!hasEmptyChoices) {
-          temp =  invalidQuestions.filter((id) => id !== questionIdx)
-          setInvalidQuestions(temp)
-        }
-      } else {
-        // question that have a headline 
-        temp =  invalidQuestions.filter((id) => id !== questionIdx)
-          setInvalidQuestions(temp)
-      }
+  const validateQuestion = (question:any, questionIdx:Number) => {
+    // prevent this function to execute further if user hasnt still tried to save the survey 
+    if (invalidQuestions === null) {
+      return
     }
-    // if none of the above conditions match it means question is still invalid and hence including it in invalidQuestions array 
-     else if (!invalidQuestions.includes(questionIdx)) {
+    let temp = invalidQuestions
+    const validationFunction = validationRules[question.type] || validationRules.defaultValidation;
+    if (validationFunction(question)) {
+      temp = invalidQuestions.filter((id) => id !== questionIdx)
+      setInvalidQuestions(temp)
+      return
+    }
+    else if (!invalidQuestions.includes(question.questionIdx)) {
       temp.push(questionIdx)
       setInvalidQuestions(temp);
     }
   };
-
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
@@ -99,10 +96,7 @@ export default function QuestionsView({
       ...updatedAttributes,
     };
     setLocalSurvey(updatedSurvey);
-    if (invalidQuestions.includes(-1)) {
-      // if there is no -1 it means user still hasen't tried to save the survey and hence till then no checks will be performed 
-      validateSurvey(questionIdx, updatedSurvey)
-    }
+    validateQuestion(updatedSurvey.questions[questionIdx], questionIdx)
   };
 
   const deleteQuestion = (questionIdx: number) => {
@@ -160,7 +154,13 @@ export default function QuestionsView({
     if (!result.destination) {
       return;
     }
-
+    if (invalidQuestions) {
+      if (invalidQuestions.includes(result.source.index)) {
+        setInvalidQuestions(invalidQuestions.map((number) => (number === result.source.index ? result.destination.index : number)))
+      } else {
+        setInvalidQuestions(invalidQuestions.map((number) => (number === result.destination.index ? result.source.index : number)))
+      }
+    }
     const newQuestions = Array.from(localSurvey.questions);
     const [reorderedQuestion] = newQuestions.splice(result.source.index, 1);
     newQuestions.splice(result.destination.index, 0, reorderedQuestion);
@@ -199,7 +199,7 @@ export default function QuestionsView({
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
                     lastQuestion={questionIdx === localSurvey.questions.length - 1}
-                    isFaulty={invalidQuestions.includes(questionIdx)}
+                    isFaulty={invalidQuestions ? invalidQuestions.includes(questionIdx) : false}
                   />
                 ))}
                 {provided.placeholder}
