@@ -151,10 +151,11 @@ export default function MultipleChoiceSingleQuestion({
               goToPreviousQuestion(
                 selectedChoice === "other"
                   ? {
-                      [question.id]: otherSpecify.current?.value,
+                      [question.id]: otherSpecify.current?.value ?? "",
                     }
                   : {
-                      [question.id]: question.choices.find((choice) => choice.id === selectedChoice)?.label,
+                      [question.id]:
+                        question.choices.find((choice) => choice.id === selectedChoice)?.label ?? "",
                     }
               );
             }}

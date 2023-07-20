@@ -44,8 +44,31 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   const personId = person?.data.person.id ?? null;
 
   useEffect(() => {
+    const storedAnswers = getStoredAnswers(survey.id);
+    const questionKeys = survey.questions.map((question) => question.id);
+    if (storedAnswers) {
+      const storedAnswersKeys = Object.keys(storedAnswers);
+      // reduce to find the last answered question index
+      const lastAnsweredQuestionIndex = questionKeys.reduce((acc, key, index) => {
+        if (storedAnswersKeys.includes(key)) {
+          return index;
+        }
+        return acc;
+      }, 0);
+      const lastAnsweredQuestion = survey.questions[lastAnsweredQuestionIndex];
+      if (lastAnsweredQuestion) {
+        setCurrentQuestion(lastAnsweredQuestion);
+        setProgress(calculateProgress(lastAnsweredQuestion, survey));
+        setSavedAnswer(getStoredAnswer(survey.id, lastAnsweredQuestion.id));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     if (!isLoadingPerson) {
-      if (survey) {
+      const storedAnswers = getStoredAnswers(survey.id);
+      if (survey && !storedAnswers) {
         setCurrentQuestion(survey.questions[0]);
 
         if (isPreview) return;
@@ -192,7 +215,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     return survey.questions[currentQuestionIndex - 1].id;
   };
 
-  const goToPreviousQuestion = (answer?: Response["data"]) => {
+  const goToPreviousQuestion = (answer: Response["data"]) => {
     setLoadingElement(true);
     const previousQuestionId = getPreviousQuestionId();
     const previousQuestion = survey.questions.find((q) => q.id === previousQuestionId);
@@ -216,6 +239,8 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       submitResponse(answer);
       return;
     }
+
+    storeAnswer(survey.id, answer);
 
     const nextQuestion = survey.questions.find((q) => q.id === nextQuestionId);
 
@@ -253,11 +278,19 @@ const storeAnswer = (surveyId: string, answer: Response["data"]) => {
   }
 };
 
-const getStoredAnswer = (surveyId: string, questionId: string): string | null => {
+const getStoredAnswers = (surveyId: string): Record<string, string> | null => {
   const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-answers`);
   if (storedAnswers) {
     const parsedAnswers = JSON.parse(storedAnswers);
-    return parsedAnswers[questionId] || null;
+    return parsedAnswers;
+  }
+  return null;
+};
+
+const getStoredAnswer = (surveyId: string, questionId: string): string | null => {
+  const storedAnswers = getStoredAnswers(surveyId);
+  if (storedAnswers) {
+    return storedAnswers[questionId];
   }
   return null;
 };

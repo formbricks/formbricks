@@ -34,7 +34,7 @@ export default function NPSQuestion({
 
   const handleSubmit = (value: number | null) => {
     const data = {
-      [question.id]: value,
+      [question.id]: value ?? null,
     };
     if (savedAnswer === value) {
       goToNextQuestion(data);
