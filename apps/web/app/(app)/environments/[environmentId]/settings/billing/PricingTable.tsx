@@ -7,10 +7,11 @@ import type { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+// upated on 20th of July 2023
 const stripeURl =
   process.env.NODE_ENV === "production"
-    ? "https://buy.stripe.com/28o00R4GDf9qdfa5kp"
-    : "https://buy.stripe.com/test_9AQfZw5CL9hmcXSdQQ";
+    ? "https://buy.stripe.com/5kA9ABal07ZjgEw3cc"
+    : "https://buy.stripe.com/test_8wMaHA3UWcACfuM3cc";
 
 interface PricingTableProps {
   environmentId: string;

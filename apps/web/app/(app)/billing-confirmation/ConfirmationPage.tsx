@@ -17,8 +17,7 @@ export default function ConfirmationPage() {
           <div className="my-6 sm:flex-auto">
             <h1 className="text-center text-xl font-semibold text-slate-900">Upgrade successful</h1>
             <p className="mt-2 text-center text-sm text-slate-700">
-              Thanks a lot for upgrading your formbricks subscription. You can now access all features and
-              improve your user research.
+              Thanks a lot for upgrading your Formbricks subscription. You have now unlimited access.
             </p>
           </div>
           <Button variant="darkCTA" className="w-full justify-center" href="/">

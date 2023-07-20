@@ -166,7 +166,7 @@ export default function EnvironmentsNavbar({ environmentId, session }: Environme
           icon: CreditCardIcon,
           label: "Billing & Plan",
           href: `/environments/${environmentId}/settings/billing`,
-          hidden: IS_FORMBRICKS_CLOUD,
+          hidden: !IS_FORMBRICKS_CLOUD,
         },
       ],
     },
