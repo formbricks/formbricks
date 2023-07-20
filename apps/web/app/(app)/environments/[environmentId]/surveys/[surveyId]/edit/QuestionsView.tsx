@@ -65,7 +65,7 @@ export default function QuestionsView({
       return;
     }
     let temp = invalidQuestions;
-    const validationFunction = validationRules[question.type] || validationRules.defaultValidation;
+    const validationFunction = validationRules[question.type] && validationRules.defaultValidation;
     if (validationFunction(question)) {
       temp = invalidQuestions.filter((id) => id !== questionIdx);
       setInvalidQuestions(temp);
