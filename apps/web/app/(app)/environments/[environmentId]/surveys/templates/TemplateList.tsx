@@ -1,21 +1,27 @@
 "use client";
 
-import { createSurvey } from "@/lib/surveys/surveys";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { useProfile } from "@/lib/profile";
 import { replacePresetPlaceholders } from "@/lib/templates";
 import { cn } from "@formbricks/lib/cn";
 import type { Template } from "@formbricks/types/templates";
-import { Button, ErrorComponent } from "@formbricks/ui";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
-import { SparklesIcon } from "@heroicons/react/24/solid";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { customSurvey, templates } from "./templates";
-import { SplitIcon } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
-import { useProfile } from "@/lib/profile";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import {
+  Button,
+  ErrorComponent,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@formbricks/ui";
+import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { SparklesIcon } from "@heroicons/react/24/solid";
+import { SplitIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createSurveyAction } from "./actions";
+import { customSurvey, templates } from "./templates";
 
 type TemplateList = {
   environmentId: string;
@@ -59,7 +65,7 @@ export default function TemplateList({ environmentId, onTemplateClick, product, 
       ...activeTemplate.preset,
       type: environment?.widgetSetupCompleted ? "web" : "link",
     };
-    const survey = await createSurvey(environmentId, augmentedTemplate);
+    const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
   };
 

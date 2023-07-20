@@ -1,6 +1,5 @@
 "use server";
 import "server-only";
-
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/errors";
 import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
