@@ -10,14 +10,6 @@ import EditThankYouCard from "./EditThankYouCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 
-type ValidationFunction = (question: any) => boolean;
-
-interface ValidationRules {
-  multipleChoiceMulti: ValidationFunction;
-  multipleChoiceSingle: ValidationFunction;
-  defaultValidation: ValidationFunction;
-}
-
 interface QuestionsViewProps {
   localSurvey: Survey;
   setLocalSurvey: (survey: Survey) => void;
@@ -26,7 +18,7 @@ interface QuestionsViewProps {
   environmentId: string;
   invalidQuestions: Number[] | null;
   setInvalidQuestions: (invalidQuestions: Number[] | null) => void;
-  validationRules: ValidationRules;
+  validateQuestion: (question: any) => boolean;
 }
 
 export default function QuestionsView({
@@ -37,7 +29,8 @@ export default function QuestionsView({
   environmentId,
   invalidQuestions,
   setInvalidQuestions,
-  validationRules,
+  validateQuestion
+  
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -59,22 +52,12 @@ export default function QuestionsView({
   };
 
   // function to validate individual questions
-  const validateQuestion = (question: any, questionIdx: Number) => {
+  const validateSurvey = (question: any, questionIdx: Number) => {
     // prevent this function to execute further if user hasnt still tried to save the survey
     if (invalidQuestions === null) {
       return;
     }
     let temp = invalidQuestions;
-    const validateQuestion = (question) => {
-      const specificValidation = validationRules[question.type];
-      const defaultValidation = validationRules.defaultValidation;
-    
-      const specificValidationResult = specificValidation ? specificValidation(question) : true;
-      const defaultValidationResult = defaultValidation(question);
-    
-      // Return true only if both specific and default validation pass
-      return specificValidationResult && defaultValidationResult;
-    };
     if (validateQuestion(question)) {
       temp = invalidQuestions.filter((id) => id !== questionIdx);
       setInvalidQuestions(temp);
@@ -104,7 +87,7 @@ export default function QuestionsView({
       ...updatedAttributes,
     };
     setLocalSurvey(updatedSurvey);
-    validateQuestion(updatedSurvey.questions[questionIdx], questionIdx);
+    validateSurvey(updatedSurvey.questions[questionIdx], questionIdx);
   };
 
   const deleteQuestion = (questionIdx: number) => {

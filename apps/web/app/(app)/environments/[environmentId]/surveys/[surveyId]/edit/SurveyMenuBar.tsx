@@ -14,14 +14,6 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isEqual } from "lodash";
 
-type ValidationFunction = (question: any) => boolean;
-
-interface ValidationRules {
-  multipleChoiceMulti: ValidationFunction;
-  multipleChoiceSingle: ValidationFunction;
-  defaultValidation: ValidationFunction;
-}
-
 interface SurveyMenuBarProps {
   localSurvey: Survey;
   survey: Survey;
@@ -30,7 +22,7 @@ interface SurveyMenuBarProps {
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
   setInvalidQuestions: (invalidQuestions: number[]) => void;
-  validationRules: ValidationRules;
+  validateQuestion: (question: any) => boolean;
 }
 
 export default function SurveyMenuBar({
@@ -41,7 +33,7 @@ export default function SurveyMenuBar({
   activeId,
   setActiveId,
   setInvalidQuestions,
-  validationRules,
+  validateQuestion
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
@@ -96,18 +88,6 @@ export default function SurveyMenuBar({
     } else {
       router.back();
     }
-  };
-
-  // Function to validate a single question based on its type
-  const validateQuestion = (question) => {
-    const specificValidation = validationRules[question.type];
-    const defaultValidation = validationRules.defaultValidation;
-  
-    const specificValidationResult = specificValidation ? specificValidation(question) : true;
-    const defaultValidationResult = defaultValidation(question);
-  
-    // Return true only if both specific and default validation pass
-    return specificValidationResult && defaultValidationResult;
   };
 
   const validateSurvey = (survey) => {
