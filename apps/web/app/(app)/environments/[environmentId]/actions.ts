@@ -1410,7 +1410,9 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
           id: environmentId,
         },
       },
-      surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,
+      surveyClosedMessage: existingSurvey.surveyClosedMessage
+        ? JSON.parse(JSON.stringify(existingSurvey.surveyClosedMessage))
+        : prismaClient.JsonNull,
     },
   });
   return newSurvey;
