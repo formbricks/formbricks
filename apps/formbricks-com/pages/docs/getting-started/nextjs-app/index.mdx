@@ -45,17 +45,17 @@ import formbricks from "@formbricks/js";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-if (typeof window !== "undefined") {
-  formbricks.init({
-    environmentId: "clj66eqzu00m5qu0g8leglrns",
-    apiHost: "https://app.formbricks.com", // e.g. https://app.formbricks.com
-    debug: true, // remove when in production
-  });
-}
-
 export default function FormbricksProvider() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    formbricks.init({
+      environmentId: "clj66eqzu00m5qu0g8leglrns",
+      apiHost: "https://app.formbricks.com", // e.g. https://app.formbricks.com
+      debug: true, // remove when in production
+    });
+  }, []);
 
   useEffect(() => {
     formbricks?.registerRouteChange();
