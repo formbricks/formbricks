@@ -78,7 +78,7 @@ export default function SingleResponse({ data, environmentId, surveyId }: OpenTe
 
   const renderTooltip = Boolean(
     (data.personAttributes && Object.keys(data.personAttributes).length > 0) ||
-    (data.meta?.userAgent && Object.keys(data.meta.userAgent).length > 0)
+      (data.meta?.userAgent && Object.keys(data.meta.userAgent).length > 0)
   );
 
   const tooltipContent = (
