@@ -22,7 +22,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<Survey | null>();
-  const [invalidQuestions, setInvalidQuestions] = useState<Number[] | null>(null);
+  const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const { survey, isLoadingSurvey, isErrorSurvey } = useSurvey(environmentId, surveyId);
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
@@ -42,10 +42,10 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
   const validateQuestion = (question) => {
     const specificValidation = validationRules[question.type];
     const defaultValidation = validationRules.defaultValidation;
-  
+
     const specificValidationResult = specificValidation ? specificValidation(question) : true;
     const defaultValidationResult = defaultValidation(question);
-  
+
     // Return true only if both specific and default validation pass
     return specificValidationResult && defaultValidationResult;
   };

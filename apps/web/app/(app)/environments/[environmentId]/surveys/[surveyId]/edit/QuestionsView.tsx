@@ -16,8 +16,8 @@ interface QuestionsViewProps {
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   environmentId: string;
-  invalidQuestions: Number[] | null;
-  setInvalidQuestions: (invalidQuestions: Number[] | null) => void;
+  invalidQuestions: String[] | null;
+  setInvalidQuestions: (invalidQuestions: String[] | null) => void;
   validateQuestion: (question: any) => boolean;
 }
 
@@ -29,8 +29,7 @@ export default function QuestionsView({
   environmentId,
   invalidQuestions,
   setInvalidQuestions,
-  validateQuestion
-  
+  validateQuestion,
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -52,18 +51,18 @@ export default function QuestionsView({
   };
 
   // function to validate individual questions
-  const validateSurvey = (question: any, questionIdx: Number) => {
+  const validateSurvey = (question: any) => {
     // prevent this function to execute further if user hasnt still tried to save the survey
     if (invalidQuestions === null) {
       return;
     }
     let temp = invalidQuestions;
     if (validateQuestion(question)) {
-      temp = invalidQuestions.filter((id) => id !== questionIdx);
+      temp = invalidQuestions.filter((id) => id !== question.id);
       setInvalidQuestions(temp);
       return;
-    } else if (!invalidQuestions.includes(question.questionIdx)) {
-      temp.push(questionIdx);
+    } else if (!invalidQuestions.includes(question.id)) {
+      temp.push(question.id);
       setInvalidQuestions(temp);
     }
   };
@@ -74,6 +73,11 @@ export default function QuestionsView({
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
       updatedSurvey = handleQuestionLogicChange(updatedSurvey, initialQuestionId, updatedAttributes.id);
+      if (invalidQuestions?.includes(initialQuestionId)) {
+        setInvalidQuestions(
+          invalidQuestions.map((id) => (id === initialQuestionId ? updatedAttributes.id : id))
+        );
+      }
 
       // relink the question to internal Id
       internalQuestionIdMap[updatedAttributes.id] =
@@ -87,7 +91,7 @@ export default function QuestionsView({
       ...updatedAttributes,
     };
     setLocalSurvey(updatedSurvey);
-    validateSurvey(updatedSurvey.questions[questionIdx], questionIdx);
+    validateSurvey(updatedSurvey.questions[questionIdx]);
   };
 
   const deleteQuestion = (questionIdx: number) => {
@@ -99,11 +103,6 @@ export default function QuestionsView({
 
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
-
-    if (invalidQuestions?.includes(questionIdx)) {
-      const updatedInvalidQuestions = invalidQuestions.filter(idx => idx !== questionIdx);
-      setInvalidQuestions(updatedInvalidQuestions);
-    }
 
     if (questionId === activeQuestionId) {
       if (questionIdx < localSurvey.questions.length - 1) {
@@ -150,21 +149,7 @@ export default function QuestionsView({
     if (!result.destination) {
       return;
     }
-    if (invalidQuestions) {
-      if (invalidQuestions.includes(result.source.index)) {
-        setInvalidQuestions(
-          invalidQuestions.map((number) =>
-            number === result.source.index ? result.destination.index : number
-          )
-        );
-      } else {
-        setInvalidQuestions(
-          invalidQuestions.map((number) =>
-            number === result.destination.index ? result.source.index : number
-          )
-        );
-      }
-    }
+    // if question whose order has been changed is present in invalidQuestions array then we need to replace them with the new index
     const newQuestions = Array.from(localSurvey.questions);
     const [reorderedQuestion] = newQuestions.splice(result.source.index, 1);
     newQuestions.splice(result.destination.index, 0, reorderedQuestion);
@@ -203,7 +188,7 @@ export default function QuestionsView({
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
                     lastQuestion={questionIdx === localSurvey.questions.length - 1}
-                    isFaulty={invalidQuestions ? invalidQuestions.includes(questionIdx) : false}
+                    isFaulty={invalidQuestions ? invalidQuestions.includes(question.id) : false}
                   />
                 ))}
                 {provided.placeholder}

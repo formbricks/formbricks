@@ -21,7 +21,7 @@ interface SurveyMenuBarProps {
   environmentId: string;
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
-  setInvalidQuestions: (invalidQuestions: number[]) => void;
+  setInvalidQuestions: (invalidQuestions: String[]) => void;
   validateQuestion: (question: any) => boolean;
 }
 
@@ -33,7 +33,7 @@ export default function SurveyMenuBar({
   activeId,
   setActiveId,
   setInvalidQuestions,
-  validateQuestion
+  validateQuestion,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
@@ -41,7 +41,7 @@ export default function SurveyMenuBar({
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const { product } = useProduct(environmentId);
-  const faultyQuestions: number[] = [];
+  let faultyQuestions: String[] = [];
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -91,12 +91,13 @@ export default function SurveyMenuBar({
   };
 
   const validateSurvey = (survey) => {
+    faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
       const isValid = validateQuestion(question);
 
       if (!isValid) {
-        faultyQuestions.push(index);
+        faultyQuestions.push(question.id);
       }
     }
     // if there are any faulty questions, the user won't be allowed to save the survey
