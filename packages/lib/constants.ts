@@ -1,5 +1,6 @@
 export const RESPONSES_LIMIT_FREE = 100;
 export const IS_FORMBRICKS_CLOUD = process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1";
+export const REVALIDATION_INTERVAL = process.env.NODE_ENV === "production" ? 30 : 0; // 30 seconds in production, 10 seconds in development
 
 // URLs
 const VERCEL_URL = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "";
@@ -15,5 +16,5 @@ export const WEBAPP_URL =
   "http://localhost:3000";
 
 // Other
-export const INTERNAL_SECRET = process.env.INTERNAL_SECRET;
+export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
 export const CRON_SECRET = process.env.CRON_SECRET;

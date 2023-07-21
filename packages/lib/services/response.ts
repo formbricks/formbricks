@@ -1,12 +1,12 @@
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { TPerson } from "@formbricks/types/v1/people";
 import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
+import { cache } from "react";
 import "server-only";
 import { getPerson, transformPrismaPerson } from "./person";
-import { cache } from "react";
-import { TPerson } from "@formbricks/types/v1/people";
 
 const responseSelection = {
   id: true,
@@ -63,7 +63,7 @@ const responseSelection = {
   },
 };
 
-export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+export const createResponse = async (responseInput: Partial<TResponseInput>): Promise<TResponse> => {
   try {
     let person: TPerson | null = null;
 

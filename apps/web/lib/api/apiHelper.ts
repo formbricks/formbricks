@@ -84,7 +84,7 @@ export const getPlan = async (req, res) => {
     return apiKeyData?.environment.product.team.plan || "free";
   } else {
     const user = await getSessionUser(req, res);
-    return user ? user.plan : "free";
+    return user && user.teams?.length > 0 ? user.teams[0].plan : "free";
   }
 };
 
