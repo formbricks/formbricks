@@ -411,6 +411,11 @@ export async function addDemoData(teamId: string): Promise<void> {
     }
   }
 
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const perfBefore = performance.now();
+
+  const eventPromises: any[] = [];
   for (let i = 0; i < 20; i++) {
     const attributes = attributeClasses.map((attributeClass) => {
       let value = generateAttributeValue(
@@ -426,19 +431,29 @@ export async function addDemoData(teamId: string): Promise<void> {
       };
     });
 
+    // 50 ms * 20 = 1 second
+    await sleep(50);
     const person = await prisma.person.create({
       data: {
         environment: { connect: { id: product.environments[0].id } },
         attributes: { create: attributes },
+        sessions: {
+          create: [{}],
+        },
+      },
+      include: {
+        sessions: true,
       },
     });
     people.push(person);
 
-    const session = await prisma.session.create({
-      data: {
-        person: { connect: { id: person.id } },
-      },
-    });
+    // 50 ms * 20 = 1 second
+    // await sleep(50);
+    // const session = await prisma.session.create({
+    //   data: {
+    //     person: { connect: { id: person.id } },
+    //   },
+    // });
 
     const eventClasses = updatedEnvironment.eventClasses;
 
@@ -446,15 +461,26 @@ export async function addDemoData(teamId: string): Promise<void> {
       // create a random number of events for each event class
       const eventCount = Math.floor(Math.random() * 5) + 1;
       for (let j = 0; j < eventCount; j++) {
-        await prisma.event.create({
-          data: {
-            eventClass: { connect: { id: eventClass.id } },
-            session: { connect: { id: session.id } },
-          },
-        });
+        // 50 ms * 20 * 20 = 20 seconds
+        // await sleep(50);
+        eventPromises.push(
+          prisma.event.create({
+            data: {
+              eventClass: { connect: { id: eventClass.id } },
+              session: { connect: { id: person.sessions[0].id } },
+            },
+          })
+        );
       }
     }
   }
+
+  await sleep(50);
+  await Promise.all(eventPromises);
+
+  const perfAfter = performance.now();
+
+  console.log(`Created ${people.length} people in ${perfAfter - perfBefore}ms`);
 
   // Create Surveys with Display and Responses
 
