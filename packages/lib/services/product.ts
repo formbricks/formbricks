@@ -41,4 +41,3 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
     throw new ValidationError("Data validation of product failed");
   }
 });
-
