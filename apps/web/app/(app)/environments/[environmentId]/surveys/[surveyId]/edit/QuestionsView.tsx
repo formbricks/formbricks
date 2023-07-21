@@ -29,7 +29,8 @@ export default function QuestionsView({
   environmentId,
   invalidQuestions,
   setInvalidQuestions,
-  validateQuestion,
+  validateQuestion
+
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -73,10 +74,8 @@ export default function QuestionsView({
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
       updatedSurvey = handleQuestionLogicChange(updatedSurvey, initialQuestionId, updatedAttributes.id);
-      if (invalidQuestions?.includes(initialQuestionId)) {
-        setInvalidQuestions(
-          invalidQuestions.map((id) => (id === initialQuestionId ? updatedAttributes.id : id))
-        );
+      if(invalidQuestions?.includes(initialQuestionId)){
+        setInvalidQuestions(invalidQuestions.map((id) => (id === initialQuestionId ? updatedAttributes.id : id)))
       }
 
       // relink the question to internal Id
@@ -149,7 +148,6 @@ export default function QuestionsView({
     if (!result.destination) {
       return;
     }
-    // if question whose order has been changed is present in invalidQuestions array then we need to replace them with the new index
     const newQuestions = Array.from(localSurvey.questions);
     const [reorderedQuestion] = newQuestions.splice(result.source.index, 1);
     newQuestions.splice(result.destination.index, 0, reorderedQuestion);
@@ -163,7 +161,6 @@ export default function QuestionsView({
     const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
     const destinationIndex = up ? questionIndex - 1 : questionIndex + 1;
     newQuestions.splice(destinationIndex, 0, reorderedQuestion);
-
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
