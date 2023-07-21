@@ -4,7 +4,11 @@
     "@formbricks/web#go": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["@formbricks/database#go", "@formbricks/js#build"]
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"]
+    },
+    "@formbricks/api#build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
     },
     "@formbricks/js#build": {
       "outputs": ["dist/**"],
@@ -72,7 +76,11 @@
         "VERCEL_URL"
       ]
     },
+    "db:setup": {
+      "outputs": []
+    },
     "go": {
+      "persistent": true,
       "cache": false
     },
     "prebuild": {
