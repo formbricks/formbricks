@@ -16,7 +16,6 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
 
   const handleSelect = (number: number) => {
-    console.log(number);
     setSelectedChoice(number);
     if (question.required) {
       setSelectedChoice(null);
