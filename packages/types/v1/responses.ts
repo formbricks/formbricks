@@ -66,7 +66,18 @@ export const ZResponseInput = z.object({
   personId: z.string().cuid2().nullable(),
   finished: z.boolean(),
   data: ZResponseData,
-  meta: ZResponseMeta.nullable(),
+  meta: z
+    .object({
+      url: z.string(),
+      userAgent: z
+        .object({
+          browser: z.string().optional(),
+          device: z.string().optional(),
+          os: z.string().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;
