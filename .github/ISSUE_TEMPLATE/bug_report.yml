@@ -41,22 +41,19 @@ body:
     description: If applicable, add screenshots to help explain your problem.
   validations:
     required: false
-- type: textarea
+- type: checkboxes
   id: environment
   attributes:
     label: Environment
-    value: |
-      - [ ] Formbricks Cloud (app.formbricks.com)
-      - [ ] self-hosted Formbricks, version/commit: [please provide]
-    render: markdown
-  validations:
-    required: true
+    options:
+      - label: Formbricks Cloud (app.formbricks.com)
+      - label: Self-hosted Formbricks
 - type: textarea
   id: desktop-version
   attributes:
     label: Desktop (please complete the following information)
     description: | 
-      Examples: 
+      examples: 
       - **OS**: [e.g. iOS]
       - **Browser**: [e.g. chrome, safari]
       - **Version**: [e.g. 22]
@@ -66,7 +63,7 @@ body:
       - npm: 
     render: markdown
   validations:
-    required: false
+    required: true
 - type: markdown
   id: nodejs-version
   attributes:
