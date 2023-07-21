@@ -11,7 +11,7 @@ interface ResponseOptionsCardProps {
   setLocalSurvey: (survey: Survey) => void;
 }
 
-export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
+export default async function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
@@ -119,7 +119,9 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
 
   const handleInputResponse = (e: any) => {
     let value = parseInt(e.target.value);
-    if (value < 1) value = 1;
+    if (localSurvey?._count?.responses && value < localSurvey?._count?.responses)
+      value = localSurvey?._count?.responses;
+    else if (value < 1) value = 1;
     const updatedSurvey: Survey = { ...localSurvey, autoComplete: value };
     setLocalSurvey(updatedSurvey);
   };
@@ -169,7 +171,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                       <Input
                         autoFocus
                         type="number"
-                        min="1"
+                        min={localSurvey?._count?.responses?.toString() ?? "1"}
                         id="autoCompleteResponses"
                         value={localSurvey.autoComplete?.toString()}
                         onChange={(e) => handleInputResponse(e)}
