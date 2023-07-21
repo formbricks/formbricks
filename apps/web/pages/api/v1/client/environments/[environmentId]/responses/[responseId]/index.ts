@@ -1,5 +1,10 @@
-import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { sendToPipeline } from "@/lib/pipelines";
 import { prisma } from "@formbricks/database";
+import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { TPerson } from "@formbricks/types/v1/people";
+import { TPipelineInput } from "@formbricks/types/v1/pipelines";
+import { TResponse } from "@formbricks/types/v1/responses";
+import { TTag } from "@formbricks/types/v1/tags";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -42,15 +47,89 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       ...response.data,
     };
 
-    // update response
-    const responseData = await prisma.response.update({
+    const responsePrisma = await prisma.response.update({
       where: {
         id: responseId,
       },
       data: {
-        ...{ ...response, data: newResponseData },
+        ...response,
+        data: newResponseData,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        surveyId: true,
+        finished: true,
+        data: true,
+        meta: true,
+        personAttributes: true,
+        person: {
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            attributes: {
+              select: {
+                value: true,
+                attributeClass: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        notes: {
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            text: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                createdAt: true,
+                updatedAt: true,
+                name: true,
+                environmentId: true,
+              },
+            },
+          },
+        },
       },
     });
+
+    const transformPrismaPerson = (person): TPerson => {
+      const attributes = person.attributes.reduce((acc, attr) => {
+        acc[attr.attributeClass.name] = attr.value;
+        return acc;
+      }, {} as Record<string, string | number>);
+
+      return {
+        id: person.id,
+        attributes: attributes,
+        createdAt: person.createdAt,
+        updatedAt: person.updatedAt,
+      };
+    };
+
+    const responseData: TResponse = {
+      ...responsePrisma,
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
 
     // send response update to pipeline
     // don't await to not block the response
@@ -64,29 +143,22 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         environmentId,
         surveyId: responseData.surveyId,
         event: "responseUpdated",
-        data: { id: responseId, ...response },
-      }),
+        response: responseData,
+      } as TPipelineInput),
     });
 
     if (response.finished) {
       // send response to pipeline
       // don't await to not block the response
-      fetch(`${WEBAPP_URL}/api/pipeline`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          internalSecret: INTERNAL_SECRET,
-          environmentId,
-          surveyId: responseData.surveyId,
-          event: "responseFinished",
-          data: responseData,
-        }),
+      sendToPipeline({
+        environmentId,
+        surveyId: responseData.surveyId,
+        event: "responseFinished",
+        response: responseData,
       });
     }
 
-    return res.json(responseData);
+    return res.json({ message: "Response updated" });
   }
 
   // Unknown HTTP Method

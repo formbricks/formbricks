@@ -17,12 +17,13 @@
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:migrate:vercel": "turbo run db:migrate:vercel",
     "db:push": "turbo run db:push",
-    "dev": "turbo run dev --parallel --filter=web... --filter=demo...",
+    "go": "turbo run go",
+    "dev": "turbo run dev --parallel",
     "start": "turbo run start --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
-    "release": "turbo run build --filter=react^... && changeset publish",
+    "release": "turbo run build --filter=js... && changeset publish",
     "test": "turbo run test"
   },
   "devDependencies": {

@@ -1,9 +1,9 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
+import { TResponseData } from "../../../types/v1/responses";
+import type { TSurveyRatingQuestion } from "../../../types/v1/surveys";
 import { cn } from "../lib/utils";
-import type { RatingQuestion } from "../../../types/questions";
 import Headline from "./Headline";
-import Subheader from "./Subheader";
 import {
   ConfusedFace,
   FrowningFace,
@@ -16,11 +16,12 @@ import {
   TiredFace,
   WearyFace,
 } from "./Smileys";
+import Subheader from "./Subheader";
 import SubmitButton from "./SubmitButton";
 
 interface RatingQuestionProps {
-  question: RatingQuestion;
-  onSubmit: (data: { [x: string]: any }) => void;
+  question: TSurveyRatingQuestion;
+  onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
 }
@@ -60,9 +61,10 @@ export default function RatingQuestion({
       onSubmit={(e) => {
         e.preventDefault();
 
-        const data = {
-          [question.id]: selectedChoice,
-        };
+        const data = {};
+        if (selectedChoice !== null) {
+          data[question.id] = selectedChoice;
+        }
 
         setSelectedChoice(null); // reset choice
 

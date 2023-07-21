@@ -78,7 +78,7 @@ export const addMember = async (teamId: string, data: { name: string; email: str
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    return result.status === 200;
+    return result.status === 201;
   } catch (error) {
     console.error(error);
     return false;

@@ -68,7 +68,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     event: "responseCreated",
     environmentId: survey.environmentId,
     surveyId: response.surveyId,
-    data: response,
+    response: response,
   });
 
   if (responseInput.finished) {
@@ -76,7 +76,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       event: "responseFinished",
       environmentId: survey.environmentId,
       surveyId: response.surveyId,
-      data: response,
+      response: response,
     });
   }
 

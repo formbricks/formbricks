@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { createTeam } from "../../app/environments/[environmentId]/actions";
+import { createTeam } from "@/app/(app)/environments/[environmentId]/actions";
 
 interface CreateTeamModalProps {
   open: boolean;
@@ -55,7 +55,11 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
             <div className="grid w-full gap-x-2">
               <div>
                 <Label>Team Name</Label>
-                <Input placeholder="e.g. Power Puff Girls" {...register("name", { required: true })} />
+                <Input
+                  autoFocus
+                  placeholder="e.g. Power Puff Girls"
+                  {...register("name", { required: true })}
+                />
               </div>
             </div>
           </div>

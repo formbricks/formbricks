@@ -35,7 +35,7 @@ export async function POST(): Promise<NextResponse> {
     const notificationResponse = getNotificationResponse(product.environments[0], product.name);
 
     // if there were no responses in the last 7 days, send a different email
-    if (notificationResponse.insights.totalCompletedResponses == 0) {
+    if (notificationResponse.insights.numLiveSurvey == 0) {
       for (const teamMember of teamMembersWithNotificationEnabled) {
         emailSendingPromises.push(
           sendNoLiveSurveyNotificationEmail(teamMember.user.email, notificationResponse)
@@ -101,7 +101,7 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
     insights.totalCompletedResponses += survey.responses.filter((r) => r.finished).length;
     insights.totalDisplays += survey.displays.length;
     insights.totalResponses += survey.responses.length;
-    insights.completionRate = Math.round((insights.totalCompletedResponses / insights.totalDisplays) * 100);
+    insights.completionRate = Math.round((insights.totalCompletedResponses / insights.totalResponses) * 100);
   }
   // build the notification response needed for the emails
   const lastWeekDate = new Date();
@@ -160,6 +160,11 @@ const getProducts = async (): Promise<ProductData[]> => {
                 },
               },
               displays: {
+                where: {
+                  createdAt: {
+                    gte: sevenDaysAgo,
+                  },
+                },
                 select: {
                   status: true,
                 },

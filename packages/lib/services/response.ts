@@ -1,11 +1,12 @@
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
+import { TPerson } from "@formbricks/types/v1/people";
 import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
-import "server-only";
-import { TransformPersonOutput, getPerson, transformPrismaPerson } from "./person";
 import { cache } from "react";
+import "server-only";
+import { getPerson, transformPrismaPerson } from "./person";
 
 const responseSelection = {
   id: true,
@@ -62,9 +63,9 @@ const responseSelection = {
   },
 };
 
-export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+export const createResponse = async (responseInput: Partial<TResponseInput>): Promise<TResponse> => {
   try {
-    let person: TransformPersonOutput | null = null;
+    let person: TPerson | null = null;
 
     if (responseInput.personId) {
       person = await getPerson(responseInput.personId);
@@ -94,7 +95,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const response: TResponse = {
       ...responsePrisma,
-      person: transformPrismaPerson(responsePrisma.person),
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
@@ -123,7 +124,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
 
     const response: TResponse = {
       ...responsePrisma,
-      person: transformPrismaPerson(responsePrisma.person),
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
@@ -157,7 +158,7 @@ export const getSurveyResponses = cache(async (surveyId: string): Promise<TRespo
 
     const responses: TResponse[] = responsesPrisma.map((responsePrisma) => ({
       ...responsePrisma,
-      person: transformPrismaPerson(responsePrisma.person),
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     }));
 
@@ -193,7 +194,7 @@ export const getEnvironmentResponses = cache(async (environmentId: string): Prom
 
     const responses: TResponse[] = responsesPrisma.map((responsePrisma) => ({
       ...responsePrisma,
-      person: transformPrismaPerson(responsePrisma.person),
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     }));
 
@@ -237,7 +238,7 @@ export const updateResponse = async (
 
     const response: TResponse = {
       ...responsePrisma,
-      person: transformPrismaPerson(responsePrisma.person),
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
