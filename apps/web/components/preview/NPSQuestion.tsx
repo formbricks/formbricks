@@ -18,6 +18,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
   const handleSelect = (number: number) => {
     setSelectedChoice(number);
     if (question.required) {
+      setSelectedChoice(null);
       onSubmit({
         [question.id]: number,
       });
@@ -33,6 +34,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
           [question.id]: selectedChoice,
         };
 
+        setSelectedChoice(null);
         onSubmit(data);
         // reset form
       }}>
