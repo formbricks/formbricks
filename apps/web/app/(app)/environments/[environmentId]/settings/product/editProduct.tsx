@@ -48,7 +48,7 @@ export function EditProductName({ environmentId }) {
       className="w-full max-w-sm items-center"
       onSubmit={handleSubmit((data) => {
         if (currentProductName === previousProductName) {
-          return toast.error("Please change team name to update");
+          return toast.error("Please change product name to update");
         }
         triggerProductMutate(data)
           .then(() => {
