@@ -41,9 +41,6 @@ export default function EditTeamName({ environmentId }) {
     <form
       className="w-full max-w-sm items-center"
       onSubmit={handleSubmit((data) => {
-        if (isTeamNameInputEmpty) {
-          return toast.error("Team name should not be empty");
-        }
         if (currentTeamName === previousTeamName) {
           return toast.error("Please change team name to update");
         }
