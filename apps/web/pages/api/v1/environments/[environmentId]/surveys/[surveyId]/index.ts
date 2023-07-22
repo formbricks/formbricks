@@ -86,6 +86,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const body = { ...req.body };
 
     delete body.updatedAt;
+    // preventing issue with unknowingly updating analytics
+    delete body._count;
 
     // delete unused fields for link surveys
     if (body.type === "link") {
