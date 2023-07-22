@@ -11,15 +11,27 @@ import { Button, ErrorComponent, Input, Label, ProfileAvatar } from "@formbricks
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
-import { Dispatch, SetStateAction, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 export function EditName() {
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, control, setValue } = useForm();
   const { profile, isLoadingProfile, isErrorProfile } = useProfile();
 
   const { triggerProfileMutate, isMutatingProfile } = useProfileMutation();
+
+  const profileName = useWatch({
+    control,
+    name: "name",
+  });
+  const isProfileNameInputEmpty = !profileName?.trim();
+  const currentProfileName = profileName?.trim().toLowerCase() ?? "";
+  const previousProfileName = profile?.name?.trim().toLowerCase() ?? "";
+
+  useEffect(() => {
+    setValue("name", profile?.name ?? "");
+  }, [profile?.name]);
 
   if (isLoadingProfile) {
     return <LoadingSpinner />;
@@ -32,6 +44,9 @@ export function EditName() {
     <form
       className="w-full max-w-sm items-center"
       onSubmit={handleSubmit((data) => {
+        if (currentProfileName === previousProfileName) {
+          return toast.error("Please change profile name to update");
+        }
         triggerProfileMutate(data)
           .then(() => {
             toast.success("Your name was updated successfully.");
@@ -41,13 +56,24 @@ export function EditName() {
           });
       })}>
       <Label htmlFor="fullname">Full Name</Label>
-      <Input type="text" id="fullname" defaultValue={profile.name} {...register("name")} />
+      <Input
+        type="text"
+        id="fullname"
+        defaultValue={profile.name}
+        {...register("name")}
+        className={isProfileNameInputEmpty ? "border-red-300 focus:border-red-300" : ""}
+      />
 
       <div className="mt-4">
         <Label htmlFor="email">Email</Label>
         <Input type="email" id="fullname" defaultValue={profile.email} disabled />
       </div>
-      <Button type="submit" variant="darkCTA" className="mt-4" loading={isMutatingProfile}>
+      <Button
+        type="submit"
+        variant="darkCTA"
+        className="mt-4"
+        loading={isMutatingProfile}
+        disabled={isProfileNameInputEmpty || currentProfileName === previousProfileName}>
         Update
       </Button>
     </form>
