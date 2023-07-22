@@ -4,11 +4,6 @@ import { useEnvironment } from "@/lib/environments/environments";
 import { useProduct } from "@/lib/products/products";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -21,18 +16,8 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
   ErrorComponent,
-  Tooltip,
-  TooltipProvider,
-  TooltipTrigger,
-  TooltipContent,
 } from "@formbricks/ui";
-import {
-  CheckCircleIcon,
-  PauseCircleIcon,
-  PlayCircleIcon,
-  PencilSquareIcon,
-  EllipsisHorizontalIcon,
-} from "@heroicons/react/24/solid";
+import { PencilSquareIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import toast from "react-hot-toast";
@@ -40,6 +25,7 @@ import { useRouter } from "next/navigation";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/SuccessMessage";
 import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/LinkModalButton";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import SurveyStatusDropdown from "@/components/shared/SurveyStatusDropdown";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -72,64 +58,7 @@ const SummaryHeader = ({ surveyId, environmentId, survey }: SummaryHeaderProps) 
       <div className="hidden justify-end gap-x-1.5 sm:flex">
         {survey.type === "link" && <LinkSurveyShareButton survey={survey} />}
         {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
-          <TooltipProvider delayDuration={50}>
-            <Tooltip open={isStatusChangeDisabled ? undefined : false}>
-              <TooltipTrigger>
-                <Select
-                  disabled={isStatusChangeDisabled}
-                  onValueChange={(value) => {
-                    triggerSurveyMutate({ status: value })
-                      .then(() => {
-                        toast.success(
-                          value === "inProgress"
-                            ? "Survey live"
-                            : value === "paused"
-                            ? "Survey paused"
-                            : value === "completed"
-                            ? "Survey completed"
-                            : ""
-                        );
-                        router.refresh();
-                      })
-                      .catch((error) => {
-                        toast.error(`Error: ${error.message}`);
-                      });
-                  }}>
-                  <SelectTrigger className="w-[170px] bg-white py-6 md:w-[200px]">
-                    <SelectValue>
-                      <div className="flex items-center">
-                        <SurveyStatusIndicator status={survey.status} environmentId={environmentId} />
-                        <span className="ml-2 text-sm text-slate-700">
-                          {survey.status === "inProgress" && "In-progress"}
-                          {survey.status === "paused" && "Paused"}
-                          {survey.status === "completed" && "Completed"}
-                          {survey.status === "archived" && "Archived"}
-                        </span>
-                      </div>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem className="group  font-normal hover:text-slate-900" value="inProgress">
-                      <PlayCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                      In-progress
-                    </SelectItem>
-                    <SelectItem className="group  font-normal hover:text-slate-900" value="paused">
-                      <PauseCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                      Paused
-                    </SelectItem>
-                    <SelectItem className="group  font-normal hover:text-slate-900" value="completed">
-                      <CheckCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
-                      Completed
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </TooltipTrigger>
-              <TooltipContent>
-                To update the survey status, update the &ldquo;Close
-                <br /> survey on date&rdquo; setting in the Response Options.
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <SurveyStatusDropdown environmentId={environmentId} surveyId={surveyId} />
         ) : null}
         <Button
           variant="darkCTA"
