@@ -118,10 +118,12 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
   };
 
   const handleInputResponse = (e: any) => {
+    const inputResponses = localSurvey?._count?.responses || 0;
     let value = parseInt(e.target.value);
-    if (localSurvey?._count?.responses && value < localSurvey?._count?.responses)
-      value = localSurvey?._count?.responses;
-    else if (value < 1) value = 1;
+
+    // Ensure value is greater than current number of responses
+    value = Math.max(value, inputResponses + 1);
+
     const updatedSurvey: Survey = { ...localSurvey, autoComplete: value };
     setLocalSurvey(updatedSurvey);
   };
@@ -171,11 +173,15 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                       <Input
                         autoFocus
                         type="number"
-                        min={localSurvey?._count?.responses?.toString() ?? "1"}
+                        min={
+                          localSurvey?._count?.responses
+                            ? (localSurvey?._count?.responses + 1).toString()
+                            : "1"
+                        }
                         id="autoCompleteResponses"
                         value={localSurvey.autoComplete?.toString()}
                         onChange={(e) => handleInputResponse(e)}
-                        className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
+                        className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
                       />
                       completed responses.
                     </p>
