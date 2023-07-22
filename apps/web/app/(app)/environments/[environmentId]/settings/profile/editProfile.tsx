@@ -76,13 +76,13 @@ export function EditAvatar({ session }) {
   );
 }
 
-interface DeleteAccounModaltProps {
+interface DeleteAccountModalProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   session: Session;
 }
 
-function DeleteAccountModal({ setOpen, open, session }: DeleteAccounModaltProps) {
+function DeleteAccountModal({ setOpen, open, session }: DeleteAccountModalProps) {
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
 

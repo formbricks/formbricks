@@ -43,7 +43,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     });
 
     if (team === null) {
-      return res.status(404).json({ message: "This product doesn't exist" });
+      return res.status(404).json({ message: "This team doesn't exist" });
     }
     return res.json(team);
   }
