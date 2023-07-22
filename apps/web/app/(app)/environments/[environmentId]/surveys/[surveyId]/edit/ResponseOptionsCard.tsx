@@ -11,7 +11,7 @@ interface ResponseOptionsCardProps {
   setLocalSurvey: (survey: Survey) => void;
 }
 
-export default async function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
+export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: ResponseOptionsCardProps) {
   const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
