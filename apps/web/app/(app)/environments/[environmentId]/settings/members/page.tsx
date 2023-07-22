@@ -2,6 +2,7 @@ import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 import { EditMemberships } from "./EditMemberships";
 import EditTeamName from "./EditTeamName";
+import DeleteTeam from "./DeleteTeam";
 
 export default function MembersSettingsPage({ params }) {
   return (
@@ -12,6 +13,11 @@ export default function MembersSettingsPage({ params }) {
       </SettingsCard>
       <SettingsCard title="Team Name" description="Give your team a descriptive name.">
         <EditTeamName environmentId={params.environmentId} />
+      </SettingsCard>
+      <SettingsCard
+        title="Delete Team"
+        description="Delete team with all its products including all surveys, responses, people, actions and attributes. This cannot be undone.">
+        <DeleteTeam environmentId={params.environmentId} />
       </SettingsCard>
     </div>
   );
