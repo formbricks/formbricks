@@ -16,6 +16,8 @@ import Objective from "./Objective";
 import Product from "./Product";
 import Role from "./Role";
 import { ResponseId } from "@formbricks/js";
+import { useTeam } from "@/lib/teams/teams";
+import { addDemoData } from "@/app/(app)/environments/[environmentId]/actions";
 
 const MAX_STEPS = 6;
 
@@ -30,6 +32,8 @@ export default function Onboarding({ session }: OnboardingProps) {
     isLoading: isLoadingEnvironment,
   } = useSWR(`/api/v1/environments/find-first`, fetcher);
   const { profile } = useProfile();
+  const { team } = useTeam(environment?.id);
+
   const { triggerProfileMutate } = useProfileMutation();
   const [formbricksResponseId, setFormbricksResponseId] = useState<ResponseId | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
@@ -56,8 +60,12 @@ export default function Onboarding({ session }: OnboardingProps) {
     setCurrentStep(currentStep + 1);
   };
 
-  const doLater = () => {
+  const doLater = async () => {
     setCurrentStep(4);
+
+    if (team) {
+      await addDemoData(team.id);
+    }
   };
 
   const next = () => {
@@ -81,11 +89,6 @@ export default function Onboarding({ session }: OnboardingProps) {
       console.error(e);
     }
   };
-
-  console.log({
-    currentStep,
-    percent,
-  });
 
   return (
     <div className="flex h-full w-full flex-col bg-slate-50">
