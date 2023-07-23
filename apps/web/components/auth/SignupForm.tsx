@@ -27,6 +27,7 @@ export const SignupForm = () => {
     if (!isValid) {
       return;
     }
+
     setSigningUp(true);
     try {
       await createUser(

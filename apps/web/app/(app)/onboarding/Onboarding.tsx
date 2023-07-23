@@ -82,6 +82,11 @@ export default function Onboarding({ session }: OnboardingProps) {
     }
   };
 
+  console.log({
+    currentStep,
+    percent,
+  });
+
   return (
     <div className="flex h-full w-full flex-col bg-slate-50">
       <div className="mx-auto grid w-full max-w-7xl grid-cols-6 items-center  pt-8">

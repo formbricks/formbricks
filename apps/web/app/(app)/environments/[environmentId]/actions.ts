@@ -411,11 +411,15 @@ export async function addDemoData(teamId: string): Promise<void> {
     }
   }
 
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  // const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const eventPromises: {
+    eventClassId: string;
+    sessionId: string;
+  }[] = [];
 
   const perfBefore = performance.now();
 
-  const eventPromises: any[] = [];
   for (let i = 0; i < 20; i++) {
     const attributes = attributeClasses.map((attributeClass) => {
       let value = generateAttributeValue(
@@ -425,14 +429,13 @@ export async function addDemoData(teamId: string): Promise<void> {
         `${companies[i].toLowerCase().split(" ").join("")}.com`,
         i
       );
+
       return {
         attributeClass: { connect: { id: attributeClass.id } },
         value: value,
       };
     });
 
-    // 50 ms * 20 = 1 second
-    await sleep(50);
     const person = await prisma.person.create({
       data: {
         environment: { connect: { id: product.environments[0].id } },
@@ -445,15 +448,8 @@ export async function addDemoData(teamId: string): Promise<void> {
         sessions: true,
       },
     });
-    people.push(person);
 
-    // 50 ms * 20 = 1 second
-    // await sleep(50);
-    // const session = await prisma.session.create({
-    //   data: {
-    //     person: { connect: { id: person.id } },
-    //   },
-    // });
+    people.push(person);
 
     const eventClasses = updatedEnvironment.eventClasses;
 
@@ -461,26 +457,40 @@ export async function addDemoData(teamId: string): Promise<void> {
       // create a random number of events for each event class
       const eventCount = Math.floor(Math.random() * 5) + 1;
       for (let j = 0; j < eventCount; j++) {
-        // 50 ms * 20 * 20 = 20 seconds
-        // await sleep(50);
         eventPromises.push(
-          prisma.event.create({
-            data: {
-              eventClass: { connect: { id: eventClass.id } },
-              session: { connect: { id: person.sessions[0].id } },
-            },
-          })
+          {
+            eventClassId: eventClass.id,
+            sessionId: person.sessions[0].id,
+          }
+          // prisma.event.create({
+          //   data: {
+          //     eventClass: { connect: { id: eventClass.id } },
+          //     session: { connect: { id: person.sessions[0].id } },
+          //   },
+          // })
         );
       }
     }
   }
 
-  await sleep(50);
-  await Promise.all(eventPromises);
+  const eventCreateManyInput = eventPromises.map((eventPromise) => ({
+    eventClassId: eventPromise.eventClassId,
+    sessionId: eventPromise.sessionId,
+  }));
+
+  try {
+    await prisma.$transaction([
+      prisma.event.createMany({
+        data: [...eventCreateManyInput],
+      }),
+    ]);
+  } catch (err) {
+    throw new Error(err);
+  }
 
   const perfAfter = performance.now();
 
-  console.log(`Created ${people.length} people in ${perfAfter - perfBefore}ms`);
+  console.log(`Done in ${perfAfter - perfBefore}ms`);
 
   // Create Surveys with Display and Responses
 

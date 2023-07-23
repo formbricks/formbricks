@@ -78,6 +78,21 @@ export async function POST(request: Request) {
                             ],
                           },
                         },
+                        {
+                          name: "Demo Product",
+                          environments: {
+                            create: [
+                              {
+                                type: "production",
+                                ...populateEnvironment,
+                              },
+                              {
+                                type: "development",
+                                ...populateEnvironment,
+                              },
+                            ],
+                          },
+                        },
                       ],
                     },
                   },
