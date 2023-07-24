@@ -108,6 +108,9 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       personId: personId,
       finished,
       data,
+      meta: {
+        url: window.location.href,
+      },
     };
     if (!responseId && !isPreview) {
       const response = await createResponse(
