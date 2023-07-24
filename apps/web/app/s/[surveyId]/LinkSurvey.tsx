@@ -10,19 +10,16 @@ import { cn } from "@formbricks/lib/cn";
 import { Confetti } from "@formbricks/ui";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { useEffect, useRef, useState } from "react";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/v1/surveys";
 import Loading from "@/app/s/[surveyId]/loading";
-
-type TEnhancedSurvey = TSurveyWithAnalytics & {
-  brandColor: string;
-  formbricksSignature: boolean;
-};
+import { TProduct } from "@formbricks/types/v1/product";
 
 interface LinkSurveyProps {
-  survey: TEnhancedSurvey;
+  survey: TSurvey;
+  product: TProduct;
 }
 
-export default function LinkSurvey({ survey }: LinkSurveyProps) {
+export default function LinkSurvey({survey, product}:LinkSurveyProps) {
   const {
     currentQuestion,
     finished,
@@ -88,18 +85,18 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
           )}
           {finished ? (
             <div>
-              <Confetti colors={[survey.brandColor, "#eee"]} />
+              <Confetti colors={[product.brandColor, "#eee"]} />
               <ThankYouCard
                 headline={survey.thankYouCard.headline || "Thank you!"}
                 subheader={survey.thankYouCard.subheader || "Your response has been recorded."}
-                brandColor={survey.brandColor}
+                brandColor={product.brandColor}
                 initiateCountdown={initiateCountdown}
               />
             </div>
           ) : (
             <QuestionConditional
               question={currentQuestion}
-              brandColor={survey.brandColor}
+              brandColor={product.brandColor}
               lastQuestion={lastQuestion}
               onSubmit={submitResponse}
               storedResponseValue={storedResponseValue}
@@ -112,8 +109,8 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
       </div>
       <div className="top-0 z-10 w-full border-b bg-white">
         <div className="mx-auto max-w-md space-y-6 p-6">
-          <Progress progress={progress} brandColor={survey.brandColor} />
-          {survey.formbricksSignature && <FormbricksSignature />}
+          <Progress progress={progress} brandColor={product.brandColor} />
+          {product.formbricksSignature && <FormbricksSignature />}
         </div>
       </div>
     </>

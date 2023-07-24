@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 import { useGetOrCreatePerson } from "../people/people";
-import { TSurveyLogic, TSurveyQuestion, TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/v1/surveys";
 
 interface StoredResponse {
   id: string | null;
@@ -26,11 +26,8 @@ export const useLinkSurvey = (surveyId: string) => {
     mutateSurvey: mutate,
   };
 };
-type TEnhancedSurvey = TSurveyWithAnalytics & {
-  brandColor: string;
-  formbricksSignature: boolean;
-};
-export const useLinkSurveyUtils = (survey: TEnhancedSurvey) => {
+
+export const useLinkSurveyUtils = (survey: TSurvey) => {
   const [currentQuestion, setCurrentQuestion] = useState<TSurveyQuestion | null>(null);
   const [prefilling, setPrefilling] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
