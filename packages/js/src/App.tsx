@@ -23,8 +23,6 @@ export default function App({ config, survey, closeSurvey, errorHandler }: AppPr
     }, 1000); // wait for animation to finish}
   };
 
-  console.log({ config });
-
   return (
     <div id="fbjs">
       <Modal

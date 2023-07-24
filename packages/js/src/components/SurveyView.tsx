@@ -225,7 +225,18 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   };
 
   return (
-    <div>
+    <div
+      className={cn(
+        "fb-overflow-hidden",
+        config?.state?.product?.showHighlightBorder &&
+          `fb-border-2 fb-border-solid fb-border-${config?.state?.product?.highlightBorderColor}`
+      )}
+      style={{
+        borderRadius: "8px",
+        overflow: "hidden",
+        border: config?.state?.product?.showHighlightBorder && "2px solid",
+        borderColor: config?.state?.product?.highlightBorderColor,
+      }}>
       {!countdownStop && survey.autoClose && (
         <Progress progress={countdownProgress} brandColor={config.state?.product?.brandColor} />
       )}
