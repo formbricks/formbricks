@@ -13,16 +13,19 @@ import { TEnvironment } from "@formbricks/types/v1/environment";
 interface SurveyEditorProps {
   survey : TSurveyWithAnalytics,
   product : TProduct,
-  environment : TEnvironment
+  environment : TEnvironment,
+  eventClasses : any
+  attributeClasses : any
 }
 
-export default function SurveyEditor({ survey,product, environment }: SurveyEditorProps): JSX.Element {
+export default function SurveyEditor({ survey,product, environment,eventClasses, attributeClasses }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurveyWithAnalytics>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
 
   useEffect(() => {
+    console.log(survey)
     if (survey) {
       if (!localSurvey) {
         setLocalSurvey(survey);
@@ -36,7 +39,7 @@ export default function SurveyEditor({ survey,product, environment }: SurveyEdit
 
   return (
     <>
-    {localSurvey && <div className="flex h-full flex-col">
+    {(localSurvey && environment) && <div className="flex h-full flex-col">
       <SurveyMenuBar
         setLocalSurvey={setLocalSurvey}
         localSurvey={localSurvey}
@@ -62,9 +65,11 @@ export default function SurveyEditor({ survey,product, environment }: SurveyEdit
             />
           ) : (
             <SettingsView
-              environmentId={environment.id}
+              environment={environment}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
+              eventClasses={eventClasses}
+              attributeClasses={attributeClasses}
             />
           )}
         </main>

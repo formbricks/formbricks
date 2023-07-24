@@ -19,7 +19,7 @@ import { surveyMutateAction } from "@/app/(app)/environments/[environmentId]/sur
 import { TProduct } from "@formbricks/types/v1/product";
 
 interface SurveyMenuBarProps {
-  localSurvey: TSurveyWithAnalytics;
+  localSurvey: any;
   survey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
@@ -125,22 +125,31 @@ export default function SurveyMenuBar({
   };
 
   const saveSurveyAction = (shouldNavigateBack = false) => {
-    // variable named strippedSurvey that is a copy of localSurvey with isDraft removed from every question
-    const strippedSurvey = {
-      ...localSurvey,
-      questions: localSurvey.questions.map((question) => {
-        const { isDraft, ...rest } = question;
-        return rest;
-      }),
-    };
+    // Convert the trigger array to the modified format
+  const modifiedTriggers = localSurvey.triggers.map(trigger => {
+    if (typeof trigger === 'object' && trigger !== null) {
+      return trigger.id;
+    } else if (typeof trigger === 'string') {
+      return trigger;
+    }
+  });
+
+  // Create a copy of localSurvey with isDraft removed from every question
+  const strippedSurvey = {
+    ...localSurvey,
+    triggers: modifiedTriggers, // Update the trigger field with the modified array
+    questions: localSurvey.questions.map((question) => {
+      const { isDraft, ...rest } = question;
+      return rest;
+    }),
+  };
 
     if (!validateSurvey(localSurvey)) {
       return;
     }
 
-    surveyMutateAction(survey.id ,{ ...strippedSurvey })
+    surveyMutateAction(survey.id,{ ...strippedSurvey })
       .then(async (response) => {
-        console.log(response)
         toast.success("Changes saved.");
         if (shouldNavigateBack) {
           router.back();

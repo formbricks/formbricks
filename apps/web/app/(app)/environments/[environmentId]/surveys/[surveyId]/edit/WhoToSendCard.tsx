@@ -29,20 +29,12 @@ interface WhoToSendCardProps {
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
   environmentId: string;
+  attributeClasses
 }
 
-export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhoToSendCardProps) {
+export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurvey,attributeClasses }: WhoToSendCardProps) {
   const [open, setOpen] = useState(false);
-  const { attributeClasses, isLoadingAttributeClasses, isErrorAttributeClasses } =
-    useAttributeClasses(environmentId);
 
-  useEffect(() => {
-    if (!isLoadingAttributeClasses) {
-      if (localSurvey.attributeFilters?.length > 0) {
-        setOpen(true);
-      }
-    }
-  }, [isLoadingAttributeClasses]);
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -60,6 +52,7 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
   };
 
   const setAttributeFilter = (idx: number, attributeClassId: string, condition: string, value: string) => {
+    console.log("running")
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.attributeFilters[idx] = { attributeClassId, condition, value };
     setLocalSurvey(updatedSurvey);
@@ -73,14 +66,6 @@ export default function WhoToSendCard({ environmentId, localSurvey, setLocalSurv
     ];
     setLocalSurvey(updatedSurvey);
   };
-
-  if (isLoadingAttributeClasses) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorAttributeClasses) {
-    return <div>Error</div>;
-  }
 
   return (
     <>

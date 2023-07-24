@@ -6,6 +6,7 @@ import { cache } from "react";
 import "server-only";
 import { z } from "zod";
 import { captureTelemetry } from "../telemetry";
+import { TActionClass } from "@formbricks/types/v1/actionClasses";
 
 export const selectSurveyWithAnalytics = {
   id: true,
@@ -281,7 +282,8 @@ export const getSurveysWithAnalytics = cache(
   }
 );
 
-export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithAnalytics) {
+export async function updateSurvey(surveyId: string, updatedSurvey: any) {
+  console.log(updatedSurvey)
   const currentTriggers = await prisma.surveyTrigger.findMany({
     where: {
       surveyId,
@@ -293,31 +295,38 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
     },
   });
   let data: any = {};
-  const body: Partial<TSurveyWithAnalytics> = { ...updatedSurvey };
+  const body: Partial<any> = { ...updatedSurvey };
+
+  delete body.updatedAt;
+  // preventing issue with unknowingly updating analytics
+  delete body.analytics;
 
   if (body.type === "link") {
     delete body.triggers;
     delete body.recontactDays;
     // converts JSON field with null value to JsonNull as JSON fields can't be set to null since prisma 3.0
+    if (!body.surveyClosedMessage) {
+      body.surveyClosedMessage = null
+    }
   }
 
   if (body.triggers) {
     const newTriggers: string[] = [];
     const removedTriggers: string[] = [];
     // find added triggers
-    for (const trigger of body.triggers) {
-      if (!trigger.id) {
+    for (const eventClassId of body.triggers) {
+      if (!eventClassId) {
         continue;
       }
-      if (currentTriggers.find((t) => t.eventClassId === trigger.id)) {
+      if (currentTriggers.find((t) => t.eventClassId === eventClassId)) {
         continue;
       } else {
-        newTriggers.push(trigger.id);
+        newTriggers.push(eventClassId);
       }
     }
     // find removed triggers
     for (const trigger of currentTriggers) {
-      if (body.triggers.find((t) => t.id === trigger.eventClassId)) {
+      if (body.triggers.find((t:any) => t === trigger.eventClassId)) {
         continue;
       } else {
         removedTriggers.push(trigger.eventClassId);
@@ -343,8 +352,9 @@ export async function updateSurvey(surveyId: string, updatedSurvey: TSurveyWithA
         },
       };
     }
-    delete data.triggers;
+    delete body.triggers;
   }
+  
 
   const attributeFilters: TSurveyAttributeFilter[] = data.attributeFilters;
   if (attributeFilters) {

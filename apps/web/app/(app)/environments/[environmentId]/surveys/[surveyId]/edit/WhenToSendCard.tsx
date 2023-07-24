@@ -23,14 +23,14 @@ import { useEffect, useState } from "react";
 import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 
 interface WhenToSendCardProps {
-  localSurvey: TSurveyWithAnalytics;
-  setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  localSurvey: any;
+  setLocalSurvey: (survey: any) => void;
   environmentId: string;
+  eventClasses: any;
 }
 
-export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey }: WhenToSendCardProps) {
+export default function WhenToSendCard({ environmentId, localSurvey, setLocalSurvey,eventClasses }: WhenToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
-  const { eventClasses, isLoadingEventClasses, isErrorEventClasses } = useEventClasses(environmentId);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
 
   const autoClose = localSurvey.autoClose !== null;
@@ -43,7 +43,7 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
 
   const setTriggerEvent = (idx: number, eventClassId: string) => {
     const updatedSurvey = { ...localSurvey };
-    updatedSurvey.triggers[idx] = eventClassId;
+    updatedSurvey.triggers[idx] = eventClasses.find((eventClass) => {return eventClass.id === eventClassId}).id;
     setLocalSurvey(updatedSurvey);
   };
 
@@ -79,10 +79,17 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
   };
 
   useEffect(() => {
+    
     if (localSurvey.type === "link") {
       setOpen(false);
     }
   }, [localSurvey.type]);
+
+  useEffect(() => {
+    
+   console.log(localSurvey)
+   console.log(eventClasses)
+  }, []);  
 
   //create new empty trigger on page load, remove one click for user
   useEffect(() => {
@@ -90,14 +97,6 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
       addTriggerEvent();
     }
   }, []);
-
-  if (isLoadingEventClasses) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorEventClasses) {
-    return <div>Error</div>;
-  }
 
   return (
     <>
@@ -155,12 +154,12 @@ export default function WhenToSendCard({ environmentId, localSurvey, setLocalSur
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="">
           <hr className="py-1 text-slate-600" />
-          {localSurvey.triggers?.map((triggerEventClassId, idx) => (
+          {localSurvey.triggers?.map((triggerEventClass, idx) => (
             <div className="mt-2" key={idx}>
               <div className="inline-flex items-center">
                 <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
                 <Select
-                  value={triggerEventClassId}
+                  value={triggerEventClass.id}
                   onValueChange={(eventClassId) => setTriggerEvent(idx, eventClassId)}>
                   <SelectTrigger className="w-[240px]">
                     <SelectValue />

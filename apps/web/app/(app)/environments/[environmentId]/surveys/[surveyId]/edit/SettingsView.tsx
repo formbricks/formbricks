@@ -3,33 +3,39 @@ import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys" 
+import { TEnvironment } from "@formbricks/types/v1/environment";
 
 interface SettingsViewProps {
-  environmentId: string;
+  environment: TEnvironment;
   localSurvey: TSurveyWithAnalytics;
   setLocalSurvey: (survey: TSurveyWithAnalytics) => void;
+  eventClasses: any,
+  attributeClasses: any
 }
 
-export default function SettingsView({ environmentId, localSurvey, setLocalSurvey }: SettingsViewProps) {
+export default async function SettingsView({ environment, localSurvey, setLocalSurvey,eventClasses,attributeClasses }: SettingsViewProps) {
+
   return (
     <div className="mt-12 space-y-3 p-5">
       <HowToSendCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environmentId={environmentId}
+        environment={environment}
       />
 
       <WhoToSendCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environmentId={environmentId}
+        environmentId={environment.id}
+        attributeClasses={attributeClasses}
       />
 
       <WhenToSendCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environmentId={environmentId}
+        environmentId={environment.id}
+        eventClasses={eventClasses}
       />
 
       <ResponseOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
@@ -37,7 +43,7 @@ export default function SettingsView({ environmentId, localSurvey, setLocalSurve
       <RecontactOptionsCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environmentId={environmentId}
+        environmentId={environment.id}
       />
     </div>
   );
