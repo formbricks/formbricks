@@ -1,19 +1,31 @@
+"use server";
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
-import { TPerson } from "@formbricks/types/v1/people";
+import {
+  TPerson,
+  TPersonDetailedAttribute,
+  TPersonWithDetailedAttributes,
+  selectPersonSchemaFromPrisma,
+} from "@formbricks/types/v1/people";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
 
-export const select = {
+const detailedAttributeSelect = {
   id: true,
   createdAt: true,
   updatedAt: true,
   attributes: {
     select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
       value: true,
       attributeClass: {
         select: {
           name: true,
+          archived: true,
         },
       },
     },
@@ -33,13 +45,10 @@ type TransformPersonInput = {
 };
 
 export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
-  const attributes = person.attributes.reduce(
-    (acc, attr) => {
-      acc[attr.attributeClass.name] = attr.value;
-      return acc;
-    },
-    {} as Record<string, string | number>
-  );
+  const attributes = person.attributes.reduce((acc, attr) => {
+    acc[attr.attributeClass.name] = attr.value;
+    return acc;
+  }, {} as Record<string, string | number>);
 
   return {
     id: person.id,
@@ -55,7 +64,7 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
       where: {
         id: personId,
       },
-      select,
+      select: selectPersonSchemaFromPrisma,
     });
 
     if (!personPrisma) {
@@ -74,13 +83,56 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
   }
 };
 
+export const getPersonWithAttributeClasses = async (
+  personId: string
+): Promise<TPersonWithDetailedAttributes | null> => {
+  try {
+    const personPrisma = await prisma.person.findUnique({
+      where: {
+        id: personId,
+      },
+      select: detailedAttributeSelect,
+    });
+    if (!personPrisma) {
+      return null;
+    }
+
+    let attributes: Array<TPersonDetailedAttribute> = [];
+    personPrisma.attributes.forEach((attr) => {
+      if (!attr.attributeClass.archived) {
+        attributes.push({
+          id: attr.id,
+          name: attr.attributeClass.name,
+          value: attr.value,
+          createdAt: attr.createdAt,
+          updatedAt: attr.updatedAt,
+          archived: attr.attributeClass.archived,
+        });
+      }
+    });
+
+    return {
+      id: personPrisma.id,
+      attributes: attributes,
+      createdAt: personPrisma.createdAt,
+      updatedAt: personPrisma.updatedAt,
+    };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
 export const getPeople = cache(async (environmentId: string): Promise<TPerson[]> => {
   try {
     const personsPrisma = await prisma.person.findMany({
       where: {
         environmentId: environmentId,
       },
-      select,
+      select: selectPersonSchemaFromPrisma,
     });
     if (!personsPrisma) {
       throw new ResourceNotFoundError("Persons", "All Persons");
@@ -110,7 +162,7 @@ export const createPerson = async (environmentId: string): Promise<TPerson> => {
           },
         },
       },
-      select,
+      select: selectPersonSchemaFromPrisma,
     });
 
     const person = transformPrismaPerson(personPrisma);

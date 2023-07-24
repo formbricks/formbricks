@@ -1,5 +1,5 @@
+import { formatDistance } from "date-fns";
 import { capitalizeFirstLetter } from "@/lib/utils";
-import { timeSince } from "@formbricks/lib/time";
 import { Label, Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
 import {
   CodeBracketIcon,
@@ -10,6 +10,7 @@ import {
   TagIcon,
 } from "@heroicons/react/24/solid";
 import { ActivityFeedItem } from "./ActivityFeed"; // Import the ActivityFeedItem type from the main file
+import { TDisplaysWithSurveyName } from "@formbricks/types/v1/displays";
 
 export const ActivityItemIcon = ({ activityItem }: { activityItem: ActivityFeedItem }) => (
   <div className="h-12 w-12 rounded-full bg-white p-3 text-slate-500  duration-100 ease-in-out group-hover:scale-110 group-hover:text-slate-600">
@@ -43,24 +44,31 @@ export const ActivityItemContent = ({ activityItem }: { activityItem: ActivityFe
       )}
     </div>
     <div className="text-sm text-slate-400">
-      <time dateTime={timeSince(activityItem.createdAt)}>{timeSince(activityItem.createdAt)}</time>
+      <time
+        dateTime={formatDistance(activityItem.createdAt, new Date(), {
+          addSuffix: true,
+        })}>
+        {formatDistance(activityItem.createdAt, new Date(), {
+          addSuffix: true,
+        })}
+      </time>
     </div>
   </div>
 );
 
 export const ActivityItemPopover = ({
   activityItem,
-  responses,
+  displays,
   children,
 }: {
   activityItem: ActivityFeedItem;
-  responses: any[];
+  displays: TDisplaysWithSurveyName[];
   children: React.ReactNode;
 }) => {
-  function findMatchingSurveyName(responses, surveyId) {
-    for (const response of responses) {
-      if (response.survey.id === surveyId) {
-        return response.survey.name;
+  function findMatchingSurveyName(displays: TDisplaysWithSurveyName[], surveyId) {
+    for (const display of displays) {
+      if (display.surveyId === surveyId) {
+        return display.surveyName;
       }
       return null; // Return null if no match is found
     }
@@ -82,7 +90,7 @@ export const ActivityItemPopover = ({
             <div>
               <Label className="font-normal text-slate-400">Survey Name</Label>
               <p className=" mb-2 text-sm font-medium text-slate-900">
-                {findMatchingSurveyName(responses, activityItem.displaySurveyId)}
+                {findMatchingSurveyName(displays, activityItem.displaySurveyId)}
               </p>
             </div>
           ) : activityItem.type === "event" ? (

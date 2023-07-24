@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { TDisplay, TDisplayInput } from "@formbricks/types/v1/displays";
+import { TDisplay, TDisplayInput, TDisplaysWithSurveyName } from "@formbricks/types/v1/displays";
 import { Prisma } from "@prisma/client";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
 import { transformPrismaPerson } from "./person";
@@ -90,6 +90,52 @@ export const markDisplayResponded = async (displayId: string): Promise<TDisplay>
     };
 
     return display;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
+export const getDisplaysOfPerson = async (personId: string): Promise<TDisplaysWithSurveyName[] | null> => {
+  try {
+    const displaysPrisma = await prisma.display.findMany({
+      where: {
+        personId: personId,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        surveyId: true,
+        survey: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!displaysPrisma) {
+      throw new ResourceNotFoundError("Display from PersonId", personId);
+    }
+
+    let displays: TDisplaysWithSurveyName[] = [];
+
+    displaysPrisma.forEach((displayPrisma) => {
+      const display: TDisplaysWithSurveyName = {
+        id: displayPrisma.id,
+        createdAt: displayPrisma.createdAt,
+        updatedAt: displayPrisma.updatedAt,
+        surveyId: displayPrisma.surveyId,
+        surveyName: displayPrisma.survey.name,
+      };
+      displays.push(display);
+    });
+
+    return displays;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");

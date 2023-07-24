@@ -1,6 +1,11 @@
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
-import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
+import {
+  TResponse,
+  TResponseInput,
+  TResponseUpdateInput,
+  TResponseWithSurveyQuestions,
+} from "@formbricks/types/v1/responses";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
 import "server-only";
@@ -61,6 +66,41 @@ const responseSelection = {
       },
     },
   },
+};
+
+export const getResponsesWithSurveyOfPerson = async (
+  personId: string
+): Promise<TResponseWithSurveyQuestions[] | null> => {
+  try {
+    const responsesWithSurvey = await prisma.response.findMany({
+      where: {
+        personId,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        surveyId: true,
+        survey: {
+          select: {
+            name: true,
+            status: true,
+            questions: true,
+          },
+        },
+        data: true,
+      },
+    });
+    if (!responsesWithSurvey) {
+      throw new ResourceNotFoundError("Response With Survey from Person", personId);
+    }
+
+    return responsesWithSurvey;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
 };
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {

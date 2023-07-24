@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZPersonAttributes } from "./people";
 import { ZTag } from "./tags";
+import { ZSurveyQuestions } from "./surveys";
 
 export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
 
@@ -75,3 +76,17 @@ export const ZResponseUpdateInput = z.object({
 });
 
 export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
+
+export const TResponseWithSurveyQuestions = z.object({
+  id: z.string().cuid2(),
+  createdAt: z.date(),
+  surveyId: z.string().cuid2(),
+  survey: z.object({
+    name: z.string(),
+    status: z.enum(["draft", "inProgress", "archived", "paused", "completed"]),
+    questions: ZSurveyQuestions,
+  }),
+  data: ZResponseData,
+});
+
+export type TResponseWithSurveyQuestions = z.infer<typeof TResponseWithSurveyQuestions>;

@@ -18,3 +18,13 @@ export const ZDisplayInput = z.object({
 });
 
 export type TDisplayInput = z.infer<typeof ZDisplayInput>;
+
+export const ZDisplaysWithSurveyName = z.object({
+  id: z.string().cuid2(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  surveyId: z.string().cuid2(),
+  surveyName: z.string(),
+});
+
+export type TDisplaysWithSurveyName = z.infer<typeof ZDisplaysWithSurveyName>;
