@@ -59,17 +59,34 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, demoDataAd
 
     try {
       await triggerProductMutate({ name, brandColor: color });
-
-      if (!profile?.onboardingCompleted) {
-        if (team && !demoDataAdded) {
-          await addDemoData(team.id);
-        }
-      }
     } catch (e) {
       toast.error("An error occured saving your settings");
       console.error(e);
     }
 
+    if (!profile?.onboardingCompleted) {
+      if (team && !demoDataAdded) {
+        try {
+          await addDemoData(team.id);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
+    done();
+  };
+
+  const handleLaterClick = async () => {
+    if (!profile.onboardingCompleted) {
+      if (team) {
+        try {
+          await addDemoData(team.id);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
     done();
   };
 
@@ -151,7 +168,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, demoDataAd
         </div>
       </div>
       <div className="flex items-center justify-end">
-        <Button size="lg" className="mr-2" variant="minimal" id="product-skip" onClick={done}>
+        <Button size="lg" className="mr-2" variant="minimal" id="product-skip" onClick={handleLaterClick}>
           I&apos;ll do it later
         </Button>
         <Button
