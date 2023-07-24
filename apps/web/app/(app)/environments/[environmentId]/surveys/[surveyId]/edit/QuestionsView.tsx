@@ -29,8 +29,7 @@ export default function QuestionsView({
   environmentId,
   invalidQuestions,
   setInvalidQuestions,
-  validateQuestion
-
+  validateQuestion,
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -74,8 +73,10 @@ export default function QuestionsView({
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
       updatedSurvey = handleQuestionLogicChange(updatedSurvey, initialQuestionId, updatedAttributes.id);
-      if(invalidQuestions?.includes(initialQuestionId)){
-        setInvalidQuestions(invalidQuestions.map((id) => (id === initialQuestionId ? updatedAttributes.id : id)))
+      if (invalidQuestions?.includes(initialQuestionId)) {
+        setInvalidQuestions(
+          invalidQuestions.map((id) => (id === initialQuestionId ? updatedAttributes.id : id))
+        );
       }
 
       // relink the question to internal Id
