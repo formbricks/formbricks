@@ -470,6 +470,7 @@ export async function addDemoData(teamId: string): Promise<void> {
     }
   });
 
+  // Commented out this older approach, will remove later
   // for (let i = 0; i < 20; i++) {
   //   const attributes = attributeClasses.map((attributeClass) => {
   //     let value = generateAttributeValue(
