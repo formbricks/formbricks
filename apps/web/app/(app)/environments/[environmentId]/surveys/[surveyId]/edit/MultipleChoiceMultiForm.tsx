@@ -21,14 +21,14 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isFaulty: boolean;
+  isInValid: boolean;
 }
 
 export default function MultipleChoiceMultiForm({
   question,
   questionIdx,
   updateQuestion,
-  isFaulty,
+  isInValid,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -139,7 +139,7 @@ export default function MultipleChoiceMultiForm({
             name="headline"
             value={question.headline}
             onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isFaulty && question.headline.trim() === ""}
+            isInvalid={isInValid && question.headline.trim() === ""}
           />
         </div>
       </div>
@@ -187,7 +187,7 @@ export default function MultipleChoiceMultiForm({
                   className={cn(choice.id === "other" && "border-dashed")}
                   placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
-                  isInvalid={isFaulty && choice.label.trim() === ""}
+                  isInvalid={isInValid && choice.label.trim() === ""}
                 />
                 {question.choices && question.choices.length > 2 && (
                   <TrashIcon

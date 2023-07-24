@@ -27,29 +27,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { environment, isLoadingEnvironment, isErrorEnvironment } = useEnvironment(environmentId);
 
-  const validationRules = {
-    multipleChoiceMulti: (question: any) => {
-      return !question.choices.some((element: any) => element.label.trim() === "");
-    },
-    multipleChoiceSingle: (question: any) => {
-      return !question.choices.some((element: any) => element.label.trim() === "");
-    },
-    defaultValidation: (question: any) => {
-      return question.headline.trim() !== "";
-    },
-  };
-
-  const validateQuestion = (question) => {
-    const specificValidation = validationRules[question.type];
-    const defaultValidation = validationRules.defaultValidation;
-
-    const specificValidationResult = specificValidation ? specificValidation(question) : true;
-    const defaultValidationResult = defaultValidation(question);
-
-    // Return true only if both specific and default validation pass
-    return specificValidationResult && defaultValidationResult;
-  };
-
   useEffect(() => {
     if (survey) {
       if (!localSurvey) {
@@ -80,7 +57,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidQuestions={setInvalidQuestions}
-        validateQuestion={validateQuestion}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
@@ -94,7 +70,6 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
               environmentId={environmentId}
               invalidQuestions={invalidQuestions}
               setInvalidQuestions={setInvalidQuestions}
-              validateQuestion={validateQuestion}
             />
           ) : (
             <SettingsView

@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isEqual } from "lodash";
+import { validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
@@ -22,7 +23,6 @@ interface SurveyMenuBarProps {
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
   setInvalidQuestions: (invalidQuestions: String[]) => void;
-  validateQuestion: (question: any) => boolean;
 }
 
 export default function SurveyMenuBar({
@@ -33,7 +33,6 @@ export default function SurveyMenuBar({
   activeId,
   setActiveId,
   setInvalidQuestions,
-  validateQuestion,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);

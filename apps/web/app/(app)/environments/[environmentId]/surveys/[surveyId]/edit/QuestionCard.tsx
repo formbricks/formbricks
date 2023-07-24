@@ -39,7 +39,7 @@ interface QuestionCardProps {
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
-  isFaulty: boolean;
+  isInValid: boolean;
 }
 
 export default function QuestionCard({
@@ -52,7 +52,7 @@ export default function QuestionCard({
   activeQuestionId,
   setActiveQuestionId,
   lastQuestion,
-  isFaulty,
+  isInValid,
 }: QuestionCardProps) {
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
@@ -72,7 +72,7 @@ export default function QuestionCard({
             className={cn(
               open ? "bg-slate-700" : "bg-slate-400",
               "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-600",
-              isFaulty && "bg-red-400  hover:bg-red-600"
+              isInValid && "bg-red-400  hover:bg-red-600"
             )}>
             {questionIdx + 1}
           </div>
@@ -139,7 +139,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isFaulty={isFaulty}
+                  isInValid={isInValid}
                 />
               ) : question.type === QuestionType.MultipleChoiceSingle ? (
                 <MultipleChoiceSingleForm
@@ -148,7 +148,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isFaulty={isFaulty}
+                  isInValid={isInValid}
                 />
               ) : question.type === QuestionType.MultipleChoiceMulti ? (
                 <MultipleChoiceMultiForm
@@ -157,7 +157,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isFaulty={isFaulty}
+                  isInValid={isInValid}
                 />
               ) : question.type === QuestionType.NPS ? (
                 <NPSQuestionForm
@@ -166,7 +166,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isFaulty={isFaulty}
+                  isInValid={isInValid}
                 />
               ) : question.type === QuestionType.CTA ? (
                 <CTAQuestionForm
@@ -175,7 +175,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isFaulty={isFaulty}
+                  isInValid={isInValid}
                 />
               ) : question.type === QuestionType.Rating ? (
                 <RatingQuestionForm
@@ -184,7 +184,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isFaulty={isFaulty}
+                  isInValid={isInValid}
                 />
               ) : question.type === "consent" ? (
                 <ConsentQuestionForm
@@ -192,7 +192,7 @@ export default function QuestionCard({
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
-                  isFaulty={isFaulty}
+                  isInValid={isInValid}
                 />
               ) : null}
               <div className="mt-4">

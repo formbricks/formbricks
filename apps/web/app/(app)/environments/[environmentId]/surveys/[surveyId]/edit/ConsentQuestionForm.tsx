@@ -11,14 +11,14 @@ interface ConsentQuestionFormProps {
   question: ConsentQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  isFaulty: boolean;
+  isInValid: boolean;
 }
 
 export default function ConsentQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isFaulty,
+  isInValid,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
   return (
@@ -31,7 +31,7 @@ export default function ConsentQuestionForm({
             name="headline"
             value={question.headline}
             onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isFaulty && question.headline.trim() === ""}
+            isInvalid={isInValid && question.headline.trim() === ""}
           />
         </div>
       </div>
@@ -65,7 +65,7 @@ export default function ConsentQuestionForm({
           value={question.label}
           placeholder="I agree to the terms and conditions"
           onChange={(e) => updateQuestion(questionIdx, { label: e.target.value })}
-          isInvalid={isFaulty && question.label.trim() === ""}
+          isInvalid={isInValid && question.label.trim() === ""}
         />
       </div>
       {/* <div className="mt-3">

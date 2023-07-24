@@ -12,7 +12,7 @@ interface CTAQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isFaulty: boolean;
+  isInValid: boolean;
 }
 
 export default function CTAQuestionForm({
@@ -20,7 +20,7 @@ export default function CTAQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-  isFaulty,
+  isInValid,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -35,7 +35,7 @@ export default function CTAQuestionForm({
             name="headline"
             value={question.headline}
             onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isFaulty && question.headline.trim() === ""}
+            isInvalid={isInValid && question.headline.trim() === ""}
           />
         </div>
       </div>

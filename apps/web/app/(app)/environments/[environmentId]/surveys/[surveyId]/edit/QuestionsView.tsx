@@ -9,6 +9,8 @@ import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
+import { Question } from "@formbricks/types/questions";
+import { validateQuestion } from "./Validation";
 
 interface QuestionsViewProps {
   localSurvey: Survey;
@@ -18,7 +20,6 @@ interface QuestionsViewProps {
   environmentId: string;
   invalidQuestions: String[] | null;
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
-  validateQuestion: (question: any) => boolean;
 }
 
 export default function QuestionsView({
@@ -29,8 +30,6 @@ export default function QuestionsView({
   environmentId,
   invalidQuestions,
   setInvalidQuestions,
-  validateQuestion
-
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -52,16 +51,15 @@ export default function QuestionsView({
   };
 
   // function to validate individual questions
-  const validateSurvey = (question: any) => {
+ const validateSurvey = (question: Question) => {
     // prevent this function to execute further if user hasnt still tried to save the survey
     if (invalidQuestions === null) {
       return;
     }
-    let temp = invalidQuestions;
+    let temp = JSON.parse(JSON.stringify(invalidQuestions))
     if (validateQuestion(question)) {
       temp = invalidQuestions.filter((id) => id !== question.id);
       setInvalidQuestions(temp);
-      return;
     } else if (!invalidQuestions.includes(question.id)) {
       temp.push(question.id);
       setInvalidQuestions(temp);
@@ -161,6 +159,7 @@ export default function QuestionsView({
     const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
     const destinationIndex = up ? questionIndex - 1 : questionIndex + 1;
     newQuestions.splice(destinationIndex, 0, reorderedQuestion);
+
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
@@ -185,7 +184,7 @@ export default function QuestionsView({
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
                     lastQuestion={questionIdx === localSurvey.questions.length - 1}
-                    isFaulty={invalidQuestions ? invalidQuestions.includes(question.id) : false}
+                    isInValid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
                   />
                 ))}
                 {provided.placeholder}

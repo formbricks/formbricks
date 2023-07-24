@@ -10,7 +10,7 @@ interface NPSQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isFaulty: boolean;
+  isInValid: boolean;
 }
 
 export default function NPSQuestionForm({
@@ -18,7 +18,7 @@ export default function NPSQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-  isFaulty,
+  isInValid,
 }: NPSQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
@@ -33,7 +33,7 @@ export default function NPSQuestionForm({
             name="headline"
             value={question.headline}
             onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isFaulty && question.headline.trim() === ""}
+            isInvalid={isInValid && question.headline.trim() === ""}
           />
         </div>
       </div>
