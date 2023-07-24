@@ -68,7 +68,7 @@ export const ZResponseInput = z.object({
   data: ZResponseData,
   meta: z
     .object({
-      url: z.string(),
+      url: z.string().optional(),
       userAgent: z
         .object({
           browser: z.string().optional(),
