@@ -20,6 +20,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
   const handleSelect = (number: number) => {
     setSelectedChoice(number);
     if (question.required) {
+      setSelectedChoice(null);
       onSubmit({
         [question.id]: number,
       });
@@ -36,6 +37,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
           data[question.id] = selectedChoice;
         }
 
+        setSelectedChoice(null);
         onSubmit(data);
         // reset form
       }}>
@@ -57,7 +59,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
                   name="nps"
                   value={number}
                   className="fb-absolute fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
-                  onChange={() => handleSelect(number)}
+                  onClick={() => handleSelect(number)}
                   required={question.required}
                 />
                 {number}
