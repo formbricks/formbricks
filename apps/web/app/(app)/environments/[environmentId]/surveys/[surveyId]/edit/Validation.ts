@@ -25,4 +25,4 @@
 
 
 
-export {validationRules, validateQuestion}
+export {validateQuestion}
