@@ -1,28 +1,18 @@
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
+import { TPipelineInput } from "@formbricks/types/v1/pipelines";
 
-export async function sendToPipeline({
-  event,
-  surveyId,
-  environmentId,
-  data,
-}: {
-  event: TPipelineTrigger;
-  surveyId: string;
-  environmentId: string;
-  data: any;
-}) {
+export async function sendToPipeline({ event, surveyId, environmentId, response }: TPipelineInput) {
   return fetch(`${WEBAPP_URL}/api/pipeline`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "x-api-key": INTERNAL_SECRET,
     },
     body: JSON.stringify({
-      internalSecret: INTERNAL_SECRET,
       environmentId: environmentId,
       surveyId: surveyId,
       event,
-      data,
+      response,
     }),
   }).catch((error) => {
     console.error(`Error sending event to pipeline: ${error}`);

@@ -94,3 +94,13 @@ export const getTodaysDateFormatted = (seperator: string) => {
 
   return formattedDate;
 };
+
+export function convertDatesInObject(obj: any) {
+  for (let key in obj) {
+    if (typeof obj[key] === "string" && !isNaN(Date.parse(obj[key]))) {
+      obj[key] = new Date(obj[key]);
+    } else if (typeof obj[key] === "object" && obj[key] !== null) {
+      convertDatesInObject(obj[key]);
+    }
+  }
+}

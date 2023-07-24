@@ -30,13 +30,6 @@ export interface OpenTextSummaryProps {
       scale?: "number" | "star" | "smiley";
       range?: number;
     }[];
-    meta?: {
-      userAgent?: {
-        browser?: string;
-        os?: string;
-        device?: string;
-      };
-    };
   };
 }
 

@@ -231,13 +231,14 @@ export const ZSurvey = z.object({
   displayOption: z.enum(["displayOnce", "displayMultiple", "respondMultiple"]),
   autoClose: z.union([z.number(), z.null()]),
   triggers: z.array(ZActionClass),
-  redirectUrl: z.string().url().optional(),
+  redirectUrl: z.string().url().nullable(),
   recontactDays: z.union([z.number(), z.null()]),
   questions: ZSurveyQuestions,
   thankYouCard: ZSurveyThankYouCard,
   delay: z.number(),
   autoComplete: z.union([z.number(), z.null()]),
   closeOnDate: z.date().nullable(),
+  surveyClosedMessage: ZSurveyClosedMessage,
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
@@ -246,8 +247,8 @@ export const ZSurveyWithAnalytics = ZSurvey.extend({
   analytics: z.object({
     numDisplays: z.number(),
     responseRate: z.number(),
+    numResponses: z.number(),
   }),
-  surveyClosedMessage: ZSurveyClosedMessage,
 });
 
 export type TSurveyWithAnalytics = z.infer<typeof ZSurveyWithAnalytics>;

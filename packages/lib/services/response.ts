@@ -6,12 +6,12 @@ import {
   TResponseUpdateInput,
   TResponseWithSurveyQuestions,
 } from "@formbricks/types/v1/responses";
+import { TPerson } from "@formbricks/types/v1/people";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
+import { cache } from "react";
 import "server-only";
 import { getPerson, transformPrismaPerson } from "./person";
-import { cache } from "react";
-import { TPerson } from "@formbricks/types/v1/people";
 
 const responseSelection = {
   id: true,
@@ -103,7 +103,7 @@ export const getResponsesWithSurveyOfPerson = async (
   }
 };
 
-export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+export const createResponse = async (responseInput: Partial<TResponseInput>): Promise<TResponse> => {
   try {
     let person: TPerson | null = null;
 

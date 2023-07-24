@@ -3,12 +3,13 @@ import Layout from "@/components/shared/Layout";
 import Cal, { getCalApi } from "@calcom/embed-react";
 import { useEffect } from "react";
 import { CheckBadgeIcon } from "@heroicons/react/24/solid";
+import { Button } from "@formbricks/ui";
 
 const XMOffer = [
   {
     step: "1",
-    header: "Kick-off call",
-    description: "You share with our seasoned PMs which areas of your customer experience need improvement.",
+    header: "Kick-off call (FREE)",
+    description: "Share with our seasoned PMs which areas of customer experience need improvement.",
   },
   {
     step: "2",
@@ -69,20 +70,29 @@ const ConciergePage = () => {
             </div>
           ))}
           <div className="border-b border-t border-slate-300 p-6  text-4xl font-semibold text-slate-800">
-            <p className="mr-2 font-light">$2.290</p>
+            <p className="mr-2 font-light">$1.290</p>
           </div>
           <div className="p-6 text-sm text-slate-800">
             <p>
               <CheckBadgeIcon className="mr-1 inline h-5 w-5 text-slate-800" />
-              100% Risk-free: Pay after the kick-off call.
+              100% Risk-free: Pay after the kick-off call, if you liked it.
             </p>
             <p>
               <CheckBadgeIcon className="mr-1 inline h-5 w-5 text-slate-800" />
               Money-back: If you&apos;re not happy, get a full refund.
             </p>
           </div>
+          <div className="px-6">
+            <Button
+              variant="darkCTA"
+              className="w-full justify-center"
+              href="https://cal.com/johannes/kick-off"
+              target="_blank">
+              Book free Kick-Off call
+            </Button>
+          </div>
         </div>
-        <div className="rounded-xl">
+        <div className="!mt-0 rounded-xl">
           <Cal
             calLink="johannes/kick-off"
             style={{
