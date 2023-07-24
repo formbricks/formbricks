@@ -447,7 +447,13 @@ export async function addDemoData(teamId: string): Promise<void> {
     });
   });
 
-  const people = await prisma.$transaction([...personPromises]);
+  let people: any[] = [];
+
+  try {
+    people = await prisma.$transaction([...personPromises]);
+  } catch (err) {
+    throw new Error(err);
+  }
 
   const eventClasses = updatedEnvironment.eventClasses;
 
