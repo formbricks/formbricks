@@ -1,28 +1,32 @@
-// extend this object in order to add more validation rules 
+// extend this object in order to add more validation rules
 
- const validationRules = {
-    multipleChoiceMulti: (question: any) => {
-      return !question.choices.some((element: any) => element.label.trim() === "");
-    },
-    multipleChoiceSingle: (question: any) => {
-      return !question.choices.some((element: any) => element.label.trim() === "");
-    },
-    defaultValidation: (question: any) => {
-      return question.headline.trim() !== "";
-    },
-  };
+import {
+  MultipleChoiceMultiQuestion,
+  MultipleChoiceSingleQuestion,
+  Question,
+} from "@formbricks/types/questions";
 
-  const validateQuestion = (question) => {
-    const specificValidation = validationRules[question.type];
-    const defaultValidation = validationRules.defaultValidation;
+const validationRules = {
+  multipleChoiceMulti: (question: MultipleChoiceMultiQuestion) => {
+    return !question.choices.some((element) => element.label.trim() === "");
+  },
+  multipleChoiceSingle: (question: MultipleChoiceSingleQuestion) => {
+    return !question.choices.some((element) => element.label.trim() === "");
+  },
+  defaultValidation: (question: Question) => {
+    return question.headline.trim() !== "";
+  },
+};
 
-    const specificValidationResult = specificValidation ? specificValidation(question) : true;
-    const defaultValidationResult = defaultValidation(question);
+const validateQuestion = (question) => {
+  const specificValidation = validationRules[question.type];
+  const defaultValidation = validationRules.defaultValidation;
 
-    // Return true only if both specific and default validation pass
-    return specificValidationResult && defaultValidationResult;
-  };
+  const specificValidationResult = specificValidation ? specificValidation(question) : true;
+  const defaultValidationResult = defaultValidation(question);
 
+  // Return true only if both specific and default validation pass
+  return specificValidationResult && defaultValidationResult;
+};
 
-
-export {validateQuestion}
+export { validateQuestion };
