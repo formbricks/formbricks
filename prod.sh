@@ -42,7 +42,13 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 
 # Test Docker installation
 echo "🚀 Testing your Docker installation."
-sudo docker run hello-world
+if sudo docker --version >/dev/null 2>&1; then
+    echo "🎉 Docker is installed!"
+else
+    echo "❌ Docker is not installed. Please install Docker before proceeding."
+    exit 1
+fi
+# sudo docker run hello-world
 
 # Adding your user to the Docker group
 echo "⚙️ Adding your user to the Docker group to avoid using sudo with docker commands."
@@ -50,12 +56,11 @@ sudo groupadd docker >/dev/null 2>&1 || true
 sudo usermod -aG docker $USER >/dev/null 2>&1
 
 echo "🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!"
-echo "⚠️ Please log out and log back in for the changes to take effect."
 
 # Installing Traefik
 echo "⚙️ Installing Traefik..."
-mkdir formbricks-quickstart && cd formbricks-quickstart
-echo "📁 Created Formbricks Quickstart directory at ./formbricks-quickstart."
+mkdir -p formbricks && cd formbricks
+echo "📁 Created Formbricks Quickstart directory at ./formbricks."
 
 # Ask the user for their email address
 echo "💡 Please enter your email address for the SSL certificate:"
@@ -167,8 +172,8 @@ services:
       - "443:443"
       - "8080:8080"
     volumes:
-      - /root/traefik/traefik.yaml:/traefik.yaml
-      - /root/traefik/acme.json:/acme.json
+      - ./traefik.yaml:/traefik.yaml
+      - ./acme.json:/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - web
@@ -202,4 +207,4 @@ docker compose up -d
 
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address."
 echo ""
-echo "🎉 All done! Check the status of Formbricks & Traefik with 'sudo docker compose ps.'"
+echo "🎉 All done! Check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'"
