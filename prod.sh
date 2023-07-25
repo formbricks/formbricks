@@ -42,13 +42,12 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 
 # Test Docker installation
 echo "🚀 Testing your Docker installation."
-if sudo docker --version >/dev/null 2>&1; then
+if docker --version >/dev/null 2>&1; then
     echo "🎉 Docker is installed!"
 else
     echo "❌ Docker is not installed. Please install Docker before proceeding."
     exit 1
 fi
-# sudo docker run hello-world
 
 # Adding your user to the Docker group
 echo "⚙️ Adding your user to the Docker group to avoid using sudo with docker commands."
@@ -101,7 +100,7 @@ touch acme.json
 chmod 600 acme.json
 echo "💡 Created acme.json file with correct permissions."
 
-sudo docker network inspect web >/dev/null 2>&1 || sudo docker network create web >/dev/null 2>&1
+docker network inspect web >/dev/null 2>&1 || docker network create web >/dev/null 2>&1
 echo "📡 Created Docker network 'web'."
 
 # Ask the user for their email address
@@ -189,8 +188,8 @@ networks:
 EOT
 
 update_nextauth_secret() {
-  nextauth_secret=$(sudo openssl rand -base64 32)
-  sudo sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.\*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
+  nextauth_secret=$(openssl rand -base64 32)
+  sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.\*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
 }
 
 echo "🚙 Updating NEXTAUTH_SECRET in the Formbricks container..."
@@ -207,4 +206,4 @@ docker compose up -d
 
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address."
 echo ""
-echo "🎉 All done! Check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'"
+echo "🎉 All done! Check the status of Formbricks & Traefik with 'cd formbricks && docker compose ps.'"
