@@ -30,8 +30,6 @@ export default function QuestionsView({
   environmentId,
   invalidQuestions,
   setInvalidQuestions,
-
-
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -53,12 +51,12 @@ export default function QuestionsView({
   };
 
   // function to validate individual questions
- const validateSurvey = (question: Question) => {
+  const validateSurvey = (question: Question) => {
     // prevent this function to execute further if user hasnt still tried to save the survey
     if (invalidQuestions === null) {
       return;
     }
-    let temp = JSON.parse(JSON.stringify(invalidQuestions))
+    let temp = JSON.parse(JSON.stringify(invalidQuestions));
     if (validateQuestion(question)) {
       temp = invalidQuestions.filter((id) => id !== question.id);
       setInvalidQuestions(temp);
