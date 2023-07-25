@@ -138,9 +138,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
     networks:
-      - web  # Connect to the external web network
-      # fix the above
-
+      - internal
 
   formbricks:
     restart: always
@@ -153,7 +151,8 @@ services:
       - "traefik.http.routers.formbricks.entrypoints=websecure"  # Use the websecure entrypoint (port 443 with TLS)
       - "traefik.http.services.formbricks.loadbalancer.server.port=3000"  # Forward traffic to Formbricks on port 3000
     networks:
-      - web  # Connect to the external web network
+      - web
+      - internal
 
     ports:
       - 3000:3000
@@ -182,9 +181,9 @@ volumes:
 networks:
   web:
     external: true
+  internal:
 EOT
 
-# Function to update NEXTAUTH_SECRET using sed
 update_nextauth_secret() {
   nextauth_secret=$(sudo openssl rand -base64 32)
   sudo sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.\*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
