@@ -203,6 +203,3 @@ docker compose up -d
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address."
 echo ""
 echo "🎉 All done! Check the status of Formbricks & Traefik with 'sudo docker compose ps.'"
-
-## my commands
-# sudo rm -rf ./formbricks-quickstart/ && sudo docker rm -f $(sudo docker ps -a -q) && sudo docker rmi $(sudo docker images -q) -f
