@@ -57,30 +57,6 @@ echo "⚙️ Installing Traefik..."
 mkdir traefik && cd traefik
 echo "Created Traefik directory at ./traefik."
 
-cat <<EOT > docker-compose.yml
-version: "3.5"
-services:
-  traefik:
-    image: "traefik:v2.7"
-    restart: always
-    container_name: "traefik"
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - /root/traefik/traefik.yaml:/traefik.yaml
-      - /root/traefik/acme.json:/acme.json
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - web
-networks:
-  web:
-    external: true
-EOT
-
-echo "Created docker-compose.yml file."
-
 # Ask the user for their email address
 echo "Please enter your email address for the SSL certificate:"
 read email_address
@@ -122,13 +98,6 @@ echo "Created acme.json file with correct permissions."
 
 sudo docker network inspect web >/dev/null 2>&1 || sudo docker network create web >/dev/null 2>&1
 echo "Created Docker network 'web'."
-
-sudo docker compose up -d
-echo "Traefik is now running!"
-
-echo "🎉 All done! Check the status of Traefik with 'sudo docker compose ps'."
-
-# formbricks here
 
 # Ask the user for their email address
 echo "Please enter your domain name for the SSL certificate:"
@@ -192,6 +161,22 @@ services:
     ports:
       - 3000:3000
     <<: *environment
+  traefik:
+    image: "traefik:v2.7"
+    restart: always
+    container_name: "traefik"
+    depends_on:
+      - formbricks
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /root/traefik/traefik.yaml:/traefik.yaml
+      - /root/traefik/acme.json:/acme.json
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - web
 
 volumes:
   postgres:
@@ -220,7 +205,7 @@ done
 
 docker compose up -d
 
-echo "🎉 formbricks baazi lfg! 'sudo docker compose ps'."
+echo "🎉 All done! Check the status of Formbricks & Traefik with 'sudo docker compose ps'."
 
 ## my commands
 # sudo rm -rf ./traefik/ && sudo docker rm -f $(sudo docker ps -a -q) && sudo docker rmi $(sudo docker images -q) -f
