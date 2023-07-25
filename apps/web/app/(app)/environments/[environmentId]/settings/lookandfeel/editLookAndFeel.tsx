@@ -191,7 +191,6 @@ export const EditHighlightBorder: React.FC<{ environmentId: string }> = ({ envir
   // not a good pattern, we should find a better way to do this
   useEffect(() => {
     if (product) {
-      console.log({ product });
       setColor(product.highlightBorderColor);
       setShowHighlightBorder(product.showHighlightBorder);
     }
