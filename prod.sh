@@ -3,7 +3,7 @@
 set -e
 
 # Friendly welcome
-echo "Welcome to the Formbricks single instance installer 🧱"
+echo "🧱 Welcome to the Formbricks single instance installer"
 echo ""
 echo "Fasten your seatbelts! We're setting up your Formbricks environment on a clean Ubuntu 22.04 server."
 echo ""
@@ -54,8 +54,8 @@ echo "⚠️ Please log out and log back in for the changes to take effect."
 
 # Installing Traefik
 echo "⚙️ Installing Traefik..."
-mkdir traefik && cd traefik
-echo "Created Traefik directory at ./traefik."
+mkdir formbricks-quickstart && cd formbricks-quickstart
+echo "Created Formbricks Quickstart directory at ./formbricks-quickstart."
 
 # Ask the user for their email address
 echo "Please enter your email address for the SSL certificate:"
@@ -104,9 +104,6 @@ echo "Please enter your domain name for the SSL certificate:"
 read domain_name
 
 # todo: for NEXTAUTH_URL ask the user if they want https? default is http 
-
-sudo mkdir formbricks-quickstart && cd formbricks-quickstart
-
 cat <<EOT > docker-compose.yml
 version: "3.3"
 x-environment: &environment
@@ -152,7 +149,7 @@ services:
       - postgres
     labels:
       - "traefik.enable=true"  # Enable Traefik for this service
-      - "traefik.http.routers.formbricks.rule=Host(\`cloud.shubham.formbricks.com\`)"  # Replace your_domain_name with your actual domain or IP
+      - "traefik.http.routers.formbricks.rule=Host(\`$domain_name\`)"  # Replace your_domain_name with your actual domain or IP
       - "traefik.http.routers.formbricks.entrypoints=websecure"  # Use the websecure entrypoint (port 443 with TLS)
       - "traefik.http.services.formbricks.loadbalancer.server.port=3000"  # Forward traffic to Formbricks on port 3000
     networks:
@@ -193,13 +190,13 @@ update_nextauth_secret() {
   sudo sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.\*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
 }
 
+echo "Updating NEXTAUTH_SECRET in the Formbricks container..."
 while true; do
-  echo "Updating NEXTAUTH_SECRET in the Formbricks container..."
   if update_nextauth_secret; then
     echo "NEXTAUTH_SECRET updated successfully!"
     break
   else
-    echo "Failed to update NEXTAUTH_SECRET. Retrying..."
+    echo "    Failed to update NEXTAUTH_SECRET. Retrying..."
   fi
 done
 
@@ -208,4 +205,4 @@ docker compose up -d
 echo "🎉 All done! Check the status of Formbricks & Traefik with 'sudo docker compose ps'."
 
 ## my commands
-# sudo rm -rf ./traefik/ && sudo docker rm -f $(sudo docker ps -a -q) && sudo docker rmi $(sudo docker images -q) -f
+# sudo rm -rf ./formbricks-quickstart/ && sudo docker rm -f $(sudo docker ps -a -q) && sudo docker rmi $(sudo docker images -q) -f
