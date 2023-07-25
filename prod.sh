@@ -5,40 +5,40 @@ set -e
 # Friendly welcome
 echo "🧱 Welcome to the Formbricks single instance installer"
 echo ""
-echo "Fasten your seatbelts! We're setting up your Formbricks environment on a clean Ubuntu 22.04 server."
+echo "🏎 Fasten your seatbelts! We're setting up your Formbricks environment on a clean Ubuntu 22.04 server."
 echo ""
 
 # Remove any old Docker installations, without stopping the script if they're not found
 echo "🧹 Time to sweep away any old Docker installations."
-sudo apt-get remove docker docker-engine docker.io containerd runc > /dev/null 2>&1 || true
+sudo apt-get remove docker docker-engine docker.io containerd runc >/dev/null 2>&1 || true
 
 # Update package list
 echo "🔄 Updating your package list."
-sudo apt-get update > /dev/null 2>&1
+sudo apt-get update >/dev/null 2>&1
 
 # Install dependencies
 echo "📦 Installing the necessary dependencies."
 sudo apt-get install -y \
-    ca-certificates \
-    curl \
-    gnupg \
-    lsb-release > /dev/null 2>&1
+  ca-certificates \
+  curl \
+  gnupg \
+  lsb-release >/dev/null 2>&1
 
 # Set up Docker's official GPG key & stable repository
 echo "🔑 Adding Docker's official GPG key and setting up the stable repository."
-sudo mkdir -m 0755 -p /etc/apt/keyrings > /dev/null 2>&1
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg > /dev/null 2>&1
+sudo mkdir -m 0755 -p /etc/apt/keyrings >/dev/null 2>&1
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg >/dev/null 2>&1
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null 2>&1
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null 2>&1
 
 # Update package list again
 echo "🔄 Updating your package list again."
-sudo apt-get update > /dev/null 2>&1
+sudo apt-get update >/dev/null 2>&1
 
 # Install Docker
 echo "🐳 Installing Docker."
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin > /dev/null 2>&1
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1
 
 # Test Docker installation
 echo "🚀 Testing your Docker installation."
@@ -46,8 +46,8 @@ sudo docker run hello-world
 
 # Adding your user to the Docker group
 echo "⚙️ Adding your user to the Docker group to avoid using sudo with docker commands."
-sudo groupadd docker > /dev/null 2>&1 || true
-sudo usermod -aG docker $USER > /dev/null 2>&1
+sudo groupadd docker >/dev/null 2>&1 || true
+sudo usermod -aG docker $USER >/dev/null 2>&1
 
 echo "🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!"
 echo "⚠️ Please log out and log back in for the changes to take effect."
@@ -55,13 +55,13 @@ echo "⚠️ Please log out and log back in for the changes to take effect."
 # Installing Traefik
 echo "⚙️ Installing Traefik..."
 mkdir formbricks-quickstart && cd formbricks-quickstart
-echo "Created Formbricks Quickstart directory at ./formbricks-quickstart."
+echo "📁 Created Formbricks Quickstart directory at ./formbricks-quickstart."
 
 # Ask the user for their email address
-echo "Please enter your email address for the SSL certificate:"
+echo "💡 Please enter your email address for the SSL certificate:"
 read email_address
 
-cat <<EOT > traefik.yaml
+cat <<EOT >traefik.yaml
 entryPoints:
   web:
     address: ":80"
@@ -90,21 +90,20 @@ certificatesResolvers:
       tlsChallenge: {}
 EOT
 
-echo "Created traefik.yaml file with your provided email address."
+echo "💡 Created traefik.yaml file with your provided email address."
 
 touch acme.json
 chmod 600 acme.json
-echo "Created acme.json file with correct permissions."
+echo "💡 Created acme.json file with correct permissions."
 
 sudo docker network inspect web >/dev/null 2>&1 || sudo docker network create web >/dev/null 2>&1
-echo "Created Docker network 'web'."
+echo "📡 Created Docker network 'web'."
 
 # Ask the user for their email address
-echo "Please enter your domain name for the SSL certificate:"
+echo "🔗 Please enter your domain name for the SSL certificate:"
 read domain_name
 
-# todo: for NEXTAUTH_URL ask the user if they want https? default is http 
-cat <<EOT > docker-compose.yml
+cat <<EOT >docker-compose.yml
 version: "3.3"
 x-environment: &environment
   environment:
@@ -123,7 +122,7 @@ x-environment: &environment
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-    # You can use: `openssl rand -base64 32` to generate one
+    # You can use: $(openssl rand -base64 32) to generate one
     NEXTAUTH_SECRET:
     # Set this to your public-facing URL, e.g., https://example.com
     # You do not need the NEXTAUTH_URL environment variable in Vercel.
@@ -189,19 +188,21 @@ update_nextauth_secret() {
   sudo sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.\*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
 }
 
-echo "Updating NEXTAUTH_SECRET in the Formbricks container..."
+echo "🚙 Updating NEXTAUTH_SECRET in the Formbricks container..."
 while true; do
   if update_nextauth_secret; then
-    echo "NEXTAUTH_SECRET updated successfully!"
+    echo "🚗 NEXTAUTH_SECRET updated successfully!"
     break
   else
-    echo "    Failed to update NEXTAUTH_SECRET. Retrying..."
+    echo "🚧 Failed to update NEXTAUTH_SECRET. Retrying..."
   fi
 done
 
 docker compose up -d
 
-echo "🎉 All done! Check the status of Formbricks & Traefik with 'sudo docker compose ps'."
+echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address."
+echo ""
+echo "🎉 All done! Check the status of Formbricks & Traefik with 'sudo docker compose ps.'"
 
 ## my commands
 # sudo rm -rf ./formbricks-quickstart/ && sudo docker rm -f $(sudo docker ps -a -q) && sudo docker rmi $(sudo docker images -q) -f
