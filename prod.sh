@@ -1,11 +1,12 @@
 #!/bin/env bash
 
 set -e
+ubuntu_version=$(lsb_release -a 2>/dev/null | grep -v "No LSB modules are available." | grep "Description:" | awk -F "Description:\t" '{print $2}')
 
 # Friendly welcome
 echo "🧱 Welcome to the Formbricks single instance installer"
 echo ""
-echo "🛸 Fasten your seatbelts! We're setting up your Formbricks environment on a clean Ubuntu 22.04 server."
+echo "🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your $ubuntu_version server."
 echo ""
 
 # Remove any old Docker installations, without stopping the script if they're not found
