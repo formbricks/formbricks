@@ -226,11 +226,6 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
 
   return (
     <div
-      className={cn(
-        "fb-overflow-hidden",
-        config?.state?.product?.showHighlightBorder &&
-          `fb-border-2 fb-border-solid fb-border-${config?.state?.product?.highlightBorderColor}`
-      )}
       style={{
         borderRadius: "8px",
         overflow: "hidden",
