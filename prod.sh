@@ -5,7 +5,7 @@ set -e
 # Friendly welcome
 echo "🧱 Welcome to the Formbricks single instance installer"
 echo ""
-echo "🏎 Fasten your seatbelts! We're setting up your Formbricks environment on a clean Ubuntu 22.04 server."
+echo "🛸 Fasten your seatbelts! We're setting up your Formbricks environment on a clean Ubuntu 22.04 server."
 echo ""
 
 # Remove any old Docker installations, without stopping the script if they're not found
@@ -100,7 +100,7 @@ sudo docker network inspect web >/dev/null 2>&1 || sudo docker network create we
 echo "📡 Created Docker network 'web'."
 
 # Ask the user for their email address
-echo "🔗 Please enter your domain name for the SSL certificate:"
+echo "🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):"
 read domain_name
 
 cat <<EOT >docker-compose.yml
