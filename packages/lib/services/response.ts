@@ -4,7 +4,6 @@ import {
   TResponse,
   TResponseInput,
   TResponseUpdateInput,
-  TResponseWithSurveyQuestions,
 } from "@formbricks/types/v1/responses";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TTag } from "@formbricks/types/v1/tags";
@@ -68,37 +67,35 @@ const responseSelection = {
   },
 };
 
-export const getResponsesWithSurveyOfPerson = async (
-  personId: string
-): Promise<TResponseWithSurveyQuestions[] | null> => {
+export const getResponsesByPersonId = async (personId: string): Promise<Array<TResponse> | null> => {
   try {
-    const responsesWithSurvey = await prisma.response.findMany({
+    const responsePrisma = await prisma.response.findMany({
       where: {
         personId,
       },
-      select: {
-        id: true,
-        createdAt: true,
-        surveyId: true,
-        survey: {
-          select: {
-            name: true,
-            status: true,
-            questions: true,
-          },
-        },
-        data: true,
-      },
+      select: responseSelection,
     });
-    if (!responsesWithSurvey) {
-      throw new ResourceNotFoundError("Response With Survey from Person", personId);
+
+    if (!responsePrisma) {
+      throw new ResourceNotFoundError("Response from PersonId", personId);
     }
 
-    return responsesWithSurvey;
+    let responses: Array<TResponse> = [];
+
+    responsePrisma.forEach((response) => {
+      responses.push({
+        ...response,
+        person: response.person ? transformPrismaPerson(response.person) : null,
+        tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+      });
+    });
+
+    return responses;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
+
     throw error;
   }
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import ResponseFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/ResponsesFeed";
-import { TResponseWithSurveyQuestions } from "@formbricks/types/v1/responses";
+import { TResponseWithSurveyData } from "@formbricks/types/v1/responses";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
@@ -10,7 +10,7 @@ export default function ResponseSection({
   responsesWithSurveyData,
 }: {
   environmentId: string;
-  responsesWithSurveyData: TResponseWithSurveyQuestions[];
+  responsesWithSurveyData: TResponseWithSurveyData[];
 }) {
   const [responsesAscending, setResponsesAscending] = useState(true);
   const toggleSortResponses = () => {

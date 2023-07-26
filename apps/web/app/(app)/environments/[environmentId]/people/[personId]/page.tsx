@@ -1,35 +1,60 @@
 import { getPersonWithAttributeClasses } from "@formbricks/lib/services/person";
-import { getResponsesWithSurveyOfPerson } from "@formbricks/lib/services/response";
+import { getResponsesByPersonId } from "@formbricks/lib/services/response";
 import { getSessionWithActionsOfPerson } from "@formbricks/lib/services/session";
 import { getDisplaysOfPerson } from "@formbricks/lib/services/displays";
+import { getSurvey } from "@formbricks/lib/services/survey";
 import AttributesSection from "@/app/(app)/environments/[environmentId]/people/[personId]/AttributesSection";
 import ActivitySection from "@/app/(app)/environments/[environmentId]/people/[personId]/ActivitySection";
 import HeadingSection from "@/app/(app)/environments/[environmentId]/people/[personId]/HeadingSection";
 import ResponseSection from "@/app/(app)/environments/[environmentId]/people/[personId]/ResponseSection";
+import { TResponseWithSurveyData } from "@formbricks/types/v1/responses";
 
 export default async function PersonPage({ params }) {
-  let [personWithAttributes, displays, sessionsWithActions, responsesWithSurvey] = await Promise.all([
+  let [personWithAttributes, displays, sessionsWithActions, responses] = await Promise.all([
     getPersonWithAttributeClasses(params.personId),
     getDisplaysOfPerson(params.personId),
     getSessionWithActionsOfPerson(params.personId),
-    getResponsesWithSurveyOfPerson(params.personId),
+    getResponsesByPersonId(params.personId),
   ]);
+
   if (!personWithAttributes) {
     throw new Error("No such person found");
   }
-  const email = personWithAttributes?.attributes?.find((attribute) => attribute.name === "email")?.value;
-  const userId = personWithAttributes?.attributes?.find((attribute) => attribute.name === "userId")?.value;
-  const otherAttributes = personWithAttributes?.attributes?.filter(
+  sessionsWithActions = sessionsWithActions ?? [];
+  displays = displays ?? [];
+
+  const surveyIds = responses?.map((response) => response.surveyId) || [];
+  const surveys = await Promise.all(surveyIds.map((surveyIdx) => getSurvey(surveyIdx)));
+
+  const responsesWithSurvey: TResponseWithSurveyData[] =
+    responses?.reduce((acc: TResponseWithSurveyData[], response) => {
+      const thisSurvey = surveys.find((survey) => survey?.id === response.surveyId);
+      if (thisSurvey) {
+        acc.push({
+          id: response.id,
+          createdAt: response.createdAt,
+          data: response.data,
+          survey: {
+            id: response.surveyId,
+            name: thisSurvey.name,
+            status: thisSurvey.status,
+            questions: thisSurvey.questions,
+          },
+        });
+      }
+      return acc;
+    }, []) || [];
+
+  const numberOfSessions = sessionsWithActions?.length ?? 0;
+  const numberOfResponses = responsesWithSurvey.length;
+
+  const { attributes } = personWithAttributes || {};
+  const userIdAttribute = attributes?.find((attribute) => attribute.name === "userId");
+  const otherAttributes = attributes?.filter(
     (attribute) => attribute.name !== "email" && attribute.name !== "userId" && !attribute.archived
   );
-  const numberOfSessions = sessionsWithActions?.length ?? 0;
-  const numberOfResponses = responsesWithSurvey?.length ?? 0;
-
-  displays = displays ?? [];
-  sessionsWithActions = sessionsWithActions ?? [];
-  responsesWithSurvey = responsesWithSurvey ?? [];
-
-  const personEmail = personWithAttributes?.attributes?.find((attribute) => attribute.name === "email");
+  const personEmail = attributes?.find((attribute) => attribute.name === "email");
+  const email = personEmail?.value;
 
   return (
     <div>
@@ -44,7 +69,7 @@ export default async function PersonPage({ params }) {
             <div className="grid grid-cols-1 gap-x-8  md:grid-cols-4">
               <AttributesSection
                 email={email}
-                userId={userId}
+                userId={userIdAttribute?.value}
                 otherAttributes={otherAttributes}
                 personWithAttributes={personWithAttributes}
                 numberOfSessions={numberOfSessions}
@@ -58,7 +83,7 @@ export default async function PersonPage({ params }) {
               <ActivitySection
                 environmentId={params.environmentId}
                 sessionsWithActions={sessionsWithActions}
-                attributes={personWithAttributes?.attributes}
+                attributes={attributes}
                 displays={displays}
               />
             </div>

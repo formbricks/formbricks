@@ -1,7 +1,7 @@
 import { formatDistance } from "date-fns";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { TResponseWithSurveyQuestions } from "@formbricks/types/v1/responses";
+import { TResponseWithSurveyData } from "@formbricks/types/v1/responses";
 import Link from "next/link";
 
 export default function ResponseFeed({
@@ -9,7 +9,7 @@ export default function ResponseFeed({
   sortByDate,
   environmentId,
 }: {
-  responses: TResponseWithSurveyQuestions[];
+  responses: TResponseWithSurveyData[];
   sortByDate: boolean;
   environmentId: string;
 }) {
@@ -26,7 +26,7 @@ export default function ResponseFeed({
                 ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
                 : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
             )
-            .map((response: TResponseWithSurveyQuestions, responseIdx) => (
+            .map((response: TResponseWithSurveyData, responseIdx) => (
               <li key={response.id} className="list-none">
                 <div className="relative pb-8">
                   {responseIdx !== responses.length - 1 ? (
@@ -53,7 +53,7 @@ export default function ResponseFeed({
                           <div className="flex items-center justify-center space-x-2  rounded-full bg-slate-50 px-3 py-1 text-sm text-slate-600">
                             <Link
                               className="hover:underline"
-                              href={`/environments/${environmentId}/surveys/${response.surveyId}/summary`}>
+                              href={`/environments/${environmentId}/surveys/${response.survey.id}/summary`}>
                               {response.survey.name}
                             </Link>
                             <SurveyStatusIndicator

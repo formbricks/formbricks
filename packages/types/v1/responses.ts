@@ -88,11 +88,11 @@ export const ZResponseUpdateInput = z.object({
 
 export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
 
-export const TResponseWithSurveyQuestions = z.object({
+export const ZResponseWithSurveyData = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
-  surveyId: z.string().cuid2(),
   survey: z.object({
+    id: z.string().cuid2(),
     name: z.string(),
     status: z.enum(["draft", "inProgress", "archived", "paused", "completed"]),
     questions: ZSurveyQuestions,
@@ -100,4 +100,4 @@ export const TResponseWithSurveyQuestions = z.object({
   data: ZResponseData,
 });
 
-export type TResponseWithSurveyQuestions = z.infer<typeof TResponseWithSurveyQuestions>;
+export type TResponseWithSurveyData = z.infer<typeof ZResponseWithSurveyData>;
