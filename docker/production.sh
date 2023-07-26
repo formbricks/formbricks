@@ -193,4 +193,4 @@ docker compose up -d
 
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
 echo ""
-echo "🎉 All done! Check the status of Formbricks & Traefik with 'cd formbricks && docker compose ps.'"
+echo "🎉 All done! Check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'"
