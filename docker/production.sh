@@ -51,14 +51,14 @@ else
 fi
 
 # Adding your user to the Docker group
-echo "⚙️ Adding your user to the Docker group to avoid using sudo with docker commands."
+echo "🐳 Adding your user to the Docker group to avoid using sudo with docker commands."
 sudo groupadd docker >/dev/null 2>&1 || true
 sudo usermod -aG docker $USER >/dev/null 2>&1
 
 echo "🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!"
 
 # Installing Traefik
-echo "⚙️ Installing Traefik..."
+echo "🚗 Installing Traefik..."
 mkdir -p formbricks && cd formbricks
 echo "📁 Created Formbricks Quickstart directory at ./formbricks."
 
