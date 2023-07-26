@@ -100,9 +100,6 @@ touch acme.json
 chmod 600 acme.json
 echo "💡 Created acme.json file with correct permissions."
 
-# docker network inspect web >/dev/null 2>&1 || docker network create web >/dev/null 2>&1
-# echo "📡 Created Docker network 'web'."
-
 # Ask the user for their email address
 echo "🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):"
 read domain_name
