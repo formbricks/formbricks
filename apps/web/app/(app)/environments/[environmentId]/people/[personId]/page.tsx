@@ -1,9 +1,11 @@
 import { getPersonWithAttributeClasses } from "@formbricks/lib/services/person";
-import PersonDetails from "./PersonDetails";
 import { getResponsesWithSurveyOfPerson } from "@formbricks/lib/services/response";
 import { getSessionWithActionsOfPerson } from "@formbricks/lib/services/session";
 import { getDisplaysOfPerson } from "@formbricks/lib/services/displays";
 import AttributesSection from "@/app/(app)/environments/[environmentId]/people/[personId]/AttributesSection";
+import ActivitySection from "@/app/(app)/environments/[environmentId]/people/[personId]/ActivitySection";
+import HeadingSection from "@/app/(app)/environments/[environmentId]/people/[personId]/HeadingSection";
+import ResponseSection from "@/app/(app)/environments/[environmentId]/people/[personId]/ResponseSection";
 
 export default async function PersonPage({ params }) {
   let [personWithAttributes, displays, sessionsWithActions, responsesWithSurvey] = await Promise.all([
@@ -27,24 +29,41 @@ export default async function PersonPage({ params }) {
   sessionsWithActions = sessionsWithActions ?? [];
   responsesWithSurvey = responsesWithSurvey ?? [];
 
+  const personEmail = personWithAttributes?.attributes?.find((attribute) => attribute.name === "email");
+
   return (
     <div>
       <main className="mx-auto px-4 sm:px-6 lg:px-8">
-        <PersonDetails
-          environmentId={params.environmentId}
-          personWithAttributes={personWithAttributes}
-          sessionsWithActions={sessionsWithActions}
-          responsesWithSurveyData={responsesWithSurvey}
-          displays={displays}>
-          <AttributesSection
-            email={email}
-            userId={userId}
-            otherAttributes={otherAttributes}
-            personWithAttributes={personWithAttributes}
-            numberOfSessions={numberOfSessions}
-            numberOfResponses={numberOfResponses}
+        <>
+          <HeadingSection
+            environmentId={params.environmentId}
+            personEmail={personEmail}
+            personId={personWithAttributes.id}
           />
-        </PersonDetails>
+          <section className="pb-24 pt-6">
+            <div className="grid grid-cols-1 gap-x-8  md:grid-cols-4">
+              <AttributesSection
+                email={email}
+                userId={userId}
+                otherAttributes={otherAttributes}
+                personWithAttributes={personWithAttributes}
+                numberOfSessions={numberOfSessions}
+                numberOfResponses={numberOfResponses}
+              />
+              <ResponseSection
+                environmentId={params.environmentId}
+                responsesWithSurveyData={responsesWithSurvey}
+              />
+
+              <ActivitySection
+                environmentId={params.environmentId}
+                sessionsWithActions={sessionsWithActions}
+                attributes={personWithAttributes?.attributes}
+                displays={displays}
+              />
+            </div>
+          </section>
+        </>
       </main>
     </div>
   );
