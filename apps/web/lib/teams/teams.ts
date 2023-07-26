@@ -15,3 +15,16 @@ export const useTeam = (environmentId: string) => {
     mutateTeam: mutate,
   };
 };
+
+export const addDemoProduct = async (teamId: string) => {
+  let response;
+
+  try {
+    response = await fetch(`/api/v1/teams/${teamId}/add_demo_product`, {
+      method: "POST",
+    });
+  } catch (err) {
+    console.log(err);
+    throw new Error(err);
+  }
+};

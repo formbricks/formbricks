@@ -78,21 +78,6 @@ export async function POST(request: Request) {
                             ],
                           },
                         },
-                        {
-                          name: "Demo Product",
-                          environments: {
-                            create: [
-                              {
-                                type: "production",
-                                ...populateEnvironment,
-                              },
-                              {
-                                type: "development",
-                                ...populateEnvironment,
-                              },
-                            ],
-                          },
-                        },
                       ],
                     },
                   },
@@ -104,7 +89,12 @@ export async function POST(request: Request) {
       };
     }
 
-    const userData = await prisma.user.create(data);
+    const userData = await prisma.user.create({
+      ...data,
+      include: {
+        memberships: true,
+      },
+    });
 
     if (inviteId) {
       sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email);

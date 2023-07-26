@@ -16,8 +16,7 @@ import Objective from "./Objective";
 import Product from "./Product";
 import Role from "./Role";
 import { ResponseId } from "@formbricks/js";
-import { useTeam } from "@/lib/teams/teams";
-import { addDemoData } from "@/app/(app)/environments/[environmentId]/actions";
+import { addDemoProduct, useTeam } from "@/lib/teams/teams";
 
 const MAX_STEPS = 6;
 
@@ -39,7 +38,6 @@ export default function Onboarding({ session }: OnboardingProps) {
   const [formbricksResponseId, setFormbricksResponseId] = useState<ResponseId | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [demoDataAdded, setDemoDataAdded] = useState(false);
   const router = useRouter();
 
   const percent = useMemo(() => {
@@ -68,13 +66,7 @@ export default function Onboarding({ session }: OnboardingProps) {
     // Add demo data only if onboardingCompleted flag is false
     if (!profile.onboardingCompleted) {
       if (team) {
-        try {
-          await addDemoData(team.id);
-          // To let the Product component know that demo data has been added
-          setDemoDataAdded(true);
-        } catch (e) {
-          console.error(e);
-        }
+        addDemoProduct(team.id);
       }
     }
   };
@@ -82,12 +74,20 @@ export default function Onboarding({ session }: OnboardingProps) {
   const next = () => {
     if (currentStep < MAX_STEPS) {
       setCurrentStep((value) => value + 1);
+
+      if (!profile.onboardingCompleted) {
+        if (team) {
+          addDemoProduct(team.id);
+        }
+      }
+
       return;
     }
   };
 
   const done = async () => {
     setIsLoading(true);
+
     try {
       const updatedProfile = { ...profile, onboardingCompleted: true };
       await triggerProfileMutate(updatedProfile);
@@ -127,14 +127,7 @@ export default function Onboarding({ session }: OnboardingProps) {
         {currentStep === 3 && (
           <Objective next={next} skip={skipStep} formbricksResponseId={formbricksResponseId} />
         )}
-        {currentStep === 4 && (
-          <Product
-            done={done}
-            environmentId={environment.id}
-            isLoading={isLoading}
-            demoDataAdded={demoDataAdded}
-          />
-        )}
+        {currentStep === 4 && <Product done={done} environmentId={environment.id} isLoading={isLoading} />}
       </div>
     </div>
   );

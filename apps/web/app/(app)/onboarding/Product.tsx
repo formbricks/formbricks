@@ -1,13 +1,10 @@
 "use client";
 
-import { addDemoData } from "@/app/(app)/environments/[environmentId]/actions";
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
-import { useProfile } from "@/lib/profile";
-import { useTeam } from "@/lib/teams/teams";
 import { Button, ColorPicker, ErrorComponent, Input, Label } from "@formbricks/ui";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -16,15 +13,12 @@ type Product = {
   done: () => void;
   environmentId: string;
   isLoading: boolean;
-  demoDataAdded: boolean;
 };
 
-const Product: React.FC<Product> = ({ done, isLoading, environmentId, demoDataAdded }) => {
+const Product: React.FC<Product> = ({ done, isLoading, environmentId }) => {
   const [loading, setLoading] = useState(true);
-  const { team } = useTeam(environmentId);
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { triggerProductMutate } = useProductMutation(environmentId);
-  const { profile } = useProfile();
 
   const [name, setName] = useState("");
   const [color, setColor] = useState("##4748b");
@@ -64,29 +58,10 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, demoDataAd
       console.error(e);
     }
 
-    if (!profile?.onboardingCompleted) {
-      if (team && !demoDataAdded) {
-        try {
-          await addDemoData(team.id);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-
     done();
   };
 
   const handleLaterClick = async () => {
-    if (!profile.onboardingCompleted) {
-      if (team) {
-        try {
-          await addDemoData(team.id);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
     done();
   };
 
