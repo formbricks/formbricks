@@ -115,6 +115,7 @@ export const getDisplaysOfPerson = async (personId: string): Promise<TDisplaysWi
             name: true,
           },
         },
+        status: true,
       },
     });
 
@@ -129,6 +130,8 @@ export const getDisplaysOfPerson = async (personId: string): Promise<TDisplaysWi
         id: displayPrisma.id,
         createdAt: displayPrisma.createdAt,
         updatedAt: displayPrisma.updatedAt,
+        person: null,
+        status: displayPrisma.status,
         surveyId: displayPrisma.surveyId,
         surveyName: displayPrisma.survey.name,
       };
