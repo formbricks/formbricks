@@ -85,7 +85,6 @@ providers:
   docker:
     watch: true
     exposedByDefault: false
-    network: web
 certificatesResolvers:
   default:
     acme:
@@ -101,8 +100,8 @@ touch acme.json
 chmod 600 acme.json
 echo "💡 Created acme.json file with correct permissions."
 
-docker network inspect web >/dev/null 2>&1 || docker network create web >/dev/null 2>&1
-echo "📡 Created Docker network 'web'."
+# docker network inspect web >/dev/null 2>&1 || docker network create web >/dev/null 2>&1
+# echo "📡 Created Docker network 'web'."
 
 # Ask the user for their email address
 echo "🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):"
@@ -141,8 +140,6 @@ services:
       - postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=postgres
-    networks:
-      - internal
 
   formbricks:
     restart: always
@@ -154,9 +151,6 @@ services:
       - "traefik.http.routers.formbricks.rule=Host(\`$domain_name\`)"  # Replace your_domain_name with your actual domain or IP
       - "traefik.http.routers.formbricks.entrypoints=websecure"  # Use the websecure entrypoint (port 443 with TLS)
       - "traefik.http.services.formbricks.loadbalancer.server.port=3000"  # Forward traffic to Formbricks on port 3000
-    networks:
-      - web
-      - internal
 
     ports:
       - 3000:3000
@@ -175,17 +169,10 @@ services:
       - ./traefik.yaml:/traefik.yaml
       - ./acme.json:/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - web
 
 volumes:
   postgres:
     driver: local
-
-networks:
-  web:
-    external: true
-  internal:
 EOT
 
 update_nextauth_secret() {
