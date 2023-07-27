@@ -18,6 +18,7 @@ import {
   generateResponsesAndDisplays,
   userAgents,
 } from "@/lib/products/createDemoProductHelpers";
+import { Prisma } from "@prisma/client";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication
@@ -38,7 +39,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
 
   if (req.method === "POST") {
-    const demoProduct = await prisma.product.create({
+    const productWithEnvironment = Prisma.validator<Prisma.ProductArgs>()({
+      include: {
+        environments: true,
+      },
+    });
+
+    type ProductWithEnvironment = Prisma.ProductGetPayload<typeof productWithEnvironment>;
+
+    const demoProduct: ProductWithEnvironment = await prisma.product.create({
       data: {
         name: "Demo Product",
         team: {
@@ -255,6 +264,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
     });
 
+    const personWithSessions = Prisma.validator<Prisma.PersonArgs>()({
+      include: {
+        sessions: true,
+      },
+    });
+
+    type PersonWithSessions = Prisma.PersonGetPayload<typeof personWithSessions>;
+
     const personPromises = generatedAttributes.map((generatedAttribute) => {
       return prisma.person.create({
         data: {
@@ -270,8 +287,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
     });
 
-    // TODO: Figure out the type for people
-    let people: any[] = [];
+    let people: PersonWithSessions[] = [];
 
     try {
       people = await prisma.$transaction([...personPromises]);

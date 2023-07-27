@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { createTeam } from "@/app/(app)/environments/[environmentId]/actions";
+import { addDemoProduct } from "@/lib/teams/teams";
 
 interface CreateTeamModalProps {
   open: boolean;
@@ -25,6 +26,10 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
   const submitTeam = async (data) => {
     setLoading(true);
     const newTeam = await createTeam(data.name, (profile as any).id);
+
+    // Add demo product to the newly created team
+    await addDemoProduct(newTeam.id);
+
     const newMemberships = await mutateMemberships();
     changeEnvironmentByTeam(newTeam.id, newMemberships, router);
     toast.success("Team created successfully!");
