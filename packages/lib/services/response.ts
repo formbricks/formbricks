@@ -1,10 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
-import {
-  TResponse,
-  TResponseInput,
-  TResponseUpdateInput,
-} from "@formbricks/types/v1/responses";
+import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
