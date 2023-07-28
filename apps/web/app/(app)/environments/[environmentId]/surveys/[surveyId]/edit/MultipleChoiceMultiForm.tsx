@@ -75,7 +75,7 @@ export default function MultipleChoiceMultiForm({
       newLogic.push({ ...logic, value: newL });
     });
     updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
-  }
+  };
 
   const addChoice = (choiceIdx?: number) => {
     setIsNew(false); // This question is no longer new.
