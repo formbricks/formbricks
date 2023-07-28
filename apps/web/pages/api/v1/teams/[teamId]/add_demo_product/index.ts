@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@formbricks/database";
-import { getSessionUser, hasTeamAccess } from "@/lib/api/apiHelper";
 import {
   ChurnResponses,
   ChurnSurvey,
@@ -19,23 +18,24 @@ import {
   userAgents,
 } from "@/lib/products/createDemoProductHelpers";
 import { Prisma } from "@prisma/client";
+import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication
 
-  const currentUser: any = await getSessionUser(req, res);
-  if (!currentUser) {
-    return res.status(401).json({ message: "Not authenticated" });
+  if (req.headers["x-api-key"] !== INTERNAL_SECRET) {
+    return res.status(401).json({
+      code: "not_authenticated",
+      message: "Not authenticated",
+      details: {
+        "x-Api-Key": "Header not provided or API Key invalid",
+      },
+    });
   }
 
   const teamId = req.query.teamId?.toString();
   if (teamId === undefined) {
     return res.status(400).json({ message: "Missing teamId" });
-  }
-
-  const hasAccess = await hasTeamAccess(currentUser, teamId);
-  if (!hasAccess) {
-    return res.status(403).json({ message: "Not authorized" });
   }
 
   if (req.method === "POST") {

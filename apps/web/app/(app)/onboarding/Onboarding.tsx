@@ -64,22 +64,22 @@ export default function Onboarding({ session }: OnboardingProps) {
     setCurrentStep(4);
 
     // Add demo data only if onboardingCompleted flag is false
-    if (!profile.onboardingCompleted) {
-      if (team) {
-        addDemoProduct(team.id);
-      }
-    }
+    // if (!profile.onboardingCompleted) {
+    //   if (team) {
+    //     addDemoProduct(team.id);
+    //   }
+    // }
   };
 
   const next = () => {
     if (currentStep < MAX_STEPS) {
       setCurrentStep((value) => value + 1);
 
-      if (!profile.onboardingCompleted) {
-        if (team) {
-          addDemoProduct(team.id);
-        }
-      }
+      // if (!profile.onboardingCompleted) {
+      //   if (team) {
+      //     addDemoProduct(team.id);
+      //   }
+      // }
 
       return;
     }

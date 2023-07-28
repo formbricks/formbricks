@@ -1,5 +1,6 @@
 import useSWR from "swr";
 import { fetcher } from "@formbricks/lib/fetcher";
+import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 
 export const useTeam = (environmentId: string) => {
   const { data, isLoading, error, mutate, isValidating } = useSWR(
@@ -17,14 +18,17 @@ export const useTeam = (environmentId: string) => {
 };
 
 export const addDemoProduct = async (teamId: string) => {
-  let response;
+  const response = await fetch(`/api/v1/teams/${teamId}/add_demo_product`, {
+    method: "POST",
+    headers: {
+      "x-api-key": INTERNAL_SECRET,
+    },
+  });
 
-  try {
-    response = await fetch(`/api/v1/teams/${teamId}/add_demo_product`, {
-      method: "POST",
-    });
-  } catch (err) {
-    console.log(err);
-    throw new Error(err);
+  if (!response.ok) {
+    const error = new Error("An error occurred while adding the demo product to your team.");
+    throw error;
   }
+
+  return response.json();
 };

@@ -28,7 +28,13 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
     const newTeam = await createTeam(data.name, (profile as any).id);
 
     // Add demo product to the newly created team
-    await addDemoProduct(newTeam.id);
+
+    try {
+      await addDemoProduct(newTeam.id);
+    } catch (err) {
+      // fail silently
+      console.log({ err });
+    }
 
     const newMemberships = await mutateMemberships();
     changeEnvironmentByTeam(newTeam.id, newMemberships, router);

@@ -1,6 +1,7 @@
 import { env } from "@/env.mjs";
 import { verifyPassword } from "@/lib/auth";
 import { verifyToken } from "@/lib/jwt";
+import { addDemoProduct } from "@/lib/teams/teams";
 import { prisma } from "@formbricks/database";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
@@ -254,7 +255,7 @@ export const authOptions: NextAuthOptions = {
           return "/auth/login?error=A%20user%20with%20this%20email%20exists%20already.";
         }
 
-        await prisma.user.create({
+        const createdUser = await prisma.user.create({
           data: {
             name: user.name,
             email: user.email,
@@ -362,7 +363,15 @@ export const authOptions: NextAuthOptions = {
               ],
             },
           },
+          include: {
+            memberships: true,
+          },
         });
+
+        const teamId = createdUser.memberships?.[0]?.teamId;
+        if (teamId) {
+          addDemoProduct(teamId);
+        }
 
         return true;
       }
