@@ -16,7 +16,6 @@ import Objective from "./Objective";
 import Product from "./Product";
 import Role from "./Role";
 import { ResponseId } from "@formbricks/js";
-import { addDemoProduct, useTeam } from "@/lib/teams/teams";
 
 const MAX_STEPS = 6;
 
@@ -32,7 +31,6 @@ export default function Onboarding({ session }: OnboardingProps) {
   } = useSWR(`/api/v1/environments/find-first`, fetcher);
 
   const { profile } = useProfile();
-  const { team } = useTeam(environment?.id);
 
   const { triggerProfileMutate } = useProfileMutation();
   const [formbricksResponseId, setFormbricksResponseId] = useState<ResponseId | undefined>();
@@ -62,24 +60,11 @@ export default function Onboarding({ session }: OnboardingProps) {
 
   const doLater = async () => {
     setCurrentStep(4);
-
-    // Add demo data only if onboardingCompleted flag is false
-    // if (!profile.onboardingCompleted) {
-    //   if (team) {
-    //     addDemoProduct(team.id);
-    //   }
-    // }
   };
 
   const next = () => {
     if (currentStep < MAX_STEPS) {
       setCurrentStep((value) => value + 1);
-
-      // if (!profile.onboardingCompleted) {
-      //   if (team) {
-      //     addDemoProduct(team.id);
-      //   }
-      // }
 
       return;
     }

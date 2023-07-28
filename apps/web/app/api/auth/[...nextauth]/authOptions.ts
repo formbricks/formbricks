@@ -1,8 +1,8 @@
 import { env } from "@/env.mjs";
 import { verifyPassword } from "@/lib/auth";
 import { verifyToken } from "@/lib/jwt";
-import { addDemoProduct } from "@/lib/teams/teams";
 import { prisma } from "@formbricks/database";
+import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -370,7 +370,14 @@ export const authOptions: NextAuthOptions = {
 
         const teamId = createdUser.memberships?.[0]?.teamId;
         if (teamId) {
-          addDemoProduct(teamId);
+          // can't call this service because relative api routes don't work in server functions
+          // addDemoProduct(teamId);
+          fetch(`${WEBAPP_URL}/api/v1/teams/${teamId}/add_demo_product`, {
+            method: "POST",
+            headers: {
+              "x-api-key": INTERNAL_SECRET,
+            },
+          });
         }
 
         return true;
