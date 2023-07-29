@@ -28,11 +28,12 @@ type TemplateList = {
   onTemplateClick: (template: Template) => void;
   environment: TEnvironment;
   product: TProduct;
+  templateSearch: string;
 };
 
 const ALL_CATEGORY_NAME = "All";
 const RECOMMENDED_CATEGORY_NAME = "For you";
-export default function TemplateList({ environmentId, onTemplateClick, product, environment }: TemplateList) {
+export default function TemplateList({ environmentId, onTemplateClick, product, environment, templateSearch }: TemplateList) {
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(false);
@@ -71,6 +72,22 @@ export default function TemplateList({ environmentId, onTemplateClick, product, 
 
   if (isLoadingProfile) return <LoadingSpinner />;
   if (isErrorProfile) return <ErrorComponent />;
+
+  const filteredTemplates = templates.filter((template) => {
+    const matchesCategory =
+      selectedFilter === ALL_CATEGORY_NAME ||
+      template.category === selectedFilter ||
+      (selectedFilter === RECOMMENDED_CATEGORY_NAME && template.objectives?.includes(profile.objective));
+
+    const templateName = template.name?.toLowerCase();
+    const templateDescription = template.description?.toLowerCase();
+    const searchQuery = templateSearch?.toLowerCase();
+
+    const matchesSearch =
+      templateName?.includes(searchQuery) || templateDescription?.includes(searchQuery);
+
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-3 focus:outline-none">
@@ -123,11 +140,21 @@ export default function TemplateList({ environmentId, onTemplateClick, product, 
         </button>
         {templates
           .filter(
-            (template) =>
-              selectedFilter === ALL_CATEGORY_NAME ||
-              template.category === selectedFilter ||
-              (selectedFilter === RECOMMENDED_CATEGORY_NAME &&
-                template.objectives?.includes(profile.objective))
+            (template) => {
+              const matchesCategory =
+                selectedFilter === ALL_CATEGORY_NAME ||
+                template.category === selectedFilter ||
+                (selectedFilter === RECOMMENDED_CATEGORY_NAME && template.objectives?.includes(profile.objective));
+
+              const templateName = template.name?.toLowerCase();
+              const templateDescription = template.description?.toLowerCase();
+              const searchQuery = templateSearch?.toLowerCase();
+
+              const matchesSearch =
+                templateName?.includes(searchQuery) || templateDescription?.includes(searchQuery);
+
+              return matchesCategory && matchesSearch;
+            }
           )
           .map((template: Template) => (
             <div
@@ -143,35 +170,34 @@ export default function TemplateList({ environmentId, onTemplateClick, product, 
               )}>
               <div className="flex">
                 <div
-                  className={`rounded border px-1.5 py-0.5 text-xs ${
-                    template.category === "Product Experience"
-                      ? "border-blue-300 bg-blue-50 text-blue-500"
-                      : template.category === "Exploration"
+                  className={`rounded border px-1.5 py-0.5 text-xs ${template.category === "Product Experience"
+                    ? "border-blue-300 bg-blue-50 text-blue-500"
+                    : template.category === "Exploration"
                       ? "border-pink-300 bg-pink-50 text-pink-500"
                       : template.category === "Growth"
-                      ? "border-orange-300 bg-orange-50 text-orange-500"
-                      : template.category === "Increase Revenue"
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-500"
-                      : template.category === "Customer Success"
-                      ? "border-violet-300 bg-violet-50 text-violet-500"
-                      : "border-slate-300 bg-slate-50 text-slate-500" // default color
-                  }`}>
+                        ? "border-orange-300 bg-orange-50 text-orange-500"
+                        : template.category === "Increase Revenue"
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-500"
+                          : template.category === "Customer Success"
+                            ? "border-violet-300 bg-violet-50 text-violet-500"
+                            : "border-slate-300 bg-slate-50 text-slate-500" // default color
+                    }`}>
                   {template.category}
                 </div>
                 {template.preset.questions.some(
                   (question) => question.logic && question.logic.length > 0
                 ) && (
-                  <TooltipProvider delayDuration={80}>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <div>
-                          <SplitIcon className="ml-1.5 h-5 w-5  rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>This survey uses branching logic.</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
+                    <TooltipProvider delayDuration={80}>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <div>
+                            <SplitIcon className="ml-1.5 h-5 w-5  rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>This survey uses branching logic.</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
               </div>
               <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
               <p className="text-left text-xs text-slate-600">{template.description}</p>
