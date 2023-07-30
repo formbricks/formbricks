@@ -11,7 +11,7 @@ import { cn } from "@formbricks/lib/cn";
 import { Confetti } from "@formbricks/ui";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import type { Survey } from "@formbricks/types/surveys";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type EnhancedSurvey = Survey & {
   brandColor: string;
@@ -38,6 +38,14 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
 
   // Create a reference to the top element
   const topRef = useRef<HTMLDivElement>(null);
+  const [autoFocus, setAutofocus] = useState(false);
+
+  // Not in an iframe, enable autofocus on input fields.
+  useEffect(() => {
+    if (window.self === window.top) {
+      setAutofocus(true);
+    }
+  }, []);
 
   // Scroll to top when the currentQuestion changes
   useEffect(() => {
@@ -90,6 +98,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
               brandColor={survey.brandColor}
               lastQuestion={lastQuestion}
               onSubmit={submitResponse}
+              autoFocus={autoFocus}
             />
           )}
         </ContentWrapper>
