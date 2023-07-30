@@ -5,6 +5,7 @@ import { DatePicker, Input, Label, Switch } from "@formbricks/ui";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 interface ResponseOptionsCardProps {
   localSurvey: Survey;
@@ -117,15 +118,23 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     }
   };
 
-  const handleInputResponse = (e: any) => {
-    const inputResponses = localSurvey?._count?.responses || 0;
-    let value = parseInt(e.target.value);
-
-    // Ensure value is greater than current number of responses
-    value = Math.max(value, inputResponses + 1);
-
-    const updatedSurvey: Survey = { ...localSurvey, autoComplete: value };
+  const handleInputResponse = (e) => {
+    const updatedSurvey: Survey = { ...localSurvey, autoComplete: parseInt(e.target.value) };
     setLocalSurvey(updatedSurvey);
+  };
+
+  const handleInputResponseBlur = (e) => {
+    if (parseInt(e.target.value) === 0) {
+      toast.error("Response limit can't be set to 0");
+      return;
+    }
+
+    const inputResponses = localSurvey?._count?.responses || 0;
+
+    if (parseInt(e.target.value) <= inputResponses) {
+      toast.error("Response limit can't be less than or equal to received responses count");
+      return;
+    }
   };
 
   return (
@@ -180,7 +189,8 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
                         }
                         id="autoCompleteResponses"
                         value={localSurvey.autoComplete?.toString()}
-                        onChange={(e) => handleInputResponse(e)}
+                        onChange={handleInputResponse}
+                        onBlur={handleInputResponseBlur}
                         className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
                       />
                       completed responses.
