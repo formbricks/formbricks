@@ -9,9 +9,7 @@ import PreviewSurvey from "../PreviewSurvey";
 import TemplateList from "./TemplateList";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
-import { Input } from "@formbricks/ui";
-import { Inbox, Search } from "lucide-react";
-// import { Search } from "@formbricks/ui/components/S";
+import { SearchBox } from "@formbricks/ui";
 
 type TemplateContainerWithPreviewProps = {
   environmentId: string;
@@ -39,16 +37,15 @@ export default function TemplateContainerWithPreview({
     <div className="flex h-full flex-col ">
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <div className="flex-1 flex-col overflow-auto bg-slate-50">
-          <div className="flex flex-row items-center justify-between">
+          <div className="flex flex-col items-center justify-between md:flex-row md:items-start">
             <h1 className="ml-6 mt-6 text-2xl font-bold text-slate-800">Create a new survey</h1>
-            <div className="ml-6 mt-6">
-              <input
+            <div className="ml-6 mt-6 px-6">
+              <SearchBox
                 autoFocus
-                value={templateSearch ?? ''}
+                value={templateSearch ?? ""}
                 onChange={(e) => setTemplateSearch(e.target.value)}
-                placeholder={"Search template"}
-                // required={question.required}
-                className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"
+                placeholder={"Search..."}
+                className="block rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm md:w-auto"
               />
             </div>
           </div>
@@ -57,7 +54,7 @@ export default function TemplateContainerWithPreview({
             environmentId={environmentId}
             environment={environment}
             product={product}
-            templateSearch={templateSearch ?? ''}
+            templateSearch={templateSearch ?? ""}
             onTemplateClick={(template) => {
               setActiveQuestionId(template.preset.questions[0].id);
               setActiveTemplate(template);

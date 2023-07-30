@@ -59,6 +59,7 @@ export {
 } from "./components/Command";
 export { Calendar } from "./components/Calendar";
 export { DatePicker } from "./components/DatePicker";
+export { SearchBox } from "./components/SearchBox";
 
 /* Icons */
 export { AngryBirdRageIcon } from "./components/icons/AngryBirdRageIcon";
@@ -115,3 +116,4 @@ export { UserSearchGlasIcon } from "./components/icons/UserSearchGlasIcon";
 export { VeryDisappointedIcon } from "./components/icons/VeryDisappointedIcon";
 export { VideoTabletAdjustIcon } from "./components/icons/VideoTabletAdjustIcon";
 export { NetPromoterScoreIcon } from "./components/icons/NetPromoterScoreIcon";
+export { SearchIcon } from "./components/icons/SearchIcon";
