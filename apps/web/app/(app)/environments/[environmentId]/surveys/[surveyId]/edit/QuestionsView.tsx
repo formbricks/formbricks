@@ -9,6 +9,8 @@ import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
+import { Question } from "@formbricks/types/questions";
+import { validateQuestion } from "./Validation";
 
 interface QuestionsViewProps {
   localSurvey: Survey;
@@ -16,6 +18,8 @@ interface QuestionsViewProps {
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   environmentId: string;
+  invalidQuestions: String[] | null;
+  setInvalidQuestions: (invalidQuestions: String[] | null) => void;
 }
 
 export default function QuestionsView({
@@ -24,6 +28,8 @@ export default function QuestionsView({
   localSurvey,
   setLocalSurvey,
   environmentId,
+  invalidQuestions,
+  setInvalidQuestions,
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -44,12 +50,33 @@ export default function QuestionsView({
     return survey;
   };
 
+  // function to validate individual questions
+  const validateSurvey = (question: Question) => {
+    // prevent this function to execute further if user hasnt still tried to save the survey
+    if (invalidQuestions === null) {
+      return;
+    }
+    let temp = JSON.parse(JSON.stringify(invalidQuestions));
+    if (validateQuestion(question)) {
+      temp = invalidQuestions.filter((id) => id !== question.id);
+      setInvalidQuestions(temp);
+    } else if (!invalidQuestions.includes(question.id)) {
+      temp.push(question.id);
+      setInvalidQuestions(temp);
+    }
+  };
+
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = JSON.parse(JSON.stringify(localSurvey));
     if ("id" in updatedAttributes) {
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
       updatedSurvey = handleQuestionLogicChange(updatedSurvey, initialQuestionId, updatedAttributes.id);
+      if (invalidQuestions?.includes(initialQuestionId)) {
+        setInvalidQuestions(
+          invalidQuestions.map((id) => (id === initialQuestionId ? updatedAttributes.id : id))
+        );
+      }
 
       // relink the question to internal Id
       internalQuestionIdMap[updatedAttributes.id] =
@@ -63,6 +90,7 @@ export default function QuestionsView({
       ...updatedAttributes,
     };
     setLocalSurvey(updatedSurvey);
+    validateSurvey(updatedSurvey.questions[questionIdx]);
   };
 
   const deleteQuestion = (questionIdx: number) => {
@@ -120,7 +148,6 @@ export default function QuestionsView({
     if (!result.destination) {
       return;
     }
-
     const newQuestions = Array.from(localSurvey.questions);
     const [reorderedQuestion] = newQuestions.splice(result.source.index, 1);
     newQuestions.splice(result.destination.index, 0, reorderedQuestion);
@@ -134,7 +161,6 @@ export default function QuestionsView({
     const [reorderedQuestion] = newQuestions.splice(questionIndex, 1);
     const destinationIndex = up ? questionIndex - 1 : questionIndex + 1;
     newQuestions.splice(destinationIndex, 0, reorderedQuestion);
-
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
@@ -159,6 +185,7 @@ export default function QuestionsView({
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
                     lastQuestion={questionIdx === localSurvey.questions.length - 1}
+                    isInValid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
                   />
                 ))}
                 {provided.placeholder}

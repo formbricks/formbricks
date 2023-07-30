@@ -9,6 +9,7 @@ interface OpenTextQuestionProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  autoFocus?: boolean;
 }
 
 export default function OpenTextQuestion({
@@ -16,6 +17,7 @@ export default function OpenTextQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  autoFocus = false,
 }: OpenTextQuestionProps) {
   const [value, setValue] = useState<string>("");
 
@@ -35,7 +37,7 @@ export default function OpenTextQuestion({
       <div className="mt-4">
         {question.longAnswer === false ? (
           <input
-            autoFocus
+            autoFocus={autoFocus}
             name={question.id}
             id={question.id}
             value={value}
@@ -46,7 +48,7 @@ export default function OpenTextQuestion({
           />
         ) : (
           <textarea
-            autoFocus
+            autoFocus={autoFocus}
             rows={3}
             name={question.id}
             id={question.id}
