@@ -1,13 +1,11 @@
 import { TJsState } from "@formbricks/types/v1/js";
+import { trackAction } from "./actions";
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
-import { Logger } from "./logger";
-import { trackAction } from "./actions";
 
-const logger = Logger.getInstance();
 const config = Config.getInstance();
 
-export const syncWithBackend = async (): Promise<Result<TJsState, NetworkError>> => {
+const syncWithBackend = async (): Promise<Result<TJsState, NetworkError>> => {
   const url = `${config.get().apiHost}/api/v1/js/sync`;
 
   const response = await fetch(url, {
