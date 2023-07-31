@@ -25,6 +25,7 @@
     "@paralleldrive/cuid2": "^2.2.1",
     "@radix-ui/react-collapsible": "^1.0.3",
     "@radix-ui/react-dropdown-menu": "^2.0.5",
+    "@sentry/nextjs": "^7.60.1",
     "@t3-oss/env-nextjs": "^0.6.0",
     "bcryptjs": "^2.4.3",
     "eslint-config-next": "^13.4.10",
