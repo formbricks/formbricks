@@ -88,8 +88,11 @@ export default function TemplateList({
     const templateName = template.name?.toLowerCase();
     const templateDescription = template.description?.toLowerCase();
     const searchQuery = templateSearch?.toLowerCase() ?? "";
+    const searchWords = searchQuery.split(" ");
 
-    const matchesSearch = templateName?.includes(searchQuery) || templateDescription?.includes(searchQuery);
+    const matchesSearch = searchWords.some(word =>
+      templateName?.includes(word) || templateDescription?.includes(word)
+    );
 
     return matchesCategory && matchesSearch;
   });
@@ -157,19 +160,18 @@ export default function TemplateList({
             )}>
             <div className="flex">
               <div
-                className={`rounded border px-1.5 py-0.5 text-xs ${
-                  template.category === "Product Experience"
-                    ? "border-blue-300 bg-blue-50 text-blue-500"
-                    : template.category === "Exploration"
+                className={`rounded border px-1.5 py-0.5 text-xs ${template.category === "Product Experience"
+                  ? "border-blue-300 bg-blue-50 text-blue-500"
+                  : template.category === "Exploration"
                     ? "border-pink-300 bg-pink-50 text-pink-500"
                     : template.category === "Growth"
-                    ? "border-orange-300 bg-orange-50 text-orange-500"
-                    : template.category === "Increase Revenue"
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-500"
-                    : template.category === "Customer Success"
-                    ? "border-violet-300 bg-violet-50 text-violet-500"
-                    : "border-slate-300 bg-slate-50 text-slate-500" // default color
-                }`}>
+                      ? "border-orange-300 bg-orange-50 text-orange-500"
+                      : template.category === "Increase Revenue"
+                        ? "border-emerald-300 bg-emerald-50 text-emerald-500"
+                        : template.category === "Customer Success"
+                          ? "border-violet-300 bg-violet-50 text-violet-500"
+                          : "border-slate-300 bg-slate-50 text-slate-500" // default color
+                  }`}>
                 {template.category}
               </div>
               {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (
