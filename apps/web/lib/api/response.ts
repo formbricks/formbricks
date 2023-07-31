@@ -101,6 +101,19 @@ const notAuthenticatedResponse = (cors: boolean = false) =>
     }
   );
 
+const unauthorizedResponse = (cors: boolean = false) =>
+  NextResponse.json(
+    {
+      code: "unauthorized",
+      message: "You are not authorized to access this resource",
+      details: {},
+    } as ApiErrorResponse,
+    {
+      status: 401,
+      ...(cors && { headers: corsHeaders }),
+    }
+  );
+
 const successResponse = (data: Object, cors: boolean = false) =>
   NextResponse.json(
     {
@@ -131,6 +144,7 @@ export const responses = {
   missingFieldResponse,
   methodNotAllowedResponse,
   notAuthenticatedResponse,
+  unauthorizedResponse,
   notFoundResponse,
   successResponse,
 };
