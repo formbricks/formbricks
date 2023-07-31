@@ -12,7 +12,7 @@ export const ColorPicker = ({ color, onChange }: { color: string; onChange: (v: 
         <div>
           #
           <HexColorInput
-            className="ml-2 mr-2 h-10 w-16 bg-transparent text-slate-500 outline-none focus:border-none"
+            className="ml-2 mr-2 h-10 w-32 border-0 bg-transparent text-slate-500 outline-none focus:border-none"
             color={color}
             onChange={onChange}
           />

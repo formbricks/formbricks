@@ -15,6 +15,7 @@ interface QuestionConditionalProps {
   savedAnswer: any;
   goToNextQuestion: (answer: any) => void;
   goToPreviousQuestion?: (answer: any) => void;
+  autoFocus: boolean;
 }
 
 export default function QuestionConditional({
@@ -25,6 +26,7 @@ export default function QuestionConditional({
   savedAnswer,
   goToNextQuestion,
   goToPreviousQuestion,
+  autoFocus,
 }: QuestionConditionalProps) {
   return question.type === QuestionType.OpenText ? (
     <OpenTextQuestion
@@ -35,6 +37,7 @@ export default function QuestionConditional({
       savedAnswer={savedAnswer}
       goToNextQuestion={goToNextQuestion}
       goToPreviousQuestion={goToPreviousQuestion}
+      autoFocus={autoFocus}
     />
   ) : question.type === QuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion

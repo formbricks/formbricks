@@ -38,42 +38,40 @@ export const getEnvironment = cache(async (environmentId: string): Promise<TEnvi
   }
 });
 
-export const getEnvironments = cache(
-  async (productId: string): Promise<TEnvironment[]> => {
-    let productPrisma;
-    try {
-      productPrisma = await prisma.product.findFirst({
-        where: {
-          id: productId,
-        },
-        include:{
-          environments:true
-        }
-      });
+export const getEnvironments = cache(async (productId: string): Promise<TEnvironment[]> => {
+  let productPrisma;
+  try {
+    productPrisma = await prisma.product.findFirst({
+      where: {
+        id: productId,
+      },
+      include: {
+        environments: true,
+      },
+    });
 
-      if (!productPrisma) {
-        throw new ResourceNotFoundError("Product", productId);
-      }
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Database operation failed");
-      }
-      throw error;
+    if (!productPrisma) {
+      throw new ResourceNotFoundError("Product", productId);
     }
-
-    const environments:TEnvironment[]=[];
-    for(let environment of productPrisma.environments){
-      let targetEnvironment:TEnvironment=ZEnvironment.parse(environment);
-      environments.push(targetEnvironment);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
     }
-    
-    try {
-      return environments;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error(JSON.stringify(error.errors, null, 2));
-      }
-      throw new ValidationError("Data validation of environments array failed");
-    }
+    throw error;
   }
-);
+
+  const environments: TEnvironment[] = [];
+  for (let environment of productPrisma.environments) {
+    let targetEnvironment: TEnvironment = ZEnvironment.parse(environment);
+    environments.push(targetEnvironment);
+  }
+
+  try {
+    return environments;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error(JSON.stringify(error.errors, null, 2));
+    }
+    throw new ValidationError("Data validation of environments array failed");
+  }
+});

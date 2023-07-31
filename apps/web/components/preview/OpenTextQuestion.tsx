@@ -14,6 +14,7 @@ interface OpenTextQuestionProps {
   savedAnswer: string | null;
   goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer: Response["data"]) => void;
+  autoFocus?: boolean;
 }
 
 export default function OpenTextQuestion({
@@ -24,6 +25,7 @@ export default function OpenTextQuestion({
   savedAnswer,
   goToNextQuestion,
   goToPreviousQuestion,
+  autoFocus = false,
 }: OpenTextQuestionProps) {
   const [value, setValue] = useState<string>("");
 
@@ -54,7 +56,7 @@ export default function OpenTextQuestion({
       <div className="mt-4">
         {question.longAnswer === false ? (
           <input
-            autoFocus={!savedAnswer}
+            autoFocus={autoFocus && !savedAnswer}
             name={question.id}
             id={question.id}
             value={value}
@@ -65,7 +67,7 @@ export default function OpenTextQuestion({
           />
         ) : (
           <textarea
-            autoFocus={!savedAnswer}
+            autoFocus={autoFocus && !savedAnswer}
             rows={3}
             name={question.id}
             id={question.id}

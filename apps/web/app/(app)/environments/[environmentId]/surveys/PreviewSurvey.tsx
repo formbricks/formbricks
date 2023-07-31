@@ -299,6 +299,7 @@ export default function PreviewSurvey({
                     savedAnswer={savedAnswer}
                     goToNextQuestion={gotoNextQuestion}
                     goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
+                    autoFocus={false}
                   />
                 ) : null
               )
@@ -329,6 +330,7 @@ export default function PreviewSurvey({
                       savedAnswer={savedAnswer}
                       goToNextQuestion={gotoNextQuestion}
                       goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
+                      autoFocus={false}
                     />
                   ) : null
                 )

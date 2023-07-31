@@ -37,12 +37,12 @@ export default function NPSQuestion({
       [question.id]: value ?? null,
     };
     if (savedAnswer === value) {
-      goToNextQuestion(data);
       setSelectedChoice(null);
+      goToNextQuestion(data);
       return;
     }
-    onSubmit(data);
     setSelectedChoice(null);
+    onSubmit(data);
   };
 
   const handleSelect = (number: number) => {
@@ -77,7 +77,7 @@ export default function NPSQuestion({
                   value={number}
                   checked={selectedChoice === number}
                   className="absolute h-full w-full cursor-pointer opacity-0"
-                  onChange={() => handleSelect(number)}
+                  onClick={() => handleSelect(number)}
                   required={question.required}
                 />
                 {number}

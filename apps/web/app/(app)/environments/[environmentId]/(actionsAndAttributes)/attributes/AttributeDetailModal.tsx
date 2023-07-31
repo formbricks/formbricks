@@ -24,12 +24,7 @@ export default function AttributeDetailModal({
     },
     {
       title: "Settings",
-      children: (
-        <AttributeSettingsTab
-          attributeClass={attributeClass}
-          setOpen={setOpen}
-        />
-      ),
+      children: <AttributeSettingsTab attributeClass={attributeClass} setOpen={setOpen} />,
     },
   ];
 
