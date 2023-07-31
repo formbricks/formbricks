@@ -229,7 +229,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
       style={{
         borderRadius: "8px",
         overflow: "hidden",
-        border: config?.state?.product?.showHighlightBorder && "2px solid",
+        border: !!config?.state?.product?.highlightBorderColor && "2px solid",
         borderColor: config?.state?.product?.highlightBorderColor,
       }}>
       {!countdownStop && survey.autoClose && (

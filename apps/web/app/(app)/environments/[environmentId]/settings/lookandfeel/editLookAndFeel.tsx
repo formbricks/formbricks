@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getPlacementStyle } from "@/lib/preview";
 import { PlacementType } from "@formbricks/types/js";
+import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 
 export function EditBrandColor({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
@@ -185,20 +186,20 @@ export const EditHighlightBorder: React.FC<{ environmentId: string }> = ({ envir
   const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
 
   const [showHighlightBorder, setShowHighlightBorder] = useState(false);
-  const [color, setColor] = useState("#333");
+  const [color, setColor] = useState<string | null>(DEFAULT_BRAND_COLOR);
 
   // Sync product state with local state
   // not a good pattern, we should find a better way to do this
   useEffect(() => {
     if (product) {
+      setShowHighlightBorder(product.highlightBorderColor ? true : false);
       setColor(product.highlightBorderColor);
-      setShowHighlightBorder(product.showHighlightBorder);
     }
   }, [product]);
 
   const handleSave = () => {
     triggerProductMutate(
-      { highlightBorderColor: color, showHighlightBorder },
+      { highlightBorderColor: color },
       {
         onSuccess: () => {
           toast.success("Settings updated successfully.");
@@ -210,6 +211,20 @@ export const EditHighlightBorder: React.FC<{ environmentId: string }> = ({ envir
         },
       }
     );
+  };
+
+  const handleSwitch = (checked: boolean) => {
+    if (checked) {
+      if (!color) {
+        setColor(DEFAULT_BRAND_COLOR);
+        setShowHighlightBorder(true);
+      } else {
+        setShowHighlightBorder(true);
+      }
+    } else {
+      setShowHighlightBorder(false);
+      setColor(null);
+    }
   };
 
   if (isLoadingProduct) {
@@ -224,15 +239,11 @@ export const EditHighlightBorder: React.FC<{ environmentId: string }> = ({ envir
     <div className="flex min-h-full w-full">
       <div className="flex w-1/2 flex-col px-6 py-5">
         <div className="mb-6 flex items-center space-x-2">
-          <Switch
-            id="highlightBorder"
-            checked={showHighlightBorder}
-            onCheckedChange={setShowHighlightBorder}
-          />
+          <Switch id="highlightBorder" checked={showHighlightBorder} onCheckedChange={handleSwitch} />
           <h2 className="text-sm font-medium text-slate-800">Show highlight border</h2>
         </div>
 
-        {showHighlightBorder ? (
+        {showHighlightBorder && color ? (
           <>
             <Label htmlFor="brandcolor">Color (HEX)</Label>
             <ColorPicker color={color} onChange={setColor} />
@@ -255,11 +266,12 @@ export const EditHighlightBorder: React.FC<{ environmentId: string }> = ({ envir
         <h3 className="text-slate-500">Preview</h3>
         <div
           className={cn("flex flex-col gap-4 rounded-lg border-2 bg-white p-5")}
-          {...(showHighlightBorder && {
-            style: {
-              borderColor: color,
-            },
-          })}>
+          {...(showHighlightBorder &&
+            color && {
+              style: {
+                borderColor: color,
+              },
+            })}>
           <h3 className="text-sm font-semibold text-slate-800">How easy was it for you to do this?</h3>
           <div className="flex rounded-2xl border border-slate-400">
             {[1, 2, 3, 4, 5].map((num) => (
