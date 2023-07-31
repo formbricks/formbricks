@@ -108,23 +108,20 @@ cat <<EOT >docker-compose.yml
 version: "3.3"
 x-environment: &environment
   environment:
-    ########################################################################
-    # ------------ MANDATORY (CHANGE ACCORDING TO YOUR SETUP) ------------#
-    ########################################################################
-
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
     # Uncomment to enable a dedicated connection pool for Prisma using Prisma Data Proxy
     # Cold boots will be faster and you'll be able to scale your DB independently of your app.
     # @see https://www.prisma.io/docs/data-platform/data-proxy/use-data-proxy
-    # PRISMA_GENERATE_DATAPROXY=true
+    # PRISMA_GENERATE_DATAPROXY: true
     PRISMA_GENERATE_DATAPROXY:
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
     # You can use: $(openssl rand -base64 32) to generate one
     NEXTAUTH_SECRET:
+
     # Set this to your public-facing URL, e.g., https://example.com
     # You do not need the NEXTAUTH_URL environment variable in Vercel.
     NEXTAUTH_URL: "https://$domain_name"
@@ -148,10 +145,8 @@ services:
       - "traefik.http.routers.formbricks.rule=Host(\`$domain_name\`)"  # Replace your_domain_name with your actual domain or IP
       - "traefik.http.routers.formbricks.entrypoints=websecure"  # Use the websecure entrypoint (port 443 with TLS)
       - "traefik.http.services.formbricks.loadbalancer.server.port=3000"  # Forward traffic to Formbricks on port 3000
-
-    ports:
-      - 3000:3000
     <<: *environment
+
   traefik:
     image: "traefik:v2.7"
     restart: always
