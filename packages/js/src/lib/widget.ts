@@ -36,18 +36,12 @@ export const closeSurvey = async (): Promise<void> => {
   document.getElementById(containerId).remove();
   addWidgetContainer();
 
-  const syncResult = await sync();
-
-  match(
-    syncResult,
-    (value) => {
-      config.update({ state: value });
-      surveyRunning = false;
-    },
-    (error) => {
-      errorHandler.handle(error);
-    }
-  );
+  try {
+    await sync();
+    surveyRunning = false;
+  } catch (e) {
+    errorHandler.handle(e);
+  }
 };
 
 export const addWidgetContainer = (): void => {

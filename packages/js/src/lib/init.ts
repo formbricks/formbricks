@@ -35,12 +35,7 @@ const addSyncEventListener = (debug?: boolean): void => {
     }
     syncIntervalId = window.setInterval(async () => {
       logger.debug("Syncing.");
-      const syncResult = await sync();
-      if (syncResult.ok !== true) {
-        return err(syncResult.error);
-      }
-      const state = syncResult.value;
-      config.update({ state });
+      await sync();
     }, updateInverval);
     // clear interval on page unload
     window.addEventListener("beforeunload", () => {
@@ -95,21 +90,13 @@ export const initialize = async (
     if (isExpired(existingSession)) {
       logger.debug("Session expired. Resyncing.");
 
-      const syncResult = await sync();
-
-      // if create sync fails, clear config and start from scratch
-      if (syncResult.ok !== true) {
+      try {
+        await sync();
+      } catch (e) {
+        logger.debug("Sync failed. Clearing config and starting from scratch.");
         await resetPerson();
         return await initialize(c);
       }
-
-      const state = syncResult.value;
-
-      config.update({ state });
-
-      const trackActionResult = await trackAction("New Session");
-
-      if (trackActionResult.ok !== true) return err(trackActionResult.error);
     } else {
       logger.debug("Session valid. Continuing.");
       // continue for now - next sync will check complete state
@@ -120,19 +107,7 @@ export const initialize = async (
     config.update({ environmentId: c.environmentId, apiHost: c.apiHost, state: undefined });
 
     logger.debug("Syncing.");
-    const syncResult = await sync();
-
-    if (syncResult.ok !== true) {
-      return err(syncResult.error);
-    }
-
-    const state = syncResult.value;
-
-    config.update({ state });
-
-    const trackActionResult = await trackAction("New Session");
-
-    if (trackActionResult.ok !== true) return err(trackActionResult.error);
+    await sync();
   }
 
   logger.debug("Add session event listeners");
