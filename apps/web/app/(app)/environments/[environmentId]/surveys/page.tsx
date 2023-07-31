@@ -1,7 +1,7 @@
 export const revalidate = REVALIDATION_INTERVAL;
 
-import ContentWrapper from "@/components/shared/ContentWrapper";
-import WidgetStatusIndicator from "@/components/shared/WidgetStatusIndicator";
+import ContentWrapper from "@/app/shared/ContentWrapper";
+import WidgetStatusIndicator from "@/app/shared/WidgetStatusIndicator";
 import SurveysList from "./SurveyList";
 import { Metadata } from "next";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";

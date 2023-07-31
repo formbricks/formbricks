@@ -1,5 +1,5 @@
 "use client";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { useTeam } from "@/lib/teams/teams";
 import { Badge, Button, ErrorComponent } from "@formbricks/ui";
 import { CheckIcon } from "@heroicons/react/24/outline";

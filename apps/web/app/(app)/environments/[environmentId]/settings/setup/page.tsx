@@ -1,4 +1,4 @@
-import WidgetStatusIndicator from "@/components/shared/WidgetStatusIndicator";
+import WidgetStatusIndicator from "@/app/shared/WidgetStatusIndicator";
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 import EnvironmentNotice from "./EnvironmentNotice";

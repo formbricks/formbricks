@@ -1,4 +1,4 @@
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { useAttributeClass } from "@/lib/attributeClasses/attributeClasses";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";

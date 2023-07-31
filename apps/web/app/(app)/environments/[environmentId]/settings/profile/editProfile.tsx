@@ -1,7 +1,7 @@
 "use client";
 
-import DeleteDialog from "@/components/shared/DeleteDialog";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import DeleteDialog from "@/app/shared/DeleteDialog";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { formbricksLogout } from "@/lib/formbricks";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";

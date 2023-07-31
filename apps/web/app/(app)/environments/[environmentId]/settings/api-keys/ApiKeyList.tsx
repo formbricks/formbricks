@@ -1,6 +1,6 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { ErrorComponent } from "@formbricks/ui";
 import EditApiKeys from "./EditApiKeys";

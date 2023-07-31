@@ -2,7 +2,7 @@
 
 import Headline from "@/components/preview/Headline";
 import Subheader from "@/components/preview/Subheader";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";
 import { Button, ColorPicker, ErrorComponent, Input, Label } from "@formbricks/ui";

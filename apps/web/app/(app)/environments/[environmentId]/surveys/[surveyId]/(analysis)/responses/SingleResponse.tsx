@@ -1,6 +1,6 @@
 "use client";
 
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import DeleteDialog from "@/app/shared/DeleteDialog";
 import { deleteSubmission } from "@/lib/responses/responses";
 import { truncate } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";

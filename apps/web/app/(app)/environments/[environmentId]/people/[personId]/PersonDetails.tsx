@@ -1,8 +1,8 @@
 "use client";
 
-import DeleteDialog from "@/components/shared/DeleteDialog";
-import GoBackButton from "@/components/shared/GoBackButton";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import DeleteDialog from "@/app/shared/DeleteDialog";
+import GoBackButton from "@/app/shared/GoBackButton";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { deletePerson, usePerson } from "@/lib/people/people";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { ErrorComponent } from "@formbricks/ui";

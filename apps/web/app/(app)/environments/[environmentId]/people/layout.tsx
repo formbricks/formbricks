@@ -1,4 +1,4 @@
-import ContentWrapper from "@/components/shared/ContentWrapper";
+import ContentWrapper from "@/app/shared/ContentWrapper";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

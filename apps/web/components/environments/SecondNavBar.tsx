@@ -1,5 +1,5 @@
 import { cn } from "@formbricks/lib/cn";
-import SurveyNavBarName from "@/components/shared/SurveyNavBarName";
+import SurveyNavBarName from "@/app/shared/SurveyNavBarName";
 import Link from "next/link";
 
 interface SecondNavbarProps {

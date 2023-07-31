@@ -1,7 +1,7 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
+import SurveyStatusIndicator from "@/app/shared/SurveyStatusIndicator";
 import { useSurveyMutation } from "@/lib/surveys/mutateSurveys";
 import { useSurvey } from "@/lib/surveys/surveys";
 import {

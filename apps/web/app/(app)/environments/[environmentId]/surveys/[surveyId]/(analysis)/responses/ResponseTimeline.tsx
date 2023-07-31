@@ -1,5 +1,5 @@
 "use client";
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
+import EmptySpaceFiller from "@/app/shared/EmptySpaceFiller";
 import { TResponse } from "@formbricks/types/v1/responses";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 import { createId } from "@paralleldrive/cuid2";

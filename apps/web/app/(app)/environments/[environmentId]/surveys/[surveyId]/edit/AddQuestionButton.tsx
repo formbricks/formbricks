@@ -1,6 +1,6 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { getQuestionDefaults, questionTypes, universalQuestionPresets } from "@/lib/questions";
 import { cn } from "@formbricks/lib/cn";

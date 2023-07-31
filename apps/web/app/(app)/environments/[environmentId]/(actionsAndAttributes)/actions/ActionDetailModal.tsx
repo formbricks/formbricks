@@ -1,4 +1,4 @@
-import ModalWithTabs from "@/components/shared/ModalWithTabs";
+import ModalWithTabs from "@/app/shared/ModalWithTabs";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
 import EventActivityTab from "./ActionActivityTab";
 import ActionSettingsTab from "./ActionSettingsTab";

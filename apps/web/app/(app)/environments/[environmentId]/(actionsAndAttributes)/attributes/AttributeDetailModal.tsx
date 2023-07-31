@@ -1,4 +1,4 @@
-import ModalWithTabs from "@/components/shared/ModalWithTabs";
+import ModalWithTabs from "@/app/shared/ModalWithTabs";
 import { TagIcon } from "@heroicons/react/24/solid";
 import type { AttributeClass } from "@prisma/client";
 import AttributeActivityTab from "./AttributeActivityTab";

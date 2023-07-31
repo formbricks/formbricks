@@ -1,5 +1,5 @@
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import EmptySpaceFiller from "@/app/shared/EmptySpaceFiller";
+import SurveyStatusIndicator from "@/app/shared/SurveyStatusIndicator";
 import { timeSince } from "@formbricks/lib/time";
 import Link from "next/link";
 

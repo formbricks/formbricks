@@ -2,7 +2,7 @@
 import { Template } from "@/../../packages/types/templates";
 import { createSurveyAction } from "./actions";
 import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TProduct } from "@formbricks/types/v1/product";
 import { useRouter } from "next/navigation";

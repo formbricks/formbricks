@@ -1,6 +1,6 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { useProduct } from "@/lib/products/products";
 import { useSurvey } from "@/lib/surveys/surveys";
 import type { Survey } from "@formbricks/types/surveys";

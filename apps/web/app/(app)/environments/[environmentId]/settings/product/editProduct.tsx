@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-import DeleteDialog from "@/components/shared/DeleteDialog";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import DeleteDialog from "@/app/shared/DeleteDialog";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 
 import { deleteProduct, useProduct } from "@/lib/products/products";
 import { truncate } from "@/lib/utils";

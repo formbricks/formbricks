@@ -1,6 +1,6 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { useProfile } from "@/lib/profile";
 import { replacePresetPlaceholders } from "@/lib/templates";
 import { cn } from "@formbricks/lib/cn";

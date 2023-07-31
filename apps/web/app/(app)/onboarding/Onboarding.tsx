@@ -1,7 +1,7 @@
 "use client";
 
 import { Logo } from "@/components/Logo";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { useProfile } from "@/lib/profile";
 import { useProfileMutation } from "@/lib/profile/mutateProfile";
 import { fetcher } from "@formbricks/lib/fetcher";

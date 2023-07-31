@@ -1,4 +1,4 @@
-import Modal from "@/components/shared/Modal";
+import Modal from "@/app/shared/Modal";
 import { changeEnvironmentByTeam } from "@/lib/environments/changeEnvironments";
 import { useMemberships } from "@/lib/memberships";
 import { useProfile } from "@/lib/profile";

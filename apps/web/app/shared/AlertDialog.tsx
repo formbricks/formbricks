@@ -1,40 +1,36 @@
 "use client";
 
-import Modal from "@/components/shared/Modal";
+import Modal from "@/app/shared/Modal";
 import { Button } from "@formbricks/ui";
 
-interface DeleteDialogProps {
+interface AlertDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  deleteWhat: string;
-  onDelete: () => void;
+  confirmWhat: string;
+  onDiscard: () => void;
   text?: string;
-  isDeleting?: boolean;
   useSaveInsteadOfCancel?: boolean;
   onSave?: () => void;
-  children?: React.ReactNode;
-  disabled?: boolean;
 }
 
-export default function DeleteDialog({
+export default function AlertDialog({
   open,
   setOpen,
-  deleteWhat,
-  onDelete,
+  confirmWhat,
+  onDiscard,
   text,
-  isDeleting,
   useSaveInsteadOfCancel = false,
   onSave,
-  children,
-  disabled,
-}: DeleteDialogProps) {
+}: AlertDialogProps) {
   return (
-    <Modal open={open} setOpen={setOpen} title={`Delete ${deleteWhat}`}>
+    <Modal open={open} setOpen={setOpen} title={`Confirm ${confirmWhat}`}>
       <p>{text || "Are you sure? This action cannot be undone."}</p>
-      <div>{children}</div>
       <div className="my-4 space-x-2 text-right">
+        <Button variant="warn" onClick={onDiscard}>
+          Discard
+        </Button>
         <Button
-          variant="secondary"
+          variant="darkCTA"
           onClick={() => {
             if (useSaveInsteadOfCancel && onSave) {
               onSave();
@@ -42,9 +38,6 @@ export default function DeleteDialog({
             setOpen(false);
           }}>
           {useSaveInsteadOfCancel ? "Save" : "Cancel"}
-        </Button>
-        <Button variant="warn" onClick={onDelete} loading={isDeleting} disabled={disabled}>
-          Delete
         </Button>
       </div>
     </Modal>

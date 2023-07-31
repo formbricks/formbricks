@@ -5,15 +5,15 @@ import {
   deleteSurveyAction,
   duplicateSurveyAction,
 } from "@/app/(app)/environments/[environmentId]/actions";
-import DeleteDialog from "@/components/shared/DeleteDialog";
+import DeleteDialog from "@/app/shared/DeleteDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/shared/DropdownMenu";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+} from "@/app/shared/DropdownMenu";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
 import type { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
 import {

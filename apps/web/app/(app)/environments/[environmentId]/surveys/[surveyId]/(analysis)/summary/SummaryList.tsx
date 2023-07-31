@@ -1,5 +1,5 @@
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/ConsentSummary";
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
+import EmptySpaceFiller from "@/app/shared/EmptySpaceFiller";
 import {
   QuestionType,
   type CTAQuestion,

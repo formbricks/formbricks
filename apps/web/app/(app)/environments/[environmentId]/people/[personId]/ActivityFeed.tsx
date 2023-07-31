@@ -1,4 +1,4 @@
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
+import EmptySpaceFiller from "@/app/shared/EmptySpaceFiller";
 import { useMemo } from "react";
 import { ActivityItemContent, ActivityItemIcon, ActivityItemPopover } from "./ActivityItemComponents";
 

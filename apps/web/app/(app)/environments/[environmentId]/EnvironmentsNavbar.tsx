@@ -15,8 +15,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/shared/DropdownMenu";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+} from "@/app/shared/DropdownMenu";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import CreateTeamModal from "@/components/team/CreateTeamModal";
 import {
   changeEnvironment,

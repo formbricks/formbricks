@@ -1,7 +1,7 @@
 "use client";
 
-import DeleteDialog from "@/components/shared/DeleteDialog";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import DeleteDialog from "@/app/shared/DeleteDialog";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { createApiKey, deleteApiKey, useApiKeys } from "@/lib/apiKeys";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { timeSince } from "@formbricks/lib/time";

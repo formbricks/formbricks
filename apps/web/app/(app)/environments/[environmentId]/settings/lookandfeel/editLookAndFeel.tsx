@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { useEnvironment } from "@/lib/environments/environments";
 import { useProductMutation } from "@/lib/products/mutateProducts";
 import { useProduct } from "@/lib/products/products";

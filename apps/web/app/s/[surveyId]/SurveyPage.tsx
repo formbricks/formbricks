@@ -2,8 +2,8 @@
 
 import LinkSurvey from "@/app/s/[surveyId]/LinkSurvey";
 import SurveyInactive from "@/app/s/[surveyId]/SurveyInactive";
-import LegalFooter from "@/components/shared/LegalFooter";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import LegalFooter from "@/app/shared/LegalFooter";
+import LoadingSpinner from "@/app/shared/LoadingSpinner";
 import { useLinkSurvey } from "@/lib/linkSurvey/linkSurvey";
 
 interface SurveyPageProps {

@@ -1,4 +1,4 @@
-import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
+import SurveyStatusIndicator from "@/app/shared/SurveyStatusIndicator";
 import { Badge } from "@formbricks/ui";
 import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
