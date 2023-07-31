@@ -28,7 +28,6 @@ const ZResponseNote = z.object({
 export type TResponseNote = z.infer<typeof ZResponseNote>;
 
 export const ZResponseMeta = z.object({
-  url: z.string(),
   userAgent: z.object({
     browser: z.string().optional(),
     os: z.string().optional(),
@@ -68,7 +67,6 @@ export const ZResponseInput = z.object({
   data: ZResponseData,
   meta: z
     .object({
-      url: z.string().optional(),
       userAgent: z
         .object({
           browser: z.string().optional(),

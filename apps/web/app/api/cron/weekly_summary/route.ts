@@ -101,7 +101,7 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
     insights.totalCompletedResponses += survey.responses.filter((r) => r.finished).length;
     insights.totalDisplays += survey.displays.length;
     insights.totalResponses += survey.responses.length;
-    insights.completionRate = Math.round((insights.totalCompletedResponses / insights.totalResponses) * 100);
+    insights.completionRate = Math.round((insights.totalCompletedResponses / insights.totalDisplays) * 100);
   }
   // build the notification response needed for the emails
   const lastWeekDate = new Date();
@@ -160,11 +160,6 @@ const getProducts = async (): Promise<ProductData[]> => {
                 },
               },
               displays: {
-                where: {
-                  createdAt: {
-                    gte: sevenDaysAgo,
-                  },
-                },
                 select: {
                   status: true,
                 },

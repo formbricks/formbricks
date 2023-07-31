@@ -64,7 +64,6 @@ export const env = createEnv({
     NEXT_PUBLIC_IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
-    NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,

@@ -22,16 +22,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(400).json({ message: "Missing personId" });
     }
 
-    try {
-      const session = await createSession(personId);
-      const settings = await getSettings(environmentId, personId);
+    const session = await createSession(personId);
+    const settings = await getSettings(environmentId, personId);
 
-      captureTelemetry("session created");
+    captureTelemetry("session created");
 
-      return res.json({ session, settings });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
+    return res.json({ session, settings });
   }
 
   // Unknown HTTP Method

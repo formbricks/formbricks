@@ -48,7 +48,6 @@ export default function NPSQuestion({
   const handleSelect = (number: number) => {
     setSelectedChoice(number);
     if (question.required) {
-      setSelectedChoice(null);
       onSubmit({
         [question.id]: number,
       });
@@ -80,7 +79,7 @@ export default function NPSQuestion({
                   value={number}
                   checked={selectedChoice === number}
                   className="fb-absolute fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
-                  onClick={() => handleSelect(number)}
+                  onChange={() => handleSelect(number)}
                   required={question.required}
                 />
                 {number}

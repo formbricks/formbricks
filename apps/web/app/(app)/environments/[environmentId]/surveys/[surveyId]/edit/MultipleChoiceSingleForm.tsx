@@ -21,14 +21,12 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
 }
 
 export default function MultipleChoiceSingleForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -53,28 +51,16 @@ export default function MultipleChoiceSingleForm({
     },
   };
 
-  const updateChoice = (choiceIdx: number, updatedAttributes: { label: string }) => {
-    const newLabel = updatedAttributes.label;
-    const oldLabel = question.choices[choiceIdx].label;
-    let newChoices: any[] = [];
-    if (question.choices) {
-      newChoices = question.choices.map((choice, idx) => {
-        if (idx !== choiceIdx) return choice;
-        return { ...choice, ...updatedAttributes };
-      });
-    }
-
-    let newLogic: any[] = [];
-    question.logic?.forEach((logic) => {
-      let newL: string | string[] | undefined = logic.value;
-      if (Array.isArray(logic.value)) {
-        newL = logic.value.map((value) => (value === oldLabel ? newLabel : value));
-      } else {
-        newL = logic.value === oldLabel ? newLabel : logic.value;
-      }
-      newLogic.push({ ...logic, value: newL });
-    });
-    updateQuestion(questionIdx, { choices: newChoices, logic: newLogic });
+  const updateChoice = (choiceIdx: number, updatedAttributes: any) => {
+    const newChoices = !question.choices
+      ? []
+      : question.choices.map((choice, idx) => {
+          if (idx === choiceIdx) {
+            return { ...choice, ...updatedAttributes };
+          }
+          return choice;
+        });
+    updateQuestion(questionIdx, { choices: newChoices });
   };
 
   const addChoice = (choiceIdx?: number) => {
@@ -151,7 +137,6 @@ export default function MultipleChoiceSingleForm({
             name="headline"
             value={question.headline}
             onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
           />
         </div>
       </div>
@@ -199,7 +184,6 @@ export default function MultipleChoiceSingleForm({
                   className={cn(choice.id === "other" && "border-dashed")}
                   placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
-                  isInvalid={isInValid && choice.label.trim() === ""}
                 />
                 {question.choices && question.choices.length > 2 && (
                   <TrashIcon

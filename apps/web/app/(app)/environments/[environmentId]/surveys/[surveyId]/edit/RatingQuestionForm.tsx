@@ -12,7 +12,6 @@ interface RatingQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
 }
 
 export default function RatingQuestionForm({
@@ -20,7 +19,6 @@ export default function RatingQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-  isInValid,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
@@ -35,7 +33,6 @@ export default function RatingQuestionForm({
             name="headline"
             value={question.headline}
             onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
           />
         </div>
       </div>

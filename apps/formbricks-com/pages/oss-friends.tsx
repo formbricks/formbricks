@@ -2,7 +2,7 @@ import Layout from "@/components/shared/Layout";
 import HeroTitle from "@/components/shared/HeroTitle";
 import { Button } from "@formbricks/ui";
 
-export const OSSFriends = [
+const OSSFriends = [
   {
     name: "BoxyHQ",
     description:

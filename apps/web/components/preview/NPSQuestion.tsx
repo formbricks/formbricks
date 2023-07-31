@@ -77,7 +77,7 @@ export default function NPSQuestion({
                   value={number}
                   checked={selectedChoice === number}
                   className="absolute h-full w-full cursor-pointer opacity-0"
-                  onClick={() => handleSelect(number)}
+                  onChange={() => handleSelect(number)}
                   required={question.required}
                 />
                 {number}

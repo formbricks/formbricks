@@ -63,7 +63,7 @@ const notificationInsight = (insights: Insights) =>
           </td>
           <td style="text-align:center;">
             <p style="font-size:0.9em">Completion %</p>
-            <h1>${insights.totalDisplays === 0 ? "N/A" : `${Math.round(insights.completionRate)}%`}</h1>
+            <h1>${insights.completionRate.toFixed(2)}%</h1>
           </td>
         </tr>
       </table>
@@ -91,34 +91,30 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
   if (!surveys.length) return ` `;
 
   return surveys
+    .filter((survey) => survey.responses.length > 0)
     .map((survey) => {
       const displayStatus = convertSurveyStatus(survey.status);
       const isLive = displayStatus === "Live";
-      const noResponseLastWeek = isLive && survey.responses.length === 0;
 
       return `
         <div style="display: block; margin-top:3em;">
           <a href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
-        survey.id
-      }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="color:#1e293b;">
+            survey.id
+          }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="color:#1e293b;">
             <h2 style="text-decoration: underline; display:inline;">${survey.name}</h2>
           </a>
           <span style="display: inline; margin-left: 10px; background-color: ${
-            isLive ? "#34D399" : "#cbd5e1"
+            isLive ? "#34D399" : "#a7f3d0"
           }; color: ${isLive ? "#F3F4F6" : "#15803d"}; border-radius:99px; padding: 2px 8px; font-size:0.9em">
             ${displayStatus}
           </span>
+          ${createSurveyFields(survey.responses)}
           ${
-            noResponseLastWeek
-              ? "<p>No new response received this week 🕵️</p>"
-              : createSurveyFields(survey.responses)
-          }
-          ${
-            survey.responsesCount >= 0
+            survey.responsesCount >= 1
               ? `<a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
                   survey.id
                 }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA">
-                ${noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responsesCount)}
+                ${getButtonLabel(survey.responsesCount)}
               </a>`
               : ""
           }
@@ -158,7 +154,8 @@ const notificationFooter = () => {
   return `
   <p style="margin-bottom:0px; padding-top:1em; font-weight:500">All the best,</p>
   <p style="margin-top:0px;">The Formbricks Team 🤍</p>
-  <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:8px; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;"><p><i>This is a Beta feature. If you experience any issues, please let us know by replying to this email 🙏</i></p></div>
+  <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:8px; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1em;"><p><i>This is a Beta feature. If you experience any issues, please let us know by replying to this email 🙏</i></p></div>
+  <p style="margin-top:0.8em; text-align:center; font-size:0.8em; line-height:1em;">The Formbricks Team 🤍</p>
  `;
 };
 

@@ -240,7 +240,7 @@ export const authOptions: NextAuthOptions = {
             });
             return true;
           }
-          return "/auth/login?error=Looks%20like%20you%20updated%20your%20email%20somewhere%20else.%0AA%20user%20with%20this%20new%20email%20exists%20already.";
+          return "/auth/error?error=email-conflict";
         }
 
         // There is no existing account for this identity provider / account id
@@ -251,7 +251,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (existingUserWithEmail) {
-          return "/auth/login?error=A%20user%20with%20this%20email%20exists%20already.";
+          return "/auth/error?error=use-email-login";
         }
 
         await prisma.user.create({

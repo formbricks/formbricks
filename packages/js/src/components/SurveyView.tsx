@@ -232,9 +232,6 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
       personId: config.state.person.id,
       finished,
       data,
-      meta: {
-        url: window.location.href,
-      },
     };
     if (!responseId) {
       const [response, _] = await Promise.all([

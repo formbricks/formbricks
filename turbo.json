@@ -4,11 +4,7 @@
     "@formbricks/web#go": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"]
-    },
-    "@formbricks/api#build": {
-      "outputs": ["dist/**"],
-      "dependsOn": ["^build"]
+      "dependsOn": ["@formbricks/database#go", "@formbricks/js#build"]
     },
     "@formbricks/js#build": {
       "outputs": ["dist/**"],
@@ -59,7 +55,6 @@
         "NEXT_PUBLIC_FORMBRICKS_PMF_FORM_ID",
         "NEXT_PUBLIC_FORMBRICKS_URL",
         "NEXT_PUBLIC_IMPRINT_URL",
-        "NEXT_PUBLIC_SENTRY_DSN",
         "NEXT_PUBLIC_VERCEL_URL",
         "NODE_ENV",
         "NEXT_PUBLIC_POSTHOG_API_HOST",
@@ -77,12 +72,7 @@
         "VERCEL_URL"
       ]
     },
-    "db:setup": {
-      "cache": false,
-      "outputs": []
-    },
     "go": {
-      "persistent": true,
       "cache": false
     },
     "prebuild": {
