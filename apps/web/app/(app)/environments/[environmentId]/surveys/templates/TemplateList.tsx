@@ -61,10 +61,15 @@ export default function TemplateList({
 
     setCategories(fullCategories);
 
-    const activeFilter =
-      !!profile?.objective && profile.objective !== "other" ? RECOMMENDED_CATEGORY_NAME : ALL_CATEGORY_NAME;
-    setSelectedFilter(activeFilter);
-  }, [profile]);
+    if (templateSearch && templateSearch.length > 0) {
+      setSelectedFilter(ALL_CATEGORY_NAME);
+    } else {
+      const activeFilter =
+        !!profile?.objective && profile.objective !== "other" ? RECOMMENDED_CATEGORY_NAME : ALL_CATEGORY_NAME;
+      setSelectedFilter(activeFilter);
+    }
+
+  }, [profile, templateSearch]);
 
   const addSurvey = async (activeTemplate) => {
     setLoading(true);
@@ -90,8 +95,8 @@ export default function TemplateList({
     const searchQuery = templateSearch?.toLowerCase() ?? "";
     const searchWords = searchQuery.split(" ");
 
-    const matchesSearch = searchWords.some(word =>
-      templateName?.includes(word) || templateDescription?.includes(word)
+    const matchesSearch = searchWords.every(word =>
+      (templateName?.includes(word) || templateDescription?.includes(word))
     );
 
     return matchesCategory && matchesSearch;
@@ -105,6 +110,7 @@ export default function TemplateList({
             key={category}
             type="button"
             onClick={() => setSelectedFilter(category)}
+            disabled={templateSearch && templateSearch.length > 0 ? true : false}
             className={cn(
               selectedFilter === category
                 ? " bg-slate-800 font-semibold text-white"
