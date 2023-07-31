@@ -2,11 +2,12 @@ import { TJsState } from "@formbricks/types/v1/js";
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
 import { Logger } from "./logger";
+import { trackAction } from "./actions";
 
 const logger = Logger.getInstance();
 const config = Config.getInstance();
 
-export const sync = async (): Promise<Result<TJsState, NetworkError>> => {
+export const syncWithBackend = async (): Promise<Result<TJsState, NetworkError>> => {
   const url = `${config.get().apiHost}/api/v1/js/sync`;
 
   const response = await fetch(url, {
@@ -33,4 +34,21 @@ export const sync = async (): Promise<Result<TJsState, NetworkError>> => {
   }
 
   return ok((await response.json()).data as TJsState);
+};
+
+export const sync = async (): Promise<void> => {
+  const syncResult = await syncWithBackend();
+  if (syncResult.ok !== true) {
+    throw syncResult.error;
+  }
+  const state = syncResult.value;
+  const oldState = config.get().state;
+  config.update({ state });
+  // if session is new, track action
+  if (!oldState?.session || oldState.session.id !== state.session.id) {
+    const trackActionResult = await trackAction("New Session");
+    if (trackActionResult.ok !== true) {
+      throw trackActionResult.error;
+    }
+  }
 };

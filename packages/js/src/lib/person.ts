@@ -179,26 +179,12 @@ export const setPersonAttribute = async (
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
   config.update({ state: undefined });
-  const syncResult = await sync();
-
-  let error: NetworkError;
-
-  match(
-    syncResult,
-    (state) => {
-      config.update({ state });
-    },
-    (err) => {
-      // pass error to outer scope
-      error = err;
-    }
-  );
-
-  if (error) {
-    return err(error);
+  try {
+    await sync();
+    return okVoid();
+  } catch (e) {
+    return err(e);
   }
-
-  return okVoid();
 };
 
 export const getPerson = (): TPerson => {
