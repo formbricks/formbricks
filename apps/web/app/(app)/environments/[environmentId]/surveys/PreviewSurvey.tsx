@@ -103,6 +103,7 @@ export default function PreviewSurvey({
         cancelAnimationFrame(frameRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoClose]);
 
   useEffect(() => {
@@ -299,6 +300,7 @@ export default function PreviewSurvey({
                     savedAnswer={savedAnswer}
                     goToNextQuestion={gotoNextQuestion}
                     goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
+                    autoFocus={false}
                   />
                 ) : null
               )
@@ -329,6 +331,7 @@ export default function PreviewSurvey({
                       savedAnswer={savedAnswer}
                       goToNextQuestion={gotoNextQuestion}
                       goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
+                      autoFocus={false}
                     />
                   ) : null
                 )

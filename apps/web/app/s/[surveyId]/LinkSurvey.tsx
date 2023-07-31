@@ -8,10 +8,10 @@ import ContentWrapper from "@/components/shared/ContentWrapper";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { useLinkSurveyUtils } from "@/lib/linkSurvey/linkSurvey";
 import { cn } from "@formbricks/lib/cn";
-import type { Survey } from "@formbricks/types/surveys";
 import { Confetti } from "@formbricks/ui";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { useEffect, useRef } from "react";
+import type { Survey } from "@formbricks/types/surveys";
+import { useEffect, useRef, useState } from "react";
 
 type EnhancedSurvey = Survey & {
   brandColor: string;
@@ -42,6 +42,14 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
   const showBackButton = progress !== 0 && !finished;
   // Create a reference to the top element
   const topRef = useRef<HTMLDivElement>(null);
+  const [autoFocus, setAutofocus] = useState(false);
+
+  // Not in an iframe, enable autofocus on input fields.
+  useEffect(() => {
+    if (window.self === window.top) {
+      setAutofocus(true);
+    }
+  }, []);
 
   // Scroll to top when the currentQuestion changes
   useEffect(() => {
@@ -97,6 +105,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
               savedAnswer={savedAnswer}
               goToNextQuestion={goToNextQuestion}
               goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
+              autoFocus={autoFocus}
             />
           )}
         </ContentWrapper>

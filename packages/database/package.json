@@ -17,7 +17,6 @@
     "db:up": "docker-compose up -d",
     "db:setup": "pnpm db:up && pnpm db:migrate:dev",
     "db:start": "pnpm db:setup",
-    "go": "pnpm db:setup",
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
