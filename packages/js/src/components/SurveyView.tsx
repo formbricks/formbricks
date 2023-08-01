@@ -225,13 +225,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   };
 
   return (
-    <div
-      style={{
-        borderRadius: "8px",
-        overflow: "hidden",
-        border: !!config?.state?.product?.highlightBorderColor && "2px solid",
-        borderColor: config?.state?.product?.highlightBorderColor,
-      }}>
+    <div>
       {!countdownStop && survey.autoClose && (
         <Progress progress={countdownProgress} brandColor={config.state?.product?.brandColor} />
       )}

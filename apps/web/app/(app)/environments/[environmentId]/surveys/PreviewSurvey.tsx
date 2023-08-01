@@ -15,6 +15,7 @@ interface PreviewSurveyProps {
   activeQuestionId?: string | null;
   questions: Question[];
   brandColor: string;
+  highlightBorderColor?: string;
   environmentId: string;
   surveyType: Survey["type"];
   thankYouCard: Survey["thankYouCard"];
@@ -29,6 +30,7 @@ export default function PreviewSurvey({
   activeQuestionId,
   questions,
   brandColor,
+  highlightBorderColor,
   surveyType,
   thankYouCard,
   autoClose,
@@ -257,7 +259,10 @@ export default function PreviewSurvey({
       </div>
 
       {previewType === "modal" ? (
-        <Modal isOpen={isModalOpen} placement={product.placement}>
+        <Modal
+          isOpen={isModalOpen}
+          placement={product.placement}
+          highlightBorderColor={product.highlightBorderColor}>
           {!countdownStop && autoClose !== null && autoClose > 0 && (
             <Progress progress={countdownProgress} brandColor={brandColor} />
           )}
