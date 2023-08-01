@@ -45,7 +45,7 @@ export default function TemplateContainerWithPreview({
                 value={templateSearch ?? ""}
                 onChange={(e) => setTemplateSearch(e.target.value)}
                 placeholder={"Search..."}
-                className="block rounded-md border border-slate-100 bg-white p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm md:w-auto"
+                className="block rounded-md border border-slate-100 bg-white shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm md:w-auto "
               />
             </div>
           </div>
