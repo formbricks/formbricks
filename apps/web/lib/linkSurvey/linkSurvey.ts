@@ -55,10 +55,11 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         }
         return acc;
       }, 0);
-      if (lastAnsweredQuestionIndex > -1) {
-        setCurrentQuestion(lastAnsweredQuestion);
-        setProgress(calculateProgress(lastAnsweredQuestion, survey));
-        setSavedAnswer(getStoredAnswer(survey.id, lastAnsweredQuestion.id));
+      if (lastAnsweredQuestionIndex > 0 && survey.questions.length > lastAnsweredQuestionIndex + 1) {
+        const nextQuestion = survey.questions[lastAnsweredQuestionIndex + 1];
+        setCurrentQuestion(nextQuestion);
+        setProgress(calculateProgress(nextQuestion, survey));
+        setSavedAnswer(getStoredAnswer(survey.id, nextQuestion.id));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
