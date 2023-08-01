@@ -2,6 +2,7 @@ import { Card } from "@formbricks/ui";
 import Image from "next/image";
 import JsLogo from "@/images/jslogo.png";
 import ZapierLogo from "@/images/zapier-small.png";
+import MakeLogo from "@/images/make-small.png"
 
 export default function IntegrationsPage() {
   return (
@@ -21,6 +22,13 @@ export default function IntegrationsPage() {
           label="Zapier"
           description="Integrate Formbricks with 5000+ apps via Zapier"
           icon={<Image src={ZapierLogo} alt="Zapier Logo" />}
+        />
+        <Card
+          docsHref="https://formbricks.com/docs/integrations/make"
+          connectHref="https://zapier.com/apps/formbricks/integrations"
+          label="Make"
+          description="Integrate Formbricks with 1000+ apps via Make"
+          icon={<Image src={MakeLogo} alt="Make Logo" />}
         />
       </div>
     </div>
