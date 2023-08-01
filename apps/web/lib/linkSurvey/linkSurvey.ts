@@ -44,19 +44,18 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   const personId = person?.data.person.id ?? null;
 
   useEffect(() => {
-    const storedAnswers = getStoredAnswers(survey.id);
+    const storedResponses = getStoredResponses(survey.id);
     const questionKeys = survey.questions.map((question) => question.id);
-    if (storedAnswers) {
-      const storedAnswersKeys = Object.keys(storedAnswers);
+    if (storedResponses) {
+      const storedResponsesKeys = Object.keys(storedResponses);
       // reduce to find the last answered question index
       const lastAnsweredQuestionIndex = questionKeys.reduce((acc, key, index) => {
-        if (storedAnswersKeys.includes(key)) {
+        if (storedResponsesKeys.includes(key)) {
           return index;
         }
         return acc;
       }, 0);
-      const lastAnsweredQuestion = survey.questions[lastAnsweredQuestionIndex];
-      if (lastAnsweredQuestion) {
+      if (lastAnsweredQuestionIndex > -1) {
         setCurrentQuestion(lastAnsweredQuestion);
         setProgress(calculateProgress(lastAnsweredQuestion, survey));
         setSavedAnswer(getStoredAnswer(survey.id, lastAnsweredQuestion.id));
@@ -67,8 +66,8 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
   useEffect(() => {
     if (!isLoadingPerson) {
-      const storedAnswers = getStoredAnswers(survey.id);
-      if (survey && !storedAnswers) {
+      const storedResponses = getStoredResponses(survey.id);
+      if (survey && !storedResponses) {
         setCurrentQuestion(survey.questions[0]);
 
         if (isPreview) return;
@@ -168,7 +167,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     } else {
       setProgress(1);
       setFinished(true);
-      clearStoredAnswers(survey.id);
+      clearStoredResponses(survey.id);
       if (survey.redirectUrl && Object.values(data)[0] !== "dismissed") {
         handleRedirect(survey.redirectUrl);
       }
@@ -272,33 +271,33 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 };
 
 const storeAnswer = (surveyId: string, answer: Response["data"]) => {
-  const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-responses`);
-  if (storedAnswers) {
-    const parsedAnswers = JSON.parse(storedAnswers);
-    localStorage.setItem(`formbricks-${surveyId}-responses`, JSON.stringify({ ...parsedAnswers, ...answer }));
+  const storedResponses = localStorage.getItem(`formbricks-${surveyId}-responses`);
+  if (storedResponses) {
+    const parsedResponses = JSON.parse(storedResponses);
+    localStorage.setItem(`formbricks-${surveyId}-responses`, JSON.stringify({ ...parsedResponses, ...answer }));
   } else {
     localStorage.setItem(`formbricks-${surveyId}-responses`, JSON.stringify(answer));
   }
 };
 
-const getStoredAnswers = (surveyId: string): Record<string, string> | null => {
-  const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-responses`);
-  if (storedAnswers) {
-    const parsedAnswers = JSON.parse(storedAnswers);
-    return parsedAnswers;
+const getStoredResponses = (surveyId: string): Record<string, string> | null => {
+  const storedResponses = localStorage.getItem(`formbricks-${surveyId}-responses`);
+  if (storedResponses) {
+    const parsedResponses = JSON.parse(storedResponses);
+    return parsedResponses;
   }
   return null;
 };
 
 const getStoredAnswer = (surveyId: string, questionId: string): string | null => {
-  const storedAnswers = getStoredAnswers(surveyId);
-  if (storedAnswers) {
-    return storedAnswers[questionId];
+  const storedResponses = getStoredResponses(surveyId);
+  if (storedResponses) {
+    return storedResponses[questionId];
   }
   return null;
 };
 
-const clearStoredAnswers = (surveyId: string) => {
+const clearStoredResponses = (surveyId: string) => {
   localStorage.removeItem(`formbricks-${surveyId}-responses`);
 };
 
