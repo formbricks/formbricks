@@ -10,7 +10,7 @@ export const storeAnswer = (surveyId: string, answer: TResponseData) => {
   }
 };
 
-export const getStoredAnswer = (surveyId: string, questionId: string): string | null => {
+export const getStoredResponse = (surveyId: string, questionId: string): string | null => {
   const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-responses`);
   if (storedAnswers) {
     const parsedAnswers = JSON.parse(storedAnswers);

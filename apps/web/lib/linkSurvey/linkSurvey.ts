@@ -59,7 +59,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         const nextQuestion = survey.questions[lastAnsweredQuestionIndex + 1];
         setCurrentQuestion(nextQuestion);
         setProgress(calculateProgress(nextQuestion, survey));
-        setSavedAnswer(getStoredAnswer(survey.id, nextQuestion.id));
+        setSavedAnswer(getStoredResponse(survey.id, nextQuestion.id));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -163,7 +163,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
       if (!question) throw new Error("Question not found");
 
-      setSavedAnswer(getStoredAnswer(survey.id, nextQuestionId));
+      setSavedAnswer(getStoredResponse(survey.id, nextQuestionId));
       setCurrentQuestion(question);
     } else {
       setProgress(1);
@@ -229,7 +229,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       storeAnswer(survey.id, answer);
     }
 
-    setSavedAnswer(getStoredAnswer(survey.id, previousQuestion.id));
+    setSavedAnswer(getStoredResponse(survey.id, previousQuestion.id));
     setCurrentQuestion(previousQuestion);
     setLoadingElement(false);
   };
@@ -249,7 +249,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
     if (!nextQuestion) throw new Error("Question not found");
 
-    setSavedAnswer(getStoredAnswer(survey.id, nextQuestion.id));
+    setSavedAnswer(getStoredResponse(survey.id, nextQuestion.id));
     setCurrentQuestion(nextQuestion);
     setLoadingElement(false);
   };
@@ -290,7 +290,7 @@ const getStoredResponses = (surveyId: string): Record<string, string> | null => 
   return null;
 };
 
-const getStoredAnswer = (surveyId: string, questionId: string): string | null => {
+const getStoredResponse = (surveyId: string, questionId: string): string | null => {
   const storedResponses = getStoredResponses(surveyId);
   if (storedResponses) {
     return storedResponses[questionId];
