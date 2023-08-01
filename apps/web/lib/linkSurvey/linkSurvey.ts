@@ -272,17 +272,17 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 };
 
 const storeAnswer = (surveyId: string, answer: Response["data"]) => {
-  const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-answers`);
+  const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-responses`);
   if (storedAnswers) {
     const parsedAnswers = JSON.parse(storedAnswers);
-    localStorage.setItem(`formbricks-${surveyId}-answers`, JSON.stringify({ ...parsedAnswers, ...answer }));
+    localStorage.setItem(`formbricks-${surveyId}-responses`, JSON.stringify({ ...parsedAnswers, ...answer }));
   } else {
-    localStorage.setItem(`formbricks-${surveyId}-answers`, JSON.stringify(answer));
+    localStorage.setItem(`formbricks-${surveyId}-responses`, JSON.stringify(answer));
   }
 };
 
 const getStoredAnswers = (surveyId: string): Record<string, string> | null => {
-  const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-answers`);
+  const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-responses`);
   if (storedAnswers) {
     const parsedAnswers = JSON.parse(storedAnswers);
     return parsedAnswers;
@@ -299,7 +299,7 @@ const getStoredAnswer = (surveyId: string, questionId: string): string | null =>
 };
 
 const clearStoredAnswers = (surveyId: string) => {
-  localStorage.removeItem(`formbricks-${surveyId}-answers`);
+  localStorage.removeItem(`formbricks-${surveyId}-responses`);
 };
 
 const checkValidity = (question: Question, answer: any): boolean => {
