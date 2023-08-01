@@ -68,6 +68,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
   const calculateProgress = useCallback((currentQuestion: Question, survey: Survey) => {
     const surveyLength = survey.questions.length;
+    const middleIdx = Math.floor(surveyLength / 2);
 
     // if idx would be zero, return 0.5 to achieve the goal gradient effect
     let elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id) || 0.5;
@@ -81,8 +82,9 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       .pop();
     const lastQuestionIdx = survey.questions.findIndex((e) => e.id === lastQuestion?.id);
 
-    if (lastQuestionIdx > 0) elementIdx = lastQuestionIdx - 1;
-    if (possibleNextQuestions.includes("end")) elementIdx = surveyLength - 1;
+    // set elementIdx to whichever is smaller, the middleIdx or the questionIdx
+    if (lastQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastQuestionIdx - 1);
+    if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
 
     return elementIdx / survey.questions.length;
   }, []);
