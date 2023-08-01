@@ -1,16 +1,16 @@
 "use client";
 
-import ResponseFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/ResponsesFeed";
+import ResponseFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/(responseSection)/ResponsesFeed";
 import { TResponseWithSurveyData } from "@formbricks/types/v1/responses";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
-export default function ResponseSection({
+export default async function ResponseTimeline({
   environmentId,
-  responsesWithSurveyData,
+  responses,
 }: {
   environmentId: string;
-  responsesWithSurveyData: TResponseWithSurveyData[];
+  responses: TResponseWithSurveyData[];
 }) {
   const [responsesAscending, setResponsesAscending] = useState(true);
   const toggleSortResponses = () => {
@@ -29,11 +29,7 @@ export default function ResponseSection({
           </button>
         </div>
       </div>
-      <ResponseFeed
-        responses={responsesWithSurveyData}
-        sortByDate={responsesAscending}
-        environmentId={environmentId}
-      />
+      <ResponseFeed responses={responses} sortByDate={responsesAscending} environmentId={environmentId} />
     </div>
   );
 }

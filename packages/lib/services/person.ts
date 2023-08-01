@@ -83,48 +83,48 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
   }
 };
 
-export const getPersonWithAttributeClasses = async (
-  personId: string
-): Promise<TPersonWithDetailedAttributes | null> => {
-  try {
-    const personPrisma = await prisma.person.findUnique({
-      where: {
-        id: personId,
-      },
-      select: detailedAttributeSelect,
-    });
-    if (!personPrisma) {
-      return null;
-    }
-
-    let attributes: Array<TPersonDetailedAttribute> = [];
-    personPrisma.attributes.forEach((attr) => {
-      if (!attr.attributeClass.archived) {
-        attributes.push({
-          id: attr.id,
-          name: attr.attributeClass.name,
-          value: attr.value,
-          createdAt: attr.createdAt,
-          updatedAt: attr.updatedAt,
-          archived: attr.attributeClass.archived,
-        });
+export const getPersonWithAttributeClasses = cache(
+  async (personId: string): Promise<TPersonWithDetailedAttributes | null> => {
+    try {
+      const personPrisma = await prisma.person.findUnique({
+        where: {
+          id: personId,
+        },
+        select: detailedAttributeSelect,
+      });
+      if (!personPrisma) {
+        return null;
       }
-    });
 
-    return {
-      id: personPrisma.id,
-      attributes: attributes,
-      createdAt: personPrisma.createdAt,
-      updatedAt: personPrisma.updatedAt,
-    };
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      let attributes: Array<TPersonDetailedAttribute> = [];
+      personPrisma.attributes.forEach((attr) => {
+        if (!attr.attributeClass.archived) {
+          attributes.push({
+            id: attr.id,
+            name: attr.attributeClass.name,
+            value: attr.value,
+            createdAt: attr.createdAt,
+            updatedAt: attr.updatedAt,
+            archived: attr.attributeClass.archived,
+          });
+        }
+      });
+
+      return {
+        id: personPrisma.id,
+        attributes: attributes,
+        createdAt: personPrisma.createdAt,
+        updatedAt: personPrisma.updatedAt,
+      };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError("Database operation failed");
+      }
+
+      throw error;
     }
-
-    throw error;
   }
-};
+);
 
 export const getPeople = cache(async (environmentId: string): Promise<TPerson[]> => {
   try {

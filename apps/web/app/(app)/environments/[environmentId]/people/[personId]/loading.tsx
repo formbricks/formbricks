@@ -1,9 +1,9 @@
 import { ArrowsUpDownIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { ActivityFeedItem } from "./ActivityFeed";
+import { ActivityFeedItem } from "./(activitySection)/ActivityFeed";
 import {
   ActivityItemPopover,
   ActivityItemIcon,
-} from "@/app/(app)/environments/[environmentId]/people/[personId]/ActivityItemComponents";
+} from "@/app/(app)/environments/[environmentId]/people/[personId]/(activitySection)/ActivityItemComponents";
 import { BackIcon } from "@formbricks/ui";
 
 export default function Loading() {
@@ -14,6 +14,11 @@ export default function Loading() {
       eventType: "noCode",
       createdAt: new Date(),
       eventLabel: "Loading User Acitivity",
+      updatedAt: null,
+      attributeLabel: null,
+      attributeValue: null,
+      eventDescription: null,
+      displaySurveyName: null,
     },
     {
       id: "clk9o7fwc000iz8kw4s0ha0ql",
@@ -21,6 +26,11 @@ export default function Loading() {
       eventType: "automatic",
       createdAt: new Date(),
       eventLabel: "Loading User Session Info",
+      updatedAt: null,
+      attributeLabel: null,
+      attributeValue: null,
+      eventDescription: null,
+      displaySurveyName: null,
     },
   ];
   return (
@@ -115,7 +125,7 @@ export default function Loading() {
                         aria-hidden="true"
                       />
                       <div className="relative animate-pulse cursor-not-allowed select-none">
-                        <ActivityItemPopover activityItem={activityItem} displays={[]}>
+                        <ActivityItemPopover activityItem={activityItem}>
                           <div className="flex cursor-not-allowed select-none items-center space-x-3">
                             <ActivityItemIcon activityItem={activityItem} />
                             <div className="font-semibold text-slate-700">Loading</div>

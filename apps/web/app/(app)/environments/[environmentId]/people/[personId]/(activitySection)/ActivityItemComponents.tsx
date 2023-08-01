@@ -9,8 +9,7 @@ import {
   SparklesIcon,
   TagIcon,
 } from "@heroicons/react/24/solid";
-import { ActivityFeedItem } from "./ActivityFeed"; // Import the ActivityFeedItem type from the main file
-import { TDisplaysWithSurveyName } from "@formbricks/types/v1/displays";
+import { ActivityFeedItem } from "./ActivityFeed";
 
 export const ActivityItemIcon = ({ activityItem }: { activityItem: ActivityFeedItem }) => (
   <div className="h-12 w-12 rounded-full bg-white p-3 text-slate-500  duration-100 ease-in-out group-hover:scale-110 group-hover:text-slate-600">
@@ -58,22 +57,11 @@ export const ActivityItemContent = ({ activityItem }: { activityItem: ActivityFe
 
 export const ActivityItemPopover = ({
   activityItem,
-  displays,
   children,
 }: {
   activityItem: ActivityFeedItem;
-  displays: TDisplaysWithSurveyName[];
   children: React.ReactNode;
 }) => {
-  function findMatchingSurveyName(displays: TDisplaysWithSurveyName[], surveyId) {
-    for (const display of displays) {
-      if (display.surveyId === surveyId) {
-        return display.surveyName;
-      }
-      return null; // Return null if no match is found
-    }
-  }
-
   return (
     <Popover>
       <PopoverTrigger className="group">{children}</PopoverTrigger>
@@ -89,9 +77,7 @@ export const ActivityItemPopover = ({
           ) : activityItem.type === "display" ? (
             <div>
               <Label className="font-normal text-slate-400">Survey Name</Label>
-              <p className=" mb-2 text-sm font-medium text-slate-900">
-                {findMatchingSurveyName(displays, activityItem.displaySurveyId)}
-              </p>
+              <p className=" mb-2 text-sm font-medium text-slate-900">{activityItem.displaySurveyName}</p>
             </div>
           ) : activityItem.type === "event" ? (
             <div>

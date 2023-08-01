@@ -1,7 +1,11 @@
+"use server";
+import "server-only";
+
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/errors";
 import { TSession, TSessionWithActions } from "@formbricks/types/v1/sessions";
 import { Prisma } from "@prisma/client";
+import { cache } from "react";
 
 const select = {
   id: true,
@@ -67,6 +71,22 @@ export const getSessionWithActionsOfPerson = async (
     throw error;
   }
 };
+
+export const getSessionCount = cache(async (personId: string): Promise<number> => {
+  try {
+    const sessionCount = await prisma.session.count({
+      where: {
+        personId,
+      },
+    });
+    return sessionCount;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
+});
 
 export const createSession = async (personId: string): Promise<TSession> => {
   try {
