@@ -61,13 +61,27 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   useEffect(() => {
     if (currentQuestion && survey) {
       const progress = calculateProgress(currentQuestion, survey);
+      // console.log("Progress: ", progress);
       setProgress(progress);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion]);
 
   const calculateProgress = useCallback((currentQuestion: Question, survey: Survey) => {
-    const elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id) || 0.5;
+    // if idx would be zero, return 0.5 to achieve the goal gradient effect
+    let elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id) || 0.5;
+
+    // get all possible next questions ids from logic
+    const possibleNextQuestions = currentQuestion.logic?.map((l) => l.destination) || [];
+
+    const lastQuestion = survey.questions
+      .filter((q) => possibleNextQuestions.includes(q.id))
+      .sort((a, b) => survey.questions.indexOf(a) - survey.questions.indexOf(b))
+      .pop();
+    const lastQuestionIdx = survey.questions.findIndex((e) => e.id === lastQuestion?.id);
+
+    if (lastQuestionIdx > 0) elementIdx = lastQuestionIdx - 1;
+
     return elementIdx / survey.questions.length;
   }, []);
 
