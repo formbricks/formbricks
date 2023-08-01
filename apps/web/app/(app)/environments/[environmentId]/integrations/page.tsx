@@ -2,7 +2,7 @@ import { Card } from "@formbricks/ui";
 import Image from "next/image";
 import JsLogo from "@/images/jslogo.png";
 import ZapierLogo from "@/images/zapier-small.png";
-import MakeLogo from "@/images/make-small.png"
+import MakeLogo from "@/images/make-small.png";
 
 export default function IntegrationsPage() {
   return (
