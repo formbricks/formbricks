@@ -11,7 +11,7 @@ interface OpenTextQuestionProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
-  savedAnswer: string | null;
+  storedResponseValue: string | null;
   goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer: Response["data"]) => void;
   autoFocus?: boolean;
@@ -22,7 +22,7 @@ export default function OpenTextQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
-  savedAnswer,
+  storedResponseValue,
   goToNextQuestion,
   goToPreviousQuestion,
   autoFocus = false,
@@ -30,14 +30,14 @@ export default function OpenTextQuestion({
   const [value, setValue] = useState<string>("");
 
   useEffect(() => {
-    setValue(savedAnswer ?? "");
-  }, [savedAnswer, question.id, question.longAnswer]);
+    setValue(storedResponseValue ?? "");
+  }, [storedResponseValue, question.id, question.longAnswer]);
 
   const handleSubmit = (value: string) => {
     const data = {
       [question.id]: value,
     };
-    if (savedAnswer === value) {
+    if (storedResponseValue === value) {
       goToNextQuestion(data);
       return;
     }
@@ -56,24 +56,24 @@ export default function OpenTextQuestion({
       <div className="mt-4">
         {question.longAnswer === false ? (
           <input
-            autoFocus={autoFocus && !savedAnswer}
+            autoFocus={autoFocus && !storedResponseValue}
             name={question.id}
             id={question.id}
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder={!savedAnswer ? question.placeholder : undefined}
+            placeholder={!storedResponseValue ? question.placeholder : undefined}
             required={question.required}
             className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-0 sm:text-sm"
           />
         ) : (
           <textarea
-            autoFocus={autoFocus && !savedAnswer}
+            autoFocus={autoFocus && !storedResponseValue}
             rows={3}
             name={question.id}
             id={question.id}
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder={!savedAnswer ? question.placeholder : undefined}
+            placeholder={!storedResponseValue ? question.placeholder : undefined}
             required={question.required}
             className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm"
           />
@@ -90,7 +90,7 @@ export default function OpenTextQuestion({
           />
         )}
         <div></div>
-        <SubmitButton {...{ question, lastQuestion, brandColor, savedAnswer, goToNextQuestion }} />
+        <SubmitButton {...{ question, lastQuestion, brandColor, storedResponseValue, goToNextQuestion }} />
       </div>
     </form>
   );

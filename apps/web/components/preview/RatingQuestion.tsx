@@ -27,7 +27,7 @@ interface RatingQuestionProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
-  savedAnswer: number | null;
+  storedResponseValue: number | null;
   goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
@@ -37,7 +37,7 @@ export default function RatingQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
-  savedAnswer,
+  storedResponseValue,
   goToNextQuestion,
   goToPreviousQuestion,
 }: RatingQuestionProps) {
@@ -46,14 +46,14 @@ export default function RatingQuestion({
   // const icons = RatingSmileyList(question.range);
 
   useEffect(() => {
-    setSelectedChoice(savedAnswer);
-  }, [savedAnswer, question]);
+    setSelectedChoice(storedResponseValue);
+  }, [storedResponseValue, question]);
 
   const handleSubmit = (value: number | null) => {
     const data = {
       [question.id]: value ?? null,
     };
-    if (savedAnswer === value) {
+    if (storedResponseValue === value) {
       goToNextQuestion(data);
       setSelectedChoice(null);
       return;
@@ -154,7 +154,7 @@ export default function RatingQuestion({
           />
         )}
         <div></div>
-        {(!question.required || savedAnswer) && <SubmitButton {...{ question, lastQuestion, brandColor }} />}
+        {(!question.required || storedResponseValue) && <SubmitButton {...{ question, lastQuestion, brandColor }} />}
       </div>
     </form>
   );

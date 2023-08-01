@@ -11,7 +11,7 @@ interface CTAQuestionProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
-  savedAnswer: string | null;
+  storedResponseValue: string | null;
   goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
@@ -21,7 +21,7 @@ export default function CTAQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
-  savedAnswer,
+  storedResponseValue,
   goToNextQuestion,
   goToPreviousQuestion,
 }: CTAQuestionProps) {
@@ -33,18 +33,18 @@ export default function CTAQuestion({
       <div className="mt-4 flex w-full justify-end">
         {goToPreviousQuestion && <BackButton onClick={() => goToPreviousQuestion()} />}
         <div></div>
-        {(!question.required || savedAnswer) && (
+        {(!question.required || storedResponseValue) && (
           <button
             type="button"
             onClick={() => {
-              if (savedAnswer) {
+              if (storedResponseValue) {
                 goToNextQuestion({ [question.id]: "clicked" });
                 return;
               }
               onSubmit({ [question.id]: "dismissed" });
             }}
             className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 text-slate-500 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:border-slate-400 dark:text-slate-400">
-            {savedAnswer === "clicked" ? "Next" : question.dismissButtonLabel || "Skip"}
+            {storedResponseValue === "clicked" ? "Next" : question.dismissButtonLabel || "Skip"}
           </button>
         )}
         <button

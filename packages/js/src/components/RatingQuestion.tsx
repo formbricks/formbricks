@@ -25,7 +25,7 @@ interface RatingQuestionProps {
   onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
-  savedAnswer: number | null;
+  storedResponseValue: number | null;
   goToNextQuestion: (answer: TResponseData) => void;
   goToPreviousQuestion?: (answer?: TResponseData) => void;
 }
@@ -35,7 +35,7 @@ export default function RatingQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
-  savedAnswer,
+  storedResponseValue,
   goToNextQuestion,
   goToPreviousQuestion,
 }: RatingQuestionProps) {
@@ -43,14 +43,14 @@ export default function RatingQuestion({
   const [hoveredNumber, setHoveredNumber] = useState(0);
 
   useEffect(() => {
-    setSelectedChoice(savedAnswer);
-  }, [savedAnswer, question]);
+    setSelectedChoice(storedResponseValue);
+  }, [storedResponseValue, question]);
 
   const handleSubmit = (value: number | null) => {
     const data = {
       [question.id]: value,
     };
-    if (savedAnswer === value) {
+    if (storedResponseValue === value) {
       goToNextQuestion(data);
       setSelectedChoice(null);
       return;

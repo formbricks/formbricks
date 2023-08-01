@@ -13,7 +13,7 @@ import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import FormbricksSignature from "./FormbricksSignature";
 import type { TResponseData, TResponseInput } from "../../../types/v1/responses";
-import { clearStoredAnswers, getStoredResponse, storeResponse } from "../lib/localStorage";
+import { clearStoredResponse, getStoredResponse, storeResponse } from "../lib/localStorage";
 
 interface SurveyViewProps {
   config: TJsConfig;
@@ -30,7 +30,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   const [loadingElement, setLoadingElement] = useState(false);
   const contentRef = useRef(null);
   const [finished, setFinished] = useState(false);
-  const [savedAnwer, setSavedAnswer] = useState<any>(null);
+  const [storedResponseValue, setStoredResponseValue] = useState<any>(null);
 
   const [countdownProgress, setCountdownProgress] = useState(100);
   const [countdownStop, setCountdownStop] = useState(false);
@@ -181,7 +181,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     const nextQuestion = questions.find((q) => q.id === nextQuestionId);
     if (!nextQuestion) throw new Error("Question not found");
 
-    setSavedAnswer(getStoredResponse(survey.id, nextQuestionId));
+    setStoredResponseValue(getStoredResponse(survey.id, nextQuestionId));
     setActiveQuestionId(nextQuestionId);
     setLoadingElement(false);
   }
@@ -203,7 +203,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
       storeResponse(survey.id, answer);
     }
 
-    setSavedAnswer(getStoredResponse(survey.id, previousQuestionId));
+    setStoredResponseValue(getStoredResponse(survey.id, previousQuestionId));
     setActiveQuestionId(previousQuestionId);
     setLoadingElement(false);
   }
@@ -259,12 +259,12 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     setLoadingElement(false);
 
     if (!finished && nextQuestionId !== "end") {
-      setSavedAnswer(getStoredResponse(survey.id, nextQuestionId));
+      setStoredResponseValue(getStoredResponse(survey.id, nextQuestionId));
       setActiveQuestionId(nextQuestionId);
     } else {
       setProgress(100);
       setFinished(true);
-      clearStoredAnswers(survey.id);
+      clearStoredResponse(survey.id);
       if (survey.thankYouCard.enabled) {
         setTimeout(() => {
           close();
@@ -304,7 +304,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
                   lastQuestion={idx === survey.questions.length - 1}
                   onSubmit={submitResponse}
                   question={question}
-                  savedAnswer={savedAnwer}
+                  storedResponseValue={storedResponseValue}
                   goToNextQuestion={goToNextQuestion}
                   goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
                 />

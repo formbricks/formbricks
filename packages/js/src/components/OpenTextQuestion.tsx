@@ -12,7 +12,7 @@ interface OpenTextQuestionProps {
   onSubmit: (data: TResponseData) => void;
   lastQuestion: boolean;
   brandColor: string;
-  savedAnswer: string | null;
+  storedResponseValue: string | null;
   goToNextQuestion: (answer: TResponseData) => void;
   goToPreviousQuestion?: (answer: TResponseData) => void;
 }
@@ -22,21 +22,21 @@ export default function OpenTextQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
-  savedAnswer,
+  storedResponseValue,
   goToNextQuestion,
   goToPreviousQuestion,
 }: OpenTextQuestionProps) {
   const [value, setValue] = useState<string>("");
 
   useEffect(() => {
-    setValue(savedAnswer ?? "");
-  }, [savedAnswer, question.id]);
+    setValue(storedResponseValue ?? "");
+  }, [storedResponseValue, question.id]);
 
   const handleSubmit = (value: string) => {
     const data = {
       [question.id]: value,
     };
-    if (savedAnswer === value) {
+    if (storedResponseValue === value) {
       goToNextQuestion(data);
       return;
     }
@@ -57,7 +57,7 @@ export default function OpenTextQuestion({
           <input
             name={question.id}
             id={question.id}
-            placeholder={!savedAnswer ? question.placeholder : undefined}
+            placeholder={!storedResponseValue ? question.placeholder : undefined}
             required={question.required}
             value={value}
             onInput={(e) => setValue(e.currentTarget.value)}
@@ -68,7 +68,7 @@ export default function OpenTextQuestion({
             rows={3}
             name={question.id}
             id={question.id}
-            placeholder={!savedAnswer ? question.placeholder : undefined}
+            placeholder={!storedResponseValue ? question.placeholder : undefined}
             required={question.required}
             value={value}
             onInput={(e) => setValue(e.currentTarget.value)}

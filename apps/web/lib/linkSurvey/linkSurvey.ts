@@ -30,7 +30,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   const [responseId, setResponseId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState<string | null>(null);
   const [initiateCountdown, setinitiateCountdown] = useState<boolean>(false);
-  const [savedAnswer, setSavedAnswer] = useState<string | null>(null);
+  const [storedResponseValue, setStoredResponseValue] = useState<string | null>(null);
   const router = useRouter();
   const URLParams = new URLSearchParams(window.location.search);
   const isPreview = URLParams.get("preview") === "true";
@@ -59,7 +59,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         const nextQuestion = survey.questions[lastAnsweredQuestionIndex + 1];
         setCurrentQuestion(nextQuestion);
         setProgress(calculateProgress(nextQuestion, survey));
-        setSavedAnswer(getStoredResponseValue(survey.id, nextQuestion.id));
+        setStoredResponseValue(getStoredResponseValue(survey.id, nextQuestion.id));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -163,7 +163,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
       if (!question) throw new Error("Question not found");
 
-      setSavedAnswer(getStoredResponseValue(survey.id, nextQuestionId));
+      setStoredResponseValue(getStoredResponseValue(survey.id, nextQuestionId));
       setCurrentQuestion(question);
     } else {
       setProgress(1);
@@ -229,7 +229,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       storeResponse(survey.id, answer);
     }
 
-    setSavedAnswer(getStoredResponseValue(survey.id, previousQuestion.id));
+    setStoredResponseValue(getStoredResponseValue(survey.id, previousQuestion.id));
     setCurrentQuestion(previousQuestion);
     setLoadingElement(false);
   };
@@ -249,7 +249,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
     if (!nextQuestion) throw new Error("Question not found");
 
-    setSavedAnswer(getStoredResponseValue(survey.id, nextQuestion.id));
+    setStoredResponseValue(getStoredResponseValue(survey.id, nextQuestion.id));
     setCurrentQuestion(nextQuestion);
     setLoadingElement(false);
   };
@@ -267,7 +267,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     restartSurvey,
     goToPreviousQuestion,
     goToNextQuestion,
-    savedAnswer,
+    storedResponseValue,
   };
 };
 

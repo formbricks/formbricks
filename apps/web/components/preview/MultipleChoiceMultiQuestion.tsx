@@ -15,7 +15,7 @@ interface MultipleChoiceMultiProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
-  savedAnswer: string[] | null;
+  storedResponseValue: string[] | null;
   goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer: Response["data"]) => void;
 }
@@ -25,7 +25,7 @@ export default function MultipleChoiceMultiQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
-  savedAnswer,
+  storedResponseValue,
   goToNextQuestion,
   goToPreviousQuestion,
 }: MultipleChoiceMultiProps) {
@@ -39,8 +39,8 @@ export default function MultipleChoiceMultiQuestion({
     .map((choice) => choice.label);
 
   useEffect(() => {
-    const nonOtherSavedChoices = savedAnswer?.filter((answer) => nonOtherChoiceLabels.includes(answer));
-    const savedOtherSpecified = savedAnswer?.find((answer) => !nonOtherChoiceLabels.includes(answer));
+    const nonOtherSavedChoices = storedResponseValue?.filter((answer) => nonOtherChoiceLabels.includes(answer));
+    const savedOtherSpecified = storedResponseValue?.find((answer) => !nonOtherChoiceLabels.includes(answer));
 
     setSelectedChoices(nonOtherSavedChoices ?? []);
 
@@ -49,7 +49,7 @@ export default function MultipleChoiceMultiQuestion({
       setShowOther(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savedAnswer, question.id]);
+  }, [storedResponseValue, question.id]);
 
   const [questionChoices, setQuestionChoices] = useState<Choice[]>(
     question.choices
@@ -74,7 +74,7 @@ export default function MultipleChoiceMultiQuestion({
       [question.id]: selectedChoices,
     };
 
-    if (_.xor(selectedChoices, savedAnswer).length === 0) {
+    if (_.xor(selectedChoices, storedResponseValue).length === 0) {
       goToNextQuestion(data);
       return;
     }

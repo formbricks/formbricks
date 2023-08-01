@@ -12,7 +12,7 @@ interface NPSQuestionProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
-  savedAnswer: number | null;
+  storedResponseValue: number | null;
   goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
@@ -22,21 +22,21 @@ export default function NPSQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
-  savedAnswer,
+  storedResponseValue,
   goToNextQuestion,
   goToPreviousQuestion,
 }: NPSQuestionProps) {
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
 
   useEffect(() => {
-    setSelectedChoice(savedAnswer);
-  }, [savedAnswer, question]);
+    setSelectedChoice(storedResponseValue);
+  }, [storedResponseValue, question]);
 
   const handleSubmit = (value: number | null) => {
     const data = {
       [question.id]: value ?? null,
     };
-    if (savedAnswer === value) {
+    if (storedResponseValue === value) {
       setSelectedChoice(null);
       goToNextQuestion(data);
       return;
@@ -95,7 +95,7 @@ export default function NPSQuestion({
           <BackButton
             onClick={() => {
               goToPreviousQuestion(
-                savedAnswer !== selectedChoice
+                storedResponseValue !== selectedChoice
                   ? {
                       [question.id]: selectedChoice,
                     }
@@ -105,7 +105,7 @@ export default function NPSQuestion({
           />
         )}
         <div></div>
-        {(!question.required || savedAnswer) && <SubmitButton {...{ question, lastQuestion, brandColor }} />}
+        {(!question.required || storedResponseValue) && <SubmitButton {...{ question, lastQuestion, brandColor }} />}
       </div>
     </form>
   );

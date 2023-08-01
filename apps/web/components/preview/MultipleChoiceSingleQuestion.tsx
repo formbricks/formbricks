@@ -15,7 +15,7 @@ interface MultipleChoiceSingleProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
-  savedAnswer: string | null;
+  storedResponseValue: string | null;
   goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
@@ -25,11 +25,11 @@ export default function MultipleChoiceSingleQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
-  savedAnswer,
+  storedResponseValue,
   goToNextQuestion,
   goToPreviousQuestion,
 }: MultipleChoiceSingleProps) {
-  const savedAnswerValue = question.choices.find((choice) => choice.label === savedAnswer)?.id;
+  const storedResponseValueValue = question.choices.find((choice) => choice.label === storedResponseValue)?.id;
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [savedOtherAnswer, setSavedOtherAnswer] = useState<string | null>(null);
   const [questionChoices, setQuestionChoices] = useState<TSurveyChoice[]>(
@@ -42,16 +42,16 @@ export default function MultipleChoiceSingleQuestion({
   const otherSpecify = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!savedAnswerValue) {
+    if (!storedResponseValueValue) {
       const otherChoiceId = question.choices.find((choice) => choice.id === "other")?.id;
-      if (otherChoiceId && savedAnswer) {
+      if (otherChoiceId && storedResponseValue) {
         setSelectedChoice(otherChoiceId);
-        setSavedOtherAnswer(savedAnswer);
+        setSavedOtherAnswer(storedResponseValue);
       }
     } else {
-      setSelectedChoice(savedAnswerValue);
+      setSelectedChoice(storedResponseValueValue);
     }
-  }, [question.choices, savedAnswer, savedAnswerValue]);
+  }, [question.choices, storedResponseValue, storedResponseValueValue]);
 
   useEffect(() => {
     if (selectedChoice === "other" && otherSpecify.current) {
@@ -69,7 +69,7 @@ export default function MultipleChoiceSingleQuestion({
     const data = {
       [question.id]: value,
     };
-    if (value === savedAnswer) {
+    if (value === storedResponseValue) {
       goToNextQuestion(data);
       resetForm(); // reset form
       return;

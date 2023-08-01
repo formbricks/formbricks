@@ -12,7 +12,7 @@ interface QuestionConditionalProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
-  savedAnswer: any;
+  storedResponseValue: any;
   goToNextQuestion: (answer: any) => void;
   goToPreviousQuestion?: (answer: any) => void;
   autoFocus: boolean;
@@ -23,7 +23,7 @@ export default function QuestionConditional({
   onSubmit,
   lastQuestion,
   brandColor,
-  savedAnswer,
+  storedResponseValue,
   goToNextQuestion,
   goToPreviousQuestion,
   autoFocus,
@@ -34,7 +34,7 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
-      savedAnswer={savedAnswer}
+      storedResponseValue={storedResponseValue}
       goToNextQuestion={goToNextQuestion}
       goToPreviousQuestion={goToPreviousQuestion}
       autoFocus={autoFocus}
@@ -45,7 +45,7 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
-      savedAnswer={savedAnswer}
+      storedResponseValue={storedResponseValue}
       goToNextQuestion={goToNextQuestion}
       goToPreviousQuestion={goToPreviousQuestion}
     />
@@ -55,7 +55,7 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
-      savedAnswer={savedAnswer}
+      storedResponseValue={storedResponseValue}
       goToNextQuestion={goToNextQuestion}
       goToPreviousQuestion={goToPreviousQuestion}
     />
@@ -65,7 +65,7 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
-      savedAnswer={savedAnswer}
+      storedResponseValue={storedResponseValue}
       goToNextQuestion={goToNextQuestion}
       goToPreviousQuestion={goToPreviousQuestion}
     />
@@ -75,7 +75,7 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
-      savedAnswer={savedAnswer}
+      storedResponseValue={storedResponseValue}
       goToNextQuestion={goToNextQuestion}
       goToPreviousQuestion={goToPreviousQuestion}
     />
@@ -85,7 +85,7 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
-      savedAnswer={savedAnswer}
+      storedResponseValue={storedResponseValue}
       goToNextQuestion={goToNextQuestion}
       goToPreviousQuestion={goToPreviousQuestion}
     />
@@ -95,7 +95,7 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
-      savedAnswer={savedAnswer}
+      storedResponseValue={storedResponseValue}
       goToNextQuestion={goToNextQuestion}
       goToPreviousQuestion={goToPreviousQuestion}
     />

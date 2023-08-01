@@ -12,7 +12,7 @@ interface ConsentQuestionProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
-  savedAnswer: string | null;
+  storedResponseValue: string | null;
   goToNextQuestion: (answer: Response["data"]) => void;
   goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
@@ -22,15 +22,15 @@ export default function ConsentQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
-  savedAnswer,
+  storedResponseValue,
   goToNextQuestion,
   goToPreviousQuestion,
 }: ConsentQuestionProps) {
   const [answer, setAnswer] = useState<string>("dismissed");
 
   useEffect(() => {
-    setAnswer(savedAnswer ?? "dismissed");
-  }, [savedAnswer, question]);
+    setAnswer(storedResponseValue ?? "dismissed");
+  }, [storedResponseValue, question]);
 
   const handleOnChange = () => {
     answer === "accepted" ? setAnswer("dissmissed") : setAnswer("accepted");
@@ -40,7 +40,7 @@ export default function ConsentQuestion({
     const data = {
       [question.id]: value,
     };
-    if (savedAnswer === value) {
+    if (storedResponseValue === value) {
       goToNextQuestion(data);
       setAnswer("dismissed");
 

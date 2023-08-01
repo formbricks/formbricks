@@ -42,8 +42,8 @@ export default function PreviewSurvey({
   const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
   const [showFormbricksSignature, setShowFormbricksSignature] = useState(false);
   const [finished, setFinished] = useState(false);
-  const [savedAnswer, setSavedAnswer] = useState<any>();
-  const [storedAnswer, setStoredAnswers] = useState<Record<string, any>>({});
+  const [storedResponseValue, setStoredResponseValue] = useState<any>();
+  const [storedResponse, setStoredResponse] = useState<Record<string, any>>({});
 
   const showBackButton = progress !== 0 && !finished;
 
@@ -212,9 +212,9 @@ export default function PreviewSurvey({
   }
 
   const gotoNextQuestion = (data) => {
-    setStoredAnswers({ ...storedAnswer, ...data });
+    setStoredResponse({ ...storedResponse, ...data });
     const nextQuestionId = getNextQuestion(data);
-    setSavedAnswer(storedAnswer[nextQuestionId]);
+    setStoredResponseValue(storedResponse[nextQuestionId]);
     if (nextQuestionId !== "end") {
       setActiveQuestionId(nextQuestionId);
     } else {
@@ -233,11 +233,11 @@ export default function PreviewSurvey({
   };
 
   function goToPreviousQuestion(data: any) {
-    setStoredAnswers({ ...storedAnswer, ...data });
+    setStoredResponse({ ...storedResponse, ...data });
     const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
     if (currentQuestionIndex === -1) throw new Error("Question not found");
     const previousQuestionId = questions[currentQuestionIndex - 1].id;
-    setSavedAnswer(storedAnswer[previousQuestionId]);
+    setStoredResponseValue(storedResponse[previousQuestionId]);
     setActiveQuestionId(previousQuestionId);
   }
 
@@ -296,7 +296,7 @@ export default function PreviewSurvey({
                     brandColor={brandColor}
                     lastQuestion={idx === questions.length - 1}
                     onSubmit={gotoNextQuestion}
-                    savedAnswer={savedAnswer}
+                    storedResponseValue={storedResponseValue}
                     goToNextQuestion={gotoNextQuestion}
                     goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
                     autoFocus={false}
@@ -327,7 +327,7 @@ export default function PreviewSurvey({
                       brandColor={brandColor}
                       lastQuestion={idx === questions.length - 1}
                       onSubmit={gotoNextQuestion}
-                      savedAnswer={savedAnswer}
+                      storedResponseValue={storedResponseValue}
                       goToNextQuestion={gotoNextQuestion}
                       goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
                       autoFocus={false}

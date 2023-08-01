@@ -36,7 +36,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     submitResponse,
     goToPreviousQuestion,
     goToNextQuestion,
-    savedAnswer,
+    storedResponseValue,
   } = useLinkSurveyUtils(survey);
 
   const showBackButton = progress !== 0 && !finished;
@@ -102,7 +102,7 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
               brandColor={survey.brandColor}
               lastQuestion={lastQuestion}
               onSubmit={submitResponse}
-              savedAnswer={savedAnswer}
+              storedResponseValue={storedResponseValue}
               goToNextQuestion={goToNextQuestion}
               goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
               autoFocus={autoFocus}
