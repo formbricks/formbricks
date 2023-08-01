@@ -19,6 +19,7 @@ import {
 } from "@/lib/products/createDemoProductHelpers";
 import { Prisma } from "@prisma/client";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
+import { createId } from "@paralleldrive/cuid2";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   // Check Authentication
@@ -233,92 +234,141 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
     });
 
+    const eventClasses = updatedEnvironment.eventClasses;
+
     // check if updatedEnvironment exists and it has attributeClasses
     if (!updatedEnvironment || !updatedEnvironment.attributeClasses) {
       throw new Error("Attribute classes could not be created");
     }
 
-    // CREATING DEMO DATA
-    // Create 20 People with Attributes
     const attributeClasses = updatedEnvironment.attributeClasses;
 
+    // create an array for all the events that will be created
     const eventPromises: {
       eventClassId: string;
       sessionId: string;
     }[] = [];
 
-    const generatedAttributes = Array.from({ length: 20 }).map((_, i: number) => {
-      return attributeClasses.map((attributeClass) => {
-        let value = generateAttributeValue(
-          attributeClass.name,
-          DEMO_NAMES[i],
-          DEMO_COMPANIES[i],
-          `${DEMO_COMPANIES[i].toLowerCase().split(" ").join("")}.com`,
-          i
-        );
+    // create an array for all the attributes that will be created
+    const generatedAttributes: {
+      attributeClassId: string;
+      value: string;
+      personId: string;
+    }[] = [];
 
-        return {
-          attributeClass: { connect: { id: attributeClass.id } },
-          value: value,
-        };
-      });
+    // create an array containing all the person ids to be created
+    const personIds = Array.from({ length: 20 }).map((_) => createId());
+
+    // create an array containing all the session ids to be created
+    const sessionIds = Array.from({ length: 20 }).map((_) => createId());
+
+    // loop over the person ids and create attributes for each person
+    personIds.forEach((personId, i: number) => {
+      generatedAttributes.push(
+        ...attributeClasses.map((attributeClass) => {
+          let value = generateAttributeValue(
+            attributeClass.name,
+            DEMO_NAMES[i],
+            DEMO_COMPANIES[i],
+            `${DEMO_COMPANIES[i].toLowerCase().split(" ").join("")}.com`,
+            i
+          );
+
+          return {
+            attributeClassId: attributeClass.id,
+            value: value,
+            personId,
+          };
+        })
+      );
     });
 
-    const personWithSessions = Prisma.validator<Prisma.PersonArgs>()({
-      include: {
-        sessions: true,
-      },
+    await prisma.person.createMany({
+      data: personIds.map((personId) => ({
+        id: personId,
+        environmentId: demoProduct.environments[0].id,
+      })),
     });
 
-    type PersonWithSessions = Prisma.PersonGetPayload<typeof personWithSessions>;
-
-    const personPromises = generatedAttributes.map((generatedAttribute) => {
-      return prisma.person.create({
-        data: {
-          environment: { connect: { id: demoProduct.environments[0].id } },
-          attributes: { create: generatedAttribute },
-          sessions: {
-            create: [{}],
-          },
-        },
-        include: {
-          sessions: true,
-        },
-      });
+    await prisma.session.createMany({
+      data: sessionIds.map((sessionId, idx) => ({
+        id: sessionId,
+        personId: personIds[idx],
+      })),
     });
 
-    let people: PersonWithSessions[] = [];
+    await prisma.attribute.createMany({
+      data: generatedAttributes,
+    });
 
-    try {
-      people = await prisma.$transaction([...personPromises]);
-    } catch (err) {
-      throw new Error(err);
-    }
+    // await prisma.attribute.createMany({
+    //   data:
+    // })
 
-    const eventClasses = updatedEnvironment.eventClasses;
+    // const personWithSessions = Prisma.validator<Prisma.PersonArgs>()({
+    //   include: {
+    //     sessions: true,
+    //   },
+    // });
 
-    people.forEach((person) => {
+    // type PersonWithSessions = Prisma.PersonGetPayload<typeof personWithSessions>;
+
+    // const personPromises = generatedAttributes.map((generatedAttribute) => {
+    //   return prisma.person.create({
+    //     data: {
+    //       environment: { connect: { id: demoProduct.environments[0].id } },
+    //       attributes: { create: generatedAttribute },
+    //       sessions: {
+    //         create: [{}],
+    //       },
+    //     },
+    //     include: {
+    //       sessions: true,
+    //     },
+    //   });
+    // });
+
+    // let people: PersonWithSessions[] = [];
+
+    // try {
+    //   people = await prisma.$transaction([...personPromises]);
+    // } catch (err) {
+    //   throw new Error(err);
+    // }
+
+    // people.forEach((person) => {
+    // for (let eventClass of eventClasses) {
+    //   // create a random number of events for each event class
+    //   const eventCount = Math.floor(Math.random() * 5) + 1;
+    //   for (let j = 0; j < eventCount; j++) {
+    //     eventPromises.push({
+    //       eventClassId: eventClass.id,
+    //       sessionId: person.sessions[0].id,
+    //     });
+    //   }
+    // }
+    // });
+
+    sessionIds.forEach((sessionId) => {
       for (let eventClass of eventClasses) {
         // create a random number of events for each event class
         const eventCount = Math.floor(Math.random() * 5) + 1;
         for (let j = 0; j < eventCount; j++) {
           eventPromises.push({
             eventClassId: eventClass.id,
-            sessionId: person.sessions[0].id,
+            sessionId,
           });
         }
       }
     });
 
-    const eventCreateManyInput = eventPromises.map((eventPromise) => ({
-      eventClassId: eventPromise.eventClassId,
-      sessionId: eventPromise.sessionId,
-    }));
-
     try {
       await prisma.$transaction([
         prisma.event.createMany({
-          data: [...eventCreateManyInput],
+          data: eventPromises.map((eventPromise) => ({
+            eventClassId: eventPromise.eventClassId,
+            sessionId: eventPromise.sessionId,
+          })),
         }),
       ]);
     } catch (err) {
@@ -338,6 +388,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
     };
 
+    const people = personIds.map((personId) => ({ id: personId }));
     const PMFResults = generateResponsesAndDisplays(people, PMFResponses, userAgents);
     const OnboardingResults = generateResponsesAndDisplays(people, OnboardingResponses, userAgents);
     const ChurnResults = generateResponsesAndDisplays(people, ChurnResponses, userAgents);
