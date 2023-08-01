@@ -283,24 +283,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       );
     });
 
-    await prisma.person.createMany({
-      data: personIds.map((personId) => ({
-        id: personId,
-        environmentId: demoProduct.environments[0].id,
-      })),
-    });
-
-    await prisma.session.createMany({
-      data: sessionIds.map((sessionId, idx) => ({
-        id: sessionId,
-        personId: personIds[idx],
-      })),
-    });
-
-    await prisma.attribute.createMany({
-      data: generatedAttributes,
-    });
-
     sessionIds.forEach((sessionId) => {
       for (let eventClass of eventClasses) {
         // create a random number of events for each event class
@@ -314,8 +296,28 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       }
     });
 
+    // create the people, sessions, attributes, and events in a transaction
+    // the order of the queries is important because of foreign key constraints
     try {
       await prisma.$transaction([
+        prisma.person.createMany({
+          data: personIds.map((personId) => ({
+            id: personId,
+            environmentId: demoProduct.environments[0].id,
+          })),
+        }),
+
+        prisma.session.createMany({
+          data: sessionIds.map((sessionId, idx) => ({
+            id: sessionId,
+            personId: personIds[idx],
+          })),
+        }),
+
+        prisma.attribute.createMany({
+          data: generatedAttributes,
+        }),
+
         prisma.event.createMany({
           data: eventPromises.map((eventPromise) => ({
             eventClassId: eventPromise.eventClassId,
