@@ -132,7 +132,7 @@ export default function ResponseOptionsCard({ localSurvey, setLocalSurvey }: Res
     const inputResponses = localSurvey?._count?.responses || 0;
 
     if (parseInt(e.target.value) <= inputResponses) {
-      toast.error("Response limit can't be less than or equal to received responses count");
+      toast.error("Response limit needs to exceed number of received responses.");
       return;
     }
   };
