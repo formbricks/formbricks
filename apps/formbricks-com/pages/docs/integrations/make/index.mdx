@@ -7,33 +7,31 @@ import UpdateQuestionId from "./update-question-id.png";
 import DuplicateSurvey from "./duplicate-survey.png";
 import CreateNewScenario from "./create-new-scenario.png";
 import SearchFormbricks from "./search-formbricks.png";
-import SelectTriggers from "./select-trigger.png"
-import CreateWebhook from "./create-webhook.png"
-import EnterApiKey from "./enter-api-key.png"
-import SelectSurvey from "./select-survey.png"
-import SubmitTestResponse from "./submit-test-response.png"
-import AddModule from "./add-module.png"
-import SelectFields from "./select-fields.png"
-import Result from "./result.png"
-import SelectAction from "./select-action.png"
-
-
+import SelectTriggers from "./select-trigger.png";
+import CreateWebhook from "./create-webhook.png";
+import EnterApiKey from "./enter-api-key.png";
+import SelectSurvey from "./select-survey.png";
+import SubmitTestResponse from "./submit-test-response.png";
+import AddModule from "./add-module.png";
+import SelectFields from "./select-fields.png";
+import Result from "./result.png";
+import SelectAction from "./select-action.png";
 
 export const meta = {
-  title: "Make Setup",
+  title: "Make.com Setup",
   description: "Wire up Formbricks with Make and 1000+ other apps",
 };
 
-Make is a visual platform that lets you design, build, and automate anything – from simple tasks to complex workflows. With Make, you can send information between Formbricks and thousands of apps to accelerate data collection for better productivity and revenue potential. 
+Make is a visual platform that lets you design, build, and automate anything – from simple tasks to complex workflows. With Make, you can send information between Formbricks and thousands of apps to accelerate data collection for better productivity and revenue potential.
 
 <Callout title="Nail down your survey first" type="note">
-  Any changes in the survey cause additional work in the Scenario. It makes sense to first settle on the survey you
-  want to run and then get to setting up Make.
+  Any changes in the survey cause additional work in the _Scenario_. It makes sense to first settle on the
+  survey you want to run and then get to setting up Make.
 </Callout>
 
 ## Step 1: Setup your survey incl. `questionId` for every question
 
-When setting up the integration your life will be easier when you change the `questionId`s of your survey questions. You can only do so **before** you publish your survey.
+When setting up the _Scenario_ on Make your life will be easier when you change the `questionId`s of your survey questions. You can only do so **before** you publish your survey.
 
 <Image src={UpdateQuestionId} alt="Update Question ID" quality="100" className="rounded-lg" />
 
@@ -48,43 +46,57 @@ _In every question card in the Advanced Settings you find the Question ID field.
 ## Step 2: Setup Make.com
 
 Go to [Make.com](https://make.com) and create a new scenario.
-<Image src={CreateNewScenario} alt="Create New Scenario" quality="100" className="rounded-lg" /> 
+
+<Image src={CreateNewScenario} alt="Create New Scenario" quality="100" className="rounded-lg" />{" "}
 
 Search for “Formbricks” to get started:
-<Image src={SearchFormbricks} alt="Search Formbricks" quality="100" className="rounded-lg" /> 
+
+<Image src={SearchFormbricks} alt="Search Formbricks" quality="100" className="rounded-lg" />{" "}
 
 Then, choose the event you want to trigger the Scenario on. In this tutorial we will use Response Finished.
-<Image src={SelectTriggers} alt="Search Formbricks" quality="100" className="rounded-lg" /> 
+
+<Image src={SelectTriggers} alt="Search Formbricks" quality="100" className="rounded-lg" />{" "}
 
 ## Step 3: Connect Formbricks with Make
-Click on create a webhook
-<Image src={CreateWebhook} alt="Search Formbricks" quality="100" className="rounded-lg" /> 
 
-Enter your Formbricks API key
-<Image src={EnterApiKey} alt="Search Formbricks" quality="100" className="rounded-lg" /> 
+Next, click on "Create a webhook"
+
+<Image src={CreateWebhook} alt="Search Formbricks" quality="100" className="rounded-lg" />{" "}
+
+You are asked to enter a Formbricks API key. Find out how to get one here in the [API Key tutorial](/docs/api/api-key-setup).
+
+<Image src={EnterApiKey} alt="Search Formbricks" quality="100" className="rounded-lg" />{" "}
 
 ## Step 4: Select Survey
+
 Next, you can choose from all the surveys you have created in this environment:
-<Image src={SelectSurvey} alt="Search Formbricks" quality="100" className="rounded-lg" /> 
+
+<Image src={SelectSurvey} alt="Search Formbricks" quality="100" className="rounded-lg" />{" "}
 
 ## Step 5: Send a test response
-In order to set up Make you’ll need a test response to the selected survey. This allows you to select the individual values of each response in your Scenario. If you have Formbricks running locally and you want to set up an in-app survey, you can use our [Demo App](/docs/contributing/demo) to trigger a survey and submit a response.
-<Image src={SubmitTestResponse} alt="Search Formbricks" quality="100" className="rounded-lg" /> 
+
+In order to set up Make you’ll need a test response in the selected survey. This allows you to select the individual values of each response in your Scenario. If you have Formbricks running locally and you want to set up an in-app survey, you can use our [Demo App](/docs/contributing/demo) to trigger a survey and submit a response.
+
+<Image src={SubmitTestResponse} alt="Search Formbricks" quality="100" className="rounded-lg" />{" "}
 
 ## Step 6: Set up your Google Sheet
-Now you have all the data you need at hand. The next steps depend on what you want to do with it. In this tutorial, we will send submissions to a Google Sheet:
 
-Click on add module and select any app of your choice. Here we will choose Google Sheet
-<Image src={AddModule} alt="Search Formbricks" quality="100" className="rounded-lg" /> 
+Now you have all the data you need at hand. The next steps depend on what you want to do with it. In this tutorial, we will send submissions to a Google Sheet.
 
-Select Action that you want to perform. Here we will choose "Add a Row"
-<Image src={SelectAction} alt="Search Formbricks" quality="100" className="rounded-lg" /> 
+Click on "Add module" and select the Google Sheet app:
 
-Enter spreadsheet details and map table fields to available data fields
-<Image src={SelectFields} alt="Search Formbricks" quality="100" className="rounded-lg" /> 
+<Image src={AddModule} alt="Search Formbricks" quality="100" className="rounded-lg" />{" "}
 
-Now whenever a new response is created, a new row will be created in out selected spreadsheet
-<Image src={Result} alt="Search Formbricks" quality="100" className="rounded-lg" /> 
+Then, select an action that you want to perform. Here we choose "Add a Row":
 
+<Image src={SelectAction} alt="Search Formbricks" quality="100" className="rounded-lg" />{" "}
+
+You are prompted to enter the details of the spreadsheet and map table fields to fill in your Formbricks data. As you can see in the screenshot, you can fill in individual data points into the cells of your choice:
+
+<Image src={SelectFields} alt="Search Formbricks" quality="100" className="rounded-lg" />{" "}
+
+Now, whenever a new response is created, a new row will be added to the spreadsheet we selected:
+
+<Image src={Result} alt="Search Formbricks" quality="100" className="rounded-lg" />{" "}
 
 export default ({ children }) => <Layout meta={meta}>{children}</Layout>;

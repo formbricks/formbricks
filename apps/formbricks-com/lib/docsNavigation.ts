@@ -48,7 +48,7 @@ const navigation = [
     title: "Integrations",
     links: [
       { title: "Zapier", href: "/docs/integrations/zapier" },
-      { title: "Make", href: "/docs/integrations/make" },
+      { title: "Make.com", href: "/docs/integrations/make" },
     ],
   },
   {
