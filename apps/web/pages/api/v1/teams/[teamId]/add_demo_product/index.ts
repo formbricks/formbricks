@@ -301,54 +301,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       data: generatedAttributes,
     });
 
-    // await prisma.attribute.createMany({
-    //   data:
-    // })
-
-    // const personWithSessions = Prisma.validator<Prisma.PersonArgs>()({
-    //   include: {
-    //     sessions: true,
-    //   },
-    // });
-
-    // type PersonWithSessions = Prisma.PersonGetPayload<typeof personWithSessions>;
-
-    // const personPromises = generatedAttributes.map((generatedAttribute) => {
-    //   return prisma.person.create({
-    //     data: {
-    //       environment: { connect: { id: demoProduct.environments[0].id } },
-    //       attributes: { create: generatedAttribute },
-    //       sessions: {
-    //         create: [{}],
-    //       },
-    //     },
-    //     include: {
-    //       sessions: true,
-    //     },
-    //   });
-    // });
-
-    // let people: PersonWithSessions[] = [];
-
-    // try {
-    //   people = await prisma.$transaction([...personPromises]);
-    // } catch (err) {
-    //   throw new Error(err);
-    // }
-
-    // people.forEach((person) => {
-    // for (let eventClass of eventClasses) {
-    //   // create a random number of events for each event class
-    //   const eventCount = Math.floor(Math.random() * 5) + 1;
-    //   for (let j = 0; j < eventCount; j++) {
-    //     eventPromises.push({
-    //       eventClassId: eventClass.id,
-    //       sessionId: person.sessions[0].id,
-    //     });
-    //   }
-    // }
-    // });
-
     sessionIds.forEach((sessionId) => {
       for (let eventClass of eventClasses) {
         // create a random number of events for each event class
