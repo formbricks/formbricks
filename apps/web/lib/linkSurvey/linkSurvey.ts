@@ -113,13 +113,13 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     setLoadingElement(true);
     const activeQuestionId: string = currentQuestion?.id || "";
     const nextQuestionId = getNextQuestionId();
-    const answerValue = data[activeQuestionId];
+    const responseValue = data[activeQuestionId];
 
     if (currentQuestion?.logic && currentQuestion?.logic.length > 0) {
       for (let logic of currentQuestion.logic) {
         if (!logic.destination) continue;
 
-        if (evaluateCondition(logic, answerValue)) {
+        if (evaluateCondition(logic, responseValue)) {
           return logic.destination;
         }
       }
@@ -392,54 +392,54 @@ const createAnswer = (question: Question, answer: string): string | number | str
   }
 };
 
-const evaluateCondition = (logic: Logic, answerValue: any): boolean => {
+const evaluateCondition = (logic: Logic, responseValue: any): boolean => {
   switch (logic.condition) {
     case "equals":
       return (
-        (Array.isArray(answerValue) && answerValue.length === 1 && answerValue.includes(logic.value)) ||
-        answerValue.toString() === logic.value
+        (Array.isArray(responseValue) && responseValue.length === 1 && responseValue.includes(logic.value)) ||
+        responseValue.toString() === logic.value
       );
     case "notEquals":
-      return answerValue !== logic.value;
+      return responseValue !== logic.value;
     case "lessThan":
-      return logic.value !== undefined && answerValue < logic.value;
+      return logic.value !== undefined && responseValue < logic.value;
     case "lessEqual":
-      return logic.value !== undefined && answerValue <= logic.value;
+      return logic.value !== undefined && responseValue <= logic.value;
     case "greaterThan":
-      return logic.value !== undefined && answerValue > logic.value;
+      return logic.value !== undefined && responseValue > logic.value;
     case "greaterEqual":
-      return logic.value !== undefined && answerValue >= logic.value;
+      return logic.value !== undefined && responseValue >= logic.value;
     case "includesAll":
       return (
-        Array.isArray(answerValue) &&
+        Array.isArray(responseValue) &&
         Array.isArray(logic.value) &&
-        logic.value.every((v) => answerValue.includes(v))
+        logic.value.every((v) => responseValue.includes(v))
       );
     case "includesOne":
       return (
-        Array.isArray(answerValue) &&
+        Array.isArray(responseValue) &&
         Array.isArray(logic.value) &&
-        logic.value.some((v) => answerValue.includes(v))
+        logic.value.some((v) => responseValue.includes(v))
       );
     case "accepted":
-      return answerValue === "accepted";
+      return responseValue === "accepted";
     case "clicked":
-      return answerValue === "clicked";
+      return responseValue === "clicked";
     case "submitted":
-      if (typeof answerValue === "string") {
-        return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
-      } else if (Array.isArray(answerValue)) {
-        return answerValue.length > 0;
-      } else if (typeof answerValue === "number") {
-        return answerValue !== null;
+      if (typeof responseValue === "string") {
+        return responseValue !== "dismissed" && responseValue !== "" && responseValue !== null;
+      } else if (Array.isArray(responseValue)) {
+        return responseValue.length > 0;
+      } else if (typeof responseValue === "number") {
+        return responseValue !== null;
       }
       return false;
     case "skipped":
       return (
-        (Array.isArray(answerValue) && answerValue.length === 0) ||
-        answerValue === "" ||
-        answerValue === null ||
-        answerValue === "dismissed"
+        (Array.isArray(responseValue) && responseValue.length === 0) ||
+        responseValue === "" ||
+        responseValue === null ||
+        responseValue === "dismissed"
       );
     default:
       return false;
