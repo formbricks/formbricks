@@ -2,6 +2,7 @@ import { getSurveys } from "@/app/api/v1/js/surveys";
 import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { getActionClasses } from "@formbricks/lib/services/actionClass";
+import { getEnvironment } from "@formbricks/lib/services/environment";
 import { createPerson, getPerson } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { createSession, extendSession, getSession } from "@formbricks/lib/services/session";
@@ -30,6 +31,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     const { environmentId, personId, sessionId } = inputValidation.data;
+
+    // check if environment exists
+    const environment = await getEnvironment(environmentId);
+    if (!environment) {
+      return responses.badRequestResponse(
+        "Environment does not exist",
+        { environmentId: "Environment with this ID does not exist" },
+        true
+      );
+    }
 
     if (!personId) {
       // create a new person

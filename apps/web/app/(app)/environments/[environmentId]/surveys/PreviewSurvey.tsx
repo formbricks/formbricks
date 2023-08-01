@@ -280,6 +280,7 @@ export default function PreviewSurvey({
                     brandColor={brandColor}
                     lastQuestion={idx === questions.length - 1}
                     onSubmit={gotoNextQuestion}
+                    autoFocus={false}
                   />
                 ) : null
               )
@@ -307,6 +308,7 @@ export default function PreviewSurvey({
                       brandColor={brandColor}
                       lastQuestion={idx === questions.length - 1}
                       onSubmit={gotoNextQuestion}
+                      autoFocus={false}
                     />
                   ) : null
                 )

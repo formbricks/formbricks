@@ -12,6 +12,7 @@ interface QuestionConditionalProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  autoFocus: boolean;
 }
 
 export default function QuestionConditional({
@@ -19,6 +20,7 @@ export default function QuestionConditional({
   onSubmit,
   lastQuestion,
   brandColor,
+  autoFocus,
 }: QuestionConditionalProps) {
   return question.type === QuestionType.OpenText ? (
     <OpenTextQuestion
@@ -26,6 +28,7 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      autoFocus={autoFocus}
     />
   ) : question.type === QuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
