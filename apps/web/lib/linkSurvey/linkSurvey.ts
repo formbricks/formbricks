@@ -60,13 +60,14 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
   useEffect(() => {
     if (currentQuestion && survey) {
-      setProgress(calculateProgress(currentQuestion, survey));
+      const progress = calculateProgress(currentQuestion, survey);
+      setProgress(progress);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion]);
 
-  const calculateProgress = useCallback((currentQuestion, survey) => {
-    const elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id);
+  const calculateProgress = useCallback((currentQuestion: Question, survey: Survey) => {
+    const elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id) || 0.5;
     return elementIdx / survey.questions.length;
   }, []);
 
