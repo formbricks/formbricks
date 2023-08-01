@@ -59,7 +59,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         const nextQuestion = survey.questions[lastAnsweredQuestionIndex + 1];
         setCurrentQuestion(nextQuestion);
         setProgress(calculateProgress(nextQuestion, survey));
-        setSavedAnswer(getStoredResponse(survey.id, nextQuestion.id));
+        setSavedAnswer(getStoredResponseValue(survey.id, nextQuestion.id));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -146,14 +146,14 @@ export const useLinkSurveyUtils = (survey: Survey) => {
         markDisplayResponded(displayId, `${window.location.protocol}//${window.location.host}`);
       }
       setResponseId(response.id);
-      storeAnswer(survey.id, response.data);
+      storeResponse(survey.id, response.data);
     } else if (responseId && !isPreview) {
       await updateResponse(
         responseRequest,
         responseId,
         `${window.location.protocol}//${window.location.host}`
       );
-      storeAnswer(survey.id, data);
+      storeResponse(survey.id, data);
     }
 
     setLoadingElement(false);
@@ -163,7 +163,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
       if (!question) throw new Error("Question not found");
 
-      setSavedAnswer(getStoredResponse(survey.id, nextQuestionId));
+      setSavedAnswer(getStoredResponseValue(survey.id, nextQuestionId));
       setCurrentQuestion(question);
     } else {
       setProgress(1);
@@ -226,10 +226,10 @@ export const useLinkSurveyUtils = (survey: Survey) => {
     if (!previousQuestion) throw new Error("Question not found");
 
     if (answer) {
-      storeAnswer(survey.id, answer);
+      storeResponse(survey.id, answer);
     }
 
-    setSavedAnswer(getStoredResponse(survey.id, previousQuestion.id));
+    setSavedAnswer(getStoredResponseValue(survey.id, previousQuestion.id));
     setCurrentQuestion(previousQuestion);
     setLoadingElement(false);
   };
@@ -243,13 +243,13 @@ export const useLinkSurveyUtils = (survey: Survey) => {
       return;
     }
 
-    storeAnswer(survey.id, answer);
+    storeResponse(survey.id, answer);
 
     const nextQuestion = survey.questions.find((q) => q.id === nextQuestionId);
 
     if (!nextQuestion) throw new Error("Question not found");
 
-    setSavedAnswer(getStoredResponse(survey.id, nextQuestion.id));
+    setSavedAnswer(getStoredResponseValue(survey.id, nextQuestion.id));
     setCurrentQuestion(nextQuestion);
     setLoadingElement(false);
   };
@@ -271,7 +271,7 @@ export const useLinkSurveyUtils = (survey: Survey) => {
   };
 };
 
-const storeAnswer = (surveyId: string, answer: Response["data"]) => {
+const storeResponse = (surveyId: string, answer: Response["data"]) => {
   const storedResponses = localStorage.getItem(`formbricks-${surveyId}-responses`);
   if (storedResponses) {
     const parsedResponses = JSON.parse(storedResponses);
@@ -290,7 +290,7 @@ const getStoredResponses = (surveyId: string): Record<string, string> | null => 
   return null;
 };
 
-const getStoredResponse = (surveyId: string, questionId: string): string | null => {
+const getStoredResponseValue = (surveyId: string, questionId: string): string | null => {
   const storedResponses = getStoredResponses(surveyId);
   if (storedResponses) {
     return storedResponses[questionId];

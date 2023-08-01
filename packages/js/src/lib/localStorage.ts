@@ -1,6 +1,6 @@
 import type { TResponseData } from "../../../types/v1/responses";
 
-export const storeAnswer = (surveyId: string, answer: TResponseData) => {
+export const storeResponse = (surveyId: string, answer: TResponseData) => {
   const storedAnswers = localStorage.getItem(`formbricks-${surveyId}-responses`);
   if (storedAnswers) {
     const parsedAnswers = JSON.parse(storedAnswers);

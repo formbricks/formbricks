@@ -13,7 +13,7 @@ import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import FormbricksSignature from "./FormbricksSignature";
 import type { TResponseData, TResponseInput } from "../../../types/v1/responses";
-import { clearStoredAnswers, getStoredResponse, storeAnswer } from "../lib/localStorage";
+import { clearStoredAnswers, getStoredResponse, storeResponse } from "../lib/localStorage";
 
 interface SurveyViewProps {
   config: TJsConfig;
@@ -200,7 +200,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     if (!previousQuestionId) throw new Error("Question not found");
 
     if (answer) {
-      storeAnswer(survey.id, answer);
+      storeResponse(survey.id, answer);
     }
 
     setSavedAnswer(getStoredResponse(survey.id, previousQuestionId));
@@ -243,13 +243,13 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
       ]);
       if (response.ok === true) {
         setResponseId(response.value.id);
-        storeAnswer(survey.id, data);
+        storeResponse(survey.id, data);
       } else {
         errorHandler(response.error);
       }
     } else {
       const result = await updateResponse(responseRequest, responseId, config);
-      storeAnswer(survey.id, data);
+      storeResponse(survey.id, data);
       if (result.ok !== true) {
         errorHandler(result.error);
       } else if (responseRequest.finished) {
