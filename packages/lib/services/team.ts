@@ -31,7 +31,7 @@ export const select = {
   plan: true,
 };
 
-export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTeam | null> => {
+export const getTeamByEnvironmentId = cache(async (environmentId: string): Promise<TTeam | null> => {
   try {
     const team = await prisma.team.findFirst({
       where: {
@@ -56,9 +56,9 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
 
     throw error;
   }
-};
+});
 
-export const createDemoProduct = async (teamId: string) => {
+export const createDemoProduct = cache(async (teamId: string) => {
   const productWithEnvironment = Prisma.validator<Prisma.ProductArgs>()({
     include: {
       environments: true,
@@ -236,4 +236,4 @@ export const createDemoProduct = async (teamId: string) => {
   );
 
   return demoProduct;
-};
+});
