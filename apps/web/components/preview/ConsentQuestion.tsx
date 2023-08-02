@@ -1,14 +1,20 @@
+import { cn } from "@/../../packages/lib/cn";
+import { BackButton } from "@/components/preview/BackButton";
+import { isLight } from "@/lib/utils";
+import { Response } from "@formbricks/types/js";
 import type { ConsentQuestion } from "@formbricks/types/questions";
+import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
-import { cn } from "@/../../packages/lib/cn";
-import { isLight } from "@/lib/utils";
 
 interface ConsentQuestionProps {
   question: ConsentQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  storedResponseValue: string | null;
+  goToNextQuestion: (answer: Response["data"]) => void;
+  goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
 export default function ConsentQuestion({
@@ -16,18 +22,42 @@ export default function ConsentQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  storedResponseValue,
+  goToNextQuestion,
+  goToPreviousQuestion,
 }: ConsentQuestionProps) {
+  const [answer, setAnswer] = useState<string>("dismissed");
+
+  useEffect(() => {
+    setAnswer(storedResponseValue ?? "dismissed");
+  }, [storedResponseValue, question]);
+
+  const handleOnChange = () => {
+    answer === "accepted" ? setAnswer("dissmissed") : setAnswer("accepted");
+  };
+
+  const handleSumbit = (value: string) => {
+    const data = {
+      [question.id]: value,
+    };
+    if (storedResponseValue === value) {
+      goToNextQuestion(data);
+      setAnswer("dismissed");
+
+      return;
+    }
+    onSubmit(data);
+    setAnswer("dismissed");
+  };
+
   return (
     <div>
       <Headline headline={question.headline} questionId={question.id} />
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
-
       <form
         onSubmit={(e) => {
           e.preventDefault();
-
-          const checkbox = document.getElementById(question.id) as HTMLInputElement;
-          onSubmit({ [question.id]: checkbox.checked ? "accepted" : "dismissed" });
+          handleSumbit(answer);
         }}>
         <label className="relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border border-gray-200 bg-slate-50 p-4 text-sm focus:outline-none">
           <input
@@ -37,6 +67,8 @@ export default function ConsentQuestion({
             value={question.label}
             className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
             aria-labelledby={`${question.id}-label`}
+            onChange={handleOnChange}
+            checked={answer === "accepted"}
             style={{ borderColor: brandColor, color: brandColor }}
             required={question.required}
           />
@@ -45,7 +77,17 @@ export default function ConsentQuestion({
           </span>
         </label>
 
-        <div className="mt-4 flex w-full justify-end">
+        <div className="mt-4 flex w-full justify-between">
+          {goToPreviousQuestion && (
+            <BackButton
+              onClick={() =>
+                goToPreviousQuestion({
+                  [question.id]: answer,
+                })
+              }
+            />
+          )}
+          <div></div>
           <button
             type="submit"
             className={cn(

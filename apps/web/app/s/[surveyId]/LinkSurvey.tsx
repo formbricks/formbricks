@@ -34,8 +34,12 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
     initiateCountdown,
     restartSurvey,
     submitResponse,
+    goToPreviousQuestion,
+    goToNextQuestion,
+    storedResponseValue,
   } = useLinkSurveyUtils(survey);
 
+  const showBackButton = progress !== 0 && !finished;
   // Create a reference to the top element
   const topRef = useRef<HTMLDivElement>(null);
   const [autoFocus, setAutofocus] = useState(false);
@@ -98,6 +102,9 @@ export default function LinkSurvey({ survey }: LinkSurveyProps) {
               brandColor={survey.brandColor}
               lastQuestion={lastQuestion}
               onSubmit={submitResponse}
+              storedResponseValue={storedResponseValue}
+              goToNextQuestion={goToNextQuestion}
+              goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
               autoFocus={autoFocus}
             />
           )}
