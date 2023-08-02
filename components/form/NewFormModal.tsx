@@ -28,6 +28,7 @@ export default function NewFormModal({
 }: FormOnboardingModalProps) {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [airtableTrainingSessionId, setAirtableTrainingSessionId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState(SourcingLocations[0]);
@@ -40,6 +41,7 @@ export default function NewFormModal({
     e.preventDefault();
     const form = await createForm({
       name,
+      airtableTrainingSessionId,
       dueDate: new Date(dueDate),
       description,
       place: location,
@@ -115,6 +117,28 @@ export default function NewFormModal({
                         placeholder="e.g. Customer Research Survey"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
+                        autoFocus
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="name"
+                      className="text-sm font-light text-ui-gray-dark"
+                    >
+                      Nom du sourcing sur Airtable
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        name="name"
+                        className="block w-full p-2 mb-6 border-none rounded bg-ui-gray-light focus:ring-2 focus:ring-red sm:text-sm placeholder:font-extralight placeholder:text-ui-gray-medium"
+                        placeholder="e.g. Customer Research Survey"
+                        value={airtableTrainingSessionId}
+                        onChange={(e) =>
+                          setAirtableTrainingSessionId(e.target.value)
+                        }
                         autoFocus
                         required
                       />
