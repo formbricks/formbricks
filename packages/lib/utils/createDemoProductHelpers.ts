@@ -1,5 +1,137 @@
 import { QuestionType } from "@formbricks/types/questions";
 import { createId } from "@paralleldrive/cuid2";
+import { EventType } from "@prisma/client";
+import { NoCodeConfig } from "@formbricks/types/events";
+
+export const populateEnvironment = {
+  eventClasses: {
+    create: [
+      {
+        name: "New Session",
+        description: "Gets fired when a new session is created",
+        type: EventType.automatic,
+      },
+      {
+        name: "Exit Intent (Desktop)",
+        description: "A user on Desktop leaves the website with the cursor.",
+        type: EventType.automatic,
+      },
+      {
+        name: "50% Scroll",
+        description: "A user scrolled 50% of the current page",
+        type: EventType.automatic,
+      },
+    ],
+  },
+  attributeClasses: {
+    create: [
+      { name: "userId", description: "The internal ID of the person", type: EventType.automatic },
+      { name: "email", description: "The email of the person", type: EventType.automatic },
+    ],
+  },
+};
+
+type TUpdateEnvironmentArgs = {
+  eventClasses: {
+    create: {
+      name: string;
+      description: string;
+      type: EventType;
+      noCodeConfig?: NoCodeConfig;
+    }[];
+  };
+  attributeClasses: {
+    create: {
+      name: string;
+      description: string;
+      type: EventType;
+    }[];
+  };
+};
+
+export const updateEnvironmentArgs: TUpdateEnvironmentArgs = {
+  eventClasses: {
+    create: [
+      {
+        name: "Created New Event",
+        description: "Person created a new event",
+        type: EventType.code,
+      },
+      {
+        name: "Updated Availability",
+        description: "Person updated their availability",
+        type: EventType.code,
+      },
+      {
+        name: "Received Booking Request",
+        description: "Person received a booking request",
+        type: EventType.code,
+      },
+      {
+        name: "Invited Team Member",
+        description: "Person invited a team member",
+        type: EventType.noCode,
+        noCodeConfig: { type: "innerHtml", innerHtml: { value: "Add Team Member" } },
+      },
+      {
+        name: "Created New Workflow",
+        description: "Person setup a new workflow",
+        type: EventType.noCode,
+        noCodeConfig: { type: "innerHtml", innerHtml: { value: "Create Workflow" } },
+      },
+      {
+        name: "Viewed Insight",
+        description: "Person viewed the insights dashboard",
+        type: EventType.noCode,
+        noCodeConfig: { type: "pageUrl", pageUrl: { rule: "contains", value: "insights" } },
+      },
+    ],
+  },
+  attributeClasses: {
+    create: [
+      {
+        name: "Name",
+        description: "Full Name of the Person",
+        type: EventType.code,
+      },
+      {
+        name: "Role",
+        description: "Current role of the person",
+        type: EventType.code,
+      },
+      {
+        name: "Company",
+        description: "The company they work at",
+        type: EventType.code,
+      },
+      {
+        name: "Experience",
+        description: "Level of experience of the person",
+        type: EventType.code,
+      },
+      {
+        name: "Usage Frequency",
+        description: "Frequency of product usage",
+        type: EventType.automatic,
+      },
+      {
+        name: "Company Size",
+        description: "Company size",
+        type: EventType.code,
+      },
+      {
+        name: "Product Satisfaction Score",
+        description: "Level of product satisfaction of the person",
+        type: EventType.automatic,
+      },
+      {
+        name: "Recommendation Likelihood",
+        description: "Likehood of recommending the product",
+        type: EventType.automatic,
+      },
+    ],
+  },
+};
 
 export const DEMO_NAMES = [
   "Wei Zhu",
@@ -939,7 +1071,7 @@ export const userAgents = [
 ];
 
 // Create a function that generates responses and displays
-export const generateResponsesAndDisplays = (people, detailedResponses, userAgents) => {
+export const generateResponsesAndDisplays = (people: { id: string }[], detailedResponses: any) => {
   const responses: any = [];
   const displays: any = [];
 
