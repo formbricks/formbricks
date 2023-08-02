@@ -173,14 +173,8 @@ update_nextauth_secret() {
 }
 
 echo "🚙 Updating NEXTAUTH_SECRET in the Formbricks container..."
-while true; do
-  if update_nextauth_secret; then
-    echo "🚗 NEXTAUTH_SECRET updated successfully!"
-    break
-  else
-    echo "🚧 Failed to update NEXTAUTH_SECRET. Retrying..."
-  fi
-done
+nextauth_secret=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32) && sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
+echo "🚗 NEXTAUTH_SECRET updated successfully!"
 
 newgrp docker << END
 
