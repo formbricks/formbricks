@@ -7,7 +7,11 @@ module.exports = {
   },
   content: ["./src/**/*.{tsx,ts,jsx,js}"],
   theme: {
-    extend: {},
+    extend: {
+      zIndex: {
+        '999999': '999999',
+      }
+    },
   },
   prefix: "fb-",
   plugins: [],
