@@ -1,3 +1,4 @@
+import { PlacementType } from "./js";
 import { Question } from "./questions";
 
 export interface ThankYouCard {
@@ -33,6 +34,10 @@ export interface Survey {
   autoComplete: number | null;
   surveyClosedMessage: SurveyClosedMessage | null;
   closeOnDate: Date | null;
+  brandColor: string | null;
+  placement: PlacementType | null;
+  clickOutsideClose: boolean | null;
+  darkOverlay: boolean | null;
 }
 
 export interface AttributeFilter {
