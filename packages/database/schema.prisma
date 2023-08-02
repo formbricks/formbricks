@@ -239,6 +239,10 @@ model Survey {
   /// @zod.custom(imports.ZSurveyClosedMessage)
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
+  brandColor          String?
+  placement           WidgetPlacement?
+  clickOutsideClose   Boolean?
+  darkOverlay         Boolean?
 }
 
 model Event {
