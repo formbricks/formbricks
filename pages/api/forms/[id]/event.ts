@@ -148,7 +148,7 @@ export default async function handle(
     events[0].data = {
       ...events[0].data,
       formId,
-      formName: form.name,
+      formName: form.airtableTrainingSessionId,
       submissions,
     };
     formatScoreSummary(events, formId, form, submissions);
@@ -249,7 +249,7 @@ const formatScoreSummary = (
   events[0].data = {
     ...events[0].data,
     formId,
-    formName: form.name,
+    formName: form.airtableTrainingSessionId,
     submissions,
   };
 
