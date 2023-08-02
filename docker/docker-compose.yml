@@ -19,14 +19,16 @@ x-environment: &environment
     # You do not need the NEXTAUTH_URL environment variable in Vercel.
     NEXTAUTH_URL: http://localhost:3000
 
+    # PostgreSQL password
+    POSTGRES_PASSWORD: postgres
+
 services:
   postgres:
     restart: always
     image: postgres:15-alpine
     volumes:
       - postgres:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_PASSWORD=postgres
+    <<: *environment
 
   formbricks:
     restart: always
