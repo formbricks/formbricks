@@ -110,6 +110,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             "Typebot gives you powerful blocks to create unique chat experiences. Embed them anywhere on your apps and start collecting results like magic.",
           href: "https://typebot.io",
         },
+                {
+          name: "Twenty",
+          description:
+            "A modern CRM offering the flexibility of open-source, advanced features and sleek design.",
+          href: "https://twenty.com",
+        },
         {
           name: "Webiny",
           description:
