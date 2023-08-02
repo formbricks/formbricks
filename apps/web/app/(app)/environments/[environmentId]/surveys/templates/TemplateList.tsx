@@ -56,13 +56,16 @@ export default function TemplateList({
 
     const fullCategories =
       !!profile?.objective && profile.objective !== "other"
-        ? [RECOMMENDED_CATEGORY_NAME, ...defaultCategories]
+        ? [RECOMMENDED_CATEGORY_NAME, ALL_CATEGORY_NAME, ...defaultCategories]
         : [ALL_CATEGORY_NAME, ...defaultCategories];
 
     setCategories(fullCategories);
 
-    const activeFilter =
-      !!profile?.objective && profile.objective !== "other" ? RECOMMENDED_CATEGORY_NAME : ALL_CATEGORY_NAME;
+    const activeFilter = templateSearch
+      ? ALL_CATEGORY_NAME
+      : !!profile?.objective && profile.objective !== "other"
+      ? RECOMMENDED_CATEGORY_NAME
+      : ALL_CATEGORY_NAME;
     setSelectedFilter(activeFilter);
   }, [profile, templateSearch]);
 
