@@ -4,6 +4,7 @@ import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
+import StylingCard from "./StylingCard";
 
 interface SettingsViewProps {
   environmentId: string;
@@ -39,6 +40,8 @@ export default function SettingsView({ environmentId, localSurvey, setLocalSurve
         setLocalSurvey={setLocalSurvey}
         environmentId={environmentId}
       />
+
+      <StylingCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
     </div>
   );
 }
