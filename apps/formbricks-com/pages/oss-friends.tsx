@@ -7,9 +7,9 @@ export default function OSSFriendsPage() {
   const [OSSFriends, setOSSFriends] = useState([]);
 
   useEffect(() => {
-    fetch("https://formbricks.com/api/oss-friends")
+    fetch("http://localhost:3001/api/oss-friends")
       .then((response) => response.json())
-      .then((data) => setOSSFriends(data));
+      .then((data) => setOSSFriends(data.data));
   }, []);
 
   return (
