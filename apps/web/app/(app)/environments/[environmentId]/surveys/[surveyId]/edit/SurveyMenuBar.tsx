@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isEqual } from "lodash";
+import { validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
   localSurvey: Survey;
@@ -21,6 +22,7 @@ interface SurveyMenuBarProps {
   environmentId: string;
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
+  setInvalidQuestions: (invalidQuestions: String[]) => void;
 }
 
 export default function SurveyMenuBar({
@@ -30,6 +32,7 @@ export default function SurveyMenuBar({
   setLocalSurvey,
   activeId,
   setActiveId,
+  setInvalidQuestions,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const { triggerSurveyMutate, isMutatingSurvey } = useSurveyMutation(environmentId, localSurvey.id);
@@ -37,6 +40,7 @@ export default function SurveyMenuBar({
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const { product } = useProduct(environmentId);
+  let faultyQuestions: String[] = [];
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -85,6 +89,26 @@ export default function SurveyMenuBar({
     }
   };
 
+  const validateSurvey = (survey) => {
+    faultyQuestions = [];
+    for (let index = 0; index < survey.questions.length; index++) {
+      const question = survey.questions[index];
+      const isValid = validateQuestion(question);
+
+      if (!isValid) {
+        faultyQuestions.push(question.id);
+      }
+    }
+    // if there are any faulty questions, the user won't be allowed to save the survey
+    if (faultyQuestions.length > 0) {
+      setInvalidQuestions(faultyQuestions);
+      toast.error("Please fill required fields");
+      return false;
+    }
+
+    return true;
+  };
+
   const saveSurveyAction = (shouldNavigateBack = false) => {
     // variable named strippedSurvey that is a copy of localSurvey with isDraft removed from every question
     const strippedSurvey = {
@@ -94,6 +118,11 @@ export default function SurveyMenuBar({
         return rest;
       }),
     };
+
+    if (!validateSurvey(localSurvey)) {
+      return;
+    }
+
     triggerSurveyMutate({ ...strippedSurvey })
       .then(async (response) => {
         if (!response?.ok) {
@@ -180,6 +209,9 @@ export default function SurveyMenuBar({
             variant="darkCTA"
             loading={isMutatingSurvey}
             onClick={async () => {
+              if (!validateSurvey(localSurvey)) {
+                return;
+              }
               await triggerSurveyMutate({ ...localSurvey, status: "inProgress" });
               router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
             }}>

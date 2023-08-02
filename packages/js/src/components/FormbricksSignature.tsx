@@ -9,7 +9,7 @@ export default function FormbricksSignature() {
       <p className="fb-text-xs fb-text-slate-400">
         Powered by{" "}
         <b>
-          <span className="fb-text-slate-500 fb-hover:text-slate-700">Formbricks</span>
+          <span className="fb-text-slate-500 hover:fb-text-slate-700">Formbricks</span>
         </b>
       </p>
     </a>

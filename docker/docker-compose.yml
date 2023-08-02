@@ -1,10 +1,6 @@
 version: "3.3"
 x-environment: &environment
   environment:
-    ########################################################################
-    # ------------ MANDATORY (CHANGE ACCORDING TO YOUR SETUP) ------------#
-    ########################################################################
-
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
@@ -18,9 +14,13 @@ x-environment: &environment
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
     # You can use: `openssl rand -base64 32` to generate one
     NEXTAUTH_SECRET:
+
     # Set this to your public-facing URL, e.g., https://example.com
     # You do not need the NEXTAUTH_URL environment variable in Vercel.
     NEXTAUTH_URL: http://localhost:3000
+
+    # PostgreSQL password
+    POSTGRES_PASSWORD: postgres
 
 services:
   postgres:
@@ -28,8 +28,7 @@ services:
     image: postgres:15-alpine
     volumes:
       - postgres:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_PASSWORD=postgres
+    <<: *environment
 
   formbricks:
     restart: always
