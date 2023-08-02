@@ -176,6 +176,15 @@ export default function FormList() {
             <></>
           )}
         </div>
+        {!forms && (
+          <EmptyPageFiller
+            alertText="Aucune session d'inscription trouvée."
+            hintText=""
+            borderStyles="border-4 border-dotted border-red"
+          >
+            <FolderOpenIcon className="w-24 h-24 mx-auto text-ui-gray-medium stroke-thin" />
+          </EmptyPageFiller>
+        )}
         {filteredData &&
           (filteredData.length === 0 ? (
             <div className="mt-5 text-center">
