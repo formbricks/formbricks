@@ -102,7 +102,7 @@ export default function TemplateList({
 
   return (
     <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-3 focus:outline-none">
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap gap-1">
         {categories.map((category) => (
           <button
             key={category}
@@ -113,7 +113,7 @@ export default function TemplateList({
               selectedFilter === category
                 ? " bg-slate-800 font-semibold text-white"
                 : " bg-white text-slate-700 hover:bg-slate-100",
-              "mt-2 rounded border border-slate-800 px-2 py-1 text-sm transition-all duration-150 "
+              "mt-2 rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150 "
             )}>
             {category}
             {category === RECOMMENDED_CATEGORY_NAME && <SparklesIcon className="ml-1 inline h-5 w-5" />}
