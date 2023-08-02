@@ -16,34 +16,48 @@ interface StylingCardProps {
 
 export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCardProps) {
   const [open, setOpen] = useState(false);
-  const autoComplete = localSurvey.autoComplete !== null;
-  const [surveyCloseOnDateToggle, setSurveyCloseOnDateToggle] = useState(false);
+  const isBrandColor = localSurvey.brandColor !== null;
+  const isPosition = localSurvey.placement !== null;
+  console.log(localSurvey);
 
-  const [color, setColor] = useState("#526988");
-
-  const handleSurveyCloseOnDateToggle = () => {
-    if (surveyCloseOnDateToggle && localSurvey.closeOnDate) {
-      setSurveyCloseOnDateToggle(false);
-
-      setLocalSurvey({ ...localSurvey, closeOnDate: null });
-      return;
-    }
-
-    if (surveyCloseOnDateToggle) {
-      setSurveyCloseOnDateToggle(false);
-      return;
-    }
-    setSurveyCloseOnDateToggle(true);
-  };
-
-  const handleCheckMark = () => {
-    if (autoComplete) {
-      const updatedSurvey: Survey = { ...localSurvey, autoComplete: null };
+  const togglePlacement = () => {
+    if (isPosition) {
+      const updatedSurvey: Survey = {
+        ...localSurvey,
+        placement: null,
+        clickOutsideClose: true,
+        darkOverlay: false,
+      };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey: Survey = { ...localSurvey, autoComplete: 25 };
+      const updatedSurvey: Survey = { ...localSurvey, placement: "bottomRight" };
       setLocalSurvey(updatedSurvey);
     }
+  };
+
+  const toggleBrandColor = () => {
+    if (isBrandColor) {
+      setLocalSurvey({ ...localSurvey, brandColor: null });
+    } else {
+      setLocalSurvey({ ...localSurvey, brandColor: "#64748b" });
+    }
+  };
+
+  const handleColorChange = (color: string) => {
+    setLocalSurvey({ ...localSurvey, brandColor: color });
+  };
+
+  const handlePlacementChange = (placement: PlacementType) => {
+    setLocalSurvey({ ...localSurvey, placement });
+  };
+
+  const handleOverlay = (overlay: string) => {
+    const darkOverlay = overlay === "darkOverlay";
+    setLocalSurvey({ ...localSurvey, darkOverlay });
+  };
+  const handlClickOutside = (isClickOutside: string) => {
+    const clickOutsideClose = isClickOutside === "allow";
+    setLocalSurvey({ ...localSurvey, clickOutsideClose });
   };
 
   const placements = [
@@ -53,10 +67,6 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     { name: "Bottom Left", value: "bottomLeft", disabled: false },
     { name: "Centered Modal", value: "center", disabled: false },
   ];
-
-  const [currentPlacement, setCurrentPlacement] = useState<PlacementType>("bottomRight");
-  const [overlay, setOverlay] = useState("");
-  const [clickOutside, setClickOutside] = useState("");
 
   return (
     <Collapsible.Root
@@ -80,7 +90,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
           {/* Brand Color */}
           <div className="p-3">
             <div className="ml-2 flex items-center space-x-1">
-              <Switch id="autoComplete" checked={autoComplete} onCheckedChange={handleCheckMark} />
+              <Switch id="autoComplete" checked={isBrandColor} onCheckedChange={toggleBrandColor} />
               <Label htmlFor="autoComplete" className="cursor-pointer">
                 <div className="ml-2">
                   <h3 className="text-sm font-semibold text-slate-700">Brand Color</h3>
@@ -90,11 +100,11 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                 </div>
               </Label>
             </div>
-            {autoComplete && (
+            {localSurvey.brandColor && (
               <div className="ml-2 mt-4 rounded-lg border bg-slate-50 p-4">
                 <div className="w-full max-w-xs">
                   <Label htmlFor="brandcolor">Color (HEX)</Label>
-                  <ColorPicker color={color} onChange={setColor} />
+                  <ColorPicker color={localSurvey.brandColor} onChange={handleColorChange} />
                 </div>
               </div>
             )}
@@ -102,11 +112,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
           {/* positioning */}
           <div className="p-3 ">
             <div className="ml-2 flex items-center space-x-1">
-              <Switch
-                id="surveyDeadline"
-                checked={surveyCloseOnDateToggle}
-                onCheckedChange={handleSurveyCloseOnDateToggle}
-              />
+              <Switch id="surveyDeadline" checked={isPosition} onCheckedChange={togglePlacement} />
               <Label htmlFor="surveyDeadline" className="cursor-pointer">
                 <div className="ml-2">
                   <h3 className="text-sm font-semibold text-slate-700">Positioning</h3>
@@ -116,14 +122,14 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                 </div>
               </Label>
             </div>
-            {surveyCloseOnDateToggle && (
+            {localSurvey.placement && (
               <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
                 <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
                   <div className="w-full items-center">
                     <div className="flex">
                       <RadioGroup
-                        onValueChange={(e) => setCurrentPlacement(e as PlacementType)}
-                        value={currentPlacement}>
+                        onValueChange={(e) => handlePlacementChange(e as PlacementType)}
+                        value={localSurvey.placement}>
                         {placements.map((placement) => (
                           <div
                             key={placement.value}
@@ -147,18 +153,24 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                         <div
                           className={cn(
                             "absolute h-16 w-16 rounded bg-slate-700",
-                            getPlacementStyle(currentPlacement)
+                            getPlacementStyle(localSurvey.placement)
                           )}></div>
                       </div>
                     </div>
 
-                    {currentPlacement === "center" && (
+                    {localSurvey.placement === "center" && (
                       <>
                         <div className="mt-6 space-y-2">
                           <Label className="font-semibold">Centered modal overlay color</Label>
                           <RadioGroup
-                            onValueChange={(e) => setOverlay(e)}
-                            value={overlay}
+                            onValueChange={(e) => handleOverlay(e)}
+                            value={
+                              localSurvey.darkOverlay === null
+                                ? ""
+                                : localSurvey.darkOverlay
+                                ? "darkOverlay"
+                                : "lightOverlay"
+                            }
                             className="flex space-x-4">
                             <div className="flex items-center space-x-2 whitespace-nowrap">
                               <RadioGroupItem id="lightOverlay" value="lightOverlay" />
@@ -179,8 +191,14 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                             Allow users to exit by clicking outside the study
                           </Label>
                           <RadioGroup
-                            onValueChange={(e) => setClickOutside(e)}
-                            value={clickOutside}
+                            onValueChange={(e) => handlClickOutside(e)}
+                            value={
+                              localSurvey.clickOutsideClose === null
+                                ? ""
+                                : localSurvey.clickOutsideClose
+                                ? "allow"
+                                : "disallow"
+                            }
                             className="flex space-x-4">
                             <div className="flex items-center space-x-2 whitespace-nowrap">
                               <RadioGroupItem id="disallow" value="disallow" />
