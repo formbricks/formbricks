@@ -187,7 +187,7 @@ export const SignupForm = () => {
             {env.NEXT_PUBLIC_TERMS_URL && (
               <Link
                 className="font-semibold"
-                href="google.com" /* {env.NEXT_PUBLIC_TERMS_URL} */
+                href={env.NEXT_PUBLIC_TERMS_URL}
                 rel="noreferrer"
                 target="_blank">
                 Terms of Service
@@ -197,7 +197,7 @@ export const SignupForm = () => {
             {env.NEXT_PUBLIC_PRIVACY_URL && (
               <Link
                 className="font-semibold"
-                href="google.com" /* {/* env.NEXT_PUBLIC_PRIVACY_URL }*/
+                href={env.NEXT_PUBLIC_PRIVACY_URL}
                 rel="noreferrer"
                 target="_blank">
                 Privacy Policy.
