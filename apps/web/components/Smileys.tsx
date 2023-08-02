@@ -1,6 +1,6 @@
 export const TiredFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
       <g id="line">
         <circle
           cx="36"
@@ -61,7 +61,7 @@ export const TiredFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) => 
 
 export const WearyFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
       <g id="line">
         <circle
           cx="36"
@@ -122,7 +122,7 @@ export const WearyFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) => 
 
 export const PerseveringFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
       <g id="line">
         <circle
           cx="36"
@@ -192,7 +192,7 @@ export const PerseveringFace: React.FC<React.SVGProps<SVGCircleElement>> = (prop
 
 export const FrowningFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
       <g id="line">
         <circle
           cx="36"
@@ -222,7 +222,7 @@ export const FrowningFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) 
 
 export const ConfusedFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
       <g id="line">
         <circle
           cx="36"
@@ -251,7 +251,7 @@ export const ConfusedFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) 
 
 export const NeutralFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
       <g id="line">
         <circle
           cx="36"
@@ -284,7 +284,7 @@ export const NeutralFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) =
 
 export const SlightlySmilingFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
       <g id="line">
         <circle
           cx="36"
@@ -314,7 +314,7 @@ export const SlightlySmilingFace: React.FC<React.SVGProps<SVGCircleElement>> = (
 
 export const SmilingFaceWithSmilingEyes: React.FC<React.SVGProps<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
       <g id="line">
         <circle
           cx="36"
@@ -358,7 +358,7 @@ export const SmilingFaceWithSmilingEyes: React.FC<React.SVGProps<SVGCircleElemen
 
 export const GrinningFaceWithSmilingEyes: React.FC<React.SVGProps<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
       <g id="line">
         <circle
           cx="36"
@@ -410,7 +410,7 @@ export const GrinningFaceWithSmilingEyes: React.FC<React.SVGProps<SVGCircleEleme
 
 export const GrinningSquintingFace: React.FC<React.SVGProps<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
       <g id="line">
         <circle
           cx="36"

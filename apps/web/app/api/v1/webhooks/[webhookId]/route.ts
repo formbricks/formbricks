@@ -18,6 +18,9 @@ export async function GET(_: Request, { params }: { params: { webhookId: string 
   if (!webhook) {
     return responses.notFoundResponse("Webhook", params.webhookId);
   }
+  if (webhook.environmentId !== apiKeyData.environmentId) {
+    return responses.unauthorizedResponse();
+  }
   return responses.successResponse(webhook);
 }
 
@@ -31,7 +34,16 @@ export async function DELETE(_: Request, { params }: { params: { webhookId: stri
     return responses.notAuthenticatedResponse();
   }
 
-  // add webhook to database
+  // check if webhook exists
+  const webhook = await getWebhook(params.webhookId);
+  if (!webhook) {
+    return responses.notFoundResponse("Webhook", params.webhookId);
+  }
+  if (webhook.environmentId !== apiKeyData.environmentId) {
+    return responses.unauthorizedResponse();
+  }
+
+  // delete webhook from database
   try {
     const webhook = await deleteWebhook(params.webhookId);
     return responses.successResponse(webhook);

@@ -8,6 +8,7 @@ import Button from "./Button";
 import { Calendar } from "./Calendar";
 import { useRef } from "react";
 import { SelectSingleEventHandler } from "react-day-picker";
+import { addDays } from "date-fns";
 
 export function DatePicker({
   date,
@@ -44,7 +45,7 @@ export function DatePicker({
           mode="single"
           selected={formattedDate}
           disabled={{
-            before: new Date(),
+            before: addDays(new Date(), 1),
           }}
           onSelect={handleDateSelect}
           initialFocus
