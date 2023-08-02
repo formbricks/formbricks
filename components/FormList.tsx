@@ -255,9 +255,10 @@ export default function FormList() {
                             </span>
                           ) : dateDayDiff(form.dueDate) > 7 ? (
                             <span className="text-base font-normal text-black-title line-clamp-3">
-                              {format(new Date(form.dueDate), "dd MMMM yyyy", {
-                                locale: fr,
-                              })}
+                              {"Ferme le " +
+                                format(new Date(form.dueDate), "dd MMMM yyyy", {
+                                  locale: fr,
+                                })}
                             </span>
                           ) : (
                             <span className="text-base  text-rose-500 font-normal line-clamp-3 ">
