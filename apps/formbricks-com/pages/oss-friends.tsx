@@ -1,17 +1,18 @@
 import Layout from "@/components/shared/Layout";
 import HeroTitle from "@/components/shared/HeroTitle";
 import { Button } from "@formbricks/ui";
-import { useEffect, useState } from "react";
 
-export default function OSSFriendsPage() {
-  const [OSSFriends, setOSSFriends] = useState([]);
+type OSSFriend = {
+  href: string;
+  name: string;
+  description: string;
+};
 
-  useEffect(() => {
-    fetch("https://formbricks.com/api/oss-friends")
-      .then((response) => response.json())
-      .then((data) => setOSSFriends(data.data));
-  }, []);
+type Props = {
+  OSSFriends: OSSFriend[];
+};
 
+export default function OSSFriendsPage({ OSSFriends }: Props) {
   return (
     <Layout title="OSS Friends" description="Open-source projects and tools for an open world.">
       <HeroTitle headingPt1="Our" headingTeal="Open-source" headingPt2="Friends" />
@@ -32,4 +33,17 @@ export default function OSSFriendsPage() {
       </div>
     </Layout>
   );
+}
+
+export async function getStaticProps() {
+  const res = await fetch("https://formbricks.com/api/oss-friends");
+  const data = await res.json();
+
+  // By returning { props: { OSSFriends } }, the OSSFriendsPage component
+  // will receive `OSSFriends` as a prop at build time
+  return {
+    props: {
+      OSSFriends: data.data,
+    },
+  };
 }
