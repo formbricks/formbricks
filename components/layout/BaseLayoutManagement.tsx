@@ -107,7 +107,7 @@ export default function BaseLayoutManagement({
               </div>
             </div>
           </header>
-          {children}
+          <div className="flex flex-col w-full">{children}</div>
           <footer className="w-full self-end bg-red flex flex-col justify-between items-center py-6 ">
             <div className="flex flex-col  justify-between items-center ">
               <Link href="/forms/">
