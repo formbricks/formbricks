@@ -84,7 +84,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
             questions={localSurvey.questions}
-            brandColor={product.brandColor}
+            brandColor={localSurvey.brandColor ? localSurvey.brandColor : product.brandColor}
             environmentId={environmentId}
             product={product}
             environment={environment}
@@ -92,6 +92,7 @@ export default function SurveyEditor({ environmentId, surveyId }: SurveyEditorPr
             thankYouCard={localSurvey.thankYouCard}
             previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
             autoClose={localSurvey.autoClose}
+            overwritePosition={localSurvey.placement}
           />
         </aside>
       </div>

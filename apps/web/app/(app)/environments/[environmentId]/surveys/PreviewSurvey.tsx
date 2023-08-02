@@ -10,6 +10,7 @@ import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
+import { PlacementType } from "@formbricks/types/js";
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
@@ -22,6 +23,7 @@ interface PreviewSurveyProps {
   previewType?: "modal" | "fullwidth" | "email";
   product: TProduct;
   environment: TEnvironment;
+  overwritePosition: PlacementType | null;
 }
 
 export default function PreviewSurvey({
@@ -35,6 +37,7 @@ export default function PreviewSurvey({
   previewType,
   product,
   environment,
+  overwritePosition,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [progress, setProgress] = useState(0); // [0, 1]
@@ -257,7 +260,7 @@ export default function PreviewSurvey({
       </div>
 
       {previewType === "modal" ? (
-        <Modal isOpen={isModalOpen} placement={product.placement}>
+        <Modal isOpen={isModalOpen} placement={overwritePosition ? overwritePosition : product.placement}>
           {!countdownStop && autoClose !== null && autoClose > 0 && (
             <Progress progress={countdownProgress} brandColor={brandColor} />
           )}
