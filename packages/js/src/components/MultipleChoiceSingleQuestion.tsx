@@ -107,7 +107,7 @@ export default function MultipleChoiceSingleQuestion({
                   selectedChoice === choice.label
                     ? "fb-z-10 fb-bg-slate-50 fb-border-slate-400"
                     : "fb-border-gray-200",
-                  "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-rounded-md fb-border fb-p-4 focus:fb-outline-none hover:bg-slate-50"
+                  "fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-rounded-md fb-border fb-p-4 focus:fb-outline-none hover:bg-slate-50 fb-text-slate-800"
                 )}>
                 <span className="fb-flex fb-items-center fb-text-sm">
                   <input

@@ -72,7 +72,7 @@ export default function NPSQuestion({
                 key={number}
                 className={cn(
                   selectedChoice === number ? "fb-z-10 fb-border-slate-400 fb-bg-slate-50" : "",
-                  "fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-border fb-bg-white fb-text-center fb-text-sm fb-leading-10 first:fb-rounded-l-md last:fb-rounded-r-md hover:fb-bg-gray-100 focus:fb-outline-none"
+                  "fb-relative fb-h-10 fb-flex-1 fb-cursor-pointer fb-border fb-bg-white fb-text-center fb-text-sm fb-leading-10 first:fb-rounded-l-md last:fb-rounded-r-md hover:fb-bg-gray-100 focus:fb-outline-none fb-text-slate-800"
                 )}>
                 <input
                   type="radio"
