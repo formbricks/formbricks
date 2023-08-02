@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import type { RatingQuestion } from "@formbricks/types/questions";
 import Headline from "./Headline";
@@ -19,11 +19,17 @@ import {
 } from "../Smileys";
 import SubmitButton from "@/components/preview/SubmitButton";
 
+import { Response } from "@formbricks/types/js";
+import { BackButton } from "@/components/preview/BackButton";
+
 interface RatingQuestionProps {
   question: RatingQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  storedResponseValue: number | null;
+  goToNextQuestion: (answer: Response["data"]) => void;
+  goToPreviousQuestion?: (answer?: Response["data"]) => void;
 }
 
 export default function RatingQuestion({
@@ -31,18 +37,35 @@ export default function RatingQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  storedResponseValue,
+  goToNextQuestion,
+  goToPreviousQuestion,
 }: RatingQuestionProps) {
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
   const [hoveredNumber, setHoveredNumber] = useState(0);
   // const icons = RatingSmileyList(question.range);
 
+  useEffect(() => {
+    setSelectedChoice(storedResponseValue);
+  }, [storedResponseValue, question]);
+
+  const handleSubmit = (value: number | null) => {
+    const data = {
+      [question.id]: value ?? null,
+    };
+    if (storedResponseValue === value) {
+      goToNextQuestion(data);
+      setSelectedChoice(null);
+      return;
+    }
+    onSubmit(data);
+    setSelectedChoice(null);
+  };
+
   const handleSelect = (number: number) => {
     setSelectedChoice(number);
     if (question.required) {
-      onSubmit({
-        [question.id]: number,
-      });
-      setSelectedChoice(null); // reset choice
+      handleSubmit(number);
     }
   };
 
@@ -53,6 +76,7 @@ export default function RatingQuestion({
       value={number}
       className="absolute left-0 h-full w-full cursor-pointer opacity-0"
       onChange={() => handleSelect(number)}
+      checked={selectedChoice === number}
       required={question.required}
     />
   );
@@ -61,14 +85,7 @@ export default function RatingQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-
-        const data = {
-          [question.id]: selectedChoice,
-        };
-
-        setSelectedChoice(null); // reset choice
-
-        onSubmit(data);
+        handleSubmit(selectedChoice);
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -128,12 +145,17 @@ export default function RatingQuestion({
         </fieldset>
       </div>
 
-      {!question.required && (
-        <div className="mt-4 flex w-full justify-between">
-          <div></div>
-          <SubmitButton {...{ question, lastQuestion, brandColor }} />
-        </div>
-      )}
+      <div className="mt-4 flex w-full justify-between">
+        {goToPreviousQuestion && (
+          <BackButton
+            onClick={() => {
+              goToPreviousQuestion({ [question.id]: selectedChoice });
+            }}
+          />
+        )}
+        <div></div>
+        {(!question.required || storedResponseValue) && <SubmitButton {...{ question, lastQuestion, brandColor }} />}
+      </div>
     </form>
   );
 }

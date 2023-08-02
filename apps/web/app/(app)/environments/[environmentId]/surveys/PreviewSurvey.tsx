@@ -43,6 +43,11 @@ export default function PreviewSurvey({
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
   const [showFormbricksSignature, setShowFormbricksSignature] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [storedResponseValue, setStoredResponseValue] = useState<any>();
+  const [storedResponse, setStoredResponse] = useState<Record<string, any>>({});
+
+  const showBackButton = progress !== 0 && !finished;
 
   useEffect(() => {
     if (product) {
@@ -131,54 +136,54 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, surveyType, questions, setActiveQuestionId, thankYouCard]);
 
-  function evaluateCondition(logic: Logic, answerValue: any): boolean {
+  function evaluateCondition(logic: Logic, responseValue: any): boolean {
     switch (logic.condition) {
       case "equals":
         return (
-          (Array.isArray(answerValue) && answerValue.length === 1 && answerValue.includes(logic.value)) ||
-          answerValue.toString() === logic.value
+          (Array.isArray(responseValue) && responseValue.length === 1 && responseValue.includes(logic.value)) ||
+          responseValue.toString() === logic.value
         );
       case "notEquals":
-        return answerValue !== logic.value;
+        return responseValue !== logic.value;
       case "lessThan":
-        return logic.value !== undefined && answerValue < logic.value;
+        return logic.value !== undefined && responseValue < logic.value;
       case "lessEqual":
-        return logic.value !== undefined && answerValue <= logic.value;
+        return logic.value !== undefined && responseValue <= logic.value;
       case "greaterThan":
-        return logic.value !== undefined && answerValue > logic.value;
+        return logic.value !== undefined && responseValue > logic.value;
       case "greaterEqual":
-        return logic.value !== undefined && answerValue >= logic.value;
+        return logic.value !== undefined && responseValue >= logic.value;
       case "includesAll":
         return (
-          Array.isArray(answerValue) &&
+          Array.isArray(responseValue) &&
           Array.isArray(logic.value) &&
-          logic.value.every((v) => answerValue.includes(v))
+          logic.value.every((v) => responseValue.includes(v))
         );
       case "includesOne":
         return (
-          Array.isArray(answerValue) &&
+          Array.isArray(responseValue) &&
           Array.isArray(logic.value) &&
-          logic.value.some((v) => answerValue.includes(v))
+          logic.value.some((v) => responseValue.includes(v))
         );
       case "accepted":
-        return answerValue === "accepted";
+        return responseValue === "accepted";
       case "clicked":
-        return answerValue === "clicked";
+        return responseValue === "clicked";
       case "submitted":
-        if (typeof answerValue === "string") {
-          return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
-        } else if (Array.isArray(answerValue)) {
-          return answerValue.length > 0;
-        } else if (typeof answerValue === "number") {
-          return answerValue !== null;
+        if (typeof responseValue === "string") {
+          return responseValue !== "dismissed" && responseValue !== "" && responseValue !== null;
+        } else if (Array.isArray(responseValue)) {
+          return responseValue.length > 0;
+        } else if (typeof responseValue === "number") {
+          return responseValue !== null;
         }
         return false;
       case "skipped":
         return (
-          (Array.isArray(answerValue) && answerValue.length === 0) ||
-          answerValue === "" ||
-          answerValue === null ||
-          answerValue === "dismissed"
+          (Array.isArray(responseValue) && responseValue.length === 0) ||
+          responseValue === "" ||
+          responseValue === null ||
+          responseValue === "dismissed"
         );
       default:
         return false;
@@ -193,14 +198,14 @@ export default function PreviewSurvey({
     const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
     if (currentQuestionIndex === -1) throw new Error("Question not found");
 
-    const answerValue = answer[activeQuestionId];
+    const responseValue = answer[activeQuestionId];
     const currentQuestion = questions[currentQuestionIndex];
 
     if (currentQuestion.logic && currentQuestion.logic.length > 0) {
       for (let logic of currentQuestion.logic) {
         if (!logic.destination) continue;
 
-        if (evaluateCondition(logic, answerValue)) {
+        if (evaluateCondition(logic, responseValue)) {
           return logic.destination;
         }
       }
@@ -209,11 +214,13 @@ export default function PreviewSurvey({
   }
 
   const gotoNextQuestion = (data) => {
+    setStoredResponse({ ...storedResponse, ...data });
     const nextQuestionId = getNextQuestion(data);
-
+    setStoredResponseValue(storedResponse[nextQuestionId]);
     if (nextQuestionId !== "end") {
       setActiveQuestionId(nextQuestionId);
     } else {
+      setFinished(true);
       if (thankYouCard?.enabled) {
         setActiveQuestionId("thank-you-card");
         setProgress(1);
@@ -226,6 +233,15 @@ export default function PreviewSurvey({
       }
     }
   };
+
+  function goToPreviousQuestion(data: any) {
+    setStoredResponse({ ...storedResponse, ...data });
+    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
+    const previousQuestionId = questions[currentQuestionIndex - 1].id;
+    setStoredResponseValue(storedResponse[previousQuestionId]);
+    setActiveQuestionId(previousQuestionId);
+  }
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -285,6 +301,9 @@ export default function PreviewSurvey({
                     brandColor={brandColor}
                     lastQuestion={idx === questions.length - 1}
                     onSubmit={gotoNextQuestion}
+                    storedResponseValue={storedResponseValue}
+                    goToNextQuestion={gotoNextQuestion}
+                    goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
                     autoFocus={false}
                   />
                 ) : null
@@ -313,6 +332,9 @@ export default function PreviewSurvey({
                       brandColor={brandColor}
                       lastQuestion={idx === questions.length - 1}
                       onSubmit={gotoNextQuestion}
+                      storedResponseValue={storedResponseValue}
+                      goToNextQuestion={gotoNextQuestion}
+                      goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
                       autoFocus={false}
                     />
                   ) : null
