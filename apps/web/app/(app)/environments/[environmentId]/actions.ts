@@ -2,6 +2,7 @@
 
 import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/errors";
+import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteSurvey, getSurvey } from "@formbricks/lib/services/survey";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
@@ -110,6 +111,17 @@ export async function createTeam(teamName: string, ownerUserId: string): Promise
       },
     },
   });
+
+  const teamId = newTeam?.id;
+
+  if (teamId) {
+    fetch(`${WEBAPP_URL}/api/v1/teams/${teamId}/add_demo_product`, {
+      method: "POST",
+      headers: {
+        "x-api-key": INTERNAL_SECRET,
+      },
+    });
+  }
 
   return newTeam;
 }

@@ -3,7 +3,6 @@ import { verifyPassword } from "@/lib/auth";
 import { verifyToken } from "@/lib/jwt";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { createDemoProduct } from "@formbricks/lib/services/team";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -371,8 +370,12 @@ export const authOptions: NextAuthOptions = {
 
         const teamId = createdUser.memberships?.[0]?.teamId;
         if (teamId) {
-          // call the service for creating the demo product
-          createDemoProduct(teamId);
+          fetch(`${WEBAPP_URL}/api/v1/teams/${teamId}/add_demo_product`, {
+            method: "POST",
+            headers: {
+              "x-api-key": INTERNAL_SECRET,
+            },
+          });
         }
 
         return true;

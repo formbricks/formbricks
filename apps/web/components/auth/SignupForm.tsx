@@ -10,7 +10,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { GithubButton } from "./GithubButton";
-import { addDemoProduct } from "@/lib/teams/teams";
 
 export const SignupForm = () => {
   const searchParams = useSearchParams();
@@ -30,15 +29,14 @@ export const SignupForm = () => {
     }
 
     setSigningUp(true);
+
     try {
-      const user = await createUser(
+      await createUser(
         e.target.elements.name.value,
         e.target.elements.email.value,
         e.target.elements.password.value,
         inviteToken
       );
-      const teamId = user.memberships[0].teamId;
-      addDemoProduct(teamId);
       const url =
         env.NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED === "1"
           ? `/auth/signup-without-verification-success`
