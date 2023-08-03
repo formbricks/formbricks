@@ -154,7 +154,9 @@ export default function RatingQuestion({
           />
         )}
         <div></div>
-        {(!question.required || storedResponseValue) && <SubmitButton {...{ question, lastQuestion, brandColor }} />}
+        {(!question.required || storedResponseValue) && (
+          <SubmitButton {...{ question, lastQuestion, brandColor }} />
+        )}
       </div>
     </form>
   );

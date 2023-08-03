@@ -141,7 +141,9 @@ export default function PreviewSurvey({
     switch (logic.condition) {
       case "equals":
         return (
-          (Array.isArray(responseValue) && responseValue.length === 1 && responseValue.includes(logic.value)) ||
+          (Array.isArray(responseValue) &&
+            responseValue.length === 1 &&
+            responseValue.includes(logic.value)) ||
           responseValue.toString() === logic.value
         );
       case "notEquals":
