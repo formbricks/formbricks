@@ -239,6 +239,10 @@ export const ZSurvey = z.object({
   autoComplete: z.union([z.number(), z.null()]),
   closeOnDate: z.date().nullable(),
   surveyClosedMessage: ZSurveyClosedMessage,
+  brandColor: z.union([z.string(), z.null()]),
+  placement: z.union([z.enum(["bottomLeft", "bottomRight", "topLeft", "topRight", "center"]), z.null()]),
+  clickOutsideClose: z.union([z.boolean(), z.null()]),
+  darkOverlay: z.union([z.boolean(), z.null()]),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;

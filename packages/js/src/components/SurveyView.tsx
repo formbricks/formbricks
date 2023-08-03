@@ -38,6 +38,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   const frameRef = useRef<number | null>(null);
 
   const showBackButton = progress !== 0 && !finished;
+  const brandColor = survey.brandColor ? survey.brandColor : config.state.product?.brandColor;
 
   const handleStopCountdown = () => {
     if (frameRef.current !== null) {
@@ -110,7 +111,9 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
     switch (logic.condition) {
       case "equals":
         return (
-          (Array.isArray(responseValue) && responseValue.length === 1 && responseValue.includes(logic.value)) ||
+          (Array.isArray(responseValue) &&
+            responseValue.length === 1 &&
+            responseValue.includes(logic.value)) ||
           responseValue.toString() === logic.value
         );
       case "notEquals":
@@ -278,7 +281,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
   return (
     <div>
       {!countdownStop && survey.autoClose && (
-        <Progress progress={countdownProgress} brandColor={config.state?.product?.brandColor} />
+        <Progress progress={countdownProgress} brandColor={brandColor} />
       )}
       <div
         ref={contentRef}
@@ -292,7 +295,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
           <ThankYouCard
             headline={survey.thankYouCard.headline}
             subheader={survey.thankYouCard.subheader}
-            brandColor={config.state.product?.brandColor}
+            brandColor={brandColor}
           />
         ) : (
           survey.questions.map(
@@ -300,7 +303,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
               activeQuestionId === question.id && (
                 <QuestionConditional
                   key={question.id}
-                  brandColor={config.state?.product?.brandColor}
+                  brandColor={brandColor}
                   lastQuestion={idx === survey.questions.length - 1}
                   onSubmit={submitResponse}
                   question={question}
@@ -313,7 +316,7 @@ export default function SurveyView({ config, survey, close, errorHandler }: Surv
         )}
       </div>
       {config.state?.product?.formbricksSignature && <FormbricksSignature />}
-      <Progress progress={progress} brandColor={config.state?.product.brandColor} />
+      <Progress progress={progress} brandColor={brandColor} />
     </div>
   );
 }

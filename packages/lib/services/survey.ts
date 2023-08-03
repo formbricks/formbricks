@@ -24,6 +24,10 @@ export const selectSurveyWithAnalytics = {
   delay: true,
   autoComplete: true,
   redirectUrl: true,
+  brandColor: true,
+  placement: true,
+  clickOutsideClose: true,
+  darkOverlay: true,
   triggers: {
     select: {
       eventClass: {
@@ -78,6 +82,10 @@ export const selectSurvey = {
   delay: true,
   autoComplete: true,
   redirectUrl: true,
+  brandColor: true,
+  placement: true,
+  clickOutsideClose: true,
+  darkOverlay: true,
   triggers: {
     select: {
       eventClass: {
