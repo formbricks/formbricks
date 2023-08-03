@@ -108,115 +108,117 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
             )}
           </div>
           {/* positioning */}
-          <div className="p-3 ">
-            <div className="ml-2 flex items-center space-x-1">
-              <Switch id="surveyDeadline" checked={isPosition} onCheckedChange={togglePlacement} />
-              <Label htmlFor="surveyDeadline" className="cursor-pointer">
-                <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Positioning</h3>
-                  <p className="text-xs font-normal text-slate-500">Change the placement of this survey.</p>
-                </div>
-              </Label>
-            </div>
-            {localSurvey.placement && (
-              <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
-                <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                  <div className="w-full items-center">
-                    <div className="flex">
-                      <RadioGroup
-                        onValueChange={(e) => handlePlacementChange(e as PlacementType)}
-                        value={localSurvey.placement}>
-                        {placements.map((placement) => (
+          {localSurvey.type !== "link" && (
+            <div className="p-3 ">
+              <div className="ml-2 flex items-center space-x-1">
+                <Switch id="surveyDeadline" checked={isPosition} onCheckedChange={togglePlacement} />
+                <Label htmlFor="surveyDeadline" className="cursor-pointer">
+                  <div className="ml-2">
+                    <h3 className="text-sm font-semibold text-slate-700">Positioning</h3>
+                    <p className="text-xs font-normal text-slate-500">Change the placement of this survey.</p>
+                  </div>
+                </Label>
+              </div>
+              {localSurvey.placement && (
+                <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
+                  <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                    <div className="w-full items-center">
+                      <div className="flex">
+                        <RadioGroup
+                          onValueChange={(e) => handlePlacementChange(e as PlacementType)}
+                          value={localSurvey.placement}>
+                          {placements.map((placement) => (
+                            <div
+                              key={placement.value}
+                              className="flex items-center space-x-2 whitespace-nowrap">
+                              <RadioGroupItem
+                                id={placement.value}
+                                value={placement.value}
+                                disabled={placement.disabled}
+                              />
+                              <Label
+                                htmlFor={placement.value}
+                                className={cn(
+                                  placement.disabled ? "cursor-not-allowed text-slate-500" : "text-slate-900"
+                                )}>
+                                {placement.name}
+                              </Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                        <div className="relative ml-8 h-40 w-full rounded bg-slate-200">
                           <div
-                            key={placement.value}
-                            className="flex items-center space-x-2 whitespace-nowrap">
-                            <RadioGroupItem
-                              id={placement.value}
-                              value={placement.value}
-                              disabled={placement.disabled}
-                            />
-                            <Label
-                              htmlFor={placement.value}
-                              className={cn(
-                                placement.disabled ? "cursor-not-allowed text-slate-500" : "text-slate-900"
-                              )}>
-                              {placement.name}
-                            </Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                      <div className="relative ml-8 h-40 w-full rounded bg-slate-200">
-                        <div
-                          className={cn(
-                            "absolute h-16 w-16 rounded bg-slate-700",
-                            getPlacementStyle(localSurvey.placement)
-                          )}></div>
+                            className={cn(
+                              "absolute h-16 w-16 rounded bg-slate-700",
+                              getPlacementStyle(localSurvey.placement)
+                            )}></div>
+                        </div>
                       </div>
-                    </div>
 
-                    {localSurvey.placement === "center" && (
-                      <>
-                        <div className="mt-6 space-y-2">
-                          <Label className="font-semibold">Centered modal overlay color</Label>
-                          <RadioGroup
-                            onValueChange={(e) => handleOverlay(e)}
-                            value={
-                              localSurvey.darkOverlay === null
-                                ? ""
-                                : localSurvey.darkOverlay
-                                ? "darkOverlay"
-                                : "lightOverlay"
-                            }
-                            className="flex space-x-4">
-                            <div className="flex items-center space-x-2 whitespace-nowrap">
-                              <RadioGroupItem id="lightOverlay" value="lightOverlay" />
-                              <Label htmlFor="lightOverlay" className="text-slate-900">
-                                Light Overlay
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2 whitespace-nowrap">
-                              <RadioGroupItem id="darkOverlay" value="darkOverlay" />
-                              <Label htmlFor="darkOverlay" className="text-slate-900">
-                                Dark Overlay
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        </div>
-                        <div className="mt-6 space-y-2">
-                          <Label className="font-semibold">
-                            Allow users to exit by clicking outside the study
-                          </Label>
-                          <RadioGroup
-                            onValueChange={(e) => handlClickOutside(e)}
-                            value={
-                              localSurvey.clickOutsideClose === null
-                                ? ""
-                                : localSurvey.clickOutsideClose
-                                ? "allow"
-                                : "disallow"
-                            }
-                            className="flex space-x-4">
-                            <div className="flex items-center space-x-2 whitespace-nowrap">
-                              <RadioGroupItem id="disallow" value="disallow" />
-                              <Label htmlFor="disallow" className="text-slate-900">
-                                Don&apos;t Allow
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2 whitespace-nowrap">
-                              <RadioGroupItem id="allow" value="allow" />
-                              <Label htmlFor="allow" className="text-slate-900">
-                                Allow
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        </div>
-                      </>
-                    )}
+                      {localSurvey.placement === "center" && (
+                        <>
+                          <div className="mt-6 space-y-2">
+                            <Label className="font-semibold">Centered modal overlay color</Label>
+                            <RadioGroup
+                              onValueChange={(e) => handleOverlay(e)}
+                              value={
+                                localSurvey.darkOverlay === null
+                                  ? ""
+                                  : localSurvey.darkOverlay
+                                  ? "darkOverlay"
+                                  : "lightOverlay"
+                              }
+                              className="flex space-x-4">
+                              <div className="flex items-center space-x-2 whitespace-nowrap">
+                                <RadioGroupItem id="lightOverlay" value="lightOverlay" />
+                                <Label htmlFor="lightOverlay" className="text-slate-900">
+                                  Light Overlay
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2 whitespace-nowrap">
+                                <RadioGroupItem id="darkOverlay" value="darkOverlay" />
+                                <Label htmlFor="darkOverlay" className="text-slate-900">
+                                  Dark Overlay
+                                </Label>
+                              </div>
+                            </RadioGroup>
+                          </div>
+                          <div className="mt-6 space-y-2">
+                            <Label className="font-semibold">
+                              Allow users to exit by clicking outside the study
+                            </Label>
+                            <RadioGroup
+                              onValueChange={(e) => handlClickOutside(e)}
+                              value={
+                                localSurvey.clickOutsideClose === null
+                                  ? ""
+                                  : localSurvey.clickOutsideClose
+                                  ? "allow"
+                                  : "disallow"
+                              }
+                              className="flex space-x-4">
+                              <div className="flex items-center space-x-2 whitespace-nowrap">
+                                <RadioGroupItem id="disallow" value="disallow" />
+                                <Label htmlFor="disallow" className="text-slate-900">
+                                  Don&apos;t Allow
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2 whitespace-nowrap">
+                                <RadioGroupItem id="allow" value="allow" />
+                                <Label htmlFor="allow" className="text-slate-900">
+                                  Allow
+                                </Label>
+                              </div>
+                            </RadioGroup>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
