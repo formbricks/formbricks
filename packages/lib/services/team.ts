@@ -38,3 +38,19 @@ export const getTeamByEnvironmentId = cache(async (environmentId: string): Promi
     throw error;
   }
 });
+
+export const deleteTeam = async (teamId: string) => {
+  try {
+    await prisma.team.delete({
+      where: {
+        id: teamId,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};

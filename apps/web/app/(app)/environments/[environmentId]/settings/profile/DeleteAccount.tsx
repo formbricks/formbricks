@@ -9,7 +9,7 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
-import { profileDeleteAction } from "./action";
+import { profileDeleteAction } from "./actions";
 import { TProfile } from "@formbricks/types/v1/profile";
 
 export function EditAvatar({ session }) {
