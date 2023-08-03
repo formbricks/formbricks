@@ -26,39 +26,39 @@ const tiers = [
     href: "/docs/self-hosting/deployment",
   },
   {
-    name: "Free",
+    name: "Cloud",
     href: "https://app.formbricks.com/auth/signup",
     priceMonthly: "$0",
     paymentRythm: "/month",
     button: "highlight",
     discounted: false,
     highlight: true,
-    description: "All Pro features included.",
+    description: "Start with the 'Free forever' plan.",
     features: [
       "Unlimited surveys",
-      "Unlimited team members",
-      "Remove branding",
-      "Granular targeting",
       "In-product surveys",
       "Link surveys",
+      "Remove branding",
+      "Granular targeting",
       "30+ templates",
       "API access",
-      "Integrations (Slack, PostHog, Zapier)",
+      "Integrations (Zapier, Make, ...)",
+      "Unlimited team members",
       "100 responses per survey",
     ],
-    ctaName: "Start for free",
+    ctaName: "Get started",
     plausibleGoal: "Pricing_CTA_FreePlan",
   },
   {
-    name: "Pro",
+    name: "Cloud Pro",
     href: "https://app.formbricks.com/auth/signup",
     priceMonthly: "$99",
     paymentRythm: "/month",
     button: "secondary",
     discounted: false,
     highlight: false,
-    description: "All features included. Unlimited usage.",
-    features: ["Unlimited responses per survey"],
+    description: "All features, unlimited usage.",
+    features: ["Everything in 'Cloud'", "Unlimited responses per survey"],
     ctaName: "Start for free",
     plausibleGoal: "Pricing_CTA_ProPlan",
   },
@@ -146,8 +146,11 @@ export default function Pricing() {
                   {tier.ctaName}
                 </Button>
 
-                {tier.name !== "Self-hosting" && (
+                {tier.name == "Cloud Pro" && (
                   <p className="mt-1.5 text-center text-xs text-slate-500">No Creditcard required.</p>
+                )}
+                {tier.name == "Cloud" && (
+                  <p className="mt-1.5 text-center text-xs text-slate-500">Free forever 🤍</p>
                 )}
               </div>
             </div>
