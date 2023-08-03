@@ -59,6 +59,15 @@ export {
 } from "./components/Command";
 export { Calendar } from "./components/Calendar";
 export { DatePicker } from "./components/DatePicker";
+export {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./components/Dialog";
 
 /* Icons */
 export { AngryBirdRageIcon } from "./components/icons/AngryBirdRageIcon";

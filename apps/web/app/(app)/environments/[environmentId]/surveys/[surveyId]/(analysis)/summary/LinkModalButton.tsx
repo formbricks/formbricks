@@ -14,6 +14,7 @@ interface LinkSurveyShareButtonProps {
 
 export default function LinkSurveyShareButton({ survey, className }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
+
   return (
     <>
       <Button
