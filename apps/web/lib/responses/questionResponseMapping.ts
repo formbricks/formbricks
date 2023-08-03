@@ -12,7 +12,7 @@ export const getQuestionResponseMapping = (
 
     questionResponseMapping.push({
       question: question.headline,
-      answer: answer.toString(),
+      answer: typeof answer !== "undefined" ? answer.toString() : "",
     });
   }
 

@@ -36,6 +36,8 @@ COPY --from=installer --chown=nextjs:nodejs /app/packages/database/migrations ./
 
 ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 
+EXPOSE 3000
+
 CMD if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
         pnpm dlx prisma migrate deploy && node apps/web/server.js; \
     else \

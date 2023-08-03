@@ -1,4 +1,4 @@
-import { Input } from "@/../../packages/ui";
+import { Input } from "@formbricks/ui";
 import SubmitButton from "@/components/preview/SubmitButton";
 import { shuffleArray } from "@/lib/utils";
 import { cn } from "@formbricks/lib/cn";
@@ -6,12 +6,18 @@ import type { Choice, MultipleChoiceMultiQuestion } from "@formbricks/types/ques
 import { useEffect, useState } from "react";
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import _ from "lodash";
+import { Response } from "@formbricks/types/js";
+import { BackButton } from "@/components/preview/BackButton";
 
 interface MultipleChoiceMultiProps {
   question: MultipleChoiceMultiQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  storedResponseValue: string[] | null;
+  goToNextQuestion: (answer: Response["data"]) => void;
+  goToPreviousQuestion?: (answer: Response["data"]) => void;
 }
 
 export default function MultipleChoiceMultiQuestion({
@@ -19,11 +25,32 @@ export default function MultipleChoiceMultiQuestion({
   onSubmit,
   lastQuestion,
   brandColor,
+  storedResponseValue,
+  goToNextQuestion,
+  goToPreviousQuestion,
 }: MultipleChoiceMultiProps) {
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
   const [showOther, setShowOther] = useState(false);
   const [otherSpecified, setOtherSpecified] = useState("");
+
+  const nonOtherChoiceLabels = question.choices
+    .filter((label) => label.id !== "other")
+    .map((choice) => choice.label);
+
+  useEffect(() => {
+    const nonOtherSavedChoices = storedResponseValue?.filter((answer) => nonOtherChoiceLabels.includes(answer));
+    const savedOtherSpecified = storedResponseValue?.find((answer) => !nonOtherChoiceLabels.includes(answer));
+
+    setSelectedChoices(nonOtherSavedChoices ?? []);
+
+    if (savedOtherSpecified) {
+      setOtherSpecified(savedOtherSpecified);
+      setShowOther(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storedResponseValue, question.id]);
+
   const [questionChoices, setQuestionChoices] = useState<Choice[]>(
     question.choices
       ? question.shuffleOption !== "none"
@@ -31,12 +58,33 @@ export default function MultipleChoiceMultiQuestion({
         : question.choices
       : []
   );
-  /*   const [isIphone, setIsIphone] = useState(false);
-   */
+
   useEffect(() => {
     setIsAtLeastOneChecked(selectedChoices.length > 0 || otherSpecified.length > 0);
   }, [selectedChoices, otherSpecified]);
 
+  const resetForm = () => {
+    setSelectedChoices([]); // reset value
+    setShowOther(false);
+    setOtherSpecified("");
+  };
+
+  const handleSubmit = () => {
+    const data = {
+      [question.id]: selectedChoices,
+    };
+
+    if (_.xor(selectedChoices, storedResponseValue).length === 0) {
+      goToNextQuestion(data);
+      return;
+    }
+
+    if (question.required && selectedChoices.length <= 0) {
+      return;
+    }
+
+    onSubmit(data);
+  };
   useEffect(() => {
     setQuestionChoices(
       question.choices
@@ -55,20 +103,8 @@ export default function MultipleChoiceMultiQuestion({
         if (otherSpecified.length > 0 && showOther) {
           selectedChoices.push(otherSpecified);
         }
-
-        if (question.required && selectedChoices.length <= 0) {
-          return;
-        }
-
-        const data = {
-          [question.id]: selectedChoices,
-        };
-
-        onSubmit(data);
-
-        setSelectedChoices([]); // reset value
-        setShowOther(false);
-        setOtherSpecified("");
+        handleSubmit();
+        resetForm();
       }}>
       <Headline headline={question.headline} questionId={question.id} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -77,7 +113,7 @@ export default function MultipleChoiceMultiQuestion({
           <legend className="sr-only">Options</legend>
           <div className="xs:max-h-[41vh] relative max-h-[60vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
             {questionChoices.map((choice) => (
-              <>
+              <div key={choice.id}>
                 <label
                   key={choice.id}
                   className={cn(
@@ -124,6 +160,7 @@ export default function MultipleChoiceMultiQuestion({
                         name={question.id}
                         className="mt-2 bg-white focus:border-slate-300"
                         placeholder="Please specify"
+                        value={otherSpecified}
                         onChange={(e) => setOtherSpecified(e.currentTarget.value)}
                         aria-labelledby={`${choice.id}-label`}
                         required={question.required}
@@ -132,7 +169,7 @@ export default function MultipleChoiceMultiQuestion({
                     )}
                   </span>
                 </label>
-              </>
+              </div>
             ))}
           </div>
         </fieldset>
@@ -145,6 +182,19 @@ export default function MultipleChoiceMultiQuestion({
         onChange={() => {}}
       />
       <div className="mt-4 flex w-full justify-between">
+        {goToPreviousQuestion && (
+          <BackButton
+            onClick={() => {
+              if (otherSpecified.length > 0 && showOther) {
+                selectedChoices.push(otherSpecified);
+              }
+              goToPreviousQuestion({
+                [question.id]: selectedChoices,
+              });
+              resetForm();
+            }}
+          />
+        )}
         <div></div>
         <SubmitButton {...{ question, lastQuestion, brandColor }} />
       </div>

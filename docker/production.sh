@@ -108,26 +108,26 @@ cat <<EOT >docker-compose.yml
 version: "3.3"
 x-environment: &environment
   environment:
-    ########################################################################
-    # ------------ MANDATORY (CHANGE ACCORDING TO YOUR SETUP) ------------#
-    ########################################################################
-
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
     # Uncomment to enable a dedicated connection pool for Prisma using Prisma Data Proxy
     # Cold boots will be faster and you'll be able to scale your DB independently of your app.
     # @see https://www.prisma.io/docs/data-platform/data-proxy/use-data-proxy
-    # PRISMA_GENERATE_DATAPROXY=true
+    # PRISMA_GENERATE_DATAPROXY: true
     PRISMA_GENERATE_DATAPROXY:
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
     # You can use: $(openssl rand -base64 32) to generate one
     NEXTAUTH_SECRET:
+
     # Set this to your public-facing URL, e.g., https://example.com
     # You do not need the NEXTAUTH_URL environment variable in Vercel.
     NEXTAUTH_URL: "https://$domain_name"
+
+    # PostgreSQL password
+    POSTGRES_PASSWORD: postgres
 
 services:
   postgres:
@@ -135,8 +135,7 @@ services:
     image: postgres:15-alpine
     volumes:
       - postgres:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_PASSWORD=postgres
+    <<: *environment
 
   formbricks:
     restart: always
@@ -148,10 +147,8 @@ services:
       - "traefik.http.routers.formbricks.rule=Host(\`$domain_name\`)"  # Replace your_domain_name with your actual domain or IP
       - "traefik.http.routers.formbricks.entrypoints=websecure"  # Use the websecure entrypoint (port 443 with TLS)
       - "traefik.http.services.formbricks.loadbalancer.server.port=3000"  # Forward traffic to Formbricks on port 3000
-
-    ports:
-      - 3000:3000
     <<: *environment
+
   traefik:
     image: "traefik:v2.7"
     restart: always
@@ -172,20 +169,9 @@ volumes:
     driver: local
 EOT
 
-update_nextauth_secret() {
-  nextauth_secret=$(openssl rand -base64 32)
-  sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.\*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
-}
-
 echo "🚙 Updating NEXTAUTH_SECRET in the Formbricks container..."
-while true; do
-  if update_nextauth_secret; then
-    echo "🚗 NEXTAUTH_SECRET updated successfully!"
-    break
-  else
-    echo "🚧 Failed to update NEXTAUTH_SECRET. Retrying..."
-  fi
-done
+nextauth_secret=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32) && sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
+echo "🚗 NEXTAUTH_SECRET updated successfully!"
 
 newgrp docker << END
 
