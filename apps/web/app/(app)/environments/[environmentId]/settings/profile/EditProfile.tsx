@@ -1,23 +1,19 @@
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
 import { DeleteAccount } from "./DeleteAccount";
-import { EditName } from "./EditName"
-import { EditAvatar } from "./EditAvatar"
+import { EditName } from "./EditName";
+import { EditAvatar } from "./EditAvatar";
 import { getProfile } from "@formbricks/lib/services/profile";
 
 export default async function EditProfile({ session }) {
-  const profile = await getProfile(session.user.id)
+  const profile = await getProfile(session.user.id);
   return (
     <div>
       <SettingsTitle title="Profile" />
-      <SettingsCard
-        title="Personal Information"
-        description="Update your personal information.">
+      <SettingsCard title="Personal Information" description="Update your personal information.">
         <EditName profile={profile} />
       </SettingsCard>
-      <SettingsCard
-        title="Avatar"
-        description="Assist your team in identifying you on Formbricks.">
+      <SettingsCard title="Avatar" description="Assist your team in identifying you on Formbricks.">
         <EditAvatar session={session} />
       </SettingsCard>
       <SettingsCard

@@ -8,5 +8,5 @@ export async function profileEditAction(userId: string, data: Object) {
 }
 
 export async function profileDeleteAction(userId: string) {
-    return await deleteProfile(userId);
-  }
+  return await deleteProfile(userId);
+}

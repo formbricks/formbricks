@@ -7,9 +7,5 @@ import EditProfile from "./EditProfile";
 
 export default async function ProfileSettingsPage() {
   const session = await getServerSession(authOptions);
-  return (
-  <>
-    {session && <EditProfile session={session}/>}
-  </>
-  );
+  return <>{session && <EditProfile session={session} />}</>;
 }

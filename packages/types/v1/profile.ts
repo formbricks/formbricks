@@ -1,6 +1,6 @@
 import z from "zod";
 import { ZUserNotificationSettings } from "./users";
-import {Role, IdentityProvider, Objective} from "@prisma/client"
+import { Role, IdentityProvider, Objective } from "@prisma/client";
 
 export const ZProfileUpdateOutput = z.object({
   id: z.string(),
@@ -22,9 +22,9 @@ export const ZProfileUpdateOutput = z.object({
 export type TProfileUpdateOutput = z.infer<typeof ZProfileUpdateOutput>;
 
 export const ZProfile = z.object({
-    id: z.string(),
-    name: z.string().nullish(),
-    email: z.string(),
+  id: z.string(),
+  name: z.string().nullish(),
+  email: z.string(),
 });
 
 export type TProfile = z.infer<typeof ZProfile>;

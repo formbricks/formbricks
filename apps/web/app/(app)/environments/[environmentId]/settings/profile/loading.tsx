@@ -34,18 +34,12 @@ export default function Loading() {
     {
       title: "Avatar",
       description: "Assist your team in identifying you on Formbricks.",
-      skeletonLines: [
-        { classes: "h-10 w-10" },
-        { classes: "h-8 w-24" },
-      ],
+      skeletonLines: [{ classes: "h-10 w-10" }, { classes: "h-8 w-24" }],
     },
     {
       title: "Delete account",
       description: "Delete your account with all of your personal information and data.",
-      skeletonLines: [
-        { classes: "h-4 w-60" },
-        { classes: "h-8 w-24" },
-      ],
+      skeletonLines: [{ classes: "h-4 w-60" }, { classes: "h-8 w-24" }],
     },
   ];
 

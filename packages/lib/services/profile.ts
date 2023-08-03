@@ -7,18 +7,17 @@ import { cache } from "react";
 const responseSelection = {
   id: true,
   name: true,
-  email: true
+  email: true,
+};
 
-}
-
-// function to retrive basic information about a user's profile 
+// function to retrive basic information about a user's profile
 export const getProfile = cache(async (userId: string): Promise<TProfile> => {
   try {
     const profile = await prisma.user.findUnique({
       where: {
         id: userId,
       },
-      select: responseSelection
+      select: responseSelection,
     });
 
     if (!profile) {
@@ -35,7 +34,7 @@ export const getProfile = cache(async (userId: string): Promise<TProfile> => {
   }
 });
 
-// function to update a user's profile 
+// function to update a user's profile
 export const updateProfile = async (
   userId: string,
   data: Prisma.UserUpdateInput
@@ -51,7 +50,7 @@ export const updateProfile = async (
       where: {
         id: userId,
       },
-      data: data
+      data: data,
     });
 
     return updatedProfile;
@@ -64,7 +63,7 @@ export const updateProfile = async (
   }
 };
 
-// function to delete a user's profile 
+// function to delete a user's profile
 export const deleteProfile = async (userId: string): Promise<void> => {
   try {
     await prisma.user.delete({

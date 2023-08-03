@@ -38,10 +38,10 @@ interface DeleteAccounModaltProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   session: Session;
-  profile: TProfile
+  profile: TProfile;
 }
 
-function DeleteAccountModal({ setOpen, open, session,profile }: DeleteAccounModaltProps) {
+function DeleteAccountModal({ setOpen, open, session, profile }: DeleteAccounModaltProps) {
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
@@ -105,7 +105,7 @@ function DeleteAccountModal({ setOpen, open, session,profile }: DeleteAccounModa
   );
 }
 
-export function DeleteAccount({ session,profile }: { session: Session | null, profile:TProfile }) {
+export function DeleteAccount({ session, profile }: { session: Session | null; profile: TProfile }) {
   const [isModalOpen, setModalOpen] = useState(false);
 
   if (!session) {

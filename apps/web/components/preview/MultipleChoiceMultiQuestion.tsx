@@ -39,7 +39,9 @@ export default function MultipleChoiceMultiQuestion({
     .map((choice) => choice.label);
 
   useEffect(() => {
-    const nonOtherSavedChoices = storedResponseValue?.filter((answer) => nonOtherChoiceLabels.includes(answer));
+    const nonOtherSavedChoices = storedResponseValue?.filter((answer) =>
+      nonOtherChoiceLabels.includes(answer)
+    );
     const savedOtherSpecified = storedResponseValue?.find((answer) => !nonOtherChoiceLabels.includes(answer));
 
     setSelectedChoices(nonOtherSavedChoices ?? []);
