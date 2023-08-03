@@ -105,7 +105,9 @@ export default function NPSQuestion({
           />
         )}
         <div></div>
-        {(!question.required || storedResponseValue) && <SubmitButton {...{ question, lastQuestion, brandColor }} />}
+        {(!question.required || storedResponseValue) && (
+          <SubmitButton {...{ question, lastQuestion, brandColor }} />
+        )}
       </div>
     </form>
   );
