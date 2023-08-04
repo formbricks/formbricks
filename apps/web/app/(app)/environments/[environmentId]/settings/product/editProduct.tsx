@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -12,54 +11,9 @@ import { deleteProduct, useProduct } from "@/lib/products/products";
 import { truncate } from "@/lib/utils";
 
 import { useEnvironment } from "@/lib/environments/environments";
-import { useProductMutation } from "@/lib/products/mutateProducts";
-import { Button, ErrorComponent, Input, Label } from "@formbricks/ui";
+import { Button, ErrorComponent } from "@formbricks/ui";
 import { useProfile } from "@/lib/profile";
 import { useMembers } from "@/lib/members";
-
-export function EditWaitingTime({ environmentId }) {
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-  const { isMutatingProduct, triggerProductMutate } = useProductMutation(environmentId);
-
-  const { register, handleSubmit } = useForm();
-
-  if (isLoadingProduct) {
-    return <LoadingSpinner />;
-  }
-  if (isErrorProduct) {
-    return <ErrorComponent />;
-  }
-
-  return (
-    <form
-      className="w-full max-w-sm items-center"
-      onSubmit={handleSubmit((data) => {
-        triggerProductMutate(data)
-          .then(() => {
-            toast.success("Waiting period updated successfully.");
-          })
-          .catch((error) => {
-            toast.error(`Error: ${error.message}`);
-          });
-      })}>
-      <Label htmlFor="recontactDays">Wait X days before showing next survey:</Label>
-      <Input
-        type="number"
-        id="recontactDays"
-        defaultValue={product.recontactDays}
-        {...register("recontactDays", {
-          min: 0,
-          max: 365,
-          valueAsNumber: true,
-        })}
-      />
-
-      <Button type="submit" variant="darkCTA" className="mt-4" loading={isMutatingProduct}>
-        Update
-      </Button>
-    </form>
-  );
-}
 
 export function DeleteProduct({ environmentId }) {
   const router = useRouter();

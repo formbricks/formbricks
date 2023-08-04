@@ -1,10 +1,11 @@
 import { getServerSession } from "next-auth";
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
-import { EditWaitingTime, DeleteProduct } from "./editProduct";
+import { DeleteProduct } from "./editProduct";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import EditProductName from "./EditProductName";
+import EditWaitingTime from "./EditWaitingTime";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const session = await getServerSession(authOptions);
@@ -23,7 +24,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
       <SettingsCard
         title="Recontact Waiting Time"
         description="Control how frequently users can be surveyed across all surveys.">
-        <EditWaitingTime environmentId={params.environmentId} />
+        <EditWaitingTime product={product} />
       </SettingsCard>
       <SettingsCard
         title="Delete Product"
