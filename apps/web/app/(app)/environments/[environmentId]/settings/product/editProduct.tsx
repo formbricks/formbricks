@@ -17,43 +17,6 @@ import { Button, ErrorComponent, Input, Label } from "@formbricks/ui";
 import { useProfile } from "@/lib/profile";
 import { useMembers } from "@/lib/members";
 
-export function EditProductName({ environmentId }) {
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-  const { isMutatingProduct, triggerProductMutate } = useProductMutation(environmentId);
-  const { mutateEnvironment } = useEnvironment(environmentId);
-
-  const { register, handleSubmit } = useForm();
-
-  if (isLoadingProduct) {
-    return <LoadingSpinner />;
-  }
-  if (isErrorProduct) {
-    return <ErrorComponent />;
-  }
-
-  return (
-    <form
-      className="w-full max-w-sm items-center"
-      onSubmit={handleSubmit((data) => {
-        triggerProductMutate(data)
-          .then(() => {
-            toast.success("Product name updated successfully.");
-            mutateEnvironment();
-          })
-          .catch((error) => {
-            toast.error(`Error: ${error.message}`);
-          });
-      })}>
-      <Label htmlFor="fullname">What&apos;s your product called?</Label>
-      <Input type="text" id="fullname" defaultValue={product.name} {...register("name")} />
-
-      <Button type="submit" variant="darkCTA" className="mt-4" loading={isMutatingProduct}>
-        Update
-      </Button>
-    </form>
-  );
-}
-
 export function EditWaitingTime({ environmentId }) {
   const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
   const { isMutatingProduct, triggerProductMutate } = useProductMutation(environmentId);

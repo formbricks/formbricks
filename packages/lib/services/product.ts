@@ -10,6 +10,7 @@ import { cache } from "react";
 
 export const getProductByEnvironmentId = cache(async (environmentId: string): Promise<TProduct> => {
   let productPrisma;
+
   try {
     productPrisma = await prisma.product.findFirst({
       where: {
@@ -41,3 +42,27 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
     throw new ValidationError("Data validation of product failed");
   }
 });
+
+const updateProductService = async (
+  productId: string,
+  data: Prisma.ProductUpdateInput
+): Promise<TProduct> => {
+  try {
+    const updatedProduct = await prisma.product.update({
+      where: {
+        id: productId,
+      },
+      data,
+    });
+
+    return updatedProduct;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+      throw new ResourceNotFoundError("Product", productId);
+    } else {
+      throw error; // Re-throw any other errors
+    }
+  }
+};
+
+export const updateProduct = cache(updateProductService);
