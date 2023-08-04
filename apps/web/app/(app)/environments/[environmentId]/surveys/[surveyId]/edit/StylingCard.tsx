@@ -93,7 +93,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
               <Switch id="autoComplete" checked={isBrandColor} onCheckedChange={toggleBrandColor} />
               <Label htmlFor="autoComplete" className="cursor-pointer">
                 <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Brand Color</h3>
+                  <h3 className="text-sm font-semibold text-slate-700">Overwrite Brand Color</h3>
                   <p className="text-xs font-normal text-slate-500">Change the main color for this survey.</p>
                 </div>
               </Label>
@@ -114,7 +114,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                 <Switch id="surveyDeadline" checked={isPosition} onCheckedChange={togglePlacement} />
                 <Label htmlFor="surveyDeadline" className="cursor-pointer">
                   <div className="ml-2">
-                    <h3 className="text-sm font-semibold text-slate-700">Positioning</h3>
+                    <h3 className="text-sm font-semibold text-slate-700">Overwrite Placement</h3>
                     <p className="text-xs font-normal text-slate-500">Change the placement of this survey.</p>
                   </div>
                 </Label>
