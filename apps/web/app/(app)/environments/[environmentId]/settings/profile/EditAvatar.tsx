@@ -3,8 +3,9 @@
 import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { Button, ProfileAvatar } from "@formbricks/ui";
 import Image from "next/image";
+import { Session } from "next-auth";
 
-export function EditAvatar({ session }) {
+export function EditAvatar({ session }:{session: Session | null}) {
   return (
     <div>
       {session?.user?.image ? (
@@ -16,7 +17,7 @@ export function EditAvatar({ session }) {
           alt="Avatar placeholder"
         />
       ) : (
-        <ProfileAvatar userId={session?.user?.id} />
+        <ProfileAvatar userId={session!.user.id} />
       )}
 
       <Button className="mt-4" variant="darkCTA" disabled={true}>
