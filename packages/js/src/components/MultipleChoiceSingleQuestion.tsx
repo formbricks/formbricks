@@ -27,7 +27,9 @@ export default function MultipleChoiceSingleQuestion({
   goToNextQuestion,
   goToPreviousQuestion,
 }: MultipleChoiceSingleProps) {
-  const storedResponseValueValue = question.choices.find((choice) => choice.label === storedResponseValue)?.id;
+  const storedResponseValueValue = question.choices.find(
+    (choice) => choice.label === storedResponseValue
+  )?.id;
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [savedOtherAnswer, setSavedOtherAnswer] = useState<string | null>(null);
   const [questionChoices, setQuestionChoices] = useState<TSurveyChoice[]>(

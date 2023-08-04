@@ -275,7 +275,10 @@ const storeResponse = (surveyId: string, answer: Response["data"]) => {
   const storedResponses = localStorage.getItem(`formbricks-${surveyId}-responses`);
   if (storedResponses) {
     const parsedResponses = JSON.parse(storedResponses);
-    localStorage.setItem(`formbricks-${surveyId}-responses`, JSON.stringify({ ...parsedResponses, ...answer }));
+    localStorage.setItem(
+      `formbricks-${surveyId}-responses`,
+      JSON.stringify({ ...parsedResponses, ...answer })
+    );
   } else {
     localStorage.setItem(`formbricks-${surveyId}-responses`, JSON.stringify(answer));
   }
