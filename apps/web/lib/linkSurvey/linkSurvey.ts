@@ -60,34 +60,47 @@ export const useLinkSurveyUtils = (survey: Survey) => {
 
   useEffect(() => {
     if (currentQuestion && survey) {
-      const progress = calculateProgress(currentQuestion, survey);
-      setProgress(progress);
+      const newProgress = calculateProgress(currentQuestion, survey, progress);
+      setProgress(newProgress);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion]);
 
-  const calculateProgress = useCallback((currentQuestion: Question, survey: Survey) => {
-    const surveyLength = survey.questions.length;
-    const middleIdx = Math.floor(surveyLength / 2);
+  const calculateProgress = useCallback(
+    (currentQuestion: Question, survey: Survey, currentProgress: number) => {
+      const surveyLength = survey.questions.length;
+      const middleIdx = Math.floor(surveyLength / 2);
 
-    // if idx would be zero, return 0.5 to achieve the goal gradient effect
-    let elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id) || 0.5;
+      // if idx would be zero, return 0.5 to achieve the goal gradient effect
+      let elementIdx = survey.questions.findIndex((e) => e.id === currentQuestion.id) || 0.5;
 
-    // get all possible next questions ids from logic
-    const possibleNextQuestions = currentQuestion.logic?.map((l) => l.destination) || [];
+      // get all possible next questions ids from logic
+      const possibleNextQuestions = currentQuestion.logic?.map((l) => l.destination) || [];
 
-    const lastQuestion = survey.questions
-      .filter((q) => possibleNextQuestions.includes(q.id))
-      .sort((a, b) => survey.questions.indexOf(a) - survey.questions.indexOf(b))
-      .pop();
-    const lastQuestionIdx = survey.questions.findIndex((e) => e.id === lastQuestion?.id);
+      const lastQuestion = survey.questions
+        .filter((q) => possibleNextQuestions.includes(q.id))
+        .sort((a, b) => survey.questions.indexOf(a) - survey.questions.indexOf(b))
+        .pop();
+      const lastQuestionIdx = survey.questions.findIndex((e) => e.id === lastQuestion?.id);
 
-    // set elementIdx to whichever is smaller, the middleIdx or the questionIdx
-    if (lastQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastQuestionIdx - 1);
-    if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
+      // set elementIdx to whichever is smaller, the middleIdx or the questionIdx
+      if (lastQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastQuestionIdx - 1);
+      if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
 
-    return elementIdx / survey.questions.length;
-  }, []);
+      const newProgress = elementIdx / survey.questions.length;
+
+      // Move forward by 5% or keep the new progress if it's greater
+      if (newProgress > currentProgress) {
+        return newProgress;
+      } else if (newProgress <= currentProgress && currentProgress + 0.1 <= 1) {
+        // Make sure not to exceed 100%
+        return currentProgress + 0.1;
+      }
+
+      return currentProgress; // In case no condition is met, return the current progress
+    },
+    []
+  );
 
   const getNextQuestionId = (answer: any): string => {
     const activeQuestionId: string = currentQuestion?.id || "";
