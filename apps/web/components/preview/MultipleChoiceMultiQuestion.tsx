@@ -39,7 +39,8 @@ export default function MultipleChoiceMultiQuestion({
     .map((choice) => choice.label);
 
   useEffect(() => {
-    const nonOtherSavedChoices = storedResponseValue?.filter((answer) =>
+    if(Array.isArray(storedResponseValue)){
+      const nonOtherSavedChoices = storedResponseValue?.filter((answer) =>
       nonOtherChoiceLabels.includes(answer)
     );
     const savedOtherSpecified = storedResponseValue?.find((answer) => !nonOtherChoiceLabels.includes(answer));
@@ -50,6 +51,7 @@ export default function MultipleChoiceMultiQuestion({
       setOtherSpecified(savedOtherSpecified);
       setShowOther(true);
     }
+  }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storedResponseValue, question.id]);
 
