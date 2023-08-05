@@ -36,6 +36,8 @@ import { PaperAirplaneIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/out
 import { useState } from "react";
 import toast from "react-hot-toast";
 import AddMemberModal from "./AddMemberModal";
+import { useRouter } from "next/navigation";
+import { useMemberships } from "@/lib/memberships";
 
 type EditMembershipsProps = {
   environmentId: string;
@@ -128,13 +130,20 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
   const [isCreateTeamModalOpen, setCreateTeamModalOpen] = useState(false);
   const [showShareInviteModal, setShowShareInviteModal] = useState(false);
+  const [isLeaveTeamModalOpen, setLeaveTeamModalOpen] = useState(false);
   const [shareInviteToken, setShareInviteToken] = useState<string>("");
 
   const [activeMember, setActiveMember] = useState({} as any);
   const { profile } = useProfile();
+  const { memberships } = useMemberships();
+
+  const router = useRouter();
 
   const role = team?.members?.filter((member) => member?.userId === profile?.id)[0]?.role;
   const isAdminOrOwner = role === "admin" || role === "owner";
+
+  const availableTeams = memberships?.length;
+  const isLeaveTeamDisabled = availableTeams <= 1;
 
   const handleOpenDeleteMemberModal = (e, member) => {
     e.preventDefault();
@@ -194,9 +203,26 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
     return now > expiresAt;
   };
 
+  const handleLeaveTeam = async () => {
+    const result = await removeMember(team.teamId, profile?.id);
+    if (!result) {
+      toast.error("Something went wrong");
+    } else {
+      toast.success("You left the team successfully");
+      router.push("/");
+    }
+  };
+
+  console.log(profile, memberships);
+
   return (
     <>
       <div className="mb-6 text-right">
+        {role !== "owner" && (
+          <Button variant="minimal" className="mr-2" onClick={() => setLeaveTeamModalOpen(true)}>
+            Leave Team
+          </Button>
+        )}
         <Button
           variant="secondary"
           className="mr-2"
@@ -310,6 +336,21 @@ export function EditMemberships({ environmentId }: EditMembershipsProps) {
         deleteWhat={activeMember.name + " from your team"}
         onDelete={handleDeleteMember}
       />
+      <DeleteDialog
+        open={isLeaveTeamModalOpen}
+        setOpen={setLeaveTeamModalOpen}
+        customTitle="Are you sure?"
+        onDelete={handleLeaveTeam}
+        text="You wil leave this team and loose access to all surveys and responses. You can only rejoin if you
+        are invited again."
+        deleteBtnText="Yes, leave team"
+        disabled={isLeaveTeamDisabled}>
+        {isLeaveTeamDisabled && (
+          <p className="mt-2 text-sm text-red-700">
+            You cannot leave this team as it is your only team. Create a new team first.
+          </p>
+        )}
+      </DeleteDialog>
       {showShareInviteModal && (
         <ShareInviteModal
           inviteToken={shareInviteToken}
