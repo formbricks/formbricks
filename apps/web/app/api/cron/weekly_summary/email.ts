@@ -61,10 +61,14 @@ const notificationInsight = (insights: Insights) =>
             <p style="font-size:0.9em">Completed</p>
             <h1>${insights.totalCompletedResponses}</h1>
           </td>
-          <td style="text-align:center;">
+          ${
+            insights.totalDisplays !== 0
+              ? `<td style="text-align:center;">
             <p style="font-size:0.9em">Completion %</p>
-            <h1>${insights.totalDisplays === 0 ? "N/A" : `${Math.round(insights.completionRate)}%`}</h1>
-          </td>
+            <h1>${Math.round(insights.completionRate)}%</h1>
+          </td>`
+              : ""
+          }
         </tr>
       </table>
   </div>
