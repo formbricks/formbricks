@@ -15,9 +15,9 @@ export type ActivityFeedItem = {
   updatedAt: Date | null;
   attributeLabel: string | null;
   attributeValue: string | null;
-  eventLabel: string | null;
-  eventDescription: string | null;
-  eventType: string | null;
+  actionLabel: string | null;
+  actionDescription: string | null;
+  actionType: string | null;
   displaySurveyName: string | null;
 };
 

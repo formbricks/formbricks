@@ -7,9 +7,9 @@ export const ZActivityFeedItem = z.object({
   updatedAt: z.date().nullable(),
   attributeLabel: z.string().nullable(),
   attributeValue: z.string().nullable(),
-  eventLabel: z.string().nullable(),
-  eventDescription: z.string().nullable(),
-  eventType: z.string().nullable(),
+  actionLabel: z.string().nullable(),
+  actionDescription: z.string().nullable(),
+  actionType: z.string().nullable(),
   displaySurveyName: z.string().nullable(),
 });
 

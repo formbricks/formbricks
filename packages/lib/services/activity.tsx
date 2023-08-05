@@ -22,9 +22,9 @@ export const getActivityTimeline = async (personId: string): Promise<TActivityFe
     updatedAt: attribute.updatedAt,
     attributeLabel: attribute.name,
     attributeValue: attribute.value,
-    eventLabel: null,
-    eventDescription: null,
-    eventType: null,
+    actionLabel: null,
+    actionDescription: null,
+    actionType: null,
     displaySurveyName: null,
   }));
   const unifiedDisplays: TActivityFeedItem[] = displays.map((display: TDisplaysWithSurveyName) => ({
@@ -34,9 +34,9 @@ export const getActivityTimeline = async (personId: string): Promise<TActivityFe
     updatedAt: display.updatedAt,
     attributeLabel: null,
     attributeValue: null,
-    eventLabel: null,
-    eventDescription: null,
-    eventType: null,
+    actionLabel: null,
+    actionDescription: null,
+    actionType: null,
     displaySurveyName: display.surveyName,
   }));
   const unifiedEvents: TActivityFeedItem[] = sessions.flatMap((session: TSessionWithActions) =>
@@ -47,9 +47,9 @@ export const getActivityTimeline = async (personId: string): Promise<TActivityFe
       updatedAt: null,
       attributeLabel: null,
       attributeValue: null,
-      eventLabel: event.eventClass?.name || null,
-      eventDescription: event.eventClass?.description || null,
-      eventType: event.eventClass?.type || null,
+      actionLabel: event.eventClass?.name || null,
+      actionDescription: event.eventClass?.description || null,
+      actionType: event.eventClass?.type || null,
       displaySurveyName: null,
     }))
   );

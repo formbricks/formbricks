@@ -19,9 +19,9 @@ export const ActivityItemIcon = ({ activityItem }: { activityItem: ActivityFeedI
       <EyeIcon />
     ) : activityItem.type === "event" ? (
       <div>
-        {activityItem.eventType === "code" && <CodeBracketIcon />}
-        {activityItem.eventType === "noCode" && <CursorArrowRaysIcon />}
-        {activityItem.eventType === "automatic" && <SparklesIcon />}
+        {activityItem.actionType === "code" && <CodeBracketIcon />}
+        {activityItem.actionType === "noCode" && <CursorArrowRaysIcon />}
+        {activityItem.actionType === "automatic" && <SparklesIcon />}
       </div>
     ) : (
       <QuestionMarkCircleIcon />
@@ -37,7 +37,7 @@ export const ActivityItemContent = ({ activityItem }: { activityItem: ActivityFe
       ) : activityItem.type === "display" ? (
         <p>Seen survey</p>
       ) : activityItem.type === "event" ? (
-        <p>{activityItem.eventLabel} triggered</p>
+        <p>{activityItem.actionLabel} triggered</p>
       ) : (
         <p>Unknown Activity</p>
       )}
@@ -82,19 +82,19 @@ export const ActivityItemPopover = ({
           ) : activityItem.type === "event" ? (
             <div>
               <div>
-                <Label className="font-normal text-slate-400">Event Display Name</Label>
-                <p className=" mb-2 text-sm font-medium text-slate-900">{activityItem.eventLabel}</p>{" "}
-                <Label className="font-normal text-slate-400">Event Description</Label>
+                <Label className="font-normal text-slate-400">Action Display Name</Label>
+                <p className=" mb-2 text-sm font-medium text-slate-900">{activityItem.actionLabel}</p>{" "}
+                <Label className="font-normal text-slate-400">Action Description</Label>
                 <p className=" mb-2 text-sm font-medium text-slate-900">
-                  {activityItem.eventDescription ? (
-                    <span>{activityItem.eventDescription}</span>
+                  {activityItem.actionDescription ? (
+                    <span>{activityItem.actionDescription}</span>
                   ) : (
                     <span>-</span>
                   )}
                 </p>
-                <Label className="font-normal text-slate-400">Event Type</Label>
+                <Label className="font-normal text-slate-400">Action Type</Label>
                 <p className="text-sm font-medium text-slate-900">
-                  {capitalizeFirstLetter(activityItem.eventType)}
+                  {capitalizeFirstLetter(activityItem.actionType)}
                 </p>
               </div>
             </div>
