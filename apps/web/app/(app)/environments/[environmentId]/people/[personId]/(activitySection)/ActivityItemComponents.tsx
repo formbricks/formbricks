@@ -66,7 +66,7 @@ export const ActivityItemPopover = ({
     <Popover>
       <PopoverTrigger className="group">{children}</PopoverTrigger>
       <PopoverContent className="bg-white">
-        <div className="">
+        <div>
           {activityItem.type === "attribute" ? (
             <div>
               <Label className="font-normal text-slate-400">Attribute Label</Label>

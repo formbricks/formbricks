@@ -3,11 +3,11 @@ import { responses } from "@/lib/api/response";
 import { transformErrorToDetails } from "@/lib/api/validator";
 import { prisma } from "@formbricks/database";
 import { getActionClasses } from "@formbricks/lib/services/actionClass";
+import { selectPerson } from "@formbricks/lib/services/people";
 import { deletePerson, transformPrismaPerson } from "@formbricks/lib/services/person";
 import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 import { extendSession } from "@formbricks/lib/services/session";
 import { TJsState, ZJsPeopleUserIdInput } from "@formbricks/types/v1/js";
-import { selectPersonSchemaFromPrisma } from "@formbricks/types/v1/people";
 import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -46,7 +46,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
           },
         },
       },
-      select: selectPersonSchemaFromPrisma,
+      select: selectPerson,
     });
     // if person exists, reconnect session and delete old user
     if (existingPerson) {
@@ -88,7 +88,7 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
             },
           },
         },
-        select: selectPersonSchemaFromPrisma,
+        select: selectPerson,
       });
     }
 

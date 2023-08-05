@@ -1,33 +1,51 @@
-import { TDisplaysWithSurveyName } from "@formbricks/types/v1/displays";
-import { TPersonDetailedAttribute } from "@formbricks/types/v1/people";
-import { TSessionWithActions } from "@formbricks/types/v1/sessions";
-import { getDisplaysOfPerson } from "./displays";
-import { getPersonWithAttributeClasses } from "./person";
-import { getSessionWithActionsOfPerson } from "./session";
+import { prisma } from "@formbricks/database";
 import { TActivityFeedItem } from "@formbricks/types/v1/activity";
 
 export const getActivityTimeline = async (personId: string): Promise<TActivityFeedItem[]> => {
-  const sessions = (await getSessionWithActionsOfPerson(personId)) ?? [];
-  const displays = (await getDisplaysOfPerson(personId)) ?? [];
-  const personWithAttributes = await getPersonWithAttributeClasses(personId);
-  if (!personWithAttributes) {
+  const person = await prisma.person.findUnique({
+    where: {
+      id: personId,
+    },
+    include: {
+      attributes: {
+        include: {
+          attributeClass: true,
+        },
+      },
+      displays: {
+        include: {
+          survey: true,
+        },
+      },
+      sessions: {
+        include: {
+          events: {
+            include: {
+              eventClass: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!person) {
     throw new Error("No such person found");
   }
-  const { attributes } = personWithAttributes || {};
+  const { attributes, displays, sessions } = person;
 
-  const unifiedAttributes: TActivityFeedItem[] = attributes.map((attribute: TPersonDetailedAttribute) => ({
+  const unifiedAttributes: TActivityFeedItem[] = attributes.map((attribute) => ({
     id: attribute.id,
     type: "attribute",
     createdAt: attribute.createdAt,
     updatedAt: attribute.updatedAt,
-    attributeLabel: attribute.name,
+    attributeLabel: attribute.attributeClass.name,
     attributeValue: attribute.value,
     actionLabel: null,
     actionDescription: null,
     actionType: null,
     displaySurveyName: null,
   }));
-  const unifiedDisplays: TActivityFeedItem[] = displays.map((display: TDisplaysWithSurveyName) => ({
+  const unifiedDisplays: TActivityFeedItem[] = displays.map((display) => ({
     id: display.id,
     type: "display",
     createdAt: display.createdAt,
@@ -37,9 +55,9 @@ export const getActivityTimeline = async (personId: string): Promise<TActivityFe
     actionLabel: null,
     actionDescription: null,
     actionType: null,
-    displaySurveyName: display.surveyName,
+    displaySurveyName: display.survey.name,
   }));
-  const unifiedEvents: TActivityFeedItem[] = sessions.flatMap((session: TSessionWithActions) =>
+  const unifiedEvents: TActivityFeedItem[] = sessions.flatMap((session) =>
     session.events.map((event) => ({
       id: event.id,
       type: "event",
