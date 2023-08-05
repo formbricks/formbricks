@@ -2,8 +2,7 @@ import { env } from "@/env.mjs";
 import { getQuestionResponseMapping } from "@/lib/responses/questionResponseMapping";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { Question } from "@formbricks/types/questions";
-import { Response } from "@formbricks/types/responses";
-import { AttributeClass } from "@prisma/client";
+import { TResponse } from "@formbricks/types/v1/responses";
 import { withEmailTemplate } from "./email-template";
 import { createInviteToken, createToken } from "./jwt";
 
@@ -120,16 +119,15 @@ export const sendResponseFinishedEmail = async (
   email: string,
   environmentId: string,
   survey: { id: string; name: string; questions: Question[] },
-  response: Response,
-  person: { id: string; attributes: { id: string; value: string; attributeClass: AttributeClass }[] } | null
+  response: TResponse
 ) => {
-  const personEmail = person?.attributes?.find((a) => a.attributeClass?.name === "email")?.value;
+  const personEmail = response.person?.attributes["email"];
   await sendEmail({
     to: email,
     subject: personEmail
       ? `${personEmail} just completed your ${survey.name} survey ✅`
       : `A response for ${survey.name} was completed ✅`,
-    replyTo: personEmail || env.MAIL_FROM,
+    replyTo: personEmail?.toString() || env.MAIL_FROM,
     html: withEmailTemplate(`<h1>Hey 👋</h1>Someone just completed your survey <strong>${
       survey.name
     }</strong><br/>

@@ -85,7 +85,7 @@ export default function Modal({
       aria-live="assertive"
       className={cn(
         isCenter ? "fb-pointer-events-auto" : "fb-pointer-events-none",
-        "fb-fixed fb-inset-0 fb-flex fb-items-end fb-z-40"
+        "fb-fixed fb-inset-0 fb-flex fb-items-end fb-z-999999 fb-p-3 sm:fb-p-0"
       )}>
       <div
         className={cn(
@@ -110,7 +110,7 @@ export default function Modal({
             <button
               type="button"
               onClick={close}
-              class="fb-rounded-md fb-bg-white fb-relative fb-z-50 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 fb-text-slate-400 hover:fb-text-slate-500 focus:ring-slate-500">
+              class="fb-rounded-md fb-bg-white fb-relative focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 fb-text-slate-400 hover:fb-text-slate-500 focus:ring-slate-500">
               <span class="fb-sr-only">Close</span>
               <svg
                 class="fb-h-6 fb-w-6"

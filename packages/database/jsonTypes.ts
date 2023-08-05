@@ -1,5 +1,5 @@
 import { TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
-import { TResponsePersonAttributes, TResponseData } from "@formbricks/types/v1/responses";
+import { TResponsePersonAttributes, TResponseData, TResponseMeta } from "@formbricks/types/v1/responses";
 import { TSurveyClosedMessage, TSurveyQuestions, TSurveyThankYouCard } from "@formbricks/types/v1/surveys";
 import { TUserNotificationSettings } from "@formbricks/types/v1/users";
 
@@ -8,7 +8,7 @@ declare global {
     export type EventProperties = { [key: string]: string };
     export type EventClassNoCodeConfig = TActionClassNoCodeConfig;
     export type ResponseData = TResponseData;
-    export type ResponseMeta = { [key: string]: string };
+    export type ResponseMeta = TResponseMeta;
     export type ResponsePersonAttributes = TResponsePersonAttributes;
     export type SurveyQuestions = TSurveyQuestions;
     export type SurveyThankYouCard = TSurveyThankYouCard;

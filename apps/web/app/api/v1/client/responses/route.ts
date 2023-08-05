@@ -45,6 +45,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   let response: TResponse;
   try {
     const meta = {
+      url: responseInput?.meta?.url ?? "",
       userAgent: {
         browser: agent?.browser.name,
         device: agent?.device.type,
@@ -68,7 +69,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     event: "responseCreated",
     environmentId: survey.environmentId,
     surveyId: response.surveyId,
-    data: response,
+    response: response,
   });
 
   if (responseInput.finished) {
@@ -76,7 +77,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       event: "responseFinished",
       environmentId: survey.environmentId,
       surveyId: response.surveyId,
-      data: response,
+      response: response,
     });
   }
 

@@ -1,5 +1,5 @@
 import { prisma } from "@formbricks/database";
-import { select } from "@formbricks/lib/services/survey";
+import { selectSurvey } from "@formbricks/lib/services/survey";
 import { TPerson } from "@formbricks/types/v1/people";
 import { TSurvey } from "@formbricks/types/v1/surveys";
 
@@ -48,7 +48,7 @@ export const getSurveys = async (environmentId: string, person: TPerson): Promis
       ],
     },
     select: {
-      ...select,
+      ...selectSurvey,
       attributeFilters: {
         select: {
           id: true,

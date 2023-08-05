@@ -10,6 +10,7 @@ interface APICallProps {
     label: string;
     type: string;
     description: string;
+    required?: boolean;
   }[];
   bodies: {
     label: string;
@@ -69,7 +70,13 @@ export function APILayout({ method, url, description, headers, bodies, responses
                 <p className="not-prose -mb-1 pt-2 font-bold">Headers</p>
                 <div>
                   {headers.map((q) => (
-                    <Parameter key={q.label} label={q.label} type={q.type} description={q.description} />
+                    <Parameter
+                      key={q.label}
+                      label={q.label}
+                      type={q.type}
+                      description={q.description}
+                      required={q.required}
+                    />
                   ))}
                 </div>
               </div>

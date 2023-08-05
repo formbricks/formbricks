@@ -3,7 +3,6 @@ import { constants } from "../constants";
 
 const {
   environmentId,
-  apiHost,
   sessionId,
   expiryTime,
   surveyId,
@@ -26,69 +25,71 @@ const {
 export const mockInitResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
-      person: {
-        id: initialPersonUid,
-        createdAt: "2021-03-09T15:00:00.000Z",
-        updatedAt: "2021-03-09T15:00:00.000Z",
-        attributes: {},
-      },
-      session: {
-        id: sessionId,
-        createdAt: "2021-03-09T15:00:00.000Z",
-        updatedAt: "2021-03-09T15:00:00.000Z",
-        expiresAt: expiryTime,
-      },
-      surveys: [
-        {
-          id: surveyId,
-          questions: [
-            {
-              id: questionOneId,
-              type: "multipleChoiceSingle",
-              choices: [
-                {
-                  id: choiceOneId,
-                  label: "Not at all disappointed",
-                },
-                {
-                  id: choiceTwoId,
-                  label: "Somewhat disappointed",
-                },
-                {
-                  id: choiceThreeId,
-                  label: "Very disappointed",
-                },
-              ],
-              headline: "How disappointed would you be if you could no longer use Test-Formbricks?",
-              required: true,
-              subheader: "Please select one of the following options:",
-            },
-            {
-              id: questionTwoId,
-              type: "openText",
-              headline: "How can we improve Test-Formbricks for you?",
-              required: true,
-              subheader: "Please be as specific as possible.",
-            },
-          ],
-          triggers: [],
-          thankYouCard: {
-            enabled: true,
-            headline: "Thank you!",
-            subheader: "We appreciate your feedback.",
-          },
-          autoClose: null,
-          delay: 0,
+      data: {
+        person: {
+          id: initialPersonUid,
+          createdAt: "2021-03-09T15:00:00.000Z",
+          updatedAt: "2021-03-09T15:00:00.000Z",
+          attributes: {},
         },
-      ],
-      noCodeActionClasses: [],
-      product: {
-        noCodeEvents: [],
-        brandColor: "#20b398",
-        formbricksSignature: true,
-        placement: "bottomRight",
-        darkOverlay: false,
-        clickOutsideClose: true,
+        session: {
+          id: sessionId,
+          createdAt: "2021-03-09T15:00:00.000Z",
+          updatedAt: "2021-03-09T15:00:00.000Z",
+          expiresAt: expiryTime,
+        },
+        surveys: [
+          {
+            id: surveyId,
+            questions: [
+              {
+                id: questionOneId,
+                type: "multipleChoiceSingle",
+                choices: [
+                  {
+                    id: choiceOneId,
+                    label: "Not at all disappointed",
+                  },
+                  {
+                    id: choiceTwoId,
+                    label: "Somewhat disappointed",
+                  },
+                  {
+                    id: choiceThreeId,
+                    label: "Very disappointed",
+                  },
+                ],
+                headline: "How disappointed would you be if you could no longer use Test-Formbricks?",
+                required: true,
+                subheader: "Please select one of the following options:",
+              },
+              {
+                id: questionTwoId,
+                type: "openText",
+                headline: "How can we improve Test-Formbricks for you?",
+                required: true,
+                subheader: "Please be as specific as possible.",
+              },
+            ],
+            triggers: [],
+            thankYouCard: {
+              enabled: true,
+              headline: "Thank you!",
+              subheader: "We appreciate your feedback.",
+            },
+            autoClose: null,
+            delay: 0,
+          },
+        ],
+        noCodeActionClasses: [],
+        product: {
+          noCodeEvents: [],
+          brandColor: "#20b398",
+          formbricksSignature: true,
+          placement: "bottomRight",
+          darkOverlay: false,
+          clickOutsideClose: true,
+        },
       },
     })
   );
@@ -97,18 +98,20 @@ export const mockInitResponse = () => {
 export const mockSetUserIdResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
-      surveys: [],
-      session: {
-        id: sessionId,
-        createdAt: "2021-03-09T15:00:00.000Z",
-        updatedAt: "2021-03-09T15:00:00.000Z",
-        expiresAt: expiryTime,
-      },
-      noCodeActionClasses: [],
-      person: {
-        id: initialPersonUid,
-        environmentId,
-        attributes: { userId: initialUserId },
+      data: {
+        surveys: [],
+        session: {
+          id: sessionId,
+          createdAt: "2021-03-09T15:00:00.000Z",
+          updatedAt: "2021-03-09T15:00:00.000Z",
+          expiresAt: expiryTime,
+        },
+        noCodeActionClasses: [],
+        person: {
+          id: initialPersonUid,
+          environmentId,
+          attributes: { userId: initialUserId },
+        },
       },
     })
   );
@@ -117,18 +120,20 @@ export const mockSetUserIdResponse = () => {
 export const mockSetEmailIdResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
-      surveys: [],
-      session: {
-        id: sessionId,
-        createdAt: "2021-03-09T15:00:00.000Z",
-        updatedAt: "2021-03-09T15:00:00.000Z",
-        expiresAt: expiryTime,
-      },
-      noCodeActionClasses: [],
-      person: {
-        id: initialPersonUid,
-        environmentId,
-        attributes: { userId: initialUserId, email: initialUserEmail },
+      data: {
+        surveys: [],
+        session: {
+          id: sessionId,
+          createdAt: "2021-03-09T15:00:00.000Z",
+          updatedAt: "2021-03-09T15:00:00.000Z",
+          expiresAt: expiryTime,
+        },
+        noCodeActionClasses: [],
+        person: {
+          id: initialPersonUid,
+          environmentId,
+          attributes: { userId: initialUserId, email: initialUserEmail },
+        },
       },
     })
   );
@@ -137,21 +142,23 @@ export const mockSetEmailIdResponse = () => {
 export const mockSetCustomAttributeResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
-      surveys: [],
-      session: {
-        id: sessionId,
-        createdAt: "2021-03-09T15:00:00.000Z",
-        updatedAt: "2021-03-09T15:00:00.000Z",
-        expiresAt: expiryTime,
-      },
-      noCodeActionClasses: [],
-      person: {
-        id: initialPersonUid,
-        environmentId,
-        attributes: {
-          userId: initialUserId,
-          email: initialUserEmail,
-          [customAttributeKey]: customAttributeValue,
+      data: {
+        surveys: [],
+        session: {
+          id: sessionId,
+          createdAt: "2021-03-09T15:00:00.000Z",
+          updatedAt: "2021-03-09T15:00:00.000Z",
+          expiresAt: expiryTime,
+        },
+        noCodeActionClasses: [],
+        person: {
+          id: initialPersonUid,
+          environmentId,
+          attributes: {
+            userId: initialUserId,
+            email: initialUserEmail,
+            [customAttributeKey]: customAttributeValue,
+          },
         },
       },
     })
@@ -161,21 +168,23 @@ export const mockSetCustomAttributeResponse = () => {
 export const mockUpdateEmailResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
-      surveys: [],
-      noCodeActionClasses: [],
-      session: {
-        id: sessionId,
-        createdAt: "2021-03-09T15:00:00.000Z",
-        updatedAt: "2021-03-09T15:00:00.000Z",
-        expiresAt: expiryTime,
-      },
-      person: {
-        id: initialPersonUid,
-        environmentId,
-        attributes: {
-          userId: initialUserId,
-          email: updatedUserEmail,
-          [customAttributeKey]: customAttributeValue,
+      data: {
+        surveys: [],
+        noCodeActionClasses: [],
+        session: {
+          id: sessionId,
+          createdAt: "2021-03-09T15:00:00.000Z",
+          updatedAt: "2021-03-09T15:00:00.000Z",
+          expiresAt: expiryTime,
+        },
+        person: {
+          id: initialPersonUid,
+          environmentId,
+          attributes: {
+            userId: initialUserId,
+            email: updatedUserEmail,
+            [customAttributeKey]: customAttributeValue,
+          },
         },
       },
     })
@@ -208,22 +217,24 @@ export const mockRegisterRouteChangeResponse = () => {
 export const mockLogoutResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
-      settings: {
-        surveys: [],
-        noCodeEvents: [],
+      data: {
+        settings: {
+          surveys: [],
+          noCodeEvents: [],
+        },
+        person: {
+          id: newPersonUid,
+          environmentId,
+          attributes: [],
+        },
+        session: {
+          id: sessionId,
+          createdAt: "2021-03-09T15:00:00.000Z",
+          updatedAt: "2021-03-09T15:00:00.000Z",
+          expiresAt: expiryTime,
+        },
+        noCodeActionClasses: [],
       },
-      person: {
-        id: newPersonUid,
-        environmentId,
-        attributes: [],
-      },
-      session: {
-        id: sessionId,
-        createdAt: "2021-03-09T15:00:00.000Z",
-        updatedAt: "2021-03-09T15:00:00.000Z",
-        expiresAt: expiryTime,
-      },
-      noCodeActionClasses: [],
     })
   );
   console.log("Resetting person. Getting new person, session and settings from backend");

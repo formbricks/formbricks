@@ -51,7 +51,7 @@ export default function Footer() {
         <p className="text-base text-slate-500 dark:text-slate-400">Privacy-first Experience Management</p>
         <div className="border-slate-500">
           <p className="text-sm text-slate-400 dark:text-slate-500">
-            &copy; 2022. All rights reserved.
+            Formbricks GmbH &copy; 2022. All rights reserved.
             <br />
             <Link href="/imprint">Imprint</Link> | <Link href="/privacy">Privacy Policy</Link> |{" "}
             <Link href="/terms">Terms</Link> | <Link href="/oss-friends">OSS Friends</Link>

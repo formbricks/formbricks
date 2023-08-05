@@ -21,13 +21,12 @@ export default function Modal({
     setShow(isOpen);
   }, [isOpen]);
 
-  // scroll to top whenever question in modal changes 
+  // scroll to top whenever question in modal changes
   useEffect(() => {
-    if(modalRef.current){
-      modalRef.current.scrollTop = 0
+    if (modalRef.current) {
+      modalRef.current.scrollTop = 0;
     }
-  }, [children])
-
+  }, [children]);
 
   const slidingAnimationClass =
     previewMode === "desktop"
@@ -35,10 +34,10 @@ export default function Modal({
         ? "translate-x-0 opacity-100"
         : "translate-x-32 opacity-0"
       : previewMode === "mobile"
-        ? show
-          ? "bottom-0"
-          : "-bottom-full"
-        : "";
+      ? show
+        ? "bottom-0"
+        : "-bottom-full"
+      : "";
 
   return (
     <div aria-live="assertive" className="relative h-full w-full overflow-hidden">
@@ -52,6 +51,5 @@ export default function Modal({
         {children}
       </div>
     </div>
-
   );
 }

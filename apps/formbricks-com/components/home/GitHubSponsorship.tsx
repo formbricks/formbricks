@@ -5,8 +5,11 @@ import Link from "next/link";
 
 export const GitHubSponsorship: React.FC = () => {
   return (
-    <div className="xs:mx-auto xs:w-full relative mx-auto my-4 mb-12 mt-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 px-4 py-8 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700  sm:px-6 sm:pb-12 sm:pt-8  md:max-w-none lg:mt-6 lg:px-8 lg:pt-8 ">
-      <div className="right-10 lg:absolute">
+    <div className="mx-4 my-4 mb-12 mt-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 px-4 py-8 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700 sm:px-6 sm:pb-12 sm:pt-8 md:max-w-none lg:mt-6 lg:px-8 lg:pt-8">
+      <style jsx>{`
+        @media (min-width: 426px);
+      `}</style>
+      <div className="right-24 lg:absolute">
         <Image
           src={GitHubMarkDark}
           alt="GitHub Sponsors Formbricks badge"

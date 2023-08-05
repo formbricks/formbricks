@@ -78,6 +78,7 @@ const navigation = [
       { title: "Get Webhook", href: "/docs/webhook-api/get-webhook" },
       { title: "Create Webhook", href: "/docs/webhook-api/create-webhook" },
       { title: "Delete Webhook", href: "/docs/webhook-api/delete-webhook" },
+      { title: "Webhook Payload", href: "/docs/webhook-api/webhook-payload" },
     ],
   },
   {

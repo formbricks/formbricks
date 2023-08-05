@@ -12,6 +12,10 @@ interface QuestionConditionalProps {
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;
+  storedResponseValue: any;
+  goToNextQuestion: (answer: any) => void;
+  goToPreviousQuestion?: (answer: any) => void;
+  autoFocus: boolean;
 }
 
 export default function QuestionConditional({
@@ -19,6 +23,10 @@ export default function QuestionConditional({
   onSubmit,
   lastQuestion,
   brandColor,
+  storedResponseValue,
+  goToNextQuestion,
+  goToPreviousQuestion,
+  autoFocus,
 }: QuestionConditionalProps) {
   return question.type === QuestionType.OpenText ? (
     <OpenTextQuestion
@@ -26,6 +34,10 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      storedResponseValue={storedResponseValue}
+      goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
+      autoFocus={autoFocus}
     />
   ) : question.type === QuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
@@ -33,6 +45,9 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      storedResponseValue={storedResponseValue}
+      goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -40,6 +55,9 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      storedResponseValue={storedResponseValue}
+      goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.NPS ? (
     <NPSQuestion
@@ -47,6 +65,9 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      storedResponseValue={storedResponseValue}
+      goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.CTA ? (
     <CTAQuestion
@@ -54,6 +75,9 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      storedResponseValue={storedResponseValue}
+      goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === QuestionType.Rating ? (
     <RatingQuestion
@@ -61,6 +85,9 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      storedResponseValue={storedResponseValue}
+      goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : question.type === "consent" ? (
     <ConsentQuestion
@@ -68,6 +95,9 @@ export default function QuestionConditional({
       onSubmit={onSubmit}
       lastQuestion={lastQuestion}
       brandColor={brandColor}
+      storedResponseValue={storedResponseValue}
+      goToNextQuestion={goToNextQuestion}
+      goToPreviousQuestion={goToPreviousQuestion}
     />
   ) : null;
 }

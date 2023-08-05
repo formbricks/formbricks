@@ -1,9 +1,9 @@
 import { Question } from "@formbricks/types/questions";
-import { Response } from "@formbricks/types/responses";
+import { TResponse } from "@formbricks/types/v1/responses";
 
 export const getQuestionResponseMapping = (
   survey: { questions: Question[] },
-  response: Response
+  response: TResponse
 ): { question: string; answer: string }[] => {
   const questionResponseMapping: { question: string; answer: string }[] = [];
 
@@ -12,7 +12,7 @@ export const getQuestionResponseMapping = (
 
     questionResponseMapping.push({
       question: question.headline,
-      answer,
+      answer: typeof answer !== "undefined" ? answer.toString() : "",
     });
   }
 

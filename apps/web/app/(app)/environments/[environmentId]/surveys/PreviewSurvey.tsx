@@ -4,14 +4,15 @@ import FormbricksSignature from "@/components/preview/FormbricksSignature";
 import Modal from "@/components/preview/Modal";
 import Progress from "@/components/preview/Progress";
 import QuestionConditional from "@/components/preview/QuestionConditional";
-import TabOption from "@/components/preview/TabOption";
 import ThankYouCard from "@/components/preview/ThankYouCard";
 import type { Logic, Question } from "@formbricks/types/questions";
 import { Survey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/v1/product";
 import type { TEnvironment } from "@formbricks/types/v1/environment";
+import TabOption from "@/components/preview/TabOption";
 import { DevicePhoneMobileIcon, ComputerDesktopIcon } from "@heroicons/react/24/solid";
+
 interface PreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
@@ -26,23 +27,60 @@ interface PreviewSurveyProps {
   environment: TEnvironment;
 }
 
-// Extracted modal content to prevent duplication
-const PreviewModalContent = ({
-  handleStopCountdown,
+function QuestionRenderer({
   activeQuestionId,
   lastActiveQuestionId,
-  thankYouCard,
   questions,
   brandColor,
+  thankYouCard,
   gotoNextQuestion,
+  showBackButton,
+  goToPreviousQuestion,
+  storedResponseValue,
+}) {
+  return (
+    <div>
+      {(activeQuestionId || lastActiveQuestionId) === "thank-you-card" ? (
+        <ThankYouCard
+          brandColor={brandColor}
+          headline={thankYouCard?.headline || "Thank you!"}
+          subheader={thankYouCard?.subheader || "We appreciate your feedback."}
+        />
+      ) : (
+        questions.map((question, idx) =>
+          (activeQuestionId || lastActiveQuestionId) === question.id ? (
+            <QuestionConditional
+              key={question.id}
+              question={question}
+              brandColor={brandColor}
+              lastQuestion={idx === questions.length - 1}
+              onSubmit={gotoNextQuestion}
+              storedResponseValue={storedResponseValue}
+              goToNextQuestion={gotoNextQuestion}
+              goToPreviousQuestion={showBackButton ? goToPreviousQuestion : undefined}
+              autoFocus={false}
+            />
+          ) : null
+        )
+      )}
+    </div>
+  );
+}
+
+function PreviewModalContent({
+  activeQuestionId,
+  lastActiveQuestionId,
+  questions,
+  brandColor,
+  thankYouCard,
+  gotoNextQuestion,
+  showBackButton,
+  goToPreviousQuestion,
+  storedResponseValue,
   showFormbricksSignature,
-  progress,
-}) => (
-  <div>
-    <div
-      onClick={() => handleStopCountdown()}
-      onMouseOver={() => handleStopCountdown()}
-      className="px-4 py-6 sm:p-6">
+}) {
+  return (
+    <div className="px-4 py-6 sm:p-6">
       <QuestionRenderer
         activeQuestionId={activeQuestionId}
         lastActiveQuestionId={lastActiveQuestionId}
@@ -50,43 +88,15 @@ const PreviewModalContent = ({
         brandColor={brandColor}
         thankYouCard={thankYouCard}
         gotoNextQuestion={gotoNextQuestion}
+        showBackButton={showBackButton}
+        goToPreviousQuestion={goToPreviousQuestion}
+        storedResponseValue={storedResponseValue}
       />
+
       {showFormbricksSignature && <FormbricksSignature />}
     </div>
-    <Progress progress={progress} brandColor={brandColor} />
-  </div>
-);
-
-const QuestionRenderer = ({ activeQuestionId, lastActiveQuestionId, questions, brandColor, thankYouCard, gotoNextQuestion }) => {
-  if ((activeQuestionId || lastActiveQuestionId) === "thank-you-card") {
-    return (
-      <ThankYouCard
-        brandColor={brandColor}
-        headline={thankYouCard?.headline || "Thank you!"}
-        subheader={thankYouCard?.subheader || "We appreciate your feedback."}
-      />
-    );
-  }
-
-  return (
-    <>
-      {questions.map((question, idx) => {
-        if ((activeQuestionId || lastActiveQuestionId) === question.id) {
-          return (
-            <QuestionConditional
-              key={question.id}
-              question={question}
-              brandColor={brandColor}
-              lastQuestion={idx === questions.length - 1}
-              onSubmit={gotoNextQuestion}
-            />
-          );
-        }
-        return null;
-      })}
-    </>
   );
-};
+}
 
 export default function PreviewSurvey({
   setActiveQuestionId,
@@ -105,18 +115,23 @@ export default function PreviewSurvey({
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
   const [lastActiveQuestionId, setLastActiveQuestionId] = useState("");
   const [showFormbricksSignature, setShowFormbricksSignature] = useState(false);
-  const [countdownProgress, setCountdownProgress] = useState(1);
-  const startRef = useRef(performance.now());
-  const frameRef = useRef<number | null>(null);
-  const ContentRef = useRef<HTMLDivElement | null>(null);
+  const [finished, setFinished] = useState(false);
+  const [storedResponseValue, setStoredResponseValue] = useState<any>();
+  const [storedResponse, setStoredResponse] = useState<Record<string, any>>({});
   const [previewMode, setPreviewMode] = useState("desktop");
-  const [countdownStop, setCountdownStop] = useState(false);
+  const showBackButton = progress !== 0 && !finished;
+  const ContentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (product) {
       setShowFormbricksSignature(product.formbricksSignature);
     }
   }, [product]);
+
+  const [countdownProgress, setCountdownProgress] = useState(1);
+  const startRef = useRef(performance.now());
+  const frameRef = useRef<number | null>(null);
+  const [countdownStop, setCountdownStop] = useState(false);
 
   const handleStopCountdown = () => {
     if (frameRef.current !== null) {
@@ -166,9 +181,12 @@ export default function PreviewSurvey({
   }, [autoClose]);
 
   useEffect(() => {
-    if(ContentRef.current){
-      // scroll to top whenever question changes 
-      ContentRef.current.scrollTop = 0
+    if (ContentRef.current) {
+      // scroll to top whenever question changes
+      ContentRef.current.scrollTop = 0;
+    }
+    if (activeQuestionId !== "end") {
+      setFinished(false);
     }
     if (activeQuestionId) {
       setLastActiveQuestionId(activeQuestionId);
@@ -198,54 +216,56 @@ export default function PreviewSurvey({
     }
   }, [activeQuestionId, surveyType, questions, setActiveQuestionId, thankYouCard]);
 
-  function evaluateCondition(logic: Logic, answerValue: any): boolean {
+  function evaluateCondition(logic: Logic, responseValue: any): boolean {
     switch (logic.condition) {
       case "equals":
         return (
-          (Array.isArray(answerValue) && answerValue.length === 1 && answerValue.includes(logic.value)) ||
-          answerValue.toString() === logic.value
+          (Array.isArray(responseValue) &&
+            responseValue.length === 1 &&
+            responseValue.includes(logic.value)) ||
+          responseValue.toString() === logic.value
         );
       case "notEquals":
-        return answerValue !== logic.value;
+        return responseValue !== logic.value;
       case "lessThan":
-        return logic.value !== undefined && answerValue < logic.value;
+        return logic.value !== undefined && responseValue < logic.value;
       case "lessEqual":
-        return logic.value !== undefined && answerValue <= logic.value;
+        return logic.value !== undefined && responseValue <= logic.value;
       case "greaterThan":
-        return logic.value !== undefined && answerValue > logic.value;
+        return logic.value !== undefined && responseValue > logic.value;
       case "greaterEqual":
-        return logic.value !== undefined && answerValue >= logic.value;
+        return logic.value !== undefined && responseValue >= logic.value;
       case "includesAll":
         return (
-          Array.isArray(answerValue) &&
+          Array.isArray(responseValue) &&
           Array.isArray(logic.value) &&
-          logic.value.every((v) => answerValue.includes(v))
+          logic.value.every((v) => responseValue.includes(v))
         );
       case "includesOne":
         return (
-          Array.isArray(answerValue) &&
+          Array.isArray(responseValue) &&
           Array.isArray(logic.value) &&
-          logic.value.some((v) => answerValue.includes(v))
+          logic.value.some((v) => responseValue.includes(v))
         );
       case "accepted":
-        return answerValue === "accepted";
+        return responseValue === "accepted";
       case "clicked":
-        return answerValue === "clicked";
+        return responseValue === "clicked";
       case "submitted":
-        if (typeof answerValue === "string") {
-          return answerValue !== "dismissed" && answerValue !== "" && answerValue !== null;
-        } else if (Array.isArray(answerValue)) {
-          return answerValue.length > 0;
-        } else if (typeof answerValue === "number") {
-          return answerValue !== null;
+        if (typeof responseValue === "string") {
+          return responseValue !== "dismissed" && responseValue !== "" && responseValue !== null;
+        } else if (Array.isArray(responseValue)) {
+          return responseValue.length > 0;
+        } else if (typeof responseValue === "number") {
+          return responseValue !== null;
         }
         return false;
       case "skipped":
         return (
-          (Array.isArray(answerValue) && answerValue.length === 0) ||
-          answerValue === "" ||
-          answerValue === null ||
-          answerValue === "dismissed"
+          (Array.isArray(responseValue) && responseValue.length === 0) ||
+          responseValue === "" ||
+          responseValue === null ||
+          responseValue === "dismissed"
         );
       default:
         return false;
@@ -260,14 +280,14 @@ export default function PreviewSurvey({
     const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
     if (currentQuestionIndex === -1) throw new Error("Question not found");
 
-    const answerValue = answer[activeQuestionId];
+    const responseValue = answer[activeQuestionId];
     const currentQuestion = questions[currentQuestionIndex];
 
     if (currentQuestion.logic && currentQuestion.logic.length > 0) {
       for (let logic of currentQuestion.logic) {
         if (!logic.destination) continue;
 
-        if (evaluateCondition(logic, answerValue)) {
+        if (evaluateCondition(logic, responseValue)) {
           return logic.destination;
         }
       }
@@ -276,11 +296,13 @@ export default function PreviewSurvey({
   }
 
   const gotoNextQuestion = (data) => {
+    setStoredResponse({ ...storedResponse, ...data });
     const nextQuestionId = getNextQuestion(data);
-
+    setStoredResponseValue(storedResponse[nextQuestionId]);
     if (nextQuestionId !== "end") {
       setActiveQuestionId(nextQuestionId);
     } else {
+      setFinished(true);
       if (thankYouCard?.enabled) {
         setActiveQuestionId("thank-you-card");
         setProgress(1);
@@ -293,6 +315,15 @@ export default function PreviewSurvey({
       }
     }
   };
+
+  function goToPreviousQuestion(data: any) {
+    setStoredResponse({ ...storedResponse, ...data });
+    const currentQuestionIndex = questions.findIndex((q) => q.id === activeQuestionId);
+    if (currentQuestionIndex === -1) throw new Error("Question not found");
+    const previousQuestionId = questions[currentQuestionIndex - 1].id;
+    setStoredResponseValue(storedResponse[previousQuestionId]);
+    setActiveQuestionId(previousQuestionId);
+  }
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -316,25 +347,30 @@ export default function PreviewSurvey({
         {previewMode === "mobile" && (
           <div className="relative h-[90%] w-1/2 overflow-hidden rounded-[3rem] border-8 border-slate-500 bg-slate-400">
             {/* below element is use to create notch for the mobile device mockup   */}
-            <div className="absolute top-0 right-1/2 left-1/2 transform -translate-x-1/2 h-4 w-1/2 rounded-b-md bg-slate-500 z-20"></div>
-            {previewType === "modal" ?
-              (<Modal isOpen={isModalOpen} placement={product.placement} previewMode="mobile">
+            <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
+            {previewType === "modal" ? (
+              <Modal isOpen={isModalOpen} placement={product.placement} previewMode="mobile">
                 {!countdownStop && autoClose !== null && autoClose > 0 && (
                   <Progress progress={countdownProgress} brandColor={brandColor} />
                 )}
                 <PreviewModalContent
-                  handleStopCountdown={handleStopCountdown}
                   activeQuestionId={activeQuestionId}
                   lastActiveQuestionId={lastActiveQuestionId}
-                  thankYouCard={thankYouCard}
                   questions={questions}
                   brandColor={brandColor}
+                  thankYouCard={thankYouCard}
                   gotoNextQuestion={gotoNextQuestion}
+                  showBackButton={showBackButton}
+                  goToPreviousQuestion={goToPreviousQuestion}
+                  storedResponseValue={storedResponseValue}
                   showFormbricksSignature={showFormbricksSignature}
-                  progress={progress}
                 />
-              </Modal>) :
-              (<div className="h-full w-full flex flex-grow flex-col overflow-y-auto absolute top-0 z-10" ref={ContentRef}>
+                <Progress progress={progress} brandColor={brandColor} />
+              </Modal>
+            ) : (
+              <div
+                className="absolute top-0 z-10 flex h-full w-full flex-grow flex-col overflow-y-auto"
+                ref={ContentRef}>
                 <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
                   <div className="w-full max-w-md px-4">
                     <QuestionRenderer
@@ -344,6 +380,9 @@ export default function PreviewSurvey({
                       brandColor={brandColor}
                       thankYouCard={thankYouCard}
                       gotoNextQuestion={gotoNextQuestion}
+                      showBackButton={showBackButton}
+                      goToPreviousQuestion={goToPreviousQuestion}
+                      storedResponseValue={storedResponseValue}
                     />
                   </div>
                 </div>
@@ -353,13 +392,12 @@ export default function PreviewSurvey({
                     {showFormbricksSignature && <FormbricksSignature />}
                   </div>
                 </div>
-              </div>)
-            }
-
+              </div>
+            )}
           </div>
         )}
         {previewMode === "desktop" && (
-          <div className="flex h-full w-5/6 flex-1 flex-col ">
+          <div className="flex h-full w-5/6 flex-1 flex-col">
             <div className="flex h-8 items-center rounded-t-lg bg-slate-100">
               <div className="ml-6 flex space-x-2">
                 <div className="h-3 w-3 rounded-full bg-red-500"></div>
@@ -379,16 +417,18 @@ export default function PreviewSurvey({
                   <Progress progress={countdownProgress} brandColor={brandColor} />
                 )}
                 <PreviewModalContent
-                  handleStopCountdown={handleStopCountdown}
                   activeQuestionId={activeQuestionId}
                   lastActiveQuestionId={lastActiveQuestionId}
-                  thankYouCard={thankYouCard}
                   questions={questions}
                   brandColor={brandColor}
+                  thankYouCard={thankYouCard}
                   gotoNextQuestion={gotoNextQuestion}
+                  showBackButton={showBackButton}
+                  goToPreviousQuestion={goToPreviousQuestion}
+                  storedResponseValue={storedResponseValue}
                   showFormbricksSignature={showFormbricksSignature}
-                  progress={progress}
                 />
+                <Progress progress={progress} brandColor={brandColor} />
               </Modal>
             ) : (
               <div className="flex flex-grow flex-col overflow-y-auto" ref={ContentRef}>
@@ -401,6 +441,9 @@ export default function PreviewSurvey({
                       brandColor={brandColor}
                       thankYouCard={thankYouCard}
                       gotoNextQuestion={gotoNextQuestion}
+                      showBackButton={showBackButton}
+                      goToPreviousQuestion={goToPreviousQuestion}
+                      storedResponseValue={storedResponseValue}
                     />
                   </div>
                 </div>
@@ -415,6 +458,7 @@ export default function PreviewSurvey({
           </div>
         )}
       </div>
+      {/* for toggling between mobile and desktop mode  */}
       <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
         <TabOption
           active={previewMode === "mobile"}
