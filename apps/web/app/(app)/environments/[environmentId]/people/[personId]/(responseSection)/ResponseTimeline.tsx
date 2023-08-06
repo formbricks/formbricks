@@ -5,7 +5,7 @@ import { TResponseWithSurveyData } from "@formbricks/types/v1/responses";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
-export default async function ResponseTimeline({
+export default function ResponseTimeline({
   environmentId,
   responses,
 }: {

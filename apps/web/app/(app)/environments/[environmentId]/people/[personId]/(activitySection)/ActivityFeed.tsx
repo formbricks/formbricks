@@ -8,21 +8,8 @@ interface ActivityFeedProps {
   environmentId: string;
 }
 
-export type ActivityFeedItem = {
-  id: string;
-  type: "event" | "attribute" | "display";
-  createdAt: Date;
-  updatedAt: Date | null;
-  attributeLabel: string | null;
-  attributeValue: string | null;
-  actionLabel: string | null;
-  actionDescription: string | null;
-  actionType: string | null;
-  displaySurveyName: string | null;
-};
-
 export default function ActivityFeed({ activities, sortByDate, environmentId }: ActivityFeedProps) {
-  const sortedActivities: ActivityFeedItem[] = activities.sort((a, b) =>
+  const sortedActivities: TActivityFeedItem[] = activities.sort((a, b) =>
     sortByDate
       ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()

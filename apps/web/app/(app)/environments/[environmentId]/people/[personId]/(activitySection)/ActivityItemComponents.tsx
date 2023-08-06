@@ -1,5 +1,5 @@
-import { formatDistance } from "date-fns";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import { TActivityFeedItem } from "@formbricks/types/v1/activity";
 import { Label, Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui";
 import {
   CodeBracketIcon,
@@ -9,9 +9,9 @@ import {
   SparklesIcon,
   TagIcon,
 } from "@heroicons/react/24/solid";
-import { ActivityFeedItem } from "./ActivityFeed";
+import { formatDistance } from "date-fns";
 
-export const ActivityItemIcon = ({ activityItem }: { activityItem: ActivityFeedItem }) => (
+export const ActivityItemIcon = ({ activityItem }: { activityItem: TActivityFeedItem }) => (
   <div className="h-12 w-12 rounded-full bg-white p-3 text-slate-500  duration-100 ease-in-out group-hover:scale-110 group-hover:text-slate-600">
     {activityItem.type === "attribute" ? (
       <TagIcon />
@@ -29,7 +29,7 @@ export const ActivityItemIcon = ({ activityItem }: { activityItem: ActivityFeedI
   </div>
 );
 
-export const ActivityItemContent = ({ activityItem }: { activityItem: ActivityFeedItem }) => (
+export const ActivityItemContent = ({ activityItem }: { activityItem: TActivityFeedItem }) => (
   <div>
     <div className="font-semibold text-slate-700">
       {activityItem.type === "attribute" ? (
@@ -59,7 +59,7 @@ export const ActivityItemPopover = ({
   activityItem,
   children,
 }: {
-  activityItem: ActivityFeedItem;
+  activityItem: TActivityFeedItem;
   children: React.ReactNode;
 }) => {
   return (
