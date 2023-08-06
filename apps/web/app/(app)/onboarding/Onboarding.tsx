@@ -29,7 +29,9 @@ export default function Onboarding({ session }: OnboardingProps) {
     error: isErrorEnvironment,
     isLoading: isLoadingEnvironment,
   } = useSWR(`/api/v1/environments/find-first`, fetcher);
+
   const { profile } = useProfile();
+
   const { triggerProfileMutate } = useProfileMutation();
   const [formbricksResponseId, setFormbricksResponseId] = useState<ResponseId | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
@@ -56,28 +58,32 @@ export default function Onboarding({ session }: OnboardingProps) {
     setCurrentStep(currentStep + 1);
   };
 
-  const doLater = () => {
+  const doLater = async () => {
     setCurrentStep(4);
   };
 
   const next = () => {
     if (currentStep < MAX_STEPS) {
       setCurrentStep((value) => value + 1);
+
       return;
     }
   };
 
   const done = async () => {
     setIsLoading(true);
+
     try {
       const updatedProfile = { ...profile, onboardingCompleted: true };
       await triggerProfileMutate(updatedProfile);
+
       if (environment) {
         router.push(`/environments/${environment.id}/surveys`);
         return;
       }
     } catch (e) {
       toast.error("An error occured saving your settings.");
+      setIsLoading(false);
       console.error(e);
     }
   };

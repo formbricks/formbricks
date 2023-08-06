@@ -440,6 +440,9 @@ importers:
       '@formbricks/types':
         specifier: '*'
         version: link:../types
+      '@paralleldrive/cuid2':
+        specifier: ^2.2.1
+        version: 2.2.1
       date-fns:
         specifier: ^2.30.0
         version: 2.30.0
