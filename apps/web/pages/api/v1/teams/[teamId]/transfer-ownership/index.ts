@@ -50,34 +50,35 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(403).json({ message: "The new owner must be a member of the team" });
     }
 
-    const updatedOwnerMembership = await prisma.membership.update({
-      where: {
-        userId_teamId: {
-          teamId,
-          userId: newOwnerId,
-        },
-      },
-      data: {
-        role: "owner",
-      },
-    });
+    try {
+      await prisma.$transaction([
+        prisma.membership.update({
+          where: {
+            userId_teamId: {
+              teamId,
+              userId: currentUser.id,
+            },
+          },
+          data: {
+            role: "admin",
+          },
+        }),
+        prisma.membership.update({
+          where: {
+            userId_teamId: {
+              teamId,
+              userId: newOwnerId,
+            },
+          },
+          data: {
+            role: "owner",
+          },
+        }),
+      ]);
+    } catch (error) {
+      return res.status(500).json({ message: "Something went wrong" });
+    }
 
-    const updatedAdminMembership = await prisma.membership.update({
-      where: {
-        userId_teamId: {
-          teamId,
-          userId: currentUser.id,
-        },
-      },
-      data: {
-        role: "admin",
-      },
-    });
-
-    return res.json({
-      message: "Ownership transferred successfully",
-      updatedOwnerMembership,
-      updatedAdminMembership,
-    });
+    return res.json({ message: "Ownership transferred successfully" });
   }
 }
