@@ -44,9 +44,6 @@ export function EditName() {
     <form
       className="w-full max-w-sm items-center"
       onSubmit={handleSubmit((data) => {
-        if (currentProfileName === previousProfileName) {
-          return toast.error("Please change profile name to update");
-        }
         triggerProfileMutate(data)
           .then(() => {
             toast.success("Your name was updated successfully.");

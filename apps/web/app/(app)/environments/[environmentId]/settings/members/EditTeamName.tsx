@@ -41,9 +41,6 @@ export default function EditTeamName({ environmentId }) {
     <form
       className="w-full max-w-sm items-center"
       onSubmit={handleSubmit((data) => {
-        if (currentTeamName === previousTeamName) {
-          return toast.error("Please change team name to update");
-        }
         triggerTeamMutate({ ...data })
           .catch((error) => {
             toast.error(`Error: ${error.message}`);
