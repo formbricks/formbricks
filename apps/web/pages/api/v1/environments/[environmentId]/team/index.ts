@@ -1,4 +1,4 @@
-import { getSessionUser, hasEnvironmentAccess } from "@/lib/api/apiHelper";
+import { getSessionUser, hasEnvironmentAccess, hasTeamAccess, isOwner } from "@/lib/api/apiHelper";
 import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -70,6 +70,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       if (environment === null) {
         return res.status(404).json({ message: "This environment doesn't exist" });
       }
+
       const team = await prisma.team.findUnique({
         where: {
           id: environment.product.teamId,
@@ -81,21 +82,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           plan: true,
         },
       });
-
       if (team === null) {
         return res.status(404).json({ message: "This team doesn't exist" });
       }
 
-      const membership = await prisma.membership.findUnique({
-        where: {
-          userId_teamId: {
-            userId: currentUser.id,
-            teamId: team.id,
-          },
-        },
-      });
-
-      if (membership?.role !== "owner") {
+      const hasOwnership = isOwner(currentUser, team.id);
+      if (!hasOwnership) {
         return res.status(403).json({ message: "You are not allowed to delete this team" });
       }
 
