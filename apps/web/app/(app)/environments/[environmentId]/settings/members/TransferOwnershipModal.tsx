@@ -7,6 +7,7 @@ interface TransferOwnershipModalProps {
   setOpen: Dispatch<SetStateAction<boolean>>;
   memberName: string;
   onSubmit: () => void;
+  isLoading?: boolean;
 }
 
 export default function TransferOwnershipModal({
@@ -14,6 +15,7 @@ export default function TransferOwnershipModal({
   open,
   memberName,
   onSubmit,
+  isLoading,
 }: TransferOwnershipModalProps) {
   const [inputValue, setInputValue] = useState("");
 
@@ -29,7 +31,8 @@ export default function TransferOwnershipModal({
       okBtnText="Transfer ownership"
       title="There can only be ONE owner! Are you sure?"
       cancelBtnText="CANCEL"
-      disabled={inputValue !== memberName}>
+      disabled={inputValue !== memberName}
+      isLoading={isLoading}>
       <div className="py-5">
         <ul className="list-disc pb-6 pl-6">
           <li>
