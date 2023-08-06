@@ -3,20 +3,11 @@ export const revalidate = REVALIDATION_INTERVAL;
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 
 import { capitalizeFirstLetter } from "@/lib/utils";
-import { getSessionCount } from "@formbricks/lib/services/session";
-import { getResponsesByPersonId } from "@formbricks/lib/services/response";
-import { getSurveys } from "@formbricks/lib/services/survey";
-import { TResponseWithSurveyData } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 import { getPerson } from "@formbricks/lib/services/person";
+import { getResponsesByPersonId } from "@formbricks/lib/services/response";
+import { getSessionCount } from "@formbricks/lib/services/session";
 
-export default async function AttributesSection({
-  personId,
-  environmentId,
-}: {
-  personId: string;
-  environmentId: string;
-}) {
+export default async function AttributesSection({ personId }: { personId: string }) {
   const person = await getPerson(personId);
   if (!person) {
     throw new Error("No such person found");
@@ -24,29 +15,7 @@ export default async function AttributesSection({
   const numberOfSessions = await getSessionCount(personId);
   const responses = await getResponsesByPersonId(personId);
 
-  const surveyIds = responses?.map((response) => response.surveyId) || [];
-  const surveys: TSurvey[] = surveyIds.length === 0 ? [] : (await getSurveys(environmentId)) ?? [];
-
-  const responsesWithSurvey: TResponseWithSurveyData[] =
-    responses?.reduce((acc: TResponseWithSurveyData[], response) => {
-      const thisSurvey = surveys.find((survey) => survey?.id === response.surveyId);
-      if (thisSurvey) {
-        acc.push({
-          id: response.id,
-          createdAt: response.createdAt,
-          data: response.data,
-          survey: {
-            id: response.surveyId,
-            name: thisSurvey.name,
-            status: thisSurvey.status,
-            questions: thisSurvey.questions,
-          },
-        });
-      }
-      return acc;
-    }, []) || [];
-
-  const numberOfResponses = responsesWithSurvey.length;
+  const numberOfResponses = responses?.length || 0;
 
   return (
     <div className="space-y-6">

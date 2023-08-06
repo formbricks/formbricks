@@ -1,7 +1,7 @@
 import { formatDistance } from "date-fns";
 import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
 import SurveyStatusIndicator from "@/components/shared/SurveyStatusIndicator";
-import { TResponseWithSurveyData } from "@formbricks/types/v1/responses";
+import { TResponseWithSurvey } from "@formbricks/types/v1/responses";
 import Link from "next/link";
 
 export default function ResponseFeed({
@@ -9,7 +9,7 @@ export default function ResponseFeed({
   sortByDate,
   environmentId,
 }: {
-  responses: TResponseWithSurveyData[];
+  responses: TResponseWithSurvey[];
   sortByDate: boolean;
   environmentId: string;
 }) {
@@ -26,7 +26,7 @@ export default function ResponseFeed({
                 ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
                 : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
             )
-            .map((response: TResponseWithSurveyData, responseIdx) => (
+            .map((response: TResponseWithSurvey, responseIdx) => (
               <li key={response.id} className="list-none">
                 <div className="relative pb-8">
                   {responseIdx !== responses.length - 1 ? (

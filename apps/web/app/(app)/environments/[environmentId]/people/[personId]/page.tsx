@@ -20,7 +20,7 @@ export default async function PersonPage({ params }) {
           <HeadingSection environmentId={params.environmentId} person={person} />
           <section className="pb-24 pt-6">
             <div className="grid grid-cols-1 gap-x-8  md:grid-cols-4">
-              <AttributesSection personId={params.personId} environmentId={params.environmentId} />
+              <AttributesSection personId={params.personId} />
               <ResponseSection environmentId={params.environmentId} personId={params.personId} />
               <ActivitySection environmentId={params.environmentId} personId={params.personId} />
             </div>
