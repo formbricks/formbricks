@@ -18,7 +18,7 @@ export default function DeleteTeam({ environmentId }) {
   const router = useRouter();
   const { profile } = useProfile();
   const { memberships } = useMemberships();
-  const { team, isErrorTeam: isErrorTeamMembers } = useMembers(environmentId);
+  const { team } = useMembers(environmentId);
   const { team: teamData, isLoadingTeam, isErrorTeam } = useTeam(environmentId);
 
   const availableTeams = memberships?.length;
