@@ -160,6 +160,7 @@ function RoleElement({
           setOpen={setTransferOwnershipModalOpen}
           memberName={memberName}
           onSubmit={handleOwnershipTransfer}
+          isLoading={loading}
         />
       </>
     );
