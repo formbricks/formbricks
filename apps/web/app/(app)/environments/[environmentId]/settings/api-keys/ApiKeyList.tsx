@@ -1,19 +1,14 @@
-"use client";
-
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProduct } from "@/lib/products/products";
-import { ErrorComponent } from "@formbricks/ui";
 import EditApiKeys from "./EditApiKeys";
+import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
+import { getApiKeys } from "@formbricks/lib/services/apiKey";
 
-export default function ApiKeyList({
+export default async function ApiKeyList({
   environmentId,
   environmentType,
 }: {
   environmentId: string;
   environmentType: string;
 }) {
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-
   const findEnvironmentByType = (environments, targetType) => {
     for (const environment of environments) {
       if (environment.type === targetType) {
@@ -23,15 +18,15 @@ export default function ApiKeyList({
     return null;
   };
 
-  if (isLoadingProduct) {
-    return <LoadingSpinner />;
-  }
-
-  if (isErrorProduct) {
-    <ErrorComponent />;
-  }
-
+  const product = await getProductByEnvironmentId(environmentId);
   const environmentTypeId = findEnvironmentByType(product?.environments, environmentType);
+  const apiKeyArray = await getApiKeys(environmentTypeId);
 
-  return <EditApiKeys environmentTypeId={environmentTypeId} environmentType={environmentType} />;
+  return (
+    <EditApiKeys
+      environmentTypeId={environmentTypeId}
+      environmentType={environmentType}
+      apiKeyArray={apiKeyArray}
+    />
+  );
 }

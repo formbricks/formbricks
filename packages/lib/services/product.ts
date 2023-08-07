@@ -19,6 +19,9 @@ export const getProductByEnvironmentId = cache(async (environmentId: string): Pr
           },
         },
       },
+      include: {
+        environments: true, // Include the environments relation
+      },
     });
 
     if (!productPrisma) {

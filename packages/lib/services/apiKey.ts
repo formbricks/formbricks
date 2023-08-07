@@ -1,8 +1,12 @@
+import "server-only";
+
 import { prisma } from "@formbricks/database";
-import { TApiKey } from "@formbricks/types/v1/apiKeys";
+import { TApiKey, TApiKeyData } from "@formbricks/types/v1/apiKeys";
 import { Prisma } from "@prisma/client";
 import { getHash } from "../crypto";
+import { createHash, randomBytes } from "crypto";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/errors";
+import { cache } from "react";
 
 export const getApiKey = async (apiKey: string): Promise<TApiKey | null> => {
   if (!apiKey) {
@@ -30,6 +34,50 @@ export const getApiKey = async (apiKey: string): Promise<TApiKey | null> => {
   }
 };
 
+export const getApiKeys = cache(async (environmentId: string): Promise<TApiKey[] | null> => {
+  try {
+    const apiKeys = await prisma.apiKey.findMany({
+      where: {
+        environmentId,
+      },
+    });
+    if (!apiKeys) {
+      return null;
+    }
+
+    return apiKeys;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
+});
+
+export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
+
+export async function createApiKey(environmentId: string, apiKeyData: TApiKeyData): Promise<TApiKey> {
+  try {
+    const key = randomBytes(16).toString("hex");
+    const hashedKey = hashApiKey(key);
+
+    const result = await prisma.apiKey.create({
+      data: {
+        ...apiKeyData,
+        hashedKey,
+        environment: { connect: { id: environmentId } },
+      },
+    });
+
+    return { ...result, apiKey: key };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
+}
+
 export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> => {
   if (!apiKey) {
     throw new InvalidInputError("API key cannot be null or undefined.");
@@ -43,6 +91,22 @@ export const getApiKeyFromKey = async (apiKey: string): Promise<TApiKey | null> 
     });
 
     return apiKeyData;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
+};
+
+export const deleteApiKey = async (id: string): Promise<void> => {
+  try {
+    await prisma.apiKey.delete({
+      where: {
+        id: id,
+      },
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
