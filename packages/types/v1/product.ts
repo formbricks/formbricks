@@ -10,7 +10,7 @@ export const ZProduct = z.object({
   highlightBorderColor: z
     .string()
     .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
-    .nullable(),
+    .nullish(),
   recontactDays: z.number().int(),
   formbricksSignature: z.boolean(),
   placement: z.enum(["bottomLeft", "bottomRight", "topLeft", "topRight", "center"]),
