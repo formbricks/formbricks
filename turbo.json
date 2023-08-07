@@ -15,7 +15,7 @@
       "dependsOn": ["^build"]
     },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["prebuild", "^build"],
       "outputs": ["dist/**", ".next/**"],
       "env": [
         "CRON_SECRET",
