@@ -12,7 +12,7 @@ export default function Modal({
   children: ReactNode;
   isOpen: boolean;
   placement: PlacementType;
-  highlightBorderColor: string | null;
+  highlightBorderColor: string | null | undefined;
 }) {
   const [show, setShow] = useState(false);
 
