@@ -1,6 +1,10 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "pipeline": {
+    "@formbricks/database#build": {
+      "cache": false,
+      "dependsOn": ["post-install"]
+    },
     "@formbricks/web#go": {
       "cache": false,
       "persistent": true,
@@ -15,7 +19,7 @@
       "dependsOn": ["^build"]
     },
     "build": {
-      "dependsOn": ["prebuild", "^build"],
+      "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],
       "env": [
         "CRON_SECRET",
@@ -76,6 +80,13 @@
         "TELEMETRY_DISABLED",
         "VERCEL_URL"
       ]
+    },
+    "post-install": {
+      "cache": false,
+      "dependsOn": [],
+      "outputs": [],
+      "inputs": ["./schema.prisma"],
+      "env": ["PRISMA_GENERATE_DATAPROXY"]
     },
     "db:setup": {
       "cache": false,
