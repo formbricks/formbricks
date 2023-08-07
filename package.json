@@ -17,7 +17,7 @@
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:migrate:vercel": "turbo run db:migrate:vercel",
     "db:push": "turbo run db:push",
-    "go": "turbo run go --concurrency 16",
+    "go": "turbo run go --concurrency 17",
     "dev": "turbo run dev --parallel",
     "start": "turbo run start --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
