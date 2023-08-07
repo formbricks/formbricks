@@ -96,9 +96,6 @@
       "persistent": true,
       "cache": false
     },
-    "prebuild": {
-      "outputs": []
-    },
     "db:migrate:dev": {
       "outputs": []
     },
