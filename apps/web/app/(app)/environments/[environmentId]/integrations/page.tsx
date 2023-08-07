@@ -13,6 +13,7 @@ export default function IntegrationsPage({ params }) {
           docsHref="https://formbricks.com/docs/getting-started/nextjs-app"
           label="Javascript Widget"
           description="Integrate Formbricks into your Webapp"
+          newTab={true}
           icon={<Image src={JsLogo} alt="Javascript Logo" />}
         />
         <Card
@@ -20,6 +21,7 @@ export default function IntegrationsPage({ params }) {
           connectHref="https://zapier.com/apps/formbricks/integrations"
           label="Zapier"
           description="Integrate Formbricks with 5000+ apps via Zapier"
+          newTab={true}
           icon={<Image src={ZapierLogo} alt="Zapier Logo" />}
         />
         <Card
@@ -27,6 +29,7 @@ export default function IntegrationsPage({ params }) {
           docsHref="https://formbricks.com/docs/webhook-api/overview"
           label="Custom Webhook"
           description="Trigger Webhooks based on actions in your surveys"
+          newTab={false}
           icon={<Image src={JsLogo} alt="Javascript Logo" />}
         />
       </div>
