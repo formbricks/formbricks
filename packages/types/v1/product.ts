@@ -7,8 +7,10 @@ export const ZProduct = z.object({
   name: z.string(),
   teamId: z.string(),
   brandColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/),
-  highlightBorderColor: z.union([z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/), z.null()]),
-
+  highlightBorderColor: z
+    .string()
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .nullable(),
   recontactDays: z.number().int(),
   formbricksSignature: z.boolean(),
   placement: z.enum(["bottomLeft", "bottomRight", "topLeft", "topRight", "center"]),
