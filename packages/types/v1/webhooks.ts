@@ -8,6 +8,7 @@ export const ZWebhook = z.object({
   url: z.string().url(),
   environmentId: z.string().cuid2(),
   triggers: z.array(ZPipelineTrigger),
+  surveyIds: z.array(z.string().cuid2()),
 });
 
 export type TWebhook = z.infer<typeof ZWebhook>;

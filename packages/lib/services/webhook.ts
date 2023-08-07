@@ -1,3 +1,6 @@
+"use server";
+import "server-only";
+
 import { TWebhook, TWebhookInput } from "@formbricks/types/v1/webhooks";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
@@ -49,6 +52,30 @@ export const createWebhook = async (
       throw new DatabaseError(`Database error when creating webhook for environment ${environmentId}`);
     }
     throw error;
+  }
+};
+
+export const updateWebhook = async (
+  environmentId: string,
+  webhookId: string,
+  webhookInput: Partial<TWebhookInput>
+): Promise<TWebhook> => {
+  try {
+    const result = await prisma.webhook.update({
+      where: {
+        id: webhookId,
+      },
+      data: {
+        url: webhookInput.url,
+        triggers: webhookInput.triggers,
+        surveyIds: webhookInput.surveyIds || [],
+      },
+    });
+    return result;
+  } catch (error) {
+    throw new DatabaseError(
+      `Database error when updating webhook with ID ${webhookId} for environment ${environmentId}`
+    );
   }
 };
 

@@ -3,7 +3,7 @@ import Image from "next/image";
 import JsLogo from "@/images/jslogo.png";
 import ZapierLogo from "@/images/zapier-small.png";
 
-export default function IntegrationsPage() {
+export default function IntegrationsPage({ params }) {
   return (
     <div>
       <h1 className="my-2 text-3xl font-bold text-slate-800">Integrations</h1>
@@ -21,6 +21,13 @@ export default function IntegrationsPage() {
           label="Zapier"
           description="Integrate Formbricks with 5000+ apps via Zapier"
           icon={<Image src={ZapierLogo} alt="Zapier Logo" />}
+        />
+        <Card
+          connectHref={`/environments/${params.environmentId}/integrations/custom-webhook`}
+          docsHref="https://formbricks.com/docs/webhook-api/overview"
+          label="Custom Webhook"
+          description="Trigger Webhooks based on actions in your surveys"
+          icon={<Image src={JsLogo} alt="Javascript Logo" />}
         />
       </div>
     </div>
