@@ -61,29 +61,14 @@ export function EditBrandColor({ environmentId }) {
   );
 }
 
-export function EditPlacement({ environmentId }) {
-  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
-  const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
-
-  const [currentPlacement, setCurrentPlacement] = useState<PlacementType>("bottomRight");
-  const [overlay, setOverlay] = useState("");
-  const [clickOutside, setClickOutside] = useState("");
-
-  useEffect(() => {
-    if (product) {
-      setCurrentPlacement(product.placement);
-      setOverlay(product.darkOverlay ? "darkOverlay" : "lightOverlay");
-      setClickOutside(product.clickOutsideClose ? "allow" : "disallow");
-    }
-  }, [product]);
-
-  if (isLoadingProduct) {
-    return <LoadingSpinner />;
-  }
-  if (isErrorProduct) {
-    return <ErrorComponent />;
-  }
-
+export function Placement({
+  setCurrentPlacement,
+  currentPlacement,
+  setOverlay,
+  overlay,
+  setClickOutside,
+  clickOutside,
+}) {
   const placements = [
     { name: "Bottom Right", value: "bottomRight", disabled: false },
     { name: "Top Right", value: "topRight", disabled: false },
@@ -93,7 +78,7 @@ export function EditPlacement({ environmentId }) {
   ];
 
   return (
-    <div className="w-full items-center">
+    <>
       <div className="flex">
         <RadioGroup onValueChange={(e) => setCurrentPlacement(e as PlacementType)} value={currentPlacement}>
           {placements.map((placement) => (
@@ -115,7 +100,6 @@ export function EditPlacement({ environmentId }) {
             )}></div>
         </div>
       </div>
-
       {currentPlacement === "center" && (
         <>
           <div className="mt-6 space-y-2">
@@ -157,6 +141,42 @@ export function EditPlacement({ environmentId }) {
           </div>
         </>
       )}
+    </>
+  );
+}
+export function EditPlacement({ environmentId }) {
+  const { product, isLoadingProduct, isErrorProduct } = useProduct(environmentId);
+  const { triggerProductMutate, isMutatingProduct } = useProductMutation(environmentId);
+
+  const [currentPlacement, setCurrentPlacement] = useState<PlacementType>("bottomRight");
+  const [overlay, setOverlay] = useState("");
+  const [clickOutside, setClickOutside] = useState("");
+
+  useEffect(() => {
+    if (product) {
+      setCurrentPlacement(product.placement);
+      setOverlay(product.darkOverlay ? "darkOverlay" : "lightOverlay");
+      setClickOutside(product.clickOutsideClose ? "allow" : "disallow");
+    }
+  }, [product]);
+
+  if (isLoadingProduct) {
+    return <LoadingSpinner />;
+  }
+  if (isErrorProduct) {
+    return <ErrorComponent />;
+  }
+
+  return (
+    <div className="w-full items-center">
+      <Placement
+        currentPlacement={currentPlacement}
+        setCurrentPlacement={setCurrentPlacement}
+        setOverlay={setOverlay}
+        overlay={overlay}
+        setClickOutside={setClickOutside}
+        clickOutside={clickOutside}
+      />
       <Button
         type="submit"
         variant="darkCTA"
