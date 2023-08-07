@@ -15,7 +15,6 @@ interface PreviewSurveyProps {
   activeQuestionId?: string | null;
   questions: Question[];
   brandColor: string;
-  highlightBorderColor?: string;
   environmentId: string;
   surveyType: Survey["type"];
   thankYouCard: Survey["thankYouCard"];
@@ -30,7 +29,6 @@ export default function PreviewSurvey({
   activeQuestionId,
   questions,
   brandColor,
-  highlightBorderColor,
   surveyType,
   thankYouCard,
   autoClose,
