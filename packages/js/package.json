@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/js",
   "license": "MIT",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
   "keywords": [
     "Formbricks",
@@ -50,8 +50,8 @@
     "@formbricks/api": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@types/jest": "^29.5.3",
-    "@typescript-eslint/eslint-plugin": "^6.2.0",
-    "@typescript-eslint/parser": "^6.2.0",
+    "@typescript-eslint/eslint-plugin": "^6.2.1",
+    "@typescript-eslint/parser": "^6.2.1",
     "autoprefixer": "^10.4.14",
     "babel-jest": "^29.6.2",
     "cross-env": "^7.0.3",

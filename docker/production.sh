@@ -126,14 +126,16 @@ x-environment: &environment
     # You do not need the NEXTAUTH_URL environment variable in Vercel.
     NEXTAUTH_URL: "https://$domain_name"
 
+    # PostgreSQL password
+    POSTGRES_PASSWORD: postgres
+
 services:
   postgres:
     restart: always
     image: postgres:15-alpine
     volumes:
       - postgres:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_PASSWORD=postgres
+    <<: *environment
 
   formbricks:
     restart: always
@@ -167,20 +169,9 @@ volumes:
     driver: local
 EOT
 
-update_nextauth_secret() {
-  nextauth_secret=$(openssl rand -base64 32)
-  sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.\*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
-}
-
 echo "🚙 Updating NEXTAUTH_SECRET in the Formbricks container..."
-while true; do
-  if update_nextauth_secret; then
-    echo "🚗 NEXTAUTH_SECRET updated successfully!"
-    break
-  else
-    echo "🚧 Failed to update NEXTAUTH_SECRET. Retrying..."
-  fi
-done
+nextauth_secret=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32) && sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $nextauth_secret/" docker-compose.yml
+echo "🚗 NEXTAUTH_SECRET updated successfully!"
 
 newgrp docker << END
 

@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/web",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
@@ -25,7 +25,7 @@
     "@paralleldrive/cuid2": "^2.2.1",
     "@radix-ui/react-collapsible": "^1.0.3",
     "@radix-ui/react-dropdown-menu": "^2.0.5",
-    "@sentry/nextjs": "^7.60.1",
+    "@sentry/nextjs": "^7.61.0",
     "@t3-oss/env-nextjs": "^0.6.0",
     "bcryptjs": "^2.4.3",
     "eslint-config-next": "^13.4.12",
@@ -35,7 +35,7 @@
     "next": "13.4.10",
     "next-auth": "^4.22.3",
     "nodemailer": "^6.9.4",
-    "posthog-js": "^1.75.2",
+    "posthog-js": "^1.75.3",
     "prismjs": "^1.29.0",
     "react": "18.2.0",
     "react-beautiful-dnd": "^13.1.1",
