@@ -15,8 +15,11 @@ interface StylingCardProps {
 
 export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCardProps) {
   const [open, setOpen] = useState(false);
-  const isBrandColor = localSurvey.brandColor !== null;
-  const isPosition = localSurvey.placement !== null;
+
+  const { brandColor, placement, darkOverlay, clickOutsideClose, type } = localSurvey;
+
+  const isBrandColor = brandColor !== null;
+  const isPosition = placement !== null;
 
   const togglePlacement = () => {
     if (isPosition) {
@@ -59,11 +62,9 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     setLocalSurvey({ ...localSurvey, clickOutsideClose });
   };
 
-  const overlay =
-    localSurvey.darkOverlay === null ? "" : localSurvey.darkOverlay ? "darkOverlay" : "lightOverlay";
+  const overlay = darkOverlay === null ? "" : darkOverlay ? "darkOverlay" : "lightOverlay";
 
-  const clickOutside =
-    localSurvey.clickOutsideClose === null ? "" : localSurvey.clickOutsideClose ? "allow" : "disallow";
+  const clickOutside = clickOutsideClose === null ? "" : clickOutsideClose ? "allow" : "disallow";
 
   return (
     <Collapsible.Root
@@ -95,17 +96,17 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                 </div>
               </Label>
             </div>
-            {localSurvey.brandColor && (
+            {brandColor && (
               <div className="ml-2 mt-4 rounded-lg border bg-slate-50 p-4">
                 <div className="w-full max-w-xs">
                   <Label htmlFor="brandcolor">Color (HEX)</Label>
-                  <ColorPicker color={localSurvey.brandColor} onChange={handleColorChange} />
+                  <ColorPicker color={brandColor} onChange={handleColorChange} />
                 </div>
               </div>
             )}
           </div>
           {/* positioning */}
-          {localSurvey.type !== "link" && (
+          {type !== "link" && (
             <div className="p-3 ">
               <div className="ml-2 flex items-center space-x-1">
                 <Switch id="surveyDeadline" checked={isPosition} onCheckedChange={togglePlacement} />
@@ -116,12 +117,12 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                   </div>
                 </Label>
               </div>
-              {localSurvey.placement && (
+              {placement && (
                 <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
                   <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
                     <div className="w-full items-center">
                       <Placement
-                        currentPlacement={localSurvey.placement}
+                        currentPlacement={placement}
                         setCurrentPlacement={handlePlacementChange}
                         setOverlay={handleOverlay}
                         overlay={overlay}
