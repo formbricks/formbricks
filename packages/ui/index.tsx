@@ -59,6 +59,7 @@ export {
 } from "./components/Command";
 export { Calendar } from "./components/Calendar";
 export { DatePicker } from "./components/DatePicker";
+export { SearchBox } from "./components/SearchBox";
 
 /* Icons */
 export { AngryBirdRageIcon } from "./components/icons/AngryBirdRageIcon";
