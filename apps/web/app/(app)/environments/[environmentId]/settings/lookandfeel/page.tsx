@@ -1,6 +1,11 @@
 import SettingsCard from "../SettingsCard";
 import SettingsTitle from "../SettingsTitle";
-import { EditBrandColor, EditPlacement, EditFormbricksSignature } from "./editLookAndFeel";
+import {
+  EditBrandColor,
+  EditPlacement,
+  EditFormbricksSignature,
+  EditHighlightBorder,
+} from "./editLookAndFeel";
 
 export default function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   return (
@@ -13,6 +18,12 @@ export default function ProfileSettingsPage({ params }: { params: { environmentI
         title="In-app Survey Placement"
         description="Change where surveys will be shown in your web app.">
         <EditPlacement environmentId={params.environmentId} />
+      </SettingsCard>
+      <SettingsCard
+        noPadding
+        title="Highlight Border"
+        description="Make sure your users notice the survey you display">
+        <EditHighlightBorder environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
         title="Formbricks Signature"

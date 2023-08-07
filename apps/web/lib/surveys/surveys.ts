@@ -27,9 +27,9 @@ export const useSurveys = (environmentId: string) => {
   };
 };
 
-export const useSurvey = (environmentId: string, id: string) => {
+export const useSurvey = (environmentId: string, id: string, analytics?: boolean) => {
   const { data, error, mutate, isLoading } = useSWR(
-    `/api/v1/environments/${environmentId}/surveys/${id}`,
+    `/api/v1/environments/${environmentId}/surveys/${id}${analytics ? "?analytics=true" : ""}`,
     fetcher
   );
 
