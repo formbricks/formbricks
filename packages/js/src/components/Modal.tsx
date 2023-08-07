@@ -70,10 +70,6 @@ export default function Modal({
     };
   }, [highlightBorderColor]);
 
-  console.log({
-    highlightBorderColor,
-  });
-
   return (
     <div
       aria-live="assertive"
