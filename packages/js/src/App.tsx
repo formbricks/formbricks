@@ -32,6 +32,7 @@ export default function App({ config, survey, closeSurvey, errorHandler }: AppPr
         close={close}
         placement={survey.placement ? survey.placement : config.state.product.placement}
         darkOverlay={survey.placement ? survey.darkOverlay : config.state.product.darkOverlay}
+        highlightBorderColor={config.state.product.highlightBorderColor}
         clickOutside={survey.placement ? survey.clickOutsideClose : config.state.product.clickOutsideClose}>
         <SurveyView config={config} survey={survey} close={close} errorHandler={errorHandler} />
       </Modal>

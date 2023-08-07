@@ -34,6 +34,7 @@ export interface Survey {
   autoComplete: number | null;
   surveyClosedMessage: SurveyClosedMessage | null;
   closeOnDate: Date | null;
+  _count: { responses: number | null } | null;
   brandColor: string | null;
   placement: PlacementType | null;
   clickOutsideClose: boolean | null;

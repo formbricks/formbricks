@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/errors";
-import { TPerson } from "@formbricks/types/v1/people";
 import { TResponse, TResponseInput, TResponseUpdateInput } from "@formbricks/types/v1/responses";
+import { TPerson } from "@formbricks/types/v1/people";
 import { TTag } from "@formbricks/types/v1/tags";
 import { Prisma } from "@prisma/client";
 import { cache } from "react";
@@ -61,6 +61,39 @@ const responseSelection = {
       },
     },
   },
+};
+
+export const getResponsesByPersonId = async (personId: string): Promise<Array<TResponse> | null> => {
+  try {
+    const responsePrisma = await prisma.response.findMany({
+      where: {
+        personId,
+      },
+      select: responseSelection,
+    });
+
+    if (!responsePrisma) {
+      throw new ResourceNotFoundError("Response from PersonId", personId);
+    }
+
+    let responses: Array<TResponse> = [];
+
+    responsePrisma.forEach((response) => {
+      responses.push({
+        ...response,
+        person: response.person ? transformPrismaPerson(response.person) : null,
+        tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+      });
+    });
+
+    return responses;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+
+    throw error;
+  }
 };
 
 export const createResponse = async (responseInput: Partial<TResponseInput>): Promise<TResponse> => {

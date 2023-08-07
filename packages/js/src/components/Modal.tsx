@@ -1,6 +1,6 @@
 import type { PlacementType } from "@formbricks/types/js";
 import { h, VNode } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { cn } from "../lib/utils";
 
 export default function Modal({
@@ -9,6 +9,7 @@ export default function Modal({
   placement,
   clickOutside,
   darkOverlay,
+  highlightBorderColor,
   close,
 }: {
   children: VNode;
@@ -16,6 +17,7 @@ export default function Modal({
   placement: PlacementType;
   clickOutside: boolean;
   darkOverlay: boolean;
+  highlightBorderColor: string | null;
   close: () => void;
 }) {
   const [show, setShow] = useState(false);
@@ -57,6 +59,17 @@ export default function Modal({
     }
   };
 
+  const highlightBorderColorStyle = useMemo(() => {
+    if (!highlightBorderColor) return {};
+
+    return {
+      borderRadius: "8px",
+      border: "2px solid",
+      overflow: "hidden",
+      borderColor: highlightBorderColor,
+    };
+  }, [highlightBorderColor]);
+
   return (
     <div
       aria-live="assertive"
@@ -97,7 +110,7 @@ export default function Modal({
               </svg>
             </button>
           </div>
-          <div className="">{children}</div>
+          <div style={highlightBorderColorStyle}>{children}</div>
         </div>
       </div>
     </div>
