@@ -9,7 +9,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   const surveyId = req.query.surveyId?.toString();
 
-  const analytics = req.query.analytics?.toString();
+  const analytics = req.query.analytics?.toString() === "true";
 
   if (environmentId === undefined) {
     return res.status(400).json({ message: "Missing environmentId" });
@@ -33,7 +33,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       include: {
         triggers: true,
         attributeFilters: true,
-        _count: analytics === "true" ? { select: { responses: true } } : false,
+        _count: analytics ? { select: { responses: { where: { finished: true } } } } : false,
       },
     });
 
