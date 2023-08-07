@@ -49,3 +49,16 @@ input:focus {
     }
   }
 }
+
+/* Hide the clear button for input type "search" */
+input[type="search"]::-webkit-search-cancel-button {
+  display: none;
+}
+
+input[type="search"]::-ms-clear {
+  display: none;
+}
+
+input[type="search"]::-ms-reveal {
+  display: none;
+}
