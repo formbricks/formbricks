@@ -39,19 +39,21 @@ export default function MultipleChoiceMultiQuestion({
     .map((choice) => choice.label);
 
   useEffect(() => {
-    if(Array.isArray(storedResponseValue)){
+    if (Array.isArray(storedResponseValue)) {
       const nonOtherSavedChoices = storedResponseValue?.filter((answer) =>
-      nonOtherChoiceLabels.includes(answer)
-    );
-    const savedOtherSpecified = storedResponseValue?.find((answer) => !nonOtherChoiceLabels.includes(answer));
+        nonOtherChoiceLabels.includes(answer)
+      );
+      const savedOtherSpecified = storedResponseValue?.find(
+        (answer) => !nonOtherChoiceLabels.includes(answer)
+      );
 
-    setSelectedChoices(nonOtherSavedChoices ?? []);
+      setSelectedChoices(nonOtherSavedChoices ?? []);
 
-    if (savedOtherSpecified) {
-      setOtherSpecified(savedOtherSpecified);
-      setShowOther(true);
+      if (savedOtherSpecified) {
+        setOtherSpecified(savedOtherSpecified);
+        setShowOther(true);
+      }
     }
-  }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storedResponseValue, question.id]);
 
