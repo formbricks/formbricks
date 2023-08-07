@@ -9,7 +9,7 @@ export const GitHubSponsorship: React.FC = () => {
       <style jsx>{`
         @media (min-width: 426px);
       `}</style>
-      <div className="right-10 lg:absolute">
+      <div className="right-24 lg:absolute">
         <Image
           src={GitHubMarkDark}
           alt="GitHub Sponsors Formbricks badge"

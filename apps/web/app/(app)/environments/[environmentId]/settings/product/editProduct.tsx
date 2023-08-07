@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -22,7 +22,19 @@ export function EditProductName({ environmentId }) {
   const { isMutatingProduct, triggerProductMutate } = useProductMutation(environmentId);
   const { mutateEnvironment } = useEnvironment(environmentId);
 
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, control, setValue } = useForm();
+
+  const productName = useWatch({
+    control,
+    name: "name",
+  });
+  const isProductNameInputEmpty = !productName?.trim();
+  const currentProductName = productName?.trim().toLowerCase() ?? "";
+  const previousProductName = product?.name?.trim().toLowerCase() ?? "";
+
+  useEffect(() => {
+    setValue("name", product?.name ?? "");
+  }, [product?.name]);
 
   if (isLoadingProduct) {
     return <LoadingSpinner />;
@@ -45,9 +57,20 @@ export function EditProductName({ environmentId }) {
           });
       })}>
       <Label htmlFor="fullname">What&apos;s your product called?</Label>
-      <Input type="text" id="fullname" defaultValue={product.name} {...register("name")} />
+      <Input
+        type="text"
+        id="fullname"
+        defaultValue={product.name}
+        {...register("name")}
+        className={isProductNameInputEmpty ? "border-red-300 focus:border-red-300" : ""}
+      />
 
-      <Button type="submit" variant="darkCTA" className="mt-4" loading={isMutatingProduct}>
+      <Button
+        type="submit"
+        variant="darkCTA"
+        className="mt-4"
+        loading={isMutatingProduct}
+        disabled={isProductNameInputEmpty || currentProductName === previousProductName}>
         Update
       </Button>
     </form>

@@ -16,22 +16,12 @@ export const getWebhooks = async (environmentId: string): Promise<TWebhook[]> =>
 };
 
 export const getWebhook = async (id: string): Promise<TWebhook | null> => {
-  try {
-    const webhook = await prisma.webhook.findUnique({
-      where: {
-        id,
-      },
-    });
-    if (!webhook) {
-      throw new ResourceNotFoundError("Webhook", id);
-    }
-    return webhook;
-  } catch (error) {
-    if (!(error instanceof ResourceNotFoundError)) {
-      throw new DatabaseError(`Database error when fetching webhook with ID ${id}`);
-    }
-    throw error;
-  }
+  const webhook = await prisma.webhook.findUnique({
+    where: {
+      id,
+    },
+  });
+  return webhook;
 };
 
 export const createWebhook = async (
